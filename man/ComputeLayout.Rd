@@ -19,6 +19,8 @@ ComputeLayout(object, ...)
   k = 0,
   pivots = 100,
   seed = 123,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
   ...
 )
 
@@ -31,6 +33,9 @@ ComputeLayout(object, ...)
   k = 0,
   pivots = 100,
   seed = 123,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  custom_layout_name = "custom",
   ...
 )
 
@@ -44,6 +49,9 @@ ComputeLayout(object, ...)
   pivots = 100,
   seed = 123,
   verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  custom_layout_name = "custom",
   ...
 )
 
@@ -58,6 +66,9 @@ ComputeLayout(object, ...)
   pivots = 100,
   seed = 123,
   verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  custom_layout_name = "custom",
   ...
 )
 }
@@ -66,19 +77,37 @@ ComputeLayout(object, ...)
 
 \item{...}{Additional parameters passed to other methods}
 
-\item{layout_method}{The method for calculating the graph layout; PMDS, Fruchterman-Reingold (fr), Kamada-Kawai (kk), drl.}
+\item{layout_method}{The method for calculating the graph layout; PMDS,
+Fruchterman-Reingold (fr), Kamada-Kawai (kk), drl.}
 
 \item{dim}{An integer specifying the dimensions of the layout (2 or 3)}
 
-\item{normalize_layout}{Logical specifying whether the coordinate system for the layout should be scaled from -1 to 1.}
+\item{normalize_layout}{Logical specifying whether the coordinate system
+for the layout should be scaled from -1 to 1.}
 
-\item{project_on_unit_sphere}{Should the resulting layout be projected onto a unit sphere?}
+\item{project_on_unit_sphere}{Should the resulting layout be projected onto
+a unit sphere?}
 
-\item{k}{The size of the neighborhood from which to pool counts from in the UPIA antibody count table. 0 is recommended.}
+\item{k}{The size of the neighborhood from which to pool counts from in
+the UPIA antibody count table. 0 is recommended.}
 
-\item{pivots}{Only used for "pmds" graph layout. See \code{?layout_with_pmds} for details}
+\item{pivots}{Only used for "pmds" graph layout. See \code{?layout_with_pmds}
+for details}
 
 \item{seed}{Set seed for reproducibility}
+
+\item{custom_layout_function}{A custom function for layout computation. The
+function should take a \code{tbl_graph} object and a \code{dim} value as
+input and return a matrix of dimensions NxD, where N is the number of nodes
+and D is equal to \code{dim}. Note that this will override the \code{layout_method}.}
+
+\item{custom_layout_function_args}{A list of arguments passed to \code{custom_layout_function}.
+The \code{dim} is automatically passed to \code{custom_layout_function} and should not be
+included in \code{custom_layout_function_args}.}
+
+\item{custom_layout_name}{A name for the layout computed with
+\code{custom_layout_function}. Should not be one of "pmds", "fr",
+"kk" or "drl".}
 
 \item{verbose}{Print messages}
 
