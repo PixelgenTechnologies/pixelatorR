@@ -1,0 +1,71 @@
+Package: pixelatorR
+Title: What the Package Does (One Line, Title Case)
+Version: 0.0.0.9000
+Authors@R: 
+    c(
+    person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
+           comment = c(ORCID = "YOUR-ORCID-ID")),
+    person("Max", "Karlsson", , "max.karlsson@pixelgen.com", role = c("aut"),
+           comment = c(ORCID = "YOUR-ORCID-ID"))
+    )
+Description: What the package does (one paragraph).
+License: GPL (>= 2)
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.2.3
+Imports:
+    cli,
+    rlang,
+    dplyr,
+    arrow,
+    glue,
+    rhdf5,
+    SeuratObject (>= 5.0.0),
+    tibble,
+    igraph,
+    tidygraph,
+    tidyr,
+    Matrix,
+    methods,
+    ggplot2,
+    stringr,
+    patchwork,
+    ggraph,
+    future.apply,
+    progressr
+Suggests:
+    Seurat (>= 5.0.0),
+    spelling,
+    testthat (>= 3.0.0),
+    graphlayouts,
+    scales,
+    jsonlite,
+    pheatmap,
+    duckdb
+Collate: 
+    'aaa.R'
+    'generics.R'
+    'cell_count_plot.R'
+    'colocalization_heatmap.R'
+    'd3_graph_helpers.R'
+    'differential_colocalization_analysis.R'
+    'differential_polarity_analysis.R'
+    'edge_rank_plot.R'
+    'extdata.R'
+    'graph_analysis.R'
+    'graph_conversion.R'
+    'graph_layout.R'
+    'graph_layout_visualization.R'
+    'keep_largest_component.R'
+    'load_cell_graphs.R'
+    'load_data.R'
+    'objects.R'
+    'pivot_tables.R'
+    'read_and_write_parquet.R'
+    'remove_cell_graphs.R'
+    'restore_arrow_connection.R'
+    'save_objects.R'
+    'tau_plot.R'
+    'utils.R'
+    'zzz.R'
+Language: en-US

@@ -1,0 +1,32 @@
+name: r-pixelator
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - r-arrow
+  - r-cli
+  - r-duckdb
+  - r-ggplot2
+  - r-ggraph
+  - r-glue
+  - r-graphlayouts
+  - r-igraph
+  - r-jsonlite
+  - r-rlang
+  - r-scales
+  - r-shiny
+  - r-stringr
+  - r-testthat
+  - r-tibble
+  - r-tidygraph
+  - r-tidyr
+  - r-dplyr
+  - r-seuratobject
+  - r-matrix
+  - r-patchwork
+  - r-rcpp
+  - r-spelling
+  - r-pheatmap
+  - r-duckdb
+  - bioconductor-rhdf5
