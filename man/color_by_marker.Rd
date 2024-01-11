@@ -40,7 +40,8 @@ followed by log-transformation with \code{log1p}.}
 
 \item{trim_quantiles}{A numeric vector of length 2 specifying quantiles to trim.
 This can be useful to reduce the influence of outliers. The specified quantiles
-are calculated from the marker counts values prior to normalization. (see section below for details)}
+are calculated from the marker counts values prior to normalization.
+(see section below for details)}
 
 \item{nNodes}{Number of nodes to keep in the graph}
 }
