@@ -91,7 +91,9 @@ RunDCA.data.frame <- function (
     }
   }
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
-  p_adjust_method <- match.arg(p_adjust_method, choices = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"))
+  p_adjust_method <- match.arg(p_adjust_method,
+                               choices = c("bonferroni", "holm", "hochberg",
+                                           "hommel", "BH", "BY", "fdr"))
 
   # Keep relevant columns and filter self matches
   object <- object %>%
@@ -201,23 +203,53 @@ RunDCA.Seurat <- function (
 ) {
 
   # Validate input parameters
-  stopifnot("'contrast_column' must be a valid meta data column name" = inherits(contrast_column, what = "character") & (length(contrast_column) == 1) & (contrast_column %in% colnames(object[[]])))
+  stopifnot(
+    "'contrast_column' must be a valid meta data column name" =
+      inherits(contrast_column, what = "character") &&
+      (length(contrast_column) == 1) &&
+      (contrast_column %in% colnames(object[[]]))
+  )
   group_vector <- object[[]][, contrast_column, drop = TRUE]
-  stopifnot("'contrast_column' must be a character vector or a factor" = inherits(group_vector, what = c("character", "factor")))
-  stopifnot("'target' must be present in 'contrast_column' column" = inherits(target, what = "character") & (length(target) == 1) & (target %in% group_vector),
-            "'reference' must be present in 'group_var' column" = inherits(reference, what = "character") & (length(reference) == 1) & (reference %in% group_vector))
+  stopifnot(
+    "'contrast_column' must be a character vector or a factor" =
+      inherits(group_vector, what = c("character", "factor"))
+  )
+  stopifnot(
+    "'target' must be present in 'contrast_column' column" =
+      inherits(target, what = "character") &&
+      (length(target) == 1) &&
+      (target %in% group_vector),
+    "'reference' must be present in 'group_var' column" =
+      inherits(reference, what = "character") &&
+      (length(reference) == 1) &&
+      (reference %in% group_vector)
+  )
   if (!is.null(group_vars)) {
-    stopifnot("'group_vars' must be valid meta data column names" = inherits(group_vars, what = "character") & (length(group_vars) >= 1) & all(group_vars %in% colnames(object[[]])))
+    stopifnot(
+      "'group_vars' must be valid meta data column names" =
+        inherits(group_vars, what = "character") &&
+        (length(group_vars) >= 1) &&
+        all(group_vars %in% colnames(object[[]]))
+    )
     for (group_var in group_vars) {
-      stopifnot("'group_vars' must be character vectors or factors" = inherits(object[[]][, group_var, drop = TRUE], what = c("character", "factor")))
+      stopifnot(
+        "'group_vars' must be character vectors or factors" =
+          inherits(object[[]][, group_var, drop = TRUE], what = c("character", "factor"))
+      )
     }
   }
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
-  p_adjust_method <- match.arg(p_adjust_method, choices = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"))
+  p_adjust_method <- match.arg(p_adjust_method,
+                               choices = c("bonferroni", "holm", "hochberg",
+                                           "hommel", "BH", "BY", "fdr"))
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot("'assay' must be a character of length 1" = is.character(assay) & (length(assay) == 1))
+    stopifnot(
+      "'assay' must be a character of length 1" =
+        is.character(assay) &&
+        (length(assay) == 1)
+    )
   } else {
     assay <- DefaultAssay(object)
   }
@@ -242,8 +274,10 @@ RunDCA.Seurat <- function (
 
   # Remove redundant columns
   colocalization_data <- colocalization_data %>%
-    select(-any_of(c("pearson", "pearson_mean", "pearson_stdev", "pearson_p_value", "pearson_p_value_adjusted",
-                     "jaccard", "jaccard_mean", "jaccard_stdev", "jaccard_z", "jaccard_p_value", "jaccard_p_value_adjusted")))
+    select(-any_of(c("pearson", "pearson_mean", "pearson_stdev",
+                     "pearson_p_value", "pearson_p_value_adjusted",
+                     "jaccard", "jaccard_mean", "jaccard_stdev",
+                     "jaccard_z", "jaccard_p_value", "jaccard_p_value_adjusted")))
 
   # Run DPA
   coloc_test_bind <- RunDCA(colocalization_data,

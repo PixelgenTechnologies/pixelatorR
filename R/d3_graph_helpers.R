@@ -1,6 +1,6 @@
 # Declarations used in package check
 globalVariables(
-  names = c('val'),
+  names = c('val', '.x'),
   package = 'pixelatorR',
   add = TRUE
 )
@@ -27,7 +27,8 @@ globalVariables(
 #' followed by log-transformation with \code{log1p}.
 #' @param trim_quantiles A numeric vector of length 2 specifying quantiles to trim.
 #' This can be useful to reduce the influence of outliers. The specified quantiles
-#' are calculated from the marker counts values prior to normalization. (see section below for details)
+#' are calculated from the marker counts values prior to normalization.
+#' (see section below for details)
 #' @param nNodes Number of nodes to keep in the graph
 #'
 #' @section Trim quantile:
@@ -255,9 +256,6 @@ color_by_marker <- function (
   scale = TRUE,
   keep_aspect_ratio = TRUE
 ) {
-
-  # Set global variables to NULL (required by shinytest2)
-  .x <- NULL
 
   # Validate input
   stopifnot("'cg' must be a 'CellGraph' object" = inherits(cg, what = "CellGraph"),
