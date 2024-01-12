@@ -1,7 +1,9 @@
-#' Map graph layouts
+#' Plot 2D graph layouts
 #'
-#' Map graph layouts computed with \code{\link{ComputeLayout}} and
-#' optionally color nodes/edges by certain attributes.
+#' Plot 2D component graph layouts computed with \code{\link{ComputeLayout}} and
+#' optionally color nodes by certain attributes. Edges can also be visualized
+#' by setting \code{map_edges}; however, since component graphs tend to be very
+#' large, this can take a long time to draw.
 #'
 #' @param object A \code{Seurat} object
 #' @param cells A character vector with cell IDs
@@ -15,7 +17,7 @@
 #' @param edge_width Not yet implemented TODO
 #' @param ... Not yet implemented
 #'
-#' @rdname MapOnLayout
+#' @rdname Plot2DGraph
 #'
 #' @import rlang
 #' @import glue
@@ -37,11 +39,11 @@
 #' seur[["mpxCells"]] <- KeepLargestComponent(seur[["mpxCells"]])
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
 #'
-#' MapOnLayout(seur, cells = colnames(seur)[1], marker = "HLA-ABC")
+#' Plot2DGraph(seur, cells = colnames(seur)[1], marker = "HLA-ABC")
 #'
 #' @export
 #'
-MapOnLayout <- function (
+Plot2DGraph <- function (
   object,
   cells = NULL,
   marker = NULL,
@@ -56,14 +58,30 @@ MapOnLayout <- function (
 ) {
 
   # Validate input parameters
-  stopifnot("'colors' must be a character vector with at least 2 colors" = is.character(colors) & (length(colors) > 1),
-            "'map_nodes' must be one of TRUE or FALSE" = is.logical(map_nodes) & (length(map_nodes) == 1),
-            "'map_edges' must be one of TRUE or FALSE" = is.logical(map_edges) & (length(map_edges) == 1),
-            "'map_nodes' and 'map_edges' cannot be deactivated at the same time" = map_nodes | map_edges,
-            "'cells' must be a non-empty character vector with cell IDs" = is.character(cells) & (length(cells) > 0))
+  stopifnot(
+    "'colors' must be a character vector with at least 2 colors" =
+      is.character(colors) &&
+      (length(colors) > 1),
+    "'map_nodes' must be one of TRUE or FALSE" =
+      is.logical(map_nodes) &&
+      (length(map_nodes) == 1),
+    "'map_edges' must be one of TRUE or FALSE" =
+      is.logical(map_edges) &&
+      (length(map_edges) == 1),
+    "'map_nodes' and 'map_edges' cannot be deactivated at the same time" =
+      map_nodes ||
+      map_edges,
+    "'cells' must be a non-empty character vector with cell IDs" =
+      is.character(cells) &&
+      (length(cells) > 0)
+  )
 
   if (!is.null(marker)) {
-    stopifnot("'marker' must be a character of length 1" = is.character(marker) & (length(marker) == 1))
+    stopifnot(
+      "'marker' must be a character of length 1" =
+        is.character(marker) &&
+        (length(marker) == 1)
+    )
   }
 
   # Check and select a layout method
@@ -77,7 +95,11 @@ MapOnLayout <- function (
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot("'assay' must be a character of length 1" = is.character(assay) & (length(assay) == 1))
+    stopifnot(
+      "'assay' must be a character of length 1" =
+        is.character(assay) &&
+        (length(assay) == 1)
+    )
   } else {
     assay <- DefaultAssay(object)
   }
@@ -93,13 +115,16 @@ MapOnLayout <- function (
 
     # Fetch component graph
     component_graph <- CellGraphs(cg_assay)[[cell_id]]
-    if (is.null(component_graph)) abort(glue("Missing cellgraph for component '{cell_id}'"))
+    if (is.null(component_graph))
+      abort(glue("Missing cellgraph for component '{cell_id}'"))
 
     # unpack values
     graph <- component_graph@cellgraph
     layout <- component_graph@layout[[layout_method]]
-    if (length(graph) == 0) abort(glue("Missing cellgraph for component '{cell_id}'"))
-    if (length(layout) == 0) abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
+    if (length(graph) == 0)
+      abort(glue("Missing cellgraph for component '{cell_id}'"))
+    if (length(layout) == 0)
+      abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
 
     # Add node marker counts if needed
     if (!is.null(marker)) {
