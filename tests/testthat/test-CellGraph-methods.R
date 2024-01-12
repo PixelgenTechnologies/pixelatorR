@@ -16,17 +16,32 @@ attr(bipart_graph, "type") <- "bipartite"
 
 cg <- CreateCellGraphObject(cellgraph = bipart_graph)
 
-# GetCellGraphData method
-test_that("GetCellGraphData works as expected", {
-  cellgraph <- GetCellGraphData(cg)
+# CellGraphData method
+test_that("CellGraphData works as expected", {
+  expect_no_error(cellgraph <- CellGraphData(cg))
   expect_s3_class(cellgraph, class = "tbl_graph")
-  expect_equal(cellgraph %>% gsize(), 46655)
+  expect_equal(cellgraph %>% igraph::gsize(), 46655)
   expect_equal(cellgraph %>% length(), 26964)
 })
 
-test_that("GetCellGraphData fails when invalid input is provided", {
-  expect_error(GetCellGraphData("Invalid input"), "Invalid class character")
-  expect_error(GetCellGraphData(cg, slot = "Invalid"), "slot must be one of cellgraph, counts, layout")
+test_that("CellGraphData fails when invalid input is provided", {
+  expect_error(CellGraphData("Invalid input"), "Invalid class character")
+  expect_error(CellGraphData(cg, slot = "Invalid"), "slot must be one of cellgraph, counts, layout")
+})
+
+# CellGraphData<- method
+test_that("CellGraphData<- works as expected", {
+  expect_no_error(CellGraphData(cg) <- CellGraphData(cg))
+  expect_no_error(cellgraph <- CellGraphData(cg))
+  expect_s3_class(cellgraph, class = "tbl_graph")
+  expect_equal(cellgraph %>% igraph::gsize(), 46655)
+  expect_equal(cellgraph %>% length(), 26964)
+})
+
+test_that("CellGraphData<- fails when invalid input is provided", {
+  expect_error(CellGraphData(cg) <- "Invalid", "'value' must be a 'tbl_graph' object")
+  expect_error(CellGraphData(cg, slot = "counts") <- "Invalid", "'value' must be a 'dgCMatrix' object")
+  expect_error(CellGraphData(cg, slot = "layout") <- "Invalid", "'value' must be a 'list'")
 })
 
 # show method
