@@ -543,7 +543,7 @@ RenameCells.CellGraphAssay <- function (
     fsd <- slot(object, name = "arrow_data")
 
     # Left join new names and save edgelist
-    session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d")))
+    session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
 
     # arrow doesn't support pasting to create new character columns,
     # instead we do a left join with our conversion table to
@@ -1191,7 +1191,6 @@ setMethod (
 )
 
 #' @describeIn CellGraphAssay-methods Subset a \code{CellGraphAssay} object
-#' @export
 #' @importClassesFrom SeuratObject Assay
 #' @concept assay
 #' @method subset CellGraphAssay
@@ -1201,40 +1200,29 @@ setMethod (
 #' @return A \code{CellGraphAssay} object
 #'
 #' @examples
-#'
 #' library(pixelatorR)
 #' library(dplyr)
-#' library(tidygraph)
 #'
 #' pxl_file <- system.file("extdata/PBMC_10_cells",
 #'                         "Sample01_test.pxl",
 #'                         package = "pixelatorR")
-#' counts <- ReadMPX_counts(pxl_file)
-#' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-#' components <- colnames(counts)
-#' edgelist_split <-
-#'   edgelist %>%
-#'   select(upia, upib, marker, component) %>%
-#'   distinct() %>%
-#'   group_by(component) %>%
-#'   group_split() %>%
-#'   setNames(nm = components)
-#'
-#' # Convert data into a list of CellGraph objects
-#' bipartite_graphs <- lapply(edgelist_split, function(x) {
-#'   x <- x %>% as_tbl_graph(directed = FALSE)
-#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
-#'   attr(x, "type") <- "bipartite"
-#'   CreateCellGraphObject(cellgraph = x)
-#' })
-#'
-#' # Create CellGraphAssay
-#' cg_assay <- CreateCellGraphAssay(counts = counts, cellgraphs = bipartite_graphs)
+#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- LoadCellGraphs(seur)
+#' cg_assay <- seur[["mpxCells"]]
 #'
 #' # Subset CellGraphAssay
 #' # ---------------------------------
+#' cg_assay_subset <- subset(cg_assay, cells = colnames(cg_assay)[1:3])
 #'
-#' subset(cg_assay, cells = colnames(cg_assay)[1:3])
+#' # Subset Seurat object containing a CellGraphAssay
+#' # --------------------------------
+#' seur_subset <- subset(seur, cells = colnames(cg_assay)[1:3])
+#'
+#' # Compare size of edge lists stored on disk
+#' ArrowData(seur) %>% dim()
+#' ArrowData(seur_subset) %>% dim()
+#'
+#' @export
 #'
 subset.CellGraphAssay <- function (
   x,
@@ -1267,7 +1255,7 @@ subset.CellGraphAssay <- function (
       if (length(cells) < ncol(x)) {
 
         # Create a temporary directory with a unique name
-        session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d")))
+        session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
 
         # Filter edgelist and export it
         slot(x, name = "arrow_data") %>%
@@ -1324,7 +1312,6 @@ subset.CellGraphAssay <- function (
 
 #' @importFrom SeuratObject Key Key<- RenameCells
 #' @describeIn CellGraphAssay-methods Merge two or more \code{CellGraphAssay} objects together
-#' @export
 #' @concept assay
 #' @method merge CellGraphAssay
 #'
@@ -1338,7 +1325,12 @@ subset.CellGraphAssay <- function (
 #' # ---------------------------------
 #'
 #' # Merge 3 CellGraphAssays
-#' merge(cg_assay, y = list(cg_assay, cg_assay))
+#' cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay))
+#'
+#' # Check size of merged edge lists stored on disk
+#' ArrowData(cg_assay_merged) %>% dim()
+#'
+#' @export
 #'
 merge.CellGraphAssay <- function (
   x = NULL,
@@ -1402,7 +1394,7 @@ merge.CellGraphAssay <- function (
       abort(glue("Paths to edgelist parquet file directories {paste(all_arrow_dirs, collapse = ',')} doesn't exist"))
 
     # Create a new temporary directory with a time stamp
-    new_dir <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d")))
+    new_dir <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
     dir.create(path = new_dir, showWarnings = FALSE)
 
     # List hive-partitioned directories for all objects
