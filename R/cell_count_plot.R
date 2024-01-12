@@ -48,9 +48,11 @@ CellCountPlot.data.frame <- function(
   if (!color.by %in% colnames(object)) {
     abort(glue("'{color.by}' is missing"))
   }
-  stopifnot("'color.by' must be a character or factor" =
-              inherits(object[, color.by, drop = TRUE],
-                       what = c("character", "factor")))
+  stopifnot(
+    "'color.by' must be a character or factor" =
+      inherits(object[, color.by, drop = TRUE],
+               what = c("character", "factor"))
+  )
 
   # Create plot
   if (!is.null(group.by)) {
