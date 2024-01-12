@@ -39,46 +39,36 @@ packages
 
 }}
 \examples{
-
 library(pixelatorR)
 library(dplyr)
-library(tidygraph)
 
 pxl_file <- system.file("extdata/PBMC_10_cells",
                         "Sample01_test.pxl",
                         package = "pixelatorR")
-counts <- ReadMPX_counts(pxl_file)
-edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-components <- colnames(counts)
-edgelist_split <-
-  edgelist \%>\%
-  select(upia, upib, marker, component) \%>\%
-  distinct() \%>\%
-  group_by(component) \%>\%
-  group_split() \%>\%
-  setNames(nm = components)
-
-# Convert data into a list of CellGraph objects
-bipartite_graphs <- lapply(edgelist_split, function(x) {
-  x <- x \%>\% as_tbl_graph(directed = FALSE)
-  x <- x \%>\% mutate(node_type = case_when(name \%in\% edgelist$upia ~ "A", TRUE ~ "B"))
-  attr(x, "type") <- "bipartite"
-  CreateCellGraphObject(cellgraph = x)
-})
-
-# Create CellGraphAssay
-cg_assay <- CreateCellGraphAssay(counts = counts, cellgraphs = bipartite_graphs)
+seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur <- LoadCellGraphs(seur)
+cg_assay <- seur[["mpxCells"]]
 
 # Subset CellGraphAssay
 # ---------------------------------
+cg_assay_subset <- subset(cg_assay, cells = colnames(cg_assay)[1:3])
 
-subset(cg_assay, cells = colnames(cg_assay)[1:3])
+# Subset Seurat object containing a CellGraphAssay
+# --------------------------------
+seur_subset <- subset(seur, cells = colnames(cg_assay)[1:3])
+
+# Compare size of edge lists stored on disk
+ArrowData(seur) \%>\% dim()
+ArrowData(seur_subset) \%>\% dim()
 
 # Merge CellGraphAssays
 # ---------------------------------
 
 # Merge 3 CellGraphAssays
-merge(cg_assay, y = list(cg_assay, cg_assay))
+cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay))
+
+# Check size of merged edge lists stored on disk
+ArrowData(cg_assay_merged) \%>\% dim()
 
 }
 \concept{assay}

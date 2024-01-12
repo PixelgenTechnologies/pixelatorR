@@ -2,11 +2,22 @@
 % Please edit documentation in R/generics.R, R/load_cell_graphs.R
 \name{LoadCellGraphs}
 \alias{LoadCellGraphs}
+\alias{LoadCellGraphs.FileSystemDataset}
 \alias{LoadCellGraphs.CellGraphAssay}
 \alias{LoadCellGraphs.Seurat}
 \title{Load CellGraphs}
 \usage{
 LoadCellGraphs(object, ...)
+
+\method{LoadCellGraphs}{FileSystemDataset}(
+  object,
+  cells,
+  load_as = c("bipartite", "Anode", "linegraph"),
+  add_marker_counts = TRUE,
+  chunk_length = 10,
+  verbose = TRUE,
+  ...
+)
 
 \method{LoadCellGraphs}{CellGraphAssay}(
   object,
@@ -42,12 +53,12 @@ LoadCellGraphs(object, ...)
 
 \item{add_marker_counts}{Should marker counts be added to the CellGraph objects?}
 
-\item{force}{Force load graph(s) if they are already loaded}
-
 \item{chunk_length}{Length of chunks used to load CellGraphs from edge list.
 Smaller chunks will likely take longer time to load, but decreases memory usage.}
 
 \item{verbose}{Print messages}
+
+\item{force}{Force load graph(s) if they are already loaded}
 
 \item{assay}{Assay name}
 }
