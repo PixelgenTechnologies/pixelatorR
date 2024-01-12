@@ -294,9 +294,7 @@ CreateCellGraphAssay <- function (
 # Get methods
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' Get CellGraph object data
-#'
-#' Extract data from a \code{\link{CellGraph-class}} object
+#' Get and set CellGraph object data
 #'
 #' @param object A \code{\link{CellGraph}} object
 #' @param slot Information to pull from object (cellgraph, meta_data, layout)
@@ -304,9 +302,9 @@ CreateCellGraphAssay <- function (
 #' @import rlang
 #' @import glue
 #'
-#' @concept assay
+#' @rdname CellGraphData
 #'
-#' @return A \code{CellGraph} slot
+#' @return \code{GetCellGraphData}: A \code{\link{CellGraph}} object slot
 #'
 #' @examples
 #'
@@ -332,11 +330,11 @@ CreateCellGraphAssay <- function (
 #' cg <- CreateCellGraphObject(cellgraph = bipart_graph)
 #'
 #' # Get slot data
-#' GetCellGraphData(cg, slot = "cellgraph")
+#' CellGraphData(cg, slot = "cellgraph")
 #'
 #' @export
 #'
-GetCellGraphData <- function (
+CellGraphData <- function (
   object,
   slot = "cellgraph"
 ) {
@@ -347,6 +345,109 @@ GetCellGraphData <- function (
   return(slot(object = object, name = slot))
 }
 
+
+#' @param value A new variable to place in \code{slot}
+#'
+#' @rdname CellGraphData
+#'
+#' @return \code{CellGraphData<-}: A \code{\link{CellGraph}} with updated data
+#'
+#' @examples
+#' # Set slot data
+#' CellGraphData(cg, slot = "cellgraph") <- CellGraphData(cg, slot = "cellgraph")
+#'
+#'
+#' @export
+#'
+"CellGraphData<-" <- function (
+  object,
+  slot = "cellgraph",
+  value
+) {
+  if (!inherits(object, what = "CellGraph")) abort(glue("Invalid class {class(object)}"))
+  if (!(slot %in% slotNames(x = object))) {
+    abort(glue("slot must be one of {paste(slotNames(x = object), collapse = ', ')}"))
+  }
+
+  # Get counts and layouts
+  cellgraph <- slot(object, name = "cellgraph")
+  counts <- slot(object, name = "counts")
+  layouts <- slot(object, name = "layout")
+
+  # Validate cellgraph input
+  if (slot == "cellgraph") {
+    stopifnot(
+      "'value' must be a 'tbl_graph' object" =
+        inherits(value, what = "tbl_graph")
+    )
+    if (length(counts) > 0) {
+      stopifnot(
+        "names in 'value' do not match the row names of 'counts'" =
+          all(names(value) == rownames(counts))
+      )
+    }
+    if (length(layouts) > 0) {
+      for (layout in names(layouts)) {
+        if (length(value) != nrow(layouts[[layout]])) {
+          abort(glue("Number of nodes in 'value' does not match the ",
+                     "number of rows in the '{layout}' layout table"))
+        }
+      }
+    }
+    slot(object, name = "cellgraph") <- cellgraph
+  }
+
+  # Validate counts input
+  if (slot == "counts") {
+    stopifnot(
+      "'value' must be a 'dgCMatrix' object" =
+        inherits(value, what = "dgCMatrix")
+    )
+    if (length(layouts) > 0) {
+      for (layout in names(layouts)) {
+        if (nrow(counts) != nrow(layouts[[layout]])) {
+          abort(glue("Number of rows in 'value' does not match the ",
+                     "number of rows in the '{layout}' layout table"))
+        }
+      }
+    }
+    stopifnot(
+      "Number of rows in 'value' do not match the number of nodes in 'cellgraph'" =
+        length(cellgraph) == nrow(value)
+    )
+    slot(object, name = "counts") <- counts
+  }
+
+  # Validate layout input
+  if (slot == "layout") {
+    stopifnot(
+      "'value' must be a 'list'" =
+        inherits(value, what = "list"),
+      "'value' is empty" =
+        length(value) > 0,
+      "'names' of 'value' cannot be NULL" =
+        !is.null(names(value))
+    )
+    for (layout in names(value)) {
+      stopifnot(
+        inherits(value[[layout]], what = "tbl_df")
+      )
+      if (length(cellgraph) != nrow(value[[layout]])) {
+        abort(glue("Number of nodes in 'cellgraph' does not match the ",
+                   "number of rows in the '{layout}' layout table provided in 'value'"))
+      }
+      if (length(counts) > 0) {
+        if (nrow(counts) != nrow(value[[layout]])) {
+          abort(glue("Number of rows in 'counts' does not match ",
+                     "the number of rows in '{layout}' table provided in 'value'"))
+        }
+      }
+    }
+    slot(object, name = "layout") <- value
+  }
+
+  return(object)
+}
 
 #' @rdname CellGraphs
 #' @method CellGraphs CellGraphAssay
