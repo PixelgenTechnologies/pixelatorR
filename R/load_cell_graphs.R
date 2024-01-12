@@ -12,14 +12,85 @@ globalVariables(
 # Load methods
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 #' @param cells A character vector of cell names to load CellGraphs for
 #' @param load_as Choose how the cell graph should be represented (see details below)
 #' @param add_marker_counts Should marker counts be added to the CellGraph objects?
-#' @param force Force load graph(s) if they are already loaded
 #' @param chunk_length Length of chunks used to load CellGraphs from edge list.
 #' Smaller chunks will likely take longer time to load, but decreases memory usage.
 #' @param verbose Print messages
+#'
+#' @rdname LoadCellGraphs
+#' @method LoadCellGraphs FileSystemDataset
+#'
+#' @export
+#'
+LoadCellGraphs.FileSystemDataset <- function (
+  object,
+  cells,
+  load_as = c("bipartite", "Anode", "linegraph"),
+  add_marker_counts = TRUE,
+  chunk_length = 10,
+  verbose = TRUE,
+  ...
+) {
+
+  # Validate input parameters
+  stopifnot(
+    "'cells' must be a character vector with at least 1 element" =
+      is.character(cells) &&
+      (length(cells) > 0),
+    "'chunk_length' must be a positive integer of length 1" =
+      is.numeric(chunk_length) &&
+      (length(chunk_length) == 1) &&
+      (chunk_length > 0)
+  )
+
+  # Ensure that all cell names are available in edgelist
+  stopifnot(
+    "All 'cells' must be present in the edgelist" =
+      all(cells %in% (object %>% pull(component, as_vector = TRUE)))
+  )
+
+  # Validate load_as
+  load_as <- match.arg(load_as, choices = c("bipartite", "Anode", "linegraph"))
+
+  # Select load function
+  graph_load_fkn <- switch (load_as,
+                            "bipartite" = .load_as_bipartite,
+                            "Anode" = .load_as_anode,
+                            "linegraph" = .load_as_linegraph
+  )
+
+  # Convert edgelist to list of Cell Graphs
+  if (verbose && check_global_verbosity())
+    cli_alert("  Loading {length(cells)} edgelist(s) as {col_br_magenta(load_as)} graph(s)")
+
+  # Split cells id into chunks
+  cells_chunks <- split(cells, ceiling(seq_along(cells) / chunk_length))
+
+  # Load cell graphs
+  p <- progressr::progressor(along = cells_chunks)
+  cellgraphs <- lapply(cells_chunks, function (cell_ids) {
+    g_list <- graph_load_fkn(object, cell_ids = cell_ids, add_markers = add_marker_counts)
+    if (add_marker_counts) {
+      g_list <- lapply(g_list, function(g) {
+        return(CreateCellGraphObject(g$graph, counts = g$counts, verbose = FALSE))
+      })
+    } else {
+      g_list <- lapply(g_list, function(g) {
+        return(CreateCellGraphObject(g, verbose = FALSE))
+      })
+    }
+    p()
+    return(g_list)
+  }) %>% Reduce(c, .)
+
+  return(cellgraphs)
+}
+
+
+#' @param force Force load graph(s) if they are already loaded
+#'
 #' @import cli
 #' @import glue
 #'
@@ -88,46 +159,19 @@ LoadCellGraphs.CellGraphAssay <- function (
     if (length(arrow_dir) == 0) {
       cli_alert_info("'arrow_dir' is missing from object. Returning object unmodified.")
     }
-    arrow_data <- ReadMPX_arrow_edgelist(path = arrow_dir, outdir = arrow_dir, verbose = FALSE)
+    return(object)
   }
 
-  # Ensure that all cell names are available in edgelist
-  stopifnot(
-    "All 'cells' must be present in the edgelist" =
-      all(cells_to_load %in% (arrow_data %>% pull(component, as_vector = TRUE)))
-  )
+  # Load CellGraphs from FileSystemDataset
+  cellgraphs <- LoadCellGraphs(arrow_data,
+                               cells = cells_to_load,
+                               load_as = load_as,
+                               add_marker_counts = add_marker_counts,
+                               chunk_length = chunk_length,
+                               verbose = verbose,
+                               ... = ...)
 
-  graph_load_fkn <- switch (load_as,
-    "bipartite" = .load_as_bipartite,
-    "Anode" = .load_as_anode,
-    "linegraph" = .load_as_linegraph
-  )
-
-  # Convert edgelist to list of Cell Graphs
-  if (verbose && check_global_verbosity())
-    cli_alert("  Loading {length(cells_to_load)} edgelist(s) as {col_br_magenta(load_as)} graph(s)")
-
-  # Split cells id into chunks
-  cells_to_load_chunks <- split(cells_to_load, ceiling(seq_along(cells_to_load) / chunk_length))
-
-  # Load cell graphs
-  p <- progressr::progressor(along = cells_to_load_chunks)
-  cellgraphs <- lapply(cells_to_load_chunks, function (cell_ids) {
-    g_list <- graph_load_fkn(arrow_data, cell_ids = cell_ids, add_markers = add_marker_counts)
-    if (add_marker_counts) {
-      g_list <- lapply(g_list, function(g) {
-        return(CreateCellGraphObject(g$graph, counts = g$counts, verbose = FALSE))
-      })
-    } else {
-      g_list <- lapply(g_list, function(g) {
-        return(CreateCellGraphObject(g, verbose = FALSE))
-      })
-    }
-    p()
-    return(g_list)
-  }) %>% Reduce(c, .)
-
-  # Fill empty elements if needed
+  # Fill cellgraphs slot list with the loaded CellGraphs
   slot(object, name = "cellgraphs")[cells_to_load] <- cellgraphs[cells_to_load]
 
   # Return object
