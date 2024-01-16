@@ -13,8 +13,10 @@ Plot2DGraph(
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
+  log_scale = TRUE,
   node_size = 0.5,
   edge_width = 0.3,
+  show_Bnodes = FALSE,
   ...
 )
 }
@@ -34,9 +36,16 @@ Plot2DGraph(
 
 \item{map_nodes, map_edges}{Should nodes and/or edges be mapped?}
 
+\item{log_scale}{Convert node counts to log-scale with \code{logp}}
+
 \item{node_size}{Size of nodes}
 
-\item{edge_width}{Not yet implemented TODO}
+\item{edge_width}{Set the width of the edges if \code{map_edges = TRUE}}
+
+\item{show_Bnodes}{Should B nodes be included in the visualization?
+This option is only applicable to bipartite graphs. Note that by removing
+the B nodes, all edges are removed from the graph and hence, \code{map_edges}
+will have no effect.}
 
 \item{...}{Not yet implemented}
 }
