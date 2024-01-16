@@ -111,7 +111,7 @@ ReadMPX_arrow_edgelist <- function (
 
   }
 
-  if (verbose && check_global_verbosity()) cli_alert_success("Returning ArrowObject")
+  if (verbose && check_global_verbosity()) cli_alert_success("Returning FileSystemDataset")
 
   # Return list with additional info if return_list = TRUE
   if (return_list) {
