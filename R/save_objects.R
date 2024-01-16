@@ -45,31 +45,29 @@ WriteMPX.CellGraphAssay <- function (
       is.logical(overwrite)
   )
 
-  arrow_data <- slot(object, name = "arrow_data")
+  arrow_dir <- ArrowDir(object)
 
   # If arrow_data is dead or missing, use saveRDS
-  msg <- tryCatch(arrow_data %>% nrow(), error = function(e) "Error")
-  msg <- msg %||% "Error"
-  if (msg == "Error") {
-    cli_alert_danger("Arrow data could not be retrieved. The edge list will not be saved.")
-    saveRDS(object, file = file, ...)
+  if (!dir.exists(arrow_dir)) {
+    abort(glue("ArrowDir '{arrow_dir}' is missing.\n",
+               "If the R session was restarted or if the directory was moved, ",
+               "you will have to rerun all steps from from the original pxl file ",
+               "and re-export the CellGraphAssay object.\n\n",
+               "Use saveRDS(object, file = <path to rds file>) to save this object without the edgelist data."))
   } else {
     cellgraphassay_dir <- dirname(path = file)
     if (!dir.exists(cellgraphassay_dir)) {
       abort(glue("Invalid output directory {cellgraphassay_dir}"))
     }
 
-    # Export parquet file to the same directory as the CellGraphAssay object
-    arrow_dir_path <-
-      export_edgelist_to_parquet(
-        object = arrow_data,
-        outdir = cellgraphassay_dir,
-        overwrite = overwrite,
-        verbose = FALSE
-      )
+    # Create new directory
+    file.copy(from = ArrowDir(object),
+              to = cellgraphassay_dir,
+              recursive = TRUE,
+              overwrite = overwrite)
 
     # Update arrow_dir
-    slot(object, name = "arrow_dir") <- arrow_dir_path
+    slot(object, name = "arrow_dir") <- file.path(cellgraphassay_dir, basename(ArrowDir(object)))
 
     # Export Seurat object
     saveRDS(object, file = file, ...)
@@ -131,26 +129,23 @@ WriteMPX.Seurat <- function (
     }
 
     # Fetch arrow data
-    arrow_data <- ArrowData(object, assay = assay)
+    arrow_dir <- ArrowDir(object, assay = assay)
 
-    # If arrow_data is dead or missing, use saveRDS
-    msg <- tryCatch(arrow_data %>% nrow(), error = function(e) "Error")
-    msg <- msg %||% "Error"
-    if (msg == "Error") {
-      cli_alert_danger("Arrow data could not be retrieved. The edge list will not be saved.")
-      saveRDS(object, file = file, ...)
+    if (!dir.exists(arrow_dir)) {
+      abort(glue("ArrowDir '{arrow_dir}' is missing.\n",
+                 "If the R session was restarted or if the directory was moved, ",
+                 "you will have to rerun all steps from from the original pxl file ",
+                 "and re-export the Seurat object.\n\n",
+                 "Use saveRDS(object, file = <path to rds file>) to save this object without the edgelist data."))
     } else {
       # Export parquet file to the same directory as the Seurat object
-      arrow_dir_path <-
-        export_edgelist_to_parquet(
-          object = arrow_data,
-          outdir = seurat_dir,
-          overwrite = overwrite,
-          verbose = FALSE
-        )
+      file.copy(from = ArrowDir(object),
+                to = seurat_dir,
+                recursive = TRUE,
+                overwrite = overwrite)
 
       # Update arrow_dir
-      ArrowDir(object) <- arrow_dir_path
+      ArrowDir(object) <- file.path(seurat_dir, basename(ArrowDir(object)))
 
       # Export Seurat object
       saveRDS(object, file = file, ...)
