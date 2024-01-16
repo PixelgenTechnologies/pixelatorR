@@ -198,9 +198,10 @@ pxContent_vs_Tau <- function (
 
 #' Write MPX data objects
 #'
-#' Saves a \code{\link{CellGraphAssay}} object or a \code{\link{Seurat}} object
+#' Saves a \code{\link{CellGraphAssay}} object or a \code{Seurat} object
 #' containing a \code{\link{CellGraphAssay}} object. Use this function
-#' as a replacement for \code{saveRDS} to improve portability.
+#' as a replacement for \code{saveRDS} to ensure that the associated arrow data
+#' is exported to the same folder as the \code{Seurat} object.
 #'
 #' If the \code{\link{CellGraphAssay}} doesn't contain any arrow Dataset, the
 #' function will simply export the object using \code{saveRDS}. If it does contain a
