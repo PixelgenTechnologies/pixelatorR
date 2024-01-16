@@ -1,5 +1,5 @@
 Package: pixelatorR
-Title: What the Package Does (One Line, Title Case)
+Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
 Version: 0.0.0.9001
 Authors@R: 
     c(
@@ -8,7 +8,8 @@ Authors@R:
     person("Max", "Karlsson", , "max.karlsson@pixelgen.com", role = c("aut"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
     )
-Description: What the package does (one paragraph).
+Description: Defines S4 classes for single-cell MPX data, extending the Seurat toolbox.
+  In addition, pixelatorR provides functions to process and visualize MPX data.
 License: GPL (>= 2)
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
