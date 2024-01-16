@@ -15,7 +15,7 @@ ColocalizationScores(object, ...) <- value
 
 \method{ColocalizationScores}{CellGraphAssay}(object, ...)
 
-\method{ColocalizationScores}{Seurat}(object, assay = NULL, ...)
+\method{ColocalizationScores}{Seurat}(object, assay = NULL, meta_data_columns = NULL, ...)
 
 \method{ColocalizationScores}{CellGraphAssay}(object, ...) <- value
 
@@ -29,6 +29,10 @@ ColocalizationScores(object, ...) <- value
 \item{value}{A \code{tbl_df} with colocalization scores}
 
 \item{assay}{Name of a \code{CellGraphAssay}}
+
+\item{meta_data_columns}{A character vector with meta.data column names.
+This option can be useful to join meta.data columns with the polarization
+score table.}
 }
 \value{
 \code{ColocalizationScores}: Colocalization scores

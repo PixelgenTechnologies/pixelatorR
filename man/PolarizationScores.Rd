@@ -15,7 +15,7 @@ PolarizationScores(object, ...) <- value
 
 \method{PolarizationScores}{CellGraphAssay}(object, ...)
 
-\method{PolarizationScores}{Seurat}(object, assay = NULL, ...)
+\method{PolarizationScores}{Seurat}(object, assay = NULL, meta_data_columns = NULL, ...)
 
 \method{PolarizationScores}{CellGraphAssay}(object, ...) <- value
 
@@ -29,6 +29,10 @@ PolarizationScores(object, ...) <- value
 \item{value}{A \code{tbl_df} with polarization scores}
 
 \item{assay}{Name of a \code{CellGraphAssay}}
+
+\item{meta_data_columns}{A character vector with meta.data column names.
+This option can be useful to join meta.data columns with the polarization
+score table.}
 }
 \value{
 \code{PolarizationScores}: Polarization scores

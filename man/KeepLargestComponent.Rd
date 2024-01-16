@@ -24,6 +24,8 @@ KeepLargestComponent(object, ...)
 \item{...}{Parameters passed to other methods}
 
 \item{verbose}{Print messages}
+
+\item{assay}{Name of a \code{CellGraphAssay} stored on the \code{Seurat} object}
 }
 \description{
 Finds connected components of a graph and returns the largest component
@@ -35,7 +37,7 @@ pxl_file <- system.file("extdata/PBMC_10_cells",
                         package = "pixelatorR")
 
 # Read edgelist
-edgelist <- ReadMPX_arrow_edgelist(pxl_file)
+edgelist <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
 
 # Load graph from edge list and store in a CellGraph object
 cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000000")[[1]]

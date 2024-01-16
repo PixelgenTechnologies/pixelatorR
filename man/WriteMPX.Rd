@@ -25,9 +25,10 @@ WriteMPX(object, ...)
 Nothing
 }
 \description{
-Saves a \code{\link{CellGraphAssay}} object or a \code{\link{Seurat}} object
+Saves a \code{\link{CellGraphAssay}} object or a \code{Seurat} object
 containing a \code{\link{CellGraphAssay}} object. Use this function
-as a replacement for \code{saveRDS} to improve portability.
+as a replacement for \code{saveRDS} to ensure that the associated arrow data
+is exported to the same folder as the \code{Seurat} object.
 }
 \details{
 If the \code{\link{CellGraphAssay}} doesn't contain any arrow Dataset, the
@@ -38,7 +39,6 @@ the "arrow_dir" slot of the object with this new directory before exporting it.
 \examples{
 
 library(pixelatorR)
-library(SeuratObject)
 
 # Load example data as a Seurat object
 pxl_file <- system.file("extdata/PBMC_10_cells",
