@@ -50,7 +50,7 @@
 #'
 Plot2DGraph <- function (
   object,
-  cells = NULL,
+  cells,
   marker = NULL,
   assay = NULL,
   layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
