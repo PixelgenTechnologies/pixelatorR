@@ -285,13 +285,19 @@ ReadMPX_item <- function (
 ) {
 
   # Check input parameters
-  stopifnot("filename must be a character of length 1" = is.character(filename) & (length(filename) == 1),
-            "Invalid items" = all(items %in% c("colocalization", "polarization", "edgelist")),
-            "Expected a .pxl file" = .file_ext(filename) == "pxl")
+  stopifnot(
+    "filename must be a character of length 1" =
+      is.character(filename) &&
+      (length(filename) == 1),
+    "Invalid items" =
+      all(items %in% c("colocalization", "polarization", "edgelist")),
+    "Expected a .pxl file" =
+      .file_ext(filename) == "pxl"
+  )
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
   if (verbose && check_global_verbosity())
-    cli_alert_info("Reading from: {filename}")
+    cli_alert_info("Loading item(s) from: {filename}")
 
   suppressWarnings(
     read_items <-
