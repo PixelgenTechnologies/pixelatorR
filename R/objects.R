@@ -853,6 +853,9 @@ PolarizationScores.CellGraphAssay <- function (
 }
 
 #' @param assay Name of a \code{CellGraphAssay}
+#' @param meta_data_columns A character vector with meta.data column names.
+#' This option can be useful to join meta.data columns with the polarization
+#' score table.
 #'
 #' @method PolarizationScores Seurat
 #'
@@ -863,12 +866,42 @@ PolarizationScores.CellGraphAssay <- function (
 PolarizationScores.Seurat <- function (
   object,
   assay = NULL,
+  meta_data_columns = NULL,
   ...
 ) {
 
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
-  return(PolarizationScores(object[[assay]]))
+  cg_assay <- object[[assay]]
+  if (!inherits(cg_assay, what = "CellGraphAssay")) {
+    abort(glue("Assay '{assay}' is not a CellGraphAssay"))
+  }
+
+  # Get polarizaation scores from CellGraphAssay
+  pol_scores <- PolarizationScores(object[[assay]])
+
+  # Handle adding meta data columns
+  if (!is.null(meta_data_columns)) {
+    stopifnot(
+      "'meta_data_columns' must be a non-empty character vector" =
+        is.character(meta_data_columns) &&
+        (length(meta_data_columns) > 0)
+    )
+    meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
+    if (any(!meta_data_columns_valid)) {
+      abort(glue("The following columns were not found in the meta.data slot: ",
+      "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"))
+    }
+
+    # Add additional meta.data slots
+    pol_scores <- pol_scores %>%
+      left_join(y = object[[]] %>%
+                  as_tibble(rownames = "component") %>%
+                  select(component, all_of(meta_data_columns)),
+                by = "component")
+  }
+
+  return(pol_scores)
 }
 
 #' @method PolarizationScores<- CellGraphAssay
@@ -926,6 +959,9 @@ ColocalizationScores.CellGraphAssay <- function (
 }
 
 #' @param assay Name of a \code{CellGraphAssay}
+#' @param meta_data_columns A character vector with meta.data column names.
+#' This option can be useful to join meta.data columns with the polarization
+#' score table.
 #'
 #' @method ColocalizationScores Seurat
 #'
@@ -936,12 +972,42 @@ ColocalizationScores.CellGraphAssay <- function (
 ColocalizationScores.Seurat <- function (
   object,
   assay = NULL,
+  meta_data_columns = NULL,
   ...
 ) {
 
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
-  return(ColocalizationScores(object[[assay]]))
+  cg_assay <- object[[assay]]
+  if (!inherits(cg_assay, what = "CellGraphAssay")) {
+    abort(glue("Assay '{assay}' is not a CellGraphAssay"))
+  }
+
+  # Get colocalization scores
+  coloc_scores <- ColocalizationScores(cg_assay)
+
+  # Handle adding meta data columns
+  if (!is.null(meta_data_columns)) {
+    stopifnot(
+      "'meta_data_columns' must be a non-empty character vector" =
+        is.character(meta_data_columns) &&
+        (length(meta_data_columns) > 0)
+    )
+    meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
+    if (any(!meta_data_columns_valid)) {
+      abort(glue("The following columns were not found in the meta.data slot: ",
+                 "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"))
+    }
+
+    # Add additional meta.data slots
+    coloc_scores <- coloc_scores %>%
+      left_join(y = object[[]] %>%
+                  as_tibble(rownames = "component") %>%
+                  select(component, all_of(meta_data_columns)),
+                by = "component")
+  }
+
+  return(coloc_scores)
 }
 
 #' @method ColocalizationScores<- CellGraphAssay
