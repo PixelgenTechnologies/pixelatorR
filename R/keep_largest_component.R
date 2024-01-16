@@ -20,7 +20,7 @@ globalVariables(
 #'                         package = "pixelatorR")
 #'
 #' # Read edgelist
-#' edgelist <- ReadMPX_arrow_edgelist(pxl_file)
+#' edgelist <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
 #'
 #' # Load graph from edge list and store in a CellGraph object
 #' cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000000")[[1]]
@@ -46,10 +46,12 @@ KeepLargestComponent.tbl_graph <- function (
       cli_alert_info("Graph is already connected")
     return(object)
   } else {
+    graph_type_attribute <- attr(object, "type")
     split_components <- object %>%
       to_components()
     largest_component <- which.max(sapply(split_components, length))
     object_largest <- split_components[[largest_component]]
+    attr(object_largest, "type") <- graph_type_attribute
     if (verbose && check_global_verbosity())
       cli_alert_info("Removed {length(object) - length(object_largest)} out of {length(object)} nodes")
   }
@@ -142,6 +144,8 @@ KeepLargestComponent.CellGraphAssay <- function (
 }
 
 
+#' @param assay Name of a \code{CellGraphAssay} stored on the \code{Seurat} object
+#'
 #' @rdname KeepLargestComponent
 #' @method KeepLargestComponent Seurat
 #'
