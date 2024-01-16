@@ -10,7 +10,6 @@
 #' @examples
 #'
 #' library(pixelatorR)
-#' library(SeuratObject)
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/PBMC_10_cells",
@@ -114,13 +113,16 @@ WriteMPX.Seurat <- function (
   # Check for CellGraphAssays
   assay_classes <- sapply(object@assays, class)
   if (sum(assay_classes == "CellGraphAssay") > 1)
-    abort("Found two CellGraphAssays in Seurat object. Cannot export more than one CellGraphAssay")
+    abort("Found more than one CellGraphAssays in Seurat object. Cannot export more than one CellGraphAssay")
 
   # Only export Seurat object if there is no CellGraphAssay present
   if (sum(assay_classes == "CellGraphAssay") == 0) {
     cli_alert_warning("Found no CellGraphAssays. Exporitng Seurat object with saveRDS(...)")
     saveRDS(object, file = file, ...)
   } else {
+
+    # Get CellGraphAssay
+    assay <- names(assay_classes)[which(assay_classes == "CellGraphAssay")]
 
     # Get directory name
     seurat_dir <- dirname(path = file)
@@ -129,7 +131,7 @@ WriteMPX.Seurat <- function (
     }
 
     # Fetch arrow data
-    arrow_data <- ArrowData(object)
+    arrow_data <- ArrowData(object, assay = assay)
 
     # If arrow_data is dead or missing, use saveRDS
     msg <- tryCatch(arrow_data %>% nrow(), error = function(e) "Error")
