@@ -5,6 +5,12 @@ cg_assay <- seur[["mpxCells"]]
 
 test_that("KeepLargestComponent works as expected", {
 
+  # Seurat
+  expect_no_error(seur_large_component <- KeepLargestComponent(seur))
+  expect_s4_class(seur_large_component, "Seurat")
+  CellGraphs(seur) <- rep(list(NULL), ncol(seur)) %>% setNames(nm = colnames(seur))
+  expect_no_error(seur <- KeepLargestComponent(seur))
+
   # CellGraphAssay
   expect_no_error(cg_assay_large_component <- KeepLargestComponent(cg_assay))
   expect_s4_class(cg_assay_large_component, "CellGraphAssay")

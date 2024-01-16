@@ -8,10 +8,31 @@ globalVariables(
 
 #' @param verbose Print messages
 #'
-#' @importFrom tidygraph `%N>%`
+#' @importFrom tidygraph to_components
 #'
 #' @rdname KeepLargestComponent
 #' @method KeepLargestComponent tbl_graph
+#'
+#' @examples
+#' library(pixelatorR)
+#' pxl_file <- system.file("extdata/PBMC_10_cells",
+#'                         "Sample01_test.pxl",
+#'                         package = "pixelatorR")
+#'
+#' # Read edgelist
+#' edgelist <- ReadMPX_arrow_edgelist(pxl_file)
+#'
+#' # Load graph from edge list and store in a CellGraph object
+#' cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000000")[[1]]
+#' cg
+#'
+#' # Fetch tbl_graph from CellGraph object
+#' g <- CellGraphData(cg, slot = "cellgraph")
+#' g
+#'
+#' # Fetch largest component from a tbl_graph
+#' g_largest <- KeepLargestComponent(g)
+#' g_largest
 #'
 #' @export
 #'
@@ -25,13 +46,14 @@ KeepLargestComponent.tbl_graph <- function (
       cli_alert_info("Graph is already connected")
     return(object)
   } else {
-    filtered_object <- object %N>%
-      mutate(group = group_components()) %>%
-      filter(group == 1)
+    split_components <- object %>%
+      to_components()
+    largest_component <- which.max(sapply(split_components, length))
+    object_largest <- split_components[[largest_component]]
     if (verbose && check_global_verbosity())
-      cli_alert_info("Removed {length(object) - length(filtered_object)} out of {length(object)} nodes")
+      cli_alert_info("Removed {length(object) - length(object_largest)} out of {length(object)} nodes")
   }
-  return(filtered_object)
+  return(object_largest)
 }
 
 
@@ -39,6 +61,11 @@ KeepLargestComponent.tbl_graph <- function (
 #'
 #' @rdname KeepLargestComponent
 #' @method KeepLargestComponent CellGraph
+#'
+#' @examples
+#' # Fetch largest component from a CellGraph
+#' cg_largest <- KeepLargestComponent(cg)
+#' cg_largest
 #'
 #' @export
 #'
@@ -57,10 +84,21 @@ KeepLargestComponent.CellGraph <- function (
   # fetch node ids after filtering
   node_ids_filtered <- filtered_graph %N>% pull(name)
 
-  # Fix counts
-  counts <- object@counts
-  counts <- counts[match(node_ids_filtered, node_ids), ]
-  slot(object, name = "counts") <- counts
+  # Filter counts
+  counts <- slot(object, name = "counts")
+  if (!is.null(counts)) {
+    counts <- counts[match(node_ids_filtered, node_ids), ]
+    slot(object, name = "counts") <- counts
+  }
+
+  # Filter layouts if available
+  layouts <- slot(object, name = "layout")
+  if (!is.null(layouts)) {
+    layouts <- lapply(layouts, function(layout) {
+      layout[match(node_ids_filtered, node_ids), ]
+    })
+    slot(object, name = "layout") <- layouts
+  }
 
   return(object)
 }
@@ -99,6 +137,33 @@ KeepLargestComponent.CellGraphAssay <- function (
     KeepLargestComponent(g, verbose = verbose, ...)
   })
   slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- cellgraphs_loaded
+
+  return(object)
+}
+
+
+#' @rdname KeepLargestComponent
+#' @method KeepLargestComponent Seurat
+#'
+#' @export
+#'
+KeepLargestComponent.Seurat <- function (
+  object,
+  assay = NULL,
+  verbose = TRUE,
+  ...
+) {
+
+  # Use default assay if assay = NULL
+  assay <- assay %||% DefaultAssay(object)
+
+  cg_assay <- object[[assay]]
+  if (!inherits(cg_assay, what = "CellGraphAssay")) {
+    abort(glue("assay '{assay}' is not a 'CellGraphAssay'"))
+  }
+
+  cg_assay <- KeepLargestComponent(cg_assay, verbose = verbose, ...)
+  object[[assay]] <- cg_assay
 
   return(object)
 }

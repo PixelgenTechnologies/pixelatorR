@@ -5,6 +5,7 @@
 \alias{KeepLargestComponent.tbl_graph}
 \alias{KeepLargestComponent.CellGraph}
 \alias{KeepLargestComponent.CellGraphAssay}
+\alias{KeepLargestComponent.Seurat}
 \title{Keep largest component}
 \usage{
 KeepLargestComponent(object, ...)
@@ -14,6 +15,8 @@ KeepLargestComponent(object, ...)
 \method{KeepLargestComponent}{CellGraph}(object, verbose = TRUE, ...)
 
 \method{KeepLargestComponent}{CellGraphAssay}(object, verbose = TRUE, ...)
+
+\method{KeepLargestComponent}{Seurat}(object, assay = NULL, verbose = TRUE, ...)
 }
 \arguments{
 \item{object}{An object}
@@ -24,4 +27,30 @@ KeepLargestComponent(object, ...)
 }
 \description{
 Finds connected components of a graph and returns the largest component
+}
+\examples{
+library(pixelatorR)
+pxl_file <- system.file("extdata/PBMC_10_cells",
+                        "Sample01_test.pxl",
+                        package = "pixelatorR")
+
+# Read edgelist
+edgelist <- ReadMPX_arrow_edgelist(pxl_file)
+
+# Load graph from edge list and store in a CellGraph object
+cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000000")[[1]]
+cg
+
+# Fetch tbl_graph from CellGraph object
+g <- CellGraphData(cg, slot = "cellgraph")
+g
+
+# Fetch largest component from a tbl_graph
+g_largest <- KeepLargestComponent(g)
+g_largest
+
+# Fetch largest component from a CellGraph
+cg_largest <- KeepLargestComponent(cg)
+cg_largest
+
 }
