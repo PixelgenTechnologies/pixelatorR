@@ -4,9 +4,9 @@
 \name{pixelatorR-package}
 \alias{pixelatorR}
 \alias{pixelatorR-package}
-\title{pixelatorR: What the Package Does (One Line, Title Case)}
+\title{pixelatorR: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data}
 \description{
-What the package does (one paragraph).
+Defines S4 classes for single-cell MPX data, extending the Seurat toolbox. In addition, pixelatorR provides functions to process and visualize MPX data.
 }
 \author{
 \strong{Maintainer}: Ludvig Larsson \email{ludvig.larsson@pixelgen.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
