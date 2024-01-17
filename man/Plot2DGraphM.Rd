@@ -68,7 +68,8 @@ A \code{patchwork} object
 \description{
 In contrast to \code{\link{Plot2DGraph}}, which only draw 1 marker at the time,
 this function makes it possible to arrange plots into a grid with markers in rows
-and components in columns.
+and components in columns. The color scales are fixed for each marker so that their
+limits are the same across all components.
 }
 \examples{
 library(pixelatorR)
