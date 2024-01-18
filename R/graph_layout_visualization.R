@@ -430,7 +430,8 @@ Plot3DGraph <- function (
     #     } +
     #     theme_void() +
     #     theme(plot.title = element_text(size = 10))
-    # })
+     })
+  
     
     # Wrap plots
     p <- wrap_plots(plots)
