@@ -13,13 +13,17 @@
 #' \code{\link{ComputeLayout}}
 #' @param colors A character vector of colors to color marker counts by
 #' @param map_nodes,map_edges Should nodes and/or edges be mapped?
-#' @param log_scale Convert node counts to log-scale with \code{logp}
+#' @param log_scale Convert node counts to log-scale with \code{log1p}
 #' @param node_size Size of nodes
 #' @param edge_width Set the width of the edges if \code{map_edges = TRUE}
 #' @param show_Bnodes Should B nodes be included in the visualization?
 #' This option is only applicable to bipartite graphs. Note that by removing
 #' the B nodes, all edges are removed from the graph and hence, \code{map_edges}
 #' will have no effect.
+#' @param collect_scales Collect color scales so that their limits are the same.
+#' This can be used to make sure that the colors are comparable across markers.
+#' @param return_plot_list Instead of collecting the plots in a grid, return a
+#' list of \code{ggplot} objects.
 #' @param ... Not yet implemented
 #'
 #' @rdname Plot2DGraph
@@ -32,6 +36,8 @@
 #' @importFrom tidygraph `%N>%`
 #'
 #' @return An object of class \code{patchwork}
+#'
+#' @seealso [Plot2DGraphM()]
 #'
 #' @examples
 #' library(pixelatorR)
@@ -61,18 +67,22 @@ Plot2DGraph <- function (
   node_size = 0.5,
   edge_width = 0.3,
   show_Bnodes = FALSE,
+  collect_scales = FALSE,
+  return_plot_list = FALSE,
   ...
 ) {
 
   # Validate input parameters
   stopifnot(
+    "'object' must be a Seurat object" =
+      inherits(object, what = "Seurat"),
     "'colors' must be a character vector with at least 2 colors" =
       is.character(colors) &&
       (length(colors) > 1),
-    "'map_nodes' must be one of TRUE or FALSE" =
+    "'map_nodes' must be either TRUE or FALSE" =
       is.logical(map_nodes) &&
       (length(map_nodes) == 1),
-    "'map_edges' must be one of TRUE or FALSE" =
+    "'map_edges' must be either TRUE or FALSE" =
       is.logical(map_edges) &&
       (length(map_edges) == 1),
     "'map_nodes' and 'map_edges' cannot be deactivated at the same time" =
@@ -80,7 +90,13 @@ Plot2DGraph <- function (
       map_edges,
     "'cells' must be a non-empty character vector with cell IDs" =
       is.character(cells) &&
-      (length(cells) > 0)
+      (length(cells) > 0),
+    "'node_size' must be a numeric value" =
+      is.numeric(node_size) &&
+      (length(node_size) == 1),
+    "'edge_width' must be a numeric value" =
+      is.numeric(edge_width) &&
+      (length(edge_width) == 1)
   )
 
   if (!is.null(marker)) {
@@ -137,8 +153,9 @@ Plot2DGraph <- function (
         )
       } else {
         if (!marker %in% colnames(component_graph@counts)) {
-          abort(glue("'{marker}' is missing from node count matrix ",
+          cli_alert_danger(glue("'{marker}' is missing from node count matrix ",
                      "for component {cell_id}"))
+          return(NULL)
         }
       }
     }
@@ -188,8 +205,25 @@ Plot2DGraph <- function (
     return(data)
   }) %>% setNames(nm = cells)
 
+  # Set limits
+  if (!is.null(marker)) {
+    if (collect_scales) {
+      max_val <- sapply(data_list, function(x) {
+        if (is.null(x)) return(NULL)
+        x$graph %>% pull(marker)
+      }) %>% unlist() %>% max()
+      limits <- c(rep(list(c(0, max_val)), length(data_list))) %>% setNames(names(data_list))
+    } else {
+      limits <- lapply(data_list, function(x) {
+        if (is.null(x)) return(NULL)
+        c(0, max(x$graph %>% pull(marker)))
+      })
+    }
+  }
+
   # Create plots
   plots <- lapply(names(data_list), function(nm) {
+    if (is.null(data_list[[nm]])) return(patchwork::plot_spacer() + theme(plot.background = element_rect(fill = NA, colour = NA)))
     # Visualize the graph with ggraph
     p <- data_list[[nm]]$graph %>%
       ggraph(layout = data_list[[nm]]$layout) +
@@ -222,26 +256,235 @@ Plot2DGraph <- function (
             } else {
               labs(title = glue("{nm}"), color = marker)
             }
-          } else {
-            labs(title = glue("{nm}"))
           }
+        } else {
+          labs(title = glue("{nm}"))
         }
       } +
-      theme_void() +
-      theme(plot.title = element_text(size = 10))
+      theme_void()# +
+      #theme(plot.title = element_text(size = 10), panel.border = element_rect(colour = "lightgrey", fill = NA))
+
+    # Add color scale
+    if (!is.null(marker)) {
+      if (marker != "node_type") {
+        p <- p + scale_color_gradientn(colours = colors, limits = limits[[nm]])
+      }
+    }
+    return(p)
   })
+
+  if (return_plot_list) {
+    return(plots)
+  }
 
   # Wrap plots
   p <- wrap_plots(plots)
-  if (!is.null(marker)) {
-    if (marker != "node_type") {
-      p <- p & scale_color_gradientn(colours = colors)
-    }
-  }
   p <- p + plot_annotation(title = glue("Layout with {layout_method_ext}"),
                            theme = theme(plot.title = element_text(size = 14, face = "bold")))
 
   return(p)
+}
+
+
+#' Plot multiple markers on multiple graphs
+#'
+#' In contrast to \code{\link{Plot2DGraph}}, which only draw 1 marker at the time,
+#' this function makes it possible to arrange plots into a grid with markers in rows
+#' and components in columns. The color scales are fixed for each marker so that their
+#' limits are the same across all components.
+#'
+#' @param markers A character vector with marker names
+#' @param titles A named character vector with optional titles. The
+#' names of \code{titles} should match \code{cells}
+#' @param titles_theme A \code{theme} used to style the titles
+#' @param titles_size The size of the text in the plot titles
+#' @param titles_col The color of the plot titles
+#' @param ... Parameters passed to Plot2DGraph
+#' @inheritParams Plot2DGraph
+#'
+#' @importFrom patchwork wrap_elements wrap_plots plot_spacer
+#' @importFrom ggplot2 theme element_rect element_blank
+#' @importFrom stats setNames
+#' @importFrom grid textGrob gpar
+#'
+#' @return A \code{patchwork} object
+#'
+#' @seealso [Plot2DGraph()]
+#'
+#' @examples
+#' library(pixelatorR)
+#' pxl_file <- system.file("extdata/PBMC_10_cells",
+#'                         "Sample01_test.pxl",
+#'                         package = "pixelatorR")
+#'
+#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- LoadCellGraphs(seur, load_as = "Anode", cells = colnames(seur)[1:10])
+#' seur[["mpxCells"]] <- KeepLargestComponent(seur[["mpxCells"]])
+#' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
+#'
+#' Plot2DGraphM(seur, cells = colnames(seur)[1:2], markers = c("HLA-ABC", "HLA-DR"))
+#'
+#' @export
+#'
+Plot2DGraphM <- function (
+  object,
+  cells,
+  markers,
+  assay = NULL,
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  colors = c("lightgrey", "mistyrose", "red", "darkred"),
+  map_nodes = TRUE,
+  map_edges = FALSE,
+  log_scale = TRUE,
+  node_size = 0.5,
+  edge_width = 0.3,
+  show_Bnodes = FALSE,
+  titles = NULL,
+  titles_theme = NULL,
+  titles_size = 10,
+  titles_col = "black",
+  ...
+) {
+
+  stopifnot(
+    "'cells' must be a non-empty characted vector" =
+      is.character(cells) && (length(cells) > 0),
+    "'markers' must be a non-empty characted vector" =
+      is.character(cells) && (length(markers) > 0),
+    "'titles_size' must be a numeric of length 1" =
+      is.numeric(titles_size) && (length(titles_size) == 1),
+    "'titles_col' must be a character of length 1" =
+      is.character(titles_col) && (length(titles_col) == 1)
+  )
+
+  # Set layout options
+  ncols <- length(cells)
+  nrows <- length(markers)
+
+  # Validate titles and titles_theme
+  if (!is.null(titles)) {
+    stopifnot(
+      "'titles' must be a named character vector with the same number of elements as 'cells'" =
+        is.character(titles) &&
+        (length(titles) == length(cells)) &&
+        all(names(titles) == cells)
+    )
+    titles <- titles[cells]
+    if (!is.null(titles_theme)) {
+      stopifnot(
+        "'titles_theme' must have class 'theme'" =
+          inherits(titles_theme, what = "theme")
+      )
+    }
+  } else {
+    titles <- cells
+  }
+
+  # Create columnn titles for patchwork
+  title_plots <- lapply(titles, function(label) {
+
+    # Here we create a title for each column
+    # titles_size and titles_col controls the size and color of the text
+    p_title <- wrap_elements(
+      textGrob(
+        label = label,
+        gp = gpar(fontsize = titles_size, col = titles_col)
+      )
+    ) +
+      theme(plot.background = element_rect(fill = "lightgrey", colour = NA))
+
+    # If a theme is provided for the titles, this can be added here
+    if (!is.null(titles_theme)) {
+      p_title <- p_title + titles_theme
+    }
+    return(p_title)
+  })
+
+  # Add an empty space for the last column which is reserved
+  # for the color legends
+  title_plots <- c(title_plots, list(plot_spacer()))
+
+  # Create rows
+  plots <- list()
+  legends <- list()
+  for (marker in markers) {
+
+    # Create a list of plots for each component
+    # and the selected marker. By setting collect_scales = TRUE
+    # we make sure that the limits of the color scale are the same
+    # across components.
+    plots_rows <- Plot2DGraph(
+      object,
+      cells = cells,
+      layout_method = layout_method,
+      marker = marker,
+      colors = colors,
+      assay = assay,
+      map_nodes = map_nodes,
+      map_edges = map_edges,
+      log_scale = log_scale,
+      node_size = node_size,
+      edge_width = edge_width,
+      show_Bnodes = show_Bnodes,
+      collect_scales = TRUE,
+      return_plot_list = TRUE,
+      ...
+    )
+
+    # Fetch legend and modify themes
+    for (i in seq_along(plots_rows)) {
+      p <- plots_rows[[i]] + theme(plot.title = element_blank())
+
+      # Fetch color legend from first plot
+      # and save it for later
+      if (ncols == i) {
+        legends[[marker]] <- .get_legend(p) %>% wrap_elements()
+      }
+
+      # Remove the color legend and plot title.
+      # These will be added to the patchwork in the final step
+      p <- p + theme(legend.position = "none", plot.title = element_blank())
+      plots_rows[[i]] <- p
+    }
+
+    # Each element in plots stores a single row of plots
+    plots[[marker]] <- plots_rows
+  }
+
+  # Add legends to plots. Each element stored length(cells)
+  # plots and after adding the legend, each row will be
+  # length(cells) + 1
+  plots <- lapply(seq_along(plots), function(i) {
+    c(plots[[i]], list(legends[[i]]))
+  })
+
+  # Combine all plots into a list
+  plots <- plots %>% Reduce(c, .)
+
+  # Final plot
+  p <- wrap_plots(c(title_plots, plots),
+                  ncol = ncols + 1, # Sets the number of columns to length(cells) + 1
+                  heights = c(1, rep(4, nrows)), # Adjust the heights to make the title row a bit smaller
+                  widths = c(rep(4, ncols), 2)) # Adjust the widths to make the legend column a bit smaller
+  return(p)
+}
+
+#' Extract legend from a ggplot
+#'
+#' Adapted from .get_legend in \code{ggpubr}
+#'
+#' @param p A \code{ggplot} object
+#'
+#' @noRd
+#'
+.get_legend <- function (
+  p
+){
+  tmp <- ggplot_gtable(ggplot_build(p))
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  if (length(leg) > 0) leg <- tmp$grobs[[leg]]
+  else leg <- NULL
+  leg
 }
 
 

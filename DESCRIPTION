@@ -43,7 +43,8 @@ Suggests:
     scales,
     jsonlite,
     pheatmap,
-    duckdb
+    duckdb,
+    dbplyr
 Collate: 
     'aaa.R'
     'generics.R'
