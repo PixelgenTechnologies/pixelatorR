@@ -517,9 +517,6 @@ Plot2DGraphM <- function (
 #' 
 #' @rdname Plot3DGraph
 #' 
-#' @import plotly
-#' @import glue
-#' @import ggplot2
 #'
 #' @return A interactive 3D plot of a component graph layout as a \code{plotly} object
 #'
@@ -714,11 +711,12 @@ Plot3DGraph <- function (
                                            size = node_size))
       fig <- fig %>% plotly::add_markers()  %>% plotly::layout(scene = list(xaxis = list(visible = showgrid),
                                                                             yaxis = list(visible = showgrid),
-                                                                            zaxis = list(visible = showgrid)),annotations = list(x = 1,
+                                                                            zaxis = list(visible = showgrid)),
+                                                               annotations = list(x = 1,
                                                                                   y = 0.98,
                                                                                   text = marker,
                                                                                   showarrow = FALSE))
-      warning("Projection to a sphere overrides the aspect ratio setting", call. = FALSE)
+      #warning("Projection to a sphere overrides the aspect ratio setting", call. = FALSE)
     }
     return(fig)
   }
