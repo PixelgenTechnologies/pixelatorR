@@ -531,7 +531,7 @@ Plot2DGraphM <- function (
 #' seur[["mpxCells"]] <- KeepLargestComponent(seur[["mpxCells"]])
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 3)
 #'
-#' Plot3DGraph(seur, cells = colnames(seur)[1], marker = "HLA-ABC")
+#' Plot3DGraph(seur, cell_id = colnames(seur)[1], marker = "HLA-ABC")
 #'
 #' @export
 Plot3DGraph <- function (
