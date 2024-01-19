@@ -171,8 +171,6 @@ ComputeLayout.tbl_graph <- function (
 #' @rdname ComputeLayout
 #' @method ComputeLayout CellGraph
 #'
-#' @importFrom future.apply future_lapply
-#'
 #' @examples
 #'
 #' # Compute layout for a CellGraph
@@ -236,6 +234,7 @@ ComputeLayout.CellGraph <- function (
 #' @rdname ComputeLayout
 #' @method ComputeLayout CellGraphAssay
 #'
+#' @importFrom progressr progressor
 #'
 #' @examples
 #'
@@ -277,8 +276,8 @@ ComputeLayout.CellGraphAssay <- function (
     cli_alert_info("Computing layouts for {length(cellgraphs_loaded)} graphs")
 
   # Calculate layout for each cell graph object sequentially
-  p <- progressr::progressor(along = cellgraphs_loaded)
-  cellgraphs_loaded <- future_lapply(cellgraphs_loaded, function(g) {
+  p <- progressor(along = cellgraphs_loaded)
+  cellgraphs_loaded <- lapply(cellgraphs_loaded, function(g) {
     g <- ComputeLayout(
       g,
       layout_method = layout_method,
@@ -295,7 +294,7 @@ ComputeLayout.CellGraphAssay <- function (
     )
     p()
     return(g)
-  }, future.seed = seed)
+  })
 
   slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- cellgraphs_loaded
 

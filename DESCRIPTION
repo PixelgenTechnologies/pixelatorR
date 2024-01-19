@@ -32,7 +32,6 @@ Imports:
     stringr,
     patchwork,
     ggraph,
-    future.apply,
     progressr
 Suggests:
     Seurat (>= 5.0.0),

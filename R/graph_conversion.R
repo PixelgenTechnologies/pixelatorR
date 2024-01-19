@@ -10,7 +10,7 @@ globalVariables(
 #' @import glue
 #' @import dplyr
 #' @importFrom tidygraph as_tbl_graph
-#' @importFrom future.apply future_lapply
+#' @importFrom progressr progressor
 #'
 #' @rdname graph-conversion
 #' @method edgelist_to_simple_Anode_graph data.frame
@@ -86,8 +86,8 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
   if (verbose && check_global_verbosity())
     cli_alert_info("Creating A-node projected graphs")
 
-  p <- progressr::progressor(along = edgelist_split)
-  edgelist_split <- future_lapply(edgelist_split, function(edgelist) {
+  p <- progressor(along = edgelist_split)
+  edgelist_split <- lapply(edgelist_split, function(edgelist) {
     anode_graph <-
       edgelist %>%
       left_join(edgelist,
