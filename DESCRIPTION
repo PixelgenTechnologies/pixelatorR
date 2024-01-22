@@ -32,7 +32,8 @@ Imports:
     stringr,
     patchwork,
     ggraph,
-    progressr
+    progressr,
+    plotly
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
