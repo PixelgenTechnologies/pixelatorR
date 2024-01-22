@@ -8,7 +8,7 @@
 \usage{
 \method{subset}{CellGraphAssay}(x, features = NULL, cells = NULL, ...)
 
-\method{merge}{CellGraphAssay}(x = NULL, y = NULL, merge.data = TRUE, ...)
+\method{merge}{CellGraphAssay}(x = NULL, y = NULL, merge.data = TRUE, add.cell.ids = NULL, ...)
 }
 \arguments{
 \item{x}{A \code{\link{CellGraphAssay}} object}
