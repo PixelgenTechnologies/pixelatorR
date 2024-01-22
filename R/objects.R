@@ -1590,6 +1590,9 @@ subset.CellGraphAssay <- function (
   return(pxcellassay)
 }
 
+
+#' @param add.cell.ids A character vector with sample names
+#'
 #' @importFrom SeuratObject Key Key<- RenameCells
 #' @describeIn CellGraphAssay-methods Merge two or more \code{CellGraphAssay} objects together
 #' @concept assay

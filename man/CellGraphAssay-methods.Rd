@@ -23,6 +23,8 @@
 
 \item{merge.data}{Merge the data slots instead of just merging the counts (which requires renormalization);
 this is recommended if the same normalization approach was applied to all objects}
+
+\item{add.cell.ids}{A character vector with sample names}
 }
 \value{
 A \code{CellGraphAssay} object

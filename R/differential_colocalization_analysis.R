@@ -179,7 +179,7 @@ RunDCA.data.frame <- function (
 #' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 #' seur1$sample <- "Sample1"
 #' seur2$sample <- "Sample2"
-#' seur_merged <- merge(seur1, seur2)
+#' seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
 #'
 #' # Run DCA
 #' dca_markers <- RunDCA(seur_merged, contrast_column = "sample",
