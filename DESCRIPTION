@@ -62,6 +62,7 @@ Collate:
     'load_data.R'
     'objects.R'
     'pivot_tables.R'
+    'pixelatorR-package.R'
     'read_and_write_parquet.R'
     'remove_cell_graphs.R'
     'restore_arrow_connection.R'
