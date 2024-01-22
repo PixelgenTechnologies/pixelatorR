@@ -1,3 +1,9 @@
+globalVariables(
+  names = c('norm_factor'),
+  package = 'pixelatorR',
+  add = TRUE
+)
+
 #' Plot 2D graph layouts
 #'
 #' Plot 2D component graph layouts computed with \code{\link{ComputeLayout}} and
@@ -692,7 +698,7 @@ Plot3DGraph <- function (
         plot_data %>% 
         
         # Normalize 3D coordinates to a sphere
-        mutate("norm_factor" = 
+        mutate(norm_factor = 
                  select(., x, y, z) %>% 
                  apply(MARGIN = 1, function(x) {
                    as.matrix(x) %>% 
