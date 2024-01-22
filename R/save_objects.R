@@ -2,7 +2,6 @@
 #' @param overwrite Set to TRUE to overwrite existing directory
 #'
 #' @import rlang
-#' @import glue
 #'
 #' @rdname WriteMPX
 #' @method WriteMPX CellGraphAssay
@@ -77,7 +76,6 @@ WriteMPX.CellGraphAssay <- function (
 
 #' @param file Name of the file where the object is written to
 #' @import rlang
-#' @import glue
 #'
 #' @rdname WriteMPX
 #' @method WriteMPX Seurat

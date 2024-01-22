@@ -5,12 +5,8 @@ globalVariables(
   add = TRUE
 )
 
-#' @import cli
 #' @import rlang
-#' @import glue
-#' @import dplyr
-#' @importFrom tidygraph as_tbl_graph
-#' @importFrom future.apply future_lapply
+#' @importFrom progressr progressor
 #'
 #' @rdname graph-conversion
 #' @method edgelist_to_simple_Anode_graph data.frame
@@ -86,8 +82,8 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
   if (verbose && check_global_verbosity())
     cli_alert_info("Creating A-node projected graphs")
 
-  p <- progressr::progressor(along = edgelist_split)
-  edgelist_split <- future_lapply(edgelist_split, function(edgelist) {
+  p <- progressor(along = edgelist_split)
+  edgelist_split <- lapply(edgelist_split, function(edgelist) {
     anode_graph <-
       edgelist %>%
       left_join(edgelist,
@@ -115,10 +111,7 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
 }
 
 
-#' @import cli
 #' @import rlang
-#' @import glue
-#' @import dplyr
 #' @importFrom arrow to_duckdb
 #' @importFrom stringr str_c str_sub
 #'
@@ -142,10 +135,17 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
   expect_duckdb()
 
   # Check input parameters
-  stopifnot("edgelist must be a non-empty object" = (nrow(object) > 0),
-            "One or several of 'upia', 'upib' are missing from edgelist" = all(c('upia', 'upib') %in% names(object)))
+  stopifnot(
+    "edgelist must be a non-empty object" =
+      (nrow(object) > 0),
+    "One or several of 'upia', 'upib' are missing from edgelist" =
+      all(c('upia', 'upib') %in% names(object))
+  )
   if (!is.null(components) && ("component" %in% names(object))) {
-    stopifnot("'components' must be a character vector" = is.character(components) & (length(components) > 0))
+    stopifnot(
+      "'components' must be a character vector" =
+        is.character(components) && (length(components) > 0)
+    )
     if (!all(components %in% (object %>% pull(component, as_vector = TRUE)))) {
       abort("Some 'component' IDs are missing from object")
     }
@@ -211,9 +211,6 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
 #' Create a simple bipartite graph from an edgelist
 #'
 #' @param edgelist An object of class \code{tbl_graph}
-#'
-#' @import dplyr
-#' @importFrom tidygraph as_tbl_graph
 #'
 #' @return An object of class \code{tbl_graph} containing a bipartite graph
 #'

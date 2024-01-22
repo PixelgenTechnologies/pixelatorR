@@ -10,7 +10,6 @@ NULL
 #' @rdname RunDPA
 #' @method RunDPA data.frame
 #'
-#' @import dplyr
 #' @importFrom stats wilcox.test p.adjust
 #'
 #' @examples

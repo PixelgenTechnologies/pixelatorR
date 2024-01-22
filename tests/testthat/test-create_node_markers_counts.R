@@ -11,7 +11,7 @@ test_that("node_markers_counts works as expected", {
   node_marker_counts <-
     edge_list %>%
     node_markers_counts()
-  expect_type(node_marker_counts, "double")
+  expect_type(node_marker_counts, "integer")
   expect_equal(ncol(node_marker_counts), 24)
   expect_equal(nrow(node_marker_counts), 2627)
 
@@ -19,7 +19,7 @@ test_that("node_markers_counts works as expected", {
   node_marker_counts_k10 <-
     edge_list %>%
     node_markers_counts(k = 2)
-  expect_type(node_marker_counts, "double")
+  expect_type(node_marker_counts, "integer")
   expect_equal(ncol(node_marker_counts), 24)
   expect_equal(nrow(node_marker_counts), 2627)
 })

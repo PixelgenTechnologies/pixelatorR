@@ -30,9 +30,6 @@ globalVariables(
 #' The \code{dim} is automatically passed to \code{custom_layout_function} and should not be
 #' included in \code{custom_layout_function_args}.
 #'
-#' @import dplyr
-#' @importFrom igraph layout_with_fr layout_with_kk layout_with_drl
-#'
 #' @rdname ComputeLayout
 #' @method ComputeLayout tbl_graph
 #'
@@ -171,8 +168,6 @@ ComputeLayout.tbl_graph <- function (
 #' @rdname ComputeLayout
 #' @method ComputeLayout CellGraph
 #'
-#' @importFrom future.apply future_lapply
-#'
 #' @examples
 #'
 #' # Compute layout for a CellGraph
@@ -236,6 +231,7 @@ ComputeLayout.CellGraph <- function (
 #' @rdname ComputeLayout
 #' @method ComputeLayout CellGraphAssay
 #'
+#' @importFrom progressr progressor
 #'
 #' @examples
 #'
@@ -277,8 +273,8 @@ ComputeLayout.CellGraphAssay <- function (
     cli_alert_info("Computing layouts for {length(cellgraphs_loaded)} graphs")
 
   # Calculate layout for each cell graph object sequentially
-  p <- progressr::progressor(along = cellgraphs_loaded)
-  cellgraphs_loaded <- future_lapply(cellgraphs_loaded, function(g) {
+  p <- progressor(along = cellgraphs_loaded)
+  cellgraphs_loaded <- lapply(cellgraphs_loaded, function(g) {
     g <- ComputeLayout(
       g,
       layout_method = layout_method,
@@ -295,7 +291,7 @@ ComputeLayout.CellGraphAssay <- function (
     )
     p()
     return(g)
-  }, future.seed = seed)
+  })
 
   slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- cellgraphs_loaded
 
@@ -373,7 +369,6 @@ ComputeLayout.Seurat <- function (
 #' Validate a custom layout function
 #'
 #' @import rlang
-#' @import glue
 #'
 #' @noRd
 #'

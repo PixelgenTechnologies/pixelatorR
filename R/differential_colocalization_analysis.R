@@ -10,9 +10,8 @@ NULL
 #' @rdname RunDCA
 #' @method RunDCA data.frame
 #'
-#' @import dplyr
 #' @importFrom stats wilcox.test p.adjust
-#' @importFrom future.apply future_lapply
+#' @importFrom progressr progressor
 #'
 #' @examples
 #' library(pixelatorR)
@@ -123,8 +122,8 @@ RunDCA.data.frame <- function (
   # Split table by group keys
   test_groups <- test_groups %>% group_split()
 
-  p <- progressr::progressor(along = test_groups)
-  coloc_test <- future_lapply(test_groups, function(colocalization_contrast) {
+  p <- progressor(along = test_groups)
+  coloc_test <- lapply(test_groups, function(colocalization_contrast) {
 
     # Get numeric data values
     x <- colocalization_contrast %>% filter(.data[[contrast_column]] == target) %>% pull(pearson_z)
