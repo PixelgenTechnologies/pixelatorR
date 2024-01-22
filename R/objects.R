@@ -120,12 +120,24 @@ CreateCellGraphObject <- function (
 ) {
 
   # Check input parameters
-  stopifnot("'cellgraph' must be a non-empty 'tbl_graph' object" = inherits(cellgraph, what = "tbl_graph") & (length(cellgraph) > 0))
+  stopifnot(
+    "'cellgraph' must be a non-empty 'tbl_graph' object" =
+      inherits(cellgraph, what = "tbl_graph") &&
+      (length(cellgraph) > 0)
+    )
   if (!is.null(counts)) {
-    stopifnot("'counts' must be a non-empty 'dgCMatrix' object" = inherits(counts, what = "dgCMatrix") & (length(counts) > 0))
+    stopifnot(
+      "'counts' must be a non-empty 'dgCMatrix' object" =
+        inherits(counts, what = "dgCMatrix") &&
+        (length(counts) > 0)
+    )
   }
   if (!is.null(layout)) {
-    stopifnot("'layout' must be a non-empty 'tbl_df' object" = inherits(layout, what = "tbl_df") & (length(layout) > 0))
+    stopifnot(
+      "'layout' must be a non-empty 'tbl_df' object" =
+        inherits(layout, what = "tbl_df") &&
+        (length(layout) > 0)
+    )
   }
 
   if (!"type" %in% names(attributes(cellgraph))) {
@@ -137,8 +149,12 @@ CreateCellGraphObject <- function (
 
   # Add checks for graph types
   if (attr(cellgraph, "type") == "bipartite") {
-    stopifnot("Node attribute 'name' is missing" = "name" %in% vertex_attr_names(cellgraph))
-    stopifnot("Node attribute 'node_type' is missing" = "node_type" %in% vertex_attr_names(cellgraph))
+    stopifnot(
+      "Node attribute 'name' is missing" =
+        "name" %in% vertex_attr_names(cellgraph),
+      "Node attribute 'node_type' is missing" =
+        "node_type" %in% vertex_attr_names(cellgraph)
+    )
   }
   #TODO: Add check for A-node-projection and linegraph
 
@@ -264,7 +280,10 @@ CreateCellGraphAssay <- function (
     }
 
     # check for required fields
-    stopifnot("column 'component' is missing from cellgraphs" = "component" %in% names(fsd))
+    stopifnot(
+      "column 'component' is missing from cellgraphs" =
+        "component" %in% names(fsd)
+    )
     available_components <- fsd %>% pull(component, as_vector = TRUE) %>% unique()
     if (!all(colnames(counts) %in% available_components))
       abort(glue("Some components are not available in the edge list"))
@@ -613,12 +632,43 @@ RenameCells.CellGraphAssay <- function (
 
   stopifnot(
     "'new.names' must be a character vector with the same length as the number of cells present in 'object'" =
-      inherits(new.names, what = "character") & (length(new.names) == ncol(object))
+      inherits(new.names, what = "character") &&
+      (length(new.names) == ncol(object))
   )
-  names(slot(object = object, name = "cellgraphs")) <- new.names
 
   # save original cell IDs
   orig.names <- colnames(object)
+
+  # Fetch unique sample IDs from orig.names and new.names
+  new_sample_id_table <- do.call(rbind, strsplit(new.names, "_"))
+  new_sample_id <- new_sample_id_table[, 1] %>% unique()
+  old_sample_id_table <- do.call(rbind, strsplit(orig.names, "_"))
+  if (ncol(old_sample_id_table) == 1) {
+    old_sample_id <- "S1"
+  } else {
+    old_sample_id <- old_sample_id_table[, 1] %>% unique()
+  }
+
+  # Validate names
+  names_checked <- sapply(new.names, function(s) {
+    stringr::str_like(s, pattern = "^[a-zA-Z][a-zA-Z0-9]*\\_RCVCMP\\d{7}$")
+  })
+  if (!any(names_checked)) {
+    abort(glue("Failed to merge CellGraphAssays.\n\n",
+               "Make sure to follow these steps:\n\n",
+               "1. CellGraphAssay column names should have the following format:\n",
+               "   ^[a-zA-Z][a-zA-Z0-9]*_RCVCMP\\d{7}$\n",
+               "   where the first part is a sample ID and the second part is the PXL ID, \n",
+               "   separated by an underscore. For example, {col_green('Sample1_RCVCMP0000000')}.\n\n",
+               "2. When merging Seurat objects, make sure to set {col_green('add.cell.ids')}.\n\n",
+               "3. Cannot merge Seurat objects with CellGraphAssays twice due to naming conflicts. \n",
+               "   Instead, merge all data sets once:\n",
+               "   {col_green('se_merged <- merge(se1, list(se2, se3, se4, ...))')}\n",
+               "   Attempting to merge the merged object again will fail:\n",
+               "   {col_red('se_double_merged <- merge(se_merged, se_merged)')}"))
+  }
+
+  names(slot(object = object, name = "cellgraphs")) <- new.names
 
   names(x = new.names) <- NULL
   for (data.slot in object[]) {
@@ -629,38 +679,59 @@ RenameCells.CellGraphAssay <- function (
     colnames(x = slot(object = object, name = data.slot)) <- new.names
   }
 
-  # Handle arrow dataset
-  if (!is.na(slot(object, name = "arrow_dir"))) {
-    # Restore arrow connection if broken
-    object <- RestoreArrowConnection(object, verbose = FALSE)
+  # Get arrow dir
+  arrow_dir <- ArrowDir(object)
+  if (!is.null(arrow_dir)) {
+    arrow_dirs <- list.files(arrow_dir, full.names = TRUE)
 
-    # Get schema for the component column (string or large string)
-    schema <- unify_schemas(schema(object@arrow_data)["component"],
-                            schema(object@arrow_data)["component"] %>% setNames(nm = "component_new"))
-
-    # Create conversion table with defined schema
-    conv_table <- arrow_table(component = orig.names, component_new = new.names, schema = schema)
-
-    fsd <- slot(object, name = "arrow_data")
-
-    # Left join new names and save edgelist
+    # Create new directory
     session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
 
-    # arrow doesn't support pasting to create new character columns,
-    # instead we do a left join with our conversion table to
-    # obtain the new cell/component names
-    fsd %>%
-      left_join(y = conv_table, by = "component") %>% # Add new cell names
-      select(-component) %>% # remove column with old names
-      rename(component = component_new) %>% # rename column
-      group_by(sample) %>%
-      write_dataset(path = session_tmpdir_random) # write data to a parquet file
+    if (length(arrow_dirs) == 1) {
+      # Handle renaming if 1 hive-style directory is present
 
-    # Rename parquet file to ensure consistency with other functions
-    files <- list.files(session_tmpdir_random, pattern = "parquet", recursive = TRUE, full.names = TRUE)
-    for (f in files) {
-      if (basename(f) != "edgelist.parquet") {
-        file.rename(from = f, to = file.path(dirname(f), "edgelist.parquet"))
+      # Check sample ID
+      if (length(new_sample_id) > 1) {
+        abort(glue("Found multiple sample IDs in 'new.names' but only 1 edgelist in the arrow directory."))
+      }
+
+      # Copy directory
+      if (dir.exists(arrow_dirs)) {
+        dir.create(session_tmpdir_random)
+        file.copy(from = arrow_dirs, to = session_tmpdir_random, recursive = TRUE)
+        # Rename hive-style directory
+        hive_style_dir_sample1 <- list.files(session_tmpdir_random, full.names = TRUE)
+        file.rename(from = hive_style_dir_sample1, file.path(session_tmpdir_random, paste0("sample=", new_sample_id)))
+      } else {
+        abort(glue("Directory '{arrow_dirs}' is mising. Cannot rename cell IDs in edgelists."))
+      }
+    } else {
+      # Handle renaming if more than 1 hive-style directories are present
+
+      if (!length(arrow_dirs) == length(new_sample_id)) {
+        abort(glue("Found {arrow_dirs} samples in arrow directory, but {length(new_sample_id)} samples in 'new.names'"))
+      }
+
+      # Copy directories to new folder
+      if (all(dir.exists(arrow_dirs))) {
+        dir.create(session_tmpdir_random)
+        for (i in seq_along(arrow_dirs)) {
+          file.copy(from = arrow_dirs[i], to = session_tmpdir_random, recursive = TRUE)
+        }
+        hive_style_dir_samples <- list.files(session_tmpdir_random, full.names = TRUE)
+        hive_style_dir_sample_IDs <- basename(hive_style_dir_samples) %>% gsub(pattern = "sample=", replacement = "", x = .)
+        hive_style_dir_samples <- setNames(hive_style_dir_samples, nm = hive_style_dir_sample_IDs)
+
+        # Reorder hive_style_dir_samples
+        hive_style_dir_samples <- hive_style_dir_samples[old_sample_id]
+
+        # Rename hive-style directory
+        for (i in seq_along(arrow_dirs)) {
+          file.rename(from = hive_style_dir_samples[i], file.path(session_tmpdir_random, paste0("sample=", new_sample_id[i])))
+        }
+      } else {
+        abort(glue("The following directories are missing:\n {paste0(arrow_dirs, collapse='\n')} ",
+                   "\nCannot rename cell IDs in edgelists."))
       }
     }
 
@@ -760,8 +831,14 @@ as.CellGraphAssay.Assay <- function (
 
   # Check cellgraphs
   if (!is.null(cellgraphs)) {
-    stopifnot("'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay" = is.list(cellgraphs) & (length(cellgraphs) == ncol(x)))
-    stopifnot("'cellgraphs' names must match colnames of the Assay" = all(names(cellgraphs) == colnames(x)))
+    stopifnot(
+      "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay" =
+        is.list(cellgraphs) &&
+        (length(cellgraphs) == ncol(x)))
+    stopifnot(
+      "'cellgraphs' names must match colnames of the Assay" =
+        all(names(cellgraphs) == colnames(x))
+    )
     for (i in seq_along(cellgraphs)) {
       if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
         abort(glue("Element {i} is not a CellGraph object or NULL"))
@@ -778,13 +855,21 @@ as.CellGraphAssay.Assay <- function (
   # Abort if cellgraphs is empty and neither arrow_dir or arrow_data is provided
   loaded_graphs <- sum(sapply(cellgraphs, is.null))
   if (loaded_graphs == ncol(x)) {
-    stopifnot("One of 'arrow_dir' or 'arrow_data' must be provided if 'cellgraphs is empty'" = (!is.null(arrow_dir)) || (!is.null(arrow_data)))
+    stopifnot(
+      "One of 'arrow_dir' or 'arrow_data' must be provided if 'cellgraphs is empty'" =
+        (!is.null(arrow_dir)) ||
+        (!is.null(arrow_data))
+    )
   }
 
   # Handle arrow_dir
   arrow_dir <- arrow_dir %||% NA_character_
   if (!is.na(arrow_dir)) {
-    stopifnot("'arrow_dir' must be a non-empty character" = is.character(arrow_dir) && (length(arrow_dir) >= 1))
+    stopifnot(
+      "'arrow_dir' must be a non-empty character" =
+        is.character(arrow_dir) &&
+        (length(arrow_dir) >= 1)
+    )
     for (path in arrow_dir) {
       if (!(dir.exists(path) || file.exists(path))) {
         abort(glue("Directory/file {path} doesn't exist"))
@@ -799,7 +884,7 @@ as.CellGraphAssay.Assay <- function (
     stopifnot(all(c("upia", "marker", "component", "sample") %in% names(arrow_data)))
     stopifnot("A valid 'arrow_dir' must be provided if 'arrow_data' is provided" = !is.na(arrow_dir))
     stopifnot("column 'component' is missing from 'arrow_data" = "component" %in% names(arrow_data))
-    stopifnot("One or several components are missing from 'arrow_data'" = all(colnames(x) %in% (arrow_data %>% pull(component, as_vector = TRUE))))
+    #stopifnot("One or several components are missing from 'arrow_data'" = all(colnames(x) %in% (arrow_data %>% pull(component, as_vector = TRUE))))
   }
 
   new.assay <- as(object = x, Class = "CellGraphAssay")
@@ -1398,6 +1483,11 @@ subset.CellGraphAssay <- function (
   ...
 ) {
 
+  stopifnot(
+    "All 'cells' must be present in x" =
+      all(cells %in% colnames(x))
+  )
+
   # Get cellgraphs
   cellgraphs <- x@cellgraphs
 
@@ -1411,6 +1501,15 @@ subset.CellGraphAssay <- function (
   # Fetch arrow_dir
   arrow_dir <- slot(x, name = "arrow_dir")
 
+  # Get sample ids
+  sample_id_table <- do.call(rbind, strsplit(colnames(x), "_"))
+  rownames(sample_id_table) <- colnames(x)
+  if (ncol(sample_id_table) == 1) {
+    sample_id <- NULL
+  } else {
+    sample_id <- sample_id_table[, 1] %>% unique()
+  }
+
   # Handle arrow data set if available
   if (!is.na(arrow_dir)) {
     x <- RestoreArrowConnection(x, verbose = FALSE)
@@ -1423,12 +1522,26 @@ subset.CellGraphAssay <- function (
 
         # Create a temporary directory with a unique name
         session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+        dir.create(session_tmpdir_random)
 
-        # Filter edgelist and export it
-        slot(x, name = "arrow_data") %>%
-          filter(component %in% cells) %>%
-          group_by(sample) %>%
-          write_dataset(session_tmpdir_random)
+        # Handle samples
+        if (ncol(sample_id_table) > 1) {
+          components_keep_list <- split(sample_id_table[cells, 2], sample_id_table[cells, 1])
+          for (s in sample_id) {
+            components_keep <- components_keep_list[[s]]
+            slot(x, name = "arrow_data") %>%
+              filter(sample == s) %>%
+              filter(component %in% components_keep) %>%
+              group_by(sample) %>%
+              write_dataset(path = session_tmpdir_random)
+          }
+        } else {
+          # Filter edgelist and export it
+          slot(x, name = "arrow_data") %>%
+            filter(component %in% cells) %>%
+            group_by(sample) %>%
+            write_dataset(session_tmpdir_random)
+        }
 
         # Rename parquet files for consistensy with other functions
         files <- list.files(session_tmpdir_random, pattern = "parquet", recursive = TRUE, full.names = TRUE)
@@ -1503,6 +1616,7 @@ merge.CellGraphAssay <- function (
   x = NULL,
   y = NULL,
   merge.data = TRUE,
+  add.cell.ids = NULL,
   ...
 ) {
 
@@ -1519,13 +1633,49 @@ merge.CellGraphAssay <- function (
 
   objects <- c(x, y)
 
+  # Define add.cell.ids
+  # add.cell.ids <- add.cell.ids %||% paste0("Sample", seq_along(objects))
+  if (!is.null(add.cell.ids)) {
+    stopifnot(
+      "Length of 'add.cell.ids' must match the number of objects to merge" =
+        length(add.cell.ids) == length(objects)
+    )
+  }
+
   # Check duplicate cell names
   cell.names <- unlist(lapply(objects, colnames))
-  if (any(duplicated(x = cell.names))) {
-    cli_alert_warning("Some cell names are duplicated across objects provided. Renaming to enforce unique cell names.")
+  unique_names <- table(cell.names)
+  names_are_duplicated <- any(unique_names > 1)
+  sample_id_old_table <- do.call(rbind, strsplit(cell.names, "_"))
+  if (names_are_duplicated && is.null(add.cell.ids)) {
+    if (ncol(sample_id_old_table) == 1) {
+      add.cell.ids <- paste0("Sample", seq_along(objects))
+    } else if (ncol(sample_id_old_table) == 2) {
+      abort("Found non-unique IDs across samples. A 'add.cell.ids' must be specified.")
+    }
+  }
+
+  # Fetch sample IDs from column names
+  if (ncol(sample_id_old_table) == 1) {
     objects <-
       lapply(seq_along(objects), function(i) {
-        return(RenameCells(object = objects[[i]], new.names = paste0(Cells(x = objects[[i]]), "_", i)))
+        if (is.null(add.cell.ids)) {
+          return(objects[[i]])
+        } else {
+          new_names_modified <- paste0(add.cell.ids[i], "_", Cells(x = objects[[i]]))
+          return(RenameCells(object = objects[[i]], new.names = new_names_modified))
+        }
+      })
+  } else {
+    objects <-
+      lapply(seq_along(objects), function(i) {
+        if (is.null(add.cell.ids)) {
+          return(objects[[i]])
+        } else {
+          cli_alert_warning("Found multiple samples in objects. 'add.cell.ids' will be added as a prefix to old IDs.")
+          new_names_modified <- paste0(add.cell.ids[i], Cells(x = objects[[i]]))
+          return(RenameCells(object = objects[[i]], new.names = new_names_modified))
+        }
       })
   }
 
@@ -1564,53 +1714,16 @@ merge.CellGraphAssay <- function (
     new_dir <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
     dir.create(path = new_dir, showWarnings = FALSE)
 
-    # List hive-partitioned directories for all objects
-    dirs_unpacked <- do.call(bind_rows, lapply(seq_along(all_arrow_dirs), function(i) {
-      cur_dir <- all_arrow_dirs[i]
-      dirs_cur <- list.files(cur_dir)
-      cur_unpacked <- do.call(bind_rows, strsplit(dirs_cur, "=") %>%
-                                lapply(function(x) {tibble(id = x[1], sample = x[2])}))
-      cur_unpacked <- cur_unpacked %>%
-        mutate(old_dir = list.files(cur_dir, full.names = TRUE), ID = i)
-    }))
-
-    # Create new names
-    dirs_unpacked <- dirs_unpacked %>%
-      mutate(sample = paste0("S", 1:n())) %>%
-      mutate(new_dir = file.path(new_dir, paste0("sample=", sample)))
-
-    # Move parquet files
-    for (i in 1:nrow(dirs_unpacked)) {
-      unlink(dirs_unpacked$new_dir[i], recursive = TRUE)
-      dir.create(path = dirs_unpacked$new_dir[i], showWarnings = TRUE)
-      file.copy(from = list.files(dirs_unpacked$old_dir[i], full.names = TRUE, recursive = TRUE),
-                to = dirs_unpacked$new_dir[i], recursive = TRUE)
-    }
-
-    # Load parquet files
-    arrow_data <- open_dataset(new_dir)
-
-    # Change ids in parquet edgelist if necessary
-    # This check could become slow for larger datasets
-    # TODO: Look for alternative solution
-    if (!all(colnames(new_assay) %in% (arrow_data %>% pull(component, as_vector = TRUE)))) {
-
-      # List all parquet files in new_dir
-      all_parquet_files <- list.files(new_dir, recursive = TRUE, full.names = TRUE)
-
-      # Update cell IDs with the same rules as Seurat:::CheckDuplicateCellNames
-      for (i in seq_along(all_parquet_files)) {
-        parquet_file <- all_parquet_files[i]
-        edgelist <- open_dataset(parquet_file) %>%
-          mutate(id = i) %>%
-          mutate(component = str_c(component, id, sep = "_")) %>%
-          select(-id)
-        write_parquet(x = edgelist, sink = parquet_file)
-        rm(edgelist)
+    # Move hive-style old sample diretories to new directory
+    for (i in seq_along(all_arrow_dirs)) {
+      hive_style_dirs <- list.files(all_arrow_dirs[i], full.names = TRUE)
+      for (ii in seq_along(hive_style_dirs)) {
+        file.copy(from = hive_style_dirs[ii], to = new_dir, recursive = TRUE)
       }
-      # Load parquet files from new directory
-      arrow_data <- open_dataset(new_dir)
     }
+
+    # Open arrow data
+    arrow_data <- open_dataset(new_dir)
   } else {
     # If any path in the input objects is NA, simply inactivate the
     # slots required to handle the arrow Dataset
