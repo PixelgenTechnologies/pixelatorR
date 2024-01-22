@@ -16,10 +16,7 @@ globalVariables(
 #' instead of drawing the heatmap
 #' @param ... Parameters passed to \code{pheatmap}
 #'
-#' @import dplyr
 #' @importFrom grDevices colorRampPalette
-#' @importFrom tidyr pivot_wider
-#' @importFrom tibble column_to_rownames
 #'
 #' @return A heatmap
 #'

@@ -13,8 +13,6 @@
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @import glue
-#' @import cli
 #' @importFrom arrow open_dataset
 #' @importFrom utils unzip
 #'
@@ -134,8 +132,6 @@ ReadMPX_arrow_edgelist <- function (
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @import glue
-#' @import cli
 #' @importFrom arrow write_dataset
 #' @importFrom utils unzip
 #'

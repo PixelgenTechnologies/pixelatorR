@@ -30,9 +30,6 @@ globalVariables(
 #' The \code{dim} is automatically passed to \code{custom_layout_function} and should not be
 #' included in \code{custom_layout_function_args}.
 #'
-#' @import dplyr
-#' @importFrom igraph layout_with_fr layout_with_kk layout_with_drl
-#'
 #' @rdname ComputeLayout
 #' @method ComputeLayout tbl_graph
 #'
@@ -372,7 +369,6 @@ ComputeLayout.Seurat <- function (
 #' Validate a custom layout function
 #'
 #' @import rlang
-#' @import glue
 #'
 #' @noRd
 #'

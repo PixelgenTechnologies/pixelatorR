@@ -8,8 +8,6 @@ globalVariables(
 
 #' @param verbose Print messages
 #'
-#' @importFrom tidygraph to_components
-#'
 #' @rdname KeepLargestComponent
 #' @method KeepLargestComponent tbl_graph
 #'

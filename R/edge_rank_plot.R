@@ -4,11 +4,6 @@ NULL
 
 #' @param group.by A character specifying a column to group by
 #'
-#' @import dplyr
-#' @import ggplot2
-#' @import cli
-#' @import glue
-#'
 #' @rdname EdgeRankPlot
 #' @method EdgeRankPlot data.frame
 #' @concept plots
@@ -36,9 +31,16 @@ EdgeRankPlot.data.frame <- function (
 ) {
 
   # Check object
-  stopifnot("'object' must be a nonempty 'data.frame'-like object" = length(object) > 0,
-            "column 'edges' is missing from 'object'" = "edges" %in% colnames(object))
-  stopifnot("'edges' must be an integer vector" = inherits(object[["edges"]], what = "integer"))
+  stopifnot(
+    "'object' must be a nonempty 'data.frame'-like object" =
+      length(object) > 0,
+    "column 'edges' is missing from 'object'" =
+      "edges" %in% colnames(object)
+  )
+  stopifnot(
+    "'edges' must be an integer vector" =
+      inherits(object[["edges"]], what = "integer")
+  )
 
   if (!is.null(group.by)) {
     stopifnot(

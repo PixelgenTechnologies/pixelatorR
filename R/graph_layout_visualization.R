@@ -29,11 +29,6 @@
 #' @rdname Plot2DGraph
 #'
 #' @import rlang
-#' @import glue
-#' @import ggplot2
-#' @import patchwork
-#' @importFrom ggraph ggraph geom_node_point geom_edge_link
-#' @importFrom tidygraph `%N>%`
 #'
 #' @return An object of class \code{patchwork}
 #'
@@ -302,8 +297,6 @@ Plot2DGraph <- function (
 #' @param ... Parameters passed to Plot2DGraph
 #' @inheritParams Plot2DGraph
 #'
-#' @importFrom patchwork wrap_elements wrap_plots plot_spacer
-#' @importFrom ggplot2 theme element_rect element_blank
 #' @importFrom stats setNames
 #' @importFrom grid textGrob gpar
 #'
