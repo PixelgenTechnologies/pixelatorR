@@ -692,7 +692,7 @@ Plot3DGraph <- function (
         plot_data %>% 
         
         # Normalize 3D coordinates to a sphere
-        mutate(norm_factor = 
+        mutate("norm_factor" = 
                  select(., x, y, z) %>% 
                  apply(MARGIN = 1, function(x) {
                    as.matrix(x) %>% 
