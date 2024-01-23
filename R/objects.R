@@ -703,7 +703,7 @@ RenameCells.CellGraphAssay <- function (
         hive_style_dir_sample1 <- list.files(session_tmpdir_random, full.names = TRUE)
         file.rename(from = hive_style_dir_sample1, file.path(session_tmpdir_random, paste0("sample=", new_sample_id)))
       } else {
-        abort(glue("Directory '{arrow_dirs}' is mising. Cannot rename cell IDs in edgelists."))
+        abort(glue("Directory '{arrow_dirs}' is missing Cannot rename cell IDs in edgelists."))
       }
     } else {
       # Handle renaming if more than 1 hive-style directories are present
