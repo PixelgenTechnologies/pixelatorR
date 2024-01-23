@@ -11,8 +11,10 @@ Plot3DGraph(
   assay = NULL,
   layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   project = FALSE,
-  aspectmode = c("data", "auto"),
-  color = "darkred",
+  aspectmode = c("data", "cube"),
+  colors = c("lightgrey", "darkred"),
+  use_palette = NULL,
+  reversescale = FALSE,
   showgrid = TRUE,
   log_scale = TRUE,
   node_size = 2,
@@ -34,14 +36,18 @@ Plot3DGraph(
 
 \item{project}{Project the nodes onto a sphere. Default FALSE}
 
-\item{aspectmode}{Set aspect ratio to one of "data", "auto" or "cube".
+\item{aspectmode}{Set aspect ratio to one of "data" or "cube".
 If "cube", this scene's axes are drawn as a cube, regardless of the axes' ranges.
 If "data", this scene's axes are drawn in proportion with the axes' ranges.
-If "auto", this scene's axes are drawn using the results of "data" except when one axis is more than four times the size of the two others, where in that case the results of "cube" are used.
 
 Default "data"}
 
-\item{color}{Color the nodes expressing a marker. Default "darkred"}
+\item{colors}{Color the nodes expressing a marker. Must be a character vector with two colornames. A continuous scale
+will be created from the first color (low abundance) to the second color (high abundance).}
+
+\item{use_palette}{Choose a color palette. This will override the color selection in \code{colors}. One of Greys, YlGnBu, Greens, YlOrRd, Bluered, RdBu, Reds, Blues, Picnic, Rainbow, Portland, Jet, Hot, Blackbody, Earth, Electric, Viridis, Cividis.}
+
+\item{reversescale}{Reverse the color scale. Default FALSE}
 
 \item{showgrid}{Show the grid lines. Default TRUE}
 
