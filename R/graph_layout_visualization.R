@@ -499,14 +499,16 @@ Plot2DGraphM <- function (
 #' @param layout_method  Select appropriate layout previously computed with
 #' \code{\link{ComputeLayout}}
 #' @param project Project the nodes onto a sphere. Default FALSE
-#' @param aspectmode Set aspect ratio to one of "data", "auto" or "cube". 
+#' @param aspectmode Set aspect ratio to one of "data" or "cube". 
 #' If "cube", this scene's axes are drawn as a cube, regardless of the axes' ranges. 
 #' If "data", this scene's axes are drawn in proportion with the axes' ranges. 
-#' If "auto", this scene's axes are drawn using the results of "data" except when one axis is more than four times the size of the two others, where in that case the results of "cube" are used. 
 #' 
 #' Default "data"
 #' 
-#' @param color Color the nodes expressing a marker. Default "darkred"
+#' @param colors Color the nodes expressing a marker. Must be a character vector with two colornames. A continuous scale
+#' will be created from the first color (low abundance) to the second color (high abundance).
+#' @param use_palette Choose a color palette. This will override the color selection in \code{colors}. One of Greys, YlGnBu, Greens, YlOrRd, Bluered, RdBu, Reds, Blues, Picnic, Rainbow, Portland, Jet, Hot, Blackbody, Earth, Electric, Viridis, Cividis.
+#' @param reversescale Reverse the color scale. Default FALSE 
 #' @param log_scale  Convert node counts to log-scale with \code{logp}
 #' @param node_size Size of nodes
 #' @param show_Bnodes  Should B nodes be included in the visualization?
@@ -540,8 +542,10 @@ Plot3DGraph <- function (
     assay = NULL,
     layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
     project = FALSE,
-    aspectmode = c("data", "auto"),
-    color = "darkred",
+    aspectmode = c("data", "cube"),
+    colors =  c("lightgrey", "darkred"),
+    use_palette = NULL,
+    reversescale = FALSE,
     showgrid = TRUE,
     log_scale = TRUE,
     node_size = 2,
@@ -551,12 +555,16 @@ Plot3DGraph <- function (
   
   # Validate input parameters
   stopifnot(
-    "'color' must be a character vector with a single color" =
-      is.character(color) &&
-      (length(color) == 1),
+    "'object' must be a Seurat object" =
+      inherits(object, what = "Seurat"),
+    "'colors' must be a character vector with 2 color names" =
+      is.character(colors) &&
+      (length(colors) == 2),
     "'cell_id' must be a non-empty character vector with a single cell ID" =
       is.character(cell_id) &&
-      (length(cell_id) == 1)
+      (length(cell_id) == 1),
+    "'cell_id' must be present in the object" =
+      cell_id %in% colnames(object)
   )
   
   if (!is.null(marker)) {
@@ -568,7 +576,7 @@ Plot3DGraph <- function (
   }
   
   # Check and select a layout method
-  layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
+  layout_method <- match.arg(layout_method)
   layout_method_ext <- switch (layout_method,
                                "fr" = "Fruchterman Reingold (fr)",
                                "kk" = "Kamada Kawai (kk)",
@@ -578,7 +586,6 @@ Plot3DGraph <- function (
   
   # Check and select an aspectmode
   aspectmode <- match.arg(aspectmode)
-  
   
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
@@ -597,10 +604,8 @@ Plot3DGraph <- function (
     abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'"))
   }
   
-  
   # Fetch component graph
   component_graph <- CellGraphs(cg_assay)[[cell_id]]
-  
   if (is.null(component_graph)) abort(glue("Missing cellgraph for component '{cell_id}'"))
   
   # unpack values
@@ -620,12 +625,14 @@ Plot3DGraph <- function (
       }
     }}
     
-    layout <- component_graph@layout[[layout_method]]
-    if (length(graph) == 0)
+  
+  if (!layout_method %in% names(component_graph@layout))
+    abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
+  layout <- component_graph@layout[[layout_method]]
+    
+  if (length(graph) == 0)
       abort(glue("Missing cellgraph for component '{cell_id}'"))
-    if (length(layout) == 0)
-      abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
-    if (length(layout) < 3)
+  if (length(layout) < 3)
       abort(glue("Too few dimensions for a 3D visualization of layout '{layout_method}' for component '{cell_id}'"))
     
     # Add node marker counts if needed
@@ -662,12 +669,16 @@ Plot3DGraph <- function (
         layout <- layout[order, ] %>% as_tibble()
       }
     }
-    
-    data_list <- list(graph = graph, layout = layout, type = attr(graph, "type"), layout_type = layout_method)
   
+  # Create colorscale, using a palette overrides the manually selected colors
+    if(!is.null(use_palette)){
+      colorscale <- use_palette
+    } else {
+      colorscale <- list(c(0, colors[1]), c(1, colors[2]))
+    }
+    
   # Create plot
-    plot_data <- data_list$layout %>% mutate(marker = data_list$graph %>% pull(marker))
-    colorscale <- list(c(0, 1), c("lightgrey", color))
+    plot_data <- layout %>% mutate(marker = graph %>% pull(marker))
     # Plot 3D graph using plotly
     if(!project){
     fig <- plotly::plot_ly(plot_data, 
@@ -675,7 +686,8 @@ Plot3DGraph <- function (
                            y = ~y, 
                            z = ~z, 
                            marker = list(color = ~marker, 
-                                         colorscale = colorscale, 
+                                         colorscale = colorscale,
+                                         reversescale = reversescale,
                                          showscale = TRUE, 
                                          size = node_size))
     fig <- fig %>% plotly::add_markers() %>% plotly::layout(scene = list(aspectmode=aspectmode,
@@ -705,7 +717,8 @@ Plot3DGraph <- function (
                              y = ~y_norm, 
                              z = ~z_norm, 
                              marker = list(color = ~marker, 
-                                           colorscale = colorscale, 
+                                           colorscale = colorscale,
+                                           reversescale = reversescale,
                                            showscale = TRUE, 
                                            size = node_size))
       fig <- fig %>% plotly::add_markers()  %>% plotly::layout(scene = list(xaxis = list(visible = showgrid),
