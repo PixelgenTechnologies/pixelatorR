@@ -5,3 +5,6 @@
 ^pixelatorR\.Rproj$
 ^\.github$
 ^default.profraw
+^_pkgdown\.yml$
+^docs$
+^pkgdown$

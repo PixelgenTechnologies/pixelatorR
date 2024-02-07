@@ -1,0 +1,104 @@
+url: ~
+
+home:
+  title: pixelatorR
+
+template:
+  bootstrap: 5
+  bootswatch: lumen
+
+development:
+  mode: auto
+
+navbar:
+  type: light
+  structure:
+    left:
+    - intro
+    - reference
+    - tutorials
+    - more
+    - news
+    right:
+    - search
+    - github
+  components:
+    github:
+      icon: fa-github
+      href: https://github.com/PixelgenTechnologies/pixelatorR
+      aria-label: GitHub
+    tutorials:
+      text: Tutorials
+      menu:
+      - text: Intro
+        href: articles/introduction.html
+      - text: Load Data
+        href: articles/load_data.html
+
+reference:
+  - title: Function reference
+  - subtitle: Load data
+  - contents:
+    - ReadMPX_Seurat
+    - ReadMPX_counts
+    - ReadMPX_item
+    - ReadMPX_edgelist
+    - ReadMPX_polarization
+    - ReadMPX_colocalization
+    - ReadMPX_arrow_edgelist
+  - subtitle: Visualization
+  - contents:
+    - CellCountPlot
+    - EdgeRankPlot
+    - pxContent_vs_Tau
+    - Plot2DGraph
+    - Plot2DGraphM
+    - Plot3DGraph
+  - subtitle: Graph layouts
+  - contents:
+    - ComputeLayout
+  - subtitle: Data processing
+  - contents:
+    - KeepLargestComponent
+    - RemoveCellGraphs
+    - RestoreArrowConnection
+    - LoadCellGraphs
+  - subtitle: Differential analysis
+  - contents:
+    - RunDPA
+    - RunDCA
+    - ColocalizationHeatmap
+  - subtitle: Seurat methods
+  - contents:
+    - PolarizationScoresToAssay
+    - ColocalizationScoresToAssay
+  - subtitle: CellGraphAssay and CellGraph methods
+  - contents:
+    - CellGraphAssay
+    - CellGraphAssay-methods
+    - CreateCellGraphAssay
+    - CellGraphs
+    - PolarizationScores
+    - ColocalizationScores
+    - ArrowData
+    - ArrowDir
+    - CellGraphData
+    - as.CellGraphAssay
+    - CellGraph
+    - CreateCellGraphObject
+  - subtitle: Graph functions
+  - contents:
+    - edgelist_to_simple_Anode_graph
+    - edgelist_to_simple_bipart_graph
+    - node_markers_counts
+    - color_by_marker
+  - subtitle: Export
+  - contents:
+    - export_edgelist_to_parquet
+    - WriteMPX
+  - subtitle: Misc
+  - contents:
+    - pixelatorR-package
+    - pxl_dataset
+    - show,CellGraph-method
+    - show,CellGraphAssay-method
