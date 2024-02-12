@@ -142,8 +142,8 @@ ComputeLayout.tbl_graph <- function (
 
     radii <- layout %>%
       mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
-      rowSums() %>%
-      sqrt()
+      rowSums()
+    radii <- sqrt(radii)
     max_radius <- max(radii)
     if (project_on_unit_sphere) {
       layout <- layout %>%

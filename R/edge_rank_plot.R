@@ -1,6 +1,12 @@
 #' @include generics.R
 NULL
 
+# Declarations used in package check
+globalVariables(
+  names = c('edges'),
+  package = 'pixelatorR',
+  add = TRUE
+)
 
 #' @param group.by A character specifying a column to group by
 #'
