@@ -5,3 +5,5 @@
 ^pixelatorR\.Rproj$
 ^\.github$
 ^default.profraw
+^docs
+^vignettes
