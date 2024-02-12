@@ -12,23 +12,23 @@ test_that(".add_coordinates_to_tbl_graph works as expected", {
 
   # Default
   expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]]))
-  expect_true(all(near(cg@cellgraph %>% pull(x) %>% head(n = 2),
+  expect_true(all(dplyr::near(cg@cellgraph %>% pull(x) %>% head(n = 2),
                c(0.3939094, -0.2168722), tol = 1e-5)))
-  expect_true(all(near(cg@cellgraph %>% pull(y) %>% head(n = 2),
+  expect_true(all(dplyr::near(cg@cellgraph %>% pull(y) %>% head(n = 2),
                c(0.2433697, -0.1628243), tol = 1e-5)))
 
   # No scaling
   expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]], scale = FALSE))
-  expect_true(all(near(cg@cellgraph %>% pull(x) %>% head(n = 2),
+  expect_true(all(dplyr::near(cg@cellgraph %>% pull(x) %>% head(n = 2),
                        c(57.77573, -31.80922), tol = 1e-5)))
-  expect_true(all(near(cg@cellgraph %>% pull(y) %>% head(n = 2),
+  expect_true(all(dplyr::near(cg@cellgraph %>% pull(y) %>% head(n = 2),
                        c(35.69567, -23.88188), tol = 1e-5)))
 
   # No scaling
   expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]], keep_aspect_ratio = FALSE))
-  expect_true(all(near(cg@cellgraph %>% pull(x) %>% head(n = 2),
+  expect_true(all(dplyr::near(cg@cellgraph %>% pull(x) %>% head(n = 2),
                        c(0.3939094, -0.2168722), tol = 1e-5)))
-  expect_true(all(near(cg@cellgraph %>% pull(y) %>% head(n = 2),
+  expect_true(all(dplyr::near(cg@cellgraph %>% pull(y) %>% head(n = 2),
                        c(0.2640113, -0.1766345), tol = 1e-5)))
 })
 

@@ -3,7 +3,7 @@ NULL
 
 # Declarations used in package check
 globalVariables(
-  names = c('g', 'from', 'to', 'node_type'),
+  names = c('g', 'from', 'to', 'node_type', 'id'),
   package = 'pixelatorR',
   add = TRUE
 )
@@ -117,9 +117,6 @@ LoadCellGraphs.FileSystemDataset <- function (
 
 
 #' @param force Force load graph(s) if they are already loaded
-#'
-#' @import cli
-#' @import glue
 #'
 #' @rdname LoadCellGraphs
 #' @method LoadCellGraphs CellGraphAssay
@@ -267,9 +264,6 @@ LoadCellGraphs.Seurat <- function (
 #' @param arrow_data An arrow dataset
 #' @param cell_ids A character vector of cell IDs
 #'
-#' @import dplyr
-#' @importFrom tidygraph as_tbl_graph `%E>%` `%N>%`
-#'
 #' @noRd
 .load_as_bipartite <- function (
   arrow_data,
@@ -370,9 +364,6 @@ LoadCellGraphs.Seurat <- function (
 #' @param arrow_data An arrow dataset
 #' @param cell_id A character vector of cell IDs
 #'
-#' @import dplyr
-#' @importFrom tidygraph as_tbl_graph
-#'
 #' @noRd
 .load_as_linegraph <- function (
   arrow_data,
@@ -417,9 +408,6 @@ LoadCellGraphs.Seurat <- function (
 #'
 #' @param arrow_data An arrow dataset
 #' @param cell_id A cell ID
-#'
-#' @import dplyr
-#' @importFrom tidygraph as_tbl_graph
 #'
 #' @noRd
 .load_as_anode <- function (
@@ -466,7 +454,7 @@ LoadCellGraphs.Seurat <- function (
 
       # Pivot marker counts into a wide format
       markers_wide <- markers_s %>%
-        tidyr::pivot_wider(id_cols = upia, names_from = marker, values_from = n, values_fill = 0)
+        pivot_wider(id_cols = upia, names_from = marker, values_from = n, values_fill = 0)
 
       cntMatrix <- as(markers_wide[, 2:ncol(markers_wide)] %>% as.matrix(), "dgCMatrix")
 

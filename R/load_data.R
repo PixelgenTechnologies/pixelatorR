@@ -13,8 +13,6 @@ globalVariables(
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @import glue
-#' @import cli
 #' @importFrom rhdf5 h5read
 #' @importFrom utils unzip
 #'
@@ -104,11 +102,7 @@ ReadMPX_counts <- function (
 #' @param ... Additional parameters passed to \code{\link{CreateSeuratObject}}
 #' @inheritParams ReadMPX_counts
 #'
-#' @import cli
 #' @import rlang
-#' @import glue
-#' @import tibble
-#' @import dplyr
 #' @importFrom SeuratObject CreateSeuratObject CreateAssayObject `VariableFeatures<-`
 #' @importFrom stats setNames
 #'
@@ -249,9 +243,7 @@ ReadMPX_Seurat <- function (
 #' @param items One of "colocalization", "polarization", "edgelist"
 #' @param verbose Print messages
 #'
-#' @import cli
 #' @import rlang
-#' @import dplyr
 #' @importFrom arrow read_parquet
 #' @importFrom utils read.csv
 #'

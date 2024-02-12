@@ -4,8 +4,6 @@ NULL
 #' @rdname PolarizationScoresToAssay
 #' @method PolarizationScoresToAssay data.frame
 #'
-#' @importFrom tidyr pivot_wider
-#'
 #' @examples
 #' library(pixelatorR)
 #' library(SeuratObject)
@@ -176,8 +174,6 @@ PolarizationScoresToAssay.Seurat <- function (
 
 #' @rdname ColocalizationScoresToAssay
 #' @method ColocalizationScoresToAssay data.frame
-#'
-#' @importFrom tidyr pivot_wider unite
 #'
 #' @examples
 #' library(pixelatorR)

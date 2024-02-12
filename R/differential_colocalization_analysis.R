@@ -10,7 +10,6 @@ NULL
 #' @rdname RunDCA
 #' @method RunDCA data.frame
 #'
-#' @import dplyr
 #' @importFrom stats wilcox.test p.adjust
 #' @importFrom progressr progressor
 #'

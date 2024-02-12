@@ -78,9 +78,7 @@ CellGraphAssay <- setClass(
 #' @param layout A \code{tbl_df} object with cell layout(s)
 #' @param verbose Print messages
 #'
-#' @import tibble
 #' @import rlang
-#' @importFrom igraph vertex_attr_names edge_attr_names
 #'
 #' @concept cellgraph
 #'
@@ -183,8 +181,6 @@ CreateCellGraphObject <- function (
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
 #' @import rlang
-#' @import glue
-#' @import dplyr
 #' @importFrom SeuratObject CreateAssayObject
 #' @importFrom Matrix rowSums colSums
 #' @concept assay
@@ -319,7 +315,6 @@ CreateCellGraphAssay <- function (
 #' @param slot Information to pull from object (cellgraph, meta_data, layout)
 #'
 #' @import rlang
-#' @import glue
 #'
 #' @rdname CellGraphData
 #'
@@ -772,7 +767,6 @@ RenameCells.CellGraphAssay <- function (
 #' @param arrow_dir TODO
 #' @param arrow_data An \code{R6} class object created with arrow
 #'
-#' @import dplyr
 #' @import rlang
 #'
 #' @rdname as.CellGraphAssay
@@ -1330,11 +1324,6 @@ NULL
 #'
 #' @param object A \code{CellGraph} object
 #'
-#' @import tidygraph
-#' @import tibble
-#' @import cli
-#' @importFrom igraph gsize
-#'
 #' @examples
 #'
 #' library(pixelatorR)
@@ -1598,8 +1587,7 @@ subset.CellGraphAssay <- function (
 #' @concept assay
 #' @method merge CellGraphAssay
 #'
-#' @import dplyr
-#' @importFrom SeuratObject RowMergeSparseMatrices Cells
+#' @importFrom SeuratObject RowMergeSparseMatrices Cells Key Key<- RenameCells
 #' @importFrom stringr str_c
 #' @importFrom arrow open_dataset write_parquet
 #'
@@ -1778,7 +1766,6 @@ merge.CellGraphAssay <- function (
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @import cli
 #'
 #' @noRd
 .validate_polarization <- function (

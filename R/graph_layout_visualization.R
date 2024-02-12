@@ -1,3 +1,9 @@
+globalVariables(
+  names = c('norm_factor'),
+  package = 'pixelatorR',
+  add = TRUE
+)
+
 #' Plot 2D graph layouts
 #'
 #' Plot 2D component graph layouts computed with \code{\link{ComputeLayout}} and
@@ -29,11 +35,6 @@
 #' @rdname Plot2DGraph
 #'
 #' @import rlang
-#' @import glue
-#' @import ggplot2
-#' @import patchwork
-#' @importFrom ggraph ggraph geom_node_point geom_edge_link
-#' @importFrom tidygraph `%N>%`
 #'
 #' @return An object of class \code{patchwork}
 #'
@@ -302,8 +303,6 @@ Plot2DGraph <- function (
 #' @param ... Parameters passed to Plot2DGraph
 #' @inheritParams Plot2DGraph
 #'
-#' @importFrom patchwork wrap_elements wrap_plots plot_spacer
-#' @importFrom ggplot2 theme element_rect element_blank
 #' @importFrom stats setNames
 #' @importFrom grid textGrob gpar
 #'
@@ -485,4 +484,220 @@ Plot2DGraphM <- function (
   if (length(leg) > 0) leg <- tmp$grobs[[leg]]
   else leg <- NULL
   leg
+}
+
+
+#' Plot 3D graph layouts
+#'
+#' Plot a 3D component graph layout computed with \code{\link{ComputeLayout}} and
+#' color nodes by a marker.
+#'
+#' @param object  A \code{Seurat} object
+#' @param cell_id  ID of component to visualize
+#' @param marker Name of marker to color the nodes by
+#' @param assay Name of assay to pull data from
+#' @param layout_method  Select appropriate layout previously computed with
+#' \code{\link{ComputeLayout}}
+#' @param project Project the nodes onto a sphere. Default FALSE
+#' @param aspectmode Set aspect ratio to one of "data" or "cube".
+#' If "cube", this scene's axes are drawn as a cube, regardless of the axes' ranges.
+#' If "data", this scene's axes are drawn in proportion with the axes' ranges.
+#'
+#' Default "data"
+#'
+#' @param colors Color the nodes expressing a marker. Must be a character vector
+#' with at least two color names.
+#' @param log_scale  Convert node counts to log-scale with \code{logp}
+#' @param node_size Size of nodes
+#' @param show_Bnodes  Should B nodes be included in the visualization?
+#' This option is only applicable to bipartite graphs.
+#' @param ... Additional parameters
+#' @param showgrid Show the grid lines. Default TRUE
+#'
+#' @rdname Plot3DGraph
+#'
+#'
+#' @return A interactive 3D plot of a component graph layout as a \code{plotly} object
+#'
+#' @examples
+#' library(pixelatorR)
+#' pxl_file <- system.file("extdata/PBMC_10_cells",
+#'                         "Sample01_test.pxl",
+#'                         package = "pixelatorR")
+#'
+#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- LoadCellGraphs(seur, cells = colnames(seur)[1:10])
+#' seur[["mpxCells"]] <- KeepLargestComponent(seur[["mpxCells"]])
+#' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 3)
+#'
+#' Plot3DGraph(seur, cell_id = colnames(seur)[1], marker = "HLA-ABC")
+#'
+#' @export
+Plot3DGraph <- function (
+  object,
+  cell_id,
+  marker = NULL,
+  assay = NULL,
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  project = FALSE,
+  aspectmode = c("data", "cube"),
+  colors =  c("lightgrey", "mistyrose", "red", "darkred"),
+  showgrid = TRUE,
+  log_scale = TRUE,
+  node_size = 2,
+  show_Bnodes = FALSE,
+  ...
+) {
+
+  # Validate input parameters
+  stopifnot(
+    "'object' must be a Seurat object" =
+      inherits(object, what = "Seurat"),
+    "'colors' must be a character vector with at least 2 color names" =
+      is.character(colors) &&
+      (length(colors) >= 2),
+    "'cell_id' must be a non-empty character vector with a single cell ID" =
+      is.character(cell_id) &&
+      (length(cell_id) == 1),
+    "'cell_id' must be present in the object" =
+      cell_id %in% colnames(object)
+  )
+
+  if (!is.null(marker)) {
+    stopifnot(
+      "'marker' must be a character of length 1" =
+        is.character(marker) &&
+        (length(marker) == 1)
+    )
+  }
+
+  # Check and select a layout method
+  layout_method <- match.arg(layout_method, c("pmds", "wpmds", "fr", "kk", "drl"))
+  layout_method_ext <- switch (layout_method,
+                               "fr" = "Fruchterman Reingold (fr)",
+                               "kk" = "Kamada Kawai (kk)",
+                               "drl" = "DrL graph layout generator (drl)",
+                               "pmds" = "pivot MDS (pmds)"
+  )
+
+  # Check and select an aspectmode
+  aspectmode <- match.arg(aspectmode, choices = c("data", "cube"))
+
+  # Use default assay if assay = NULL
+  if (!is.null(assay)) {
+    stopifnot(
+      "'assay' must be a character of length 1" =
+        is.character(assay) &&
+        (length(assay) == 1)
+    )
+  } else {
+    assay <- DefaultAssay(object)
+  }
+
+  # Validate assay
+  cg_assay <- object[[assay]]
+  if (!inherits(cg_assay, what = "CellGraphAssay")) {
+    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'"))
+  }
+
+  # Fetch component graph
+  component_graph <- CellGraphs(cg_assay)[[cell_id]]
+  if (is.null(component_graph)) abort(glue("Missing cellgraph for component '{cell_id}'"))
+
+  # unpack values
+  graph <- component_graph@cellgraph
+
+  # Validate marker
+  if (!is.null(marker)) {
+    if (marker == "node_type") {
+      stopifnot(
+        "marker = 'node_type' can only be used for bipartite graphs" =
+          attr(graph, "type") == "bipartite"
+      )
+    } else {
+      if (!marker %in% colnames(component_graph@counts)) {
+        abort(glue("'{marker}' is missing from node count matrix ",
+                   "for component {cell_id}"))
+      }
+    }
+  }
+
+
+  if (!layout_method %in% names(component_graph@layout))
+    abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
+  layout <- component_graph@layout[[layout_method]]
+
+  if (length(graph) == 0)
+      abort(glue("Missing cellgraph for component '{cell_id}'"))
+  if (length(layout) < 3)
+      abort(glue("Too few dimensions for a 3D visualization of layout '{layout_method}' for component '{cell_id}'"))
+
+  # Add node marker counts if needed
+  if (!is.null(marker)) {
+    if (marker != "node_type") {
+      layout <- layout %>%
+        mutate(marker = component_graph@counts[, marker]) %>%
+        {
+          if (log_scale) {
+            mutate(., marker = log1p(marker))
+          } else {
+            .
+          }
+        }
+    }
+  }
+
+  # Remove B nodes if show_Bnodes=FALSE
+  if ((attr(graph, "type") == "bipartite")) {
+    layout$node_type <- graph %>% pull(node_type)
+    if (!show_Bnodes) {
+      layout <- layout %>%
+        filter(node_type == "A")
+    }
+  }
+
+  # Project data to sphere if project=TRUE
+  if (project) {
+    # Normalize 3D coordinates to a sphere
+    layout <- layout %>%
+      mutate(norm_factor = select(., x, y, z) %>%
+             apply(MARGIN = 1, function(x) {
+               as.matrix(x) %>%
+                 norm(type = "F")
+             }),
+           x = x / norm_factor,
+           y = y / norm_factor,
+           z = z / norm_factor)
+  }
+
+  # Plot 3D graph using plotly
+  fig <- plotly::plot_ly(layout,
+                         x = ~x,
+                         y = ~y,
+                         z = ~z,
+                         marker = list(size = node_size),
+                         mode = "scatter3d")
+  if (!is.null(marker)) {
+    if (marker == "node_type") {
+      fig <- fig %>%
+        plotly::add_markers(color = ~node_type, colors = c("blue", "orange"))
+    } else {
+      fig <- fig %>%
+        plotly::add_markers(color = ~marker, colors = colors)
+    }
+  } else {
+    fig <- fig %>%
+      plotly::add_markers()
+  }
+
+  fig <- fig %>%
+    plotly::layout(scene = list(aspectmode = aspectmode,
+                                xaxis = list(visible = showgrid),
+                                yaxis = list(visible = showgrid),
+                                zaxis = list(visible = showgrid)),
+                   annotations = list(x = 1,
+                                      y = 0.98,
+                                      text = ifelse(!is.null(marker), marker, ""),
+                                      showarrow = FALSE))
+  return(fig)
 }

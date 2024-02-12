@@ -19,9 +19,6 @@ globalVariables(
 #' @param component_edge_list An object of class \code{tbl_df}
 #' @param k Number of neighbors to include
 #'
-#' @import dplyr
-#' @import tibble
-#' @importFrom tidyr spread
 #' @importFrom igraph get.adjacency connect
 #'
 #' @return A matrix with node marker counts
@@ -34,15 +31,22 @@ node_markers_counts <- function (
 ) {
 
   # Check input parameters
-  stopifnot("component_edge_list should be a non-empty tbl_df" = inherits(component_edge_list, what = "tbl_df") & (nrow(component_edge_list) > 0),
-            "k should be an integer vector of length 1" = inherits(k, what = c("numeric", "integer")) & (length(k) == 1),
-            "One or several of 'upia', 'upib', 'marker' are missing from component_edge_list" = all(c('upia', 'upib', 'marker') %in% colnames(component_edge_list)))
+  stopifnot(
+    "component_edge_list should be a non-empty tbl_df" =
+      inherits(component_edge_list, what = "tbl_df") &&
+      (nrow(component_edge_list) > 0),
+    "k should be an integer vector of length 1" =
+      inherits(k, what = c("numeric", "integer")) &&
+      (length(k) == 1),
+    "One or several of 'upia', 'upib', 'marker' are missing from component_edge_list" =
+      all(c('upia', 'upib', 'marker') %in% colnames(component_edge_list))
+  )
 
   component_counts <-
     component_edge_list %>%
     group_by(upia, marker) %>%
     count() %>%
-    spread(marker, n, fill = 0) %>%
+    pivot_wider(id_cols = "upia", names_from = "marker", values_from = "n", values_fill = 0) %>%
     column_to_rownames("upia")
 
   if (k > 0) {

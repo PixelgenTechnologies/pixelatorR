@@ -38,8 +38,6 @@ globalVariables(
 #' above this threshold are replaced with the value for the 99th quantile. The same
 #' thing applies to the lower bound but the other way around.
 #'
-#' @import dplyr
-#'
 #' @export
 #'
 color_by_marker <- function (
@@ -203,8 +201,6 @@ color_by_marker <- function (
 #'
 #' @param data A \code{tbl_graph} object
 #'
-#' @importFrom tidygraph `%E>%` `%N>%`
-#'
 #' @noRd
 #'
 .convert_tbl_graph_to_json <- function (
@@ -245,8 +241,6 @@ color_by_marker <- function (
 #' @param layout_coordinates A \code{tbl_df} with layout coordinates
 #' @param scale rescale coordinates
 #' @param keep_aspect_ratio Should the aspect ratio be kept?
-#'
-#' @importFrom tidygraph `%N>%`
 #'
 #' @noRd
 #'
