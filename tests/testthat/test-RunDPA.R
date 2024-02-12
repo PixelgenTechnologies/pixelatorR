@@ -12,7 +12,7 @@ polarization_table_merged <-  bind_rows(polarization_table1, polarization_table2
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
-seur_merged <- suppressWarnings(merge(seur1, seur2))
+seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 
 test_that("RunDPA works as expected on a data.frame", {
 
@@ -58,3 +58,4 @@ test_that("RunDPA fails with invalid input",  {
   expect_error(dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", target = "Sample1", reference = "Invalid"),
                "'reference' must be present in 'contrast_column' column")
 })
+

@@ -8,7 +8,7 @@
 \usage{
 \method{subset}{CellGraphAssay}(x, features = NULL, cells = NULL, ...)
 
-\method{merge}{CellGraphAssay}(x = NULL, y = NULL, merge.data = TRUE, ...)
+\method{merge}{CellGraphAssay}(x = NULL, y = NULL, merge.data = TRUE, add.cell.ids = NULL, ...)
 }
 \arguments{
 \item{x}{A \code{\link{CellGraphAssay}} object}
@@ -23,6 +23,8 @@
 
 \item{merge.data}{Merge the data slots instead of just merging the counts (which requires renormalization);
 this is recommended if the same normalization approach was applied to all objects}
+
+\item{add.cell.ids}{A character vector with sample names}
 }
 \value{
 A \code{CellGraphAssay} object

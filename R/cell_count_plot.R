@@ -118,7 +118,7 @@ CellCountPlot.data.frame <- function(
 #' seur_obj1 <- seur_obj2 <- seur_obj
 #' seur_obj1$sample <- "1"
 #' seur_obj2$sample <- "2"
-#' seur_obj_merged <- merge(seur_obj1, seur_obj2)
+#' seur_obj_merged <- merge(seur_obj1, seur_obj2, add.cell.ids = c("A", "B"))
 #' CellCountPlot(seur_obj_merged, group.by = "labels", color.by = "sample")
 #'
 #' @export
