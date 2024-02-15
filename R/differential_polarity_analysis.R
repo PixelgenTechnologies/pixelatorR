@@ -39,7 +39,7 @@ RunDPA.data.frame <- function (
   contrast_column,
   group_vars = NULL,
   alternative = c("two.sided", "less", "greater"),
-  conf.int = TRUE,
+  conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -76,8 +76,8 @@ RunDPA.data.frame <- function (
     "'morans_z' and 'component' must be present in polarization score table" =
       all(c("marker", "morans_z", "component") %in% colnames(object)),
 
-    "'conf.int' must be TRUE or FALSE" =
-      inherits(conf.int, what = "logical") & (length(conf.int) == 1)
+    "'conf_int' must be TRUE or FALSE" =
+      inherits(conf_int, what = "logical") & (length(conf_int) == 1)
   )
 
   if (!is.null(group_vars)) {
@@ -137,7 +137,7 @@ RunDPA.data.frame <- function (
       y = y,
       paired = FALSE,
       alternative = alternative,
-      conf.int = conf.int
+      conf.int = conf_int
     )
 
     # Tidy up results
@@ -203,7 +203,7 @@ RunDPA.Seurat <- function (
   assay = NULL,
   group_vars = NULL,
   alternative = c("two.sided", "less", "greater"),
-  conf.int = TRUE,
+  conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -293,7 +293,7 @@ RunDPA.Seurat <- function (
                           contrast_column = contrast_column,
                           group_vars = group_vars,
                           alternative = alternative,
-                          conf.int = conf.int,
+                          conf_int = conf_int,
                           p_adjust_method = p_adjust_method,
                           verbose = verbose)
 

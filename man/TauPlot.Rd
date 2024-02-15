@@ -8,9 +8,9 @@
 \usage{
 TauPlot(object, ...)
 
-\method{TauPlot}{data.frame}(object, group.by = NULL, ...)
+\method{TauPlot}{data.frame}(object, group_by = NULL, ...)
 
-\method{TauPlot}{Seurat}(object, group.by = NULL, ...)
+\method{TauPlot}{Seurat}(object, group_by = NULL, ...)
 }
 \arguments{
 \item{object}{A \code{data.frame}-like object or a \code{Seurat} object with
@@ -18,7 +18,7 @@ TauPlot(object, ...)
 
 \item{...}{Not yet implemented}
 
-\item{group.by}{A column in the object representing a 'character' or 'factor'
+\item{group_by}{A column in the object representing a 'character' or 'factor'
 to group data by}
 }
 \value{
@@ -49,7 +49,7 @@ seur_obj1 <- seur_obj2 <- seur_obj
 seur_obj1$sample <- "1"
 seur_obj2$sample <- "2"
 seur_obj_merged <- merge(seur_obj1, seur_obj2, add.cell.ids = c("A", "B"))
-TauPlot(seur_obj_merged, group.by = "sample")
+TauPlot(seur_obj_merged, group_by = "sample")
 
 }
 \seealso{

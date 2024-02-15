@@ -179,7 +179,7 @@ CellCountPlot <- function (
 #'
 #' @param object A \code{data.frame}-like object or a \code{Seurat} object with
 #' \code{umi_per_upia}, \code{tau} and \code{tau_type} values
-#' @param group.by A column in the object representing a 'character' or 'factor'
+#' @param group_by A column in the object representing a 'character' or 'factor'
 #' to group data by
 #' @param ... Not yet implemented
 #'
@@ -333,7 +333,7 @@ edgelist_to_simple_Anode_graph <- function (
 #' This column must include \code{target} and \code{reference}.
 #' @param group_vars An optional character vector with column names to split the tests by.
 #' @param alternative One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)
-#' @param conf.int Should confidence intervals be computed? (see \code{?wilcox.test} for details)
+#' @param conf_int Should confidence intervals be computed? (see \code{?wilcox.test} for details)
 #' @param p_adjust_method One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 #' (see \code{?p.adjust} for details)
 #' @param verbose Print messages
@@ -384,7 +384,7 @@ RunDPA <- function (
 #' This column must include \code{target} and \code{reference}.
 #' @param group_vars An optional character vector with column names to group the tests by.
 #' @param alternative One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)
-#' @param conf.int Should confidence intervals be computed? (see \code{?wilcox.test} for details)
+#' @param conf_int Should confidence intervals be computed? (see \code{?wilcox.test} for details)
 #' @param p_adjust_method One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 #' (see \code{?p.adjust} for details)
 #' @param verbose Print messages

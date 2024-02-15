@@ -28,7 +28,7 @@ NULL
 #'
 TauPlot.data.frame <- function (
   object,
-  group.by = NULL,
+  group_by = NULL,
   ...
 ) {
 
@@ -47,12 +47,12 @@ TauPlot.data.frame <- function (
       inherits(object[, "tau_type", drop = TRUE],
                what = c("character", "factor"))
   )
-  if (!is.null(group.by)) {
-    if (!group.by %in% colnames(object)) {
-      abort(glue("'{group.by}' is missing"))
+  if (!is.null(group_by)) {
+    if (!group_by %in% colnames(object)) {
+      abort(glue("'{group_by}' is missing"))
     }
-    stopifnot("'group.by' must be a character or factor" =
-                inherits(object[, group.by, drop = TRUE],
+    stopifnot("'group_by' must be a character or factor" =
+                inherits(object[, group_by, drop = TRUE],
                          what = c("character", "factor")))
   }
 
@@ -61,7 +61,7 @@ TauPlot.data.frame <- function (
     ggplot(aes(tau, umi_per_upia, color = tau_type)) +
     geom_point() +
     {
-      if (!is.null(group.by)) {
+      if (!is.null(group_by)) {
         facet_grid(~ sample)
       }
     } +
@@ -83,13 +83,13 @@ TauPlot.data.frame <- function (
 #' seur_obj1$sample <- "1"
 #' seur_obj2$sample <- "2"
 #' seur_obj_merged <- merge(seur_obj1, seur_obj2, add.cell.ids = c("A", "B"))
-#' TauPlot(seur_obj_merged, group.by = "sample")
+#' TauPlot(seur_obj_merged, group_by = "sample")
 #'
 #' @export
 #'
 TauPlot.Seurat <- function (
   object,
-  group.by = NULL,
+  group_by = NULL,
   ...
 ) {
 
@@ -102,5 +102,5 @@ TauPlot.Seurat <- function (
   mData <- object[[]]
 
   # Create plot
-  TauPlot(mData, group.by = group.by)
+  TauPlot(mData, group_by = group_by)
 }

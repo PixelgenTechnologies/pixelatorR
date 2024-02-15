@@ -40,7 +40,7 @@ RunDCA.data.frame <- function (
   contrast_column,
   group_vars = NULL,
   alternative = c("two.sided", "less", "greater"),
-  conf.int = TRUE,
+  conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -71,9 +71,9 @@ RunDCA.data.frame <- function (
   stopifnot(
     "'morans_z' and 'component' must be present in colocalization score table" =
       all(c("marker_1", "marker_2", "pearson_z", "component") %in% colnames(object)),
-    "'conf.int' must be TRUE or FALSE" =
-      inherits(conf.int, what = "logical") &&
-      (length(conf.int) == 1)
+    "'conf_int' must be TRUE or FALSE" =
+      inherits(conf_int, what = "logical") &&
+      (length(conf_int) == 1)
   )
   if (!is.null(group_vars)) {
     stopifnot(
@@ -130,7 +130,7 @@ RunDCA.data.frame <- function (
     y <- colocalization_contrast %>% filter(.data[[contrast_column]] == reference) %>% pull(pearson_z)
 
     # Run wilcox.test
-    result <- wilcox.test(x = x, y = y, paired = FALSE, alternative = alternative, conf.int = conf.int)
+    result <- wilcox.test(x = x, y = y, paired = FALSE, alternative = alternative, conf.int = conf_int)
 
     # Tidy up results
     result <- result %>% .tidy() %>%
@@ -195,7 +195,7 @@ RunDCA.Seurat <- function (
   assay = NULL,
   group_vars = NULL,
   alternative = c("two.sided", "less", "greater"),
-  conf.int = TRUE,
+  conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -285,7 +285,7 @@ RunDCA.Seurat <- function (
                             contrast_column = contrast_column,
                             group_vars = group_vars,
                             alternative = alternative,
-                            conf.int = conf.int,
+                            conf_int = conf_int,
                             p_adjust_method = p_adjust_method,
                             verbose = verbose)
 

@@ -15,7 +15,7 @@ RunDPA(object, ...)
   contrast_column,
   group_vars = NULL,
   alternative = c("two.sided", "less", "greater"),
-  conf.int = TRUE,
+  conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -29,7 +29,7 @@ RunDPA(object, ...)
   assay = NULL,
   group_vars = NULL,
   alternative = c("two.sided", "less", "greater"),
-  conf.int = TRUE,
+  conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -51,7 +51,7 @@ This column must include \code{target} and \code{reference}.}
 
 \item{alternative}{One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)}
 
-\item{conf.int}{Should confidence intervals be computed? (see \code{?wilcox.test} for details)}
+\item{conf_int}{Should confidence intervals be computed? (see \code{?wilcox.test} for details)}
 
 \item{p_adjust_method}{One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 (see \code{?p.adjust} for details)}

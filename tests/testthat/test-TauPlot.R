@@ -15,5 +15,5 @@ test_that("TauPlot works for data.frame-like objects", {
 
 test_that("TauPlot fails with invalid input", {
   expect_error(TauPlot("invalid"))
-  expect_error(TauPlot(seur_obj, group.by = "invalid"))
+  expect_error(TauPlot(seur_obj, group_by = "invalid"))
 })
