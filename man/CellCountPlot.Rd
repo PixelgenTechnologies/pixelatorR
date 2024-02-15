@@ -80,7 +80,7 @@ CellCountPlot(seur_obj_merged, group_by = "labels", color_by = "sample")
 }
 \seealso{
 Other QC-plots: 
-\code{\link{pxContent_vs_Tau}()}
+\code{\link{TauPlot}()}
 }
 \concept{QC-plots}
 \concept{plots}

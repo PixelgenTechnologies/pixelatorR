@@ -183,17 +183,17 @@ CellCountPlot <- function (
 #' to group data by
 #' @param ... Not yet implemented
 #'
-#' @rdname pxContent_vs_Tau
+#' @rdname TauPlot
 #'
 #' @return A \code{ggplot} object
 #'
-#' @export pxContent_vs_Tau
+#' @export TauPlot
 #'
-pxContent_vs_Tau <- function (
+TauPlot <- function (
   object,
   ...
 ) {
-  UseMethod(generic = "pxContent_vs_Tau", object = object)
+  UseMethod(generic = "TauPlot", object = object)
 }
 
 #' Write MPX data objects

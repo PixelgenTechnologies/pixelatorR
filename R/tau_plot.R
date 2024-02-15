@@ -7,8 +7,8 @@ globalVariables(
 #' @include generics.R
 NULL
 
-#' @rdname pxContent_vs_Tau
-#' @method pxContent_vs_Tau data.frame
+#' @rdname TauPlot
+#' @method TauPlot data.frame
 #'
 #' @examples
 #'
@@ -22,11 +22,11 @@ NULL
 #' seur_obj
 #'
 #' # Plot with data.frame
-#' pxContent_vs_Tau(seur_obj[[]])
+#' TauPlot(seur_obj[[]])
 #'
 #' @export
 #'
-pxContent_vs_Tau.data.frame <- function (
+TauPlot.data.frame <- function (
   object,
   group.by = NULL,
   ...
@@ -71,23 +71,23 @@ pxContent_vs_Tau.data.frame <- function (
     labs(x = "Marker specificity (Tau)", y = "Pixel content (UMI/UPIA)")
 }
 
-#' @rdname pxContent_vs_Tau
-#' @method pxContent_vs_Tau Seurat
+#' @rdname TauPlot
+#' @method TauPlot Seurat
 #'
 #' @examples
 #' # Plot with Seurat object
-#' pxContent_vs_Tau(seur_obj)
+#' TauPlot(seur_obj)
 #'
 #' # Group by sample in merged data
 #' seur_obj1 <- seur_obj2 <- seur_obj
 #' seur_obj1$sample <- "1"
 #' seur_obj2$sample <- "2"
 #' seur_obj_merged <- merge(seur_obj1, seur_obj2, add.cell.ids = c("A", "B"))
-#' pxContent_vs_Tau(seur_obj_merged, group.by = "sample")
+#' TauPlot(seur_obj_merged, group.by = "sample")
 #'
 #' @export
 #'
-pxContent_vs_Tau.Seurat <- function (
+TauPlot.Seurat <- function (
   object,
   group.by = NULL,
   ...
@@ -102,5 +102,5 @@ pxContent_vs_Tau.Seurat <- function (
   mData <- object[[]]
 
   # Create plot
-  pxContent_vs_Tau(mData, group.by = group.by)
+  TauPlot(mData, group.by = group.by)
 }
