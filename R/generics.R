@@ -150,9 +150,9 @@ EdgeRankPlot <- function (
 #' @family QC-plots
 #'
 #' @param object A \code{data.frame}-like object or a \code{Seurat} object
-#' @param group.by A column in the object representing a 'character' or 'factor'
+#' @param group_by A column in the object representing a 'character' or 'factor'
 #' to group data by
-#' @param color.by A column in the object representing a 'character' or 'factor'
+#' @param color_by A column in the object representing a 'character' or 'factor'
 #' to color data by
 #' @param show_count Place the count on top of the bar or next to the bar if
 #' \code{flip_axes = TRUE}
