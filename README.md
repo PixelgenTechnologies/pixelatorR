@@ -1,19 +1,77 @@
+# pixelatorR
+
 <!-- badges: start -->
 [![codecov](https://codecov.io/gh/PixelgenTechnologies/pixelatorR/graph/badge.svg?token=ClGH1zHvuD)](https://codecov.io/gh/PixelgenTechnologies/pixelatorR)
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
-# pixelatorR
+[**Installation**](#installation) |
+[**Usage**](#usage) |
+[**Notes**](#notes) |
+[**Contact**](#contact) |
+[**Credits**](#credits)
 
-The goal of `pixelatorR` is to provide the infrastructure to process, analyze and visualize MPX data.
+pixelatorR provides the infrastructure to process, analyze and visualize MPX data.
+
+<p align="center">
+    <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height=200
+     alt="Pixelgen Technologies" />
+</p>
+<div align="center">© 2023 - Pixelgen Technologies AB</div>
 
 ## Installation
 
-You can install the development version of `pixelatorR` with:
+pixelatorR can be installed from GitHub with:
 
 ``` r
-install.packages("devtools")
-devtools::install()
+remotes::install_github("PixelgenTechnologies/pixelatorR")
 ```
 
-Alternatively, open the project in RStudio, navigate to Build and then press Install.
+### Installation from source
+
+You can also install pixelatorR from source by cloning the repository.
+
+```shell
+git clone https://github.com/pixelgentechnologies/pixelatorR.git
+```
+
+From R:
+
+```r
+devtools::install("<path to pixelatorR directory")
+```
+
+or with:
+
+```r
+install.packages("<path to pixelatorR directory", repos = NULL, type = "source")
+```
+
+## Usage
+
+Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) for a step-by step guide on MPX data analysis.
+
+## Notes
+
+pixelatorR is designed to work with objects types from the [SeuratObject](https://github.com/satijalab/seurat-object) R package. For the best user experience, we recommend installing [Seurat v5](https://satijalab.org/seurat/).
+
+## Contact
+
+For feature requests or bug reports, please use the GitHub [issues](https://github.com/PixelgenTechnologies/pixelatorR/issues).
+
+You can also email the development team at [developers@pixelgen.com](mailto:developers@pixelgen.com).
+
+## Credits
+
+pixelatorR is developed and maintained by the [developers](https://github.com/PixelgenTechnologies) at [Pixelgen Technologies](https://pixelgen.com).
+
+When using pixelator in your research, please cite the following publication:
+
+> Karlsson, Filip, Tomasz Kallas, Divya Thiagarajan, Max Karlsson, Maud Schweitzer, Jose Fernandez Navarro, Louise Leijonancker, _et al._ “Molecular Pixelation: Single Cell Spatial Proteomics by Sequencing.” bioRxiv, June 8, 2023. https://doi.org/10.1101/2023.06.05.543770.
+
+Main developers:
+
+- Ludvig Larsson ([@ludvigla](https://github.com/ludvigla))
+- Max Karlsson ([@maxkarlsson](https://github.com/maxkarlsson))
+
+A huge thank you to all [code contributors](https://github.com/PixelgenTechnologies/pixelatorR/graphs/contributors)!
