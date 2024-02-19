@@ -11,7 +11,7 @@
 [**Contact**](#contact) |
 [**Credits**](#credits)
 
-pixelatorR provides the infrastructure to process, analyze and visualize MPX data.
+pixelatorR provides the infrastructure to process, analyze and visualize MPX data for R users.
 
 <p align="center">
     <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height=200
@@ -21,7 +21,7 @@ pixelatorR provides the infrastructure to process, analyze and visualize MPX dat
 
 ## Installation
 
-pixelatorR can be installed from GitHub with:
+pixelatorR can be installed from GitHub by running the following code from R:
 
 ``` r
 remotes::install_github("PixelgenTechnologies/pixelatorR")
@@ -35,13 +35,13 @@ You can also install pixelatorR from source by cloning the repository.
 git clone https://github.com/pixelgentechnologies/pixelatorR.git
 ```
 
-From R:
+Then, in an R session, run:
 
 ```r
 devtools::install("<path to pixelatorR directory")
 ```
 
-or with:
+Alternatively, you can run:
 
 ```r
 install.packages("<path to pixelatorR directory", repos = NULL, type = "source")
@@ -49,7 +49,7 @@ install.packages("<path to pixelatorR directory", repos = NULL, type = "source")
 
 ## Usage
 
-Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) for a step-by step guide on MPX data analysis.
+Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) for a step-by step guide on MPX data analysis with pixelatorR.
 
 ## Notes
 
