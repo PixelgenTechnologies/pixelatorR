@@ -16,7 +16,7 @@ RunDCA(object, ...)
   contrast_column,
   group_vars = NULL,
   alternative = c("two.sided", "less", "greater"),
-  conf.int = TRUE,
+  conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -30,7 +30,7 @@ RunDCA(object, ...)
   assay = NULL,
   group_vars = NULL,
   alternative = c("two.sided", "less", "greater"),
-  conf.int = TRUE,
+  conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -52,7 +52,7 @@ This column must include \code{target} and \code{reference}.}
 
 \item{alternative}{One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)}
 
-\item{conf.int}{Should confidence intervals be computed? (see \code{?wilcox.test} for details)}
+\item{conf_int}{Should confidence intervals be computed? (see \code{?wilcox.test} for details)}
 
 \item{p_adjust_method}{One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 (see \code{?p.adjust} for details)}
@@ -109,7 +109,7 @@ dca_markers
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
-seur_merged <- merge(seur1, seur2)
+seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
 
 # Run DCA
 dca_markers <- RunDCA(seur_merged, contrast_column = "sample",

@@ -14,7 +14,7 @@ colocalization_table_merged <-  bind_rows(colocalization_table1, colocalization_
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
-seur_merged <- suppressWarnings(merge(seur1, seur2))
+seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 seur_merged <- subset(seur_merged, features = c("ACTB", "HLA-ABC"))
 
 test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatmap works on the output", {

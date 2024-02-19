@@ -45,33 +45,56 @@ LoadCellGraphs.FileSystemDataset <- function (
       (chunk_length > 0)
   )
 
-  # Ensure that all cell names are available in edgelist
-  stopifnot(
-    "All 'cells' must be present in the edgelist" =
-      all(cells %in% (object %>% pull(component, as_vector = TRUE)))
-  )
-
   # Validate load_as
   load_as <- match.arg(load_as, choices = c("bipartite", "Anode", "linegraph"))
 
   # Select load function
-  graph_load_fkn <- switch (load_as,
+  graph_load_fkn <- switch(load_as,
                             "bipartite" = .load_as_bipartite,
                             "Anode" = .load_as_anode,
-                            "linegraph" = .load_as_linegraph
-  )
+                            "linegraph" = .load_as_linegraph)
 
   # Convert edgelist to list of Cell Graphs
   if (verbose && check_global_verbosity())
     cli_alert("  Loading {length(cells)} edgelist(s) as {col_br_magenta(load_as)} graph(s)")
 
   # Split cells id into chunks
-  cells_chunks <- split(cells, ceiling(seq_along(cells) / chunk_length))
+  sample_id_table <- do.call(rbind, strsplit(cells, "_"))
+  if (ncol(sample_id_table) == 1) {
+    sample_id_table <- cbind("S1", sample_id_table)
+  }
+  colnames(sample_id_table) <- c("sample", "component")
+  sample_id_table <- as_tibble(sample_id_table) %>%
+    group_by(sample) %>%
+    mutate(group = ceiling(seq_len(n()) / chunk_length)) %>%
+    group_by(sample, group)
 
-  # Load cell graphs
-  p <- progressr::progressor(along = cells_chunks)
-  cellgraphs <- lapply(cells_chunks, function (cell_ids) {
-    g_list <- graph_load_fkn(object, cell_ids = cell_ids, add_markers = add_marker_counts)
+  key_pairs <- sample_id_table %>% group_keys()
+
+  sample_id_table_list <- sample_id_table %>%
+    group_split() %>%
+    as.list()
+
+  # Set up progressor
+  p <- progressr::progressor(along = sample_id_table_list)
+
+  # Process chunks
+  cellgraphs <- lapply(seq_along(sample_id_table_list), function (i) {
+
+    cell_ids <- sample_id_table_list[[i]]
+    sample_id <- key_pairs[i, 1, drop = TRUE]
+
+    # Load chunks for specific sample
+    object_filtered <- object %>% filter(sample == sample_id)
+    g_list <- try({graph_load_fkn(object_filtered,
+                             cell_ids = cell_ids[, 2, drop = TRUE],
+                             add_markers = add_marker_counts)}, silent = TRUE)
+
+    if (inherits(g_list, what = "try-error") || any(sapply(g_list, is.null))) {
+      abort(glue("Failed to load edge list data. Most likely reason is that invalid cells were provided."))
+    }
+
+    # Add marker counts
     if (add_marker_counts) {
       g_list <- lapply(g_list, function(g) {
         return(CreateCellGraphObject(g$graph, counts = g$counts, verbose = FALSE))
@@ -81,9 +104,13 @@ LoadCellGraphs.FileSystemDataset <- function (
         return(CreateCellGraphObject(g, verbose = FALSE))
       })
     }
+
+    # Log progress
     p()
     return(g_list)
   }) %>% Reduce(c, .)
+
+  cellgraphs <- setNames(cellgraphs, nm = cells)
 
   return(cellgraphs)
 }

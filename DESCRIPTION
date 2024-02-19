@@ -45,8 +45,10 @@ Suggests:
     duckdb,
     dbplyr
 Collate: 
-    'aaa.R'
     'generics.R'
+    'CellGraph.R'
+    'CellGraphAssay.R'
+    'aaa.R'
     'cell_count_plot.R'
     'colocalization_heatmap.R'
     'd3_graph_helpers.R'

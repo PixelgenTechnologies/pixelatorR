@@ -1,8 +1,14 @@
 #' @include generics.R
 NULL
 
+# Declarations used in package check
+globalVariables(
+  names = c('edges'),
+  package = 'pixelatorR',
+  add = TRUE
+)
 
-#' @param group.by A character specifying a column to group by
+#' @param group_by A character specifying a column to group by
 #'
 #' @rdname EdgeRankPlot
 #' @method EdgeRankPlot data.frame
@@ -26,7 +32,7 @@ NULL
 #'
 EdgeRankPlot.data.frame <- function (
   object,
-  group.by = NULL,
+  group_by = NULL,
   ...
 ) {
 
@@ -42,20 +48,20 @@ EdgeRankPlot.data.frame <- function (
       inherits(object[["edges"]], what = "integer")
   )
 
-  if (!is.null(group.by)) {
+  if (!is.null(group_by)) {
     stopifnot(
-      "'group.by' must be a character of length 1" =
-        is.character(group.by) &&
-        (length(group.by) == 1)
+      "'group_by' must be a character of length 1" =
+        is.character(group_by) &&
+        (length(group_by) == 1)
     )
-    if (!inherits(object[[group.by]], what = c("character", "factor"))) {
-      abort(glue("Invalid class '{class(object[[group.by]])}' for column ",
-                 "'{group.by}'. Expected a 'character' or 'factor'"))
+    if (!inherits(object[[group_by]], what = c("character", "factor"))) {
+      abort(glue("Invalid class '{class(object[[group_by]])}' for column ",
+                 "'{group_by}'. Expected a 'character' or 'factor'"))
     }
-    if (!group.by %in% colnames(object)) {
-      cli_alert_warning("'{group.by}' not found in 'object'")
+    if (!group_by %in% colnames(object)) {
+      cli_alert_warning("'{group_by}' not found in 'object'")
     } else {
-      object <- object %>% group_by_at(group.by)
+      object <- object %>% group_by_at(group_by)
     }
   }
 
@@ -66,8 +72,8 @@ EdgeRankPlot.data.frame <- function (
   edgerank_plot <-
     object %>%
       {
-        if (!is.null(group.by)) {
-          ggplot(., aes(rank, edges, color = !! sym(group.by)))
+        if (!is.null(group_by)) {
+          ggplot(., aes(rank, edges, color = !! sym(group_by)))
         } else {
           ggplot(., aes(rank, edges))
         }
@@ -96,10 +102,10 @@ EdgeRankPlot.data.frame <- function (
 #'
 EdgeRankPlot.Seurat <- function (
   object,
-  group.by = NULL,
+  group_by = NULL,
   ...
 ) {
 
-  edgerank_plot <- EdgeRankPlot(object[[]], group.by = group.by)
+  edgerank_plot <- EdgeRankPlot(object[[]], group_by = group_by)
   return(edgerank_plot)
 }

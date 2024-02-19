@@ -25,8 +25,6 @@ dependencies:
   - r-seuratobject
   - r-matrix
   - r-patchwork
-  - r-rcpp
-  - r-spelling
   - r-pheatmap
   - r-duckdb
   - bioconductor-rhdf5

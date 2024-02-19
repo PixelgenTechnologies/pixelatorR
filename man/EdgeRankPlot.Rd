@@ -8,16 +8,16 @@
 \usage{
 EdgeRankPlot(object, ...)
 
-\method{EdgeRankPlot}{data.frame}(object, group.by = NULL, ...)
+\method{EdgeRankPlot}{data.frame}(object, group_by = NULL, ...)
 
-\method{EdgeRankPlot}{Seurat}(object, group.by = NULL, ...)
+\method{EdgeRankPlot}{Seurat}(object, group_by = NULL, ...)
 }
 \arguments{
 \item{object}{A \code{data.frame}-like object or a \code{Seurat} object}
 
 \item{...}{Parameters passed to other methods}
 
-\item{group.by}{A character specifying a column to group by}
+\item{group_by}{A character specifying a column to group by}
 }
 \value{
 A \code{ggplot} object

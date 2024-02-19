@@ -10,8 +10,8 @@ CellCountPlot(object, ...)
 
 \method{CellCountPlot}{data.frame}(
   object,
-  group.by = NULL,
-  color.by,
+  group_by = NULL,
+  color_by,
   show_count = TRUE,
   flip_axes = FALSE,
   ...
@@ -19,8 +19,8 @@ CellCountPlot(object, ...)
 
 \method{CellCountPlot}{Seurat}(
   object,
-  group.by = NULL,
-  color.by,
+  group_by = NULL,
+  color_by,
   show_count = TRUE,
   flip_axes = FALSE,
   ...
@@ -31,10 +31,10 @@ CellCountPlot(object, ...)
 
 \item{...}{Not yet implemented}
 
-\item{group.by}{A column in the object representing a 'character' or 'factor'
+\item{group_by}{A column in the object representing a 'character' or 'factor'
 to group data by}
 
-\item{color.by}{A column in the object representing a 'character' or 'factor'
+\item{color_by}{A column in the object representing a 'character' or 'factor'
 to color data by}
 
 \item{show_count}{Place the count on top of the bar or next to the bar if
@@ -65,22 +65,22 @@ seur_obj
 seur_obj$labels <- sample(c("A", "B"), size = ncol(seur_obj), replace = TRUE)
 
 # Plot with data.frame and color by labels
-CellCountPlot(seur_obj[[]], color.by = "labels")
+CellCountPlot(seur_obj[[]], color_by = "labels")
 
 # Plot with Seurat object
-CellCountPlot(seur_obj, color.by = "labels")
+CellCountPlot(seur_obj, color_by = "labels")
 
 # Color by sample in merged data
 seur_obj1 <- seur_obj2 <- seur_obj
 seur_obj1$sample <- "1"
 seur_obj2$sample <- "2"
-seur_obj_merged <- merge(seur_obj1, seur_obj2)
-CellCountPlot(seur_obj_merged, group.by = "labels", color.by = "sample")
+seur_obj_merged <- merge(seur_obj1, seur_obj2, add.cell.ids = c("A", "B"))
+CellCountPlot(seur_obj_merged, group_by = "labels", color_by = "sample")
 
 }
 \seealso{
 Other QC-plots: 
-\code{\link{pxContent_vs_Tau}()}
+\code{\link{TauPlot}()}
 }
 \concept{QC-plots}
 \concept{plots}
