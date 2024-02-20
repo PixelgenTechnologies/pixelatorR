@@ -102,3 +102,10 @@ reference:
     - pxl_dataset
     - show,CellGraph-method
     - show,CellGraphAssay-method
+
+footer:
+  structure:
+    left: legal
+    right: built_with
+  components:
+    legal: © Pixelgen Technologies 2024
