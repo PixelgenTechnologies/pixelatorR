@@ -300,9 +300,29 @@ ReadMPX_item <- function (
         if (verbose && check_global_verbosity())
           cli_alert("  Loading {col_br_magenta(item)} data")
 
-        unzipped_filename <- unzip(filename,  paste0(item, ".parquet"), exdir = getOption("pixelatorR.arrow_outdir"))
+        # generate a file name for a new temporary directory.
+        # When running R CMD check on windows latest release, we
+        # do not have permissions to modify files in TEMPDIR.
+        # For this reason, we create a new directory with a unique
+        # name instead.
+        exdir_temp <- fs::file_temp()
+
+        # Unzip item to temporary directory
+        unzipped_filename <- unzip(filename,  paste0(item, ".parquet"), exdir = exdir_temp)
+
+        # Read contents of parquet file
         outdata <- read_parquet(unzipped_filename)
-        file.remove(unzipped_filename)
+
+        # Try to delete temporary directory or throw a warning if it fails.
+        check <- tryCatch({
+          fs::dir_delete(exdir_temp)
+        }, error = function(e)
+          e,
+        warning = function(w)
+          w)
+        if (inherits(check, what = "error"))
+          cli_alert_warning("Failed to remove temporary directory {exdir_temp}")
+
         return(outdata)
       })
   )
