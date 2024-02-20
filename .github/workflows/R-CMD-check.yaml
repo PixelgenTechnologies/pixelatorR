@@ -44,10 +44,6 @@ jobs:
           extra-packages: any::rcmdcheck
           needs: check
 
-      - name: change temp dir
-        run: echo "TMPDIR=${{ runner.temp }}" >> $GITHUB_ENV
-        shell: bash
-
       - uses: r-lib/actions/check-r-package@v2
         with:
           upload-snapshots: true
