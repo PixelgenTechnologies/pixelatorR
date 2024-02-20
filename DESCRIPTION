@@ -33,7 +33,8 @@ Imports:
     patchwork,
     ggraph,
     progressr,
-    plotly
+    plotly,
+    fs
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
