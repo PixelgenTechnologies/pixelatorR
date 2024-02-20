@@ -3,10 +3,8 @@ Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Si
 Version: 0.1.0
 Authors@R: 
     c(
-    person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID")),
-    person("Max", "Karlsson", , "max.karlsson@pixelgen.com", role = c("aut"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre")),
+    person("Max", "Karlsson", , "max.karlsson@pixelgen.com", role = c("aut"))
     )
 Description: Defines S4 classes for single-cell MPX data, extending the Seurat toolbox.
   In addition, pixelatorR provides functions to process and visualize MPX data.
