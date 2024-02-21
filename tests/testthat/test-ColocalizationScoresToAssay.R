@@ -1,4 +1,4 @@
-library(pixelatorR)
+options(pixelatorR.arrow_outdir = tempdir())
 pxl_file <- system.file("extdata/PBMC_10_cells",
                         "Sample01_test.pxl",
                         package = "pixelatorR"

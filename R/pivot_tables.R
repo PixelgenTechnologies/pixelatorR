@@ -7,6 +7,8 @@ NULL
 #' @examples
 #' library(pixelatorR)
 #' library(SeuratObject)
+#' # Set arrow data output directory to temp for tests
+#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/PBMC_10_cells",
@@ -178,6 +180,8 @@ PolarizationScoresToAssay.Seurat <- function (
 #' @examples
 #' library(pixelatorR)
 #' library(SeuratObject)
+#' # Set arrow data output directory to temp for tests
+#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/PBMC_10_cells",

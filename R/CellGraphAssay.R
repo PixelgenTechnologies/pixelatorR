@@ -204,6 +204,8 @@ CreateCellGraphAssay <- function (
 #' library(pixelatorR)
 #' library(dplyr)
 #' library(tidygraph)
+#' # Set arrow data output directory to temp for tests
+#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/PBMC_10_cells",
 #'                         "Sample01_test.pxl",
@@ -839,6 +841,8 @@ setMethod (
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)
+#' # Set arrow data output directory to temp for tests
+#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/PBMC_10_cells",
 #'                         "Sample01_test.pxl",

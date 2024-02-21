@@ -23,7 +23,7 @@ test_that(".onLoad works as expected", {
   options(pixelatorR.arrow_outdir = NULL)
   expect_equal(getOption("pixelatorR.arrow_outdir"), NULL)
   expect_invisible(pixelatorR:::.onLoad())
-  expect_true(dir.exists(getOption("pixelatorR.arrow_outdir")))
+  expect_equal(getOption("pixelatorR.arrow_outdir"), file.path(getwd(), "edgelists"))
 
   # Restore options
   options(pixelatorR.verbose = pixelatorR_verbose, pixelatorR.arrow_outdir = arrow_outdir)

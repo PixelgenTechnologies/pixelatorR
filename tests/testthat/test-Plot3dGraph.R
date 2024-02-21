@@ -1,9 +1,11 @@
+options(pixelatorR.arrow_outdir = tempdir())
+
 pxl_file <- system.file("extdata/PBMC_10_cells",
                         "Sample01_test.pxl",
                         package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1:2])
-seur_obj[["mpxCells"]] <- KeepLargestComponent(seur_obj[["mpxCells"]])
+seur_obj <- KeepLargestComponent(seur_obj)
 seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds", dim = 3)
 
 test_that("Plot3DGraph works as expected", {
