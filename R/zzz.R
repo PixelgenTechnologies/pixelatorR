@@ -15,7 +15,7 @@
   if (is.null(getOption("pixelatorR.arrow_outdir"))) {
 
     if (Sys.getenv("PIXELATORR_ARROWDIR") == "") {
-      options(pixelatorR.arrow_outdir = tempdir())
+      options(pixelatorR.arrow_outdir = file.path(getwd(), "edgelists"))
     } else {
       options(pixelatorR.arrow_outdir = Sys.getenv("PIXELATORR_ARROWDIR"))
     }

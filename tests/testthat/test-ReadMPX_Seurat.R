@@ -1,3 +1,5 @@
+options(pixelatorR.arrow_outdir = tempdir())
+
 test_that("Data loading with ReadMPX_Seurat works", {
   pg_data <-
     ReadMPX_Seurat(

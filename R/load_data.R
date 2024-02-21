@@ -46,7 +46,7 @@ ReadMPX_counts <- function (
   original_filename <- filename
   if (endsWith(filename, ".pxl")) {
     # LL: Returns error message
-    filename <- tryCatch(unzip(filename, "adata.h5ad", exdir = getOption("pixelatorR.arrow_outdir")),
+    filename <- tryCatch(unzip(filename, "adata.h5ad", exdir = tempdir()),
                          error = function(e) e,
                          warning = function(w) w)
     if (inherits(x = filename, what = "simpleWarning")) abort("Failed to unzip data")
@@ -113,6 +113,8 @@ ReadMPX_counts <- function (
 #' @examples
 #'
 #' library(pixelatorR)
+#' # Set arrow data output directory to temp for tests
+#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/PBMC_10_cells",

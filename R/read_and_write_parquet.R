@@ -21,6 +21,8 @@
 #' @examples
 #'
 #' library(pixelatorR)
+#' # Set arrow data output directory to temp for tests
+#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/PBMC_10_cells",
@@ -66,6 +68,13 @@ ReadMPX_arrow_edgelist <- function (
     outdir <- getOption("pixelatorR.arrow_outdir")
     if (verbose && check_global_verbosity())
       cli_alert_info("Output directory set to '{outdir}'")
+    if (!dir.exists(outdir)) {
+      check <- try({
+        dir.create(outdir, showWarnings = FALSE)
+      })
+      if (!check)
+        abort(glue("Failed to create output directory '{outdir}'."))
+    }
   } else {
     stopifnot(
       "'outdir' must be a character vector of length 1" =
@@ -73,7 +82,7 @@ ReadMPX_arrow_edgelist <- function (
         (length(outdir) == 1)
     )
     outdir <- normalizePath(outdir)
-    if (!dir.exists(outdir))  abort(glue("outdir '{outdir}' doesn't exist"))
+    if (!dir.exists(outdir)) abort(glue("outdir '{outdir}' doesn't exist"))
   }
 
   # If pxl files are provided, make a copy of the parquet files stored internally
@@ -94,7 +103,7 @@ ReadMPX_arrow_edgelist <- function (
     # Copy parquet file
     newdir <- file.path(session_tmpdir_random, paste0("sample=S", 1))
     suppressWarnings({dir.create(path = newdir)})
-    unzipped_filename <- unzip(path, paste0("edgelist.parquet"), exdir = newdir)
+    unzip(path, paste0("edgelist.parquet"), exdir = newdir)
 
     # Open copied parquet file
     ds <- open_dataset(session_tmpdir_random)
@@ -140,6 +149,8 @@ ReadMPX_arrow_edgelist <- function (
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)
+#' # Set arrow data output directory to temp for tests
+#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/PBMC_10_cells",
