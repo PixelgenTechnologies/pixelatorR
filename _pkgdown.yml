@@ -30,10 +30,12 @@ navbar:
     tutorials:
       text: Tutorials
       menu:
-      - text: Intro
+      - text: Introduction
         href: articles/introduction.html
       - text: Load Data
         href: articles/load_data.html
+      - text: Merge & subset
+        href: articles/subset_and_merge.html
 
 reference:
   - title: Function reference

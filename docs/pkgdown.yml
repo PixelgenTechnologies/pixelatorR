@@ -4,5 +4,6 @@ pkgdown_sha: ~
 articles:
   introduction: introduction.html
   load_data: load_data.html
-last_built: 2024-02-20T19:59Z
+  subset_and_merge: subset_and_merge.html
+last_built: 2024-02-21T10:34Z
 

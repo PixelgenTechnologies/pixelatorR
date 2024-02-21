@@ -41,8 +41,9 @@
 <li class="active nav-item dropdown">
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-tutorials">Tutorials</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
-    <a class="dropdown-item" href="../articles/introduction.html">Intro</a>
+    <a class="dropdown-item" href="../articles/introduction.html">Introduction</a>
     <a class="dropdown-item" href="../articles/load_data.html">Load Data</a>
+    <a class="dropdown-item" href="../articles/subset_and_merge.html">Merge &amp; subset</a>
   </div>
 </li>
       </ul>
@@ -124,40 +125,40 @@ you can download a PXL file and load it as a Seurat object:</p>
 <p><br></p>
 <style type="text/css">
 .infobox {
-  padding: 3em 2em 3em 2em;
+  padding: 1em 3em 2em 3em;
   margin-bottom: 10px;
   border: 1px solid grey;
   border-radius: 5px;
   background: #ffc6c4 5px center/3em no-repeat;
 }
 </style>
-<div class="infobox">
+<div class="section level3 infobox">
+<h3 id="note">Note<a class="anchor" aria-label="anchor" href="#note"></a>
+</h3>
 <p>By default, edgelists are stored in a temporary directory which can
 be accessed from the global option “pixelatorR.arrow_outdir”:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"pixelatorR.arrow_outdir"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpOZuPmU"</span></span></code></pre>
-<p>If the R session crashes or is restarted, this temporary directory
-will be removed and the edgelists will become inaccessible to
-pixelatorR.</p>
-<p>pixelatorR uses the global option
-<code>pixelatorR.arrow_outdir</code> to determine where to place the
-edgelist directory. By modifying this option you can place the edgelists
-in a local folder instead:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Create an empty directory in your current working directory</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="st">"./edgelists"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Change global option</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="st">"./edgelists"</span><span class="op">)</span></span></code></pre></div>
-<p>Note that <code>subset</code> and <code>merge</code> operations will
-create new edgelist directories.</p>
-<p>Visit the <strong>Load data</strong> tutorial for more details.</p>
+<p>This variable is set when pixelatorR is loaded with
+<code><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">library(pixelatorR)</a></code>, and defaults to a directory called
+<code>edgelists</code> in the current working directory.</p>
+<p>Some operations, such as <code>subset</code> and <code>merge</code>,
+will create new directories which you will find in the
+“<current working directory>/edgelists” folder (see the <strong>Load
+data</strong> tutorial for more details).</current></p>
+<p>By modifying “pixelatorR.arrow_outdir”, you can for instance use a
+temporary directory instead:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Change global option</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>However, if you use <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code>, the edgelists will be
+removed if the R session is crashes or is restarted, meaning that you
+will have to rerun the analysis.</p>
 </div>
 <p><br></p>
 <p>Now, we can load the MPX data as a Seurat object with
 <code>ReadMPX_Seurat</code>:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="st">"./Sample01_human_pbmcs_unstimulated.dataset.pxl"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">477</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span></span></code></pre>
 </div>
@@ -169,7 +170,7 @@ however, <code>pixelatorR</code> does not yet support the new assay
 class (<code>AssayV5</code>).</p>
 <p>Therefore, we suggest setting the global option
 “Seurat.object.assay.version” to “v3” to avoid potential conflicts:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>Seurat.object.assay.version <span class="op">=</span> <span class="st">"v3"</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
