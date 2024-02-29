@@ -14,7 +14,8 @@ globalVariables(
 #' Fruchterman-Reingold (fr), Kamada-Kawai (kk), drl.
 #' @param dim An integer specifying the dimensions of the layout (2 or 3)
 #' @param normalize_layout Logical specifying whether the coordinate system
-#' for the layout should be scaled from -1 to 1.
+#' should be centered at origo and the coordinates scaled such that their median
+#' length (euclidean norm) is 1.
 #' @param k The size of the neighborhood from which to pool counts from in
 #' the UPIA antibody count table. 0 is recommended.
 #' @param pivots Only used for "pmds" graph layout. See \code{?layout_with_pmds}
@@ -32,6 +33,10 @@ globalVariables(
 #'
 #' @rdname ComputeLayout
 #' @method ComputeLayout tbl_graph
+#'
+#' @seealso [center_layout_coordinates()] for centering layout coordinates,
+#' [normalize_layout_coordinates()] for normalizing layout coordinates and
+#' [project_layout_coordinates_on_unit_sphere()] for projecting layout coordinates onto a unit sphere.
 #'
 #' @examples
 #' library(pixelatorR)
@@ -90,6 +95,13 @@ ComputeLayout.tbl_graph <- function (
       inherits(seed, what = "numeric")
   )
 
+  if (project_on_unit_sphere && dim == 2) {
+    abort("Projecting onto a unit sphere is only possible for 3D layouts")
+  }
+  if (project_on_unit_sphere && normalize_layout) {
+    abort("Only one of 'project_on_unit_sphere' or 'normalize_layout' can be set to TRUE")
+  }
+
   # Set seed
   old_seed <- .Random.seed
   set.seed(seed)
@@ -137,24 +149,13 @@ ComputeLayout.tbl_graph <- function (
   }
 
   # Project to unit sphere
-  if (project_on_unit_sphere || normalize_layout) {
+  if (project_on_unit_sphere) {
+    layout <- project_layout_coordinates_on_unit_sphere(layout)
+  }
 
-    layout <- layout %>%
-      mutate(across(contains(c("x", "y", "z")), ~ .x - mean(.x)))
-
-    radii <- layout %>%
-      mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
-      rowSums()
-    radii <- sqrt(radii)
-    max_radius <- max(radii)
-    if (project_on_unit_sphere) {
-      layout <- layout %>%
-        mutate(across(contains(c("x", "y", "z")), ~ (.x*max_radius)/radii))
-    }
-    if (normalize_layout) {
-      layout <- layout %>%
-        mutate(across(contains(c("x", "y", "z")), ~ .x/max_radius))
-    }
+  # Normalize layout
+  if (normalize_layout) {
+    layout <- normalize_layout_coordinates(layout)
   }
 
   # Restore old seed
@@ -413,4 +414,154 @@ ComputeLayout.Seurat <- function (
                "The number of rows in the layout should match the number of ",
                "nodes in the graph"))
   }
+}
+
+
+#' Layout Coordinates Utility Functions
+#'
+#' Utility function used to manipulate layout coordinates.
+#' These functions always returns a \code{tbl_df} object.
+#'
+#' @section Center Layout Coordinates:
+#' Centers each axis of the layout coordinates around their means.
+#'
+#' @param layout A matrix-like object with layout coordinates
+#'
+#' @name layout coordinates utils
+#' @rdname layout_coordinates_utils
+#'
+#' @return A \code{tbl_df} object with adjusted layout coordinates
+#'
+#' @examples
+#' library(dplyr)
+#' library(tibble)
+#'
+#' # Generate random points that are offset to (100, 100, 100)
+#' xyz <- matrix(rnorm(600, mean = 100, sd = 20), ncol = 3,
+#'               dimnames = list(NULL, c("x", "y", "z"))) %>%
+#'   as_tibble()
+#'
+#' # Visualize random points
+#' plotly::plot_ly(data = xyz, x = ~x, y = ~y, z = ~z,
+#'                 type = "scatter3d", mode = "markers")
+#'
+#' # Center points at (0, 0, 0)
+#' xyz_centered <- center_layout_coordinates(xyz)
+#' apply(xyz_centered, 2, mean)
+#' plotly::plot_ly(data = xyz_centered, x = ~x, y = ~y,
+#'                 z = ~z, type = "scatter3d", mode = "markers")
+#'
+#' # Normalize points to have a median radius of 1
+#' xyz_normalized <- normalize_layout_coordinates(xyz_centered)
+#' radii <- sqrt(rowSums(xyz_normalized^2))
+#' median(radii)
+#' plotly::plot_ly(data = xyz_normalized, x = ~x, y = ~y,
+#'                 z = ~z, type = "scatter3d", mode = "markers")
+#'
+#' # Project points on unit sphere
+#' xyz_projected <- project_layout_coordinates_on_unit_sphere(xyz_normalized)
+#' radii <- sqrt(rowSums(xyz_projected^2))
+#' all(near(radii, y = rep(1, length(radii)), tol = 1e-12))
+#' plotly::plot_ly(data = xyz_projected, x = ~x, y = ~y,
+#'                 z = ~z, type = "scatter3d", mode = "markers")
+#'
+#' @export
+#'
+center_layout_coordinates <- function (
+  layout
+) {
+
+  stopifnot(
+    "'layout' must be a non-empty, matrix-like object" =
+      inherits(layout, what = c("matrix", "data.frame")) &&
+      length(layout) > 0,
+    "'layout' can only have 2 or 3 columns" =
+      ncol(layout) %in% c(2, 3)
+  )
+
+  # Force rename columns to x, y, z
+  colnames(layout) <- c("x", "y", "z")[1:ncol(layout)]
+  if (inherits(layout, what = "matrix")) {
+    layout <- as_tibble(layout)
+  }
+
+  # Center layout coordinates
+  layout <- layout %>%
+    mutate(across(contains(c("x", "y", "z")), ~ .x - mean(.x)))
+
+  return(layout)
+}
+
+
+#' @section Normalize Layout Coordinates:
+#' Centers each axis of the layout coordinates around the mean and
+#' adjusts each point coordinate such that their median length
+#' (euclidean norm) is 1.
+#'
+#' @param layout A matrix-like object with layout coordinates
+#'
+#' @rdname layout_coordinates_utils
+#'
+#' @export
+#'
+normalize_layout_coordinates <- function (
+  layout
+) {
+
+  stopifnot(
+    "'layout' must be a non-empty, matrix-like object" =
+      inherits(layout, what = c("matrix", "data.frame")) &&
+      length(layout) > 0,
+    "'layout' can only have 2 or 3 columns" =
+      ncol(layout) %in% c(2, 3)
+  )
+
+  layout <- center_layout_coordinates(layout)
+
+  radii <- layout %>%
+    mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
+    rowSums()
+  radii <- sqrt(radii)
+  median_radius <- median(radii)
+  layout <- layout %>%
+    mutate(across(contains(c("x", "y", "z")), ~ .x/median_radius))
+
+  return(layout)
+}
+
+
+#' @section Project Layout Coordinates on a Unit Sphere:
+#' Centers each axis of the layout coordinates around the mean and
+#' adjusts each coordinate such that their lengths (euclidean norm)
+#' are 1. This function only accepts layouts with 3 dimensions.
+#'
+#' @param layout A matrix-like object with layout coordinates
+#'
+#' @rdname layout_coordinates_utils
+#'
+#' @export
+#'
+project_layout_coordinates_on_unit_sphere <- function (
+  layout
+) {
+
+  stopifnot(
+    "'layout' must be a non-empty, matrix-like object" =
+      inherits(layout, what = c("matrix", "data.frame")) &&
+      length(layout) > 0,
+    "'layout' can only have 3 columns" =
+      ncol(layout) == 3
+  )
+
+  layout <- center_layout_coordinates(layout)
+
+  radii <- layout %>%
+    mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
+    rowSums()
+  radii <- sqrt(radii)
+  median_radius <- median(radii)
+  layout <- layout %>%
+    mutate(across(contains(c("x", "y", "z")), ~ .x/radii))
+
+  return(layout)
 }

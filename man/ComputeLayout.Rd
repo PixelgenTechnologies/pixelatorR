@@ -83,7 +83,8 @@ Fruchterman-Reingold (fr), Kamada-Kawai (kk), drl.}
 \item{dim}{An integer specifying the dimensions of the layout (2 or 3)}
 
 \item{normalize_layout}{Logical specifying whether the coordinate system
-for the layout should be scaled from -1 to 1.}
+should be centered at origo and the coordinates scaled such that their median
+length (euclidean norm) is 1.}
 
 \item{project_on_unit_sphere}{Should the resulting layout be projected onto
 a unit sphere?}
@@ -159,4 +160,9 @@ cg_assay <- ComputeLayout(seur[["mpxCells"]], layout_method = "fr")
 # Compute layout for a Seurat object
 seur <- ComputeLayout(seur, layout_method = "fr")
 
+}
+\seealso{
+\code{\link[=center_layout_coordinates]{center_layout_coordinates()}} for centering layout coordinates,
+\code{\link[=normalize_layout_coordinates]{normalize_layout_coordinates()}} for normalizing layout coordinates and
+\code{\link[=project_layout_coordinates_on_unit_sphere]{project_layout_coordinates_on_unit_sphere()}} for projecting layout coordinates onto a unit sphere.
 }
