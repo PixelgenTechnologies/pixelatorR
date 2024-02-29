@@ -34,8 +34,7 @@ Imports:
     ggraph,
     progressr,
     plotly,
-    fs,
-    stats
+    fs
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
