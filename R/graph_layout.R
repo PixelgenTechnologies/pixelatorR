@@ -140,7 +140,7 @@ ComputeLayout.tbl_graph <- function (
   if (project_on_unit_sphere || normalize_layout) {
 
     layout <- layout %>%
-      mutate(across(contains(c("x", "y", "z")), ~ .x - mean(x)))
+      mutate(across(contains(c("x", "y", "z")), ~ .x - mean(.x)))
 
     radii <- layout %>%
       mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
