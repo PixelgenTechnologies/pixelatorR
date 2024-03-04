@@ -56,10 +56,9 @@
   if (length(polarization) > 0) {
     # Check column names
     stopifnot(
-      "'polarization' names are invalid" =
-        all(names(polarization) ==
-              c("morans_i", "morans_p_value", "morans_p_adjusted",
-                "morans_z", "marker", "component"))
+      "'polarization' table names are invalid" =
+        all(c("morans_i", "morans_p_value", "morans_p_adjusted",
+              "morans_z", "marker", "component") %in% names(polarization))
     )
     # Check component names
     cells_in_polarization <- cell_ids %in% (polarization$component %>% unique())
@@ -103,13 +102,12 @@
 
   if (length(colocalization) > 0) {
     # Check column names
-    stopifnot("'colocalization' names are invalid" =
-                all(names(colocalization) ==
-                      c("marker_1", "marker_2", "pearson", "pearson_mean",
-                        "pearson_stdev", "pearson_z", "pearson_p_value",
-                        "pearson_p_value_adjusted", "jaccard", "jaccard_mean",
-                        "jaccard_stdev", "jaccard_z", "jaccard_p_value",
-                        "jaccard_p_value_adjusted", "component")))
+    stopifnot("'colocalization' table names are invalid" =
+                all(c("marker_1", "marker_2", "pearson", "pearson_mean",
+                      "pearson_stdev", "pearson_z", "pearson_p_value",
+                      "pearson_p_value_adjusted", "jaccard", "jaccard_mean",
+                      "jaccard_stdev", "jaccard_z", "jaccard_p_value",
+                      "jaccard_p_value_adjusted", "component") %in% names(colocalization)))
     # Check component names
     cells_in_colocalization <- cell_ids %in% (colocalization$component %>% unique())
     if (!all(cells_in_colocalization)) {
