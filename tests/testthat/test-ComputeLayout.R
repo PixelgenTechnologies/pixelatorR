@@ -22,12 +22,12 @@ test_that("ComputeLayout works as expected", {
 
   # Test with normalize_layout
   expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = "pmds", normalize_layout = TRUE))
-  max_radius <- cg_assay@cellgraphs$RCVCMP0000000@layout[[layout_method]] %>%
+  median_radius <- cg_assay@cellgraphs$RCVCMP0000000@layout[[layout_method]] %>%
     mutate(across(x:z, ~.x^2)) %>%
     rowSums() %>%
     sqrt() %>%
-    max()
-  expect_equal(max_radius, 1)
+    median()
+  expect_equal(median_radius, 1)
 
   # Test with project_on_unit_sphere
   expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = "pmds", project_on_unit_sphere = TRUE))
@@ -72,7 +72,21 @@ test_that("ComputeLayout works as expected with a custom layout function", {
 
 })
 
-test_that("ComputeLayout fails with an invalid input", {
+
+test_that("ComputeLayout fails when invalid input is provided", {
+
+  # Invalid object
+  expect_error(ComputeLayout("Invalid"))
+  e <- tryCatch(se[["mpxCells"]] %>% ComputeLayout(layout_method = "Invalid", verbose = FALSE), error = function(e) e, silent = TRUE)
+  expect_s3_class(e, "simpleError")
+
+  # Invalid combination of normalize_layout and project_on_unit_sphere
+  expect_error(se[["mpxCells"]] %>% ComputeLayout(normalize_layout = TRUE, project_on_unit_sphere = TRUE, dim = 3),
+               "Only one of 'project_on_unit_sphere' or 'normalize_layout' can be set to TRUE")
+
+  # Invalid combination of dim and project_on_unit_sphere
+  expect_error(se[["mpxCells"]] %>% ComputeLayout(dim = 2, project_on_unit_sphere = TRUE),
+               "Projecting onto a unit sphere is only possible for 3D layouts")
 
   custom_layout_fkn <- function(g) return("Invalid")
 
@@ -89,11 +103,4 @@ test_that("ComputeLayout fails with an invalid input", {
 
   # Seurat
   expect_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn))
-
-})
-
-test_that("ComputeLayout fails when invalid input is provided", {
-  expect_error(ComputeLayout("Invalid"))
-  e <- tryCatch(se[["mpxCells"]] %>% ComputeLayout(layout_method = "Invalid", verbose = FALSE), error = function(e) e, silent = TRUE)
-  expect_s3_class(e, "simpleError")
 })
