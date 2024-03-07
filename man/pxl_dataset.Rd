@@ -4,11 +4,16 @@
 \alias{pxl_dataset}
 \title{Mock Test data}
 \description{
-MPX mock data set with 5 cells
+MPX data set of 5 immune cells (link to \href{https://software.pixelgen.com/datasets}{data resource})
 \itemize{
-\item{\href{https://software.pixelgen.com/datasets/cd3-capping-v1.0-immunology-I}{CD3 capped cell: RCVCMP0000217}}
-\item{\href{https://software.pixelgen.com/datasets/1k-human-pbmcs-v1.0-immunology-I}{B cell: RCVCMP0000118, CD4 T cell: RCVCMP0000487, CD8 T cell: RCVCMP0000655})}
-\item{\href{https://software.pixelgen.com/datasets/uropod-t-cells-v1.0-immunology-I}{Uropod cell: RCVCMP0000263}}
+\item{1x CD3 capping stimulated CD4 T cell (RCVCMP0000217) \cr\cr
+\strong{Data set:} CD3 Stimulated Human PBMCs SCSP v1.0 Kit, Immunology Panel I}
+\item{1x B cell (RCVCMP0000118)\cr
+1x CD4 T cell (RCVCMP0000487)\cr
+1x CD8 T cell (RCVCMP0000655) \cr\cr
+\strong{Data set:} 1k Human PBMCs, SCSP v1.0 Kit, Immunology Panel I}
+\item{1x Migratory CD8 T cell with uropod (RCVCMP0000263) \cr\cr
+\strong{Data set:} Uropod formation on T cells, SCSP v1.0 Kit, Immunology Panel I}
 }
 }
 \concept{datasets}
