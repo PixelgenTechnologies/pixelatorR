@@ -13,23 +13,29 @@ globalVariables(
 #'
 #' @examples
 #' library(pixelatorR)
+#' library(tidygraph)
 #' # Set arrow data output directory to temp for tests
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
-#'                         package = "pixelatorR")
+#' pxl_file <- system.file("extdata/mock_data",
+#'                        "mock_mpx_data.pxl",
+#'                        package = "pixelatorR")
 #'
 #' # Read edgelist
 #' edgelist <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
 #'
 #' # Load graph from edge list and store in a CellGraph object
-#' cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000000")[[1]]
+#' cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000217")[[1]]
 #' cg
 #'
 #' # Fetch tbl_graph from CellGraph object
 #' g <- CellGraphData(cg, slot = "cellgraph")
 #' g
+#'
+#' # Break graph by removing random edges
+#' set.seed(132)
+#' g <- g %E>%
+#'  filter(from %in% sample(from, n() - 500))
 #'
 #' # Fetch largest component from a tbl_graph
 #' g_largest <- KeepLargestComponent(g)
@@ -66,6 +72,9 @@ KeepLargestComponent.tbl_graph <- function (
 #' @method KeepLargestComponent CellGraph
 #'
 #' @examples
+#' # Add new graph to CellGraph object
+#' cg@cellgraph <- g_largest
+#'
 #' # Fetch largest component from a CellGraph
 #' cg_largest <- KeepLargestComponent(cg)
 #' cg_largest

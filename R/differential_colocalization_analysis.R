@@ -13,27 +13,6 @@ NULL
 #' @importFrom stats wilcox.test p.adjust
 #' @importFrom progressr progressor
 #'
-#' @examples
-#' library(pixelatorR)
-#' library(dplyr)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
-#'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
-#'                         package = "pixelatorR")
-#'
-#' # Load colocalization scores
-#' colocalization_table1 <- colocalization_table2 <- ReadMPX_colocalization(pxl_file)
-#' colocalization_table1$sample <- "Sample1"
-#' colocalization_table2$sample <- "Sample2"
-#' colocalization_table_merged <-  bind_rows(colocalization_table1, colocalization_table2)
-#'
-#' # Run DPA using table as input
-#' dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample",
-#'                       target = "Sample1", reference = "Sample2")
-#' dca_markers
-#'
 #' @export
 #'
 RunDCA.data.frame <- function (
@@ -177,11 +156,24 @@ RunDCA.data.frame <- function (
 #' @method RunDCA Seurat
 #'
 #' @examples
+#' library(pixelatorR)
+#' library(dplyr)
+#' # Set arrow data output directory to temp for tests
+#' options(pixelatorR.arrow_outdir = tempdir())
+#'
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
+#'                         package = "pixelatorR")
 #' # Seurat objects
 #' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 #' seur1$sample <- "Sample1"
 #' seur2$sample <- "Sample2"
 #' seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
+#'
+#' # Subset data to run test on a few markers
+#' seur_merged <- subset(seur_merged,
+#'                       features = c("CD3", "CD4", "CD8", "CD19",
+#'                                    "CD20", "CD45RA", "CD45RO"))
 #'
 #' # Run DCA
 #' dca_markers <- RunDCA(seur_merged, contrast_column = "sample",

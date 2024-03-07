@@ -45,16 +45,15 @@ globalVariables(
 #' # Set arrow data output directory to temp for tests
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
 #'                         package = "pixelatorR")
 #'
 #' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
-#' seur <- LoadCellGraphs(seur, load_as = "Anode", cells = colnames(seur)[1:10])
-#' seur[["mpxCells"]] <- KeepLargestComponent(seur[["mpxCells"]])
+#' seur <- LoadCellGraphs(seur, load_as = "Anode")
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
 #'
-#' Plot2DGraph(seur, cells = colnames(seur)[1], marker = "HLA-ABC")
+#' Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3E")
 #'
 #' @export
 #'
@@ -318,16 +317,15 @@ Plot2DGraph <- function (
 #' # Set arrow data output directory to temp for tests
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
 #'                         package = "pixelatorR")
 #'
 #' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
-#' seur <- LoadCellGraphs(seur, load_as = "Anode", cells = colnames(seur)[1:10])
-#' seur[["mpxCells"]] <- KeepLargestComponent(seur[["mpxCells"]])
+#' seur <- LoadCellGraphs(seur, load_as = "Anode")
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
 #'
-#' Plot2DGraphM(seur, cells = colnames(seur)[1:2], markers = c("HLA-ABC", "HLA-DR"))
+#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], markers = c("CD20", "CD4"))
 #'
 #' @export
 #'
@@ -530,16 +528,15 @@ Plot2DGraphM <- function (
 #' # Set arrow data output directory to temp for tests
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
 #'                         package = "pixelatorR")
 #'
 #' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
-#' seur <- LoadCellGraphs(seur, cells = colnames(seur)[1:10])
-#' seur[["mpxCells"]] <- KeepLargestComponent(seur[["mpxCells"]])
+#' seur <- LoadCellGraphs(seur, cells = colnames(seur)[5])
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 3)
 #'
-#' Plot3DGraph(seur, cell_id = colnames(seur)[1], marker = "HLA-ABC")
+#' Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50")
 #'
 #' @export
 Plot3DGraph <- function (

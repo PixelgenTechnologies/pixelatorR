@@ -1,8 +1,8 @@
 options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/mock_data",
+                        "mock_mpx_data.pxl",
                         package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
 seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("Sample1", "Sample2"))
@@ -28,20 +28,20 @@ test_that("LoadCellGraphs works for CellGraphAssay objects", {
   # Load bipartite graph (default)
   expect_no_error({cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], force = TRUE)})
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_s4_class(cg_assay@cellgraphs$RCVCMP0000000, "CellGraph")
-  expect_equal(attr(cg_assay@cellgraphs$RCVCMP0000000@cellgraph, "type"), "bipartite")
+  expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "bipartite")
 
   # Load A-node projected graph
   expect_no_error({cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], load_as = "Anode", force = TRUE)})
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_s4_class(cg_assay@cellgraphs$RCVCMP0000000, "CellGraph")
-  expect_equal(attr(cg_assay@cellgraphs$RCVCMP0000000@cellgraph, "type"), "Anode")
+  expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "Anode")
 
   # Load line graph
   expect_no_error({cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], load_as = "linegraph", force = TRUE)})
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_s4_class(cg_assay@cellgraphs$RCVCMP0000000, "CellGraph")
-  expect_equal(attr(cg_assay@cellgraphs$RCVCMP0000000@cellgraph, "type"), "linegraph")
+  expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "linegraph")
 })
 
 test_that("LoadCellGraphs works for FileSystemDataset", {

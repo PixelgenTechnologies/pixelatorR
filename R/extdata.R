@@ -1,19 +1,10 @@
-#' Test data
+#' Mock Test data
 #'
-#' MPX data from 1k Human PBMCs, SCSP v1.0 Kit, Immunology Panel I
+#' MPX mock data set with 5 cells
 #' \itemize{
-#'    \item{\strong{PBMC_10_cells/Sample01_test.pxl}: light weight PXL file with 26 10 cells and 26 markers \url{https://software.pixelgen.com/datasets/1k-human-pbmcs-v1.0-immunology-I}}
-#' }
-#'
-#' @name pxl_dataset
-#' @family datasets
-NULL
-
-#' Test data
-#'
-#' MPX data from Uropod formation on T cells, SCSP v1.0 Kit, Immunology Panel I
-#' \itemize{
-#'    \item{\strong{Uropod_Cells/edgelist.parquet}: example cell MPX edgelist \url{https://software.pixelgen.com/datasets/uropod-t-cells-v1.0-immunology-I}}
+#'    \item{[CD3 capped cell: RCVCMP0000217](https://software.pixelgen.com/datasets/cd3-capping-v1.0-immunology-I)}
+#'    \item{[B cell: RCVCMP0000118, CD4 T cell: RCVCMP0000487, CD8 T cell: RCVCMP0000655](https://software.pixelgen.com/datasets/1k-human-pbmcs-v1.0-immunology-I))}
+#'    \item{[Uropod cell: RCVCMP0000263](https://software.pixelgen.com/datasets/uropod-t-cells-v1.0-immunology-I)}
 #' }
 #'
 #' @name pxl_dataset

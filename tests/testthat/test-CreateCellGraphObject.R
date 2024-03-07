@@ -1,6 +1,6 @@
 edge_list <-
   ReadMPX_item(
-    system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR"),
+    system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR"),
     items = "edgelist"
   )
 edge_list <-

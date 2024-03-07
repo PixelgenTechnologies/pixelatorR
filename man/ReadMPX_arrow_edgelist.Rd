@@ -40,8 +40,8 @@ library(pixelatorR)
 options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/mock_data",
+                        "mock_mpx_data.pxl",
                         package = "pixelatorR")
 edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
 edgelist_arrow

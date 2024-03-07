@@ -75,8 +75,8 @@ CellGraphAssay <- setClass(
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
 #'                         package = "pixelatorR")
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
@@ -207,8 +207,8 @@ CreateCellGraphAssay <- function (
 #' # Set arrow data output directory to temp for tests
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
 #'                         package = "pixelatorR")
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
@@ -461,8 +461,8 @@ RenameCells.CellGraphAssay <- function (
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
 #'                         package = "pixelatorR")
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
@@ -783,8 +783,8 @@ NULL
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
 #'                         package = "pixelatorR")
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
@@ -844,8 +844,8 @@ setMethod (
 #' # Set arrow data output directory to temp for tests
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/mock_data",
+#'                         "mock_mpx_data.pxl",
 #'                         package = "pixelatorR")
 #' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 #' seur <- LoadCellGraphs(seur)

@@ -35,7 +35,7 @@ library(tibble)
 # Set arrow data output directory to temp for tests
 options(pixelatorR.arrow_outdir = tempdir())
 
-pxl_file <- system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR")
+pxl_file <- system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR")
 
 # Load edgelist
 el <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)

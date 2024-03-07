@@ -1,7 +1,7 @@
 options(pixelatorR.arrow_outdir = tempdir())
 edge_list <-
   ReadMPX_item(
-    system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR"),
+    system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR"),
     items = "edgelist"
   )
 edge_list <-
@@ -21,8 +21,8 @@ cg <- CreateCellGraphObject(cellgraph = bipart_graph)
 test_that("CellGraphData works as expected", {
   expect_no_error(cellgraph <- CellGraphData(cg))
   expect_s3_class(cellgraph, class = "tbl_graph")
-  expect_equal(cellgraph %>% igraph::gsize(), 46655)
-  expect_equal(cellgraph %>% length(), 26964)
+  expect_equal(cellgraph %>% igraph::gsize(), 68255)
+  expect_equal(cellgraph %>% length(), 16800)
 })
 
 test_that("CellGraphData fails when invalid input is provided", {
@@ -35,8 +35,8 @@ test_that("CellGraphData<- works as expected", {
   expect_no_error(CellGraphData(cg) <- CellGraphData(cg))
   expect_no_error(cellgraph <- CellGraphData(cg))
   expect_s3_class(cellgraph, class = "tbl_graph")
-  expect_equal(cellgraph %>% igraph::gsize(), 46655)
-  expect_equal(cellgraph %>% length(), 26964)
+  expect_equal(cellgraph %>% igraph::gsize(), 68255)
+  expect_equal(cellgraph %>% length(), 16800)
 })
 
 test_that("CellGraphData<- fails when invalid input is provided", {
@@ -48,5 +48,5 @@ test_that("CellGraphData<- fails when invalid input is provided", {
 # show method
 test_that("show.CellGraph works as expected", {
   msg <- capture_output(show(cg))
-  expect_equal(msg, "A CellGraph object containing a bipartite graph with 26964 nodes and 46655 edges ")
+  expect_equal(msg, "A CellGraph object containing a bipartite graph with 16800 nodes and 68255 edges ")
 })

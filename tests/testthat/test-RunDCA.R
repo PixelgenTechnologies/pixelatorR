@@ -1,8 +1,8 @@
 library(dplyr)
 options(pixelatorR.arrow_outdir = tempdir())
 
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/mock_data",
+                        "mock_mpx_data.pxl",
                         package = "pixelatorR")
 
 # Load colocalization scores
@@ -27,12 +27,12 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
   expect_true(all(dca_markers$data_type == "pearson_z"))
   expect_true(all(dca_markers$target == "Sample1"))
   expect_true(all(dca_markers$reference == "Sample2"))
-  expect_true(all(dca_markers$n1[1:4] == c(9, 5, 7, 10)))
-  expect_true(all(dca_markers$n2[1:4] == c(9, 5, 7, 10)))
-  expect_true(all(dca_markers$statistic[1:4] == c(40.5, 12.5, 24.5 , 50)))
+  expect_true(all(dca_markers$n1[1:4] == c(4, 4, 4, 3)))
+  expect_true(all(dca_markers$n2[1:4] == c(4, 4, 4, 3)))
+  expect_true(all(dca_markers$statistic[1:4] == c(8, 8, 8, 4.5)))
   expect_true(all(dca_markers$method == "Wilcoxon"))
   expect_true(all(dca_markers$marker_1[1:4] == c("ACTB", "ACTB", "ACTB", "ACTB")))
-  expect_true(all(dca_markers$marker_2[1:4] == c("CD11c", "CD14", "CD19", "CD20")))
+  expect_true(all(dca_markers$marker_2[1:4] == c("B2M", "CD102", "CD11a", "CD11b")))
 
   # Colocalization heatmap
   expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers))
@@ -41,7 +41,7 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
   expect_s3_class(p_heatmap, "pheatmap")
   expect_no_error(p_data <- ColocalizationHeatmap(dca_markers, return_plot_data = TRUE))
   expect_s3_class(p_data, "data.frame")
-  expect_equal(dim(p_data), c(26, 26))
+  expect_equal(dim(p_data), c(80, 80))
 })
 
 test_that("RunDCA works as expected on a Seurat object", {
@@ -52,9 +52,9 @@ test_that("RunDCA works as expected on a Seurat object", {
   expect_true(all(dca_markers$data_type == "pearson_z"))
   expect_true(all(dca_markers$target == "Sample1"))
   expect_true(all(dca_markers$reference == "Sample2"))
-  expect_true(all(dca_markers$n1 == 10))
-  expect_true(all(dca_markers$n2 == 10))
-  expect_true(all(dca_markers$statistic == 50))
+  expect_true(all(dca_markers$n1 == 4))
+  expect_true(all(dca_markers$n2 == 4))
+  expect_true(all(dca_markers$statistic == 8))
   expect_true(all(dca_markers$method == "Wilcoxon"))
   expect_true(all(dca_markers$marker_1 == "ACTB"))
   expect_true(all(dca_markers$marker_2 == "HLA-ABC"))

@@ -1,4 +1,4 @@
-el <- ReadMPX_arrow_edgelist(system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR"),
+el <- ReadMPX_arrow_edgelist(system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR"),
                        outdir = tempdir(),
                        overwrite = TRUE)
 

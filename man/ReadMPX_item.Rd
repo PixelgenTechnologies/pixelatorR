@@ -41,8 +41,8 @@ is a single \code{tbl_df}.
 library(pixelatorR)
 
 # Load example data
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/mock_data",
+                        "mock_mpx_data.pxl",
                         package = "pixelatorR")
 polarization <- ReadMPX_item(pxl_file, items = "polarization")
 polarization

@@ -1,24 +1,24 @@
 options(pixelatorR.arrow_outdir = tempdir())
 
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/mock_data",
+                        "mock_mpx_data.pxl",
                         package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1:2])
-seur_obj <- KeepLargestComponent(seur_obj)
 seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds")
 
 test_that("Plot2DGraph works as expected", {
+
   expect_no_error({layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds")})
   expect_s3_class(layout_plot, "ggplot")
-  expect_no_error({layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", marker = "CD14")})
-  expect_equal(layout_plot[[1]]$labels$title, "RCVCMP0000000")
-  expect_equal(layout_plot[[1]]$labels$colour, "CD14\n(log-scaled)")
-  expect_equal(dim(layout_plot[[1]]$data), c(2613, 8))
+  expect_no_error({layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", marker = "CD3E")})
+  expect_equal(layout_plot[[1]]$labels$title, "RCVCMP0000217")
+  expect_equal(layout_plot[[1]]$labels$colour, "CD3E\n(log-scaled)")
+  expect_equal(dim(layout_plot[[1]]$data), c(1395, 8))
 
   # Test with showBnodes active
   expect_no_error({layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", show_Bnodes = TRUE)})
-  expect_equal(dim(layout_plot[[1]]$data), c(3525, 7))
+  expect_equal(dim(layout_plot[[1]]$data), c(2470, 7))
 
   # Test with return_plot_list = TRUE
   expect_no_error({layout_plots <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1:2], layout_method = "pmds", return_plot_list = TRUE)})

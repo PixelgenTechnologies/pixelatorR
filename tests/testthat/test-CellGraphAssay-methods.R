@@ -1,4 +1,4 @@
-pxl_file <- system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR")
+pxl_file <- system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 cg_assay <- seur_obj[["mpxCells"]]
 
@@ -6,10 +6,10 @@ cg_assay <- seur_obj[["mpxCells"]]
 test_that("CellGraphs.CellGraphAssay getter/setter works as expected", {
   cg_list <- CellGraphs(cg_assay)
   expect_type(cg_list, "list")
-  expect_equal(cg_list %>% length(), 10)
+  expect_equal(cg_list %>% length(), 5)
   CellGraphs(cg_assay) <- cg_assay@cellgraphs
   cg_list <- cg_assay@cellgraphs
-  expect_equal(cg_list %>% length(), 10)
+  expect_equal(cg_list %>% length(), 5)
   CellGraphs(cg_assay) <- NULL
 })
 
@@ -37,18 +37,18 @@ test_that("RenameCells.CellGraphAssay method fails when invalid input is provide
 test_that("subset.CellGraphAssay works as expected", {
   cg_assay_subset <- subset(cg_assay, cells = colnames(cg_assay)[1:2])
   expect_equal(ncol(cg_assay_subset), 2)
-  expect_equal(colnames(cg_assay_subset), c("RCVCMP0000000", "RCVCMP0000002"))
+  expect_equal(colnames(cg_assay_subset), c("RCVCMP0000217", "RCVCMP0000118"))
 })
 
 # merge method
 cg_assay <- seur_obj[["mpxCells"]]
 test_that("merge.CellGraphAssay works as expected", {
   expect_no_error(cg_assay_merged <- merge(cg_assay, y = cg_assay))
-  expect_equal(ncol(cg_assay_merged), 20)
-  expect_equal(length(CellGraphs(cg_assay_merged)), 20)
+  expect_equal(ncol(cg_assay_merged), 10)
+  expect_equal(length(CellGraphs(cg_assay_merged)), 10)
   expect_no_error(cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay)))
-  expect_equal(ncol(cg_assay_merged), 30)
-  expect_equal(length(CellGraphs(cg_assay_merged)), 30)
+  expect_equal(ncol(cg_assay_merged), 15)
+  expect_equal(length(CellGraphs(cg_assay_merged)), 15)
   expect_no_error(cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay)))
   expect_equal(colnames(cg_assay_merged), c(paste0("Sample1_", colnames(cg_assay)),
                                             paste0("Sample2_", colnames(cg_assay)),
@@ -76,14 +76,14 @@ test_that("PolarizationScores.CellGraphAssay works as expected", {
   expect_no_error(pol <- PolarizationScores(cg_assay))
   expect_s3_class(pol, "tbl_df")
   expect_equal(names(pol), c("morans_i", "morans_p_value", "morans_p_adjusted", "morans_z", "marker", "component"))
-  expect_equal(dim(pol), c(225, 6))
+  expect_equal(dim(pol), c(380, 6))
 
   # Setter
   expect_no_error(PolarizationScores(cg_assay) <- PolarizationScores(cg_assay))
   expect_no_error(pol <- PolarizationScores(cg_assay))
   expect_s3_class(pol, "tbl_df")
   expect_equal(names(pol), c("morans_i", "morans_p_value", "morans_p_adjusted", "morans_z", "marker", "component"))
-  expect_equal(dim(pol), c(225, 6))
+  expect_equal(dim(pol), c(380, 6))
 })
 
 test_that("PolarizationScores.CellGraphAssay fails when invalid input is provided", {
@@ -109,7 +109,7 @@ test_that("ColocalizationScores.CellGraphAssay works as expected", {
                  "jaccard", "jaccard_mean", "jaccard_stdev",
                  "jaccard_z", "jaccard_p_value", "jaccard_p_value_adjusted",
                  "component"))
-  expect_equal(dim(coloc), c(2680, 15))
+  expect_equal(dim(coloc), c(14649, 15))
 
   # Setter
   expect_no_error(ColocalizationScores(cg_assay) <- ColocalizationScores(cg_assay))
@@ -122,7 +122,7 @@ test_that("ColocalizationScores.CellGraphAssay works as expected", {
                  "jaccard", "jaccard_mean", "jaccard_stdev",
                  "jaccard_z", "jaccard_p_value", "jaccard_p_value_adjusted",
                  "component"))
-  expect_equal(dim(coloc), c(2680, 15))
+  expect_equal(dim(coloc), c(14649, 15))
 })
 
 test_that("ColocalizationScores.CellGraphAssay fails when invalid input is provided", {
@@ -142,20 +142,18 @@ test_that("ArrowData.CellGraphAssay works as expected", {
   expect_no_error(arrow_data <- ArrowData(cg_assay))
   expect_s3_class(arrow_data, "FileSystemDataset")
   expect_equal(names(arrow_data),
-               c("upia", "upib", "umi", "marker", "sequence",
-                 "count", "umi_unique_count", "upi_unique_count",
-                 "component", "sample"))
-  expect_equal(dim(arrow_data), c(64750, 10))
+               c("upia", "upib", "marker",
+                 "count", "component", "sample"))
+  expect_equal(dim(arrow_data), c(93303, 6))
 
   # Setter
   expect_no_error(ArrowData(cg_assay) <- ArrowData(cg_assay))
   expect_no_error(arrow_data <- ArrowData(cg_assay))
   expect_s3_class(arrow_data, "FileSystemDataset")
   expect_equal(names(arrow_data),
-               c("upia", "upib", "umi", "marker", "sequence",
-                 "count", "umi_unique_count", "upi_unique_count",
-                 "component", "sample"))
-  expect_equal(dim(arrow_data), c(64750, 10))
+               c("upia", "upib", "marker",
+                 "count", "component", "sample"))
+  expect_equal(dim(arrow_data), c(93303, 6))
 })
 
 test_that("ArrowData.CellGraphAssay fails when invalid input is provided", {
@@ -194,4 +192,3 @@ test_that("ArrowDir.CellGraphAssay fails when invalid input is provided", {
   # Setter invalid inout
   expect_error(ArrowDir(cg_assay) <- 1, "'value' must be a non-empty character vector")
 })
-
