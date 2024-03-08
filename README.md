@@ -18,6 +18,8 @@ pixelatorR provides the infrastructure to process, analyze and visualize MPX dat
 > [!NOTE] 
 > Visit our [package website](https://pixelgentechnologies.github.io/pixelatorR/) for more details about installation. Here, you can also access the function documentation and tutorials for advanced users.
 
+<br/>
+
 ## Installation
 
 pixelatorR can be installed from GitHub by running the following code from R:
