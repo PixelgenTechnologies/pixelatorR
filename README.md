@@ -13,12 +13,6 @@ pixelatorR provides the infrastructure to process, analyze and visualize MPX dat
 [**Contact**](#contact) |
 [**Credits**](#credits)
 
-<p align="center">
-    <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height=200
-     alt="Pixelgen Technologies" />
-</p>
-<div align="center">© 2023 - Pixelgen Technologies AB</div>
-
 <br/>
 
 > [!NOTE] 
