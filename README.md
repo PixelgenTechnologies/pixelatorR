@@ -7,7 +7,9 @@
 [**Usage**](#usage) |
 [**Notes**](#notes) |
 [**Contact**](#contact) |
-[**Credits**](#credits)
+[**Credits**](#credits) |
+[**Documentation**](https://pixelgentechnologies.github.io/pixelatorR/reference/index.html) |
+[**Tutorials**](https://software.pixelgen.com/mpx-analysis/introduction)
 
 # pixelatorR
 

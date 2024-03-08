@@ -59,6 +59,9 @@ reference:
   - subtitle: Graph layouts
   - contents:
     - ComputeLayout
+    - center_layout_coordinates
+    - normalize_layout_coordinates
+    - project_layout_coordinates_on_unit_sphere
   - subtitle: Data processing
   - contents:
     - KeepLargestComponent

@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -139,7 +139,7 @@ into a new directory and each sample gets it’s own sub directory:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ArrowDir.html">ArrowDir</a></span><span class="op">(</span><span class="va">cg_assay_merged</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_tree.html" class="external-link">dir_tree</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #0000BB; font-weight: bold;">/private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpRaXvfR/nPKfB-2024-02-22-093555</span></span></span>
+<pre><code><span><span class="co">## <span style="color: #0000BB; font-weight: bold;">/private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpjRN36a/KRy57-2024-03-08-142926</span></span></span>
 <span><span class="co">## ├── <span style="color: #0000BB; font-weight: bold;">sample=A</span></span></span>
 <span><span class="co">## │   └── edgelist.parquet</span></span>
 <span><span class="co">## ├── <span style="color: #0000BB; font-weight: bold;">sample=B</span></span></span>
@@ -232,7 +232,7 @@ directory is created:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ArrowDir.html">ArrowDir</a></span><span class="op">(</span><span class="va">seur_obj_subset</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_tree.html" class="external-link">dir_tree</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## <span style="color: #0000BB; font-weight: bold;">/private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpRaXvfR/U3C0x-2024-02-22-093558</span></span></span>
+<pre><code><span><span class="co">## <span style="color: #0000BB; font-weight: bold;">/private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpjRN36a/U3C0x-2024-03-08-142929</span></span></span>
 <span><span class="co">## └── <span style="color: #0000BB; font-weight: bold;">sample=S1</span></span></span>
 <span><span class="co">##     └── edgelist.parquet</span></span></code></pre>
 <p>Since each edge list file has to be filtered each time
@@ -250,7 +250,7 @@ code will remove components with less than 1,000 edges or more than
 <span></span>
 <span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##    user  system elapsed </span></span>
-<span><span class="co">##   7.873   0.950   5.256</span></span></code></pre>
+<span><span class="co">##   7.201   0.926   4.470</span></span></code></pre>
 <p>But this alternative will be faster:</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/system.time.html" class="external-link">system.time</a></span><span class="op">(</span><span class="op">{</span></span>
@@ -263,7 +263,7 @@ code will remove components with less than 1,000 edges or more than
 <span></span>
 <span><span class="op">}</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##    user  system elapsed </span></span>
-<span><span class="co">##   3.776   0.494   2.487</span></span></code></pre>
+<span><span class="co">##   3.552   0.542   2.238</span></span></code></pre>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside>

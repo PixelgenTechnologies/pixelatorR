@@ -12,7 +12,7 @@ Pixelator data processing pipeline."><!-- mathjax --><script src="https://cdnjs.
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -176,13 +176,16 @@ for each cell type.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Set arrow data output directory to temp for tests</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/PBMC_10_cells"</span>,</span></span>
 <span class="r-in"><span>                        <span class="st">"Sample01_test.pxl"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load colocalization scores</span></span></span>
 <span class="r-in"><span><span class="va">colocalization_table1</span> <span class="op">&lt;-</span> <span class="va">colocalization_table2</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_item.html">ReadMPX_colocalization</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpRWMBTZ/temp_libpath418c63b64229/pixelatorR/extdata/PBMC_10_cells/Sample01_test.pxl</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHmlprD/temp_libpath1486176c28e63/pixelatorR/extdata/PBMC_10_cells/Sample01_test.pxl</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">colocalization</span> data</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
 <span class="r-in"><span><span class="va">colocalization_table1</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample1"</span></span></span>

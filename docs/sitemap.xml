@@ -4,6 +4,9 @@
     <loc>/404.html</loc>
   </url>
   <url>
+    <loc>/CHANGELOG.html</loc>
+  </url>
+  <url>
     <loc>/LICENSE.html</loc>
   </url>
   <url>
@@ -137,6 +140,9 @@
   </url>
   <url>
     <loc>/reference/index.html</loc>
+  </url>
+  <url>
+    <loc>/reference/layout_coordinates_utils.html</loc>
   </url>
   <url>
     <loc>/reference/node_markers_counts.html</loc>

@@ -12,7 +12,7 @@ with the bipartite graph, layout, and antibody counts per A pixel."><!-- mathjax
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.1</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -149,7 +149,8 @@ Fruchterman-Reingold (fr), Kamada-Kawai (kk), drl.</p></dd>
 
 <dt>normalize_layout</dt>
 <dd><p>Logical specifying whether the coordinate system
-for the layout should be scaled from -1 to 1.</p></dd>
+should be centered at origo and the coordinates scaled such that their median
+length (euclidean norm) is 1.</p></dd>
 
 
 <dt>project_on_unit_sphere</dt>
@@ -204,11 +205,19 @@ included in <code>custom_layout_function_args</code>.</p></dd>
 
 <p>An object containing a graph layout</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="layout_coordinates_utils.html">center_layout_coordinates()</a></code> for centering layout coordinates,
+<code><a href="layout_coordinates_utils.html">normalize_layout_coordinates()</a></code> for normalizing layout coordinates and
+<code><a href="layout_coordinates_utils.html">project_layout_coordinates_on_unit_sphere()</a></code> for projecting layout coordinates onto a unit sphere.</p></div>
+    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Set arrow data output directory to temp for tests</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/PBMC_10_cells"</span>,</span></span>
 <span class="r-in"><span>                        <span class="st">"Sample01_test.pxl"</span>,</span></span>
