@@ -1,7 +1,7 @@
 <!-- badges: start -->
 [![codecov](https://codecov.io/gh/PixelgenTechnologies/pixelatorR/graph/badge.svg?token=ClGH1zHvuD)](https://codecov.io/gh/PixelgenTechnologies/pixelatorR)
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
-[!Beta release](https://img.shields.io/badge/beta_release-v0.1.1-orange)(https://github.com/PixelgenTechnologies/pixelatorR)
+![Static Badge](https://img.shields.io/badge/beta_release-v0.1.1-orange)
 <!-- badges: end -->
 
 [**Installation**](#installation) |
