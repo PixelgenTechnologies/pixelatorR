@@ -38,12 +38,6 @@ git clone https://github.com/pixelgentechnologies/pixelatorR.git
 Then, in an R session, run:
 
 ```r
-devtools::install("<path to pixelatorR directory>")
-```
-
-Or if you don't have `remotes` installed, you can run:
-
-```r
 install.packages("<path to pixelatorR directory>", repos = NULL, type = "source")
 ```
 
