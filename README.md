@@ -1,6 +1,7 @@
 <!-- badges: start -->
 [![codecov](https://codecov.io/gh/PixelgenTechnologies/pixelatorR/graph/badge.svg?token=ClGH1zHvuD)](https://codecov.io/gh/PixelgenTechnologies/pixelatorR)
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
+[!Beta release](https://img.shields.io/badge/beta_release-v0.1.1-orange)(https://github.com/PixelgenTechnologies/pixelatorR)
 <!-- badges: end -->
 
 [**Installation**](#installation) |
@@ -47,7 +48,7 @@ install.packages("<path to pixelatorR directory>", repos = NULL, type = "source"
 
 ## Usage
 
-Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) for a step-by step guide on MPX data analysis with pixelatorR.
+Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) for a step-by step guide on MPX data analysis with pixelatorR. For advanced users, we also provide additional tutorials on our [package website](https://pixelgentechnologies.github.io/pixelatorR/), which are more directed towards users who are interested in the details of how pixelatorR stores and handles MPX data in R.
 
 ## Notes
 
