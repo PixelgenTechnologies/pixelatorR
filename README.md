@@ -5,6 +5,12 @@
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
 
+<p align="center">
+    <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height=200
+     alt="Pixelgen Technologies" />
+</p>
+<div align="center">© 2023 - Pixelgen Technologies AB</div>
+
 [**Installation**](#installation) |
 [**Usage**](#usage) |
 [**Notes**](#notes) |
@@ -15,12 +21,6 @@ pixelatorR provides the infrastructure to process, analyze and visualize MPX dat
 
 > [!NOTE] 
 > Visit our [package website](https://pixelgentechnologies.github.io/pixelatorR/) for more details about installation and to access the package documentation.
-
-<p align="center">
-    <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height=200
-     alt="Pixelgen Technologies" />
-</p>
-<div align="center">© 2023 - Pixelgen Technologies AB</div>
 
 ## Installation
 
