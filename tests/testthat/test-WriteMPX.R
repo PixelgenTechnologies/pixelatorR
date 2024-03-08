@@ -1,8 +1,10 @@
+options(pixelatorR.arrow_outdir = tempdir())
+
 pxl_file <- system.file("extdata/PBMC_10_cells",
                         "Sample01_test.pxl",
                         package = "pixelatorR")
 
-seur_obj <- suppressWarnings({ReadMPX_Seurat(pxl_file, return_cellgraphassay = TRUE, overwrite = TRUE)})
+seur_obj <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = TRUE, overwrite = TRUE)
 outfile <- tempfile()
 
 test_that("WriteMPX.CellGraphAssay works as expected", {

@@ -41,6 +41,8 @@ Get and set \code{\link{CellGraph}} lists for \code{\link{CellGraphAssay}} and
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
+# Set arrow data output directory to temp for tests
+options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/PBMC_10_cells",
                         "Sample01_test.pxl",

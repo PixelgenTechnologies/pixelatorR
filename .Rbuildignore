@@ -9,7 +9,6 @@
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
-=======
 ^docs
 ^vignettes
->>>>>>> main
+^CHANGELOG.md

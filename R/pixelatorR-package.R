@@ -81,6 +81,7 @@
 #' @importFrom patchwork plot_spacer
 #' @importFrom patchwork wrap_elements
 #' @importFrom patchwork wrap_plots
+#' @importFrom stats median
 #' @importFrom tibble as_tibble
 #' @importFrom tibble column_to_rownames
 #' @importFrom tibble tibble

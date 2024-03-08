@@ -1,3 +1,5 @@
+options(pixelatorR.arrow_outdir = tempdir())
+
 test_that("CellGraphs.Seurat getter/setter works as expected", {
   se <- ReadMPX_Seurat(system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR"),
                                    overwrite = TRUE, return_cellgraphassay = TRUE)
