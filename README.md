@@ -13,6 +13,8 @@
 
 pixelatorR provides the infrastructure to process, analyze and visualize MPX data for R users.
 
+> [!NOTE] Visit our [package website](https://pixelgentechnologies.github.io/pixelatorR/) for more details about installation and to access the package documentation.
+
 <p align="center">
     <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height=200
      alt="Pixelgen Technologies" />
@@ -24,6 +26,7 @@ pixelatorR provides the infrastructure to process, analyze and visualize MPX dat
 pixelatorR can be installed from GitHub by running the following code from R:
 
 ``` r
+install.packages("remotes")
 remotes::install_github("PixelgenTechnologies/pixelatorR")
 ```
 
@@ -38,13 +41,13 @@ git clone https://github.com/pixelgentechnologies/pixelatorR.git
 Then, in an R session, run:
 
 ```r
-devtools::install("<path to pixelatorR directory")
+devtools::install("<path to pixelatorR directory>")
 ```
 
-Alternatively, you can run:
+Or if you don't have `remotes` installed, you can run:
 
 ```r
-install.packages("<path to pixelatorR directory", repos = NULL, type = "source")
+install.packages("<path to pixelatorR directory>", repos = NULL, type = "source")
 ```
 
 ## Usage
