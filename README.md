@@ -1,5 +1,7 @@
 # pixelatorR
 
+pixelatorR provides the infrastructure to process, analyze and visualize MPX data for R users.
+
 <!-- badges: start -->
 [![codecov](https://codecov.io/gh/PixelgenTechnologies/pixelatorR/graph/badge.svg?token=ClGH1zHvuD)](https://codecov.io/gh/PixelgenTechnologies/pixelatorR)
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
@@ -17,7 +19,7 @@
 </p>
 <div align="center">© 2023 - Pixelgen Technologies AB</div>
 
-pixelatorR provides the infrastructure to process, analyze and visualize MPX data for R users.
+<br/>
 
 > [!NOTE] 
 > Visit our [package website](https://pixelgentechnologies.github.io/pixelatorR/) for more details about installation and to access the package documentation.
