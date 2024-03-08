@@ -1,7 +1,4 @@
-# pixelatorR
-
 <!-- badges: start -->
-[![DOI](https://img.shields.io/badge/DOI-10.1101/2023.06.05.543770-B31B1B.svg)](https://www.biorxiv.org/content/10.1101/2023.06.05.543770v1)
 [![codecov](https://codecov.io/gh/PixelgenTechnologies/pixelatorR/graph/badge.svg?token=ClGH1zHvuD)](https://codecov.io/gh/PixelgenTechnologies/pixelatorR)
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
 <!-- badges: end -->
@@ -12,19 +9,23 @@
 [**Contact**](#contact) |
 [**Credits**](#credits)
 
+# pixelatorR
+
 pixelatorR provides the infrastructure to process, analyze and visualize MPX data for R users.
 
-<p align="center">
-    <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height=200
-     alt="Pixelgen Technologies" />
-</p>
-<div align="center">© 2023 - Pixelgen Technologies AB</div>
+<br/>
+
+> [!NOTE] 
+> Visit our [package website](https://pixelgentechnologies.github.io/pixelatorR/) for more details about installation. Here, you can also access the function documentation and tutorials for advanced users.
+
+<br/>
 
 ## Installation
 
 pixelatorR can be installed from GitHub by running the following code from R:
 
 ``` r
+install.packages("remotes")
 remotes::install_github("PixelgenTechnologies/pixelatorR")
 ```
 
@@ -39,13 +40,7 @@ git clone https://github.com/pixelgentechnologies/pixelatorR.git
 Then, in an R session, run:
 
 ```r
-devtools::install("<path to pixelatorR directory")
-```
-
-Alternatively, you can run:
-
-```r
-install.packages("<path to pixelatorR directory", repos = NULL, type = "source")
+install.packages("<path to pixelatorR directory>", repos = NULL, type = "source")
 ```
 
 ## Usage
