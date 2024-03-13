@@ -106,7 +106,7 @@ LoadCellGraphs.FileSystemDataset <- function (
     }
 
     # Log progress
-    # p()
+    p()
     return(g_list)
   }) %>% Reduce(c, .)
 
