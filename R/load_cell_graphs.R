@@ -106,11 +106,25 @@ LoadCellGraphs.FileSystemDataset <- function (
     }
 
     # Log progress
-    p()
+    # p()
     return(g_list)
   }) %>% Reduce(c, .)
 
-  cellgraphs <- setNames(cellgraphs, nm = cells)
+  # Recover component names
+  if (grepl("_", cells[1])) {
+    cellgraph_names <-
+      sample_id_table_list %>%
+      bind_rows() %>%
+      mutate(name = paste(sample, component, sep = "_"))
+  } else {
+    cellgraph_names <-
+      sample_id_table_list %>%
+      bind_rows() %>%
+      mutate(name = component)
+  }
+
+
+  cellgraphs <- setNames(cellgraphs, nm = cellgraph_names$name)
 
   return(cellgraphs)
 }
