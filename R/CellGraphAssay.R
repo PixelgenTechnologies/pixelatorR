@@ -115,6 +115,14 @@ CreateCellGraphAssay <- function (
   ...
 ) {
 
+  # Unlist dots
+  dots <- list(...)
+  if ("command" %in% names(dots)) {
+    command <- dots[["command"]]
+  } else {
+    command = "CreateCellGraphAssay"
+  }
+
   # Check input parameters
   stopifnot(
     "'counts' must be a matrix-like object" =
@@ -146,7 +154,7 @@ CreateCellGraphAssay <- function (
     arrow_dir <- sapply(arrow_dir, normalizePath)
 
     # Load arrow dataset
-    fsd <- ReadMPX_arrow_edgelist(path = arrow_dir, outdir = outdir, return_list = TRUE, overwrite = overwrite, verbose = FALSE)
+    fsd <- ReadMPX_arrow_edgelist(path = arrow_dir, outdir = outdir, return_list = TRUE, overwrite = overwrite, verbose = FALSE, command = command)
 
     # Update arrow_dir to new temporary directory
     arrow_dir <- fsd$arrow_dir
@@ -383,7 +391,7 @@ RenameCells.CellGraphAssay <- function (
       # Handle renaming if more than 1 hive-style directories are present
 
       if (!length(arrow_dirs) == length(new_sample_id)) {
-        abort(glue("Found {arrow_dirs} samples in arrow directory, but {length(new_sample_id)} samples in 'new.names'"))
+        abort(glue("Found {length(arrow_dirs)} samples in arrow directory, but {length(new_sample_id)} samples in 'new.names'"))
       }
 
       # Copy directories to new folder
@@ -408,6 +416,14 @@ RenameCells.CellGraphAssay <- function (
                    "\nCannot rename cell IDs in edgelists."))
       }
     }
+
+    # Log command
+    options(pixelatorR.edgelist_copies = bind_rows(
+      getOption("pixelatorR.edgelist_copies"),
+      tibble(command = "RenameCells",
+             edgelist_dir = normalizePath(session_tmpdir_random),
+             timestamp = Sys.time())
+    ))
 
     # Reload arrow dataset
     fsd_new <- open_dataset(session_tmpdir_random)
@@ -857,7 +873,7 @@ setMethod (
 #'
 #' # Subset Seurat object containing a CellGraphAssay
 #' # --------------------------------
-#' seur_subset <- subset(seur, cells = colnames(cg_assay)[1:3])
+#' seur_subset <- subset(seur, cells = colnames(seur)[1:3])
 #'
 #' # Compare size of edge lists stored on disk
 #' ArrowData(seur) %>% dim()
@@ -939,6 +955,14 @@ subset.CellGraphAssay <- function (
             file.rename(from = f, file.path(dirname(f), "edgelist.parquet"))
           }
         }
+
+        # Log command
+        options(pixelatorR.edgelist_copies = bind_rows(
+          getOption("pixelatorR.edgelist_copies"),
+          tibble(command = "subset",
+                 edgelist_dir = normalizePath(session_tmpdir_random),
+                 timestamp = Sys.time())
+        ))
 
         # Update arrow_dir
         arrow_dir <- session_tmpdir_random
@@ -1112,6 +1136,14 @@ merge.CellGraphAssay <- function (
         file.copy(from = hive_style_dirs[ii], to = new_dir, recursive = TRUE)
       }
     }
+
+    # Log command
+    options(pixelatorR.edgelist_copies = bind_rows(
+      getOption("pixelatorR.edgelist_copies"),
+      tibble(command = "subset",
+             edgelist_dir = normalizePath(new_dir),
+             timestamp = Sys.time())
+    ))
 
     # Open arrow data
     arrow_data <- open_dataset(new_dir)
