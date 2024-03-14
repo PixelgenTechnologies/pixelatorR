@@ -1,6 +1,6 @@
 edge_list <-
   ReadMPX_edgelist(
-    system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR")
+    system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
   )
 
 test_that("edgelist_to_simple_Anode_graph works as expected", {

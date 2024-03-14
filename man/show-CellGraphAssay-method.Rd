@@ -18,8 +18,8 @@ library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
-pxl_file <- system.file("extdata/mock_data",
-                        "mock_mpx_data.pxl",
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
                         package = "pixelatorR")
 counts <- ReadMPX_counts(pxl_file)
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")

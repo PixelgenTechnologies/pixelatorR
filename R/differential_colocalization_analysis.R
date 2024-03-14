@@ -161,8 +161,8 @@ RunDCA.data.frame <- function (
 #' # Set arrow data output directory to temp for tests
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
-#' pxl_file <- system.file("extdata/mock_data",
-#'                         "mock_mpx_data.pxl",
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #' # Seurat objects
 #' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)

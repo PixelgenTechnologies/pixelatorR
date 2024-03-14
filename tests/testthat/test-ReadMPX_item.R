@@ -1,4 +1,4 @@
-testfile <- system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR")
+testfile <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 
 test_that("ReadMPX_item works as expected", {
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/extdata.R
 \name{pxl_dataset}
 \alias{pxl_dataset}
-\title{Mock Test data}
+\title{Five Cells MPX Test data}
 \description{
 MPX data set of 5 immune cells (link to \href{https://software.pixelgen.com/datasets}{data resource})
 \itemize{

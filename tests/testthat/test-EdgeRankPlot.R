@@ -1,8 +1,8 @@
 options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/mock_data",
-                        "mock_mpx_data.pxl",
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
                         package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 

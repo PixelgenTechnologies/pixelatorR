@@ -1,4 +1,4 @@
-#' Mock Test data
+#' Five Cells MPX Test data
 #'
 #' MPX data set of 5 immune cells (link to [data resource](https://software.pixelgen.com/datasets))
 #' \itemize{

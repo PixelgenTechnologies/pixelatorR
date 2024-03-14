@@ -55,8 +55,8 @@ CellGraph <- setClass(
 #'
 #' edge_list <-
 #' ReadMPX_item(
-#'   system.file("extdata/mock_data",
-#'               "mock_mpx_data.pxl",
+#'   system.file("extdata/five_cells",
+#'               "five_cells.pxl",
 #'               package = "pixelatorR"),
 #'   items = "edgelist"
 #' )
@@ -154,8 +154,8 @@ CreateCellGraphObject <- function (
 #'
 #' edge_list <-
 #'   ReadMPX_item(
-#'     system.file("extdata/mock_data",
-#'                 "mock_mpx_data.pxl",
+#'     system.file("extdata/five_cells",
+#'                 "five_cells.pxl",
 #'                 package = "pixelatorR"),
 #'     items = "edgelist"
 #'   )
@@ -306,8 +306,8 @@ CellGraphData <- function (
 #'
 #' edge_list <-
 #' ReadMPX_item(
-#'   system.file("extdata/mock_data",
-#'               "mock_mpx_data.pxl",
+#'   system.file("extdata/five_cells",
+#'               "five_cells.pxl",
 #'               package = "pixelatorR"),
 #'   items = "edgelist"
 #' )

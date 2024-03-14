@@ -1,4 +1,4 @@
-pxl_file <- system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR")
+pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 seur <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = T, overwrite = T)
 cg_assay <- seur[["mpxCells"]]
 

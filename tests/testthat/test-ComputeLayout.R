@@ -1,5 +1,5 @@
 options(pixelatorR.arrow_outdir = tempdir())
-se <- ReadMPX_Seurat(system.file("extdata/mock_data", "mock_mpx_data.pxl", package = "pixelatorR"),
+se <- ReadMPX_Seurat(system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
                      overwrite = TRUE, return_cellgraphassay = TRUE)
 
 se <- LoadCellGraphs(se, cells = colnames(se)[1:2])

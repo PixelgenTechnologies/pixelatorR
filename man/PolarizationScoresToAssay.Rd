@@ -80,8 +80,8 @@ library(SeuratObject)
 options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/mock_data",
-  "mock_mpx_data.pxl",
+pxl_file <- system.file("extdata/five_cells",
+  "five_cells.pxl",
   package = "pixelatorR"
 )
 pol_scores <- ReadMPX_polarization(pxl_file)
