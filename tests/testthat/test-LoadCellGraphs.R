@@ -9,6 +9,11 @@ seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("Sample1", "Sample
 cg_assay <- seur_obj[["mpxCells"]]
 cg_assay_merged <- merge(cg_assay, cg_assay)
 
+cg_assay_split <- lapply(0:4, function(i) {
+  subset(cg_assay, cells = colnames(cg_assay)[(i*2 + 1):(i*2 + 2)])
+})
+cg_assay_merged_big <- merge(cg_assay_split[[1]], cg_assay_split[-1], add.cell.ids = paste0("Sample", 1:5))
+
 test_that("LoadCellGraphs works for Seurat objects", {
   # Single data set
   expect_no_error({seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1])})
@@ -40,11 +45,42 @@ test_that("LoadCellGraphs works for CellGraphAssay objects", {
 })
 
 test_that("LoadCellGraphs works for FileSystemDataset", {
+
   expect_no_error(el <- ReadMPX_arrow_edgelist(pxl_file))
 
   # Single data set
-  expect_no_error({g_list <- LoadCellGraphs(el, cells = colnames(seur_obj)[1:2])})
+  expect_no_error({g_list <- LoadCellGraphs(el, cells = colnames(seur_obj))})
   expect_type(g_list, "list")
   expect_s4_class(g_list[[1]], "CellGraph")
-  expect_equal(length(g_list), 2)
+  expect_equal(length(g_list), 10)
+
+  # Big merged data
+  expect_no_error({g_list_merged_big <- LoadCellGraphs(ArrowData(cg_assay_merged_big), cells = colnames(cg_assay_merged_big))})
+  expect_equal(names(g_list_merged_big), colnames(cg_assay_merged_big))
+
+  # Check data in arrow directory
+  expect_equal(ArrowDir(cg_assay_merged_big) %>% list.files(),
+               c("sample=Sample1", "sample=Sample2", "sample=Sample3", "sample=Sample4",
+                 "sample=Sample5"))
+
+  # Check that components in parquet files are correct
+  for (i in 1:5) {
+    expect_equal(
+      ArrowData(cg_assay_merged_big) %>% filter(sample == paste0("Sample", i)) %>% collect() %>% pull(component) %>% unique() %>% sort(),
+      colnames(cg_assay_split[[i]]) %>% sort()
+    )
+  }
+
+  # Check that contents of g_list and g_list_merged_big are the same
+  for (i in 1:5) {
+    expect_equal(g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize(),
+                 g_list_merged_big[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize()
+    )
+    expect_equal(g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% length(),
+                 g_list_merged_big[[i]] %>% CellGraphData(slot = "cellgraph") %>% length()
+    )
+    expect_equal(g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% attr(which = "type"),
+                 g_list_merged_big[[i]] %>% CellGraphData(slot = "cellgraph") %>% attr(which = "type")
+    )
+  }
 })

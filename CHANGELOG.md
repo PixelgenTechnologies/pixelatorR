@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED] - 2024-??-??
 
+## [0.1.2] - 2024-03-14
+
+* Fixed bug in `LoadCellGraphs` when working on Seurat objects with multiple data sets (merged). Previous version returned components in an invalid order.
+
 ## [0.1.1] - 2024-02-29
 
 * Fixed bug in `ComputeLayout` when normalizing or projecting layout coordinates

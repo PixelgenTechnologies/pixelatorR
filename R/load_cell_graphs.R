@@ -58,19 +58,26 @@ LoadCellGraphs.FileSystemDataset <- function (
   if (verbose && check_global_verbosity())
     cli_alert("  Loading {length(cells)} edgelist(s) as {col_br_magenta(load_as)} graph(s)")
 
-  # Split cells id into chunks
+  # Split cell ids into sample and component, if a prefix exists
   sample_id_table <- do.call(rbind, strsplit(cells, "_"))
-  if (ncol(sample_id_table) == 1) {
+
+  # Check if data is merged, otherwise use default sample name
+  is_merged <- ncol(sample_id_table) == 2
+  if (!is_merged) {
     sample_id_table <- cbind("S1", sample_id_table)
   }
   colnames(sample_id_table) <- c("sample", "component")
+
+  # Group cells ids into chunks
   sample_id_table <- as_tibble(sample_id_table) %>%
     group_by(sample) %>%
     mutate(group = ceiling(seq_len(n()) / chunk_length)) %>%
     group_by(sample, group)
 
+  # Fetch group keys to use for chunk loading
   key_pairs <- sample_id_table %>% group_keys()
 
+  # Split sample_id_table into list of chunks
   sample_id_table_list <- sample_id_table %>%
     group_split() %>%
     as.list()
@@ -89,6 +96,11 @@ LoadCellGraphs.FileSystemDataset <- function (
     g_list <- try({graph_load_fkn(object_filtered,
                              cell_ids = cell_ids[, 2, drop = TRUE],
                              add_markers = add_marker_counts)}, silent = TRUE)
+
+    # Adjust sample id if needed
+    if (is_merged) {
+      g_list <- set_names(g_list, nm = paste0(sample_id, "_", names(g_list)))
+    }
 
     if (inherits(g_list, what = "try-error") || any(sapply(g_list, is.null))) {
       abort(glue("Failed to load edge list data. Most likely reason is that invalid cells were provided."))
@@ -109,8 +121,6 @@ LoadCellGraphs.FileSystemDataset <- function (
     p()
     return(g_list)
   }) %>% Reduce(c, .)
-
-  cellgraphs <- setNames(cellgraphs, nm = cells)
 
   return(cellgraphs)
 }
