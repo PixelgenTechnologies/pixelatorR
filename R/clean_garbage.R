@@ -13,17 +13,21 @@ globalVariables(
 #' these edgelist files can use up several gigabytes of disk space. This function
 #' scans through the \code{getOption("pixelatorR.arrow_outdir")} directory and removes
 #' any edgelist files that are not linked to \code{Seurat} objects or \code{CellGraphAssay}s
-#' in the global environment.
+#' in the global environment. Note that only global variables which inherits the \code{Seurat}
+#' or \code{CellGraphAssay} class are considered, as well as lists containing these object types.
 #'
 #' @export
 #'
 clean_edgelists_directories <- function () {
 
   # Get variables in global environment
-  ge <- global_env()
+  global_variables <- global_env() %>% as.list()
 
   # Check if there are any Seurat objects or CellGraphAssays
-  ge <- sapply(ge, function(x) {
+  global_variable_types <- sapply(names(global_variables), function(nm) {
+
+    x <- global_variables[[nm]]
+
     if (inherits(x, what = c("Seurat", "CellGraphAssay"))) {
       # Ignore Seurat objects without CellGraphAssays
       arrow_dir <- try({
@@ -34,21 +38,45 @@ clean_edgelists_directories <- function () {
       } else {
         return(arrow_dir)
       }
+    } else if (inherits(x, what = "list")) {
+
+      # Check if any list contains Seurat objects or CellGraphAssays
+      list_arrow_dirs <- lapply(x, function(y) {
+        if (inherits(y, what = c("Seurat", "CellGraphAssay"))) {
+          # Ignore Seurat objects without CellGraphAssays
+          arrow_dir <- try({
+            ArrowDir(y)
+          }, silent = TRUE)
+          if (inherits(arrow_dir, "try-error")) {
+            return(NULL)
+          } else {
+            return(arrow_dir)
+          }
+        } else {
+          return(NULL)
+        }
+      })
+      return(list_arrow_dirs %>% set_names(seq_along(list_arrow_dirs)))
     } else {
       return(NULL)
     }
   })
-  ge <- Filter(Negate(is.null), ge) %>% unlist()
-  if (length(ge) > 0) {
-    ge <- tibble(variable = names(ge), edgelist_dir = ge)
+
+  # Unlist and remove NULLs
+  global_variable_types <- unlist(global_variable_types)
+  global_variable_types <- Filter(Negate(is.null), global_variable_types)
+
+  # Convert to tibble
+  if (length(global_variable_types) > 0) {
+    global_variable_types <- tibble(variable = names(global_variable_types), edgelist_dir = global_variable_types)
   }
 
   # Get command log
   command_log <- getOption("pixelatorR.edgelist_copies")
   if (length(command_log) > 0) {
-    if (length(ge) > 0) {
+    if (length(global_variable_types) > 0) {
       command_log <- command_log %>%
-        left_join(ge, by = "edgelist_dir")
+        left_join(global_variable_types, by = "edgelist_dir")
     } else {
       command_log <- NULL
     }
@@ -58,7 +86,7 @@ clean_edgelists_directories <- function () {
   edgelist_dirs <- list.files(getOption("pixelatorR.arrow_outdir"), full.names = TRUE) %>% normalizePath()
   if (length(edgelist_dirs) > 0) {
     edgelist_dirs <- tibble(edgelist_dir = edgelist_dirs, exists = TRUE)
-    if (length(ge) > 0) {
+    if (length(global_variable_types) > 0) {
       command_log <- command_log %>%
         full_join(edgelist_dirs, by = "edgelist_dir")
     } else {
