@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.1.2
+Version: 0.2.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre")),
@@ -33,6 +33,8 @@ Imports:
     progressr,
     plotly,
     fs
+Remotes:
+    cran/arrow@14.0.2.1
 Suggests:
     Seurat (>= 5.0.0),
     spelling,

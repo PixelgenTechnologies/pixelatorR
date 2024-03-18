@@ -3,13 +3,13 @@ options(pixelatorR.arrow_outdir = tempdir())
 test_that("Data loading with ReadMPX_Seurat works", {
   pg_data <-
     ReadMPX_Seurat(
-      system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR"), overwrite = TRUE
+      system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"), overwrite = TRUE
     )
   expect_s4_class(pg_data, "Seurat")
   expect_equal(names(pg_data@assays), c("mpxCells"))
   pg_data <-
     ReadMPX_Seurat(
-      system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR"),
+      system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
       overwrite = TRUE, load_cell_graphs = TRUE
     )
   expect_s4_class(pg_data, "Seurat")

@@ -1,6 +1,6 @@
 options(pixelatorR.arrow_outdir = tempdir())
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
                         package = "pixelatorR"
 )
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
@@ -12,29 +12,41 @@ test_that("ColocalizationScoresToAssay works as expected", {
   expect_equal(names(seur_obj@assays), c("mpxCells", "colocalization"))
   expect_s4_class(seur_obj[["colocalization"]], "Assay")
   expect_equal(ncol(seur_obj[["colocalization"]]), ncol(seur_obj[["mpxCells"]]))
-  exp_matrix_top_left <- matrix(c(6.87611904, -1.02836270, -6.22495456, 0.000000),
-                                ncol = 2, byrow = TRUE,
-                                dimnames = list(c("ACTB-CD11c", "ACTB-CD14"),
-                                                c("RCVCMP0000000", "RCVCMP0000002")))
-  expect_equal(exp_matrix_top_left, seur_obj[["colocalization"]]$data[1:2, 1:2])
+  expect_equal(seur_obj[["colocalization"]]$data[1:2, 1:2],
+               structure(
+                 c(-0.940132075815013, 1.92413178598625, 0, 0),
+                 dim = c(2L,
+                         2L),
+                 dimnames = list(
+                   c("ACTB-B2M", "ACTB-CD102"),
+                   c("RCVCMP0000217",
+                     "RCVCMP0000118")
+                 )
+               ))
 
   # New assay name
   expect_no_error(seur_obj <- ColocalizationScoresToAssay(seur_obj, new_assay = "coloc"))
   expect_equal(names(seur_obj@assays), c("mpxCells", "colocalization", "coloc"))
   expect_s4_class(seur_obj[["coloc"]], "Assay")
   expect_equal(ncol(seur_obj[["coloc"]]), ncol(seur_obj[["mpxCells"]]))
-  expect_equal(nrow(seur_obj[["coloc"]]), 325)
+  expect_equal(nrow(seur_obj[["coloc"]]), 3160)
 
   # Use jaccard_z values
   expect_no_error(seur_obj <- ColocalizationScoresToAssay(seur_obj, values_from = "jaccard_z"))
   expect_equal(names(seur_obj@assays), c("mpxCells", "colocalization", "coloc"))
   expect_s4_class(seur_obj[["colocalization"]], "Assay")
   expect_equal(ncol(seur_obj[["colocalization"]]), ncol(seur_obj[["mpxCells"]]))
-  exp_matrix_top_left <- matrix(c(6.9636201306, -0.9352617012, -5.7658771986, 0.0000000000),
-                                ncol = 2, byrow = TRUE,
-                                dimnames = list(c("ACTB-CD11c", "ACTB-CD14"),
-                                                c("RCVCMP0000000", "RCVCMP0000002")))
-  expect_equal(exp_matrix_top_left, seur_obj[["colocalization"]]$data[1:2, 1:2])
+  expect_equal(seur_obj[["colocalization"]]$data[1:2, 1:2],
+               structure(
+                 c(0.323862202333832, 1.9793475103644, 0, 0),
+                 dim = c(2L,
+                         2L),
+                 dimnames = list(
+                   c("ACTB-B2M", "ACTB-CD102"),
+                   c("RCVCMP0000217",
+                     "RCVCMP0000118")
+                 )
+               ))
 })
 
 

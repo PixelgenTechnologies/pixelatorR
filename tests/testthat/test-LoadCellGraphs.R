@@ -1,18 +1,19 @@
 options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
                         package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
 seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("Sample1", "Sample2"))
 cg_assay <- seur_obj[["mpxCells"]]
 cg_assay_merged <- merge(cg_assay, cg_assay)
 
-cg_assay_split <- lapply(0:4, function(i) {
-  subset(cg_assay, cells = colnames(cg_assay)[(i*2 + 1):(i*2 + 2)])
+
+cg_assay_split <- lapply(list(c(1, 2), c(3, 4, 5)), function(inds) {
+  subset(cg_assay, cells = colnames(cg_assay)[inds])
 })
-cg_assay_merged_big <- merge(cg_assay_split[[1]], cg_assay_split[-1], add.cell.ids = paste0("Sample", 1:5))
+cg_assay_merged_big <- merge(cg_assay_split[[1]], cg_assay_split[-1], add.cell.ids = paste0("Sample", 1:2))
 
 test_that("LoadCellGraphs works for Seurat objects", {
   # Single data set
@@ -28,20 +29,20 @@ test_that("LoadCellGraphs works for CellGraphAssay objects", {
   # Load bipartite graph (default)
   expect_no_error({cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], force = TRUE)})
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_s4_class(cg_assay@cellgraphs$RCVCMP0000000, "CellGraph")
-  expect_equal(attr(cg_assay@cellgraphs$RCVCMP0000000@cellgraph, "type"), "bipartite")
+  expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "bipartite")
 
   # Load A-node projected graph
   expect_no_error({cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], load_as = "Anode", force = TRUE)})
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_s4_class(cg_assay@cellgraphs$RCVCMP0000000, "CellGraph")
-  expect_equal(attr(cg_assay@cellgraphs$RCVCMP0000000@cellgraph, "type"), "Anode")
+  expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "Anode")
 
   # Load line graph
   expect_no_error({cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], load_as = "linegraph", force = TRUE)})
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_s4_class(cg_assay@cellgraphs$RCVCMP0000000, "CellGraph")
-  expect_equal(attr(cg_assay@cellgraphs$RCVCMP0000000@cellgraph, "type"), "linegraph")
+  expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "linegraph")
 })
 
 test_that("LoadCellGraphs works for FileSystemDataset", {
@@ -52,7 +53,7 @@ test_that("LoadCellGraphs works for FileSystemDataset", {
   expect_no_error({g_list <- LoadCellGraphs(el, cells = colnames(seur_obj))})
   expect_type(g_list, "list")
   expect_s4_class(g_list[[1]], "CellGraph")
-  expect_equal(length(g_list), 10)
+  expect_equal(length(g_list), 5)
 
   # Big merged data
   expect_no_error({g_list_merged_big <- LoadCellGraphs(ArrowData(cg_assay_merged_big), cells = colnames(cg_assay_merged_big))})
@@ -60,19 +61,18 @@ test_that("LoadCellGraphs works for FileSystemDataset", {
 
   # Check data in arrow directory
   expect_equal(ArrowDir(cg_assay_merged_big) %>% list.files(),
-               c("sample=Sample1", "sample=Sample2", "sample=Sample3", "sample=Sample4",
-                 "sample=Sample5"))
+               c("sample=Sample1", "sample=Sample2"))
 
   # Check that components in parquet files are correct
-  for (i in 1:5) {
+  for (i in 1:2) {
     expect_equal(
-      ArrowData(cg_assay_merged_big) %>% filter(sample == paste0("Sample", i)) %>% collect() %>% pull(component) %>% unique() %>% sort(),
-      colnames(cg_assay_split[[i]]) %>% sort()
+      ArrowData(cg_assay_merged_big) %>% filter(sample == paste0("Sample", i)) %>% collect() %>% pull(component) %>% unique() %>% as.character() %>% sort(),
+      colnames(cg_assay_split[[i]]) %>% as.character() %>% sort()
     )
   }
 
   # Check that contents of g_list and g_list_merged_big are the same
-  for (i in 1:5) {
+  for (i in 1:2) {
     expect_equal(g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize(),
                  g_list_merged_big[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize()
     )

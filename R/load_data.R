@@ -22,8 +22,8 @@ globalVariables(
 #' library(pixelatorR)
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
 #'                          package = "pixelatorR")
 #' counts <- ReadMPX_counts(pxl_file)
 #' counts[1:5, 1:5]
@@ -117,8 +117,8 @@ ReadMPX_counts <- function (
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #' seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 #' seur_obj
@@ -261,8 +261,8 @@ ReadMPX_Seurat <- function (
 #' library(pixelatorR)
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #' polarization <- ReadMPX_item(pxl_file, items = "polarization")
 #' polarization

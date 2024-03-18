@@ -91,8 +91,8 @@ library(SeuratObject)
 options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/PBMC_10_cells",
-  "Sample01_test.pxl",
+pxl_file <- system.file("extdata/five_cells",
+  "five_cells.pxl",
   package = "pixelatorR"
 )
 col_scores <- ReadMPX_colocalization(pxl_file)

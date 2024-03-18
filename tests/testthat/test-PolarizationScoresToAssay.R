@@ -1,7 +1,7 @@
 options(pixelatorR.arrow_outdir = tempdir())
 
-pxl_file <- system.file("extdata/PBMC_10_cells",
-  "Sample01_test.pxl",
+pxl_file <- system.file("extdata/five_cells",
+  "five_cells.pxl",
   package = "pixelatorR"
 )
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
@@ -13,11 +13,13 @@ test_that("PolarizationScoresToAssay works as expected", {
   expect_equal(names(seur_obj@assays), c("mpxCells", "polarization"))
   expect_s4_class(seur_obj[["polarization"]], "Assay")
   expect_equal(dim(seur_obj[["polarization"]]), dim(seur_obj[["mpxCells"]]))
-  exp_matrix_top_left <- matrix(c(-0.02884569, 0.01942594, 0.64174516, 2.81220649),
-                       ncol = 2, byrow = TRUE,
-                       dimnames = list(c("ACTB", "CD11c"),
-                                       c("RCVCMP0000000", "RCVCMP0000002")))
-  expect_equal(exp_matrix_top_left, seur_obj[["polarization"]]$data[1:2, 1:2])
+  expect_equal(seur_obj[["polarization"]]$data[1:2, 1:2],
+               structure(
+                 c(-0.133503001331984,-0.675947218565106, 0, 4.55113839877331),
+                 dim = c(2L, 2L),
+                 dimnames = list(c("ACTB", "B2M"), c("RCVCMP0000217",
+                                                     "RCVCMP0000118"))
+               ))
 
   # New assay name
   expect_no_error(seur_obj <- PolarizationScoresToAssay(seur_obj, new_assay = "pol"))
@@ -30,11 +32,18 @@ test_that("PolarizationScoresToAssay works as expected", {
   expect_equal(names(seur_obj@assays), c("mpxCells", "polarization", "pol"))
   expect_s4_class(seur_obj[["polarization"]], "Assay")
   expect_equal(dim(seur_obj[["polarization"]]), dim(seur_obj[["mpxCells"]]))
-  exp_matrix_top_left <- matrix(c(-0.0004683552, -0.0005655225, 0.0023255354, 0.0172761591),
-                                ncol = 2, byrow = TRUE,
-                                dimnames = list(c("ACTB", "CD11c"),
-                                                c("RCVCMP0000000", "RCVCMP0000002")))
-  expect_equal(exp_matrix_top_left, seur_obj[["polarization"]]$data[1:2, 1:2])
+  expect_equal(seur_obj[["polarization"]]$data[1:2, 1:2],
+               structure(
+                 c(
+                   -0.00164610432425177,
+                   -0.00734402218330873,
+                   0,
+                   0.0307451831152651
+                 ),
+                 dim = c(2L, 2L),
+                 dimnames = list(c("ACTB", "B2M"), c("RCVCMP0000217",
+                                                     "RCVCMP0000118"))
+               ))
 })
 
 

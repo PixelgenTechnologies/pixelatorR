@@ -25,8 +25,8 @@
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #' edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
 #' edgelist_arrow
@@ -153,8 +153,8 @@ ReadMPX_arrow_edgelist <- function (
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #' edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
 #'
