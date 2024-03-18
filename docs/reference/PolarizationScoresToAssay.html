@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -137,27 +137,27 @@ to show the distribution of polarization scores.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load example data as a Seurat object</span></span></span>
-<span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/PBMC_10_cells"</span>,</span></span>
-<span class="r-in"><span>  <span class="st">"Sample01_test.pxl"</span>,</span></span>
+<span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/five_cells"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"pixelatorR"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">pol_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_item.html">ReadMPX_polarization</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpE5vtrX/temp_libpathd4fe641c7694/pixelatorR/extdata/PBMC_10_cells/Sample01_test.pxl</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLNZlox/temp_libpathc9e3750e7949/pixelatorR/extdata/five_cells/five_cells.pxl</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">polarization</span> data</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># PolarizationScoresToAssay returns a matrix for a tbl_df</span></span></span>
 <span class="r-in"><span><span class="va">pol_scores_mat</span> <span class="op">&lt;-</span> <span class="fu">PolarizationScoresToAssay</span><span class="op">(</span><span class="va">pol_scores</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">pol_scores_mat</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       RCVCMP0000000 RCVCMP0000005 RCVCMP0000003 RCVCMP0000002 RCVCMP0000008</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB    -0.02884569    -0.1661079    -0.7318156    0.01942594    0.03407241</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> CD11c    0.64174516    -0.5554502    -0.4868502    2.81220649    0.00000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> CD14     3.18896265     0.3321374     0.0000000    0.00000000   -0.44240507</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> CD19    -0.15680916     1.8914271     4.5770456    0.00000000   -0.88188130</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       RCVCMP0000217 RCVCMP0000118 RCVCMP0000655 RCVCMP0000487 RCVCMP0000263</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB     -0.1335030    0.00000000    -0.2925391   -0.17816347    -0.1473378</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> B2M      -0.6759472    4.55113840     1.6401548   -3.14104176    -8.7973738</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> CD102    -0.8262732    0.03074864     0.3773469    0.03870055    -0.4982260</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> CD11a     0.1816744    0.07436839     0.8086415    0.30911581    -1.8365308</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a Seurat object</span></span></span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">10</span> cells and <span style="color: #5555FF;">26</span> targeted surface proteins</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fetch CellGraphAssay and create new polarization</span></span></span>
 <span class="r-in"><span><span class="co"># scores Assay</span></span></span>
@@ -177,9 +177,9 @@ to show the distribution of polarization scores.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># After conversion, we now have a new assay called "polarization"</span></span></span>
 <span class="r-in"><span><span class="va">seur</span><span class="op">[[</span><span class="st">"polarization"</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assay data with 26 features for 10 cells</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Assay data with 80 features for 5 cells</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> First 10 features:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ACTB, CD11c, CD14, CD19, CD20, CD22, CD26, CD29, CD32, CD328 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ACTB, B2M, CD102, CD11a, CD11b, CD11c, CD127, CD137, CD14, CD150 </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Switch default assay to polarization</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SeuratObject/man/DefaultAssay.html" class="external-link">DefaultAssay</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"polarization"</span></span></span>

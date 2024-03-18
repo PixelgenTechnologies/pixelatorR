@@ -12,7 +12,7 @@ packages"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/ma
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -125,14 +125,14 @@ this is recommended if the same normalization approach was applied to all object
 <span class="r-in"><span><span class="co"># Set arrow data output directory to temp for tests</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/PBMC_10_cells"</span>,</span></span>
-<span class="r-in"><span>                        <span class="st">"Sample01_test.pxl"</span>,</span></span>
+<span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/five_cells"</span>,</span></span>
+<span class="r-in"><span>                        <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">10</span> cells and <span style="color: #5555FF;">26</span> targeted surface proteins</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="LoadCellGraphs.html">LoadCellGraphs</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading 10 edgelist(s) as <span style="color: #FF55FF;">bipartite</span> graph(s)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Successfully loaded 10 CellGraph object(s).</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading 5 edgelist(s) as <span style="color: #FF55FF;">bipartite</span> graph(s)</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Successfully loaded 5 CellGraph object(s).</span>
 <span class="r-in"><span><span class="va">cg_assay</span> <span class="op">&lt;-</span> <span class="va">seur</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Subset CellGraphAssay</span></span></span>
@@ -145,9 +145,9 @@ this is recommended if the same normalization approach was applied to all object
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compare size of edge lists stored on disk</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ArrowData.html">ArrowData</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 64750    10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 93303     6</span>
 <span class="r-in"><span><span class="fu"><a href="ArrowData.html">ArrowData</a></span><span class="op">(</span><span class="va">seur_subset</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 20837    10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 50611     6</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Merge CellGraphAssays</span></span></span>
 <span class="r-in"><span><span class="co"># ---------------------------------</span></span></span>
@@ -157,7 +157,7 @@ this is recommended if the same normalization approach was applied to all object
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check size of merged edge lists stored on disk</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="ArrowData.html">ArrowData</a></span><span class="op">(</span><span class="va">cg_assay_merged</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/base/dim.html" class="external-link">dim</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 194250     10</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 279909      6</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

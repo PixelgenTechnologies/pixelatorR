@@ -14,7 +14,7 @@ the outdir directory which can be modified on disk."><!-- mathjax --><script src
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -112,24 +112,20 @@ to TRUE to overwrite the directory</p></dd>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load example data</span></span></span>
-<span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/PBMC_10_cells"</span>,</span></span>
-<span class="r-in"><span>                        <span class="st">"Sample01_test.pxl"</span>,</span></span>
+<span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/five_cells"</span>,</span></span>
+<span class="r-in"><span>                        <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">edgelist_arrow</span> <span class="op">&lt;-</span> <span class="fu">ReadMPX_arrow_edgelist</span><span class="op">(</span><span class="va">pxl_file</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Output directory set to '/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpfnOAyh'</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Copying parquet files to /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpfnOAyh/kSazH-2024-03-14-114700</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Output directory set to '/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpdgBpG2'</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Copying parquet files to /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpdgBpG2/jD2sz-2024-03-18-171347</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning FileSystemDataset</span>
 <span class="r-in"><span><span class="va">edgelist_arrow</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> FileSystemDataset with 1 Parquet file</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> upia: string</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> upib: string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> umi: string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> marker: string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sequence: string</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> count: int32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> umi_unique_count: int32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> upi_unique_count: int32</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> component: string</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> marker: dictionary&lt;values=string, indices=int32&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> count: int8</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> component: dictionary&lt;values=string, indices=int32&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sample: string</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

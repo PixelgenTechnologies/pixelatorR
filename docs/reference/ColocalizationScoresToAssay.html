@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -157,32 +157,32 @@ to show the distribution of colocalization scores.</p>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load example data as a Seurat object</span></span></span>
-<span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/PBMC_10_cells"</span>,</span></span>
-<span class="r-in"><span>  <span class="st">"Sample01_test.pxl"</span>,</span></span>
+<span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/five_cells"</span>,</span></span>
+<span class="r-in"><span>  <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"pixelatorR"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">col_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_item.html">ReadMPX_colocalization</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpE5vtrX/temp_libpathd4fe641c7694/pixelatorR/extdata/PBMC_10_cells/Sample01_test.pxl</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLNZlox/temp_libpathc9e3750e7949/pixelatorR/extdata/five_cells/five_cells.pxl</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">colocalization</span> data</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ColocalizationScoresToAssay returns a matrix for a tbl_df</span></span></span>
 <span class="r-in"><span><span class="va">col_scores_mat</span> <span class="op">&lt;-</span> <span class="fu">ColocalizationScoresToAssay</span><span class="op">(</span><span class="va">col_scores</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">col_scores_mat</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            RCVCMP0000000 RCVCMP0000002 RCVCMP0000003 RCVCMP0000005</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD11c      6.876119     -1.028363     -7.339336    -2.8884534</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD14      -6.224955      0.000000      0.000000     0.3047543</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> CD11c-CD14     -6.658966      0.000000      0.000000    -0.6719115</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD19       5.399166      0.000000     -3.863839     5.4437994</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            RCVCMP0000006</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD11c     -1.611557</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD14       0.000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> CD11c-CD14      0.000000</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD19       1.072440</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            RCVCMP0000217 RCVCMP0000118 RCVCMP0000487 RCVCMP0000655</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-B2M      -0.9401321      0.000000     -2.879992     4.5740882</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD102     1.9241318      0.000000      3.157566    -0.4834448</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> B2M-CD102      4.7268224      2.190192     -3.101690     2.3802011</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD11a     2.1011979      0.000000     -1.804651     8.0947966</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>            RCVCMP0000263</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-B2M       1.9368818</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD102     0.5934362</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> B2M-CD102     -5.2602955</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD11a     5.4727656</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a Seurat object</span></span></span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">10</span> cells and <span style="color: #5555FF;">26</span> targeted surface proteins</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fetch CellGraphAssay and create new polarization</span></span></span>
 <span class="r-in"><span><span class="co"># scores Assay</span></span></span>
@@ -202,10 +202,10 @@ to show the distribution of colocalization scores.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># After conversion, we now have a new assay called "colocalization"</span></span></span>
 <span class="r-in"><span><span class="va">seur</span><span class="op">[[</span><span class="st">"colocalization"</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assay data with 325 features for 10 cells</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Assay data with 3160 features for 5 cells</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> First 10 features:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  ACTB-CD11c, ACTB-CD14, CD11c-CD14, ACTB-CD19, CD11c-CD19, CD14-CD19,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD20, CD11c-CD20, CD14-CD20, CD19-CD20 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  ACTB-B2M, ACTB-CD102, B2M-CD102, ACTB-CD11a, B2M-CD11a, CD102-CD11a,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD11b, B2M-CD11b, CD102-CD11b, CD11a-CD11b </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Switch default assay to polarization</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SeuratObject/man/DefaultAssay.html" class="external-link">DefaultAssay</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"colocalization"</span></span></span>
