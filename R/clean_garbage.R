@@ -124,7 +124,7 @@ clean_edgelists_directories <- function () {
   }
 
   if (getOption("pixelatorR.interactive", default = TRUE)) {
-    cli_alert_warning(glue("Are you sure you want to remove the folllowing directories?\n\n",
+    cli_alert_warning(glue("Are you sure you want to remove the following directories?\n\n",
                            paste(command_log_na$edgelist_dir, collapse = "\n")))
     if (menu(c("Yes", "No")) != 1) {
       return(invisible(NULL))
