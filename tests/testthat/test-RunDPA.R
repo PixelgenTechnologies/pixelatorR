@@ -1,7 +1,7 @@
 options(pixelatorR.arrow_outdir = tempdir())
 
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
                         package = "pixelatorR")
 
 # Load polarization scores
@@ -19,16 +19,16 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 test_that("RunDPA works as expected on a data.frame", {
 
   expect_no_error(suppressWarnings(dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample",
-                        target = "Sample1", reference = "Sample2")))
+                                                         target = "Sample1", reference = "Sample2")))
 
   expect_true(all(dpa_markers$data_type == "morans_z"))
   expect_true(all(dpa_markers$target == "Sample1"))
   expect_true(all(dpa_markers$reference == "Sample2"))
-  expect_true(all(dpa_markers$n1[1:4] == c(10, 9, 5, 7)))
-  expect_true(all(dpa_markers$n2[1:4] == c(10, 9, 5, 7)))
-  expect_true(all(dpa_markers$statistic[1:4] == c(50.0, 40.5, 12.5, 24.5)))
+  expect_true(all(dpa_markers$n1[1:4] == c(4, 5, 5, 5)))
+  expect_true(all(dpa_markers$n2[1:4] == c(4, 5, 5, 5)))
+  expect_true(all(dpa_markers$statistic[1:4] == c(8, 12.5, 12.5, 12.5)))
   expect_true(all(dpa_markers$method == "Wilcoxon"))
-  expect_true(all(dpa_markers$marker[1:4] == c("ACTB", "CD11c", "CD14", "CD19")))
+  expect_true(all(dpa_markers$marker[1:4] == c("ACTB", "B2M", "CD102", "CD11a")))
 })
 
 test_that("RunDPA works as expected on a Seurat object", {
@@ -39,11 +39,11 @@ test_that("RunDPA works as expected on a Seurat object", {
   expect_true(all(dpa_markers$data_type == "morans_z"))
   expect_true(all(dpa_markers$target == "Sample1"))
   expect_true(all(dpa_markers$reference == "Sample2"))
-  expect_true(all(dpa_markers$n1[1:4] == c(10, 9, 5, 7)))
-  expect_true(all(dpa_markers$n2[1:4] == c(10, 9, 5, 7)))
-  expect_true(all(dpa_markers$statistic[1:4] == c(50.0, 40.5, 12.5, 24.5)))
+  expect_true(all(dpa_markers$n1[1:4] == c(4, 5, 5, 5)))
+  expect_true(all(dpa_markers$n2[1:4] == c(4, 5, 5, 5)))
+  expect_true(all(dpa_markers$statistic[1:4] == c(8, 12.5, 12.5, 12.5)))
   expect_true(all(dpa_markers$method == "Wilcoxon"))
-  expect_true(all(dpa_markers$marker[1:4] == c("ACTB", "CD11c", "CD14", "CD19")))
+  expect_true(all(dpa_markers$marker[1:4] == c("ACTB", "B2M", "CD102", "CD11a")))
 })
 
 test_that("RunDPA fails with invalid input",  {

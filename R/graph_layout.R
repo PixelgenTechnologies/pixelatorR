@@ -44,8 +44,8 @@ globalVariables(
 #' # Set arrow data output directory to temp for tests
 #' options(pixelatorR.arrow_outdir = tempdir())
 #'
-#' pxl_file <- system.file("extdata/PBMC_10_cells",
-#'                         "Sample01_test.pxl",
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #'
 #' # Load example data

@@ -1,16 +1,16 @@
 options(pixelatorR.arrow_outdir = tempdir())
 
-pxl_file <- system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR")
+pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 el <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
 
 test_that("edgelist_to_simple_Anode_graph works as expected", {
 
   # data.frame
   el_tbl_df <- as_tibble(el)
-  expect_no_error(anode <- edgelist_to_simple_Anode_graph(el_tbl_df, components = "RCVCMP0000000"))
+  expect_no_error(anode <- edgelist_to_simple_Anode_graph(el_tbl_df, components = "RCVCMP0000217"))
 
   # FileSystemDataset
-  expect_no_error(anode <- edgelist_to_simple_Anode_graph(el, components = "RCVCMP0000000"))
+  expect_no_error(anode <- edgelist_to_simple_Anode_graph(el, components = "RCVCMP0000217"))
 })
 
 test_that("edgelist_to_simple_Anode_graph fails when invalid input is provided", {
@@ -27,7 +27,7 @@ test_that("edgelist_to_simple_Anode_graph fails when invalid input is provided",
 test_that("edgelist_to_simple_bipart_graph works as expected", {
 
   # data.frame
-  el_tbl_df <- as_tibble(el) %>% filter(component == "RCVCMP0000000")
+  el_tbl_df <- as_tibble(el) %>% filter(component == "RCVCMP0000217")
   expect_no_error(anode <- edgelist_to_simple_bipart_graph(el_tbl_df))
 
 })

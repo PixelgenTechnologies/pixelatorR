@@ -71,16 +71,15 @@ library(pixelatorR)
 # Set arrow data output directory to temp for tests
 options(pixelatorR.arrow_outdir = tempdir())
 
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
                         package = "pixelatorR")
 
 seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
-seur <- LoadCellGraphs(seur, load_as = "Anode", cells = colnames(seur)[1:10])
-seur[["mpxCells"]] <- KeepLargestComponent(seur[["mpxCells"]])
+seur <- LoadCellGraphs(seur, load_as = "Anode")
 seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
 
-Plot2DGraph(seur, cells = colnames(seur)[1], marker = "HLA-ABC")
+Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3E")
 
 }
 \seealso{

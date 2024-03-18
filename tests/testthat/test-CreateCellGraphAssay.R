@@ -1,4 +1,4 @@
-pxl_file <- system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR")
+pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 mat <- ReadMPX_counts(pxl_file)
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 components <- colnames(mat)

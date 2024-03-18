@@ -24,8 +24,8 @@ Read a count matrix from a pxl file
 library(pixelatorR)
 
 # Load example data
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
                          package = "pixelatorR")
 counts <- ReadMPX_counts(pxl_file)
 counts[1:5, 1:5]

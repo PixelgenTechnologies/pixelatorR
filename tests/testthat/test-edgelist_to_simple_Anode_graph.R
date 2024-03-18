@@ -1,6 +1,6 @@
 edge_list <-
   ReadMPX_edgelist(
-    system.file("extdata/PBMC_10_cells", "Sample01_test.pxl", package = "pixelatorR")
+    system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
   )
 
 test_that("edgelist_to_simple_Anode_graph works as expected", {
@@ -8,7 +8,7 @@ test_that("edgelist_to_simple_Anode_graph works as expected", {
     as_tibble() %>%
     edgelist_to_simple_Anode_graph()
   expect_type(edge_list_a_node, "list")
-  expect_equal(edge_list_a_node %>% length(), 10)
+  expect_equal(edge_list_a_node %>% length(), 5)
   expect_equal(sapply(edge_list_a_node, function(x) class(x)[1]) %>% unique(), "tbl_graph")
 })
 

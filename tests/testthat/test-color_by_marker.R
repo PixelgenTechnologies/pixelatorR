@@ -1,10 +1,10 @@
 options(pixelatorR.arrow_outdir = tempdir())
-pxl_file <- system.file("extdata/PBMC_10_cells",
-                        "Sample01_test.pxl",
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
                         package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1])
-cg <- seur_obj[["mpxCells"]]@cellgraphs[[colnames(seur_obj)[1]]]
+cg <- CellGraphs(seur_obj)[[1]]
 
 test_that("color_by_marker works as expected", {
 
@@ -12,22 +12,25 @@ test_that("color_by_marker works as expected", {
   expect_no_error(cg_colored <- color_by_marker(cg, markers = "CD9"))
   expect_true("val" %in% names(cg_colored@cellgraph %>% as_tibble()))
   expect_true("color" %in% names(cg_colored@cellgraph %>% as_tibble()))
-  expect_equal(cg_colored@cellgraph %>% pull(val) %>% head() %>% unname(),
-               c(0, 0, 0, 0, 0.09531018, 0.06453852))
+  expect_equal(cg_colored@cellgraph %>% pull(val) %>% head(),
+               c(`GGTATATATTTTAAGTAGTTTAGTA-A` = 0, `ATTATGTTGTTGTATGTTTATTATT-A` = 0,
+                 `TCCGTGGTTTGATACTCGGGAATTT-A` = 0, `AGTGTAAGAGGTTGTTTCTTAGAAA-A` = 0.167054084663166,
+                 `GAGCAGACAATGGCGCTTAGCTAAA-A` = 0, `CAATTTTGACCTAGTTGTGGCCAAG-A` = 0
+               ))
 
   # Test with two markers
   expect_no_error(cg_colored <- color_by_marker(cg, markers = c("CD9", "ACTB")))
   expect_true("val" %in% names(cg_colored@cellgraph %>% as_tibble()))
   expect_true("color" %in% names(cg_colored@cellgraph %>% as_tibble()))
-  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head() %>% unname(),
-               c("#440154", "#440154", "#440154", "#440154", "#440154", "#32658E"))
+  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head(),
+               c("#440154", "#440154", "#440154", "#440154", "#440154", "#440154"))
 
   # Test with smooth counts
   expect_no_error(cg_colored <- color_by_marker(cg, markers = "CD9", smooth_counts = TRUE))
   expect_true("val" %in% names(cg_colored@cellgraph %>% as_tibble()))
   expect_true("color" %in% names(cg_colored@cellgraph %>% as_tibble()))
-  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head() %>% unname(),
-               c("#440154", "#440154", "#440154", "#440154", "#482071", "#481769"))
+  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head(),
+               c("#440154", "#440154", "#440154", "#3C4F8A", "#440154", "#440154"))
 
   # Test with nNodes
   expect_no_error(g_colored <- color_by_marker(cg, markers = "CD9", nNodes = 100))
@@ -35,18 +38,18 @@ test_that("color_by_marker works as expected", {
 
   # Test with normalize FALSE
   expect_no_error(cg_colored <- color_by_marker(cg, markers = "CD9", normalize = FALSE))
-  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head() %>% unname(),
-               c("#440154", "#440154", "#440154", "#440154", "#21908D", "#21908D"))
+  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head(),
+               c("#440154", "#440154", "#440154", "#35B779", "#440154", "#440154"))
 
   # Test with trim quantiles
   cg_colored <- color_by_marker(cg, markers = "CD9", trim_quantiles = c(0, 0.5))
-  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head() %>% unname(),
+  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head(),
                c("#21908D", "#21908D", "#21908D", "#21908D", "#21908D", "#21908D"))
 
   # Test with mode = "sum"
   expect_no_error(cg_colored <- color_by_marker(cg, markers = c("CD9", "ACTB"), mode = "sum"))
-  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head() %>% unname(),
-               c("#440154", "#481466", "#440154", "#440154", "#482071", "#482979"))
+  expect_equal(cg_colored@cellgraph %>% pull(color) %>% head(),
+               c("#440154", "#440154", "#440154", "#3C4F8A", "#440154", "#440154"))
 })
 
 
