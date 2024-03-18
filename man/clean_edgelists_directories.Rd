@@ -13,5 +13,6 @@ in the \code{getOption("pixelatorR.arrow_outdir")} directory. For large data set
 these edgelist files can use up several gigabytes of disk space. This function
 scans through the \code{getOption("pixelatorR.arrow_outdir")} directory and removes
 any edgelist files that are not linked to \code{Seurat} objects or \code{CellGraphAssay}s
-in the global environment.
+in the global environment. Note that only global variables which inherits the \code{Seurat}
+or \code{CellGraphAssay} class are considered, as well as lists containing these object types.
 }
