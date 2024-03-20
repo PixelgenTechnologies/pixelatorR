@@ -159,7 +159,8 @@ ReadMPX_Seurat <- function (
                                      cellgraphs = empty_graphs,
                                      arrow_dir = filename,
                                      outdir = edgelist_outdir,
-                                     overwrite = overwrite)
+                                     overwrite = overwrite,
+                                     command = "ReadMPX_Seurat")
     Key(cg_assay) <- paste0(assay, "_")
 
     if (load_cell_graphs) {

@@ -9,7 +9,8 @@ ReadMPX_arrow_edgelist(
   outdir = NULL,
   return_list = FALSE,
   overwrite = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 )
 }
 \arguments{
@@ -24,6 +25,8 @@ a vector with sample IDs and a the path to the parquet output directory}
 to TRUE to overwrite the directory}
 
 \item{verbose}{Print messages}
+
+\item{...}{Parameters passed to other methods}
 }
 \value{
 An \code{ArrowObject}

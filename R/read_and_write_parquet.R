@@ -11,6 +11,7 @@
 #' @param overwrite If the output directory already exists, set this parameter
 #' to TRUE to overwrite the directory
 #' @param verbose Print messages
+#' @param ... Parameters passed to other methods
 #'
 #' @import rlang
 #' @importFrom arrow open_dataset
@@ -38,12 +39,21 @@ ReadMPX_arrow_edgelist <- function (
   outdir = NULL,
   return_list = FALSE,
   overwrite = FALSE,
-  verbose = TRUE
+  verbose = TRUE,
+  ...
 ) {
+
+  # Unlist dots
+  dots <- list(...)
+  if ("command" %in% names(dots)) {
+    command <- dots[["command"]]
+  } else {
+    command <- NULL
+  }
 
   # Check input parameters
   stopifnot(
-    "'path' must be a non-emty character of length 1" =
+    "'path' must be a non-empty character of length 1" =
       inherits(path, what = "character") &&
       (length(path) == 1)
   )
@@ -107,6 +117,16 @@ ReadMPX_arrow_edgelist <- function (
 
     # Open copied parquet file
     ds <- open_dataset(session_tmpdir_random)
+
+    # Log command
+    if (!is.null(command)) {
+      options(pixelatorR.edgelist_copies = bind_rows(
+        getOption("pixelatorR.edgelist_copies"),
+        tibble(command = command,
+               edgelist_dir = normalizePath(session_tmpdir_random),
+               timestamp = Sys.time())
+      ))
+    }
 
     # Update path to session_tmpdir_random
     path <- session_tmpdir_random
