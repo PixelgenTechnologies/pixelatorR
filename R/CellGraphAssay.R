@@ -132,8 +132,20 @@ CreateCellGraphAssay <- function (
   arrow_dir <- arrow_dir %||% NA_character_
 
   # Validate polarization and colocalization
-  polarization <- .validate_polarization(polarization, cell_ids = colnames(counts), markers = rownames(counts), verbose = verbose)
-  colocalization <- .validate_colocalization(colocalization, cell_ids = colnames(counts), markers = rownames(counts), verbose = verbose)
+  polarization <-
+    .validate_polarization(
+      polarization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
+    )
+  colocalization <-
+    .validate_colocalization(
+      colocalization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
+    )
 
   # If arrow_dir are provided, attempt to lazy load edgelist
   if (!is.na(arrow_dir)) {
@@ -146,7 +158,14 @@ CreateCellGraphAssay <- function (
     arrow_dir <- sapply(arrow_dir, normalizePath)
 
     # Load arrow dataset
-    fsd <- ReadMPX_arrow_edgelist(path = arrow_dir, outdir = outdir, return_list = TRUE, overwrite = overwrite, verbose = FALSE)
+    fsd <-
+      ReadMPX_arrow_edgelist(
+        path = arrow_dir,
+        outdir = outdir,
+        return_list = TRUE,
+        overwrite = overwrite,
+        verbose = FALSE
+      )
 
     # Update arrow_dir to new temporary directory
     arrow_dir <- fsd$arrow_dir
@@ -359,7 +378,15 @@ RenameCells.CellGraphAssay <- function (
     arrow_dirs <- list.files(arrow_dir, full.names = TRUE)
 
     # Create new directory
-    session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+    session_tmpdir_random <-
+      file.path(
+        getOption("pixelatorR.arrow_outdir"),
+        paste0(
+          .generate_random_string(),
+          "-",
+          format(Sys.time(), "%Y-%m-%d-%H%M%S")
+        )
+      )
 
     if (length(arrow_dirs) == 1) {
       # Handle renaming if 1 hive-style directory is present
@@ -393,7 +420,8 @@ RenameCells.CellGraphAssay <- function (
           file.copy(from = arrow_dirs[i], to = session_tmpdir_random, recursive = TRUE)
         }
         hive_style_dir_samples <- list.files(session_tmpdir_random, full.names = TRUE)
-        hive_style_dir_sample_IDs <- basename(hive_style_dir_samples) %>% gsub(pattern = "sample=", replacement = "", x = .)
+        hive_style_dir_sample_IDs <- basename(hive_style_dir_samples) %>%
+          gsub(pattern = "sample=", replacement = "", x = .)
         hive_style_dir_samples <- setNames(hive_style_dir_samples, nm = hive_style_dir_sample_IDs)
 
         # Reorder hive_style_dir_samples
@@ -401,7 +429,9 @@ RenameCells.CellGraphAssay <- function (
 
         # Rename hive-style directory
         for (i in seq_along(arrow_dirs)) {
-          file.rename(from = hive_style_dir_samples[i], file.path(session_tmpdir_random, paste0("sample=", new_sample_id[i])))
+          file.rename(from = hive_style_dir_samples[i],
+                      file.path(session_tmpdir_random,
+                                paste0("sample=", new_sample_id[i])))
         }
       } else {
         abort(glue("The following directories are missing:\n {paste0(arrow_dirs, collapse='\n')} ",
@@ -507,7 +537,8 @@ as.CellGraphAssay.Assay <- function (
     stopifnot(
       "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay" =
         is.list(cellgraphs) &&
-        (length(cellgraphs) == ncol(x)))
+        (length(cellgraphs) == ncol(x))
+    )
     stopifnot(
       "'cellgraphs' names must match colnames of the Assay" =
         all(names(cellgraphs) == colnames(x))
@@ -557,7 +588,6 @@ as.CellGraphAssay.Assay <- function (
     stopifnot(all(c("upia", "marker", "component", "sample") %in% names(arrow_data)))
     stopifnot("A valid 'arrow_dir' must be provided if 'arrow_data' is provided" = !is.na(arrow_dir))
     stopifnot("column 'component' is missing from 'arrow_data" = "component" %in% names(arrow_data))
-    #stopifnot("One or several components are missing from 'arrow_data'" = all(colnames(x) %in% (arrow_data %>% pull(component, as_vector = TRUE))))
   }
 
   new.assay <- as(object = x, Class = "CellGraphAssay")
@@ -669,8 +699,8 @@ ColocalizationScores.CellGraphAssay <- function (
 #' @export
 #'
 ArrowData.CellGraphAssay <- function (
-    object,
-    ...
+  object,
+  ...
 ) {
   slot(object, name = "arrow_data")
 }
@@ -910,7 +940,15 @@ subset.CellGraphAssay <- function (
       if (length(cells) < ncol(x)) {
 
         # Create a temporary directory with a unique name
-        session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+        session_tmpdir_random <-
+          file.path(
+            getOption("pixelatorR.arrow_outdir"),
+            paste0(
+              .generate_random_string(),
+              "-",
+              format(Sys.time(), "%Y-%m-%d-%H%M%S")
+            )
+          )
         dir.create(session_tmpdir_random)
 
         # Handle samples
@@ -1004,11 +1042,11 @@ subset.CellGraphAssay <- function (
 #' @export
 #'
 merge.CellGraphAssay <- function (
-    x = NULL,
-    y = NULL,
-    merge.data = TRUE,
-    add.cell.ids = NULL,
-    ...
+  x = NULL,
+  y = NULL,
+  merge.data = TRUE,
+  add.cell.ids = NULL,
+  ...
 ) {
 
   # Validate input parameters
@@ -1025,7 +1063,6 @@ merge.CellGraphAssay <- function (
   objects <- c(x, y)
 
   # Define add.cell.ids
-  # add.cell.ids <- add.cell.ids %||% paste0("Sample", seq_along(objects))
   if (!is.null(add.cell.ids)) {
     stopifnot(
       "Length of 'add.cell.ids' must match the number of objects to merge" =
@@ -1102,7 +1139,15 @@ merge.CellGraphAssay <- function (
       abort(glue("Paths to edgelist parquet file directories {paste(all_arrow_dirs, collapse = ',')} doesn't exist"))
 
     # Create a new temporary directory with a time stamp
-    new_dir <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+    new_dir <-
+      file.path(
+        getOption("pixelatorR.arrow_outdir"),
+        paste0(
+          .generate_random_string(),
+          "-",
+          format(Sys.time(), "%Y-%m-%d-%H%M%S")
+        )
+      )
     dir.create(path = new_dir, showWarnings = FALSE)
 
     # Move hive-style old sample diretories to new directory
@@ -1125,13 +1170,15 @@ merge.CellGraphAssay <- function (
   # Merge polarization and colocalization scores
   name_conversion <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
     tibble(new = colnames(objects[[i]]), sample = i)
-  })) %>% mutate(component = cell.names) %>%
+  })) %>%
+    mutate(component = cell.names) %>%
     group_by(sample) %>%
     group_split()
   polarization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
     pl <- slot(objects[[i]], name = "polarization")
     if (length(pl) == 0) return(pl)
-    pl <- pl %>% left_join(name_conversion[[i]], by = "component") %>%
+    pl <- pl %>%
+      left_join(name_conversion[[i]], by = "component") %>%
       select(-component, -sample) %>%
       rename(component = new)
     return(pl)
@@ -1139,7 +1186,8 @@ merge.CellGraphAssay <- function (
   colocalization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
     cl <- slot(objects[[i]], name = "colocalization")
     if (length(cl) == 0) return(cl)
-    cl <- cl %>% left_join(name_conversion[[i]], by = "component") %>%
+    cl <- cl %>%
+      left_join(name_conversion[[i]], by = "component") %>%
       select(-component, -sample) %>%
       rename(component = new)
     return(cl)

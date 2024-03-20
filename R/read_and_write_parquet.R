@@ -90,7 +90,12 @@ ReadMPX_arrow_edgelist <- function (
   if (!dir.exists(path)) {
 
     # Create a new folder names by date, hour and minute
-    session_tmpdir_random <- file.path(outdir, paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+    session_tmpdir_random <-
+      file.path(outdir, paste0(
+        .generate_random_string(),
+        "-",
+        format(Sys.time(), "%Y-%m-%d-%H%M%S")
+      ))
     if (dir.exists(session_tmpdir_random) && !overwrite)
       abort(glue("Output directory '{session_tmpdir_random}' already exists.",
                  " Set 'overwrite=TRUE' to overwrite this directory."))
@@ -98,11 +103,15 @@ ReadMPX_arrow_edgelist <- function (
     # Create empty directory
     if (verbose && check_global_verbosity())
       cli_alert_info("Copying parquet files to {session_tmpdir_random}")
-    suppressWarnings({dir.create(path = session_tmpdir_random)})
+    suppressWarnings({
+      dir.create(path = session_tmpdir_random)
+    })
 
     # Copy parquet file
     newdir <- file.path(session_tmpdir_random, paste0("sample=S", 1))
-    suppressWarnings({dir.create(path = newdir)})
+    suppressWarnings({
+      dir.create(path = newdir)
+    })
     unzip(path, paste0("edgelist.parquet"), exdir = newdir)
 
     # Open copied parquet file
@@ -189,7 +198,12 @@ export_edgelist_to_parquet <- function (
   stopifnot("'outdir' must be a character vector of length 1" = is.character(outdir) & (length(outdir) == 1))
   outdir <- normalizePath(outdir)
   if (!dir.exists(outdir))  abort(glue("outdir '{outdir}' doesn't exist"))
-  session_tmpdir_random <- file.path(outdir, paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")), suffix)
+  session_tmpdir_random <-
+    file.path(outdir, paste0(
+      .generate_random_string(),
+      "-",
+      format(Sys.time(), "%Y-%m-%d-%H%M%S")
+    ), suffix)
 
   if ((!overwrite) && dir.exists(session_tmpdir_random))
     abort(glue("Output directory '{session_tmpdir_random}' already exists. ",

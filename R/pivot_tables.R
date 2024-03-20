@@ -89,9 +89,9 @@ PolarizationScoresToAssay.CellGraphAssay <- function (
   # Make sure that the components match
   # Create an empty matrix (all 0's)
   tofillMat <- matrix(data = 0,
-                     nrow = nrow(pol_scores_wide_format),
-                     ncol = ncol(object),
-                     dimnames = list(rownames(pol_scores_wide_format), colnames(object)))
+                      nrow = nrow(pol_scores_wide_format),
+                      ncol = ncol(object),
+                      dimnames = list(rownames(pol_scores_wide_format), colnames(object)))
 
   # Fill matrix where it overlaps
   # Any missing columns will be keep 0's

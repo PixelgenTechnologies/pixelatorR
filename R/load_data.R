@@ -39,7 +39,7 @@ ReadMPX_counts <- function (
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
   # Reads anndata from a .pxl file by unzipping it into a temporary folder and reading the anndata object within.
-  if (verbose & check_global_verbosity())
+  if (verbose && check_global_verbosity())
     cli_alert_info("Loading count data from {filename}")
 
   # Unzip pxl file
@@ -147,7 +147,8 @@ ReadMPX_Seurat <- function (
 
   # Load count matrix
   data <- ReadMPX_counts(filename = filename, return_list = TRUE, verbose = FALSE)
-  X <- data$X; anndata_hier <- data$anndata_hier
+  X <- data$X
+  anndata_hier <- data$anndata_hier
 
   # Load edgelist
   empty_graphs <- rep(list(NULL), ncol(X)) %>% setNames(nm = colnames(X))
@@ -164,8 +165,12 @@ ReadMPX_Seurat <- function (
 
     if (load_cell_graphs) {
       if (verbose && check_global_verbosity())
-        cli_alert_warning(glue(col_br_red("Loading cell graphs into the Seurat object may take time and uses a lot of memory.",
-                                          " Consider using LoadCellGraphs to load selected cell graphs at a later stage.")))
+        cli_alert_warning(glue(
+          col_br_red(
+            "Loading cell graphs into the Seurat object may take time and uses a lot of memory.",
+            " Consider using LoadCellGraphs to load selected cell graphs at a later stage."
+          )
+        ))
       cg_assay <- LoadCellGraphs(cg_assay, verbose = verbose)
     }
     # Load polarity scores
@@ -186,7 +191,10 @@ ReadMPX_Seurat <- function (
   # Create Seurat object
   seur_obj <- CreateSeuratObject(counts = cg_assay, assay = assay, ...)
   if (verbose && check_global_verbosity())
-    cli_alert_success("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells and {col_br_blue(nrow(X))} targeted surface proteins")
+    cli_alert_success(
+      glue("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells ",
+           "and {col_br_blue(nrow(X))} targeted surface proteins")
+    )
 
   if (add_additional_assays) {
     for (layr in names(anndata_hier$obsm)) {
@@ -318,10 +326,8 @@ ReadMPX_item <- function (
         # Try to delete temporary directory or throw a warning if it fails.
         check <- tryCatch({
           fs::dir_delete(exdir_temp)
-        }, error = function(e)
-          e,
-        warning = function(w)
-          w)
+        }, error = function(e) e,
+        warning = function(w) w)
         if (inherits(check, what = "error"))
           cli_alert_warning("Failed to remove temporary directory {exdir_temp}")
 

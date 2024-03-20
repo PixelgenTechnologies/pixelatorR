@@ -112,11 +112,12 @@ Plot2DGraph <- function (
 
   # Check and select a layout method
   layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
-  layout_method_ext <- switch (layout_method,
-                           "fr" = "Fruchterman Reingold (fr)",
-                           "kk" = "Kamada Kawai (kk)",
-                           "drl" = "DrL graph layout generator (drl)",
-                           "pmds" = "pivot MDS (pmds)"
+  layout_method_ext <- switch(
+    layout_method,
+    "fr" = "Fruchterman Reingold (fr)",
+    "kk" = "Kamada Kawai (kk)",
+    "drl" = "DrL graph layout generator (drl)",
+    "pmds" = "pivot MDS (pmds)"
   )
 
   # Use default assay if assay = NULL
@@ -157,7 +158,7 @@ Plot2DGraph <- function (
       } else {
         if (!marker %in% colnames(component_graph@counts)) {
           cli_alert_danger(glue("'{marker}' is missing from node count matrix ",
-                     "for component {cell_id}"))
+                                "for component {cell_id}"))
           return(NULL)
         }
       }
@@ -172,15 +173,15 @@ Plot2DGraph <- function (
     # Add node marker counts if needed
     if (!is.null(marker)) {
       if (marker != "node_type") {
-          graph <- graph %N>%
-            mutate(marker = component_graph@counts[, marker]) %>%
-            {
-              if (log_scale) {
-                mutate(., marker = log1p(marker))
-              } else {
-                .
-              }
+        graph <- graph %N>%
+          mutate(marker = component_graph@counts[, marker]) %>%
+          {
+            if (log_scale) {
+              mutate(., marker = log1p(marker))
+            } else {
+              .
             }
+          }
       }
     }
 
@@ -206,7 +207,8 @@ Plot2DGraph <- function (
 
     data <- list(graph = graph, layout = layout, type = attr(graph, "type"), layout_type = layout_method)
     return(data)
-  }) %>% setNames(nm = cells)
+  }) %>%
+    setNames(nm = cells)
 
   # Set limits
   if (!is.null(marker)) {
@@ -214,7 +216,9 @@ Plot2DGraph <- function (
       max_val <- sapply(data_list, function(x) {
         if (is.null(x)) return(NULL)
         x$graph %>% pull(marker)
-      }) %>% unlist() %>% max()
+      }) %>%
+        unlist() %>%
+        max()
       limits <- c(rep(list(c(0, max_val)), length(data_list))) %>% setNames(names(data_list))
     } else {
       limits <- lapply(data_list, function(x) {
@@ -226,7 +230,9 @@ Plot2DGraph <- function (
 
   # Create plots
   plots <- lapply(names(data_list), function(nm) {
-    if (is.null(data_list[[nm]])) return(patchwork::plot_spacer() + theme(plot.background = element_rect(fill = NA, colour = NA)))
+    if (is.null(data_list[[nm]]))
+      return(patchwork::plot_spacer() +
+               theme(plot.background = element_rect(fill = NA, colour = NA)))
     # Visualize the graph with ggraph
     p <- data_list[[nm]]$graph %>%
       ggraph(layout = data_list[[nm]]$layout) +
@@ -264,8 +270,7 @@ Plot2DGraph <- function (
           labs(title = glue("{nm}"))
         }
       } +
-      theme_void()# +
-      #theme(plot.title = element_text(size = 10), panel.border = element_rect(colour = "lightgrey", fill = NA))
+      theme_void()
 
     # Add color scale
     if (!is.null(marker)) {
@@ -456,7 +461,7 @@ Plot2DGraphM <- function (
 
   # Add legends to plots. Each element stored length(cells)
   # plots and after adding the legend, each row will be
-  # length(cells) + 1
+  # number of cells + 1
   plots <- lapply(seq_along(plots), function(i) {
     c(plots[[i]], list(legends[[i]]))
   })
@@ -482,7 +487,7 @@ Plot2DGraphM <- function (
 #'
 .get_legend <- function (
   p
-){
+) {
   tmp <- ggplot_gtable(ggplot_build(p))
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
   if (length(leg) > 0) leg <- tmp$grobs[[leg]]
@@ -579,11 +584,12 @@ Plot3DGraph <- function (
 
   # Check and select a layout method
   layout_method <- match.arg(layout_method, c("pmds", "wpmds", "fr", "kk", "drl"))
-  layout_method_ext <- switch (layout_method,
-                               "fr" = "Fruchterman Reingold (fr)",
-                               "kk" = "Kamada Kawai (kk)",
-                               "drl" = "DrL graph layout generator (drl)",
-                               "pmds" = "pivot MDS (pmds)"
+  layout_method_ext <- switch (
+    layout_method,
+    "fr" = "Fruchterman Reingold (fr)",
+    "kk" = "Kamada Kawai (kk)",
+    "drl" = "DrL graph layout generator (drl)",
+    "pmds" = "pivot MDS (pmds)"
   )
 
   # Check and select an aspectmode
@@ -634,9 +640,9 @@ Plot3DGraph <- function (
   layout <- component_graph@layout[[layout_method]]
 
   if (length(graph) == 0)
-      abort(glue("Missing cellgraph for component '{cell_id}'"))
+    abort(glue("Missing cellgraph for component '{cell_id}'"))
   if (length(layout) < 3)
-      abort(glue("Too few dimensions for a 3D visualization of layout '{layout_method}' for component '{cell_id}'"))
+    abort(glue("Too few dimensions for a 3D visualization of layout '{layout_method}' for component '{cell_id}'"))
 
   # Add node marker counts if needed
   if (!is.null(marker)) {
@@ -666,14 +672,16 @@ Plot3DGraph <- function (
   if (project) {
     # Normalize 3D coordinates to a sphere
     layout <- layout %>%
-      mutate(norm_factor = select(., x, y, z) %>%
-             apply(MARGIN = 1, function(x) {
-               as.matrix(x) %>%
-                 norm(type = "F")
-             }),
-           x = x / norm_factor,
-           y = y / norm_factor,
-           z = z / norm_factor)
+      mutate(
+        norm_factor = select(., x, y, z) %>%
+          apply(MARGIN = 1, function(x) {
+            as.matrix(x) %>%
+              norm(type = "F")
+          }),
+        x = x / norm_factor,
+        y = y / norm_factor,
+        z = z / norm_factor
+      )
   }
 
   # Plot 3D graph using plotly

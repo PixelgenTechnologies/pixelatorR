@@ -68,7 +68,7 @@ RunDCA.data.frame <- function (
       stopifnot(
         "'group_vars' must be character vectors or factors" =
           inherits(object[, group_var, drop = TRUE], what = c("character", "factor"))
-        )
+      )
     }
   }
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
@@ -115,7 +115,8 @@ RunDCA.data.frame <- function (
     result <- wilcox.test(x = x, y = y, paired = FALSE, alternative = alternative, conf.int = conf_int)
 
     # Tidy up results
-    result <- result %>% .tidy() %>%
+    result <- result %>%
+      .tidy() %>%
       mutate(n1 = length(x), n2 = length(y), method = "Wilcoxon", alternative = alternative, data_type = "pearson_z",
              target = target, reference = reference, p = signif(p.value, 3)) %>%
       select(c("estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
@@ -136,7 +137,7 @@ RunDCA.data.frame <- function (
     # Add additional group columns
     if (!is.null(group_vars)) {
       for (group_var in group_vars) {
-        coloc_test_with_groups[[group_var]] = test_groups_keys[i, group_var, drop = TRUE]
+        coloc_test_with_groups[[group_var]] <- test_groups_keys[i, group_var, drop = TRUE]
       }
     }
     return(coloc_test_with_groups)

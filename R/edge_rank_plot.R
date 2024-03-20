@@ -73,19 +73,19 @@ EdgeRankPlot.data.frame <- function (
   # Create edge rank plot
   edgerank_plot <-
     object %>%
-      {
-        if (!is.null(group_by)) {
-          ggplot(., aes(rank, edges, color = !! sym(group_by)))
-        } else {
-          ggplot(., aes(rank, edges))
-        }
-      } +
-      geom_point(size = 0.5) +
-      scale_x_log10() +
-      scale_y_log10() +
-      labs(x = "Component rank (by number of edges)",
-           y = "Number of edges") +
-      theme_minimal()
+    {
+      if (!is.null(group_by)) {
+        ggplot(., aes(rank, edges, color = !!sym(group_by)))
+      } else {
+        ggplot(., aes(rank, edges))
+      }
+    } +
+    geom_point(size = 0.5) +
+    scale_x_log10() +
+    scale_y_log10() +
+    labs(x = "Component rank (by number of edges)",
+         y = "Number of edges") +
+    theme_minimal()
 
   return(edgerank_plot)
 }

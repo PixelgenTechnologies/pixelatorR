@@ -40,10 +40,10 @@
 #'
 #' @noRd
 .validate_polarization <- function (
-    polarization,
-    cell_ids,
-    markers,
-    verbose = FALSE
+  polarization,
+  cell_ids,
+  markers,
+  verbose = FALSE
 ) {
   # Set polarization to empty tibble if NULL
   polarization <- polarization %||% tibble()
@@ -91,10 +91,10 @@
 #'
 #' @noRd
 .validate_colocalization <- function (
-    colocalization,
-    cell_ids,
-    markers,
-    verbose = FALSE
+  colocalization,
+  cell_ids,
+  markers,
+  verbose = FALSE
 ) {
 
   # Set colocalization to empty tibble if NULL

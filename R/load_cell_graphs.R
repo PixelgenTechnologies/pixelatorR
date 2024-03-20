@@ -50,9 +50,9 @@ LoadCellGraphs.FileSystemDataset <- function (
 
   # Select load function
   graph_load_fkn <- switch(load_as,
-                            "bipartite" = .load_as_bipartite,
-                            "Anode" = .load_as_anode,
-                            "linegraph" = .load_as_linegraph)
+                           "bipartite" = .load_as_bipartite,
+                           "Anode" = .load_as_anode,
+                           "linegraph" = .load_as_linegraph)
 
   # Convert edgelist to list of Cell Graphs
   if (verbose && check_global_verbosity())
@@ -93,9 +93,12 @@ LoadCellGraphs.FileSystemDataset <- function (
 
     # Load chunks for specific sample
     object_filtered <- object %>% filter(sample == sample_id)
-    g_list <- try({graph_load_fkn(object_filtered,
-                             cell_ids = cell_ids[, 2, drop = TRUE],
-                             add_markers = add_marker_counts)}, silent = TRUE)
+    g_list <- try({
+      graph_load_fkn(object_filtered,
+                     cell_ids = cell_ids[, 2, drop = TRUE],
+                     add_markers = add_marker_counts)
+    }, silent = TRUE
+    )
 
     # Adjust sample id if needed
     if (is_merged) {
@@ -120,7 +123,8 @@ LoadCellGraphs.FileSystemDataset <- function (
     # Log progress
     p()
     return(g_list)
-  }) %>% Reduce(c, .)
+  }) %>%
+    Reduce(c, .)
 
   return(cellgraphs)
 }
@@ -158,7 +162,7 @@ LoadCellGraphs.CellGraphAssay <- function (
 
   # Check if cells are already loaded
   loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
-  if ((sum(!loaded_graphs) == 0) & !force) {
+  if ((sum(!loaded_graphs) == 0) && !force) {
     if (verbose && check_global_verbosity())
       cli_alert_info("All cells are alredy loaded. Returning CellGraphAssay unmodified.")
     return(object)
@@ -168,7 +172,7 @@ LoadCellGraphs.CellGraphAssay <- function (
       loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
     }
     cells_to_load <- setdiff(cells, cells[loaded_graphs])
-    if (verbose && check_global_verbosity() & (length(cells_to_load) < length(cells)))
+    if (verbose && check_global_verbosity() && (length(cells_to_load) < length(cells)))
       cli_alert_info(glue("{length(cells) - length(cells_to_load)} CellGraphs loaded.",
                           " Loading remaining {length(cells_to_load)} CellGraphs."))
   }
@@ -189,7 +193,12 @@ LoadCellGraphs.CellGraphAssay <- function (
   msg <- tryCatch(arrow_data %>% nrow(), error = function(e) "Error")
   msg <- msg %||% "Error"
   if (msg == "Error") {
-    cli_alert_warning("'arrow_data' is either missing from the object or dead. Attempting to load edgelist from stored 'arrow_dir'.")
+    cli_alert_warning(
+      glue(
+        "'arrow_data' is either missing from the object or dead. ",
+        "Attempting to load edgelist from stored 'arrow_dir'."
+      )
+    )
     if (length(arrow_dir) == 0) {
       cli_alert_info("'arrow_dir' is missing from object. Returning object unmodified.")
     }
@@ -300,11 +309,10 @@ LoadCellGraphs.Seurat <- function (
     # Add node type as node attribute
     g <- g %>%
       # Replace node attributes with name / node_type
-      mutate(!!! g %>%
-        as_tibble() %>%
-        mutate(id = name) %>%
-        tidyr::separate(col = name, into = c("name", "node_type"))
-        ) %>%
+      mutate(!!!g %>%
+               as_tibble() %>%
+               mutate(id = name) %>%
+               tidyr::separate(col = name, into = c("name", "node_type"))) %>%
       select(-name) %>%
       rename(name = id) %>%
       select(name, node_type)
@@ -488,4 +496,3 @@ LoadCellGraphs.Seurat <- function (
   return(edge_table_split[cell_ids])
 
 }
-
