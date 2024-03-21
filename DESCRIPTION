@@ -61,6 +61,7 @@ Collate:
     'differential_polarity_analysis.R'
     'edge_rank_plot.R'
     'extdata.R'
+    'global_options.R'
     'graph_analysis.R'
     'graph_conversion.R'
     'graph_layout.R'

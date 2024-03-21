@@ -145,6 +145,11 @@ ReadMPX_Seurat <- function (
       (length(assay) == 1)
   )
 
+  # Display message first time function is called
+  if (getOption("pixelatorR.startup_message", TRUE) && return_cellgraphassay && getOption("pixelatorR.verbose")) {
+    .initial_call_message()
+  }
+
   # Load count matrix
   data <- ReadMPX_counts(filename = filename, return_list = TRUE, verbose = FALSE)
   X <- data$X; anndata_hier <- data$anndata_hier

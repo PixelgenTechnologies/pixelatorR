@@ -367,7 +367,22 @@ RenameCells.CellGraphAssay <- function (
     arrow_dirs <- list.files(arrow_dir, full.names = TRUE)
 
     # Create new directory
-    session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+    session_tmpdir_random <-
+      file.path(
+        getOption("pixelatorR.arrow_outdir"),
+        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
+
+    # Trigger garbage cleaning if the edgelist directories exceed the
+    # maximum allowed size
+    if (edgelist_directories_du() > getOption("pixelatorR.arrowdir_maxsize", fs::fs_bytes(20*1024^3))) {
+      cli_alert_info(
+        glue(
+          "Edge list directories exceed maximum size ",
+          "(see getOption('pixelatorR.arrowdir_maxsize')."
+        )
+      )
+      clean_edgelists_directories()
+    }
 
     if (length(arrow_dirs) == 1) {
       # Handle renaming if 1 hive-style directory is present
@@ -925,8 +940,23 @@ subset.CellGraphAssay <- function (
       # Only filter by cells
       if (length(cells) < ncol(x)) {
 
+        # Trigger garbage cleaning if the edgelist directories exceed the
+        # maximum allowed size
+        if (edgelist_directories_du() > getOption("pixelatorR.arrowdir_maxsize", fs::fs_bytes(20*1024^3))) {
+          cli_alert_info(
+            glue(
+              "Edge list directories exceed maximum size ",
+              "(see getOption('pixelatorR.arrowdir_maxsize')."
+            )
+          )
+          clean_edgelists_directories()
+        }
+
         # Create a temporary directory with a unique name
-        session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+        session_tmpdir_random <-
+          file.path(
+            getOption("pixelatorR.arrow_outdir"),
+            glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
         dir.create(session_tmpdir_random)
 
         # Handle samples
@@ -1122,11 +1152,26 @@ merge.CellGraphAssay <- function (
   # Run edgelist merge if arrow_dirs exists
   if (!any(is.na(all_arrow_dirs))) {
 
+    # Trigger garbage cleaning if the edgelist directories exceed the
+    # maximum allowed size
+    if (edgelist_directories_du() > getOption("pixelatorR.arrowdir_maxsize", fs::fs_bytes(20*1024^3))) {
+      cli_alert_info(
+        glue(
+          "Edge list directories exceed maximum size ",
+          "(see getOption('pixelatorR.arrowdir_maxsize')."
+        )
+      )
+      clean_edgelists_directories()
+    }
+
     if (!any(dir.exists(all_arrow_dirs)))
       abort(glue("Paths to edgelist parquet file directories {paste(all_arrow_dirs, collapse = ',')} doesn't exist"))
 
     # Create a new temporary directory with a time stamp
-    new_dir <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+    new_dir <-
+      file.path(
+        getOption("pixelatorR.arrow_outdir"),
+        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
     dir.create(path = new_dir, showWarnings = FALSE)
 
     # Move hive-style old sample diretories to new directory
