@@ -11,11 +11,36 @@ edgelist_directories_du(list_all = FALSE)
 if any, the sub directories are associated with.}
 }
 \value{
-The total disk usage of all valid edgelist directories or a tibble
-with the disk usage of each sub directory and the variable they are linked
-to if applicable.
+The total disk usage of all valid edgelist directories as a numeric value
+or if \code{list_all = TRUE}, a tibble with the disk usage of each sub directory
+and the variable they are linked to if applicable.
 }
 \description{
 This function checks the directories in \code{getOption("pixelatorR.arrow_outdir")}
 and returns their total disk usage.
 }
+\examples{
+library(Seurat)
+
+# Override prompts and clean up edgelist directories
+# Only required for running these examples
+options(pixelatorR.auto_cleanup = TRUE)
+options(pixelatorR.arrow_outdir = tempdir())
+edgelist_directories_clean()
+
+# Read a Seurat object from a pxl file
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
+                        package = "pixelatorR")
+seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+
+# Check the disk usage of the edgelist directory
+# associated with seur
+edgelist_directories_du(list_all = TRUE)
+
+}
+\seealso{
+Other edgelist_directories: 
+\code{\link{edgelist_directories_clean}()}
+}
+\concept{edgelist_directories}

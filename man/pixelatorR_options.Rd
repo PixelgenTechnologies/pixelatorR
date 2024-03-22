@@ -4,14 +4,14 @@
 \alias{pixelatorR_options}
 \title{Global Options in pixelatorR}
 \description{
-Information about global options proivided in pixelatorR.
+Information about global options provided in pixelatorR.
 }
 \details{
 Available options:
 \itemize{
 \item{\code{pixelatorR.arrow_outdir} The directory where the edgelists are stored.}
 \item{\code{pixelatorR.arrowdir_maxsize} The maximum allowed size of the edgelists directory.}
-\item{\code{pixelatorR.auto_cleanup} Whether to run \code{\link{clean_edgelists_directories()}}
+\item{\code{pixelatorR.auto_cleanup} Whether to run \code{edgelists_directories_clean()}
 automatically when the size of the edgelists directory exceeds \code{pixelatorR.arrowdir_maxsize}.
 The cleanup is triggered by functions which create new edgelist copies, such as \code{subset},
 \code{merge} and \code{RenameCells}.}
@@ -42,20 +42,22 @@ or if the functions mentioned above are called many times. When Seurat
 objects are overwritten or removed, some directories may no longer be linked to any
 global variable in the current R session, but these directories
 will not be removed automatically. pixelatorR offers a utility function called
-\code{\link{clean_edgelists_directories()}} to remove them.
+\code{edgelists_directories_clean()} to remove them.
 
 To make the user aware of this behavior, a message will be displayed once the
 first time \code{ReadMPX_Seurat} that creates a new edgelist directory is called.
 
 Moreover, when the size of the directory exceeds the maximum allowed size set with
 the global option \code{pixelatorR.arrowdir_maxsize} (which is set to 20GB by default),
-\code{clean_edgelists_directories()} will be run automatically. Users will be given
+\code{edgelists_directories_clean()} will be run automatically. Users will be given
 a prompt to confirm the cleanup before it is executed. This behavior can be turned off
 by setting \code{options(pixelatorR.auto_cleanup = TRUE)}. You can also run
 \code{edgelist_directories_du()} to get the current size of the directory.
 }
 
 \examples{
+library(dplyr)
+
 # Set edgelist directory to a temporary folder
 options(pixelatorR.arrow_outdir = tempdir())
 
@@ -78,6 +80,6 @@ options(pixelatorR.verbose = FALSE)
 
 }
 \seealso{
-\code{\link[=clean_edgelists_directories]{clean_edgelists_directories()}} to clean up the edgelist directory,
+\code{\link[=edgelist_directories_clean]{edgelist_directories_clean()}} to clean up the edgelist directory,
 \code{\link[=edgelist_directories_du]{edgelist_directories_du()}} to get the current size of the edgelist directory.
 }

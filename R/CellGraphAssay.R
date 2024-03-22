@@ -381,7 +381,7 @@ RenameCells.CellGraphAssay <- function (
           "(see getOption('pixelatorR.arrowdir_maxsize')."
         )
       )
-      clean_edgelists_directories()
+      edgelist_directories_clean()
     }
 
     if (length(arrow_dirs) == 1) {
@@ -949,7 +949,7 @@ subset.CellGraphAssay <- function (
               "(see getOption('pixelatorR.arrowdir_maxsize')."
             )
           )
-          clean_edgelists_directories()
+          edgelist_directories_clean()
         }
 
         # Create a temporary directory with a unique name
@@ -1161,7 +1161,7 @@ merge.CellGraphAssay <- function (
           "(see getOption('pixelatorR.arrowdir_maxsize')."
         )
       )
-      clean_edgelists_directories()
+      edgelist_directories_clean()
     }
 
     if (!any(dir.exists(all_arrow_dirs)))

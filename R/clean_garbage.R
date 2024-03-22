@@ -1,6 +1,6 @@
 # Declarations used in package check
 globalVariables(
-  names = c('edgelist_dir', 'variable', 'pattern_match', 'type', 'size'),
+  names = c('edgelist_dir', 'variable', 'pattern_match', 'type', 'size', 'path'),
   package = 'pixelatorR',
   add = TRUE
 )
@@ -16,9 +16,30 @@ globalVariables(
 #' in the global environment. Note that only global variables which inherits the \code{Seurat}
 #' or \code{CellGraphAssay} class are considered, as well as lists containing these object types.
 #'
+#' @rdname edgelist_directories_clean
+#' @family edgelist_directories
+#'
+#' @return Nothing is returned.
+#'
+#' @examples
+#' # Skip prompts
+#' options(pixelatorR.auto_cleanup = TRUE)
+#'
+#' # Read a Seurat object from a pxl file
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#'
+#' # Remove Seurat object
+#' rm(seur)
+#'
+#' # Now clean up the edgelist directory
+#' edgelist_directories_clean()
+#'
 #' @export
 #'
-clean_edgelists_directories <- function () {
+edgelist_directories_clean <- function () {
 
   global_variable_types <- .get_global_mpx_variables()
 
@@ -68,7 +89,7 @@ clean_edgelists_directories <- function () {
     return(invisible(NULL))
   }
 
-  if (getOption("pixelatorR.auto_cleanup", default = TRUE)) {
+  if (!getOption("pixelatorR.auto_cleanup", default = TRUE)) {
     cli_alert_warning(glue("Are you sure you want to remove the following directories?\n\n",
                            paste(global_variable_types_na$edgelist_dir, collapse = "\n")))
     if (menu(c("Yes", "No")) != 1) {
@@ -103,9 +124,31 @@ clean_edgelists_directories <- function () {
 #' @param list_all Show the disk usage for each sub directory and check what global variable,
 #' if any, the sub directories are associated with.
 #'
-#' @return The total disk usage of all valid edgelist directories or a tibble
-#' with the disk usage of each sub directory and the variable they are linked
-#' to if applicable.
+#' @rdname edgelist_directories_du
+#' @family edgelist_directories
+#'
+#' @return The total disk usage of all valid edgelist directories as a numeric value
+#' or if \code{list_all = TRUE}, a tibble with the disk usage of each sub directory
+#' and the variable they are linked to if applicable.
+#'
+#' @examples
+#' library(Seurat)
+#'
+#' # Override prompts and clean up edgelist directories
+#' # Only required for running these examples
+#' options(pixelatorR.auto_cleanup = TRUE)
+#' options(pixelatorR.arrow_outdir = tempdir())
+#' edgelist_directories_clean()
+#'
+#' # Read a Seurat object from a pxl file
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#'
+#' # Check the disk usage of the edgelist directory
+#' # associated with seur
+#' edgelist_directories_du(list_all = TRUE)
 #'
 #' @export
 #'
@@ -147,7 +190,12 @@ edgelist_directories_du <- function (
     # Default behavior is to return the total disk usage
     # Note that some directories might be duplicated if
     # they are linked to multiple variables
-    return(fs::fs_bytes(sum(file_info %>% filter(!duplicated(path)) %>% pull(size))))
+    if (nrow(file_info) > 0) {
+      return(fs::fs_bytes(sum(file_info %>% filter(!duplicated(path)) %>% pull(size))))
+    } else {
+      cli_alert_info("Found no edgelist directories.")
+      return(invisible(NULL))
+    }
   }
 }
 

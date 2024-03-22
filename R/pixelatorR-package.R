@@ -7,6 +7,7 @@
 #' @importFrom cli cli_alert_info
 #' @importFrom cli cli_alert_success
 #' @importFrom cli cli_alert_warning
+#' @importFrom cli cli_text
 #' @importFrom cli col_br_blue
 #' @importFrom cli col_br_magenta
 #' @importFrom cli col_br_red
