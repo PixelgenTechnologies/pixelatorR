@@ -115,14 +115,6 @@ CreateCellGraphAssay <- function (
   ...
 ) {
 
-  # Unlist dots
-  dots <- list(...)
-  if ("command" %in% names(dots)) {
-    command <- dots[["command"]]
-  } else {
-    command = "CreateCellGraphAssay"
-  }
-
   # Check input parameters
   stopifnot(
     "'counts' must be a matrix-like object" =
@@ -154,7 +146,7 @@ CreateCellGraphAssay <- function (
     arrow_dir <- sapply(arrow_dir, normalizePath)
 
     # Load arrow dataset
-    fsd <- ReadMPX_arrow_edgelist(path = arrow_dir, outdir = outdir, return_list = TRUE, overwrite = overwrite, verbose = FALSE, command = command)
+    fsd <- ReadMPX_arrow_edgelist(path = arrow_dir, outdir = outdir, return_list = TRUE, overwrite = overwrite, verbose = FALSE)
 
     # Update arrow_dir to new temporary directory
     arrow_dir <- fsd$arrow_dir
@@ -425,9 +417,10 @@ RenameCells.CellGraphAssay <- function (
     }
 
     # Log command
+    command <- sys.calls()[[1]][1] %>% as.character()
     options(pixelatorR.edgelist_copies = bind_rows(
       getOption("pixelatorR.edgelist_copies"),
-      tibble(command = "RenameCells",
+      tibble(command = command,
              edgelist_dir = normalizePath(session_tmpdir_random),
              timestamp = Sys.time())
     ))
@@ -971,9 +964,10 @@ subset.CellGraphAssay <- function (
         }
 
         # Log command
+        command <- sys.calls()[[1]][1] %>% as.character()
         options(pixelatorR.edgelist_copies = bind_rows(
           getOption("pixelatorR.edgelist_copies"),
-          tibble(command = "subset",
+          tibble(command = command,
                  edgelist_dir = normalizePath(session_tmpdir_random),
                  timestamp = Sys.time())
         ))
@@ -1159,9 +1153,10 @@ merge.CellGraphAssay <- function (
     }
 
     # Log command
+    command <- sys.calls()[[1]][1] %>% as.character()
     options(pixelatorR.edgelist_copies = bind_rows(
       getOption("pixelatorR.edgelist_copies"),
-      tibble(command = "subset",
+      tibble(command = command,
              edgelist_dir = normalizePath(new_dir),
              timestamp = Sys.time())
     ))

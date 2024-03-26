@@ -40,7 +40,7 @@
 #' first time \code{ReadMPX_Seurat} that creates a new edgelist directory is called.
 #'
 #' Moreover, when the size of the directory exceeds the size limit set with
-#' the global option \code{pixelatorR.arrowdir_maxsize} (which is set to 10GB by default),
+#' the global option \code{pixelatorR.arrowdir_maxsize} (which is set to 5GB by default),
 #' \code{edgelists_directories_clean()} will be run automatically. Users will be given
 #' a prompt to confirm the cleanup before it is executed. This behavior can be turned off
 #' by setting \code{options(pixelatorR.auto_cleanup = TRUE)}. You can also run

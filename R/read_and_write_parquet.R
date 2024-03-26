@@ -43,14 +43,6 @@ ReadMPX_arrow_edgelist <- function (
   ...
 ) {
 
-  # Unlist dots
-  dots <- list(...)
-  if ("command" %in% names(dots)) {
-    command <- dots[["command"]]
-  } else {
-    command <- NULL
-  }
-
   # Check input parameters
   stopifnot(
     "'path' must be a non-empty character of length 1" =
@@ -100,7 +92,10 @@ ReadMPX_arrow_edgelist <- function (
   if (!dir.exists(path)) {
 
     # Create a new folder names by date, hour and minute
-    session_tmpdir_random <- file.path(outdir, paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+    session_tmpdir_random <-
+      file.path(
+        outdir,
+        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
     if (dir.exists(session_tmpdir_random) && !overwrite)
       abort(glue("Output directory '{session_tmpdir_random}' already exists.",
                  " Set 'overwrite=TRUE' to overwrite this directory."))
@@ -119,14 +114,13 @@ ReadMPX_arrow_edgelist <- function (
     ds <- open_dataset(session_tmpdir_random)
 
     # Log command
-    if (!is.null(command)) {
-      options(pixelatorR.edgelist_copies = bind_rows(
-        getOption("pixelatorR.edgelist_copies"),
-        tibble(command = command,
-               edgelist_dir = normalizePath(session_tmpdir_random),
-               timestamp = Sys.time())
-      ))
-    }
+    command <- sys.calls()[[1]][1] %>% as.character()
+    options(pixelatorR.edgelist_copies = bind_rows(
+      getOption("pixelatorR.edgelist_copies"),
+      tibble(command = command,
+             edgelist_dir = normalizePath(session_tmpdir_random),
+             timestamp = Sys.time())
+    ))
 
     # Update path to session_tmpdir_random
     path <- session_tmpdir_random
@@ -155,7 +149,6 @@ ReadMPX_arrow_edgelist <- function (
 #'
 #' @param object An \code{FileSystemDataset}
 #' @param outdir A path to an existing directory
-#' @param suffix Add a suffix to output directory name
 #' @param overwrite If the output directory already exists, set this parameter
 #' to TRUE to overwrite the directory
 #' @param verbose Print messages
@@ -201,7 +194,6 @@ ReadMPX_arrow_edgelist <- function (
 export_edgelist_to_parquet <- function (
   object,
   outdir,
-  suffix = "",
   overwrite = FALSE,
   verbose = TRUE
 ) {
@@ -209,7 +201,10 @@ export_edgelist_to_parquet <- function (
   stopifnot("'outdir' must be a character vector of length 1" = is.character(outdir) & (length(outdir) == 1))
   outdir <- normalizePath(outdir)
   if (!dir.exists(outdir))  abort(glue("outdir '{outdir}' doesn't exist"))
-  session_tmpdir_random <- file.path(outdir, paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")), suffix)
+  session_tmpdir_random <-
+    file.path(
+      outdir,
+      glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
 
   if ((!overwrite) && dir.exists(session_tmpdir_random))
     abort(glue("Output directory '{session_tmpdir_random}' already exists. ",
@@ -217,5 +212,15 @@ export_edgelist_to_parquet <- function (
   if (verbose && check_global_verbosity())
     cli_alert_info("Saving edgelist to {session_tmpdir_random}")
   write_dataset(object %>% ungroup(), path = session_tmpdir_random, existing_data_behavior = "overwrite")
+
+  # Log command
+  command <- sys.calls()[[1]][1] %>% as.character()
+  options(pixelatorR.edgelist_copies = bind_rows(
+    getOption("pixelatorR.edgelist_copies"),
+    tibble(command = command,
+           edgelist_dir = normalizePath(session_tmpdir_random),
+           timestamp = Sys.time())
+  ))
+
   return(session_tmpdir_random)
 }

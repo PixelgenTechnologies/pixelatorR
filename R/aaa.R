@@ -40,7 +40,7 @@ check_global_verbosity <- function() {
 #'
 #' @noRd
 .run_clean <- function (
-  default_size_gb = 10
+  default_size_gb = 5
 ) {
 
   edgelist_size <- suppressMessages(edgelist_directories_du())
