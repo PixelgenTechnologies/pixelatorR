@@ -35,6 +35,36 @@ check_global_verbosity <- function() {
 }
 
 
+#' Utility function to run clean up of edge list directories
+#' from other functions
+#'
+#' @noRd
+.run_clean <- function (
+  default_size_gb = 10
+) {
+
+  edgelist_size <- suppressMessages(edgelist_directories_du())
+  if (is.null(edgelist_size)) return(invisible(NULL))
+
+  # Trigger garbage cleaning if the edgelist directories exceed the
+  # maximum allowed size
+  if (edgelist_size > getOption("pixelatorR.arrowdir_maxsize", fs::fs_bytes(default_size_gb*1024^3))) {
+    cli_alert_info(
+      glue(
+        "Edge list directories exceed size limit to trigger cleanup of unused files ",
+        "(see getOption('pixelatorR.arrowdir_maxsize')."
+      )
+    )
+    attempt <- try({edgelist_directories_clean()})
+    if (inherits(attempt, "try-error")) {
+      cli_alert_warning(
+        "Failed to clean edge list directories. "
+      )
+    }
+  }
+}
+
+
 # ***********************************
 # Check if certain packages are installed. If the package is missing, users will
 # be asked to install the package.

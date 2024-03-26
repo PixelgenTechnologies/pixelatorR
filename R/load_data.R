@@ -139,6 +139,10 @@ ReadMPX_Seurat <- function (
   ...
 ) {
 
+  # Trigger garbage cleaning if the edgelist directories exceed the
+  # maximum allowed size
+  .run_clean()
+
   stopifnot(
     "assay must be a character of length 1" =
       is.character(assay) &&

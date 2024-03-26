@@ -1,5 +1,5 @@
 options(pixelatorR.arrow_outdir = tempdir())
-options(pixelatorR.interactive = FALSE)
+options(pixelatorR.auto_cleanup = TRUE)
 rm(list = ls())
 edgelist_directories_clean()
 
