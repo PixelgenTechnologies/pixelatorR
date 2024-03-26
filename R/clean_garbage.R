@@ -89,7 +89,7 @@ edgelist_directories_clean <- function () {
     return(invisible(NULL))
   }
 
-  if (!getOption("pixelatorR.auto_cleanup", default = TRUE)) {
+  if (!getOption("pixelatorR.auto_cleanup", default = FALSE)) {
     cli_alert_warning(glue("Are you sure you want to remove the following directories?\n\n",
                            paste(global_variable_types_na$edgelist_dir, collapse = "\n")))
     if (menu(c("Yes", "No")) != 1) {

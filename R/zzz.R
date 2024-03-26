@@ -23,7 +23,7 @@
 
   # set edgelist directory max size to 10GB
   if (is.null(getOption("pixelatorR.arrowdir_maxsize"))) {
-    options(pixelatorR.arrowdir_maxsize = fs::fs_bytes(20*1024^3))
+    options(pixelatorR.arrowdir_maxsize = fs::fs_bytes(10*1024^3))
   }
 
   options(pixelatorR.startup_message = TRUE)

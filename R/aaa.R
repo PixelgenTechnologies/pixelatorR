@@ -22,14 +22,15 @@ check_global_verbosity <- function() {
   cli_text()
   cli_alert(glue("Certain operations, such as subset and merge, will create new \n",
                  "directories in this folder. If the size of the directory exceeds \n",
-                 "the maximum allowed size (see global option 'pixelatorR.arrowdir_maxsize'), \n",
+                 "the size limit to trigger cleanup of unused files \n",
+                 "(see global option 'pixelatorR.arrowdir_maxsize'), \n",
                  "these functions will trigger a cleanup to remove directories \n",
                  "that are not linked to any global variable in the current R session."))
   cli_text()
   cli_alert(glue("You can find more information about this behavior by \n",
                  "typing ?pixelatorR_options in the console."))
   cli_text()
-  cli_alert_info(col_red("This message is only displayed once."))
+  cli_alert_info(col_red("This message is displayed once per session."))
   options(pixelatorR.startup_message = FALSE)
 }
 

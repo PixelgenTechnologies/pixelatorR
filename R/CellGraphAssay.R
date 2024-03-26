@@ -945,7 +945,7 @@ subset.CellGraphAssay <- function (
         if (edgelist_directories_du() > getOption("pixelatorR.arrowdir_maxsize", fs::fs_bytes(20*1024^3))) {
           cli_alert_info(
             glue(
-              "Edge list directories exceed maximum size ",
+              "Edge list directories exceed size limit to trigger cleanup of unused files ",
               "(see getOption('pixelatorR.arrowdir_maxsize')."
             )
           )

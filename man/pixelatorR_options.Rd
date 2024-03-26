@@ -47,8 +47,8 @@ will not be removed automatically. pixelatorR offers a utility function called
 To make the user aware of this behavior, a message will be displayed once the
 first time \code{ReadMPX_Seurat} that creates a new edgelist directory is called.
 
-Moreover, when the size of the directory exceeds the maximum allowed size set with
-the global option \code{pixelatorR.arrowdir_maxsize} (which is set to 20GB by default),
+Moreover, when the size of the directory exceeds the size limit set with
+the global option \code{pixelatorR.arrowdir_maxsize} (which is set to 10GB by default),
 \code{edgelists_directories_clean()} will be run automatically. Users will be given
 a prompt to confirm the cleanup before it is executed. This behavior can be turned off
 by setting \code{options(pixelatorR.auto_cleanup = TRUE)}. You can also run
@@ -68,7 +68,7 @@ edgelist_directories_du()
 getOption("pixelatorR.arrow_outdir") \%>\% fs::dir_ls()
 
 # Increase maximum allowed size of edgelist directory to 50GB
-# This will generate a prompt asking users to cleanup of the edgelist directory
+# This will generate a prompt asking users to cleanup the edgelist directory
 # if the total size exceeds 50GB
 options(pixelatorR.arrowdir_maxsize = fs::fs_bytes(50 * 1024^3))
 
