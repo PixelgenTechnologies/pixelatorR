@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED] - 2024-??-??
 
+## [0.2.1] 2024-03-28
+
+### Added utility functions to clean up edgelist directories
+
+- `edgelist_directories_clean` runs a cleanup of the edgelist directory set by the "pixelatorR.arrow_outdir" global option
+- `edgelist_directories_du` returns the total disk usage of the edgelist directory set by the "pixelatorR.arrow_outdir" global option
+- Added global option "pixelatorR.arrowdir_maxsize". When running `ReadMPX_Seurat`, `merge.CellGraphAssay`, `subset.CellGraphAssay` or `RenameCells.CellGraphAssay`, a clean up will be triggered if the total disk usage of the edgelist directory exceeds this value. The default value is 5 GB.
+
 ## [0.2.0] - 2024-03-18
 
 ### Added new test data set - five_cells.pxl
