@@ -4,20 +4,12 @@
 \alias{export_edgelist_to_parquet}
 \title{Export a FileSystemDataset to .parquet files}
 \usage{
-export_edgelist_to_parquet(
-  object,
-  outdir,
-  suffix = "",
-  overwrite = FALSE,
-  verbose = TRUE
-)
+export_edgelist_to_parquet(object, outdir, overwrite = FALSE, verbose = TRUE)
 }
 \arguments{
 \item{object}{An \code{FileSystemDataset}}
 
 \item{outdir}{A path to an existing directory}
-
-\item{suffix}{Add a suffix to output directory name}
 
 \item{overwrite}{If the output directory already exists, set this parameter
 to TRUE to overwrite the directory}

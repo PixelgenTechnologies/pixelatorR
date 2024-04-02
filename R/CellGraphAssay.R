@@ -359,7 +359,14 @@ RenameCells.CellGraphAssay <- function (
     arrow_dirs <- list.files(arrow_dir, full.names = TRUE)
 
     # Create new directory
-    session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+    session_tmpdir_random <-
+      file.path(
+        getOption("pixelatorR.arrow_outdir"),
+        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
+
+    # Trigger garbage cleaning if the edgelist directories exceed the
+    # maximum allowed size
+    .run_clean()
 
     if (length(arrow_dirs) == 1) {
       # Handle renaming if 1 hive-style directory is present
@@ -383,7 +390,7 @@ RenameCells.CellGraphAssay <- function (
       # Handle renaming if more than 1 hive-style directories are present
 
       if (!length(arrow_dirs) == length(new_sample_id)) {
-        abort(glue("Found {arrow_dirs} samples in arrow directory, but {length(new_sample_id)} samples in 'new.names'"))
+        abort(glue("Found {length(arrow_dirs)} samples in arrow directory, but {length(new_sample_id)} samples in 'new.names'"))
       }
 
       # Copy directories to new folder
@@ -408,6 +415,15 @@ RenameCells.CellGraphAssay <- function (
                    "\nCannot rename cell IDs in edgelists."))
       }
     }
+
+    # Log command
+    command <- sys.calls()[[1]][1] %>% as.character()
+    options(pixelatorR.edgelist_copies = bind_rows(
+      getOption("pixelatorR.edgelist_copies"),
+      tibble(command = command,
+             edgelist_dir = normalizePath(session_tmpdir_random),
+             timestamp = Sys.time())
+    ))
 
     # Reload arrow dataset
     fsd_new <- open_dataset(session_tmpdir_random)
@@ -857,7 +873,7 @@ setMethod (
 #'
 #' # Subset Seurat object containing a CellGraphAssay
 #' # --------------------------------
-#' seur_subset <- subset(seur, cells = colnames(cg_assay)[1:3])
+#' seur_subset <- subset(seur, cells = colnames(seur)[1:3])
 #'
 #' # Compare size of edge lists stored on disk
 #' ArrowData(seur) %>% dim()
@@ -909,8 +925,15 @@ subset.CellGraphAssay <- function (
       # Only filter by cells
       if (length(cells) < ncol(x)) {
 
+        # Trigger garbage cleaning if the edgelist directories exceed the
+        # maximum allowed size
+        .run_clean()
+
         # Create a temporary directory with a unique name
-        session_tmpdir_random <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+        session_tmpdir_random <-
+          file.path(
+            getOption("pixelatorR.arrow_outdir"),
+            glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
         dir.create(session_tmpdir_random)
 
         # Handle samples
@@ -939,6 +962,15 @@ subset.CellGraphAssay <- function (
             file.rename(from = f, file.path(dirname(f), "edgelist.parquet"))
           }
         }
+
+        # Log command
+        command <- sys.calls()[[1]][1] %>% as.character()
+        options(pixelatorR.edgelist_copies = bind_rows(
+          getOption("pixelatorR.edgelist_copies"),
+          tibble(command = command,
+                 edgelist_dir = normalizePath(session_tmpdir_random),
+                 timestamp = Sys.time())
+        ))
 
         # Update arrow_dir
         arrow_dir <- session_tmpdir_random
@@ -1098,11 +1130,18 @@ merge.CellGraphAssay <- function (
   # Run edgelist merge if arrow_dirs exists
   if (!any(is.na(all_arrow_dirs))) {
 
+    # Trigger garbage cleaning if the edgelist directories exceed the
+    # maximum allowed size
+    .run_clean()
+
     if (!any(dir.exists(all_arrow_dirs)))
       abort(glue("Paths to edgelist parquet file directories {paste(all_arrow_dirs, collapse = ',')} doesn't exist"))
 
     # Create a new temporary directory with a time stamp
-    new_dir <- file.path(getOption("pixelatorR.arrow_outdir"), paste0(.generate_random_string(), "-", format(Sys.time(), "%Y-%m-%d-%H%M%S")))
+    new_dir <-
+      file.path(
+        getOption("pixelatorR.arrow_outdir"),
+        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
     dir.create(path = new_dir, showWarnings = FALSE)
 
     # Move hive-style old sample diretories to new directory
@@ -1112,6 +1151,15 @@ merge.CellGraphAssay <- function (
         file.copy(from = hive_style_dirs[ii], to = new_dir, recursive = TRUE)
       }
     }
+
+    # Log command
+    command <- sys.calls()[[1]][1] %>% as.character()
+    options(pixelatorR.edgelist_copies = bind_rows(
+      getOption("pixelatorR.edgelist_copies"),
+      tibble(command = command,
+             edgelist_dir = normalizePath(new_dir),
+             timestamp = Sys.time())
+    ))
 
     # Open arrow data
     arrow_data <- open_dataset(new_dir)
