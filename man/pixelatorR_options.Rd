@@ -67,10 +67,10 @@ edgelist_directories_du()
 # List files in the edgelist directory
 getOption("pixelatorR.arrow_outdir") \%>\% fs::dir_ls()
 
-# Increase maximum allowed size of edgelist directory to 50GB
+# Increase maximum allowed size of edgelist directory to 5GB
 # This will generate a prompt asking users to cleanup the edgelist directory
 # if the total size exceeds 50GB
-options(pixelatorR.arrowdir_maxsize = fs::fs_bytes(50 * 1024^3))
+options(pixelatorR.arrowdir_maxsize = fs::fs_bytes(5 * 1024^3))
 
 # Turn of prompts for automatic cleanup
 options(pixelatorR.auto_cleanup = TRUE)
