@@ -139,11 +139,20 @@ ReadMPX_Seurat <- function (
   ...
 ) {
 
+  # Trigger garbage cleaning if the edgelist directories exceed the
+  # maximum allowed size
+  .run_clean()
+
   stopifnot(
     "assay must be a character of length 1" =
       is.character(assay) &&
       (length(assay) == 1)
   )
+
+  # Display message first time function is called
+  if (getOption("pixelatorR.startup_message", TRUE) && return_cellgraphassay && getOption("pixelatorR.verbose")) {
+    .initial_call_message()
+  }
 
   # Load count matrix
   data <- ReadMPX_counts(filename = filename, return_list = TRUE, verbose = FALSE)

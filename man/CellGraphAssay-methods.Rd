@@ -59,7 +59,7 @@ cg_assay_subset <- subset(cg_assay, cells = colnames(cg_assay)[1:3])
 
 # Subset Seurat object containing a CellGraphAssay
 # --------------------------------
-seur_subset <- subset(seur, cells = colnames(cg_assay)[1:3])
+seur_subset <- subset(seur, cells = colnames(seur)[1:3])
 
 # Compare size of edge lists stored on disk
 ArrowData(seur) \%>\% dim()
