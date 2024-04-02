@@ -101,8 +101,13 @@ reference:
   - contents:
     - export_edgelist_to_parquet
     - WriteMPX
+  - subtitle: Edge lists
+  - contents:
+    - edgelist_directories_clean
+    - edgelist_directories_du
   - subtitle: Misc
   - contents:
+    - pixelatorR_options
     - pixelatorR-package
     - pxl_dataset
     - show,CellGraph-method

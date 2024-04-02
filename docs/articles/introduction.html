@@ -26,7 +26,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -163,6 +163,140 @@ will have to rerun the analysis.</p>
 <code>ReadMPX_Seurat</code>:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="st">"./Sample01_human_pbmcs_unstimulated.dataset.pxl"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Edge list directories exceed size limit to trigger cleanup of unused files (see getOption('pixelatorR.arrowdir_maxsize').</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Are you sure you want to remove the following directories?</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/0Z2q3-2024-02-21-104021</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/2HQaO-2024-02-21-112846</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/2hstL-2024-02-21-112850</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/2Jkmd-2024-02-21-112843</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/3pWHQ-2024-03-14-114732</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/4n1k3-2024-02-21-112850</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/4VqGs-2024-02-21-102857</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/5dBtH-2024-02-21-112811</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/5LJu5-2024-03-08-142913</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/5U5Pt-2024-02-21-112624</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/6rUpc-2024-02-21-112922</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/7mQ5W-2024-02-21-103741</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/8xzuf-2024-02-21-112923</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/9JXRU-2024-02-21-112918</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/9ph0f-2024-02-21-103739</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/9xSk9-2024-02-21-103143</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/AaDQF-2024-02-21-112622</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/aMkAQ-2024-02-21-102745</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/AXrmj-2024-03-14-114722</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/AzsbB-2024-02-21-112811</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/b74Sz-2024-02-21-112809</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/BH8t1-2024-03-08-150337</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/bSzm8-2024-03-08-142903</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/cjpLN-2024-02-21-102911</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/CSIQW-2024-02-21-112621</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/CUcCH-2024-03-08-152451</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/DjtJH-2024-02-21-102609</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/dkGCH-2024-02-21-112624</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/dLdiP-2024-02-21-103222</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/DN2Dx-2024-02-21-112850</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/dUW7R-2024-02-21-101941</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/eHuUV-2024-02-21-112810</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/ejOEI-2024-02-21-112618</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/EL0kx-2024-02-21-112806</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/ENuEM-2024-02-21-112847</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/fC14f-2024-02-21-112807</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/fIMUw-2024-02-21-102728</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/FjEAx-2024-02-21-104024</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/FTbaU-2024-02-21-112848</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/fu42O-2024-02-21-112923</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/GJHgd-2024-02-21-112919</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/gv75s-2024-02-21-112808</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/hPx5N-2024-02-21-112920</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/HrZwC-2024-02-21-102554</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/icPmo-2024-02-21-104128</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/ILfq1-2024-03-08-150335</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/iQibu-2024-02-21-104130</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/JFxXQ-2024-02-21-103205</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/Jkv2m-2024-02-21-103313</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/jxYPY-2024-02-21-103015</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/k8Vwu-2024-02-21-112851</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/Lii83-2024-02-21-112848</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/lkkKM-2024-02-21-102943</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/LoFAM-2024-02-21-112919</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/lPait-2024-02-21-103818</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/mL0Xj-2024-03-18-171409</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/mrXw3-2024-02-21-112921</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/MuR7U-2024-02-21-103911</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/MvyAh-2024-02-21-112812</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/n88Lw-2024-02-21-112848</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/NeRK7-2024-02-21-112622</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/njjlo-2024-02-21-112624</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/nu4k8-2024-02-21-102934</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/NvafW-2024-03-14-114730</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/NwrrP-2024-02-21-103119</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/O48B9-2024-02-21-112921</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/o4tDk-2024-02-21-103422</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/OaOq2-2024-02-21-112807</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/oiZWN-2024-02-21-102421</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/oPITV-2024-02-21-112915</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/P4OxD-2024-03-18-171412</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/Pdgdb-2024-02-21-102533</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/piOLA-2024-02-21-103914</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/qscJc-2024-02-21-112804</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/r77ul-2024-03-08-142911</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/rKrKC-2024-02-21-112810</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/ROCzU-2024-03-08-152443</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/RPs4N-2024-02-21-112624</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/s0elb-2024-02-21-112848</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/T2x2d-2024-02-20-120213</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/t7DZc-2024-02-21-112620</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/tGdv4-2024-02-21-112812</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/TGQYW-2024-02-21-112812</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/TLWMu-2024-02-21-103037</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/tX7qf-2024-02-21-112921</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112813</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112814</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112817</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112819</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112852</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112853</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112855</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112857</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112924</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112925</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112928</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U3C0x-2024-02-21-112930</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/U6TtT-2024-03-08-142244</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/Ugnfn-2024-03-08-142252</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/uHcNg-2024-03-08-150327</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/uoD66-2024-02-21-102349</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/V9eem-2024-02-21-112923</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/VItVK-2024-02-21-112850</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/VKFfG-2024-03-08-142255</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/W6xfj-2024-03-18-171401</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/wRcvB-2024-03-08-152453</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/WUksI-2024-02-21-112845</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/XflHE-2024-02-21-112918</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/YbSZp-2024-02-21-112809</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/Yg6fk-2024-02-21-112923</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/zMrbH-2024-02-21-102206</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/Zt6b6-2024-02-21-103821</span></span>
+<span><span class="co">## /Users/ludviglarsson/r-pixelator-packages/pixelatorR/vignettes/edgelists/ZvpAn-2024-02-21-112846</span></span></code></pre>
+<pre><code><span><span class="co">## Error in menu(c("Yes", "No")) : menu() cannot be used non-interactively</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to clean edge list directories.</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #00BBBB;">ℹ</span> Graph data will be stored on disk until loaded with LoadCellGraphs.</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span></code></pre>
+<pre><code><span><span class="co">## → The directory where the graph data is stored can be set with </span></span>
+<span><span class="co">## the global option 'pixelatorR.arrow_outdir'.</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span></code></pre>
+<pre><code><span><span class="co">## → Certain operations, such as subset and merge, will create new </span></span>
+<span><span class="co">## directories in this folder. If the size of the directory exceeds </span></span>
+<span><span class="co">## the size limit to trigger cleanup of unused files </span></span>
+<span><span class="co">## (see global option 'pixelatorR.arrowdir_maxsize'), </span></span>
+<span><span class="co">## these functions will trigger a cleanup to remove directories </span></span>
+<span><span class="co">## that are not linked to any global variable in the current R session.</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span></code></pre>
+<pre><code><span><span class="co">## → You can find more information about this behavior by </span></span>
+<span><span class="co">## typing ?pixelatorR_options in the console.</span></span></code></pre>
+<pre><code><span><span class="co">## </span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #00BBBB;">ℹ</span> <span style="color: #BB0000;">This message is displayed once per session.</span></span></span></code></pre>
 <pre><code><span><span class="co">## <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">477</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span></span></code></pre>
 </div>
 <div class="section level2">
@@ -173,7 +307,7 @@ however, <code>pixelatorR</code> does not yet support the new assay
 class (<code>AssayV5</code>).</p>
 <p>Therefore, we suggest setting the global option
 “Seurat.object.assay.version” to “v3” to avoid potential conflicts:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>Seurat.object.assay.version <span class="op">=</span> <span class="st">"v3"</span><span class="op">)</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>

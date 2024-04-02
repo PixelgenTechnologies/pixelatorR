@@ -12,7 +12,7 @@ MPX data set."><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/li
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,6 +136,22 @@ to color data by</p></dd>
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"pixelatorR"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">seur_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Graph data will be stored on disk until loaded with LoadCellGraphs.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → The directory where the graph data is stored can be set with </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> the global option 'pixelatorR.arrow_outdir'.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → Certain operations, such as subset and merge, will create new </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> directories in this folder. If the size of the directory exceeds </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> the size limit to trigger cleanup of unused files </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> (see global option 'pixelatorR.arrowdir_maxsize'), </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> these functions will trigger a cleanup to remove directories </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> that are not linked to any global variable in the current R session.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> → You can find more information about this behavior by </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> typing ?pixelatorR_options in the console.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> <span style="color: #BB0000;">This message is displayed once per session.</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span><span class="va">seur_obj</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>

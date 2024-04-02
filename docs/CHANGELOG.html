@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,42 @@
 <div class="section level2">
 <h2 id="unreleased---2024--">[UNRELEASED] - 2024-??-??<a class="anchor" aria-label="anchor" href="#unreleased---2024--"></a></h2>
 </div>
+<div class="section level2">
+<h2 id="id_021-2024-03-28">[0.2.1] 2024-03-28<a class="anchor" aria-label="anchor" href="#id_021-2024-03-28"></a></h2>
+<div class="section level3">
+<h3 id="added-utility-functions-to-clean-up-edgelist-directories">Added utility functions to clean up edgelist directories<a class="anchor" aria-label="anchor" href="#added-utility-functions-to-clean-up-edgelist-directories"></a></h3>
+<ul><li>
+<code>edgelist_directories_clean</code> runs a cleanup of the edgelist directory set by the “pixelatorR.arrow_outdir” global option</li>
+<li>
+<code>edgelist_directories_du</code> returns the total disk usage of the edgelist directory set by the “pixelatorR.arrow_outdir” global option</li>
+<li>Added global option “pixelatorR.arrowdir_maxsize”. When running <code>ReadMPX_Seurat</code>, <code>merge.CellGraphAssay</code>, <code>subset.CellGraphAssay</code> or <code>RenameCells.CellGraphAssay</code>, a clean up will be triggered if the total disk usage of the edgelist directory exceeds this value. The default value is 5 GB.</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_020---2024-03-18">[0.2.0] - 2024-03-18<a class="anchor" aria-label="anchor" href="#id_020---2024-03-18"></a></h2>
+<div class="section level3">
+<h3 id="added-new-test-data-set---five_cellspxl">Added new test data set - five_cells.pxl<a class="anchor" aria-label="anchor" href="#added-new-test-data-set---five_cellspxl"></a></h3>
+<p>Once <code>pixelatorR</code> is installed, the test data can be read from the following path:</p>
+<pre><code><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/five_cells"</span>,</span>
+<span>  <span class="st">"five_cells.pxl"</span>,</span>
+<span>  package <span class="op">=</span> <span class="st">"pixelatorR"</span></span>
+<span><span class="op">)</span></span></code></pre>
+<ul><li>The data set contains 5 cells from three different MPX data sets:
+<ul><li>
+<a href="https://software.pixelgen.com/datasets/" class="external-link">CD3 capped cell: RCVCMP0000217</a> from the CD3 capping data set (stimulated)</li>
+<li>
+<a href="https://software.pixelgen.com/datasets/" class="external-link">B cell: RCVCMP0000118, CD4 T cell: RCVCMP0000487, CD8 T cell: RCVCMP0000655</a> from a PBMC data set</li>
+<li>
+<a href="https://software.pixelgen.com/datasets/" class="external-link">Uropod cell: RCVCMP0000263</a> from the RANTES stimulated data set</li>
+</ul></li>
+<li>All cells now have fully connected components</li>
+<li>The total file size is 2.1 MB, where the following fields have been excluded from the edgelist.parquet file: “umi”, “sequence”, “umi_unique_count”, “upi_unique_count”</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_013---2024-03-18">[0.1.3] - 2024-03-18<a class="anchor" aria-label="anchor" href="#id_013---2024-03-18"></a></h2>
+<ul><li>The latest version of <code>arrow</code> on CRAN (v15.0.1) contains several bugs which are picked up by the R CMD checks. Fixed the version of <code>arrow</code> to v14.0.2.1 until a stable release is available.</li>
+</ul></div>
 <div class="section level2">
 <h2 id="id_012---2024-03-14">[0.1.2] - 2024-03-14<a class="anchor" aria-label="anchor" href="#id_012---2024-03-14"></a></h2>
 <ul><li>Fixed bug in <code>LoadCellGraphs</code> when working on Seurat objects with multiple data sets (merged). Previous version returned components in an invalid order.</li>

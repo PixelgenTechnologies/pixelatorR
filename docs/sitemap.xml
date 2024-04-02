@@ -28,6 +28,9 @@
     <loc>/index.html</loc>
   </url>
   <url>
+    <loc>/pull_request_template.html</loc>
+  </url>
+  <url>
     <loc>/reference/ArrowData.html</loc>
   </url>
   <url>
@@ -130,6 +133,12 @@
     <loc>/reference/color_by_marker.html</loc>
   </url>
   <url>
+    <loc>/reference/edgelist_directories_clean.html</loc>
+  </url>
+  <url>
+    <loc>/reference/edgelist_directories_du.html</loc>
+  </url>
+  <url>
     <loc>/reference/edgelist_to_simple_bipart_graph.html</loc>
   </url>
   <url>
@@ -149,6 +158,9 @@
   </url>
   <url>
     <loc>/reference/pixelatorR-package.html</loc>
+  </url>
+  <url>
+    <loc>/reference/pixelatorR_options.html</loc>
   </url>
   <url>
     <loc>/reference/pxContent_vs_Tau.html</loc>
