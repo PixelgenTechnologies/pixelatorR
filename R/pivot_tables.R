@@ -405,7 +405,7 @@ ColocalizationScoresToAssay.Seurat <- function (
                       dimnames = list(rownames(spatial_metric_wide_format), colnames(object)))
 
   # Fill matrix where it overlaps
-  # Any missing columns will be keep 0's
+  # Any missing columns will be kept as 0's
   tofillMat[, colnames(spatial_metric_wide_format)] <- spatial_metric_wide_format
 
   return(tofillMat)
