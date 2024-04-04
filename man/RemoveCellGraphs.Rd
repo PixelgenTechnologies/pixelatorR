@@ -3,12 +3,15 @@
 \name{RemoveCellGraphs}
 \alias{RemoveCellGraphs}
 \alias{RemoveCellGraphs.CellGraphAssay}
+\alias{RemoveCellGraphs.CellGraphAssay5}
 \alias{RemoveCellGraphs.Seurat}
 \title{Remove CellGraphs}
 \usage{
 RemoveCellGraphs(object, ...)
 
 \method{RemoveCellGraphs}{CellGraphAssay}(object, ...)
+
+\method{RemoveCellGraphs}{CellGraphAssay5}(object, ...)
 
 \method{RemoveCellGraphs}{Seurat}(object, assay = NULL, ...)
 }

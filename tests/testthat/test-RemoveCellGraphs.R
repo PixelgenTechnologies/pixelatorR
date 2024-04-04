@@ -17,3 +17,14 @@ test_that("RemoveCellGraphs works for Seurat objects", {
   classes <- sapply(seur_cleaned@assays[["mpxCells"]]@cellgraphs, class)
   expect_true(all(classes %in% "NULL"))
 })
+
+options(Seurat.object.assay.version = "v5")
+seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1])
+
+test_that("RemoveCellGraphs works for CellGraphAssay5 objects", {
+  expect_no_error({cg_assay <- RemoveCellGraphs(seur_obj[["mpxCells"]])})
+  classes <- sapply(cg_assay@cellgraphs, class)
+  expect_true(all(classes %in% "NULL"))
+})
+options(Seurat.object.assay.version = "v3")

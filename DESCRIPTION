@@ -20,7 +20,7 @@ Imports:
     dplyr,
     arrow,
     glue,
-    rhdf5,
+    hdf5r,
     SeuratObject (>= 5.0.0),
     tibble,
     igraph,
@@ -35,7 +35,8 @@ Imports:
     progressr,
     plotly,
     fs,
-    utils
+    utils,
+    pbapply
 Remotes:
     cran/arrow@14.0.2.1
 Suggests:
@@ -52,6 +53,7 @@ Collate:
     'generics.R'
     'CellGraph.R'
     'CellGraphAssay.R'
+    'CellGraphAssay5.R'
     'aaa.R'
     'cell_count_plot.R'
     'clean_garbage.R'

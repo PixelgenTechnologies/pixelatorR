@@ -5,6 +5,7 @@
 \alias{KeepLargestComponent.tbl_graph}
 \alias{KeepLargestComponent.CellGraph}
 \alias{KeepLargestComponent.CellGraphAssay}
+\alias{KeepLargestComponent.CellGraphAssay5}
 \alias{KeepLargestComponent.Seurat}
 \title{Keep largest component}
 \usage{
@@ -15,6 +16,8 @@ KeepLargestComponent(object, ...)
 \method{KeepLargestComponent}{CellGraph}(object, verbose = TRUE, ...)
 
 \method{KeepLargestComponent}{CellGraphAssay}(object, verbose = TRUE, ...)
+
+\method{KeepLargestComponent}{CellGraphAssay5}(object, verbose = TRUE, ...)
 
 \method{KeepLargestComponent}{Seurat}(object, assay = NULL, verbose = TRUE, ...)
 }

@@ -13,7 +13,6 @@ globalVariables(
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @importFrom rhdf5 h5read
 #' @importFrom utils unzip
 #'
 #' @return A count matrix or a list if \code{return_list = TRUE}
@@ -35,6 +34,7 @@ ReadMPX_counts <- function (
   return_list = FALSE,
   verbose = TRUE
 ) {
+
   stopifnot("filename must be a character of length 1" = is.character(filename) & (length(filename) == 1))
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
@@ -45,29 +45,32 @@ ReadMPX_counts <- function (
   # Unzip pxl file
   original_filename <- filename
   if (endsWith(filename, ".pxl")) {
-    # LL: Returns error message
-    filename <- tryCatch(unzip(filename, "adata.h5ad", exdir = tempdir()),
+    filename <- tryCatch(utils::unzip(filename, "adata.h5ad", exdir = tempdir()),
                          error = function(e) e,
                          warning = function(w) w)
-    if (inherits(x = filename, what = "simpleWarning")) abort("Failed to unzip data")
+    if (inherits(x = filename, what = "simpleWarning"))
+      abort("Failed to unzip 'adata.h5ad' data")
   } else {
     abort(glue("Invalid file format .{.file_ext(filename)}. Expected a .pxl file."))
   }
 
   # Read temporary file
-  anndata_hier <- h5read(filename, "/")
-
-  # Remove temporary file
-  if (endsWith(original_filename, ".pxl")) file.remove(filename)
+  hd5_object <- hdf5r::H5File$new(filename, "r")
+  #anndata_hier <- h5read(filename, "/")
 
   # Extract contents
-  X <- anndata_hier$X
-  colnames(X) <- anndata_hier$obs$component
-  rownames(X) <- anndata_hier$var$marker
+  X <- hd5_object[["X"]]$read()
+  colnames(X) <- hd5_object[["obs"]][["component"]]$read()
+  rownames(X) <- hd5_object[["var"]][["marker"]]$read()
+  # X <- anndata_hier$X
+  # colnames(X) <- anndata_hier$obs$component
+  # rownames(X) <- anndata_hier$var$marker
+  X <- X[seq_len(nrow(X)), seq_len(ncol(X))]
 
   if (return_list) {
-    return(list(X = X, anndata_hier = anndata_hier))
+    return(list(X = X, hd5_object = hd5_object))
   } else {
+    hd5_object$close()
     return(X)
   }
 }
@@ -103,7 +106,7 @@ ReadMPX_counts <- function (
 #' @inheritParams ReadMPX_counts
 #'
 #' @import rlang
-#' @importFrom SeuratObject CreateSeuratObject CreateAssayObject `VariableFeatures<-`
+#' @importFrom SeuratObject CreateSeuratObject CreateAssayObject CreateAssay5Object `VariableFeatures<-`
 #' @importFrom stats setNames
 #'
 #' @family data-loaders
@@ -156,19 +159,36 @@ ReadMPX_Seurat <- function (
 
   # Load count matrix
   data <- ReadMPX_counts(filename = filename, return_list = TRUE, verbose = FALSE)
-  X <- data$X; anndata_hier <- data$anndata_hier
+  X <- data$X
+  hd5_object <- data$hd5_object
 
   # Load edgelist
   empty_graphs <- rep(list(NULL), ncol(X)) %>% setNames(nm = colnames(X))
 
   if (return_cellgraphassay) {
 
-    # Create CellGraphAssay
-    cg_assay <- CreateCellGraphAssay(counts = X,
-                                     cellgraphs = empty_graphs,
-                                     arrow_dir = filename,
-                                     outdir = edgelist_outdir,
-                                     overwrite = overwrite)
+    # Create CellGraphAssay(5)
+    cg_assay <- switch(
+      getOption("Seurat.object.assay.version", "v3"),
+      "v3" = CreateCellGraphAssay(
+        counts = X,
+        cellgraphs = empty_graphs,
+        arrow_dir = filename,
+        outdir = edgelist_outdir,
+        overwrite = overwrite
+      ),
+      "v5" = CreateCellGraphAssay5(
+        counts = X,
+        cellgraphs = empty_graphs,
+        fs_map = tibble(
+          id_map = list(tibble(
+            current_id = colnames(X),
+            original_id = colnames(X)
+          )),
+          sample = 1L,
+          pxl_file = filename)
+      )
+    )
     Key(cg_assay) <- paste0(assay, "_")
 
     if (load_cell_graphs) {
@@ -188,54 +208,53 @@ ReadMPX_Seurat <- function (
       cg_assay@colocalization <- colocalization
     }
   } else {
-    cg_assay <- CreateAssayObject(counts = X)
+    cg_assay <- switch(
+      getOption("Seurat.object.assay.version", "v3"),
+      "v3" = CreateAssayObject(counts = X),
+      "v5" = CreateAssay5Object(counts = X)
+    )
     Key(cg_assay) <- paste0(assay, "_")
   }
 
   # Create Seurat object
-  seur_obj <- CreateSeuratObject(counts = cg_assay, assay = assay, ...)
+  seur_obj <- CreateSeuratObject(counts = cg_assay, assay = assay)#, ...)
   if (verbose && check_global_verbosity())
-    cli_alert_success("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells and {col_br_blue(nrow(X))} targeted surface proteins")
-
-  if (add_additional_assays) {
-    for (layr in names(anndata_hier$obsm)) {
-
-      # Add only normalized counts as individual assays
-      if (!layr %in% c("denoised", "normalized_clr", "normalized_rel")) next
-
-      X_assay <-
-        anndata_hier$obsm[[layr]] %>%
-        as_tibble() %>%
-        column_to_rownames("component") %>%
-        t()
-      layer_assay <- CreateAssayObject(counts = X_assay)
-      suppressWarnings(seur_obj[[layr]] <- layer_assay)
-    }
-  }
-
+    cli_alert_success(glue("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells ",
+                           "and {col_br_blue(nrow(X))} targeted surface proteins"))
 
   # Extract meta data
   seur_obj@meta.data <-
-    anndata_hier$obs %>%
-    {
-      newdata <- .
-      for (name in names(newdata)) {
-        if (length(newdata[[name]]) == dim(anndata_hier$X)[2]) next
-        indicies <- newdata[[name]]$codes + 1
-        categories <- newdata[[name]]$categories
-        newdata[[name]] <- factor(categories[indicies], categories)
+    names(hd5_object[["obs"]]) %>% lapply(function(nm) {
+      if (length(names(hd5_object[["obs"]][[nm]])) == 2) {
+        indices <- hd5_object[["obs"]][[nm]][["codes"]]$read() + 1
+        categories <- hd5_object[["obs"]][[nm]][["categories"]]$read()
+        col <- tibble(!!sym(nm) := factor(categories[indices], categories))
+      } else {
+        col <- tibble(!!sym(nm) := hd5_object[["obs"]][[nm]]$read())
       }
-      newdata
-    } %>%
+      return(col)
+    }) %>%
+    do.call(bind_cols, .) %>%
     as.data.frame() %>%
     column_to_rownames("component")
 
-  # Extract variable meta data (var)
-  var_meta <- anndata_hier$var %>%
+  # Extract feature meta data (var)
+  feature_meta_data <-
+    names(hd5_object[["var"]]) %>% lapply(function(nm) {
+      col <- tibble(!!sym(nm) := hd5_object[["var"]][[nm]]$read())
+    }) %>%
+    do.call(bind_cols, .) %>%
     as.data.frame()
-  rownames(var_meta) <- var_meta$marker
 
-  seur_obj[[assay]]@meta.features <- var_meta
+  # Close hdf5 file
+  hd5_object$close()
+
+  if (getOption("Seurat.object.assay.version", "v3") == "v3") {
+    rownames(feature_meta_data) <- feature_meta_data$marker
+    seur_obj[[assay]]@meta.features <- feature_meta_data
+  } else {
+    seur_obj[[assay]]@meta.data <- feature_meta_data
+  }
 
   # Set variable features to all features
   VariableFeatures(seur_obj) <- rownames(seur_obj)

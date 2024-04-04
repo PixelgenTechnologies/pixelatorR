@@ -39,3 +39,26 @@ test_that("KeepLargestComponent works as expected", {
 test_that("KeepLargestComponent fails when invalid input is provided", {
   expect_error(KeepLargestComponent(object = "Invalid"))
 })
+
+options(Seurat.object.assay.version = "v5")
+seur <- ReadMPX_Seurat(filename = pxl_file, return_cellgraphassay = TRUE, overwrite = TRUE)
+seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
+
+# Breaks graph
+cg <- CellGraphs(seur)[[1]]
+set.seed(123)
+cg@cellgraph <- cg@cellgraph %E>%
+  filter(from %in% sample(from, igraph::gsize(.) - 500, replace = FALSE))
+seur@assays$mpxCells@cellgraphs[[1]] <- cg
+cg_assay5 <- seur[["mpxCells"]]
+
+test_that("KeepLargestComponent works as expected on CellGraphAssay5 objects", {
+
+  # CellGraphAssay
+  expect_no_error(cg_assay_large_component <- KeepLargestComponent(cg_assay5))
+  expect_s4_class(cg_assay_large_component, "CellGraphAssay5")
+  cg_assay_large_component@cellgraphs <- rep(list(NULL), ncol(cg_assay5)) %>% setNames(nm = colnames(cg_assay5))
+  expect_no_error(cg_assay_large_component <- KeepLargestComponent(cg_assay_large_component))
+
+})
+options(Seurat.object.assay.version = "v3")

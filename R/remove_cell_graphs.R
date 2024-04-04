@@ -11,6 +11,19 @@ RemoveCellGraphs.CellGraphAssay <- function (
   return(object)
 }
 
+#' @rdname RemoveCellGraphs
+#' @method RemoveCellGraphs CellGraphAssay5
+#'
+#' @export
+#'
+RemoveCellGraphs.CellGraphAssay5 <- function (
+  object,
+  ...
+){
+  slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% setNames(nm = colnames(object))
+  return(object)
+}
+
 #' @param assay The name of the target assay
 #'
 #' @import rlang

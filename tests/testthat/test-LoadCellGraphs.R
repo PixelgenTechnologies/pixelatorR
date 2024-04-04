@@ -84,3 +84,33 @@ test_that("LoadCellGraphs works for FileSystemDataset", {
     )
   }
 })
+
+options(Seurat.object.assay.version = "v5")
+seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
+seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("Sample1", "Sample2"))
+cg_assay5 <- seur_obj[["mpxCells"]]
+
+test_that("LoadCellGraphs works for CellGraphAssay5 objects", {
+
+  # Load bipartite graph (default)
+  expect_no_error({cg_assay5 <- LoadCellGraphs(cg_assay5, cells = colnames(cg_assay5)[1], force = TRUE)})
+  expect_s4_class(cg_assay5, "CellGraphAssay5")
+  expect_s4_class(CellGraphs(cg_assay5)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay5)[[1]]@cellgraph, "type"), "bipartite")
+  expect_equal(attr(CellGraphs(cg_assay5)[[1]]@cellgraph, "component_id"), colnames(cg_assay5)[1])
+
+  # Load A-node projected graph
+  expect_no_error({cg_assay5 <- LoadCellGraphs(cg_assay5, cells = colnames(cg_assay5)[1], load_as = "Anode", force = TRUE)})
+  expect_s4_class(cg_assay5, "CellGraphAssay5")
+  expect_s4_class(CellGraphs(cg_assay5)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay5)[[1]]@cellgraph, "type"), "Anode")
+  expect_equal(attr(CellGraphs(cg_assay5)[[1]]@cellgraph, "component_id"), colnames(cg_assay5)[1])
+
+  # Load line graph
+  expect_no_error({cg_assay5 <- LoadCellGraphs(cg_assay5, cells = colnames(cg_assay5)[1], load_as = "linegraph", force = TRUE)})
+  expect_s4_class(cg_assay5, "CellGraphAssay5")
+  expect_s4_class(CellGraphs(cg_assay5)[[1]], "CellGraph")
+  expect_equal(attr(CellGraphs(cg_assay5)[[1]]@cellgraph, "type"), "linegraph")
+  expect_equal(attr(CellGraphs(cg_assay5)[[1]]@cellgraph, "component_id"), colnames(cg_assay5)[1])
+})
+options(Seurat.object.assay.version = "v3")

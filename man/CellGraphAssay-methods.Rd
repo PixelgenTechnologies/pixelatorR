@@ -43,6 +43,7 @@ packages
 \examples{
 library(pixelatorR)
 library(dplyr)
+options(Seurat.object.assay.version = "v3")
 # Set arrow data output directory to temp for tests
 options(pixelatorR.arrow_outdir = tempdir())
 

@@ -75,30 +75,33 @@ PolarizationScoresToAssay.CellGraphAssay <- function (
   ...
 ) {
 
-  # fetch polarization scores
-  pol_table <- slot(object, name = "polarization")
-  if (is.null(pol_table)) {
-    abort("'polarization' scores are missing from 'CellGraphAssay'")
-  }
-
-  # Validate input
-  values_from <- match.arg(values_from, choices = c("morans_z", "morans_i"))
-
-  pol_scores_wide_format <- PolarizationScoresToAssay(pol_table, values_from, ...)
-
-  # Make sure that the components match
-  # Create an empty matrix (all 0's)
-  tofillMat <- matrix(data = 0,
-                     nrow = nrow(pol_scores_wide_format),
-                     ncol = ncol(object),
-                     dimnames = list(rownames(pol_scores_wide_format), colnames(object)))
-
-  # Fill matrix where it overlaps
-  # Any missing columns will be keep 0's
-  tofillMat[, colnames(pol_scores_wide_format)] <- pol_scores_wide_format
+  pol_matrix <- .create_spatial_metric_matrix(object,
+                                              values_from = values_from,
+                                              metric = "polarization")
 
   # Create Assay from filled matrix
-  assay <- CreateAssayObject(data = tofillMat)
+  assay <- CreateAssayObject(data = pol_matrix)
+
+  return(assay)
+}
+
+#' @rdname PolarizationScoresToAssay
+#' @method PolarizationScoresToAssay CellGraphAssay5
+#'
+#' @export
+#'
+PolarizationScoresToAssay.CellGraphAssay5 <- function (
+  object,
+  values_from = c("morans_z", "morans_i"),
+  ...
+) {
+
+  pol_matrix <- .create_spatial_metric_matrix(object,
+                                              values_from = values_from,
+                                              metric = "polarization")
+
+  # Create Assay from filled matrix
+  assay <- CreateAssay5Object(data = pol_matrix)
 
   return(assay)
 }
@@ -255,32 +258,35 @@ ColocalizationScoresToAssay.CellGraphAssay <- function (
   ...
 ) {
 
-  # fetch polarization scores
-  col_table <- slot(object, name = "colocalization")
-  if (is.null(col_table)) {
-    abort("'colocalization' scores are missing from 'CellGraphAssay'")
-  }
-
-  # Validate input
-  values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson", "pearson_mean",
-                                       "jaccard_mean", "jaccard", "jaccard_z"))
-
-  col_scores_wide_format <- ColocalizationScoresToAssay(col_table, values_from, ...)
-
-  # Make sure that the components match
-  # Create an empty matrix (all 0's)
-  tofillMat <- matrix(data = 0,
-                      nrow = nrow(col_scores_wide_format),
-                      ncol = ncol(object),
-                      dimnames = list(rownames(col_scores_wide_format), colnames(object)))
-
-  # Fill matrix where it overlaps
-  # Any missing columns will be keep 0's
-  tofillMat[, colnames(col_scores_wide_format)] <- col_scores_wide_format
+  coloc_matrix <- .create_spatial_metric_matrix(object,
+                                                values_from = values_from,
+                                                metric = "colocalization")
 
   # Create Assay from filled matrix
-  assay <- CreateAssayObject(data = tofillMat)
+  assay <- CreateAssayObject(data = coloc_matrix)
+
+  return(assay)
+}
+
+
+#' @rdname ColocalizationScoresToAssay
+#' @method ColocalizationScoresToAssay CellGraphAssay5
+#'
+#' @export
+#'
+ColocalizationScoresToAssay.CellGraphAssay5 <- function (
+  object,
+  values_from = c("pearson_z", "pearson", "pearson_mean",
+                  "jaccard_mean", "jaccard", "jaccard_z"),
+  ...
+) {
+
+  coloc_matrix <- .create_spatial_metric_matrix(object,
+                                                values_from = values_from,
+                                                metric = "colocalization")
+
+  # Create Assay from filled matrix
+  assay <- CreateAssay5Object(data = coloc_matrix)
 
   return(assay)
 }
@@ -356,4 +362,51 @@ ColocalizationScoresToAssay.Seurat <- function (
   object[[new_assay]] <- col_assay
 
   return(object)
+}
+
+#' Utility function to fetch spatial metrics from
+#' a CellGraphAssay(5) object and convert them to a matrix
+#'
+#' @noRd
+#'
+.create_spatial_metric_matrix <- function (
+  object,
+  values_from,
+  metric,
+  ...
+) {
+  # fetch polarization scores
+  spatial_metric_table <- slot(object, name = metric)
+  if (is.null(spatial_metric_table)) {
+    abort(glue("'{metric}' scores are missing from '{class(object)}'"))
+  }
+
+  # Validate input
+  values_from <- match.arg(values_from, choices = switch(
+    metric,
+    "polarization" = c("morans_z", "morans_i"),
+    "colocalization" = c("pearson_z", "pearson", "pearson_mean",
+                         "jaccard_mean", "jaccard", "jaccard_z")
+  ))
+
+
+  pivot_assay_func <- switch(
+    metric,
+    "polarization" = PolarizationScoresToAssay,
+    "colocalization" = ColocalizationScoresToAssay
+  )
+  spatial_metric_wide_format <- pivot_assay_func(spatial_metric_table, values_from, ...)
+
+  # Make sure that the components match
+  # Create an empty matrix (all 0's)
+  tofillMat <- matrix(data = 0,
+                      nrow = nrow(spatial_metric_wide_format),
+                      ncol = ncol(object),
+                      dimnames = list(rownames(spatial_metric_wide_format), colnames(object)))
+
+  # Fill matrix where it overlaps
+  # Any missing columns will be keep 0's
+  tofillMat[, colnames(spatial_metric_wide_format)] <- spatial_metric_wide_format
+
+  return(tofillMat)
 }

@@ -27,4 +27,5 @@ dependencies:
   - r-patchwork
   - r-pheatmap
   - r-duckdb
-  - bioconductor-rhdf5
+  - r-hdf5r
+  - r-pbapply

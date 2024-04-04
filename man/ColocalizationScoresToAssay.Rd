@@ -4,6 +4,7 @@
 \alias{ColocalizationScoresToAssay}
 \alias{ColocalizationScoresToAssay.data.frame}
 \alias{ColocalizationScoresToAssay.CellGraphAssay}
+\alias{ColocalizationScoresToAssay.CellGraphAssay5}
 \alias{ColocalizationScoresToAssay.Seurat}
 \title{Convert colocalization scores to Assay}
 \usage{
@@ -17,6 +18,13 @@ ColocalizationScoresToAssay(object, ...)
 )
 
 \method{ColocalizationScoresToAssay}{CellGraphAssay}(
+  object,
+  values_from = c("pearson_z", "pearson", "pearson_mean", "jaccard_mean", "jaccard",
+    "jaccard_z"),
+  ...
+)
+
+\method{ColocalizationScoresToAssay}{CellGraphAssay5}(
   object,
   values_from = c("pearson_z", "pearson", "pearson_mean", "jaccard_mean", "jaccard",
     "jaccard_z"),

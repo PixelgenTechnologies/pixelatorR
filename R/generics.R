@@ -1,3 +1,16 @@
+#' Convert objects to a \code{\link{CellGraphAssay5}}
+#'
+#' @param x An object to convert to class \code{\link{CellGraphAssay5}}
+#' @param ... Arguments passed to other methods
+#' @rdname as.CellGraphAssay5
+#' @export as.CellGraphAssay5
+as.CellGraphAssay5 <- function (
+  x,
+  ...
+) {
+  UseMethod(generic = "as.CellGraphAssay5", object = x)
+}
+
 #' Convert objects to a \code{\link{CellGraphAssay}}
 #'
 #' @param x An object to convert to class \code{\link{CellGraphAssay}}

@@ -8,5 +8,6 @@
 
 library(testthat)
 library(pixelatorR)
+options(Seurat.object.assay.version = "v3")
 
 test_check("pixelatorR")

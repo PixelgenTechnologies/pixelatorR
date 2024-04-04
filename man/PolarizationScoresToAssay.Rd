@@ -4,6 +4,7 @@
 \alias{PolarizationScoresToAssay}
 \alias{PolarizationScoresToAssay.data.frame}
 \alias{PolarizationScoresToAssay.CellGraphAssay}
+\alias{PolarizationScoresToAssay.CellGraphAssay5}
 \alias{PolarizationScoresToAssay.Seurat}
 \title{Convert polarization scores to Assay}
 \usage{
@@ -12,6 +13,8 @@ PolarizationScoresToAssay(object, ...)
 \method{PolarizationScoresToAssay}{data.frame}(object, values_from = c("morans_z", "morans_i"), ...)
 
 \method{PolarizationScoresToAssay}{CellGraphAssay}(object, values_from = c("morans_z", "morans_i"), ...)
+
+\method{PolarizationScoresToAssay}{CellGraphAssay5}(object, values_from = c("morans_z", "morans_i"), ...)
 
 \method{PolarizationScoresToAssay}{Seurat}(
   object,

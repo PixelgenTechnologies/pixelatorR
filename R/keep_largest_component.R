@@ -154,6 +154,44 @@ KeepLargestComponent.CellGraphAssay <- function (
 }
 
 
+#' @param verbose Print messages
+#'
+#' @rdname KeepLargestComponent
+#' @method KeepLargestComponent CellGraphAssay5
+#'
+#' @export
+#'
+KeepLargestComponent.CellGraphAssay5 <- function (
+  object,
+  verbose = TRUE,
+  ...
+) {
+
+  # Check cellgraphs
+  cellgraphs <- slot(object, name = "cellgraphs")
+  loaded_graphs <- !sapply(cellgraphs, is.null)
+
+  if (sum(loaded_graphs) == 0) {
+    if (verbose && check_global_verbosity())
+      cli_alert_info("No 'cellgraphs' loaded in 'CellGraphAssay5'. Returning unmodified 'CellGraphAssay5'.")
+    return(object)
+  }
+
+  # Only keep loaded graphs
+  cellgraphs_loaded <- cellgraphs[loaded_graphs]
+
+  if (verbose && check_global_verbosity())
+    cli_alert_info("Keeping largest component for {length(cellgraphs_loaded)} graphs")
+
+  cellgraphs_loaded <- lapply(cellgraphs_loaded, function(g) {
+    KeepLargestComponent(g, verbose = verbose, ...)
+  })
+  slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- cellgraphs_loaded
+
+  return(object)
+}
+
+
 #' @param assay Name of a \code{CellGraphAssay} stored on the \code{Seurat} object
 #'
 #' @rdname KeepLargestComponent

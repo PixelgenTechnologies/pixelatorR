@@ -85,6 +85,7 @@
 #' @importFrom patchwork wrap_plots
 #' @importFrom rlang global_env
 #' @importFrom stats median
+#' @importFrom stats na.omit
 #' @importFrom tibble as_tibble
 #' @importFrom tibble column_to_rownames
 #' @importFrom tibble tibble

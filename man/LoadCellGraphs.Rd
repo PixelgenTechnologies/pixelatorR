@@ -3,7 +3,9 @@
 \name{LoadCellGraphs}
 \alias{LoadCellGraphs}
 \alias{LoadCellGraphs.FileSystemDataset}
+\alias{LoadCellGraphs.tbl_df}
 \alias{LoadCellGraphs.CellGraphAssay}
+\alias{LoadCellGraphs.CellGraphAssay5}
 \alias{LoadCellGraphs.Seurat}
 \title{Load CellGraphs}
 \usage{
@@ -19,6 +21,15 @@ LoadCellGraphs(object, ...)
   ...
 )
 
+\method{LoadCellGraphs}{tbl_df}(
+  object,
+  cells,
+  load_as = c("bipartite", "Anode", "linegraph"),
+  add_marker_counts = TRUE,
+  verbose = TRUE,
+  ...
+)
+
 \method{LoadCellGraphs}{CellGraphAssay}(
   object,
   cells = colnames(object),
@@ -26,6 +37,18 @@ LoadCellGraphs(object, ...)
   add_marker_counts = TRUE,
   force = FALSE,
   chunk_length = 10,
+  verbose = TRUE,
+  ...
+)
+
+\method{LoadCellGraphs}{CellGraphAssay5}(
+  object,
+  cells = colnames(object),
+  load_as = c("bipartite", "Anode", "linegraph"),
+  add_marker_counts = TRUE,
+  force = FALSE,
+  chunk_size = 10,
+  cl = NULL,
   verbose = TRUE,
   ...
 )
@@ -38,6 +61,7 @@ LoadCellGraphs(object, ...)
   add_marker_counts = TRUE,
   force = FALSE,
   chunk_length = 10,
+  cl = NULL,
   verbose = TRUE,
   ...
 )
@@ -59,6 +83,15 @@ Smaller chunks will likely take longer time to load, but decreases memory usage.
 \item{verbose}{Print messages}
 
 \item{force}{Force load graph(s) if they are already loaded}
+
+\item{chunk_size}{An integer specifying a number of components to load
+in chunks.}
+
+\item{cl}{A cluster object created by makeCluster, or an integer
+to indicate number of child-processes (integer values are ignored
+on Windows) for parallel evaluations. See Details on performance
+in the documentation for \code{pbapply}. The default is NULL,
+which means that no parallelization is used.}
 
 \item{assay}{Assay name}
 }

@@ -82,3 +82,5 @@ DOI
 Unlinked
 uropod
 tibble
+makeCluster
+parallelization
