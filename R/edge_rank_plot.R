@@ -3,7 +3,7 @@ NULL
 
 # Declarations used in package check
 globalVariables(
-  names = c('edges'),
+  names = c('molecules'),
   package = 'pixelatorR',
   add = TRUE
 )
@@ -42,13 +42,14 @@ EdgeRankPlot.data.frame <- function (
   stopifnot(
     "'object' must be a nonempty 'data.frame'-like object" =
       length(object) > 0,
-    "column 'edges' is missing from 'object'" =
-      "edges" %in% colnames(object)
+    "Either column 'edges' or 'molecules' must be present in 'object'" =
+      any(c("edges", "molecules") %in% colnames(object))
   )
-  stopifnot(
-    "'edges' must be an integer vector" =
-      inherits(object[["edges"]], what = "integer")
-  )
+
+  molecules_column <-
+    ifelse("molecules" %in% colnames(object), "molecules", "edges")
+
+  if(!inherits(object[[molecules_column]], what = "integer")) glue("'{molecules_column}' must be an integer vector")
 
   if (!is.null(group_by)) {
     stopifnot(
@@ -67,24 +68,26 @@ EdgeRankPlot.data.frame <- function (
     }
   }
 
-  object <- object %>%
-    mutate(rank = rank(-edges, ties.method = "random"))
+  object <-
+    object %>%
+    rename(molecules = any_of(molecules_column)) %>%
+    mutate(rank = rank(-molecules, ties.method = "random"))
 
   # Create edge rank plot
   edgerank_plot <-
     object %>%
       {
         if (!is.null(group_by)) {
-          ggplot(., aes(rank, edges, color = !! sym(group_by)))
+          ggplot(., aes(rank, molecules, color = !! sym(group_by)))
         } else {
-          ggplot(., aes(rank, edges))
+          ggplot(., aes(rank, molecules))
         }
       } +
       geom_point(size = 0.5) +
       scale_x_log10() +
       scale_y_log10() +
-      labs(x = "Component rank (by number of edges)",
-           y = "Number of edges") +
+      labs(x = "Component rank (by number of molecules)",
+           y = "Number of molecules") +
       theme_minimal()
 
   return(edgerank_plot)
