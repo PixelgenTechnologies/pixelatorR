@@ -3,7 +3,7 @@ NULL
 
 # Declarations used in package check
 globalVariables(
-  names = c("molecules"),
+  names = c('molecules'),
   package = 'pixelatorR',
   add = TRUE
 )
