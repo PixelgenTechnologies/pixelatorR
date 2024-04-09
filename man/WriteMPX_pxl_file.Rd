@@ -4,13 +4,7 @@
 \alias{WriteMPX_pxl_file}
 \title{Export Seurat object data to a .pxl file}
 \usage{
-WriteMPX_pxl_file(
-  object,
-  file,
-  assay = NULL,
-  overwrite = FALSE,
-  verbose = TRUE
-)
+WriteMPX_pxl_file(object, file, assay = NULL, overwrite = FALSE)
 }
 \arguments{
 \item{object}{A \code{Seurat} object with a \code{CellGraphAssay5}
@@ -24,8 +18,6 @@ If set to \code{NULL} the default assay will be used.}
 
 \item{overwrite}{A logical value specifying whether to overwrite the \code{file}
 if it already exists.}
-
-\item{verbose}{Print messages.}
 }
 \value{
 Nothing. The function writes the .pxl file to the specified location.

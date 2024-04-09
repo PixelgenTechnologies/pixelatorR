@@ -41,7 +41,6 @@ globalVariables(
 #' If set to \code{NULL} the default assay will be used.
 #' @param overwrite A logical value specifying whether to overwrite the \code{file}
 #' if it already exists.
-#' @param verbose Print messages.
 #'
 #' @return Nothing. The function writes the .pxl file to the specified location.
 #'
@@ -73,8 +72,7 @@ WriteMPX_pxl_file <- function (
   object,
   file,
   assay = NULL,
-  overwrite = FALSE,
-  verbose = TRUE
+  overwrite = FALSE
 ) {
 
   stopifnot(
@@ -154,9 +152,7 @@ WriteMPX_pxl_file <- function (
   # Zip the pxl folder and move to the target file
   # We use the simplest compression here since the
   # files are already compressed
-  if (verbose & check_global_verbosity()) {
-    cli_alert_info("Saving .pxl file to {file}")
-  }
+  cli_alert_info("Saving .pxl file to {file}")
 
   zip::zip(
     zipfile = file,
@@ -166,9 +162,7 @@ WriteMPX_pxl_file <- function (
     recurse = FALSE
   )
 
-  if (verbose & check_global_verbosity()) {
-    cli_alert_success("Finished!")
-  }
+  cli_alert_success("Finished!")
 
 }
 
