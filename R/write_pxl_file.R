@@ -81,9 +81,7 @@ WriteMPX_pxl_file <- function (
     "'file' must be a valid path ending with .pxl" =
       is.character(file) && (fs::path_ext(file) == "pxl"),
     "'overwrite' must be either TRUE or FALSE" =
-      is.logical(overwrite),
-    "'verbose' must be either TRUE or FALSE" =
-      is.logical(verbose)
+      is.logical(overwrite)
   )
 
   # Check if file exists
