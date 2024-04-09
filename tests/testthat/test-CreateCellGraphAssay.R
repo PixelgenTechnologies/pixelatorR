@@ -17,12 +17,10 @@ bipartite_graphs <- lapply(edgelist, function(x) {
 })
 
 test_that("CreateCellGraphAssay works as expected", {
-  expect_no_error({cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs, overwrite = TRUE)})
+  expect_no_error({cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)})
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_no_error({cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs, arrow_dir = pxl_file, overwrite = TRUE)})
+  expect_no_error({cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)})
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_true(!is.na(cg_assay@arrow_dir))
-  expect_equal(class(cg_assay@arrow_data), c("FileSystemDataset", "Dataset", "ArrowObject", "R6"))
 })
 
 test_that("CreateCellGraphAssay fails when invalid input is provided", {
@@ -30,3 +28,14 @@ test_that("CreateCellGraphAssay fails when invalid input is provided", {
   expect_error(CreateCellGraphAssay(counts = mat, cellgraphs = "Invalid input"), "'cellgraphs' must be a 'list'")
 })
 
+test_that("CreateCellGraphAssay5 works as expected", {
+  expect_no_error({cg_assay <- CreateCellGraphAssay5(counts = mat, cellgraphs = bipartite_graphs)})
+  expect_s4_class(cg_assay, "CellGraphAssay5")
+  expect_no_error({cg_assay <- CreateCellGraphAssay5(counts = mat, cellgraphs = bipartite_graphs)})
+  expect_s4_class(cg_assay, "CellGraphAssay5")
+})
+
+test_that("CreateCellGraphAssay5 fails when invalid input is provided", {
+  expect_error(CreateCellGraphAssay(counts = "Invalid input", cellgraphs = bipartite_graphs), "'counts' must be a matrix-like object")
+  expect_error(CreateCellGraphAssay(counts = mat, cellgraphs = "Invalid input"), "'cellgraphs' must be a 'list'")
+})

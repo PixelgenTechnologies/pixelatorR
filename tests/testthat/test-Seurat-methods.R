@@ -1,4 +1,4 @@
-options(pixelatorR.arrow_outdir = tempdir())
+options(Seurat.object.assay.version = "v3")
 
 test_that("CellGraphs.Seurat getter/setter works as expected", {
   se <- ReadMPX_Seurat(system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),

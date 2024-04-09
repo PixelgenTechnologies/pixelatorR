@@ -1,9 +1,9 @@
-options(pixelatorR.arrow_outdir = tempdir())
+options(Seurat.object.assay.version = "v3")
 
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
                         package = "pixelatorR")
-seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur_obj <- ReadMPX_Seurat(pxl_file)
 
 test_that("TauPlot works for Seurat objects", {
   expect_no_error({tau_plot <- TauPlot(seur_obj)})

@@ -37,6 +37,7 @@ LoadCellGraphs(object, ...)
   add_marker_counts = TRUE,
   force = FALSE,
   chunk_size = 10,
+  cl = NULL,
   verbose = TRUE,
   ...
 )
@@ -95,15 +96,12 @@ which means that no parallelization is used.}
 An object with a list of \code{\link{CellGraph}} objects
 }
 \description{
-Loads a list of \code{\link{CellGraph}} object into the "cellgraphs" slot, provided that
-an arrow_data object exists in the "arrow_data" slot of a \code{\link{CellGraphAssay}}.
-If the arrow_data is missing or the connection to it is dead, the method will attempt
-to load the edgelist from the arrow_dir stored in the "arrow_dir" slot of the \code{\link{CellGraphAssay}}.
+Loads a list of \code{\link{CellGraph}} objects.
 }
 \details{
 One can specify cells to load by their names using the \code{cells} parameter. Only
-the \code{cells} specified will be loaded into the object. Note that the cell graphs
-are large and will consume a lot of memory. For this reason, it is advisable to load
+the \code{cells} specified will be loaded. Note that the cell graphs
+are large and can consume a lot of memory. For this reason, it is advisable to load
 \code{\link{CellGraph}}s \strong{only} for cells of interest.
 
 Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of

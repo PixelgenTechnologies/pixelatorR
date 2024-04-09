@@ -1,4 +1,5 @@
 options(Seurat.object.assay.version = "v5")
+
 pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 cg_assay5 <- seur_obj[["mpxCells"]]

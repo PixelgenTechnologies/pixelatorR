@@ -32,13 +32,11 @@ representing a bipartite graph.
 
 library(pixelatorR)
 library(tibble)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 
 # Load edgelist
-el <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
+el <- ReadMPX_arrow_edgelist(pxl_file)
 
 # Convert to tbl_df
 el_tbl_df <- as_tibble(el)

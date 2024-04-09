@@ -1,4 +1,4 @@
-options(pixelatorR.arrow_outdir = tempdir())
+options(Seurat.object.assay.version = "v3")
 
 # Load example data as a Seurat object
 pxl_file <- system.file("extdata/five_cells",
@@ -7,7 +7,7 @@ pxl_file <- system.file("extdata/five_cells",
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
 seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("Sample1", "Sample2"))
 cg_assay <- seur_obj[["mpxCells"]]
-cg_assay_merged <- merge(cg_assay, cg_assay)
+cg_assay_merged <- merge(cg_assay, cg_assay, add.cell.ids = c("A", "B"))
 
 
 cg_assay_split <- lapply(list(c(1, 2), c(3, 4, 5)), function(inds) {
@@ -56,37 +56,25 @@ test_that("LoadCellGraphs works for FileSystemDataset", {
   expect_equal(length(g_list), 5)
 
   # Big merged data
-  expect_no_error({g_list_merged_big <- LoadCellGraphs(ArrowData(cg_assay_merged_big), cells = colnames(cg_assay_merged_big))})
-  expect_equal(names(g_list_merged_big), colnames(cg_assay_merged_big))
-
-  # Check data in arrow directory
-  expect_equal(ArrowDir(cg_assay_merged_big) %>% list.files(),
-               c("sample=Sample1", "sample=Sample2"))
-
-  # Check that components in parquet files are correct
-  for (i in 1:2) {
-    expect_equal(
-      ArrowData(cg_assay_merged_big) %>% filter(sample == paste0("Sample", i)) %>% collect() %>% pull(component) %>% unique() %>% as.character() %>% sort(),
-      colnames(cg_assay_split[[i]]) %>% as.character() %>% sort()
-    )
-  }
+  expect_no_error({g_list_merged_big <- LoadCellGraphs(cg_assay_merged_big, cells = colnames(cg_assay_merged_big))})
+  expect_equal(names(CellGraphs(g_list_merged_big)), colnames(cg_assay_merged_big))
 
   # Check that contents of g_list and g_list_merged_big are the same
   for (i in 1:2) {
     expect_equal(g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize(),
-                 g_list_merged_big[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize()
+                 CellGraphs(g_list_merged_big)[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize()
     )
     expect_equal(g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% length(),
-                 g_list_merged_big[[i]] %>% CellGraphData(slot = "cellgraph") %>% length()
+                 CellGraphs(g_list_merged_big)[[i]] %>% CellGraphData(slot = "cellgraph") %>% length()
     )
     expect_equal(g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% attr(which = "type"),
-                 g_list_merged_big[[i]] %>% CellGraphData(slot = "cellgraph") %>% attr(which = "type")
+                 CellGraphs(g_list_merged_big)[[i]] %>% CellGraphData(slot = "cellgraph") %>% attr(which = "type")
     )
   }
 })
 
 options(Seurat.object.assay.version = "v5")
-seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
+seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("Sample1", "Sample2"))
 cg_assay5 <- seur_obj[["mpxCells"]]
 

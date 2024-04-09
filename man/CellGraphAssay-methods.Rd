@@ -44,13 +44,11 @@ packages
 library(pixelatorR)
 library(dplyr)
 options(Seurat.object.assay.version = "v3")
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
                         package = "pixelatorR")
-seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur)
 cg_assay <- seur[["mpxCells"]]
 
@@ -62,18 +60,13 @@ cg_assay_subset <- subset(cg_assay, cells = colnames(cg_assay)[1:3])
 # --------------------------------
 seur_subset <- subset(seur, cells = colnames(seur)[1:3])
 
-# Compare size of edge lists stored on disk
-ArrowData(seur) \%>\% dim()
-ArrowData(seur_subset) \%>\% dim()
-
 # Merge CellGraphAssays
 # ---------------------------------
 
 # Merge 3 CellGraphAssays
-cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay))
-
-# Check size of merged edge lists stored on disk
-ArrowData(cg_assay_merged) \%>\% dim()
+cg_assay_merged <- merge(cg_assay,
+                         y = list(cg_assay, cg_assay),
+                         add.cell.ids = c("A", "B", "C"))
 
 }
 \concept{assay}

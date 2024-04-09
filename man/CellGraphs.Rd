@@ -48,8 +48,6 @@ Get and set \code{\link{CellGraph}} lists for \code{\link{CellGraphAssay}} and
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
@@ -94,8 +92,6 @@ CellGraphs(cg_assay) <- cg_assay@cellgraphs
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
@@ -139,7 +135,7 @@ CellGraphs(cg_assay5) <- cg_assay5@cellgraphs
 
 # CellGraphs getter Seurat
 # ---------------------------------
-se <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
+se <- ReadMPX_Seurat(pxl_file)
 
 # Get cellgraphs from a Seurat object
 CellGraphs(se)
@@ -153,8 +149,7 @@ CellGraphs(se) <- cg_assay@cellgraphs
 
 }
 \seealso{
-\code{\link[=PolarizationScores]{PolarizationScores()}} and \code{\link[=ColocalizationScores]{ColocalizationScores()}} for getting/setting spatial metrics,
-and \code{\link[=ArrowData]{ArrowData()}}/\code{\link[=ArrowDir]{ArrowDir()}} for getting/setting arrow data
+\code{\link[=PolarizationScores]{PolarizationScores()}} and \code{\link[=ColocalizationScores]{ColocalizationScores()}} for getting/setting spatial metrics
 }
 \concept{assay}
 \concept{cellgraphs}

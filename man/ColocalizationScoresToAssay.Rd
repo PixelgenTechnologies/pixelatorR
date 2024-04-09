@@ -91,8 +91,6 @@ to show the distribution of colocalization scores.
 \examples{
 library(pixelatorR)
 library(SeuratObject)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data as a Seurat object
 pxl_file <- system.file("extdata/five_cells",
@@ -106,7 +104,7 @@ col_scores_mat <- ColocalizationScoresToAssay(col_scores)
 col_scores_mat[1:4, 1:5]
 
 # Create a Seurat object
-seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur <- ReadMPX_Seurat(pxl_file)
 
 # Fetch CellGraphAssay and create new polarization
 # scores Assay
