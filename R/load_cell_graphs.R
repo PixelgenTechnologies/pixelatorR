@@ -15,8 +15,7 @@ globalVariables(
 #' @param cells A character vector of cell names to load CellGraphs for
 #' @param load_as Choose how the cell graph should be represented (see details below)
 #' @param add_marker_counts Should marker counts be added to the CellGraph objects?
-#' @param chunk_length Length of chunks used to load CellGraphs from edge list.
-#' Smaller chunks will likely take longer time to load, but decreases memory usage.
+#' @param chunk_size Length of chunks used to load CellGraphs from edge list.
 #' @param verbose Print messages
 #'
 #' @rdname LoadCellGraphs
@@ -29,7 +28,7 @@ LoadCellGraphs.FileSystemDataset <- function (
   cells,
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  chunk_length = 10,
+  chunk_size = 10,
   verbose = TRUE,
   ...
 ) {
@@ -39,10 +38,10 @@ LoadCellGraphs.FileSystemDataset <- function (
     "'cells' must be a character vector with at least 1 element" =
       is.character(cells) &&
       (length(cells) > 0),
-    "'chunk_length' must be a positive integer of length 1" =
-      is.numeric(chunk_length) &&
-      (length(chunk_length) == 1) &&
-      (chunk_length > 0)
+    "'chunk_size' must be a positive integer of length 1" =
+      is.numeric(chunk_size) &&
+      (length(chunk_size) == 1) &&
+      (chunk_size > 0)
   )
 
   # Validate load_as
@@ -71,7 +70,7 @@ LoadCellGraphs.FileSystemDataset <- function (
   # Group cells ids into chunks
   sample_id_table <- as_tibble(sample_id_table) %>%
     group_by(sample) %>%
-    mutate(group = ceiling(seq_len(n()) / chunk_length)) %>%
+    mutate(group = ceiling(seq_len(n()) / chunk_size)) %>%
     group_by(sample, group)
 
   # Fetch group keys to use for chunk loading
@@ -187,7 +186,7 @@ LoadCellGraphs.CellGraphAssay <- function (
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
   force = FALSE,
-  chunk_length = 10,
+  chunk_size = 10,
   verbose = TRUE,
   ...
 ) {
@@ -249,7 +248,7 @@ LoadCellGraphs.CellGraphAssay <- function (
                                cells = cells_to_load,
                                load_as = load_as,
                                add_marker_counts = add_marker_counts,
-                               chunk_length = chunk_length,
+                               chunk_size = chunk_size,
                                verbose = verbose,
                                ... = ...)
 
@@ -262,9 +261,6 @@ LoadCellGraphs.CellGraphAssay <- function (
   return(object)
 }
 
-#' @param force Force load graph(s) if they are already loaded
-#' @param chunk_size An integer specifying a number of components to load
-#' in chunks.
 #' @param cl A cluster object created by makeCluster, or an integer
 #' to indicate number of child-processes (integer values are ignored
 #' on Windows) for parallel evaluations. See Details on performance
@@ -415,7 +411,7 @@ LoadCellGraphs.Seurat <- function (
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
   force = FALSE,
-  chunk_length = 10,
+  chunk_size = 10,
   cl = NULL,
   verbose = TRUE,
   ...
@@ -444,7 +440,7 @@ LoadCellGraphs.Seurat <- function (
       load_as = load_as,
       add_marker_counts = add_marker_counts,
       force = force,
-      chunk_length = chunk_length,
+      chunk_size = chunk_size,
       cl = cl,
       verbose = verbose,
       ...

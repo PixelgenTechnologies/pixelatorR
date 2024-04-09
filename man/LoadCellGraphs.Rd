@@ -16,7 +16,7 @@ LoadCellGraphs(object, ...)
   cells,
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  chunk_length = 10,
+  chunk_size = 10,
   verbose = TRUE,
   ...
 )
@@ -36,7 +36,7 @@ LoadCellGraphs(object, ...)
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
   force = FALSE,
-  chunk_length = 10,
+  chunk_size = 10,
   verbose = TRUE,
   ...
 )
@@ -60,7 +60,7 @@ LoadCellGraphs(object, ...)
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
   force = FALSE,
-  chunk_length = 10,
+  chunk_size = 10,
   cl = NULL,
   verbose = TRUE,
   ...
@@ -77,15 +77,11 @@ LoadCellGraphs(object, ...)
 
 \item{add_marker_counts}{Should marker counts be added to the CellGraph objects?}
 
-\item{chunk_length}{Length of chunks used to load CellGraphs from edge list.
-Smaller chunks will likely take longer time to load, but decreases memory usage.}
+\item{chunk_size}{Length of chunks used to load CellGraphs from edge list.}
 
 \item{verbose}{Print messages}
 
 \item{force}{Force load graph(s) if they are already loaded}
-
-\item{chunk_size}{An integer specifying a number of components to load
-in chunks.}
 
 \item{cl}{A cluster object created by makeCluster, or an integer
 to indicate number of child-processes (integer values are ignored

@@ -186,7 +186,7 @@ ReadMPX_Seurat <- function (
             original_id = colnames(X)
           )),
           sample = 1L,
-          pxl_file = filename)
+          pxl_file = ifelse(.is_absolute_path(filename), normalizePath(filename), filename))
       )
     )
     Key(cg_assay) <- paste0(assay, "_")
@@ -217,13 +217,13 @@ ReadMPX_Seurat <- function (
   }
 
   # Create Seurat object
-  seur_obj <- CreateSeuratObject(counts = cg_assay, assay = assay)#, ...)
+  seur_obj <- CreateSeuratObject(counts = cg_assay, assay = assay, ...)
   if (verbose && check_global_verbosity())
     cli_alert_success(glue("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells ",
                            "and {col_br_blue(nrow(X))} targeted surface proteins"))
 
   # Extract meta data
-  seur_obj@meta.data <-
+  meta_data <-
     names(hd5_object[["obs"]]) %>% lapply(function(nm) {
       if (length(names(hd5_object[["obs"]][[nm]])) == 2) {
         indices <- hd5_object[["obs"]][[nm]][["codes"]]$read() + 1
@@ -236,7 +236,14 @@ ReadMPX_Seurat <- function (
     }) %>%
     do.call(bind_cols, .) %>%
     as.data.frame() %>%
+    #select(-any_of("component")) %>%
+    #rename(component = !! sym("_index")) %>%
     column_to_rownames("component")
+
+  if (!all(rownames(meta_data) == colnames(seur_obj)))
+    abort(glue("The cell names in the Seurat object and the metadata do not match. ",
+               "\nFailed to create Seurat object."))
+  seur_obj@meta.data <- meta_data
 
   # Extract feature meta data (var)
   feature_meta_data <-

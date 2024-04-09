@@ -12,22 +12,19 @@ ColocalizationScoresToAssay(object, ...)
 
 \method{ColocalizationScoresToAssay}{data.frame}(
   object,
-  values_from = c("pearson_z", "pearson", "pearson_mean", "jaccard_mean", "jaccard",
-    "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 )
 
 \method{ColocalizationScoresToAssay}{CellGraphAssay}(
   object,
-  values_from = c("pearson_z", "pearson", "pearson_mean", "jaccard_mean", "jaccard",
-    "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 )
 
 \method{ColocalizationScoresToAssay}{CellGraphAssay5}(
   object,
-  values_from = c("pearson_z", "pearson", "pearson_mean", "jaccard_mean", "jaccard",
-    "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 )
 
@@ -35,8 +32,7 @@ ColocalizationScoresToAssay(object, ...)
   object,
   assay = NULL,
   new_assay = NULL,
-  values_from = c("pearson_z", "pearson", "pearson_mean", "jaccard_mean", "jaccard",
-    "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 )
 }

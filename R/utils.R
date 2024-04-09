@@ -29,6 +29,18 @@
 }
 
 
+#' Check if a path is absolute
+#' @noRd
+.is_absolute_path <- function (
+  x
+) {
+  if (.Platform$OS.type == 'unix') {
+    grepl('^[/~]', x)
+  } else {
+    !(normalizePath(x) == normalizePath(file.path('.', x)))
+  }
+}
+
 #' Validate polarization \code{tbl_df}
 #'
 #' @param polarization A \code{tbl_df} with polarization scores

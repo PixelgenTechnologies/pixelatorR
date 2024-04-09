@@ -82,8 +82,8 @@ PolarizationScores.Seurat <- function (
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Assay '{assay}' is not a CellGraphAssay"))
+  if (!inherits(cg_assay, what = c("CellGraphAssay", "CellGraphAssay5"))) {
+    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5'"))
   }
 
   # Get polarizaation scores from CellGraphAssay
@@ -160,8 +160,8 @@ ColocalizationScores.Seurat <- function (
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Assay '{assay}' is not a CellGraphAssay"))
+  if (!inherits(cg_assay, what = c("CellGraphAssay", "CellGraphAssay5"))) {
+    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5'"))
   }
 
   # Get colocalization scores

@@ -30,23 +30,6 @@ test_that("ColocalizationScoresToAssay works as expected", {
   expect_s4_class(seur_obj[["coloc"]], "Assay")
   expect_equal(ncol(seur_obj[["coloc"]]), ncol(seur_obj[["mpxCells"]]))
   expect_equal(nrow(seur_obj[["coloc"]]), 3160)
-
-  # Use jaccard_z values
-  expect_no_error(seur_obj <- ColocalizationScoresToAssay(seur_obj, values_from = "jaccard_z"))
-  expect_equal(names(seur_obj@assays), c("mpxCells", "colocalization", "coloc"))
-  expect_s4_class(seur_obj[["colocalization"]], "Assay")
-  expect_equal(ncol(seur_obj[["colocalization"]]), ncol(seur_obj[["mpxCells"]]))
-  expect_equal(seur_obj[["colocalization"]]$data[1:2, 1:2],
-               structure(
-                 c(0.323862202333832, 1.9793475103644, 0, 0),
-                 dim = c(2L,
-                         2L),
-                 dimnames = list(
-                   c("ACTB-B2M", "ACTB-CD102"),
-                   c("RCVCMP0000217",
-                     "RCVCMP0000118")
-                 )
-               ))
 })
 
 

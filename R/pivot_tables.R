@@ -201,20 +201,22 @@ PolarizationScoresToAssay.Seurat <- function (
 #'
 ColocalizationScoresToAssay.data.frame <- function (
   object,
-  values_from = c("pearson_z", "pearson", "pearson_mean",
-                  "jaccard_mean", "jaccard", "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 ) {
 
   # Validate input
   values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson", "pearson_mean",
-                                       "jaccard_mean", "jaccard", "jaccard_z"))
+                           choices = c("pearson_z", "pearson"))
   stopifnot(
-    "'component' must be present in input table" = "component" %in% colnames(object),
-    "'marker_1' must be present in input table" = "marker_1" %in% colnames(object),
-    "'marker_2' must be present in input table" = "marker_2" %in% colnames(object),
-    "'values_from' must be present in input table" = values_from %in% colnames(object)
+    "'component' must be present in input table" =
+      "component" %in% colnames(object),
+    "'marker_1' must be present in input table" =
+      "marker_1" %in% colnames(object),
+    "'marker_2' must be present in input table" =
+      "marker_2" %in% colnames(object),
+    "'values_from' must be present in input table" =
+      values_from %in% colnames(object)
   )
 
   # Cast data.frame to wide format
@@ -253,8 +255,7 @@ ColocalizationScoresToAssay.data.frame <- function (
 #'
 ColocalizationScoresToAssay.CellGraphAssay <- function (
   object,
-  values_from = c("pearson_z", "pearson", "pearson_mean",
-                  "jaccard_mean", "jaccard", "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 ) {
 
@@ -276,8 +277,7 @@ ColocalizationScoresToAssay.CellGraphAssay <- function (
 #'
 ColocalizationScoresToAssay.CellGraphAssay5 <- function (
   object,
-  values_from = c("pearson_z", "pearson", "pearson_mean",
-                  "jaccard_mean", "jaccard", "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 ) {
 
@@ -318,8 +318,7 @@ ColocalizationScoresToAssay.Seurat <- function (
   object,
   assay = NULL,
   new_assay = NULL,
-  values_from = c("pearson_z", "pearson", "pearson_mean",
-                  "jaccard_mean", "jaccard", "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 ) {
 
@@ -352,8 +351,7 @@ ColocalizationScoresToAssay.Seurat <- function (
 
   # Validate input
   values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson", "pearson_mean",
-                                       "jaccard_mean", "jaccard", "jaccard_z"))
+                           choices = c("pearson_z", "pearson"))
 
   # Create new assay
   col_assay <- ColocalizationScoresToAssay(cg_assay, values_from, ...)
@@ -385,8 +383,7 @@ ColocalizationScoresToAssay.Seurat <- function (
   values_from <- match.arg(values_from, choices = switch(
     metric,
     "polarization" = c("morans_z", "morans_i"),
-    "colocalization" = c("pearson_z", "pearson", "pearson_mean",
-                         "jaccard_mean", "jaccard", "jaccard_z")
+    "colocalization" = c("pearson_z", "pearson")
   ))
 
 

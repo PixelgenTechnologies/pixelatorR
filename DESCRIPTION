@@ -35,8 +35,8 @@ Imports:
     progressr,
     plotly,
     fs,
-    utils,
-    pbapply
+    pbapply,
+    zip
 Remotes:
     cran/arrow@14.0.2.1
 Suggests:
@@ -80,5 +80,6 @@ Collate:
     'save_objects.R'
     'tau_plot.R'
     'utils.R'
+    'write_pxl_file.R'
     'zzz.R'
 Language: en-US
