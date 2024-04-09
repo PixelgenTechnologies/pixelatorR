@@ -332,7 +332,7 @@ LoadCellGraphs.CellGraphAssay5 <- function (
     # The file is renamed to make sure it has a unique path
     fs::file_move(unz_pq_file, pq_file)
 
-    # Read the edgelist in memory, but onlye the necessary columns
+    # Read the edgelist in memory, but only the necessary columns
     ar <- arrow::read_parquet(pq_file,
                               col_select = c("upia", "upib", "marker", "component"),
                               as_data_frame = FALSE)
