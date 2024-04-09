@@ -5,30 +5,6 @@ globalVariables(
   add = TRUE
 )
 
-# options(Seurat.object.assay.version = "v5")
-
-# # Create Seurat object
-# pxl_file <- system.file("extdata/five_cells",
-#                         "five_cells.pxl",
-#                         package = "pixelatorR")
-# pxl_file <- "../../pixelator_analysis/data/Sample01_SG_unstimulated_S1_001.dataset.pxl"
-# se <- ReadMPX_Seurat(pxl_file)
-
-# se_merged <- merge(se, list(se, se, se))
-# new_pxl_file <- fs::file_temp(ext = "small.pxl")
-
-# # Export data to a new .pxl file
-# WriteMPX_pxl_file(se_merged, new_pxl_file, overwrite = TRUE)
-
-# # Read the new .pxl file
-# se_merged <- ReadMPX_Seurat(new_pxl_file)
-
-# # Reset global option
-# options(Seurat.object.assay.version = "v3")
-
-
-
-
 #' Export Seurat object data to a .pxl file
 #'
 #' The function only exports the essential data required to create a functional
