@@ -364,7 +364,7 @@ RunDCA <- function (
 }
 
 
-#' Convert polarization scores to Assay
+#' Convert polarization scores to Assay(5)
 #'
 #' @section Behavior:
 #'
@@ -458,7 +458,7 @@ PolarizationScoresToAssay <- function (
 #'
 #' @param object An object with colocalization scores
 #' @param values_from What column to pick colocalization scores from. One of
-#' "pearson", "pearson_mean", "pearson_z", "jaccard_mean", "jaccard" or "jaccard_z"
+#' "pearson" or "pearson_z"
 #' @param ... Not yet implemented
 #'
 #' @rdname ColocalizationScoresToAssay
@@ -475,8 +475,8 @@ ColocalizationScoresToAssay <- function (
 
 #' PolarizationScores
 #'
-#' Get and set polarization scores for a \code{\link{CellGraphAssay}} or
-#' a \code{Seurat} object
+#' Get and set polarization scores for a \code{\link{CellGraphAssay}},
+#' \code{\link{CellGraphAssay5}} or a \code{Seurat} object
 #'
 #' @param object An object with polarization scores
 #' @param ... Not implemented
@@ -516,8 +516,8 @@ PolarizationScores <- function (
 
 #' ColocalizationScores
 #'
-#' Get and set colocalization scores for a \code{\link{CellGraphAssay}} or
-#' a \code{Seurat} object
+#' Get and set colocalization scores for a \code{\link{CellGraphAssay}},
+#' \code{\link{CellGraphAssay5}} or a \code{Seurat} object
 #'
 #' @param object An object with polarization scores
 #' @param ... Not implemented

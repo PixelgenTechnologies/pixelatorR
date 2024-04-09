@@ -6,7 +6,7 @@
 \alias{PolarizationScoresToAssay.CellGraphAssay}
 \alias{PolarizationScoresToAssay.CellGraphAssay5}
 \alias{PolarizationScoresToAssay.Seurat}
-\title{Convert polarization scores to Assay}
+\title{Convert polarization scores to Assay(5)}
 \usage{
 PolarizationScoresToAssay(object, ...)
 
@@ -37,7 +37,7 @@ PolarizationScoresToAssay(object, ...)
 \item{new_assay}{Name of the \code{Assay} to store the polarization scores in}
 }
 \description{
-Convert polarization scores to Assay
+Convert polarization scores to Assay(5)
 }
 \section{Behavior}{
 

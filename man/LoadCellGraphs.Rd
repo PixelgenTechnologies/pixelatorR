@@ -96,14 +96,10 @@ which means that no parallelization is used.}
 An object with a list of \code{\link{CellGraph}} objects
 }
 \description{
-Loads a list of \code{\link{CellGraph}} objects.
+Loads a list of \code{\link{CellGraph}} objects. One can specify cells to load by
+their names using the \code{cells} parameter.
 }
 \details{
-One can specify cells to load by their names using the \code{cells} parameter. Only
-the \code{cells} specified will be loaded. Note that the cell graphs
-are large and can consume a lot of memory. For this reason, it is advisable to load
-\code{\link{CellGraph}}s \strong{only} for cells of interest.
-
 Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of
 these graph representations in the sections below.
 }
