@@ -42,7 +42,7 @@ ColocalizationScoresToAssay(object, ...)
 \item{...}{Not yet implemented}
 
 \item{values_from}{What column to pick colocalization scores from. One of
-"pearson", "pearson_mean", "pearson_z", "jaccard_mean", "jaccard" or "jaccard_z"}
+"pearson" or "pearson_z"}
 
 \item{assay}{Name of the \code{\link{CellGraphAssay}} to pull polarization scores from}
 

@@ -48,8 +48,8 @@ score table.}
 updated
 }
 \description{
-Get and set colocalization scores for a \code{\link{CellGraphAssay}} or
-a \code{Seurat} object
+Get and set colocalization scores for a \code{\link{CellGraphAssay}},
+\code{\link{CellGraphAssay5}} or a \code{Seurat} object
 }
 \seealso{
 Other spatial metrics: 
