@@ -9,9 +9,7 @@ CreateCellGraphAssay(
   cellgraphs,
   polarization = NULL,
   colocalization = NULL,
-  arrow_dir = NULL,
-  outdir = NULL,
-  overwrite = FALSE,
+  fs_map = NULL,
   verbose = FALSE,
   ...
 )
@@ -25,12 +23,8 @@ CreateCellGraphAssay(
 
 \item{colocalization}{A \code{tbl_df} with colocalization scores}
 
-\item{arrow_dir}{A path to an existing directory}
-
-\item{outdir}{A path to an existing directory}
-
-\item{overwrite}{If the output directory already exists, set this parameter
-to TRUE to overwrite the directory}
+\item{fs_map}{A \code{tbl_df} with information pxl file paths,
+sample IDs and component IDs}
 
 \item{verbose}{Print messages}
 

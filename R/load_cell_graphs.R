@@ -57,49 +57,18 @@ LoadCellGraphs.FileSystemDataset <- function (
   if (verbose && check_global_verbosity())
     cli_alert("  Loading {length(cells)} edgelist(s) as {col_br_magenta(load_as)} graph(s)")
 
-  # Split cell ids into sample and component, if a prefix exists
-  sample_id_table <- do.call(rbind, strsplit(cells, "_"))
-
-  # Check if data is merged, otherwise use default sample name
-  is_merged <- ncol(sample_id_table) == 2
-  if (!is_merged) {
-    sample_id_table <- cbind("S1", sample_id_table)
-  }
-  colnames(sample_id_table) <- c("sample", "component")
-
   # Group cells ids into chunks
-  sample_id_table <- as_tibble(sample_id_table) %>%
-    group_by(sample) %>%
-    mutate(group = ceiling(seq_len(n()) / chunk_size)) %>%
-    group_by(sample, group)
-
-  # Fetch group keys to use for chunk loading
-  key_pairs <- sample_id_table %>% group_keys()
-
-  # Split sample_id_table into list of chunks
-  sample_id_table_list <- sample_id_table %>%
-    group_split() %>%
-    as.list()
-
-  # Set up progressor
-  p <- progressr::progressor(along = sample_id_table_list)
+  cells_split <- split(cells, ceiling(seq_along(cells) / chunk_size))
 
   # Process chunks
-  cellgraphs <- lapply(seq_along(sample_id_table_list), function (i) {
+  cellgraphs <- lapply(seq_along(cells_split), function (i) {
 
-    cell_ids <- sample_id_table_list[[i]]
-    sample_id <- key_pairs[i, 1, drop = TRUE]
+    cell_ids <- cells_split[[i]]
 
     # Load chunks for specific sample
-    object_filtered <- object %>% filter(sample == sample_id)
-    g_list <- try({graph_load_fkn(object_filtered,
-                             cell_ids = cell_ids[, 2, drop = TRUE],
+    g_list <- try({graph_load_fkn(object,
+                             cell_ids = cell_ids,
                              add_markers = add_marker_counts)}, silent = TRUE)
-
-    # Adjust sample id if needed
-    if (is_merged) {
-      g_list <- set_names(g_list, nm = paste0(sample_id, "_", names(g_list)))
-    }
 
     if (inherits(g_list, what = "try-error") || any(sapply(g_list, is.null))) {
       abort(glue("Failed to load edge list data. Most likely reason is that invalid cells were provided."))
@@ -116,8 +85,6 @@ LoadCellGraphs.FileSystemDataset <- function (
       })
     }
 
-    # Log progress
-    p()
     return(g_list)
   }) %>% Reduce(c, .)
 
@@ -187,6 +154,7 @@ LoadCellGraphs.CellGraphAssay <- function (
   add_marker_counts = TRUE,
   force = FALSE,
   chunk_size = 10,
+  cl = NULL,
   verbose = TRUE,
   ...
 ) {
@@ -220,40 +188,80 @@ LoadCellGraphs.CellGraphAssay <- function (
                           " Loading remaining {length(cells_to_load)} CellGraphs."))
   }
 
-  # Check for valid arrow_dir
-  arrow_dir <- slot(object, name = "arrow_dir")
-  if (length(arrow_dir) > 1) {
-    abort("'arrow_dir' should be a single directory")
-  }
-  if (is.na(arrow_dir)) {
-    cli_alert_warning("'arrow_dir' is missing from object")
-  } else {
-    stopifnot("'arrow_dir' must be a directory" = dir.exists(arrow_dir))
-  }
+  # Find where components are located
+  fs_map_unnested_filtered <- slot(object, name = "fs_map") %>%
+    tidyr::unnest(cols = "id_map") %>%
+    filter(current_id %in% cells)
+  fs_map_nested_filtered <- fs_map_unnested_filtered %>%
+    tidyr::nest(data = c("current_id", "original_id"))
 
-  # Check for valid arrow_data
-  arrow_data <- slot(object, name = "arrow_data")
-  msg <- tryCatch(arrow_data %>% nrow(), error = function(e) "Error")
-  msg <- msg %||% "Error"
-  if (msg == "Error") {
-    cli_alert_warning("'arrow_data' is either missing from the object or dead. Attempting to load edgelist from stored 'arrow_dir'.")
-    if (length(arrow_dir) == 0) {
-      cli_alert_info("'arrow_dir' is missing from object. Returning object unmodified.")
+  # Load cell graphs in chunks
+  cg_list_full <- lapply(seq_len(nrow(fs_map_nested_filtered)), function(i) {
+    f <- fs_map_nested_filtered$pxl_file[i]
+
+    # Unzip the edgelist parquet file to tmpdir
+    unzip(f, exdir = tempdir(), files = "edgelist.parquet")
+    unz_pq_file <- file.path(tempdir(), "edgelist.parquet")
+    pq_file <- fs::file_temp(ext = "parquet")
+
+    # The file is renamed to make sure it has a unique path
+    fs::file_move(unz_pq_file, pq_file)
+
+    # Read the edgelist in memory, but only the necessary columns
+    ar <- arrow::read_parquet(pq_file,
+                              col_select = c("upia", "upib", "marker", "component"),
+                              as_data_frame = FALSE)
+
+    if (verbose && check_global_verbosity()) {
+      cli_alert(glue("   Loading CellGraphs for {nrow(fs_map_nested_filtered$data[[i]])} cells ",
+                     "from sample {fs_map_nested_filtered$sample[i]}"))
     }
-    return(object)
-  }
 
-  # Load CellGraphs from FileSystemDataset
-  cellgraphs <- LoadCellGraphs(arrow_data,
-                               cells = cells_to_load,
-                               load_as = load_as,
-                               add_marker_counts = add_marker_counts,
-                               chunk_size = chunk_size,
-                               verbose = verbose,
-                               ... = ...)
+    # Split data into chunks determined by chunk_size
+    id_data_chunks <- fs_map_nested_filtered$data[[i]] %>%
+      mutate(group = ceiling(seq_len(n())/chunk_size)) %>%
+      rename(component = current_id) %>%
+      group_by(group) %>%
+      group_split()
+
+    # Read cellgraphs
+    cg_list <- pbapply::pblapply(id_data_chunks, function(id_chunk) {
+
+      # Filter edgelist data for the current chunk
+      # Note that we use original_id which are the original
+      # MPX component ids. current_id are the ids currenty used
+      # for components in object
+      edgelist_data <- ar %>%
+        filter(component %in% id_chunk$original_id) %>%
+        collect()
+
+      # Send to tbl_df method
+      cg_list <-
+        LoadCellGraphs(
+          edgelist_data,
+          cells = id_chunk$original_id,
+          load_as = load_as,
+          add_marker_counts = add_marker_counts,
+          verbose = verbose
+          , ... = ...)
+
+      return(cg_list)
+    }, cl = cl) %>% unlist()
+
+    # Update names of the cellgraph list
+    cg_list <- cg_list[fs_map_nested_filtered$data[[i]]$original_id]
+    cg_list <- set_names(cg_list, nm = fs_map_nested_filtered$data[[i]]$current_id)
+
+    # Remove temporary file
+    try_delete <- try(fs::file_delete(pq_file), silent = TRUE)
+    if (inherits(try_delete, what = "try-error"))
+      cli_alert_warning("Failed to delete temporary edge list parquet file {pq}.")
+
+    return(cg_list)
+  }) %>% unlist()
 
   # Fill cellgraphs slot list with the loaded CellGraphs
-  slot(object, name = "cellgraphs")[cells_to_load] <- cellgraphs[cells_to_load]
+  slot(object, name = "cellgraphs")[fs_map_unnested_filtered$current_id] <- cg_list_full
 
   # Return object
   if (verbose && check_global_verbosity())

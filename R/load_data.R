@@ -56,15 +56,12 @@ ReadMPX_counts <- function (
 
   # Read temporary file
   hd5_object <- hdf5r::H5File$new(filename, "r")
-  #anndata_hier <- h5read(filename, "/")
 
   # Extract contents
   X <- hd5_object[["X"]]$read()
   colnames(X) <- hd5_object[["obs"]][["component"]]$read()
   rownames(X) <- hd5_object[["var"]][["marker"]]$read()
-  # X <- anndata_hier$X
-  # colnames(X) <- anndata_hier$obs$component
-  # rownames(X) <- anndata_hier$var$marker
+
   X <- X[seq_len(nrow(X)), seq_len(ncol(X))]
 
   if (return_list) {
@@ -78,18 +75,14 @@ ReadMPX_counts <- function (
 #' Load data from PXL file into a \code{Seurat} object
 #'
 #' This wrapper function can be used to load data from a PXL file, and returns
-#' a \code{Seurat} object with the desired data. By default, the MPX count matrix
-#' is returned as an \code{Assay} and the graph data is excluded.
+#' a \code{Seurat} object.
 #'
-#' The graph data is stored as an edgelist in the PXL file, and this edgelist
-#' can be inconvenient to work with in memory for larger datasets. If you want to
-#' have the edgelist available in your \code{Seurat} object, you can set \code{return_cellgraphassay = TRUE}
-#' to return a \code{\link{CellGraphAssay}} class object instead. The \code{\link{CellGraphAssay}}
-#' object extends the \code{Assay} class but can keep additional slots with graph-related data.
-#' The edgelist is not loaded into memory, but is provided as an arrow Dataset stored in the
-#' \code{\link{CellGraphAssay}}. This arrow Dataset makes it possible manipulate and fetch
-#' information from the edgelist whenever necessary, without having to load it into memory.
-#' See \code{\link{CellGraphAssay}} for more details.
+#' By default, the MPX count matrix is returned in a \code{CellGraphAssay} object.
+#' Graphs are not loaded directly unless \code{load_cell_graphs = TRUE}. Graphs
+#' can also be loaded at a later stage with \code{\link{LoadCellGraphs}}.
+#'
+#' When setting the global option \code{Seurat.object.assay.version} to \code{"v5"},
+#' the function will return a \code{CellGraphAssay5} object instead.
 #'
 #' @param assay Assay name
 #' @param return_cellgraphassay Should data be loaded as a \code{CellGraphAssay} object?
@@ -116,14 +109,12 @@ ReadMPX_counts <- function (
 #' @examples
 #'
 #' library(pixelatorR)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
-#' seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
 #' @export
@@ -142,20 +133,11 @@ ReadMPX_Seurat <- function (
   ...
 ) {
 
-  # Trigger garbage cleaning if the edgelist directories exceed the
-  # maximum allowed size
-  .run_clean()
-
   stopifnot(
     "assay must be a character of length 1" =
       is.character(assay) &&
       (length(assay) == 1)
   )
-
-  # Display message first time function is called
-  if (getOption("pixelatorR.startup_message", TRUE) && return_cellgraphassay && getOption("pixelatorR.verbose")) {
-    .initial_call_message()
-  }
 
   # Load count matrix
   data <- ReadMPX_counts(filename = filename, return_list = TRUE, verbose = FALSE)
@@ -168,26 +150,21 @@ ReadMPX_Seurat <- function (
   if (return_cellgraphassay) {
 
     # Create CellGraphAssay(5)
-    cg_assay <- switch(
+    cg_assay_create_func <- switch(
       getOption("Seurat.object.assay.version", "v3"),
-      "v3" = CreateCellGraphAssay(
-        counts = X,
-        cellgraphs = empty_graphs,
-        arrow_dir = filename,
-        outdir = edgelist_outdir,
-        overwrite = overwrite
-      ),
-      "v5" = CreateCellGraphAssay5(
-        counts = X,
-        cellgraphs = empty_graphs,
-        fs_map = tibble(
-          id_map = list(tibble(
-            current_id = colnames(X),
-            original_id = colnames(X)
-          )),
-          sample = 1L,
-          pxl_file = ifelse(.is_absolute_path(filename), normalizePath(filename), filename))
-      )
+      "v3" = CreateCellGraphAssay,
+      "v5" = CreateCellGraphAssay5
+    )
+    cg_assay <- cg_assay_create_func(
+      counts = X,
+      cellgraphs = empty_graphs,
+      fs_map = tibble(
+        id_map = list(tibble(
+          current_id = colnames(X),
+          original_id = colnames(X)
+        )),
+        sample = 1L,
+        pxl_file = ifelse(.is_absolute_path(filename), normalizePath(filename), filename))
     )
     Key(cg_assay) <- paste0(assay, "_")
 
@@ -269,15 +246,16 @@ ReadMPX_Seurat <- function (
   return(seur_obj)
 }
 
-#' Read a pixel data item
+#' Read an MPX data item
 #'
-#' Function that unzips a .pxl file into a temporary folder and reads any
-#' number of items (not anndata) as specified in items. If more than one
-#' item is fetched, the output is a list of data frames. Otherwise the output
-#' is a single \code{tbl_df}.
+#' \code{ReadMPX_item} reads any number of items from a .pxl file. If multiple
+#' items are specified, the output is a list of  \code{tbl_df} objects.
+#' Otherwise the output is a single \code{tbl_df}. \code{ReadMPX_polarization},
+#' \code{ReadMPX_colocalization} and \code{ReadMPX_edgelist} are wrappers for
+#' \code{ReadMPX_item} to read specific items.
 #'
 #' @param filename Path to a .pxl file
-#' @param items One of "colocalization", "polarization", "edgelist"
+#' @param items One or several of "colocalization", "polarization", "edgelist"
 #' @param verbose Print messages
 #'
 #' @import rlang

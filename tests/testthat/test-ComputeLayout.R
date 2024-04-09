@@ -1,4 +1,5 @@
-options(pixelatorR.arrow_outdir = tempdir())
+options(Seurat.object.assay.version = "v3")
+
 se <- ReadMPX_Seurat(system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
                      overwrite = TRUE, return_cellgraphassay = TRUE)
 
@@ -103,3 +104,4 @@ test_that("ComputeLayout fails when invalid input is provided", {
   # Seurat
   expect_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn))
 })
+

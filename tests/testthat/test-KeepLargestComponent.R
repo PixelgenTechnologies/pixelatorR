@@ -1,3 +1,5 @@
+options(Seurat.object.assay.version = "v3")
+
 pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 seur <- ReadMPX_Seurat(filename = pxl_file, return_cellgraphassay = TRUE, overwrite = TRUE)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
@@ -41,7 +43,7 @@ test_that("KeepLargestComponent fails when invalid input is provided", {
 })
 
 options(Seurat.object.assay.version = "v5")
-seur <- ReadMPX_Seurat(filename = pxl_file, return_cellgraphassay = TRUE, overwrite = TRUE)
+seur <- ReadMPX_Seurat(filename = pxl_file, return_cellgraphassay = TRUE)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
 
 # Breaks graph

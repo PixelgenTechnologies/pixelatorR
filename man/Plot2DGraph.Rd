@@ -68,14 +68,12 @@ large, this can take a long time to draw.
 }
 \examples{
 library(pixelatorR)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
                         package = "pixelatorR")
 
-seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, load_as = "Anode")
 seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
 

@@ -1,4 +1,4 @@
-options(pixelatorR.arrow_outdir = tempdir())
+options(Seurat.object.assay.version = "v3")
 
 # Load example data as a Seurat object
 pxl_file <- system.file("extdata/five_cells",

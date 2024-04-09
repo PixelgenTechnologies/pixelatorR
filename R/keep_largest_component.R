@@ -14,15 +14,13 @@ globalVariables(
 #' @examples
 #' library(pixelatorR)
 #' library(tidygraph)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                        "five_cells.pxl",
 #'                        package = "pixelatorR")
 #'
 #' # Read edgelist
-#' edgelist <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
+#' edgelist <- ReadMPX_arrow_edgelist(pxl_file)
 #'
 #' # Load graph from edge list and store in a CellGraph object
 #' cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000217")[[1]]

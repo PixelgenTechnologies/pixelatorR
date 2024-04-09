@@ -1,3 +1,5 @@
+options(Seurat.object.assay.version = "v3")
+
 pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 cg_assay <- seur_obj[["mpxCells"]]
@@ -30,7 +32,8 @@ test_that("RenameCells.CellGraphAssay method works as expected", {
 })
 
 test_that("RenameCells.CellGraphAssay method fails when invalid input is provided", {
-  expect_error(RenameCells(cg_assay, new.names = "Invalid"), "'new.names' must be a character vector with the same length as the number of cells present in 'object'")
+  expect_error(RenameCells(cg_assay, new.names = "Invalid"),
+               "'new.names' must be a character vector where ")
 })
 
 # subset method
@@ -43,25 +46,25 @@ test_that("subset.CellGraphAssay works as expected", {
 # merge method
 cg_assay <- seur_obj[["mpxCells"]]
 test_that("merge.CellGraphAssay works as expected", {
-  expect_no_error(cg_assay_merged <- merge(cg_assay, y = cg_assay))
+  expect_no_error(cg_assay_merged <- merge(cg_assay, y = cg_assay, add.cell.ids = c("A", "B")))
   expect_equal(ncol(cg_assay_merged), 10)
   expect_equal(length(CellGraphs(cg_assay_merged)), 10)
-  expect_no_error(cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay)))
+  expect_no_error(cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C")))
   expect_equal(ncol(cg_assay_merged), 15)
   expect_equal(length(CellGraphs(cg_assay_merged)), 15)
-  expect_no_error(cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay)))
-  expect_equal(colnames(cg_assay_merged), c(paste0("Sample1_", colnames(cg_assay)),
-                                            paste0("Sample2_", colnames(cg_assay)),
-                                            paste0("Sample3_", colnames(cg_assay))))
-  expect_no_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay))})
+  expect_no_error(cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C")))
+  expect_equal(colnames(cg_assay_merged), c(paste0("A_", colnames(cg_assay)),
+                                            paste0("B_", colnames(cg_assay)),
+                                            paste0("C_", colnames(cg_assay))))
+  expect_no_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C"))})
   expect_no_error({cg_assay_double_merged <- merge(cg_assay_merged, cg_assay_merged, add.cell.ids = c("A", "B"))})
 })
 
 test_that("merge.CellGraphAssay fails when invalid input is provided", {
   expect_error({cg_assay_merged <- merge(cg_assay, y = "Invalid")}, "'y' must be a 'CellGraphAssay' object or a list of 'CellGraphAssay' objects")
   expect_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))}, "Element 2 in 'y' is not a 'CellGraphAssay'")
-  expect_no_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay))})
-  expect_error({cg_assay_double_merged <- merge(cg_assay_merged, cg_assay_merged)})
+  expect_no_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C"))})
+  expect_no_error({cg_assay_double_merged <- merge(cg_assay_merged, cg_assay_merged, add.cell.ids = c("A", "B"))})
 })
 
 # Show method
@@ -132,63 +135,4 @@ test_that("ColocalizationScores.CellGraphAssay fails when invalid input is provi
 
   # Setter
   expect_error(ColocalizationScores(cg_assay) <- "invalid", "'colocalization' must be a non-empty 'tbl_df' object")
-})
-
-
-# ArrowData getter/setter method
-test_that("ArrowData.CellGraphAssay works as expected", {
-
-  # Getter
-  expect_no_error(arrow_data <- ArrowData(cg_assay))
-  expect_s3_class(arrow_data, "FileSystemDataset")
-  expect_equal(names(arrow_data),
-               c("upia", "upib", "marker",
-                 "count", "component", "sample"))
-  expect_equal(dim(arrow_data), c(93303, 6))
-
-  # Setter
-  expect_no_error(ArrowData(cg_assay) <- ArrowData(cg_assay))
-  expect_no_error(arrow_data <- ArrowData(cg_assay))
-  expect_s3_class(arrow_data, "FileSystemDataset")
-  expect_equal(names(arrow_data),
-               c("upia", "upib", "marker",
-                 "count", "component", "sample"))
-  expect_equal(dim(arrow_data), c(93303, 6))
-})
-
-test_that("ArrowData.CellGraphAssay fails when invalid input is provided", {
-
-  # Getter
-  expect_error(arrow_data <- ArrowData("invalid"), "no applicable method for")
-
-  # Setter
-  expect_error(ArrowData(cg_assay) <- "invalid", "Invalid class 'character'")
-})
-
-
-# ArrowDir getter/setter method
-test_that("ArrowDir.CellGraphAssay works as expected", {
-
-  # Getter
-  expect_no_error(arrow_dir <- ArrowDir(cg_assay))
-  expect_type(arrow_dir, "character")
-  expect_length(arrow_dir, 1)
-
-  # Setter
-  expect_no_error(ArrowDir(cg_assay) <- ArrowDir(cg_assay))
-  expect_no_error(arrow_dir <- ArrowDir(cg_assay))
-  expect_type(arrow_dir, "character")
-  expect_length(arrow_dir, 1)
-})
-
-test_that("ArrowDir.CellGraphAssay fails when invalid input is provided", {
-
-  # Getter
-  expect_error(arrow_dir <- ArrowDir("invalid"), "no applicable method for")
-
-  # Setter missing directory
-  expect_error(ArrowDir(cg_assay) <- "invalid", "invalid doesn't exist")
-
-  # Setter invalid inout
-  expect_error(ArrowDir(cg_assay) <- 1, "'value' must be a non-empty character vector")
 })

@@ -1,5 +1,3 @@
-options(pixelatorR.arrow_outdir = tempdir())
-
 pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 el <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
 

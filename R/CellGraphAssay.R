@@ -22,9 +22,8 @@ globalVariables(
 #' @slot cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @slot polarization A \code{tbl_df} with polarization scores
 #' @slot colocalization A \code{tbl_df} with colocalization scores
-#' @slot arrow_dir A character giving the name of the directory where the edgelist
-#' parquet file(s) are stored
-#' @slot arrow_data An \code{R6} class object with an arrow Dataset
+#' @slot fs_map A \code{tbl_df} with information pxl file paths,
+#' sample IDs and component IDs
 #'
 #' @name CellGraphAssay-class
 #' @rdname CellGraphAssay-class
@@ -38,8 +37,7 @@ CellGraphAssay <- setClass(
     cellgraphs = "list",
     polarization = "data.frame",
     colocalization = "data.frame",
-    arrow_dir = "character",
-    arrow_data = "ANY"
+    fs_map = "data.frame"
   )
 )
 
@@ -58,7 +56,8 @@ CellGraphAssay <- setClass(
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @param polarization A \code{tbl_df} with polarization scores
 #' @param colocalization A \code{tbl_df} with colocalization scores
-#' @param arrow_dir A path to an existing directory
+#' @param fs_map A \code{tbl_df} with information pxl file paths,
+#' sample IDs and component IDs
 #' @param ... Additional arguments passed to \code{\link{CreateAssayObject}}
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
@@ -108,9 +107,7 @@ CreateCellGraphAssay <- function (
   cellgraphs,
   polarization = NULL,
   colocalization = NULL,
-  arrow_dir = NULL,
-  outdir = NULL,
-  overwrite = FALSE,
+  fs_map = NULL,
   verbose = FALSE,
   ...
 ) {
@@ -128,63 +125,38 @@ CreateCellGraphAssay <- function (
   )
   cellgraphs <- cellgraphs[colnames(counts)]
 
-  # Set path to NA if NULL
-  arrow_dir <- arrow_dir %||% NA_character_
-
   # Validate polarization and colocalization
-  polarization <- .validate_polarization(polarization, cell_ids = colnames(counts), markers = rownames(counts), verbose = verbose)
-  colocalization <- .validate_colocalization(colocalization, cell_ids = colnames(counts), markers = rownames(counts), verbose = verbose)
-
-  # If arrow_dir are provided, attempt to lazy load edgelist
-  if (!is.na(arrow_dir)) {
-    stopifnot("'arrow_dir' must be a non-empty character" = is.character(arrow_dir) && (length(arrow_dir) >= 1))
-    for (path in arrow_dir) {
-      if (!(dir.exists(path) || file.exists(path))) {
-        abort(glue("Directory/file {path} doesn't exist"))
-      }
-    }
-    arrow_dir <- sapply(arrow_dir, normalizePath)
-
-    # Load arrow dataset
-    fsd <- ReadMPX_arrow_edgelist(path = arrow_dir, outdir = outdir, return_list = TRUE, overwrite = overwrite, verbose = FALSE)
-
-    # Update arrow_dir to new temporary directory
-    arrow_dir <- fsd$arrow_dir
-    fsd <- fsd$ArrowObject
-    if (!all(c("upia", "marker", "component", "sample") %in% names(fsd))) {
-      abort(glue("The following columns need to be present in the edgelist:",
-                 " 'upia', 'marker', 'component', 'sample'\n",
-                 "Check that {arrow_dir} is correctly formatted."))
-    }
-
-    # check for required fields
-    stopifnot(
-      "column 'component' is missing from cellgraphs" =
-        "component" %in% names(fsd)
+  polarization <-
+    .validate_polarization(
+      polarization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
     )
-    available_components <- fsd %>% pull(component, as_vector = TRUE) %>% unique()
-    if (!all(colnames(counts) %in% available_components))
-      abort(glue("Some components are not available in the edge list"))
-  } else {
-    fsd <- NULL
-  }
+  colocalization <-
+    .validate_colocalization(
+      colocalization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
+    )
 
-  # Create the Seurat assay
+  # Create the Seurat assay object
+  counts <- as(counts, "dgCMatrix")
   seurat.assay <- CreateAssayObject(
     counts = counts,
     ...
   )
 
   # Convert Seurat Assay to a CellGraphAssay
-  pxCell.assay <- as.CellGraphAssay(
+  cg_assay <- as.CellGraphAssay(
     x = seurat.assay,
     cellgraphs = cellgraphs,
     polarization = polarization,
     colocalization = colocalization,
-    arrow_dir = arrow_dir,
-    arrow_data = fsd
+    fs_map = fs_map
   )
-  return(pxCell.assay)
+  return(cg_assay)
 }
 
 
@@ -204,8 +176,6 @@ CreateCellGraphAssay <- function (
 #' library(pixelatorR)
 #' library(dplyr)
 #' library(tidygraph)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
@@ -304,132 +274,28 @@ RenameCells.CellGraphAssay <- function (
   ...
 ) {
 
-  stopifnot(
-    "'new.names' must be a character vector with the same length as the number of cells present in 'object'" =
-      inherits(new.names, what = "character") &&
-      (length(new.names) == ncol(object))
-  )
+  if (!inherits(new.names, what = "character") ||
+      !(length(new.names) == ncol(object)) ||
+      !sum(duplicated(new.names)) == 0) {
+    abort(glue("'new.names' must be a character vector where length(new.names) == ncol(object),",
+               " and the names must be unique."))
+  }
+  if (is.null(names(new.names))) {
+    new.names <- set_names(new.names, nm = colnames(object))
+  }
 
-  # save original cell IDs
   orig.names <- colnames(object)
 
-  # Fetch unique sample IDs from orig.names and new.names
-  new_sample_id_table <- do.call(rbind, strsplit(new.names, "_"))
-  new_sample_id <- new_sample_id_table[, 1] %>% unique()
-  old_sample_id_table <- do.call(rbind, strsplit(orig.names, "_"))
-  if (ncol(old_sample_id_table) == 1) {
-    old_sample_id <- "S1"
-  } else {
-    old_sample_id <- old_sample_id_table[, 1] %>% unique()
-  }
+  assay <- as(object, Class = "Assay")
+  assay <- RenameCells(assay, new.names = new.names, ...)
 
-  # Validate names
-  names_checked <- sapply(new.names, function(s) {
-    stringr::str_like(s, pattern = "^[a-zA-Z][a-zA-Z0-9]*\\_RCVCMP\\d{7}$")
-  })
-  if (!any(names_checked)) {
-    abort(glue("Failed to merge CellGraphAssays.\n\n",
-               "Make sure to follow these steps:\n\n",
-               "1. CellGraphAssay column names should have the following format:\n",
-               "   ^[a-zA-Z][a-zA-Z0-9]*_RCVCMP\\d{7}$\n",
-               "   where the first part is a sample ID and the second part is the PXL ID, \n",
-               "   separated by an underscore. For example, {col_green('Sample1_RCVCMP0000000')}.\n\n",
-               "2. When merging Seurat objects, make sure to set {col_green('add.cell.ids')}.\n\n",
-               "3. Cannot merge Seurat objects with CellGraphAssays twice due to naming conflicts. \n",
-               "   Instead, merge all data sets once:\n",
-               "   {col_green('se_merged <- merge(se1, list(se2, se3, se4, ...))')}\n",
-               "   Attempting to merge the merged object again will fail:\n",
-               "   {col_red('se_double_merged <- merge(se_merged, se_merged)')}"))
-  }
+  ## Recreate the CellGraphAssay object
+  cg_assay_renamed <- as.CellGraphAssay(assay)
 
-  names(slot(object = object, name = "cellgraphs")) <- new.names
-
-  names(x = new.names) <- NULL
-  for (data.slot in object[]) {
-    old.data <- LayerData(object = object, layer = data.slot)
-    if (ncol(x = old.data) <= 1) {
-      next
-    }
-    colnames(x = slot(object = object, name = data.slot)) <- new.names
-  }
-
-  # Get arrow dir
-  arrow_dir <- ArrowDir(object)
-  if (!is.null(arrow_dir)) {
-    arrow_dirs <- list.files(arrow_dir, full.names = TRUE)
-
-    # Create new directory
-    session_tmpdir_random <-
-      file.path(
-        getOption("pixelatorR.arrow_outdir"),
-        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
-
-    # Trigger garbage cleaning if the edgelist directories exceed the
-    # maximum allowed size
-    .run_clean()
-
-    if (length(arrow_dirs) == 1) {
-      # Handle renaming if 1 hive-style directory is present
-
-      # Check sample ID
-      if (length(new_sample_id) > 1) {
-        abort(glue("Found multiple sample IDs in 'new.names' but only 1 edgelist in the arrow directory."))
-      }
-
-      # Copy directory
-      if (dir.exists(arrow_dirs)) {
-        dir.create(session_tmpdir_random)
-        file.copy(from = arrow_dirs, to = session_tmpdir_random, recursive = TRUE)
-        # Rename hive-style directory
-        hive_style_dir_sample1 <- list.files(session_tmpdir_random, full.names = TRUE)
-        file.rename(from = hive_style_dir_sample1, file.path(session_tmpdir_random, paste0("sample=", new_sample_id)))
-      } else {
-        abort(glue("Directory '{arrow_dirs}' is missing Cannot rename cell IDs in edgelists."))
-      }
-    } else {
-      # Handle renaming if more than 1 hive-style directories are present
-
-      if (!length(arrow_dirs) == length(new_sample_id)) {
-        abort(glue("Found {length(arrow_dirs)} samples in arrow directory, but {length(new_sample_id)} samples in 'new.names'"))
-      }
-
-      # Copy directories to new folder
-      if (all(dir.exists(arrow_dirs))) {
-        dir.create(session_tmpdir_random)
-        for (i in seq_along(arrow_dirs)) {
-          file.copy(from = arrow_dirs[i], to = session_tmpdir_random, recursive = TRUE)
-        }
-        hive_style_dir_samples <- list.files(session_tmpdir_random, full.names = TRUE)
-        hive_style_dir_sample_IDs <- basename(hive_style_dir_samples) %>% gsub(pattern = "sample=", replacement = "", x = .)
-        hive_style_dir_samples <- setNames(hive_style_dir_samples, nm = hive_style_dir_sample_IDs)
-
-        # Reorder hive_style_dir_samples
-        hive_style_dir_samples <- hive_style_dir_samples[old_sample_id]
-
-        # Rename hive-style directory
-        for (i in seq_along(arrow_dirs)) {
-          file.rename(from = hive_style_dir_samples[i], file.path(session_tmpdir_random, paste0("sample=", new_sample_id[i])))
-        }
-      } else {
-        abort(glue("The following directories are missing:\n {paste0(arrow_dirs, collapse='\n')} ",
-                   "\nCannot rename cell IDs in edgelists."))
-      }
-    }
-
-    # Log command
-    command <- sys.calls()[[1]][1] %>% as.character()
-    options(pixelatorR.edgelist_copies = bind_rows(
-      getOption("pixelatorR.edgelist_copies"),
-      tibble(command = command,
-             edgelist_dir = normalizePath(session_tmpdir_random),
-             timestamp = Sys.time())
-    ))
-
-    # Reload arrow dataset
-    fsd_new <- open_dataset(session_tmpdir_random)
-    slot(object, name = "arrow_data") <- fsd_new
-    slot(object, name = "arrow_dir") <- session_tmpdir_random
-  }
+  # Rename cellgraphs
+  cellgraphs <- slot(object, name = "cellgraphs")
+  cellgraphs <- set_names(cellgraphs, nm = new.names)
+  slot(cg_assay_renamed, name = "cellgraphs") <- cellgraphs
 
   # Handle polarization slot
   name_conversion <- tibble(new = new.names, component = orig.names)
@@ -440,7 +306,7 @@ RenameCells.CellGraphAssay <- function (
       select(-component) %>%
       rename(component = new)
   }
-  slot(object, name = "polarization") <- polarization
+  slot(cg_assay_renamed, name = "polarization") <- polarization
 
   # Handle colocalization slot
   colocalization <- slot(object, name = "colocalization")
@@ -450,17 +316,28 @@ RenameCells.CellGraphAssay <- function (
       select(-component) %>%
       rename(component = new)
   }
-  slot(object, name = "colocalization") <- colocalization
+  slot(cg_assay_renamed, name = "colocalization") <- colocalization
 
-  return(object)
+  # Handle fs_map
+  fs_map <- slot(object, name = "fs_map")
+  if (nrow(fs_map) > 0) {
+    fs_map$id_map <- fs_map %>% pull(id_map) %>%
+      lapply(function(x) {
+        x$current_id <- new.names[x$current_id]
+        return(x)
+      })
+  }
+  slot(cg_assay_renamed, name = "fs_map") <- fs_map
+
+  return(cg_assay_renamed)
 }
 
 
 #' @param cellgraphs A list of \code{\link{CellGraph}} objects
 #' @param polarization A \code{tbl_df} with polarization scores
 #' @param colocalization A \code{tbl_df} with colocalization scores
-#' @param arrow_dir TODO
-#' @param arrow_data An \code{R6} class object created with arrow
+#' @param fs_map A \code{tbl_df} with information pxl file paths,
+#' sample IDs and component IDs
 #'
 #' @import rlang
 #'
@@ -513,8 +390,7 @@ as.CellGraphAssay.Assay <- function (
   cellgraphs = NULL,
   polarization = NULL,
   colocalization = NULL,
-  arrow_dir = NULL,
-  arrow_data = NULL,
+  fs_map = NULL,
   ...
 ) {
 
@@ -537,59 +413,28 @@ as.CellGraphAssay.Assay <- function (
     cellgraphs <- rep(list(NULL), ncol(x)) %>% setNames(nm = colnames(x))
   }
 
+  # Check fs_map
+  if (!is.null(fs_map)) {
+    .validate_fs_map(fs_map)
+  }
+
   # Validate polarization and colocalization
   polarization <- .validate_polarization(polarization, cell_ids = colnames(x), markers = rownames(x))
   colocalization <- .validate_colocalization(colocalization, cell_ids = colnames(x), markers = rownames(x))
 
-  # Abort if cellgraphs is empty and neither arrow_dir or arrow_data is provided
-  loaded_graphs <- sum(sapply(cellgraphs, is.null))
-  if (loaded_graphs == ncol(x)) {
-    stopifnot(
-      "One of 'arrow_dir' or 'arrow_data' must be provided if 'cellgraphs is empty'" =
-        (!is.null(arrow_dir)) ||
-        (!is.null(arrow_data))
-    )
-  }
-
-  # Handle arrow_dir
-  arrow_dir <- arrow_dir %||% NA_character_
-  if (!is.na(arrow_dir)) {
-    stopifnot(
-      "'arrow_dir' must be a non-empty character" =
-        is.character(arrow_dir) &&
-        (length(arrow_dir) >= 1)
-    )
-    for (path in arrow_dir) {
-      if (!(dir.exists(path) || file.exists(path))) {
-        abort(glue("Directory/file {path} doesn't exist"))
-      }
-    }
-    arrow_dir <- sapply(arrow_dir, normalizePath) %>% unname()
-  }
-
-  # Handle arrow_data
-  if (!is.null(arrow_data)) {
-    #TODO: validate class
-    stopifnot(all(c("upia", "marker", "component", "sample") %in% names(arrow_data)))
-    stopifnot("A valid 'arrow_dir' must be provided if 'arrow_data' is provided" = !is.na(arrow_dir))
-    stopifnot("column 'component' is missing from 'arrow_data" = "component" %in% names(arrow_data))
-    #stopifnot("One or several components are missing from 'arrow_data'" = all(colnames(x) %in% (arrow_data %>% pull(component, as_vector = TRUE))))
-  }
-
-  new.assay <- as(object = x, Class = "CellGraphAssay")
-  slot(new.assay, name = "arrow_dir") <- NA_character_
+  new_assay <- as(object = x, Class = "CellGraphAssay")
 
   # Add slots
-  slot(new.assay, name = "cellgraphs") <- cellgraphs
-  slot(new.assay, name = "polarization") <- polarization
-  slot(new.assay, name = "colocalization") <- colocalization
-  if (!is.null(arrow_data)) {
-    # If an R6 class object exists, add it and arrow_dir to the appropriate slots
-    slot(new.assay, name = "arrow_data") <- arrow_data
-    slot(new.assay, name = "arrow_dir") <- arrow_dir
+  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "polarization") <- polarization
+  slot(new_assay, name = "colocalization") <- colocalization
+
+  # Add fs_map
+  if (!is.null(fs_map)) {
+    slot(new_assay, name = "fs_map") <- fs_map
   }
 
-  return(new.assay)
+  return(new_assay)
 }
 
 setAs(
@@ -678,80 +523,34 @@ ColocalizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method ArrowData CellGraphAssay
+#' @method FSMap CellGraphAssay
 #'
-#' @rdname ArrowData
+#' @rdname FSMap
 #'
 #' @export
 #'
-ArrowData.CellGraphAssay <- function (
-    object,
-    ...
+FSMap.CellGraphAssay <- function (
+  object,
+  ...
 ) {
-  slot(object, name = "arrow_data")
+  slot(object, name = "fs_map")
 }
 
 
-#' @method ArrowData<- CellGraphAssay
+#' @method FSMap<- CellGraphAssay
 #'
-#' @rdname ArrowData
+#' @rdname FSMap
 #'
 #' @export
 #'
-"ArrowData<-.CellGraphAssay" <- function (
+"FSMap<-.CellGraphAssay" <- function (
   object,
   ...,
   value
 ) {
   # Validate value
-  if (!inherits(value, what = c("Dataset", "arrow_dplyr_query", "ArrowObject"))) {
-    abort(glue("Invalid class '{class(value)[1]}'."))
-  }
-  msg <- tryCatch(value %>% nrow(), error = function(e) "Error")
-  if (msg == "Error") {
-    abort("Invalid 'value'")
-  }
-  slot(object = object, name = "arrow_data") <- value
-  return(object)
-}
-
-
-#' @param assay Name of a \code{CellGraphAssay}
-#'
-#' @method ArrowDir CellGraphAssay
-#'
-#' @rdname ArrowDir
-#'
-#' @export
-#'
-ArrowDir.CellGraphAssay <- function (
-  object,
-  ...
-) {
-  slot(object, name = "arrow_dir")
-}
-
-
-#' @method ArrowDir<- CellGraphAssay
-#'
-#' @rdname ArrowDir
-#'
-#' @export
-#'
-"ArrowDir<-.CellGraphAssay" <- function (
-  object,
-  ...,
-  value
-) {
-  stopifnot(
-    "'value' must be a non-empty character vector" =
-      is.character(value) &&
-      (length(value) == 1)
-  )
-  if (!file.exists(value)) {
-    abort(glue("{value} doesn't exist"))
-  }
-  slot(object = object, name = "arrow_dir") <- value
+  .validate_fs_map(value)
+  slot(object, name = "fs_map") <- value
   return(object)
 }
 
@@ -858,13 +657,11 @@ setMethod (
 #' library(pixelatorR)
 #' library(dplyr)
 #' options(Seurat.object.assay.version = "v3")
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
-#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur)
 #' cg_assay <- seur[["mpxCells"]]
 #'
@@ -875,10 +672,6 @@ setMethod (
 #' # Subset Seurat object containing a CellGraphAssay
 #' # --------------------------------
 #' seur_subset <- subset(seur, cells = colnames(seur)[1:3])
-#'
-#' # Compare size of edge lists stored on disk
-#' ArrowData(seur) %>% dim()
-#' ArrowData(seur_subset) %>% dim()
 #'
 #' @export
 #'
@@ -898,89 +691,16 @@ subset.CellGraphAssay <- function (
   cellgraphs <- x@cellgraphs
 
   # subset elements in the standard assay
-  standardassay <- as(object = x, Class = "Assay")
-  standardassay <- subset(x = standardassay, features = features, cells = cells)
+  assay <- as(object = x, Class = "Assay")
+  assay_subset <- subset(x = assay, features = features, cells = cells)
 
   # Filter cellgraphs
-  cellgraphs_filtered <- cellgraphs[colnames(standardassay)]
+  cellgraphs_filtered <- cellgraphs[colnames(assay_subset)]
 
-  # Fetch arrow_dir
-  arrow_dir <- slot(x, name = "arrow_dir")
+  # Filter cellgraphs
+  cellgraphs_filtered <- cellgraphs[colnames(assay_subset)]
 
-  # Get sample ids
-  sample_id_table <- do.call(rbind, strsplit(colnames(x), "_"))
-  rownames(sample_id_table) <- colnames(x)
-  if (ncol(sample_id_table) == 1) {
-    sample_id <- NULL
-  } else {
-    sample_id <- sample_id_table[, 1] %>% unique()
-  }
-
-  # Handle arrow data set if available
-  if (!is.na(arrow_dir)) {
-    x <- RestoreArrowConnection(x, verbose = FALSE)
-
-    # Filter edgelists
-    if (!is.null(cells)) {
-
-      # Only filter by cells
-      if (length(cells) < ncol(x)) {
-
-        # Trigger garbage cleaning if the edgelist directories exceed the
-        # maximum allowed size
-        .run_clean()
-
-        # Create a temporary directory with a unique name
-        session_tmpdir_random <-
-          file.path(
-            getOption("pixelatorR.arrow_outdir"),
-            glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
-        dir.create(session_tmpdir_random)
-
-        # Handle samples
-        if (ncol(sample_id_table) > 1) {
-          components_keep_list <- split(sample_id_table[cells, 2], sample_id_table[cells, 1])
-          for (s in sample_id) {
-            components_keep <- components_keep_list[[s]]
-            slot(x, name = "arrow_data") %>%
-              filter(sample == s) %>%
-              filter(component %in% components_keep) %>%
-              group_by(sample) %>%
-              write_dataset(path = session_tmpdir_random)
-          }
-        } else {
-          # Filter edgelist and export it
-          slot(x, name = "arrow_data") %>%
-            filter(component %in% cells) %>%
-            group_by(sample) %>%
-            write_dataset(session_tmpdir_random)
-        }
-
-        # Rename parquet files for consistensy with other functions
-        files <- list.files(session_tmpdir_random, pattern = "parquet", recursive = TRUE, full.names = TRUE)
-        for (f in files) {
-          if (basename(f) != "edgelist.parquet") {
-            file.rename(from = f, file.path(dirname(f), "edgelist.parquet"))
-          }
-        }
-
-        # Log command
-        command <- sys.calls()[[1]][1] %>% as.character()
-        options(pixelatorR.edgelist_copies = bind_rows(
-          getOption("pixelatorR.edgelist_copies"),
-          tibble(command = command,
-                 edgelist_dir = normalizePath(session_tmpdir_random),
-                 timestamp = Sys.time())
-        ))
-
-        # Update arrow_dir
-        arrow_dir <- session_tmpdir_random
-      }
-    }
-    slot(x, name = "arrow_data") <- arrow::open_dataset(arrow_dir)
-  }
-
-  # Filter polarization and colocaliation
+  # Filter polarization and colocaliation scores
   polarization <- slot(x, name = "polarization")
   if (length(polarization) > 0) {
     if (!is.null(cells)) {
@@ -1000,16 +720,24 @@ subset.CellGraphAssay <- function (
     }
   }
 
+  # Filter fs_map
+  fs_map <- slot(x, name = "fs_map")
+  if (length(fs_map) > 0) {
+    fs_map$id_map <- lapply(fs_map$id_map, function(x) {
+      x %>% filter(current_id %in% cells)
+    })
+    fs_map <- na.omit(fs_map)
+  }
+
   # convert standard assay to CellGraphAssay
-  pxcellassay <- as.CellGraphAssay(
-    x = standardassay,
+  cg_assay <- as.CellGraphAssay(
+    x = assay_subset,
     cellgraphs = cellgraphs_filtered,
     polarization = polarization,
     colocalization = colocalization,
-    arrow_dir = arrow_dir,
-    arrow_data = slot(x, name = "arrow_data")
+    fs_map = fs_map
   )
-  return(pxcellassay)
+  return(cg_assay)
 }
 
 
@@ -1029,19 +757,18 @@ subset.CellGraphAssay <- function (
 #' # ---------------------------------
 #'
 #' # Merge 3 CellGraphAssays
-#' cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay))
-#'
-#' # Check size of merged edge lists stored on disk
-#' ArrowData(cg_assay_merged) %>% dim()
+#' cg_assay_merged <- merge(cg_assay,
+#'                          y = list(cg_assay, cg_assay),
+#'                          add.cell.ids = c("A", "B", "C"))
 #'
 #' @export
 #'
 merge.CellGraphAssay <- function (
-    x = NULL,
-    y = NULL,
-    merge.data = TRUE,
-    add.cell.ids = NULL,
-    ...
+  x = NULL,
+  y = NULL,
+  merge.data = TRUE,
+  add.cell.ids = NULL,
+  ...
 ) {
 
   # Validate input parameters
@@ -1057,132 +784,60 @@ merge.CellGraphAssay <- function (
 
   objects <- c(x, y)
 
+  objects <- c(x, y)
+  cell.names <- unlist(lapply(objects, colnames))
+  name_conversion <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
+    tibble(component = colnames(objects[[i]]), sample = i)
+  })) %>% mutate(component_new = cell.names) %>%
+    group_by(sample) %>%
+    group_split()
+
   # Define add.cell.ids
-  # add.cell.ids <- add.cell.ids %||% paste0("Sample", seq_along(objects))
   if (!is.null(add.cell.ids)) {
     stopifnot(
       "Length of 'add.cell.ids' must match the number of objects to merge" =
         length(add.cell.ids) == length(objects)
     )
+    objects <- lapply(seq_along(objects), function(i) {
+      objects[[i]] %>% RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) %>%
+                                     set_names(nm = colnames(objects[[i]])))
+    })
   }
 
   # Check duplicate cell names
-  cell.names <- unlist(lapply(objects, colnames))
   unique_names <- table(cell.names)
   names_are_duplicated <- any(unique_names > 1)
-  sample_id_old_table <- do.call(rbind, strsplit(cell.names, "_"))
-  if (names_are_duplicated && is.null(add.cell.ids)) {
-    if (ncol(sample_id_old_table) == 1) {
-      add.cell.ids <- paste0("Sample", seq_along(objects))
-    } else if (ncol(sample_id_old_table) == 2) {
-      abort("Found non-unique IDs across samples. A 'add.cell.ids' must be specified.")
-    }
+  if (names_are_duplicated & is.null(add.cell.ids)) {
+    abort(glue("Found non-unique IDs across samples. A 'add.cell.ids' must be specified. ",
+               "Alternatively, make sure that each separate object has unique cell names."))
   }
-
-  # Fetch sample IDs from column names
-  if (ncol(sample_id_old_table) == 1) {
-    objects <-
-      lapply(seq_along(objects), function(i) {
-        if (is.null(add.cell.ids)) {
-          return(objects[[i]])
-        } else {
-          new_names_modified <- paste0(add.cell.ids[i], "_", Cells(x = objects[[i]]))
-          return(RenameCells(object = objects[[i]], new.names = new_names_modified))
-        }
-      })
-  } else {
-    objects <-
-      lapply(seq_along(objects), function(i) {
-        if (is.null(add.cell.ids)) {
-          return(objects[[i]])
-        } else {
-          cli_alert_warning("Found multiple samples in objects. 'add.cell.ids' will be added as a prefix to old IDs.")
-          new_names_modified <- paste0(add.cell.ids[i], Cells(x = objects[[i]]))
-          return(RenameCells(object = objects[[i]], new.names = new_names_modified))
-        }
-      })
-  }
-
-  # Fetch cellgraphs
-  cellgraphs_new <- Reduce(c, lapply(seq_along(objects), function(i) {
-    el <- objects[[i]]
-    return(el@cellgraphs)
-  }))
 
   # Fetch standard assays
-  standardassays <- lapply(objects, function(el) {
-    assay <- as(object = el, Class = "Assay")
+  standardassays <- lapply(objects, function(cg_assay) {
+    assay <- as(object = cg_assay, Class = "Assay")
     if (length(Key(assay)) == 0) Key(assay) <- "px_"
     return(assay)
   })
 
-  # Fetch all arrow_dirs
-  all_arrow_dirs <- sapply(objects, function(el) slot(el, name = "arrow_dir"))
-
   # Merge Seurat assays
   new_assay <- merge(x = standardassays[[1]],
-                     y = standardassays[2:length(standardassays)],
+                     y = standardassays[-1],
                      merge.data = merge.data,
                      ...)
 
-  # Rename cellgraphs
-  names(cellgraphs_new) <- colnames(new_assay)
+  # Fetch cellgraphs
+  cellgraphs_new <- Reduce(c, lapply(objects, function(cg_assay) {
+    return(cg_assay@cellgraphs)
+  })) %>% set_names(nm = colnames(new_assay))
 
-  # Run edgelist merge if arrow_dirs exists
-  if (!any(is.na(all_arrow_dirs))) {
-
-    # Trigger garbage cleaning if the edgelist directories exceed the
-    # maximum allowed size
-    .run_clean()
-
-    if (!any(dir.exists(all_arrow_dirs)))
-      abort(glue("Paths to edgelist parquet file directories {paste(all_arrow_dirs, collapse = ',')} doesn't exist"))
-
-    # Create a new temporary directory with a time stamp
-    new_dir <-
-      file.path(
-        getOption("pixelatorR.arrow_outdir"),
-        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
-    dir.create(path = new_dir, showWarnings = FALSE)
-
-    # Move hive-style old sample diretories to new directory
-    for (i in seq_along(all_arrow_dirs)) {
-      hive_style_dirs <- list.files(all_arrow_dirs[i], full.names = TRUE)
-      for (ii in seq_along(hive_style_dirs)) {
-        file.copy(from = hive_style_dirs[ii], to = new_dir, recursive = TRUE)
-      }
-    }
-
-    # Log command
-    command <- sys.calls()[[1]][1] %>% as.character()
-    options(pixelatorR.edgelist_copies = bind_rows(
-      getOption("pixelatorR.edgelist_copies"),
-      tibble(command = command,
-             edgelist_dir = normalizePath(new_dir),
-             timestamp = Sys.time())
-    ))
-
-    # Open arrow data
-    arrow_data <- open_dataset(new_dir)
-  } else {
-    # If any path in the input objects is NA, simply inactivate the
-    # slots required to handle the arrow Dataset
-    arrow_data <- NULL
-    new_dir <- NA_character_
-  }
 
   # Merge polarization and colocalization scores
-  name_conversion <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
-    tibble(new = colnames(objects[[i]]), sample = i)
-  })) %>% mutate(component = cell.names) %>%
-    group_by(sample) %>%
-    group_split()
   polarization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
     pl <- slot(objects[[i]], name = "polarization")
     if (length(pl) == 0) return(pl)
     pl <- pl %>% left_join(name_conversion[[i]], by = "component") %>%
       select(-component, -sample) %>%
-      rename(component = new)
+      rename(component = component_new)
     return(pl)
   }))
   colocalization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
@@ -1190,19 +845,32 @@ merge.CellGraphAssay <- function (
     if (length(cl) == 0) return(cl)
     cl <- cl %>% left_join(name_conversion[[i]], by = "component") %>%
       select(-component, -sample) %>%
-      rename(component = new)
+      rename(component = component_new)
     return(cl)
   }))
 
+  # Merge fs_map
+  fs_map <- tibble()
+  for (cg_assay in objects) {
+    if (length(slot(cg_assay, name = "fs_map")) == 0) {
+      fs_map <- NULL
+      break
+    }
+  }
+  if (!is.null(fs_map)) {
+    fs_map <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
+      slot(objects[[i]], name = "fs_map")
+    })) %>% mutate(sample = seq_len(n()))
+  }
+
   # Convert to CellGraphAssay and add cellgraphs
-  pxcellassay <- as.CellGraphAssay(
+  merged_cg_assay <- as.CellGraphAssay(
     x = new_assay,
     cellgraphs = cellgraphs_new,
     polarization = polarization,
     colocalization = colocalization,
-    arrow_dir = new_dir,
-    arrow_data = arrow_data
+    fs_map = fs_map
   )
 
-  return(pxcellassay)
+  return(merged_cg_assay)
 }

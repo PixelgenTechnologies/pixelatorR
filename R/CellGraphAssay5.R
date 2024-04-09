@@ -177,8 +177,6 @@ CreateCellGraphAssay5 <- function (
 #' library(pixelatorR)
 #' library(dplyr)
 #' library(tidygraph)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
@@ -398,11 +396,11 @@ as.CellGraphAssay5.Assay5 <- function (
   # Check cellgraphs
   if (!is.null(cellgraphs)) {
     stopifnot(
-      "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay" =
+      "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay5" =
         is.list(cellgraphs) &&
         (length(cellgraphs) == ncol(x)))
     stopifnot(
-      "'cellgraphs' names must match colnames of the Assay" =
+      "'cellgraphs' names must match colnames of the Assay5" =
         all(names(cellgraphs) == colnames(x))
     )
     for (i in seq_along(cellgraphs)) {
@@ -416,30 +414,7 @@ as.CellGraphAssay5.Assay5 <- function (
 
   # Check fs_map
   if (!is.null(fs_map)) {
-    stopifnot(
-      "'fs_map' must be a non-empty tibble with the following columns: 'id_map', 'sample', 'pxl_file'" =
-        inherits(fs_map, what = "tbl_df") &&
-        all(names(fs_map) == c("id_map", "sample", "pxl_file"))
-    )
-    stopifnot(
-      "'fs_map$sample' must be an integer vector" =
-        is.integer(fs_map$sample),
-      "'fs_map$pxl_file' must be a character vector" =
-        is.character(fs_map$pxl_file)
-    )
-
-    # Validate content of id_map
-    if (!all((fs_map$id_map %>% do.call(bind_rows, .))$current_id == colnames(x)))
-      abort(glue("The 'id_map' column must contain a tbl_df objects with a ",
-                 "'current_id' column that matches the colnames of the Assay5"))
-
-    # Validate pxl_files
-    for (f in fs_map$pxl_file) {
-      if (!fs::file_exists(f))
-        abort(glue("The pxl file '{f}' does not exist. Please provide a valid path."))
-      if (!fs::file_access(f, mode = "read"))
-        abort(glue("The pxl file '{f}' is not readable. "))
-    }
+    .validate_fs_map(fs_map)
   }
 
   # Validate polarization and colocalization
@@ -545,6 +520,39 @@ ColocalizationScores.CellGraphAssay5 <- function (
   slot(object, name = "colocalization") <- colocalization
   return(object)
 }
+
+
+#' @method FSMap CellGraphAssay5
+#'
+#' @rdname FSMap
+#'
+#' @export
+#'
+FSMap.CellGraphAssay5 <- function (
+  object,
+  ...
+) {
+  slot(object, name = "fs_map")
+}
+
+
+#' @method FSMap<- CellGraphAssay5
+#'
+#' @rdname FSMap
+#'
+#' @export
+#'
+"FSMap<-.CellGraphAssay5" <- function (
+  object,
+  ...,
+  value
+) {
+  # Validate value
+  .validate_fs_map(value)
+  slot(object, name = "fs_map") <- value
+  return(object)
+}
+
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Methods for R-defined generics

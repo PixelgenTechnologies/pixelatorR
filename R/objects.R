@@ -16,7 +16,7 @@ NULL
 #'
 #' # CellGraphs getter Seurat
 #' # ---------------------------------
-#' se <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
+#' se <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Get cellgraphs from a Seurat object
 #' CellGraphs(se)
@@ -211,90 +211,6 @@ ColocalizationScores.Seurat <- function (
   # Fetch polarization scores from assay
   cg_assay <- object[[assay]]
   ColocalizationScores(cg_assay) <- value
-  object[[assay]] <- cg_assay
-
-  return(object)
-}
-
-
-#' @param assay Name of a \code{CellGraphAssay}
-#'
-#' @method ArrowData Seurat
-#'
-#' @rdname ArrowData
-#'
-#' @export
-#'
-ArrowData.Seurat <- function (
-  object,
-  assay = NULL,
-  ...
-) {
-
-  # Use default assay if assay = NULL
-  assay <- assay %||% DefaultAssay(object)
-  ArrowData(object[[assay]])
-}
-
-
-#' @method ArrowData<- Seurat
-#'
-#' @rdname ArrowData
-#'
-#' @export
-#'
-"ArrowData<-.Seurat" <- function (
-  object,
-  assay = NULL,
-  ...,
-  value
-) {
-
-  # Use default assay if assay = NULL
-  assay <- assay %||% DefaultAssay(object)
-  ArrowData(cg_assay) <- value
-  object[[assay]] <- cg_assay
-
-  return(object)
-}
-
-
-#' @method ArrowDir Seurat
-#'
-#' @rdname ArrowDir
-#'
-#' @export
-#'
-ArrowDir.Seurat <- function (
-  object,
-  assay = NULL,
-  ...
-) {
-
-  # Use default assay if assay = NULL
-  assay <- assay %||% DefaultAssay(object)
-
-  return(ArrowDir(object[[assay]]))
-}
-
-
-#' @method ArrowDir<- Seurat
-#'
-#' @rdname ArrowDir
-#'
-#' @export
-#'
-"ArrowDir<-.Seurat" <- function (
-  object,
-  assay = NULL,
-  ...,
-  value
-) {
-
-  # Use default assay if assay = NULL
-  assay <- assay %||% DefaultAssay(object)
-  cg_assay <- object[[assay]]
-  ArrowDir(cg_assay) <- value
   object[[assay]] <- cg_assay
 
   return(object)

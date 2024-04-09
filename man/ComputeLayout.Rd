@@ -124,15 +124,13 @@ with the bipartite graph, layout, and antibody counts per A pixel.
 \examples{
 library(pixelatorR)
 library(dplyr)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
                         package = "pixelatorR")
 
 # Load example data
-seur <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = TRUE, overwrite = TRUE)
+seur <- ReadMPX_Seurat(pxl_file)
 
 # Load 1 cellgraph
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1],

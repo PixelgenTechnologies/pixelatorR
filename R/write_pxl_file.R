@@ -98,22 +98,9 @@ WriteMPX_pxl_file <- function (
       inherits(cg_assay, what = "CellGraphAssay5")
   )
 
+  # fetch and validate fs_map
   fs_map <- cg_assay@fs_map
-
-  # Validate pxl files
-  for (i in seq_len(nrow(fs_map))) {
-    f <- fs_map$pxl_file[i]
-    if (!fs::file_exists(f)) {
-      abort(glue("The pxl file '{col_br_blue(f)}' linked to sample {i} does not exist. ",
-                 "Make sure that the path is correct and that the file has not been moved/deleted."))
-    }
-    # Check .pxl file for content
-    pxl_files <- unzip(f, list = TRUE)$Name
-    if (!all(c("adata.h5ad", "colocalization.parquet", "edgelist.parquet",
-               "metadata.json", "polarization.parquet") %in% pxl_files)) {
-      abort(glue("The pxl file '{col_br_blue(f)}' is invalid. "))
-    }
-  }
+  .validate_fs_map(fs_map)
 
   # Delete the file only if it's not in use
   # by the current object
