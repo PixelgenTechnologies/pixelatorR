@@ -8,7 +8,13 @@
 \usage{
 edgelist_to_simple_Anode_graph(object, ...)
 
-\method{edgelist_to_simple_Anode_graph}{data.frame}(object, components = NULL, verbose = TRUE, ...)
+\method{edgelist_to_simple_Anode_graph}{data.frame}(
+  object,
+  components = NULL,
+  cl = NULL,
+  verbose = TRUE,
+  ...
+)
 
 \method{edgelist_to_simple_Anode_graph}{FileSystemDataset}(object, components = NULL, verbose = TRUE, ...)
 }
@@ -18,6 +24,12 @@ edgelist_to_simple_Anode_graph(object, ...)
 \item{...}{Not yet implemented}
 
 \item{components}{Components to compute A node projection for}
+
+\item{cl}{A cluster object created by makeCluster, or an integer
+to indicate number of child-processes (integer values are ignored
+on Windows) for parallel evaluations. See Details on performance
+in the documentation for \code{pbapply}. The default is NULL,
+which means that no parallelization is used.}
 
 \item{verbose}{Print messages}
 }

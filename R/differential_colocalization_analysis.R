@@ -7,11 +7,15 @@ globalVariables(
 #' @include generics.R
 NULL
 
+#' @param cl  A cluster object created by makeCluster, or an integer
+#' to indicate number of child-processes (integer values are ignored
+#' on Windows) for parallel evaluations. See Details on performance
+#' in the documentation for \code{pbapply}. The default is NULL,
+#' which means that no parallelization is used.
 #' @rdname RunDCA
 #' @method RunDCA data.frame
 #'
 #' @importFrom stats wilcox.test p.adjust
-#' @importFrom progressr progressor
 #'
 #' @export
 #'
@@ -24,6 +28,7 @@ RunDCA.data.frame <- function (
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  cl = NULL,
   verbose = TRUE,
   ...
 ) {
@@ -104,8 +109,7 @@ RunDCA.data.frame <- function (
   # Split table by group keys
   test_groups <- test_groups %>% group_split()
 
-  p <- progressor(along = test_groups)
-  coloc_test <- lapply(test_groups, function(colocalization_contrast) {
+  coloc_test <- pblapply(test_groups, function(colocalization_contrast) {
 
     # Get numeric data values
     x <- colocalization_contrast %>% filter(.data[[contrast_column]] == target) %>% pull(pearson_z)
@@ -120,9 +124,8 @@ RunDCA.data.frame <- function (
              target = target, reference = reference, p = signif(p.value, 3)) %>%
       select(c("estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
                "p", "conf.low", "conf.high", "method", "alternative"))
-    p()
     return(result)
-  })
+  }, cl = cl)
 
   # Bind results from pol_test list
   coloc_test_bind <- do.call(bind_rows, lapply(seq_along(coloc_test), function(i) {

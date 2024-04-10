@@ -141,134 +141,6 @@ LoadCellGraphs.tbl_df <- function (
 
 
 #' @param force Force load graph(s) if they are already loaded
-#'
-#' @rdname LoadCellGraphs
-#' @method LoadCellGraphs CellGraphAssay
-#'
-#' @export
-#'
-LoadCellGraphs.CellGraphAssay <- function (
-  object,
-  cells = colnames(object),
-  load_as = c("bipartite", "Anode", "linegraph"),
-  add_marker_counts = TRUE,
-  force = FALSE,
-  chunk_size = 10,
-  cl = NULL,
-  verbose = TRUE,
-  ...
-) {
-
-  # Validate input parameters
-  stopifnot(
-    "'cells' must be a non-empty character vector of cell names" =
-      is.character(cells) &&
-      (length(cells) > 0)
-  )
-  stopifnot(
-    "'cells' must be present in 'object'" =
-      all(cells %in% colnames(object))
-  )
-  load_as <- match.arg(load_as, choices = c("bipartite", "Anode", "linegraph"))
-
-  # Check if cells are already loaded
-  loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
-  if ((sum(!loaded_graphs) == 0) & !force) {
-    if (verbose && check_global_verbosity())
-      cli_alert_info("All cells are alredy loaded. Returning CellGraphAssay unmodified.")
-    return(object)
-  } else {
-    if (force) {
-      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>% setNames(nm = cells)
-      loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
-    }
-    cells_to_load <- setdiff(cells, cells[loaded_graphs])
-    if (verbose && check_global_verbosity() & (length(cells_to_load) < length(cells)))
-      cli_alert_info(glue("{length(cells) - length(cells_to_load)} CellGraphs loaded.",
-                          " Loading remaining {length(cells_to_load)} CellGraphs."))
-  }
-
-  # Find where components are located
-  fs_map_unnested_filtered <- slot(object, name = "fs_map") %>%
-    tidyr::unnest(cols = "id_map") %>%
-    filter(current_id %in% cells)
-  fs_map_nested_filtered <- fs_map_unnested_filtered %>%
-    tidyr::nest(data = c("current_id", "original_id"))
-
-  # Load cell graphs in chunks
-  cg_list_full <- lapply(seq_len(nrow(fs_map_nested_filtered)), function(i) {
-    f <- fs_map_nested_filtered$pxl_file[i]
-
-    # Unzip the edgelist parquet file to tmpdir
-    unzip(f, exdir = tempdir(), files = "edgelist.parquet")
-    unz_pq_file <- file.path(tempdir(), "edgelist.parquet")
-    pq_file <- fs::file_temp(ext = "parquet")
-
-    # The file is renamed to make sure it has a unique path
-    fs::file_move(unz_pq_file, pq_file)
-
-    # Read the edgelist in memory, but only the necessary columns
-    ar <- arrow::read_parquet(pq_file,
-                              col_select = c("upia", "upib", "marker", "component"),
-                              as_data_frame = FALSE)
-
-    if (verbose && check_global_verbosity()) {
-      cli_alert(glue("   Loading CellGraphs for {nrow(fs_map_nested_filtered$data[[i]])} cells ",
-                     "from sample {fs_map_nested_filtered$sample[i]}"))
-    }
-
-    # Split data into chunks determined by chunk_size
-    id_data_chunks <- fs_map_nested_filtered$data[[i]] %>%
-      mutate(group = ceiling(seq_len(n())/chunk_size)) %>%
-      rename(component = current_id) %>%
-      group_by(group) %>%
-      group_split()
-
-    # Read cellgraphs
-    cg_list <- pbapply::pblapply(id_data_chunks, function(id_chunk) {
-
-      # Filter edgelist data for the current chunk
-      # Note that we use original_id which are the original
-      # MPX component ids. current_id are the ids currenty used
-      # for components in object
-      edgelist_data <- ar %>%
-        filter(component %in% id_chunk$original_id) %>%
-        collect()
-
-      # Send to tbl_df method
-      cg_list <-
-        LoadCellGraphs(
-          edgelist_data,
-          cells = id_chunk$original_id,
-          load_as = load_as,
-          add_marker_counts = add_marker_counts,
-          verbose = verbose
-          , ... = ...)
-
-      return(cg_list)
-    }, cl = cl) %>% unlist()
-
-    # Update names of the cellgraph list
-    cg_list <- cg_list[fs_map_nested_filtered$data[[i]]$original_id]
-    cg_list <- set_names(cg_list, nm = fs_map_nested_filtered$data[[i]]$current_id)
-
-    # Remove temporary file
-    try_delete <- try(fs::file_delete(pq_file), silent = TRUE)
-    if (inherits(try_delete, what = "try-error"))
-      cli_alert_warning("Failed to delete temporary edge list parquet file {pq}.")
-
-    return(cg_list)
-  }) %>% unlist()
-
-  # Fill cellgraphs slot list with the loaded CellGraphs
-  slot(object, name = "cellgraphs")[fs_map_unnested_filtered$current_id] <- cg_list_full
-
-  # Return object
-  if (verbose && check_global_verbosity())
-    cli_alert_success("Successfully loaded {length(cells_to_load)} CellGraph object(s).")
-  return(object)
-}
-
 #' @param cl A cluster object created by makeCluster, or an integer
 #' to indicate number of child-processes (integer values are ignored
 #' on Windows) for parallel evaluations. See Details on performance
@@ -276,11 +148,11 @@ LoadCellGraphs.CellGraphAssay <- function (
 #' which means that no parallelization is used.
 #'
 #' @rdname LoadCellGraphs
-#' @method LoadCellGraphs CellGraphAssay5
+#' @method LoadCellGraphs MPXAssay
 #'
 #' @export
 #'
-LoadCellGraphs.CellGraphAssay5 <- function (
+LoadCellGraphs.MPXAssay <- function (
   object,
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
@@ -308,7 +180,7 @@ LoadCellGraphs.CellGraphAssay5 <- function (
   loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
   if ((sum(!loaded_graphs) == 0) & !force) {
     if (verbose && check_global_verbosity())
-      cli_alert_info("All cells are alredy loaded. Returning CellGraphAssay unmodified.")
+      cli_alert_info("All cells are already loaded. Returning object unmodified.")
     return(object)
   } else {
     if (force) {
@@ -358,7 +230,7 @@ LoadCellGraphs.CellGraphAssay5 <- function (
       group_split()
 
     # Read cellgraphs
-    cg_list <- pbapply::pblapply(id_data_chunks, function(id_chunk) {
+    cg_list <- pblapply(id_data_chunks, function(id_chunk) {
 
       # Filter edgelist data for the current chunk
       # Note that we use original_id which are the original
@@ -401,6 +273,21 @@ LoadCellGraphs.CellGraphAssay5 <- function (
     cli_alert_success("Successfully loaded {length(cells_to_load)} CellGraph object(s).")
   return(object)
 }
+
+
+#' @rdname LoadCellGraphs
+#' @method LoadCellGraphs CellGraphAssay
+#' @docType methods
+#' @export
+#'
+LoadCellGraphs.CellGraphAssay <- LoadCellGraphs.MPXAssay
+
+#' @rdname LoadCellGraphs
+#' @method LoadCellGraphs CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+LoadCellGraphs.CellGraphAssay5 <- LoadCellGraphs.MPXAssay
 
 
 #' @param assay Assay name
@@ -427,7 +314,11 @@ LoadCellGraphs.Seurat <- function (
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot("'assay' must be a character of length 1" = is.character(assay) && (length(assay) == 1))
+    stopifnot(
+      "'assay' must be a character of length 1" =
+        is.character(assay) &&
+        (length(assay) == 1)
+      )
   } else {
     # Use default assay if assay = NULL
     assay <- DefaultAssay(object)
@@ -435,7 +326,7 @@ LoadCellGraphs.Seurat <- function (
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = c("CellGraphAssay", "CellGraphAssay5"))) {
+  if (!is(cg_assay, "MPXAssay")) {
     abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'",
                " or a 'CellGraphAssay5'"))
   }

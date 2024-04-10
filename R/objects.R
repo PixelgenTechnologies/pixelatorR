@@ -1,15 +1,11 @@
 #' @include generics.R
-#' @importFrom methods setClass setMethod slot slot<- new as slotNames
-#' @importClassesFrom Matrix dgCMatrix
 NULL
 
 
-#' @param object A Seurat object or CellGraphAssay object
 #' @importFrom SeuratObject DefaultAssay
 #' @rdname CellGraphs
 #' @method CellGraphs Seurat
 #' @export
-#' @concept assay
 #' @concept cellgraphs
 #'
 #' @examples
@@ -39,7 +35,6 @@ CellGraphs.Seurat <- function (
 #' @export
 #' @method CellGraphs<- Seurat
 #' @rdname CellGraphs
-#' @concept assay
 #' @concept cellgraphs
 #' @importFrom SeuratObject DefaultAssay
 #'
@@ -82,8 +77,8 @@ PolarizationScores.Seurat <- function (
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = c("CellGraphAssay", "CellGraphAssay5"))) {
-    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
   }
 
   # Get polarizaation scores from CellGraphAssay
@@ -160,8 +155,8 @@ ColocalizationScores.Seurat <- function (
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = c("CellGraphAssay", "CellGraphAssay5"))) {
-    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
   }
 
   # Get colocalization scores

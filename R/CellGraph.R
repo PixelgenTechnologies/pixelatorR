@@ -74,10 +74,10 @@ CellGraph <- setClass(
 #' @export
 #'
 CreateCellGraphObject <- function (
-    cellgraph,
-    counts = NULL,
-    layout = NULL,
-    verbose = FALSE
+  cellgraph,
+  counts = NULL,
+  layout = NULL,
+  verbose = FALSE
 ) {
 
   # Check input parameters

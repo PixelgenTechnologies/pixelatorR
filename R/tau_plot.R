@@ -1,9 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('tau', 'tau_type', 'umi_per_upia'),
-  package = 'pixelatorR',
-  add = TRUE
-)
 #' @include generics.R
 NULL
 

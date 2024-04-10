@@ -1,6 +1,7 @@
 # Declarations used in package check
 globalVariables(
-  names = c('id_map', 'component_new'),
+  names = c('id_map', 'component_new', 'tau', 'tau_type', 'umi_per_upia',
+            'upia1', 'upia2', 'component', 'rn', 'x', 'y', 'z', 'name'),
   package = 'pixelatorR',
   add = TRUE
 )
@@ -19,8 +20,8 @@ check_global_verbosity <- function() {
 
 
 # ***********************************
-# Check if certain packages are installed. If the package is missing, users will
-# be asked to install the package.
+# Check if certain packages are installed. When calling these functions,
+# if the package is missing, users will be asked to install the package.
 # ***********************************
 
 expect_jsonlite <- function(...) {

@@ -4,19 +4,21 @@
 \name{RenameCells.MPXAssay}
 \alias{RenameCells.MPXAssay}
 \alias{MPXAssay-methods}
+\alias{show,MPXAssay-method}
 \alias{subset.MPXAssay}
 \alias{merge.MPXAssay}
 \title{MPXAssay Methods}
 \usage{
 \method{RenameCells}{MPXAssay}(object, new.names = NULL, ...)
 
+\S4method{show}{MPXAssay}(object)
+
 \method{subset}{MPXAssay}(x, features = NULL, cells = NULL, ...)
 
 \method{merge}{MPXAssay}(x = NULL, y = NULL, merge.data = TRUE, add.cell.ids = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{MPXAssay} object, i.e. one of \code{CellGraphAssay} or
-\code{CellGraphAssay5}}
+\item{object}{A \code{CellGraphAssay} or a \code{CellGraphAssay5} object}
 
 \item{new.names}{A character vector with new cell IDs. The length of the vector
 must be equal to the number of cells in the object and the names must be unique.}
@@ -48,6 +50,9 @@ packages
 \item \code{RenameCells(MPXAssay)}: Rename cell IDs of a \code{CellGraphAssay} or
 \code{CellGraphAssay5} object
 
+\item \code{show(MPXAssay)}: Show method for a \code{CellGraphAssay} or a
+\code{CellGraphAssay5} object
+
 \item \code{subset(MPXAssay)}: Subset a \code{CellGraphAssay} or a
 \code{CellGraphAssay5} object
 
@@ -56,6 +61,40 @@ packages
 
 }}
 \examples{
+
+library(pixelatorR)
+library(dplyr)
+library(tidygraph)
+
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
+                        package = "pixelatorR")
+counts <- ReadMPX_counts(pxl_file)
+edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
+components <- colnames(counts)
+edgelist_split <-
+  edgelist \%>\%
+  select(upia, upib, component) \%>\%
+  distinct() \%>\%
+  group_by(component) \%>\%
+  group_split() \%>\%
+  setNames(nm = components)
+
+# Convert data into a list of CellGraph objects
+bipartite_graphs <- lapply(edgelist_split, function(x) {
+  x <- x \%>\% as_tbl_graph(directed = FALSE)
+  x <- x \%>\% mutate(node_type = case_when(name \%in\% edgelist$upia ~ "A", TRUE ~ "B"))
+  attr(x, "type") <- "bipartite"
+  CreateCellGraphObject(cellgraph = x)
+})
+
+# Create CellGraphAssay
+cg_assay <- CreateCellGraphAssay(counts = counts, cellgraphs = bipartite_graphs)
+cg_assay
+
+# Show method
+cg_assay
+
 library(pixelatorR)
 library(dplyr)
 options(Seurat.object.assay.version = "v3")
