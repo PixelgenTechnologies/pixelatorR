@@ -32,11 +32,11 @@ Imports:
     stringr,
     patchwork,
     ggraph,
-    progressr,
     plotly,
     fs,
     pbapply,
-    zip
+    zip,
+    utils
 Remotes:
     cran/arrow@14.0.2.1
 Suggests:

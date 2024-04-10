@@ -18,6 +18,7 @@ RunDCA(object, ...)
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  cl = NULL,
   verbose = TRUE,
   ...
 )
@@ -56,6 +57,12 @@ This column must include \code{target} and \code{reference}.}
 
 \item{p_adjust_method}{One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 (see \code{?p.adjust} for details)}
+
+\item{cl}{A cluster object created by makeCluster, or an integer
+to indicate number of child-processes (integer values are ignored
+on Windows) for parallel evaluations. See Details on performance
+in the documentation for \code{pbapply}. The default is NULL,
+which means that no parallelization is used.}
 
 \item{verbose}{Print messages}
 

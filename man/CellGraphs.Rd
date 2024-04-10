@@ -22,7 +22,7 @@ CellGraphs(object, ...) <- value
 \method{CellGraphs}{Seurat}(object, ...) <- value
 }
 \arguments{
-\item{object}{A Seurat object or CellGraphAssay object}
+\item{object}{A \code{Seurat}, \code{CellGraphAssay} or \code{CellGraphAssay} object}
 
 \item{...}{Arguments passed to other methods}
 
@@ -33,8 +33,7 @@ Returns a list of \code{\link{CellGraph}} objects. If there are
 no \code{\link{CellGraph}} objects present, returns an empty list.
 }
 \description{
-Get and set \code{\link{CellGraph}} lists for \code{\link{CellGraphAssay}} and
-\code{Seurat} objects
+Get and set \code{\link{CellGraph}} lists for different objects.
 }
 \examples{
 

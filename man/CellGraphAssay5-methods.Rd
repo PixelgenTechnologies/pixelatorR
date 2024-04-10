@@ -4,19 +4,21 @@
 \name{RenameCells.CellGraphAssay5}
 \alias{RenameCells.CellGraphAssay5}
 \alias{CellGraphAssay5-methods}
+\alias{show,CellGraphAssay5-method}
 \alias{subset.CellGraphAssay5}
 \alias{merge.CellGraphAssay5}
 \title{CellGraphAssay5 Methods}
 \usage{
 \method{RenameCells}{CellGraphAssay5}(object, new.names = NULL, ...)
 
+\S4method{show}{CellGraphAssay5}(object)
+
 \method{subset}{CellGraphAssay5}(x, features = NULL, cells = NULL, ...)
 
 \method{merge}{CellGraphAssay5}(x = NULL, y = NULL, merge.data = TRUE, add.cell.ids = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{MPXAssay} object, i.e. one of \code{CellGraphAssay} or
-\code{CellGraphAssay5}}
+\item{object}{A \code{CellGraphAssay} or a \code{CellGraphAssay5} object}
 
 \item{new.names}{A character vector with new cell IDs. The length of the vector
 must be equal to the number of cells in the object and the names must be unique.}
@@ -43,6 +45,9 @@ packages
 \section{Functions}{
 \itemize{
 \item \code{RenameCells(CellGraphAssay5)}: Rename cell IDs of a \code{CellGraphAssay5} object
+
+\item \code{show(CellGraphAssay5)}: Show method for
+\code{CellGraphAssay5} objects
 
 \item \code{subset(CellGraphAssay5)}: Subset a \code{CellGraphAssay5} object
 

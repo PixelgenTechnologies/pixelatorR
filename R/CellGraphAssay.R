@@ -70,11 +70,12 @@ CellGraphAssay5 <- setClass(
 
 #' MPXAssay class
 #'
-#' The MPXAssay class is the union of the CellGraphAssay and CellGraphAssay5
-#' class.
+#' The MPXAssay class is defined as the union of the CellGraphAssay and CellGraphAssay5
+#' class. In other words, it is a virtual class defined as a superclass of these two classes.
 #'
-#' @name MPXAssay
-#' @rdname MPXAssay
+#' @name MPXAssay-class
+#' @rdname MPXAssay-class
+#' @aliases MPXAssay
 #'
 #' @exportClass MPXAssay
 #' @concept assay
@@ -932,9 +933,9 @@ NULL
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-#' Show method for \code{CellGraphAssay} object
-#'
-#' @param object A \code{CellGraphAssay} object
+#' @describeIn MPXAssay-methods Show method for a \code{CellGraphAssay} or a
+#' \code{CellGraphAssay5} object
+#' @param object A \code{CellGraphAssay} or a \code{CellGraphAssay5} object
 #'
 #' @importFrom methods show
 #'
@@ -973,87 +974,66 @@ NULL
 #' # Show method
 #' cg_assay
 #'
+#' @export
+#'
 setMethod (
   f = "show",
-  signature = "CellGraphAssay",
+  signature = "MPXAssay",
   definition = function(object) {
     cellgraphs <- slot(object, "cellgraphs")
     loaded_graphs <- !sapply(cellgraphs, is.null)
-    show(as(object, Class = "Assay"))
-    cat(
-      "Loaded CellGraph objects:",
-      sum(loaded_graphs),
-      "\n"
-    )
+    msg <-
+      capture.output(show(as(
+        object, Class = ifelse(
+          is(object, "CellGraphAssay5"),
+          "Assay5",
+          "Assay"
+        )
+      )))
+    msg[1] <- gsub(pattern = "^Assay",
+                   x = msg[1],
+                   replacement = "CellGraphAssay")
+    msg <- c(msg, paste0("Loaded CellGraph objects:\n ",
+                         sum(loaded_graphs),
+                         "\n"))
+    cat(paste(msg, collapse = "\n"))
   }
 )
 
+#' @describeIn CellGraphAssay-methods Show method for
+#' \code{CellGraphAssay} objects
+#' @concept assay
+#' @method show CellGraphAssay
+#' @docType methods
+#'
+#' @export
+#'
+setMethod (
+  f = "show",
+  signature = "CellGraphAssay",
+  definition = function(object) as(getMethod("show", "MPXAssay"), "function")(object)
+)
 
-#' Show method for \code{CellGraphAssay5} object
+#' @describeIn CellGraphAssay5-methods Show method for
+#' \code{CellGraphAssay5} objects
+#' @concept assay
+#' @method show CellGraphAssay5
+#' @docType methods
 #'
-#' @param object A \code{CellGraphAssay5} object
-#'
-#' @importFrom methods show
-#'
-#' @examples
-#'
-#' library(pixelatorR)
-#' library(dplyr)
-#' library(tidygraph)
-#'
-#' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
-#' counts <- ReadMPX_counts(pxl_file)
-#' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-#' components <- colnames(counts)
-#' edgelist_split <-
-#'   edgelist %>%
-#'   select(upia, upib, component) %>%
-#'   distinct() %>%
-#'   group_by(component) %>%
-#'   group_split() %>%
-#'   setNames(nm = components)
-#'
-#' # Convert data into a list of CellGraph objects
-#' bipartite_graphs <- lapply(edgelist_split, function(x) {
-#'   x <- x %>% as_tbl_graph(directed = FALSE)
-#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
-#'   attr(x, "type") <- "bipartite"
-#'   CreateCellGraphObject(cellgraph = x)
-#' })
-#'
-#' # Create CellGraphAssay5
-#' cg_assay5 <- CreateCellGraphAssay5(counts = counts, cellgraphs = bipartite_graphs)
-#' cg_assay5
-#'
-#' # Show method
-#' cg_assay5
+#' @export
 #'
 setMethod (
   f = "show",
   signature = "CellGraphAssay5",
-  definition = function(object) {
-    cellgraphs <- slot(object, "cellgraphs")
-    loaded_graphs <- !sapply(cellgraphs, is.null)
-    show(as(object, Class = "Assay5"))
-    cat(
-      "Loaded CellGraph objects:",
-      sum(loaded_graphs),
-      "\n"
-    )
-  }
+  definition = function(object) as(getMethod("show", "MPXAssay"), "function")(object)
 )
 
 
 #' @describeIn MPXAssay-methods Subset a \code{CellGraphAssay} or a
 #' \code{CellGraphAssay5} object
-#' @importClassesFrom SeuratObject Assay Assay5
 #' @concept assay
 #' @method subset MPXAssay
 #' @docType methods
-#'
-#' @importFrom arrow write_dataset
 #'
 #' @return A \code{MPXAssay} object
 #'

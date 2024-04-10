@@ -1,3 +1,6 @@
+#' @include generics.R
+NULL
+
 #' Convert objects to a \code{\link{CellGraphAssay5}}
 #'
 #' @param x An object to convert to class \code{\link{CellGraphAssay5}}
@@ -26,9 +29,9 @@ as.CellGraphAssay <- function (
 
 #' CellGraphs
 #'
-#' Get and set \code{\link{CellGraph}} lists for \code{\link{CellGraphAssay}} and
-#' \code{Seurat} objects
+#' Get and set \code{\link{CellGraph}} lists for different objects.
 #'
+#' @param object A \code{Seurat}, \code{CellGraphAssay} or \code{CellGraphAssay} object
 #' @param ... Arguments passed to other methods
 #'
 #' @return Returns a list of \code{\link{CellGraph}} objects. If there are

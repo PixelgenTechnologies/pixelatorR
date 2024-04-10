@@ -1,9 +1,5 @@
-# Declarations used in package check
-globalVariables(
-  names = c('x', 'y', 'z', 'name'),
-  package = 'pixelatorR',
-  add = TRUE
-)
+#' @include generics.R
+NULL
 
 #' Get a graph layout
 #'
@@ -225,13 +221,15 @@ ComputeLayout.CellGraph <- function (
   return(object)
 }
 
-
+#' @param cl A cluster object created by makeCluster, or an integer
+#' to indicate number of child-processes (integer values are ignored
+#' on Windows) for parallel evaluations. See Details on performance
+#' in the documentation for \code{pbapply}. The default is NULL,
+#' which means that no parallelization is used.
 #' @param verbose Print messages
 #'
 #' @rdname ComputeLayout
 #' @method ComputeLayout MPXAssay
-#'
-#' @importFrom progressr progressor
 #'
 #' @examples
 #'
@@ -253,6 +251,7 @@ ComputeLayout.MPXAssay <- function (
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
   custom_layout_name = "custom",
+  cl = NULL,
   ...
 ) {
 
@@ -273,8 +272,7 @@ ComputeLayout.MPXAssay <- function (
     cli_alert_info("Computing layouts for {length(cellgraphs_loaded)} graphs")
 
   # Calculate layout for each cell graph object sequentially
-  p <- progressor(along = cellgraphs_loaded)
-  cellgraphs_loaded <- lapply(cellgraphs_loaded, function(g) {
+  cellgraphs_loaded <- pblapply(cellgraphs_loaded, function(g) {
     g <- ComputeLayout(
       g,
       layout_method = layout_method,
@@ -289,9 +287,8 @@ ComputeLayout.MPXAssay <- function (
       custom_layout_name = custom_layout_name,
       ...
     )
-    p()
     return(g)
-  })
+  }, cl = cl)
 
   slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- cellgraphs_loaded
 

@@ -94,8 +94,8 @@ WriteMPX_pxl_file <- function (
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
   stopifnot(
-    "'assay' must be a 'CellGraphAssay5' object" =
-      inherits(cg_assay, what = "CellGraphAssay5")
+    "'assay' must be a 'CellGraphAssay' or a 'CellGraphAssay5' object" =
+      is(cg_assay, "MPXAssay")
   )
 
   # fetch and validate fs_map

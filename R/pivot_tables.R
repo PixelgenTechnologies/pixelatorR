@@ -52,7 +52,7 @@ PolarizationScoresToAssay.data.frame <- function (
 
 
 #' @rdname PolarizationScoresToAssay
-#' @method PolarizationScoresToAssay CellGraphAssay
+#' @method PolarizationScoresToAssay MPXAssay
 #'
 #' @examples
 #' # Create a Seurat object
@@ -67,7 +67,7 @@ PolarizationScoresToAssay.data.frame <- function (
 #'
 #' @export
 #'
-PolarizationScoresToAssay.CellGraphAssay <- function (
+PolarizationScoresToAssay.MPXAssay <- function (
   object,
   values_from = c("morans_z", "morans_i"),
   ...
@@ -84,25 +84,18 @@ PolarizationScoresToAssay.CellGraphAssay <- function (
 }
 
 #' @rdname PolarizationScoresToAssay
-#' @method PolarizationScoresToAssay CellGraphAssay5
-#'
+#' @method PolarizationScoresToAssay CellGraphAssay
+#' @docType methods
 #' @export
 #'
-PolarizationScoresToAssay.CellGraphAssay5 <- function (
-  object,
-  values_from = c("morans_z", "morans_i"),
-  ...
-) {
+PolarizationScoresToAssay.CellGraphAssay <- PolarizationScoresToAssay.MPXAssay
 
-  pol_matrix <- .create_spatial_metric_matrix(object,
-                                              values_from = values_from,
-                                              metric = "polarization")
-
-  # Create Assay from filled matrix
-  assay <- CreateAssay5Object(data = pol_matrix)
-
-  return(assay)
-}
+#' @rdname PolarizationScoresToAssay
+#' @method PolarizationScoresToAssay CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+PolarizationScoresToAssay.CellGraphAssay5 <- PolarizationScoresToAssay.MPXAssay
 
 
 #' @param assay Name of the \code{\link{CellGraphAssay}} to pull polarization scores from
@@ -234,7 +227,7 @@ ColocalizationScoresToAssay.data.frame <- function (
 
 
 #' @rdname ColocalizationScoresToAssay
-#' @method ColocalizationScoresToAssay CellGraphAssay
+#' @method ColocalizationScoresToAssay MPXAssay
 #'
 #' @examples
 #' # Create a Seurat object
@@ -249,7 +242,7 @@ ColocalizationScoresToAssay.data.frame <- function (
 #'
 #' @export
 #'
-ColocalizationScoresToAssay.CellGraphAssay <- function (
+ColocalizationScoresToAssay.MPXAssay <- function (
   object,
   values_from = c("pearson_z", "pearson"),
   ...
@@ -267,25 +260,18 @@ ColocalizationScoresToAssay.CellGraphAssay <- function (
 
 
 #' @rdname ColocalizationScoresToAssay
-#' @method ColocalizationScoresToAssay CellGraphAssay5
-#'
+#' @method ColocalizationScoresToAssay CellGraphAssay
+#' @docType methods
 #' @export
 #'
-ColocalizationScoresToAssay.CellGraphAssay5 <- function (
-  object,
-  values_from = c("pearson_z", "pearson"),
-  ...
-) {
+ColocalizationScoresToAssay.CellGraphAssay <- ColocalizationScoresToAssay.MPXAssay
 
-  coloc_matrix <- .create_spatial_metric_matrix(object,
-                                                values_from = values_from,
-                                                metric = "colocalization")
-
-  # Create Assay from filled matrix
-  assay <- CreateAssay5Object(data = coloc_matrix)
-
-  return(assay)
-}
+#' @rdname ColocalizationScoresToAssay
+#' @method ColocalizationScoresToAssay CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+ColocalizationScoresToAssay.CellGraphAssay5 <- ColocalizationScoresToAssay.MPXAssay
 
 
 #' @param assay Name of the \code{\link{CellGraphAssay}} to pull polarization scores from

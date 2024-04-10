@@ -2,16 +2,13 @@
 % Please edit documentation in R/generics.R, R/remove_cell_graphs.R
 \name{RemoveCellGraphs}
 \alias{RemoveCellGraphs}
-\alias{RemoveCellGraphs.CellGraphAssay}
-\alias{RemoveCellGraphs.CellGraphAssay5}
+\alias{RemoveCellGraphs.MPXAssay}
 \alias{RemoveCellGraphs.Seurat}
 \title{Remove CellGraphs}
 \usage{
 RemoveCellGraphs(object, ...)
 
-\method{RemoveCellGraphs}{CellGraphAssay}(object, ...)
-
-\method{RemoveCellGraphs}{CellGraphAssay5}(object, ...)
+\method{RemoveCellGraphs}{MPXAssay}(object, ...)
 
 \method{RemoveCellGraphs}{Seurat}(object, assay = NULL, ...)
 }

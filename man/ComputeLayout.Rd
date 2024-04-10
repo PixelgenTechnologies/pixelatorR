@@ -55,6 +55,7 @@ ComputeLayout(object, ...)
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
   custom_layout_name = "custom",
+  cl = NULL,
   ...
 )
 
@@ -71,6 +72,7 @@ ComputeLayout(object, ...)
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
   custom_layout_name = "custom",
+  cl = NULL,
   ...
 )
 
@@ -87,6 +89,7 @@ ComputeLayout(object, ...)
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
   custom_layout_name = "custom",
+  cl = NULL,
   ...
 )
 
@@ -146,6 +149,12 @@ included in \code{custom_layout_function_args}.}
 "kk" or "drl".}
 
 \item{verbose}{Print messages}
+
+\item{cl}{A cluster object created by makeCluster, or an integer
+to indicate number of child-processes (integer values are ignored
+on Windows) for parallel evaluations. See Details on performance
+in the documentation for \code{pbapply}. The default is NULL,
+which means that no parallelization is used.}
 
 \item{assay}{Name of assay to compute layouts for}
 }
