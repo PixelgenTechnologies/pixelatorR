@@ -7,7 +7,7 @@
 \title{The CellGraphAssay class}
 \description{
 The CellGraphAssay object is an extended \code{\link[SeuratObject]{Assay}}
-for the storage and analysis of mpx single-cell data.
+for the storage and analysis of MPX single-cell data.
 }
 \section{Slots}{
 

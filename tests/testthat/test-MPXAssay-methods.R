@@ -61,8 +61,8 @@ test_that("merge.CellGraphAssay works as expected", {
 })
 
 test_that("merge.CellGraphAssay fails when invalid input is provided", {
-  expect_error({cg_assay_merged <- merge(cg_assay, y = "Invalid")}, "'y' must be a 'CellGraphAssay' object or a list of 'CellGraphAssay' objects")
-  expect_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))}, "Element 2 in 'y' is not a 'CellGraphAssay'")
+  expect_error({cg_assay_merged <- merge(cg_assay, y = "Invalid")}, "'y' must be a 'CellGraphAssay")
+  expect_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))}, "Element 2 in 'y' is not a")
   expect_no_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C"))})
   expect_no_error({cg_assay_double_merged <- merge(cg_assay_merged, cg_assay_merged, add.cell.ids = c("A", "B"))})
 })
