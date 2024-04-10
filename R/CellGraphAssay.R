@@ -1,5 +1,4 @@
 #' @include generics.R
-#' @importFrom methods setClass setClassUnion setMethod slot slot<- new as slotNames
 #' @importClassesFrom Matrix dgCMatrix
 NULL
 
@@ -17,7 +16,7 @@ globalVariables(
 #' The CellGraphAssay class
 #'
 #' The CellGraphAssay object is an extended \code{\link[SeuratObject]{Assay}}
-#' for the storage and analysis of mpx single-cell data.
+#' for the storage and analysis of MPX single-cell data.
 #'
 #' @slot cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @slot polarization A \code{tbl_df} with polarization scores
@@ -40,6 +39,47 @@ CellGraphAssay <- setClass(
     fs_map = "data.frame"
   )
 )
+
+#' The CellGraphAssay5 class
+#'
+#' The CellGraphAssay5 object is an extended \code{\link[SeuratObject]{Assay5}}
+#' for the storage and analysis of MPX single-cell data.
+#'
+#' @slot cellgraphs A named list of \code{\link{CellGraph}} objects
+#' @slot polarization A \code{tbl_df} with polarization scores
+#' @slot colocalization A \code{tbl_df} with colocalization scores
+#' @slot fs_map A \code{tbl_df} with information pxl file paths,
+#' sample IDs and component IDs
+#'
+#' @name CellGraphAssay5-class
+#' @rdname CellGraphAssay5-class
+#' @importClassesFrom SeuratObject Assay5
+#' @exportClass CellGraphAssay5
+#' @concept assay
+CellGraphAssay5 <- setClass(
+  Class = "CellGraphAssay5",
+  contains = "Assay5",
+  slots = list(
+    cellgraphs = "list",
+    polarization = "data.frame",
+    colocalization = "data.frame",
+    fs_map = "data.frame"
+  )
+)
+
+
+#' MPXAssay class
+#'
+#' The MPXAssay class is the union of the CellGraphAssay and CellGraphAssay5
+#' class.
+#'
+#' @name MPXAssay
+#' @rdname MPXAssay
+#'
+#' @exportClass MPXAssay
+#' @concept assay
+setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
+
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -160,13 +200,126 @@ CreateCellGraphAssay <- function (
 }
 
 
+#' Create a CellGraphAssay5 object
+#'
+#' Create a \code{\link{CellGraphAssay5}} object from a count matrix. The expected
+#' format of the input matrix is features x cells.
+#'
+#' @param counts Unnormalized data (raw counts)
+#' @param cellgraphs A named list of \code{\link{CellGraph}} objects
+#' @param polarization A \code{tbl_df} with polarization scores
+#' @param colocalization A \code{tbl_df} with colocalization scores
+#' @param fs_map A \code{tbl_df} with information pxl file paths,
+#' sample IDs and component IDs
+#' @param ... Additional arguments passed to \code{\link{CreateAssay5Object}}
+#' @inheritParams ReadMPX_arrow_edgelist
+#'
+#' @import rlang
+#' @importFrom SeuratObject CreateAssay5Object
+#' @importFrom Matrix rowSums colSums
+#' @concept assay
+#'
+#' @return A \code{CellGraphAssay5} object
+#'
+#' @examples
+#'
+#' library(pixelatorR)
+#' library(dplyr)
+#' library(tidygraph)
+#'
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' counts <- ReadMPX_counts(pxl_file)
+#' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
+#' components <- colnames(counts)
+#' edgelist_split <-
+#'   edgelist %>%
+#'   select(upia, upib, component) %>%
+#'   distinct() %>%
+#'   group_by(component) %>%
+#'   group_split() %>%
+#'   setNames(nm = components)
+#'
+#' # Convert data into a list of CellGraph objects
+#' bipartite_graphs <- lapply(edgelist_split, function(x) {
+#'   x <- x %>% as_tbl_graph(directed = FALSE)
+#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   attr(x, "type") <- "bipartite"
+#'   CreateCellGraphObject(cellgraph = x)
+#' })
+#'
+#' # Create CellGraphAssay5
+#' cg_assay5 <- CreateCellGraphAssay5(counts = counts, cellgraphs = bipartite_graphs)
+#' cg_assay5
+#'
+#' @export
+#'
+CreateCellGraphAssay5 <- function (
+    counts,
+    cellgraphs,
+    polarization = NULL,
+    colocalization = NULL,
+    fs_map = NULL,
+    verbose = FALSE,
+    ...
+) {
+
+  # Check input parameters
+  stopifnot(
+    "'counts' must be a matrix-like object" =
+      inherits(counts, what =  c("matrix", "dgCMatrix")),
+    "'cellgraphs' must be a 'list'" =
+      inherits(cellgraphs, what = "list")
+  )
+  stopifnot(
+    "'cellgraphs' names must be match the colnames of the count matrix" =
+      all(names(cellgraphs) == colnames(counts))
+  )
+  cellgraphs <- cellgraphs[colnames(counts)]
+
+  # Validate polarization and colocalization
+  polarization <-
+    .validate_polarization(
+      polarization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
+    )
+  colocalization <-
+    .validate_colocalization(
+      colocalization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
+    )
+
+  # Create the Seurat assay5 object
+  counts <- as(counts, "dgCMatrix")
+  seurat_assay <- CreateAssay5Object(
+    counts = counts,
+    ...
+  )
+
+  # Convert Seurat Assay5 to a CellGraphAssay5
+  cg_assay5 <- as.CellGraphAssay5(
+    x = seurat_assay,
+    cellgraphs = cellgraphs,
+    polarization = polarization,
+    colocalization = colocalization,
+    fs_map = fs_map
+  )
+  return(cg_assay5)
+}
+
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Get/set methods
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 #' @rdname CellGraphs
-#' @method CellGraphs CellGraphAssay
+#' @method CellGraphs MPXAssay
 #' @export
 #' @concept assay
 #' @concept cellgraphs
@@ -209,7 +362,7 @@ CreateCellGraphAssay <- function (
 #' # Get cellgraphs from a CellGraphAssay object
 #' CellGraphs(cg_assay)
 #'
-CellGraphs.CellGraphAssay <- function (
+CellGraphs.MPXAssay <- function (
   object,
   ...
 ) {
@@ -218,7 +371,7 @@ CellGraphs.CellGraphAssay <- function (
 
 
 #' @export
-#' @method CellGraphs<- CellGraphAssay
+#' @method CellGraphs<- MPXAssay
 #' @rdname CellGraphs
 #' @concept assay
 #' @concept cellgraphs
@@ -231,7 +384,7 @@ CellGraphs.CellGraphAssay <- function (
 #' # Set cellgraphs in a CellGraphAssay object
 #' CellGraphs(cg_assay) <- cg_assay@cellgraphs
 #'
-"CellGraphs<-.CellGraphAssay" <- function (
+"CellGraphs<-.MPXAssay" <- function (
   object,
   ...,
   value
@@ -260,15 +413,23 @@ CellGraphs.CellGraphAssay <- function (
 }
 
 
+#' @param object A \code{MPXAssay} object, i.e. one of \code{CellGraphAssay} or
+#' \code{CellGraphAssay5}
+#' @param new.names A character vector with new cell IDs. The length of the vector
+#' must be equal to the number of cells in the object and the names must be unique.
+#' @param ... Additional arguments (not used)
+#'
 #' @importFrom SeuratObject RenameCells LayerData
 #' @importFrom arrow schema unify_schemas open_dataset arrow_table write_dataset
 #'
-#' @rdname RenameCells
-#' @method RenameCells CellGraphAssay
+#' @describeIn MPXAssay-methods Rename cell IDs of a \code{CellGraphAssay} or
+#' \code{CellGraphAssay5} object
+#' @method RenameCells MPXAssay
 #' @concept assay
+#' @docType methods
 #'
 #' @export
-RenameCells.CellGraphAssay <- function (
+RenameCells.MPXAssay <- function (
   object,
   new.names = NULL,
   ...
@@ -286,11 +447,12 @@ RenameCells.CellGraphAssay <- function (
 
   orig.names <- colnames(object)
 
-  assay <- as(object, Class = "Assay")
+  assay <- as(object, Class = ifelse(is(object, "CellGraphAssay"), "Assay", "Assay5"))
   assay <- RenameCells(assay, new.names = new.names, ...)
 
-  ## Recreate the CellGraphAssay object
-  cg_assay_renamed <- as.CellGraphAssay(assay)
+  # Recreate the CellGraphAssay object
+  as_assay_function <- ifelse(is(object, "CellGraphAssay"), as.CellGraphAssay, as.CellGraphAssay5)
+  cg_assay_renamed <- as_assay_function(assay)
 
   # Rename cellgraphs
   cellgraphs <- slot(object, name = "cellgraphs")
@@ -331,6 +493,24 @@ RenameCells.CellGraphAssay <- function (
 
   return(cg_assay_renamed)
 }
+
+#' @inheritParams RenameCells.MPXAssay
+#' @describeIn CellGraphAssay-methods Rename cell IDs of a \code{CellGraphAssay} object
+#' @concept assay
+#' @method RenameCells CellGraphAssay
+#' @docType methods
+#' @export
+#'
+RenameCells.CellGraphAssay <- RenameCells.MPXAssay
+
+#' @inheritParams RenameCells.MPXAssay
+#' @describeIn CellGraphAssay5-methods Rename cell IDs of a \code{CellGraphAssay5} object
+#' @concept assay
+#' @method RenameCells CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+RenameCells.CellGraphAssay5 <- RenameCells.MPXAssay
 
 
 #' @param cellgraphs A list of \code{\link{CellGraph}} objects
@@ -459,13 +639,139 @@ setAs(
 )
 
 
-#' @method PolarizationScores CellGraphAssay
+#' @param cellgraphs A list of \code{\link{CellGraph}} objects
+#' @param polarization A \code{tbl_df} with polarization scores
+#' @param colocalization A \code{tbl_df} with colocalization scores
+#' @param fs_map A \code{tbl_df} with information pxl file paths,
+#' sample IDs and component IDs
+#'
+#' @import rlang
+#'
+#' @rdname as.CellGraphAssay5
+#' @method as.CellGraphAssay5 Assay5
+#' @concept assay
+#'
+#' @return A \code{CellGraphAssay5} object
+#'
+#' @examples
+#'
+#' library(pixelatorR)
+#' library(SeuratObject)
+#' library(dplyr)
+#' library(tidygraph)
+#'
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' counts <- ReadMPX_counts(pxl_file)
+#' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
+#' components <- colnames(counts)
+#' edgelist_split <-
+#'   edgelist %>%
+#'   select(upia, upib, component) %>%
+#'   distinct() %>%
+#'   group_by(component) %>%
+#'   group_split() %>%
+#'   setNames(nm = components)
+#'
+#' # Convert data into a list of CellGraph objects
+#' bipartite_graphs <- lapply(edgelist_split, function(x) {
+#'   x <- x %>% as_tbl_graph(directed = FALSE)
+#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   attr(x, "type") <- "bipartite"
+#'   CreateCellGraphObject(cellgraph = x)
+#' })
+#'
+#' # Create Assay5
+#' assay5 <- CreateAssay5Object(counts = counts)
+#'
+#' # Convert Assay5 to CellGraphAssay5
+#' cg_assay <- as.CellGraphAssay5(assay5, cellgraphs = bipartite_graphs)
+#' cg_assay
+#'
+#' @export
+#'
+as.CellGraphAssay5.Assay5 <- function (
+    x,
+    cellgraphs = NULL,
+    polarization = NULL,
+    colocalization = NULL,
+    fs_map = NULL,
+    ...
+) {
+
+  # Check cellgraphs
+  if (!is.null(cellgraphs)) {
+    stopifnot(
+      "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay5" =
+        is.list(cellgraphs) &&
+        (length(cellgraphs) == ncol(x)))
+    stopifnot(
+      "'cellgraphs' names must match colnames of the Assay5" =
+        all(names(cellgraphs) == colnames(x))
+    )
+    for (i in seq_along(cellgraphs)) {
+      if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
+        abort(glue("Element {i} is not a CellGraph object or NULL"))
+      }
+    }
+  } else {
+    cellgraphs <- rep(list(NULL), ncol(x)) %>% setNames(nm = colnames(x))
+  }
+
+  # Check fs_map
+  if (!is.null(fs_map)) {
+    .validate_fs_map(fs_map)
+  }
+
+  # Validate polarization and colocalization
+  polarization <- .validate_polarization(polarization, cell_ids = colnames(x), markers = rownames(x))
+  colocalization <- .validate_colocalization(colocalization, cell_ids = colnames(x), markers = rownames(x))
+
+  new_assay <- as(object = x, Class = "CellGraphAssay5")
+
+  # Add slots
+  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "polarization") <- polarization
+  slot(new_assay, name = "colocalization") <- colocalization
+
+  # Add fs_map
+  if (!is.null(fs_map)) {
+    slot(new_assay, name = "fs_map") <- fs_map
+  }
+
+  return(new_assay)
+}
+
+setAs(
+  from = "Assay5",
+  to = "CellGraphAssay5",
+  def = function(from) {
+    object.list <- sapply(
+      X = slotNames(x = from),
+      FUN = slot,
+      object = from,
+      simplify = FALSE,
+      USE.NAMES = TRUE
+    )
+    object.list <- c(
+      list(
+        "Class" = "CellGraphAssay5"
+      ),
+      object.list
+    )
+    return(do.call(what = "new", args = object.list))
+  }
+)
+
+
+#' @method PolarizationScores MPXAssay
 #'
 #' @rdname PolarizationScores
 #'
 #' @export
 #'
-PolarizationScores.CellGraphAssay <- function (
+PolarizationScores.MPXAssay <- function (
   object,
   ...
 ) {
@@ -473,13 +779,13 @@ PolarizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method PolarizationScores<- CellGraphAssay
+#' @method PolarizationScores<- MPXAssay
 #'
 #' @rdname PolarizationScores
 #'
 #' @export
 #'
-"PolarizationScores<-.CellGraphAssay" <- function (
+"PolarizationScores<-.MPXAssay" <- function (
   object,
   ...,
   value
@@ -491,13 +797,13 @@ PolarizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method ColocalizationScores CellGraphAssay
+#' @method ColocalizationScores MPXAssay
 #'
 #' @rdname ColocalizationScores
 #'
 #' @export
 #'
-ColocalizationScores.CellGraphAssay <- function (
+ColocalizationScores.MPXAssay <- function (
   object,
   ...
 ) {
@@ -505,13 +811,13 @@ ColocalizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method ColocalizationScores<- CellGraphAssay
+#' @method ColocalizationScores<- MPXAssay
 #'
 #' @rdname ColocalizationScores
 #'
 #' @export
 #'
-"ColocalizationScores<-.CellGraphAssay" <- function (
+"ColocalizationScores<-.MPXAssay" <- function (
   object,
   ...,
   value
@@ -523,13 +829,13 @@ ColocalizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method FSMap CellGraphAssay
+#' @method FSMap MPXAssay
 #'
 #' @rdname FSMap
 #'
 #' @export
 #'
-FSMap.CellGraphAssay <- function (
+FSMap.MPXAssay <- function (
   object,
   ...
 ) {
@@ -537,13 +843,13 @@ FSMap.CellGraphAssay <- function (
 }
 
 
-#' @method FSMap<- CellGraphAssay
+#' @method FSMap<- MPXAssay
 #'
 #' @rdname FSMap
 #'
 #' @export
 #'
-"FSMap<-.CellGraphAssay" <- function (
+"FSMap<-.MPXAssay" <- function (
   object,
   ...,
   value
@@ -560,6 +866,26 @@ FSMap.CellGraphAssay <- function (
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
+#' MPXAssay Methods
+#'
+#' Methods for \code{\link{MPXAssay}} objects for generics defined in other
+#' packages
+#'
+#' @param x A \code{\link{MPXAssay}} object
+#' @param features Feature names
+#' @param cells Cell names
+#' @param y A \code{\link{MPXAssay}} object or a list of \code{\link{MPXAssay}} objects
+#' @param merge.data Merge the data slots instead of just merging the counts (which requires renormalization);
+#' this is recommended if the same normalization approach was applied to all objects
+#' @param ... Arguments passed to other methods
+#'
+#' @name MPXAssay-methods
+#' @rdname MPXAssay-methods
+#'
+#' @concept assay
+#'
+NULL
+
 #' CellGraphAssay Methods
 #'
 #' Methods for \code{\link{CellGraphAssay}} objects for generics defined in other
@@ -575,6 +901,26 @@ FSMap.CellGraphAssay <- function (
 #'
 #' @name CellGraphAssay-methods
 #' @rdname CellGraphAssay-methods
+#'
+#' @concept assay
+#'
+NULL
+
+#' CellGraphAssay5 Methods
+#'
+#' Methods for \code{\link{CellGraphAssay5}} objects for generics defined in other
+#' packages
+#'
+#' @param x A \code{\link{CellGraphAssay5}} object
+#' @param features Feature names
+#' @param cells Cell names
+#' @param y A \code{\link{CellGraphAssay5}} object or a list of \code{\link{CellGraphAssay5}} objects
+#' @param merge.data Merge the data slots instead of just merging the counts (which requires renormalization);
+#' this is recommended if the same normalization approach was applied to all objects
+#' @param ... Arguments passed to other methods
+#'
+#' @name CellGraphAssay5-methods
+#' @rdname CellGraphAssay5-methods
 #'
 #' @concept assay
 #'
@@ -643,15 +989,73 @@ setMethod (
 )
 
 
+#' Show method for \code{CellGraphAssay5} object
+#'
+#' @param object A \code{CellGraphAssay5} object
+#'
+#' @importFrom methods show
+#'
+#' @examples
+#'
+#' library(pixelatorR)
+#' library(dplyr)
+#' library(tidygraph)
+#'
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' counts <- ReadMPX_counts(pxl_file)
+#' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
+#' components <- colnames(counts)
+#' edgelist_split <-
+#'   edgelist %>%
+#'   select(upia, upib, component) %>%
+#'   distinct() %>%
+#'   group_by(component) %>%
+#'   group_split() %>%
+#'   setNames(nm = components)
+#'
+#' # Convert data into a list of CellGraph objects
+#' bipartite_graphs <- lapply(edgelist_split, function(x) {
+#'   x <- x %>% as_tbl_graph(directed = FALSE)
+#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   attr(x, "type") <- "bipartite"
+#'   CreateCellGraphObject(cellgraph = x)
+#' })
+#'
+#' # Create CellGraphAssay5
+#' cg_assay5 <- CreateCellGraphAssay5(counts = counts, cellgraphs = bipartite_graphs)
+#' cg_assay5
+#'
+#' # Show method
+#' cg_assay5
+#'
+setMethod (
+  f = "show",
+  signature = "CellGraphAssay5",
+  definition = function(object) {
+    cellgraphs <- slot(object, "cellgraphs")
+    loaded_graphs <- !sapply(cellgraphs, is.null)
+    show(as(object, Class = "Assay5"))
+    cat(
+      "Loaded CellGraph objects:",
+      sum(loaded_graphs),
+      "\n"
+    )
+  }
+)
 
-#' @describeIn CellGraphAssay-methods Subset a \code{CellGraphAssay} object
-#' @importClassesFrom SeuratObject Assay
+
+#' @describeIn MPXAssay-methods Subset a \code{CellGraphAssay} or a
+#' \code{CellGraphAssay5} object
+#' @importClassesFrom SeuratObject Assay Assay5
 #' @concept assay
-#' @method subset CellGraphAssay
+#' @method subset MPXAssay
+#' @docType methods
 #'
 #' @importFrom arrow write_dataset
 #'
-#' @return A \code{CellGraphAssay} object
+#' @return A \code{MPXAssay} object
 #'
 #' @examples
 #' library(pixelatorR)
@@ -665,17 +1069,17 @@ setMethod (
 #' seur <- LoadCellGraphs(seur)
 #' cg_assay <- seur[["mpxCells"]]
 #'
-#' # Subset CellGraphAssay
+#' # Subset CellGraphAssay(5)
 #' # ---------------------------------
 #' cg_assay_subset <- subset(cg_assay, cells = colnames(cg_assay)[1:3])
 #'
-#' # Subset Seurat object containing a CellGraphAssay
+#' # Subset Seurat object containing a CellGraphAssay(5)
 #' # --------------------------------
 #' seur_subset <- subset(seur, cells = colnames(seur)[1:3])
 #'
 #' @export
 #'
-subset.CellGraphAssay <- function (
+subset.MPXAssay <- function (
   x,
   features = NULL,
   cells = NULL,
@@ -691,7 +1095,9 @@ subset.CellGraphAssay <- function (
   cellgraphs <- x@cellgraphs
 
   # subset elements in the standard assay
-  assay <- as(object = x, Class = "Assay")
+  assay <- as(object = x, Class = ifelse(is(x, "CellGraphAssay"),
+                                         "Assay",
+                                         "Assay5"))
   assay_subset <- subset(x = assay, features = features, cells = cells)
 
   # Filter cellgraphs
@@ -729,8 +1135,11 @@ subset.CellGraphAssay <- function (
     fs_map <- na.omit(fs_map)
   }
 
-  # convert standard assay to CellGraphAssay
-  cg_assay <- as.CellGraphAssay(
+  # convert standard assay to CellGraphAssay or CellGraphAssay5
+  as_assay_func <- ifelse(is(x, "CellGraphAssay"),
+                          as.CellGraphAssay,
+                          as.CellGraphAssay5)
+  cg_assay <- as_assay_func(
     x = assay_subset,
     cellgraphs = cellgraphs_filtered,
     polarization = polarization,
@@ -740,30 +1149,48 @@ subset.CellGraphAssay <- function (
   return(cg_assay)
 }
 
+#' @describeIn CellGraphAssay-methods Subset a \code{CellGraphAssay} object
+#' @concept assay
+#' @method subset CellGraphAssay
+#' @docType methods
+#' @export
+#'
+subset.CellGraphAssay <- subset.MPXAssay
+
+#' @describeIn CellGraphAssay5-methods Subset a \code{CellGraphAssay5} object
+#' @concept assay
+#' @method subset CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+subset.CellGraphAssay5 <- subset.MPXAssay
+
 
 #' @param add.cell.ids A character vector with sample names
 #'
 #' @importFrom SeuratObject Key Key<- RenameCells
-#' @describeIn CellGraphAssay-methods Merge two or more \code{CellGraphAssay} objects together
+#' @describeIn MPXAssay-methods Merge two or more \code{CellGraphAssay} or
+#' \code{CellGraphAssay5} objects together
 #' @concept assay
-#' @method merge CellGraphAssay
+#' @method merge MPXAssay
+#' @docType methods
 #'
 #' @importFrom SeuratObject RowMergeSparseMatrices Cells Key Key<- RenameCells
 #' @importFrom stringr str_c
 #' @importFrom arrow open_dataset write_parquet
 #'
 #' @examples
-#' # Merge CellGraphAssays
+#' # Merge multiple CellGraphAssay(5) objects
 #' # ---------------------------------
 #'
-#' # Merge 3 CellGraphAssays
+#' # Merge 3 CellGraphAssay(5) objects
 #' cg_assay_merged <- merge(cg_assay,
 #'                          y = list(cg_assay, cg_assay),
 #'                          add.cell.ids = c("A", "B", "C"))
 #'
 #' @export
 #'
-merge.CellGraphAssay <- function (
+merge.MPXAssay <- function (
   x = NULL,
   y = NULL,
   merge.data = TRUE,
@@ -772,17 +1199,15 @@ merge.CellGraphAssay <- function (
 ) {
 
   # Validate input parameters
-  if (!inherits(y, what = c("list", "CellGraphAssay")))
-    abort("'y' must be a 'CellGraphAssay' object or a list of 'CellGraphAssay' objects")
+  if (!inherits(y, what = c("list", "MPXAssay")))
+    abort("'y' must be a 'CellGraphAssay(5)' object or a list of 'CellGraphAssay(5)' objects")
   if (is.list(y)) {
     for (i in seq_along(y)) {
-      if (!inherits(y[[i]], what = "CellGraphAssay")) {
-        abort(glue("Element {i} in 'y' is not a 'CellGraphAssay'"))
+      if (!inherits(y[[i]], what = "MPXAssay")) {
+        abort(glue("Element {i} in 'y' is not a 'CellGraphAssay(5)' object"))
       }
     }
   }
-
-  objects <- c(x, y)
 
   objects <- c(x, y)
   cell.names <- unlist(lapply(objects, colnames))
@@ -814,7 +1239,7 @@ merge.CellGraphAssay <- function (
 
   # Fetch standard assays
   standardassays <- lapply(objects, function(cg_assay) {
-    assay <- as(object = cg_assay, Class = "Assay")
+    assay <- as(object = cg_assay, Class = ifelse(is(cg_assay, "CellGraphAssay"), "Assay", "Assay5"))
     if (length(Key(assay)) == 0) Key(assay) <- "px_"
     return(assay)
   })
@@ -864,7 +1289,11 @@ merge.CellGraphAssay <- function (
   }
 
   # Convert to CellGraphAssay and add cellgraphs
-  merged_cg_assay <- as.CellGraphAssay(
+  as_assay_func <-
+    ifelse(is(cg_assay, "CellGraphAssay"),
+           as.CellGraphAssay,
+           as.CellGraphAssay5)
+  merged_cg_assay <- as_assay_func(
     x = new_assay,
     cellgraphs = cellgraphs_new,
     polarization = polarization,
@@ -874,3 +1303,19 @@ merge.CellGraphAssay <- function (
 
   return(merged_cg_assay)
 }
+
+#' @describeIn CellGraphAssay-methods Merge two or more \code{CellGraphAssay} objects together
+#' @concept assay
+#' @method merge CellGraphAssay
+#' @docType methods
+#' @export
+#'
+merge.CellGraphAssay <- merge.MPXAssay
+
+#' @describeIn CellGraphAssay5-methods Merge two or more \code{CellGraphAssay5} objects together
+#' @concept assay
+#' @method merge CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+merge.CellGraphAssay5 <- merge.MPXAssay

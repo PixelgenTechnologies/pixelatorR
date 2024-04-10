@@ -229,7 +229,7 @@ ComputeLayout.CellGraph <- function (
 #' @param verbose Print messages
 #'
 #' @rdname ComputeLayout
-#' @method ComputeLayout CellGraphAssay
+#' @method ComputeLayout MPXAssay
 #'
 #' @importFrom progressr progressor
 #'
@@ -240,7 +240,7 @@ ComputeLayout.CellGraph <- function (
 #'
 #' @export
 #'
-ComputeLayout.CellGraphAssay <- function (
+ComputeLayout.MPXAssay <- function (
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
   dim = 2,
@@ -262,7 +262,7 @@ ComputeLayout.CellGraphAssay <- function (
 
   if (sum(loaded_graphs) == 0) {
     if (verbose && check_global_verbosity())
-      cli_alert_info("No 'cellgraphs' loaded in 'CellGraphAssay'. Returning unmodified 'CellGraphAssay'.")
+      cli_alert_info("No 'cellgraphs' loaded. Returning unmodified object.")
     return(object)
   }
 
@@ -298,6 +298,21 @@ ComputeLayout.CellGraphAssay <- function (
   return(object)
 }
 
+#' @rdname ComputeLayout
+#' @method ComputeLayout CellGraphAssay
+#' @docType methods
+#' @export
+#'
+ComputeLayout.CellGraphAssay <- ComputeLayout.MPXAssay
+
+#' @rdname ComputeLayout
+#' @method ComputeLayout CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+ComputeLayout.CellGraphAssay5 <- ComputeLayout.MPXAssay
+
+
 #' @param assay Name of assay to compute layouts for
 #' @rdname ComputeLayout
 #' @method ComputeLayout Seurat
@@ -330,8 +345,8 @@ ComputeLayout.Seurat <- function (
   assay <- assay %||% DefaultAssay(object)
 
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("assay '{assay}' is not a 'CellGraphAssay'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
   }
 
   # Check cellgraphs

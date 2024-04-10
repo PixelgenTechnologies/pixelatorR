@@ -1,3 +1,10 @@
+# Declarations used in package check
+globalVariables(
+  names = c('id_map', 'component_new'),
+  package = 'pixelatorR',
+  add = TRUE
+)
+
 #' Check global option for verbosity
 #'
 #' By setting the global option \code{options(pixelatorR.verbose = FALSE)},
