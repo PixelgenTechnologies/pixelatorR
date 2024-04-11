@@ -76,9 +76,11 @@ PolarizationScoresToAssay.MPXAssay <- function (
   pol_matrix <- .create_spatial_metric_matrix(object,
                                               values_from = values_from,
                                               metric = "polarization")
+  pol_matrix <- as(pol_matrix, "dgCMatrix")
 
   # Create Assay from filled matrix
-  assay <- CreateAssayObject(data = pol_matrix)
+  create_cg_assay_function <- ifelse(is(object, "CellGraphAssay"), CreateAssayObject, CreateAssay5Object)
+  assay <- create_cg_assay_function(data = pol_matrix)
 
   return(assay)
 }
@@ -162,7 +164,7 @@ PolarizationScoresToAssay.Seurat <- function (
   pol_assay <- PolarizationScoresToAssay(cg_assay, values_from, ...)
 
   # Place new assay in Seurat object
-  object[[new_assay]] <- pol_assay
+  object@assays[[new_assay]] <- pol_assay
 
   return(object)
 }
@@ -251,9 +253,11 @@ ColocalizationScoresToAssay.MPXAssay <- function (
   coloc_matrix <- .create_spatial_metric_matrix(object,
                                                 values_from = values_from,
                                                 metric = "colocalization")
+  coloc_matrix <- as(coloc_matrix, "dgCMatrix")
 
   # Create Assay from filled matrix
-  assay <- CreateAssayObject(data = coloc_matrix)
+  create_cg_assay_function <- ifelse(is(object, "CellGraphAssay"), CreateAssayObject, CreateAssay5Object)
+  assay <- create_cg_assay_function(data = coloc_matrix)
 
   return(assay)
 }
@@ -339,7 +343,7 @@ ColocalizationScoresToAssay.Seurat <- function (
   col_assay <- ColocalizationScoresToAssay(cg_assay, values_from, ...)
 
   # Place new assay in Seurat object
-  object[[new_assay]] <- col_assay
+  object@assays[[new_assay]] <- col_assay
 
   return(object)
 }

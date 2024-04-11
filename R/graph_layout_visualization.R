@@ -130,8 +130,8 @@ Plot2DGraph <- function (
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay' or a 'CellGraphAssay5' object."))
   }
 
   # Fetch data
@@ -596,8 +596,8 @@ Plot3DGraph <- function (
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay' or a 'CellGraphAssay5' object"))
   }
 
   # Fetch component graph

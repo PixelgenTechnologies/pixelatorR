@@ -1281,6 +1281,29 @@ merge.MPXAssay <- function (
     fs_map = fs_map
   )
 
+  # Add meta.features for CellGraphAssay
+  if (is(merged_cg_assay, "CellGraphAssay")) {
+
+    can_merge_meta_features <- TRUE
+    ob_features <- lapply(objects, function(x) rownames(x@meta.features))
+    for (i in 2:length(ob_features)) {
+      if (!all(ob_features[[i]] == ob_features[[1]])) {
+        cli_alert_danger("Meta features are not the same across objects. ",
+                         "Cannot merge meta.features slots.")
+        can_merge_meta_features <- FALSE
+        break
+      }
+    }
+
+    if (can_merge_meta_features) {
+      meta_features <- objects[[1]]@meta.features %>% select(any_of(c("control", "marker", "nuclear")))
+    }
+
+    # Place meta.features in CellGraphAssay
+    merged_cg_assay@meta.features <- meta_features
+
+  }
+
   return(merged_cg_assay)
 }
 
