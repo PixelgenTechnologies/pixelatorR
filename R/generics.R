@@ -35,7 +35,7 @@ as.CellGraphAssay <- function (
 #' @param ... Arguments passed to other methods
 #'
 #' @return Returns a list of \code{\link{CellGraph}} objects. If there are
-#' no \code{\link{CellGraph}} objects present, returns an empty list.
+#' no \code{\link{CellGraph}} objects present, returns an empty named list.
 #'
 #' @rdname CellGraphs
 #' @seealso [PolarizationScores()] and [ColocalizationScores()] for getting/setting spatial metrics
@@ -111,7 +111,7 @@ LoadCellGraphs <- function (
 
 #' Remove CellGraphs
 #'
-#' Removes \code{\link{CellGraph}} list from the "cellgraphs" slot.
+#' Clears the \code{\link{CellGraph}} objects from the "cellgraphs" slot.
 #'
 #' @param object A \code{Seurat} object or an \code{\link{CellGraphAssay}} object
 #' @param ... Parameters passed to other methods
@@ -131,7 +131,7 @@ RemoveCellGraphs <- function (
 
 #' Edge Rank Plot
 #'
-#' Plots the number of edges per component against the component rank
+#' Plots the number of edges/molecules per component against the component rank
 #'
 #' @param object A \code{data.frame}-like object or a \code{Seurat} object
 #' @param ... Parameters passed to other methods
@@ -367,7 +367,7 @@ RunDCA <- function (
 }
 
 
-#' Convert polarization scores to Assay(5)
+#' Convert polarization score table to an Assay or Assay5
 #'
 #' @section Behavior:
 #'
@@ -422,7 +422,7 @@ PolarizationScoresToAssay <- function (
 }
 
 
-#' Convert colocalization scores to Assay
+#' Convert colocalization score table to an Assay or Assay5
 #'
 #' @section Behavior:
 #'

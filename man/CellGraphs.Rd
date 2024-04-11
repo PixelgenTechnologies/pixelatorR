@@ -30,7 +30,7 @@ CellGraphs(object, ...) <- value
 }
 \value{
 Returns a list of \code{\link{CellGraph}} objects. If there are
-no \code{\link{CellGraph}} objects present, returns an empty list.
+no \code{\link{CellGraph}} objects present, returns an empty named list.
 }
 \description{
 Get and set \code{\link{CellGraph}} lists for different objects.
