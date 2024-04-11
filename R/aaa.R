@@ -24,10 +24,6 @@ check_global_verbosity <- function() {
 # if the package is missing, users will be asked to install the package.
 # ***********************************
 
-expect_jsonlite <- function(...) {
-  rlang::check_installed('jsonlite', ...)
-}
-
 expect_scales <- function(...) {
   rlang::check_installed('scales', ...)
 }

@@ -36,10 +36,7 @@ Imports:
     fs,
     pbapply,
     zip,
-    utils,
-    grDevices,
-    stats,
-    grid
+    jsonlite
 Remotes:
     cran/arrow@14.0.2.1
 Suggests:
@@ -48,7 +45,6 @@ Suggests:
     testthat (>= 3.0.0),
     graphlayouts,
     scales,
-    jsonlite,
     pheatmap,
     duckdb,
     dbplyr

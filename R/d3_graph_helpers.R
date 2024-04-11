@@ -208,9 +208,6 @@ color_by_marker <- function (
   # Set global variables to NULL (required by shinytest2)
   from <- to <- NULL
 
-  # Require jsonlite library
-  expect_jsonlite()
-
   # Validate data
   stopifnot("'data' must be a 'tbl_graph' object" = inherits(data, what = "tbl_graph"))
 
