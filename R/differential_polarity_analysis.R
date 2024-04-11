@@ -10,8 +10,6 @@ NULL
 #' @rdname RunDPA
 #' @method RunDPA data.frame
 #'
-#' @importFrom stats wilcox.test p.adjust
-#'
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)

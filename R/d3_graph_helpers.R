@@ -172,8 +172,6 @@ color_by_marker <- function (
 #' @param x A numeric vector
 #' @param bottom_q,top_q Quantiles used for trimming
 #'
-#' @importFrom stats quantile
-#'
 #' @noRd
 #'
 .trim_quantiles <- function (

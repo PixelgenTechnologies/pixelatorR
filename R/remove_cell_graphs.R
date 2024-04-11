@@ -7,7 +7,7 @@ RemoveCellGraphs.MPXAssay <- function (
   object,
   ...
 ){
-  slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% setNames(nm = colnames(object))
+  slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
   return(object)
 }
 

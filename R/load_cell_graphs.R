@@ -184,7 +184,7 @@ LoadCellGraphs.MPXAssay <- function (
     return(object)
   } else {
     if (force) {
-      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>% setNames(nm = cells)
+      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>% set_names(nm = cells)
       loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
     }
     cells_to_load <- setdiff(cells, cells[loaded_graphs])
@@ -369,7 +369,7 @@ LoadCellGraphs.Seurat <- function (
 
   edge_table_split <- edge_table %>%
     group_split() %>% # Split into list, with one element per component
-    setNames(nm = edge_table %>% dplyr::group_data() %>% pull(component)) # Name list with component IDs
+    set_names(nm = edge_table %>% dplyr::group_data() %>% pull(component)) # Name list with component IDs
 
   edge_table_split <- lapply(names(edge_table_split), function(nm) {
 
@@ -523,7 +523,7 @@ LoadCellGraphs.Seurat <- function (
   # Split into list with one component per element
   edge_table_split <- edge_table %>%
     group_split() %>%
-    setNames(nm = edge_table %>% dplyr::group_data() %>% pull(component))
+    set_names(nm = edge_table %>% dplyr::group_data() %>% pull(component))
 
   edge_table_split <- lapply(names(edge_table_split), function(nm) {
 

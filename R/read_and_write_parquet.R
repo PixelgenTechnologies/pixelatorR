@@ -10,8 +10,6 @@
 #' @param ... Parameters passed to other methods
 #'
 #' @import rlang
-#' @importFrom arrow open_dataset
-#' @importFrom utils unzip
 #'
 #' @return Nothing. The edgelist is saved to a parquet file
 #' set with \code{edge_list_file}

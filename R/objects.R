@@ -2,7 +2,6 @@
 NULL
 
 
-#' @importFrom SeuratObject DefaultAssay
 #' @rdname CellGraphs
 #' @method CellGraphs Seurat
 #' @export
@@ -36,7 +35,6 @@ CellGraphs.Seurat <- function (
 #' @method CellGraphs<- Seurat
 #' @rdname CellGraphs
 #' @concept cellgraphs
-#' @importFrom SeuratObject DefaultAssay
 #'
 #' @examples
 #' # CellGraphs setter Seurat
