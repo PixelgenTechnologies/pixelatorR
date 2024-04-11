@@ -8,7 +8,7 @@
 \alias{ColocalizationScoresToAssay.CellGraphAssay}
 \alias{ColocalizationScoresToAssay.CellGraphAssay5}
 \alias{ColocalizationScoresToAssay.Seurat}
-\title{Convert colocalization scores to Assay}
+\title{Convert colocalization score table to an Assay or Assay5}
 \usage{
 ColocalizationScoresToAssay(object, ...)
 
@@ -57,7 +57,7 @@ ColocalizationScoresToAssay(object, ...)
 \item{new_assay}{Name of the \code{Assay} to store the polarization scores in}
 }
 \description{
-Convert colocalization scores to Assay
+Convert colocalization score table to an Assay or Assay5
 }
 \section{Behavior}{
 

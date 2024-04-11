@@ -23,7 +23,7 @@ EdgeRankPlot(object, ...)
 A \code{ggplot} object
 }
 \description{
-Plots the number of edges per component against the component rank
+Plots the number of edges/molecules per component against the component rank
 }
 \examples{
 
