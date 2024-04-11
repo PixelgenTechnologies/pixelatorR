@@ -1,5 +1,3 @@
-options(Seurat.object.assay.version = "v3")
-
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
                         package = "pixelatorR")

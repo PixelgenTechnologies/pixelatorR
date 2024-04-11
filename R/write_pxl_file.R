@@ -267,19 +267,27 @@ WriteMPX_pxl_file <- function (
 
   # Create var H5Group
   var <- adata_new$create_group("var")
-  feature_meta_data <- cg_assay@meta.data
+  if (is(cg_assay, "CellGraphAssay5")) {
+    feature_meta_data <- cg_assay@meta.data
+  } else {
+    feature_meta_data <- cg_assay@meta.features
+  }
 
   # Only export selected faeture meta data columns if they are available
-  var$create_dataset("marker", robj = feature_meta_data %>% pull(marker), chunk_dims = NULL)
-  var_cols_of_interest <- c("antibody_count", "components", "antibody_pct", "nuclear", "control")
-  var_cols_keep <- intersect(
-    var_cols_of_interest,
-    colnames(feature_meta_data)
-  )
-  if (length(var_cols_keep) > 0) {
-    for (col_name in var_cols_keep) {
-      var$create_dataset(col_name, robj = feature_meta_data %>% pull(col_name), chunk_dims = NULL)
+  if (length(feature_meta_data) > 0) {
+    var$create_dataset("marker", robj = feature_meta_data %>% pull(marker), chunk_dims = NULL)
+    var_cols_of_interest <- c("antibody_count", "components", "antibody_pct", "nuclear", "control")
+    var_cols_keep <- intersect(
+      var_cols_of_interest,
+      colnames(feature_meta_data)
+    )
+    if (length(var_cols_keep) > 0) {
+      for (col_name in var_cols_keep) {
+        var$create_dataset(col_name, robj = feature_meta_data %>% pull(col_name), chunk_dims = NULL)
+      }
     }
+  } else {
+    var$create_dataset("marker", robj = cg_assay %>% rownames(), chunk_dims = NULL)
   }
   hdf5r::h5attr(var, which = "_index") <- "marker"
   hdf5r::h5attr(var, which = "encoding-type") <- "dataframe"
