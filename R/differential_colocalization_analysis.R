@@ -15,8 +15,6 @@ NULL
 #' @rdname RunDCA
 #' @method RunDCA data.frame
 #'
-#' @importFrom stats wilcox.test p.adjust
-#'
 #' @export
 #'
 RunDCA.data.frame <- function (

@@ -19,8 +19,6 @@ globalVariables(
 #' @param component_edge_list An object of class \code{tbl_df}
 #' @param k Number of neighbors to include
 #'
-#' @importFrom igraph as_adjacency_matrix connect
-#'
 #' @return A matrix with node marker counts
 #'
 #' @export

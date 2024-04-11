@@ -204,7 +204,7 @@ Plot2DGraph <- function (
 
     data <- list(graph = graph, layout = layout, type = attr(graph, "type"), layout_type = layout_method)
     return(data)
-  }) %>% setNames(nm = cells)
+  }) %>% set_names(nm = cells)
 
   # Set limits
   if (!is.null(marker)) {
@@ -213,7 +213,7 @@ Plot2DGraph <- function (
         if (is.null(x)) return(NULL)
         x$graph %>% pull(marker)
       }) %>% unlist() %>% max()
-      limits <- c(rep(list(c(0, max_val)), length(data_list))) %>% setNames(names(data_list))
+      limits <- c(rep(list(c(0, max_val)), length(data_list))) %>% set_names(names(data_list))
     } else {
       limits <- lapply(data_list, function(x) {
         if (is.null(x)) return(NULL)
@@ -302,9 +302,6 @@ Plot2DGraph <- function (
 #' @param titles_col The color of the plot titles
 #' @param ... Parameters passed to Plot2DGraph
 #' @inheritParams Plot2DGraph
-#'
-#' @importFrom stats setNames
-#' @importFrom grid textGrob gpar
 #'
 #' @return A \code{patchwork} object
 #'

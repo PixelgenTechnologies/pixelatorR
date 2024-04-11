@@ -36,7 +36,10 @@ Imports:
     fs,
     pbapply,
     zip,
-    utils
+    utils,
+    grDevices,
+    stats,
+    grid
 Remotes:
     cran/arrow@14.0.2.1
 Suggests:

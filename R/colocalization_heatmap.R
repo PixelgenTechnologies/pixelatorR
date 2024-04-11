@@ -16,8 +16,6 @@ globalVariables(
 #' instead of drawing the heatmap
 #' @param ... Parameters passed to \code{pheatmap}
 #'
-#' @importFrom grDevices colorRampPalette
-#'
 #' @return A heatmap
 #'
 #' @export

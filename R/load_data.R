@@ -13,7 +13,6 @@ globalVariables(
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @importFrom utils unzip
 #'
 #' @return A count matrix or a list if \code{return_list = TRUE}
 #'
@@ -99,8 +98,6 @@ ReadMPX_counts <- function (
 #' @inheritParams ReadMPX_counts
 #'
 #' @import rlang
-#' @importFrom SeuratObject CreateSeuratObject CreateAssayObject CreateAssay5Object `VariableFeatures<-`
-#' @importFrom stats setNames
 #'
 #' @family data-loaders
 #'
@@ -145,7 +142,7 @@ ReadMPX_Seurat <- function (
   hd5_object <- data$hd5_object
 
   # Load edgelist
-  empty_graphs <- rep(list(NULL), ncol(X)) %>% setNames(nm = colnames(X))
+  empty_graphs <- rep(list(NULL), ncol(X)) %>% set_names(nm = colnames(X))
 
   if (return_cellgraphassay) {
 
@@ -259,8 +256,6 @@ ReadMPX_Seurat <- function (
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @importFrom arrow read_parquet
-#' @importFrom utils read.csv
 #'
 #' @family data-loaders
 #'

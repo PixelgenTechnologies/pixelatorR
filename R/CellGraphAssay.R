@@ -103,8 +103,6 @@ setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
 #' @import rlang
-#' @importFrom SeuratObject CreateAssayObject
-#' @importFrom Matrix rowSums colSums
 #' @concept assay
 #'
 #' @return A \code{CellGraphAssay} object
@@ -216,8 +214,6 @@ CreateCellGraphAssay <- function (
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
 #' @import rlang
-#' @importFrom SeuratObject CreateAssay5Object
-#' @importFrom Matrix rowSums colSums
 #' @concept assay
 #'
 #' @return A \code{CellGraphAssay5} object
@@ -393,7 +389,7 @@ CellGraphs.MPXAssay <- function (
 
   # Clean cellgraphs slot if balue = NULL
   if (is.null(x = value)) {
-    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% setNames(nm = colnames(object))
+    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
     return(object)
   }
 
@@ -419,9 +415,6 @@ CellGraphs.MPXAssay <- function (
 #' @param new.names A character vector with new cell IDs. The length of the vector
 #' must be equal to the number of cells in the object and the names must be unique.
 #' @param ... Additional arguments (not used)
-#'
-#' @importFrom SeuratObject RenameCells LayerData
-#' @importFrom arrow schema unify_schemas open_dataset arrow_table write_dataset
 #'
 #' @describeIn MPXAssay-methods Rename cell IDs of a \code{CellGraphAssay} or
 #' \code{CellGraphAssay5} object
@@ -591,7 +584,7 @@ as.CellGraphAssay.Assay <- function (
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% setNames(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
   }
 
   # Check fs_map
@@ -717,7 +710,7 @@ as.CellGraphAssay5.Assay5 <- function (
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% setNames(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
   }
 
   # Check fs_map
@@ -937,8 +930,6 @@ NULL
 #' \code{CellGraphAssay5} object
 #' @param object A \code{CellGraphAssay} or a \code{CellGraphAssay5} object
 #'
-#' @importFrom methods show
-#'
 #' @examples
 #'
 #' library(pixelatorR)
@@ -1148,16 +1139,11 @@ subset.CellGraphAssay5 <- subset.MPXAssay
 
 #' @param add.cell.ids A character vector with sample names
 #'
-#' @importFrom SeuratObject Key Key<- RenameCells
 #' @describeIn MPXAssay-methods Merge two or more \code{CellGraphAssay} or
 #' \code{CellGraphAssay5} objects together
 #' @concept assay
 #' @method merge MPXAssay
 #' @docType methods
-#'
-#' @importFrom SeuratObject RowMergeSparseMatrices Cells Key Key<- RenameCells
-#' @importFrom stringr str_c
-#' @importFrom arrow open_dataset write_parquet
 #'
 #' @examples
 #' # Merge multiple CellGraphAssay(5) objects

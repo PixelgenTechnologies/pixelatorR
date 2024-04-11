@@ -101,7 +101,7 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
     attr(g, "type") <- "Anode"
     return(g)
   }) %>%
-    setNames(nm = components)
+    set_names(nm = components)
 
   if (verbose && check_global_verbosity())
     cli_alert_success("Returning an A-node projected graphs")
@@ -110,8 +110,6 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
 
 
 #' @import rlang
-#' @importFrom arrow to_duckdb
-#' @importFrom stringr str_c str_sub
 #'
 #' @rdname graph-conversion
 #' @method edgelist_to_simple_Anode_graph FileSystemDataset
@@ -198,7 +196,7 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
     attr(g, "type") <- "Anode"
     return(g)
   }) %>%
-    setNames(nm = components)
+    set_names(nm = components)
 
   if (verbose && check_global_verbosity())
     cli_alert_success("Returning an A-node projected graphs")
