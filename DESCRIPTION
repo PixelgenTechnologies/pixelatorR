@@ -65,6 +65,7 @@ Collate:
     'graph_conversion.R'
     'graph_layout.R'
     'graph_layout_visualization.R'
+    'inspect_pxl_file.R'
     'keep_largest_component.R'
     'load_cell_graphs.R'
     'load_data.R'
