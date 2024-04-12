@@ -34,7 +34,11 @@ ReadMPX_counts <- function (
   verbose = TRUE
 ) {
 
-  stopifnot("filename must be a character of length 1" = is.character(filename) & (length(filename) == 1))
+  stopifnot(
+    "filename must be a character of length 1" =
+      is.character(filename) &&
+      (length(filename) == 1)
+  )
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
   # Reads anndata from a .pxl file by unzipping it into a temporary folder and reading the anndata object within.
@@ -44,17 +48,20 @@ ReadMPX_counts <- function (
   # Unzip pxl file
   original_filename <- filename
   if (endsWith(filename, ".pxl")) {
-    filename <- tryCatch(utils::unzip(filename, "adata.h5ad", exdir = tempdir()),
+    res <- tryCatch(unzip(filename, exdir = fs::path_temp()),
                          error = function(e) e,
                          warning = function(w) w)
-    if (inherits(x = filename, what = "simpleWarning"))
+    if (inherits(x = res, what = "simpleWarning"))
       abort("Failed to unzip 'adata.h5ad' data")
   } else {
     abort(glue("Invalid file format .{.file_ext(filename)}. Expected a .pxl file."))
   }
 
   # Read temporary file
-  hd5_object <- hdf5r::H5File$new(filename, "r")
+  adata_file <- file.path(fs::path_temp(), "adata.h5ad")
+  tmp_file <- fs::file_temp(ext = "h5ad")
+  fs::file_move(adata_file, tmp_file)
+  hd5_object <- hdf5r::H5File$new(tmp_file, "r")
 
   # Extract contents
   X <- hd5_object[["X"]]$read()
@@ -63,10 +70,11 @@ ReadMPX_counts <- function (
 
   X <- X[seq_len(nrow(X)), seq_len(ncol(X))]
 
+  hd5_object$close_all()
+
   if (return_list) {
-    return(list(X = X, hd5_object = hd5_object))
+    return(list(X = X, tmp_file = tmp_file))
   } else {
-    hd5_object$close()
     return(X)
   }
 }
@@ -139,7 +147,7 @@ ReadMPX_Seurat <- function (
   # Load count matrix
   data <- ReadMPX_counts(filename = filename, return_list = TRUE, verbose = FALSE)
   X <- data$X
-  hd5_object <- data$hd5_object
+  hd5_object <- hdf5r::H5File$new(data$tmp_file, "r")
 
   # Load edgelist
   empty_graphs <- rep(list(NULL), ncol(X)) %>% set_names(nm = colnames(X))

@@ -35,9 +35,9 @@
   x
 ) {
   if (.Platform$OS.type == 'unix') {
-    grepl('^[/~]', x)
+    str_detect(x, '^[/~]')
   } else {
-    !(normalizePath(x) == normalizePath(file.path('.', x)))
+    str_detect(x, "^(~|.:)(/|\\\\)")
   }
 }
 
