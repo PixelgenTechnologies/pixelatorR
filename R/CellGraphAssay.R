@@ -387,7 +387,7 @@ CellGraphs.MPXAssay <- function (
   value
 ) {
 
-  # Clean cellgraphs slot if balue = NULL
+  # Clean cellgraphs slot if value = NULL
   if (is.null(x = value)) {
     slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
     return(object)
@@ -1077,7 +1077,7 @@ subset.MPXAssay <- function (
   # Filter cellgraphs
   cellgraphs_filtered <- cellgraphs[colnames(assay_subset)]
 
-  # Filter polarization and colocaliation scores
+  # Filter polarization and colocalization scores
   polarization <- slot(x, name = "polarization")
   if (length(polarization) > 0) {
     if (!is.null(cells)) {
