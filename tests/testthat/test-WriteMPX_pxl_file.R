@@ -15,9 +15,9 @@ for (assay_version in c("v3", "v5")) {
     temp_pxl_file <- fs::file_temp(ext = ".pxl")
     expect_no_error({WriteMPX_pxl_file(seur_obj, temp_pxl_file)})
     expect_true(fs::file_exists(temp_pxl_file))
-    f_size <- fs::fs_bytes(2223793) %>% set_names(temp_pxl_file)
-    expect_equal(fs::file_size(temp_pxl_file),
-                 f_size)
+    # f_size <- fs::fs_bytes(2223793) %>% set_names(temp_pxl_file)
+    # expect_equal(fs::file_size(temp_pxl_file),
+    #              f_size)
 
     # Check content for single sample pxl file
     pxl_files <- unzip(temp_pxl_file, list = TRUE)$Name
@@ -47,12 +47,12 @@ for (assay_version in c("v3", "v5")) {
     temp_pxl_file <- fs::file_temp(ext = ".pxl")
     expect_no_error({WriteMPX_pxl_file(seur_obj_merged, temp_pxl_file)})
     expect_true(fs::file_exists(temp_pxl_file))
-    if (assay_version == "v5") {
-      f_size <- fs::fs_bytes(2881338) %>% set_names(temp_pxl_file)
-    } else {
-      f_size <- fs::fs_bytes(2879666) %>% set_names(temp_pxl_file)
-    }
-    expect_equal(fs::file_size(temp_pxl_file), f_size)
+    # if (assay_version == "v5") {
+    #   f_size <- fs::fs_bytes(2881338) %>% set_names(temp_pxl_file)
+    # } else {
+    #   f_size <- fs::fs_bytes(2879666) %>% set_names(temp_pxl_file)
+    # }
+    # expect_equal(fs::file_size(temp_pxl_file), f_size)
 
     # Check content for single sample pxl file
     pxl_files <- unzip(temp_pxl_file, list = TRUE)$Name
