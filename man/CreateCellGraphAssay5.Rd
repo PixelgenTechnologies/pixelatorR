@@ -23,8 +23,8 @@ CreateCellGraphAssay5(
 
 \item{colocalization}{A \code{tbl_df} with colocalization scores}
 
-\item{fs_map}{A \code{tbl_df} with information pxl file paths,
-sample IDs and component IDs}
+\item{fs_map}{A \code{tbl_df} with information on source pxl file
+paths, sample IDs, and component IDs}
 
 \item{verbose}{Print messages}
 
