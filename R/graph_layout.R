@@ -157,9 +157,8 @@ ComputeLayout.tbl_graph <- function (
   return(layout)
 }
 
-#' @param custom_layout_name A name for the layout computed with
-#' \code{custom_layout_function}. Should not be one of "pmds", "fr",
-#' "kk" or "drl".
+#' @param layout_name The name of the computed layout. If this name is not given,
+#' the \code{layout_method} will be used as the name.
 #'
 #' @rdname ComputeLayout
 #' @method ComputeLayout CellGraph
@@ -174,6 +173,7 @@ ComputeLayout.tbl_graph <- function (
 ComputeLayout.CellGraph <- function (
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -182,16 +182,23 @@ ComputeLayout.CellGraph <- function (
   seed = 123,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   ...
 ) {
 
-  # Validate custom_layout_name
-  stopifnot(
-    "'custom_layout_name' should be a character of length 1" =
-      is.character(custom_layout_name) &&
-      (length(custom_layout_name) == 1)
-  )
+  if (is.null(custom_layout_function) & is.null(layout_name)) {
+    layout_name <- match.arg(layout_method, choices = c("pmds", "fr", "kk", "drl"))
+  }
+  if (!is.null(custom_layout_function) & is.null(layout_name)) {
+    layout_name <- "custom"
+  }
+
+  if (!is.null(layout_name)) {
+    stopifnot(
+      "'layout_name' should be a character of length 1" =
+        is.character(layout_name) &&
+        (length(layout_name) == 1)
+    )
+  }
 
   layout <-
     ComputeLayout(
@@ -212,11 +219,7 @@ ComputeLayout.CellGraph <- function (
   }
 
   # Add layout to CellGraph layout slot
-  if (!is.null(custom_layout_function)) {
-    slot(object, name = "layout")[[custom_layout_name]] <- layout
-  } else {
-    slot(object, name = "layout")[[match.arg(layout_method, choices = c("pmds", "fr", "kk", "drl"))]] <- layout
-  }
+  slot(object, name = "layout")[[layout_name]] <- layout
 
   return(object)
 }
@@ -241,6 +244,7 @@ ComputeLayout.CellGraph <- function (
 ComputeLayout.MPXAssay <- function (
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -250,7 +254,6 @@ ComputeLayout.MPXAssay <- function (
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   cl = NULL,
   ...
 ) {
@@ -276,6 +279,7 @@ ComputeLayout.MPXAssay <- function (
     g <- ComputeLayout(
       g,
       layout_method = layout_method,
+      layout_name = layout_name,
       dim = dim,
       normalize_layout = normalize_layout,
       project_on_unit_sphere = project_on_unit_sphere,
@@ -284,7 +288,6 @@ ComputeLayout.MPXAssay <- function (
       seed = seed,
       custom_layout_function = custom_layout_function,
       custom_layout_function_args = custom_layout_function_args,
-      custom_layout_name = custom_layout_name,
       ...
     )
     return(g)
@@ -325,6 +328,7 @@ ComputeLayout.Seurat <- function (
   object,
   assay = NULL,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -334,7 +338,6 @@ ComputeLayout.Seurat <- function (
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   ...
 ) {
 
@@ -360,6 +363,7 @@ ComputeLayout.Seurat <- function (
     ComputeLayout(
       cg_assay,
       layout_method = layout_method,
+      layout_name = layout_name,
       dim = dim,
       normalize_layout = normalize_layout,
       project_on_unit_sphere = project_on_unit_sphere,
@@ -369,7 +373,6 @@ ComputeLayout.Seurat <- function (
       verbose = verbose,
       custom_layout_function = custom_layout_function,
       custom_layout_function_args = custom_layout_function_args,
-      custom_layout_name = custom_layout_name,
       ...
     )
 
