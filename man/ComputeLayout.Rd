@@ -30,6 +30,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{CellGraph}(
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -38,13 +39,13 @@ ComputeLayout(object, ...)
   seed = 123,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   ...
 )
 
 \method{ComputeLayout}{MPXAssay}(
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -54,7 +55,6 @@ ComputeLayout(object, ...)
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   cl = NULL,
   ...
 )
@@ -62,6 +62,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{CellGraphAssay}(
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -71,7 +72,6 @@ ComputeLayout(object, ...)
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   cl = NULL,
   ...
 )
@@ -79,6 +79,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{CellGraphAssay5}(
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -88,7 +89,6 @@ ComputeLayout(object, ...)
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   cl = NULL,
   ...
 )
@@ -97,6 +97,7 @@ ComputeLayout(object, ...)
   object,
   assay = NULL,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -106,7 +107,6 @@ ComputeLayout(object, ...)
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   ...
 )
 }
@@ -144,9 +144,8 @@ and D is equal to \code{dim}. Note that this will override the \code{layout_meth
 The \code{dim} is automatically passed to \code{custom_layout_function} and should not be
 included in \code{custom_layout_function_args}.}
 
-\item{custom_layout_name}{A name for the layout computed with
-\code{custom_layout_function}. Should not be one of "pmds", "fr",
-"kk" or "drl".}
+\item{layout_name}{The name of the computed layout. If this name is not given,
+the \code{layout_method} will be used as the name.}
 
 \item{verbose}{Print messages}
 

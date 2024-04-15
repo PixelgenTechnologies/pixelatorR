@@ -53,23 +53,23 @@ for (assay_version in c("v3", "v5")) {
 
     # CellGraph
     expect_no_error(cg_layout <- ComputeLayout(cg, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
-    expect_equal(names(cg_layout@layout), "custom")
+    expect_true("custom" %in% names(cg_layout@layout))
     expect_equal(dim(cg_layout@layout[["custom"]]), c(2470, 2))
 
     # CellGraphAssay
     expect_no_error(cg_assay_layout <- ComputeLayout(se[["mpxCells"]], custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
-    expect_equal(names(CellGraphs(cg_assay_layout)[[1]]@layout), "custom")
+    expect_true("custom" %in% names(CellGraphs(cg_assay_layout)[[1]]@layout))
     expect_equal(dim(CellGraphs(cg_assay_layout)[[1]]@layout[["custom"]]), c(2470, 2))
 
     # Seurat
     expect_no_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
-    expect_equal(names(CellGraphs(se_layout)[[1]]@layout), "custom")
+    expect_true("custom" %in% names(CellGraphs(se_layout)[[1]]@layout))
     expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["custom"]]), c(2470, 2))
 
     # Test with new layout name
     expect_no_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn,
-                                               custom_layout_function_args = list(pivots = 100), custom_layout_name = "my_layout"))
-    expect_equal(names(CellGraphs(se_layout)[[1]]@layout), "my_layout")
+                                               custom_layout_function_args = list(pivots = 100), layout_name = "my_layout"))
+    expect_true("my_layout" %in% names(CellGraphs(se_layout)[[1]]@layout))
     expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["my_layout"]]), c(2470, 2))
 
   })
