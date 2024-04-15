@@ -21,8 +21,8 @@ globalVariables(
 #' @slot cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @slot polarization A \code{tbl_df} with polarization scores
 #' @slot colocalization A \code{tbl_df} with colocalization scores
-#' @slot fs_map A \code{tbl_df} with information pxl file paths,
-#' sample IDs and component IDs
+#' @slot fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #'
 #' @name CellGraphAssay-class
 #' @rdname CellGraphAssay-class
@@ -48,8 +48,8 @@ CellGraphAssay <- setClass(
 #' @slot cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @slot polarization A \code{tbl_df} with polarization scores
 #' @slot colocalization A \code{tbl_df} with colocalization scores
-#' @slot fs_map A \code{tbl_df} with information pxl file paths,
-#' sample IDs and component IDs
+#' @slot fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #'
 #' @name CellGraphAssay5-class
 #' @rdname CellGraphAssay5-class
@@ -97,8 +97,8 @@ setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @param polarization A \code{tbl_df} with polarization scores
 #' @param colocalization A \code{tbl_df} with colocalization scores
-#' @param fs_map A \code{tbl_df} with information pxl file paths,
-#' sample IDs and component IDs
+#' @param fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #' @param ... Additional arguments passed to \code{\link{CreateAssayObject}}
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
@@ -208,8 +208,8 @@ CreateCellGraphAssay <- function (
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @param polarization A \code{tbl_df} with polarization scores
 #' @param colocalization A \code{tbl_df} with colocalization scores
-#' @param fs_map A \code{tbl_df} with information pxl file paths,
-#' sample IDs and component IDs
+#' @param fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #' @param ... Additional arguments passed to \code{\link{CreateAssay5Object}}
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
@@ -387,7 +387,7 @@ CellGraphs.MPXAssay <- function (
   value
 ) {
 
-  # Clean cellgraphs slot if balue = NULL
+  # Clean cellgraphs slot if value = NULL
   if (is.null(x = value)) {
     slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
     return(object)
@@ -510,8 +510,8 @@ RenameCells.CellGraphAssay5 <- RenameCells.MPXAssay
 #' @param cellgraphs A list of \code{\link{CellGraph}} objects
 #' @param polarization A \code{tbl_df} with polarization scores
 #' @param colocalization A \code{tbl_df} with colocalization scores
-#' @param fs_map A \code{tbl_df} with information pxl file paths,
-#' sample IDs and component IDs
+#' @param fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #'
 #' @import rlang
 #'
@@ -636,8 +636,8 @@ setAs(
 #' @param cellgraphs A list of \code{\link{CellGraph}} objects
 #' @param polarization A \code{tbl_df} with polarization scores
 #' @param colocalization A \code{tbl_df} with colocalization scores
-#' @param fs_map A \code{tbl_df} with information pxl file paths,
-#' sample IDs and component IDs
+#' @param fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #'
 #' @import rlang
 #'
@@ -1077,7 +1077,7 @@ subset.MPXAssay <- function (
   # Filter cellgraphs
   cellgraphs_filtered <- cellgraphs[colnames(assay_subset)]
 
-  # Filter polarization and colocaliation scores
+  # Filter polarization and colocalization scores
   polarization <- slot(x, name = "polarization")
   if (length(polarization) > 0) {
     if (!is.null(cells)) {
