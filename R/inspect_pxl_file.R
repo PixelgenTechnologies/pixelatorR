@@ -1,3 +1,15 @@
+#' Inspect a PXL file
+#'
+#' This function inspects a PXL file and returns a tibble with
+#' information about the files contained in the PXL file.
+#'
+#' @param pxl_file Path to a PXL file
+#'
+#' @return A tibble with information about the files contained
+#' in the PXL file
+#'
+#' @export
+#'
 inspect_pxl_file <- function (
   pxl_file
 ) {

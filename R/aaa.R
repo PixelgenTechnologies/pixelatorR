@@ -2,7 +2,8 @@
 globalVariables(
   names = c('id_map', 'component_new', 'tau', 'tau_type', 'umi_per_upia',
             'upia1', 'upia2', 'component', 'rn', 'x', 'y', 'z', 'name',
-            'type'),
+            'type', 'g', 'from', 'to', 'node_type', 'id', 'layout',
+            'pearson_z', 'p', 'p.value'),
   package = 'pixelatorR',
   add = TRUE
 )

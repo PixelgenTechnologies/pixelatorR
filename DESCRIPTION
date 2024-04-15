@@ -36,7 +36,8 @@ Imports:
     fs,
     pbapply,
     zip,
-    jsonlite
+    jsonlite,
+    parallel
 Remotes:
     cran/arrow@14.0.2.1
 Suggests:
@@ -69,6 +70,7 @@ Collate:
     'keep_largest_component.R'
     'load_cell_graphs.R'
     'load_data.R'
+    'load_precomputed_layouts.R'
     'objects.R'
     'pivot_tables.R'
     'pixelatorR-package.R'

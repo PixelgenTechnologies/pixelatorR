@@ -15,7 +15,14 @@
 
 \method{subset}{CellGraphAssay5}(x, features = NULL, cells = NULL, ...)
 
-\method{merge}{CellGraphAssay5}(x = NULL, y = NULL, merge.data = TRUE, add.cell.ids = NULL, ...)
+\method{merge}{CellGraphAssay5}(
+  x = NULL,
+  y = NULL,
+  merge.data = TRUE,
+  add.cell.ids = NULL,
+  collapse = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{CellGraphAssay} or a \code{CellGraphAssay5} object}
@@ -37,6 +44,8 @@ must be equal to the number of cells in the object and the names must be unique.
 this is recommended if the same normalization approach was applied to all objects}
 
 \item{add.cell.ids}{A character vector with sample names}
+
+\item{collapse}{If TRUE, merge layers of the same name together}
 }
 \description{
 Methods for \code{\link{CellGraphAssay5}} objects for generics defined in other

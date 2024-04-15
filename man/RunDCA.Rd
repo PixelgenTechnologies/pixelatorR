@@ -33,6 +33,7 @@ RunDCA(object, ...)
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  cl = NULL,
   verbose = TRUE,
   ...
 )
