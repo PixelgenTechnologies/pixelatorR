@@ -218,8 +218,6 @@ ReadMPX_Seurat <- function (
     }) %>%
     do.call(bind_cols, .) %>%
     as.data.frame() %>%
-    #select(-any_of("component")) %>%
-    #rename(component = !! sym("_index")) %>%
     column_to_rownames("component")
 
   if (!all(rownames(meta_data) == colnames(seur_obj)))
@@ -247,6 +245,9 @@ ReadMPX_Seurat <- function (
 
   # Set variable features to all features
   VariableFeatures(seur_obj) <- rownames(seur_obj)
+
+  # Remove redundant meta data columns
+  seur_obj@meta.data <- seur_obj@meta.data %>% select(-contains(c("nFeature", "nCount", "_index")))
 
   return(seur_obj)
 }
