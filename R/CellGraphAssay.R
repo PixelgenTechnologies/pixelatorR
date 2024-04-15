@@ -1138,6 +1138,7 @@ subset.CellGraphAssay5 <- subset.MPXAssay
 
 
 #' @param add.cell.ids A character vector with sample names
+#' @param collapse If TRUE, merge layers of the same name together
 #'
 #' @describeIn MPXAssay-methods Merge two or more \code{CellGraphAssay} or
 #' \code{CellGraphAssay5} objects together
@@ -1161,6 +1162,7 @@ merge.MPXAssay <- function (
   y = NULL,
   merge.data = TRUE,
   add.cell.ids = NULL,
+  collapse = TRUE,
   ...
 ) {
 
@@ -1215,6 +1217,11 @@ merge.MPXAssay <- function (
                      y = standardassays[-1],
                      merge.data = merge.data,
                      ...)
+
+  # Join layers
+  if (collapse & is(new_assay, "Assay5")) {
+    new_assay <- JoinLayers(new_assay)
+  }
 
   # Fetch cellgraphs
   cellgraphs_new <- Reduce(c, lapply(objects, function(cg_assay) {
