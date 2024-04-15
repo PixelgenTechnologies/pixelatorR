@@ -18,8 +18,8 @@ for the storage and analysis of MPX single-cell data.
 
 \item{\code{colocalization}}{A \code{tbl_df} with colocalization scores}
 
-\item{\code{fs_map}}{A \code{tbl_df} with information pxl file paths,
-sample IDs and component IDs}
+\item{\code{fs_map}}{A \code{tbl_df} with information on source pxl file
+paths, sample IDs, and component IDs}
 }}
 
 \concept{assay}
