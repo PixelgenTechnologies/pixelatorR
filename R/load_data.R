@@ -1,10 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('.'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
 #' Read a count matrix from a pxl file
 #'
 #' @param filename Path to a .pxl file
