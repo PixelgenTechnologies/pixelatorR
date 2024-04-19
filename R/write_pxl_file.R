@@ -338,11 +338,11 @@ WriteMPX_pxl_file <- function (
       fs::file_move(file.path(pxl_folder, "metadata.json"), sample_json)
       return(sample_json)
     })
-    merged_sample_json <- list(sample = lapply(json_files, function(f) {
+    merged_sample_json <- list(samples = lapply(json_files, function(f) {
       jsonlite::read_json(f)
     }) %>%
       set_names(nm = paste0("sample", seq_along(json_files))))
-    jsonlite::write_json(merged_sample_json, file.path(pxl_folder, "metadata.json"))
+    jsonlite::write_json(merged_sample_json, file.path(pxl_folder, "metadata.json"), auto_unbox = TRUE)
     fs::file_delete(json_files)
   }
   cli_alert_success("Exported merged meta data")
