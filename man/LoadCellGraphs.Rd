@@ -37,7 +37,6 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_precomputed_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -50,7 +49,6 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_precomputed_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -63,7 +61,6 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_precomputed_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -98,8 +95,6 @@ LoadCellGraphs(object, ...)
 \item{chunk_size}{Length of chunks used to load CellGraphs from edge list.}
 
 \item{verbose}{Print messages}
-
-\item{load_precomputed_layouts}{Currently does nothing}
 
 \item{force}{Force load graph(s) if they are already loaded}
 
