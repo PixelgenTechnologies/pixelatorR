@@ -33,3 +33,4 @@ dependencies:
   - r-zip
   - r-plotly
   - r-duckdb
+  - r-lifecycle
