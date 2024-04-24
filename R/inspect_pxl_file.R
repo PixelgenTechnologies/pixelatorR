@@ -5,6 +5,14 @@
 #'
 #' @param pxl_file Path to a PXL file
 #'
+#' @examples
+#' pxl_file <- system.file("extdata/five_cells",
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
+#'
+#' inspect_pxl_file(pxl_file)
+#'
 #' @return A tibble with information about the files contained
 #' in the PXL file
 #'
