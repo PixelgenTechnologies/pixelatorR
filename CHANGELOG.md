@@ -24,7 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Introduced experimental function `WriteMPX_pxl_file` to write MPX data from a Seurat object to a PXL file
 
-## [0.3.0] - 2024-03-28
+### Fixes
+
+- Made `EdgeRankPlot` compatible with incoming changes in pixelator Python >0.16.2 where `edges` is renamed to `molecules` in `CellGraphAssay` objects
+
+## [0.3.0] 2024-03-28
 
 ### Added utility functions to clean up edgelist directories
 
