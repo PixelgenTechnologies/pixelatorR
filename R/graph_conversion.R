@@ -1,12 +1,11 @@
-# Declarations used in package check
-globalVariables(
-  names = c('upia1', 'upia2', 'component', 'rn'),
-  package = 'pixelatorR',
-  add = TRUE
-)
+#' @include generics.R
+NULL
 
-#' @import rlang
-#' @importFrom progressr progressor
+#' @param cl A cluster object created by makeCluster, or an integer
+#' to indicate number of child-processes (integer values are ignored
+#' on Windows) for parallel evaluations. See Details on performance
+#' in the documentation for \code{pbapply}. The default is NULL,
+#' which means that no parallelization is used.
 #'
 #' @rdname graph-conversion
 #' @method edgelist_to_simple_Anode_graph data.frame
@@ -15,13 +14,11 @@ globalVariables(
 #'
 #' library(pixelatorR)
 #' library(tibble)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 #'
 #' # Load edgelist
-#' el <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
+#' el <- ReadMPX_arrow_edgelist(pxl_file)
 #'
 #' # Convert to tbl_df
 #' el_tbl_df <- as_tibble(el)
@@ -35,6 +32,7 @@ globalVariables(
 edgelist_to_simple_Anode_graph.data.frame <- function (
   object,
   components = NULL,
+  cl = NULL,
   verbose = TRUE,
   ...
 ) {
@@ -84,8 +82,7 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
   if (verbose && check_global_verbosity())
     cli_alert_info("Creating A-node projected graphs")
 
-  p <- progressor(along = edgelist_split)
-  edgelist_split <- lapply(edgelist_split, function(edgelist) {
+  edgelist_split <- pblapply(edgelist_split, function(edgelist) {
     anode_graph <-
       edgelist %>%
       left_join(edgelist,
@@ -95,9 +92,8 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
       select(upia1, upia2) %>%
       distinct() %>%
       filter(upia1 < upia2)
-    p()
     return(anode_graph)
-  })
+  }, cl = cl)
 
   # Convert edge lists to tbl_graphs and add attribute
   anode_graphs <- lapply(edgelist_split, function(edgelist) {
@@ -105,7 +101,7 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
     attr(g, "type") <- "Anode"
     return(g)
   }) %>%
-    setNames(nm = components)
+    set_names(nm = components)
 
   if (verbose && check_global_verbosity())
     cli_alert_success("Returning an A-node projected graphs")
@@ -114,8 +110,6 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
 
 
 #' @import rlang
-#' @importFrom arrow to_duckdb
-#' @importFrom stringr str_c str_sub
 #'
 #' @rdname graph-conversion
 #' @method edgelist_to_simple_Anode_graph FileSystemDataset
@@ -202,7 +196,7 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
     attr(g, "type") <- "Anode"
     return(g)
   }) %>%
-    setNames(nm = components)
+    set_names(nm = components)
 
   if (verbose && check_global_verbosity())
     cli_alert_success("Returning an A-node projected graphs")

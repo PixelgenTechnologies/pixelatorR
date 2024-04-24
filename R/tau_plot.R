@@ -1,9 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('tau', 'tau_type', 'umi_per_upia'),
-  package = 'pixelatorR',
-  add = TRUE
-)
 #' @include generics.R
 NULL
 
@@ -13,14 +7,12 @@ NULL
 #' @examples
 #'
 #' library(pixelatorR)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
-#' seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
 #' # Plot with data.frame

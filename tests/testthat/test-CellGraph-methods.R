@@ -1,4 +1,6 @@
-options(pixelatorR.arrow_outdir = tempdir())
+library(tidygraph)
+options(Seurat.object.assay.version = "v3")
+
 edge_list <-
   ReadMPX_item(
     system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),

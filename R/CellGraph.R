@@ -1,5 +1,4 @@
 #' @include generics.R
-#' @importFrom methods setClass setClassUnion setMethod slot slot<- new as slotNames
 #' @importClassesFrom Matrix dgCMatrix
 NULL
 
@@ -74,10 +73,10 @@ CellGraph <- setClass(
 #' @export
 #'
 CreateCellGraphObject <- function (
-    cellgraph,
-    counts = NULL,
-    layout = NULL,
-    verbose = FALSE
+  cellgraph,
+  counts = NULL,
+  layout = NULL,
+  verbose = FALSE
 ) {
 
   # Check input parameters
@@ -175,8 +174,8 @@ CreateCellGraphObject <- function (
 #' @export
 #'
 CellGraphData <- function (
-    object,
-    slot = "cellgraph"
+  object,
+  slot = "cellgraph"
 ) {
   if (!inherits(object, what = "CellGraph")) abort(glue("Invalid class {class(object)}"))
   if (!(slot %in% slotNames(x = object))) {
@@ -200,9 +199,9 @@ CellGraphData <- function (
 #' @export
 #'
 "CellGraphData<-" <- function (
-    object,
-    slot = "cellgraph",
-    value
+  object,
+  slot = "cellgraph",
+  value
 ) {
   if (!inherits(object, what = "CellGraph")) abort(glue("Invalid class {class(object)}"))
   if (!(slot %in% slotNames(x = object))) {

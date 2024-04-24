@@ -1,17 +1,13 @@
-# Declarations used in package check
-globalVariables(
-  names = c('pearson_z', 'p', 'p.value'),
-  package = 'pixelatorR',
-  add = TRUE
-)
 #' @include generics.R
 NULL
 
+#' @param cl  A cluster object created by makeCluster, or an integer
+#' to indicate number of child-processes (integer values are ignored
+#' on Windows) for parallel evaluations. See Details on performance
+#' in the documentation for \code{pbapply}. The default is NULL,
+#' which means that no parallelization is used.
 #' @rdname RunDCA
 #' @method RunDCA data.frame
-#'
-#' @importFrom stats wilcox.test p.adjust
-#' @importFrom progressr progressor
 #'
 #' @export
 #'
@@ -24,6 +20,7 @@ RunDCA.data.frame <- function (
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  cl = NULL,
   verbose = TRUE,
   ...
 ) {
@@ -104,43 +101,90 @@ RunDCA.data.frame <- function (
   # Split table by group keys
   test_groups <- test_groups %>% group_split()
 
-  p <- progressor(along = test_groups)
-  coloc_test <- lapply(test_groups, function(colocalization_contrast) {
+  # Chunk the data to enable parallel processing
+  # Decide how to split the data depending on the cl
+  if (inherits(cl, "cluster")) {
+    chunk_size <- length(cl)
+    # Load dplyr in each cluster
+    clusterEvalQ(cl, {
+      library(dplyr)
+    })
+    # Export variables to each cluster
+    clusterExport(cl, c("test_groups", "test_groups_keys", "contrast_column",
+                        "target", "reference", "alternative", "conf_int",
+                        ".tidy", "group_vars"),
+                  envir = current_env())
+    chunks <- split(seq_along(test_groups), cut(seq_along(test_groups), length(cl)))
+  } else if (is.numeric(cl)) {
+    chunks <- split(seq_along(test_groups), cut(seq_along(test_groups), cl))
+  } else {
+    chunks <- as.list(seq_along(test_groups))
+  }
 
-    # Get numeric data values
-    x <- colocalization_contrast %>% filter(.data[[contrast_column]] == target) %>% pull(pearson_z)
-    y <- colocalization_contrast %>% filter(.data[[contrast_column]] == reference) %>% pull(pearson_z)
+  # Process chunks
+  coloc_test <- pblapply(chunks, function(chunk) {
 
-    # Run wilcox.test
-    result <- wilcox.test(x = x, y = y, paired = FALSE, alternative = alternative, conf.int = conf_int)
+    test_groups_chunk <- test_groups[chunk]
+    test_groups_keys_chunk <- test_groups_keys[chunk, ]
 
-    # Tidy up results
-    result <- result %>% .tidy() %>%
-      mutate(n1 = length(x), n2 = length(y), method = "Wilcoxon", alternative = alternative, data_type = "pearson_z",
-             target = target, reference = reference, p = signif(p.value, 3)) %>%
-      select(c("estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
-               "p", "conf.low", "conf.high", "method", "alternative"))
-    p()
-    return(result)
-  })
+    coloc_test_chunk <- lapply(test_groups_chunk, function(colocalization_contrast) {
 
-  # Bind results from pol_test list
-  coloc_test_bind <- do.call(bind_rows, lapply(seq_along(coloc_test), function(i) {
+      # Get numeric data values
+      x <- colocalization_contrast %>% filter(.data[[contrast_column]] == target) %>% pull(pearson_z)
+      y <- colocalization_contrast %>% filter(.data[[contrast_column]] == reference) %>% pull(pearson_z)
 
-    # Add marker column
-    coloc_test_with_groups <- coloc_test[[i]] %>% mutate(
-      marker_1 = test_groups_keys[i, 1, drop = TRUE],
-      marker_2 = test_groups_keys[i, 2, drop = TRUE]
-    )
+      # Run wilcox.test
+      result <- try({
+        wilcox.test(
+          x = x,
+          y = y,
+          paired = FALSE,
+          alternative = alternative,
+          conf.int = conf_int
+        )
+      }, silent = TRUE)
 
-    # Add additional group columns
-    if (!is.null(group_vars)) {
-      for (group_var in group_vars) {
-        coloc_test_with_groups[[group_var]] = test_groups_keys[i, group_var, drop = TRUE]
+      if (inherits(result, "try-error")) {
+        return(NULL)
       }
-    }
-    return(coloc_test_with_groups)
-  }))
+
+      # Tidy up results
+      result <- result %>% .tidy() %>%
+        mutate(n1 = length(x), n2 = length(y), method = "Wilcoxon", alternative = alternative, data_type = "pearson_z",
+               target = target, reference = reference, p = signif(p.value, 3)) %>%
+        select(c("estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
+                 "p", "conf.low", "conf.high", "method", "alternative"))
+      return(result)
+    })
+
+    # Bind results from pol_test list
+    coloc_test_chunk_merged <- do.call(bind_rows, lapply(seq_along(coloc_test_chunk), function(i) {
+
+      if (is.null(coloc_test_chunk[[i]])) {
+        return(NULL)
+      }
+
+      # Add marker column
+      coloc_test_with_groups <- coloc_test_chunk[[i]] %>% mutate(
+        marker_1 = test_groups_keys_chunk[i, 1, drop = TRUE],
+        marker_2 = test_groups_keys_chunk[i, 2, drop = TRUE]
+      )
+
+      # Add additional group columns
+      if (!is.null(group_vars)) {
+        for (group_var in group_vars) {
+          coloc_test_with_groups[[group_var]] = test_groups_keys_chunk[i, group_var, drop = TRUE]
+        }
+      }
+      return(coloc_test_with_groups)
+    }))
+
+    return(coloc_test_chunk_merged)
+
+  }, cl = cl)
+
+  # Bind results from coloc_test list
+  coloc_test_bind <- do.call(bind_rows, coloc_test)
 
   # Adjust p-values
   coloc_test_bind <- coloc_test_bind %>%
@@ -158,14 +202,12 @@ RunDCA.data.frame <- function (
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #' # Seurat objects
-#' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
 #' seur1$sample <- "Sample1"
 #' seur2$sample <- "Sample2"
 #' seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
@@ -192,6 +234,7 @@ RunDCA.Seurat <- function (
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  cl = NULL,
   verbose = TRUE,
   ...
 ) {
@@ -273,7 +316,7 @@ RunDCA.Seurat <- function (
                      "jaccard", "jaccard_mean", "jaccard_stdev",
                      "jaccard_z", "jaccard_p_value", "jaccard_p_value_adjusted")))
 
-  # Run DPA
+  # Run DCA
   coloc_test_bind <- RunDCA(colocalization_data,
                             target = target,
                             reference = reference,
@@ -282,6 +325,7 @@ RunDCA.Seurat <- function (
                             alternative = alternative,
                             conf_int = conf_int,
                             p_adjust_method = p_adjust_method,
+                            cl = cl,
                             verbose = verbose)
 
   return(coloc_test_bind)

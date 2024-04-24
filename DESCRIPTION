@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.3.0
+Version: 0.4.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
@@ -20,7 +20,7 @@ Imports:
     dplyr,
     arrow,
     glue,
-    rhdf5,
+    hdf5r,
     SeuratObject (>= 5.0.0),
     tibble,
     igraph,
@@ -32,10 +32,13 @@ Imports:
     stringr,
     patchwork,
     ggraph,
-    progressr,
     plotly,
     fs,
-    utils
+    pbapply,
+    zip,
+    jsonlite,
+    parallel,
+    lifecycle
 Remotes:
     cran/arrow@14.0.2.1
 Suggests:
@@ -44,7 +47,6 @@ Suggests:
     testthat (>= 3.0.0),
     graphlayouts,
     scales,
-    jsonlite,
     pheatmap,
     duckdb,
     dbplyr
@@ -54,7 +56,6 @@ Collate:
     'CellGraphAssay.R'
     'aaa.R'
     'cell_count_plot.R'
-    'clean_garbage.R'
     'colocalization_heatmap.R'
     'd3_graph_helpers.R'
     'differential_colocalization_analysis.R'
@@ -74,9 +75,8 @@ Collate:
     'pixelatorR-package.R'
     'read_and_write_parquet.R'
     'remove_cell_graphs.R'
-    'restore_arrow_connection.R'
-    'save_objects.R'
     'tau_plot.R'
     'utils.R'
+    'write_pxl_file.R'
     'zzz.R'
 Language: en-US

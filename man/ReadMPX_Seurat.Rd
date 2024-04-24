@@ -48,31 +48,25 @@ An object of class \code{Seurat}
 }
 \description{
 This wrapper function can be used to load data from a PXL file, and returns
-a \code{Seurat} object with the desired data. By default, the MPX count matrix
-is returned as an \code{Assay} and the graph data is excluded.
+a \code{Seurat} object.
 }
 \details{
-The graph data is stored as an edgelist in the PXL file, and this edgelist
-can be inconvenient to work with in memory for larger datasets. If you want to
-have the edgelist available in your \code{Seurat} object, you can set \code{return_cellgraphassay = TRUE}
-to return a \code{\link{CellGraphAssay}} class object instead. The \code{\link{CellGraphAssay}}
-object extends the \code{Assay} class but can keep additional slots with graph-related data.
-The edgelist is not loaded into memory, but is provided as an arrow Dataset stored in the
-\code{\link{CellGraphAssay}}. This arrow Dataset makes it possible manipulate and fetch
-information from the edgelist whenever necessary, without having to load it into memory.
-See \code{\link{CellGraphAssay}} for more details.
+By default, the MPX count matrix is returned in a \code{CellGraphAssay} object.
+Graphs are not loaded directly unless \code{load_cell_graphs = TRUE}. Graphs
+can also be loaded at a later stage with \code{\link{LoadCellGraphs}}.
+
+When setting the global option \code{Seurat.object.assay.version} to \code{"v5"},
+the function will return a \code{CellGraphAssay5} object instead.
 }
 \examples{
 
 library(pixelatorR)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data as a Seurat object
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
                         package = "pixelatorR")
-seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj
 
 }

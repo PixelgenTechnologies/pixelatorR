@@ -1,22 +1,17 @@
 #' @include generics.R
-#' @importFrom methods setClass setMethod slot slot<- new as slotNames
-#' @importClassesFrom Matrix dgCMatrix
 NULL
 
 
-#' @param object A Seurat object or CellGraphAssay object
-#' @importFrom SeuratObject DefaultAssay
 #' @rdname CellGraphs
 #' @method CellGraphs Seurat
 #' @export
-#' @concept assay
 #' @concept cellgraphs
 #'
 #' @examples
 #'
 #' # CellGraphs getter Seurat
 #' # ---------------------------------
-#' se <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
+#' se <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Get cellgraphs from a Seurat object
 #' CellGraphs(se)
@@ -39,9 +34,7 @@ CellGraphs.Seurat <- function (
 #' @export
 #' @method CellGraphs<- Seurat
 #' @rdname CellGraphs
-#' @concept assay
 #' @concept cellgraphs
-#' @importFrom SeuratObject DefaultAssay
 #'
 #' @examples
 #' # CellGraphs setter Seurat
@@ -82,8 +75,8 @@ PolarizationScores.Seurat <- function (
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Assay '{assay}' is not a CellGraphAssay"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
   }
 
   # Get polarizaation scores from CellGraphAssay
@@ -160,8 +153,8 @@ ColocalizationScores.Seurat <- function (
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Assay '{assay}' is not a CellGraphAssay"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
   }
 
   # Get colocalization scores
@@ -211,90 +204,6 @@ ColocalizationScores.Seurat <- function (
   # Fetch polarization scores from assay
   cg_assay <- object[[assay]]
   ColocalizationScores(cg_assay) <- value
-  object[[assay]] <- cg_assay
-
-  return(object)
-}
-
-
-#' @param assay Name of a \code{CellGraphAssay}
-#'
-#' @method ArrowData Seurat
-#'
-#' @rdname ArrowData
-#'
-#' @export
-#'
-ArrowData.Seurat <- function (
-  object,
-  assay = NULL,
-  ...
-) {
-
-  # Use default assay if assay = NULL
-  assay <- assay %||% DefaultAssay(object)
-  ArrowData(object[[assay]])
-}
-
-
-#' @method ArrowData<- Seurat
-#'
-#' @rdname ArrowData
-#'
-#' @export
-#'
-"ArrowData<-.Seurat" <- function (
-  object,
-  assay = NULL,
-  ...,
-  value
-) {
-
-  # Use default assay if assay = NULL
-  assay <- assay %||% DefaultAssay(object)
-  ArrowData(cg_assay) <- value
-  object[[assay]] <- cg_assay
-
-  return(object)
-}
-
-
-#' @method ArrowDir Seurat
-#'
-#' @rdname ArrowDir
-#'
-#' @export
-#'
-ArrowDir.Seurat <- function (
-  object,
-  assay = NULL,
-  ...
-) {
-
-  # Use default assay if assay = NULL
-  assay <- assay %||% DefaultAssay(object)
-
-  return(ArrowDir(object[[assay]]))
-}
-
-
-#' @method ArrowDir<- Seurat
-#'
-#' @rdname ArrowDir
-#'
-#' @export
-#'
-"ArrowDir<-.Seurat" <- function (
-  object,
-  assay = NULL,
-  ...,
-  value
-) {
-
-  # Use default assay if assay = NULL
-  assay <- assay %||% DefaultAssay(object)
-  cg_assay <- object[[assay]]
-  ArrowDir(cg_assay) <- value
   object[[assay]] <- cg_assay
 
   return(object)

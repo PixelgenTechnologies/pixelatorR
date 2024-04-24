@@ -10,13 +10,9 @@ NULL
 #' @rdname RunDPA
 #' @method RunDPA data.frame
 #'
-#' @importFrom stats wilcox.test p.adjust
-#'
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
@@ -186,7 +182,7 @@ RunDPA.data.frame <- function (
 #'
 #' @examples
 #' # Seurat objects
-#' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
 #' seur1$sample <- "Sample1"
 #' seur2$sample <- "Sample2"
 #' seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))

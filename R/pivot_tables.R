@@ -7,8 +7,6 @@ NULL
 #' @examples
 #' library(pixelatorR)
 #' library(SeuratObject)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
@@ -54,11 +52,11 @@ PolarizationScoresToAssay.data.frame <- function (
 
 
 #' @rdname PolarizationScoresToAssay
-#' @method PolarizationScoresToAssay CellGraphAssay
+#' @method PolarizationScoresToAssay MPXAssay
 #'
 #' @examples
 #' # Create a Seurat object
-#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Fetch CellGraphAssay and create new polarization
 #' # scores Assay
@@ -69,39 +67,37 @@ PolarizationScoresToAssay.data.frame <- function (
 #'
 #' @export
 #'
-PolarizationScoresToAssay.CellGraphAssay <- function (
+PolarizationScoresToAssay.MPXAssay <- function (
   object,
   values_from = c("morans_z", "morans_i"),
   ...
 ) {
 
-  # fetch polarization scores
-  pol_table <- slot(object, name = "polarization")
-  if (is.null(pol_table)) {
-    abort("'polarization' scores are missing from 'CellGraphAssay'")
-  }
-
-  # Validate input
-  values_from <- match.arg(values_from, choices = c("morans_z", "morans_i"))
-
-  pol_scores_wide_format <- PolarizationScoresToAssay(pol_table, values_from, ...)
-
-  # Make sure that the components match
-  # Create an empty matrix (all 0's)
-  tofillMat <- matrix(data = 0,
-                     nrow = nrow(pol_scores_wide_format),
-                     ncol = ncol(object),
-                     dimnames = list(rownames(pol_scores_wide_format), colnames(object)))
-
-  # Fill matrix where it overlaps
-  # Any missing columns will be keep 0's
-  tofillMat[, colnames(pol_scores_wide_format)] <- pol_scores_wide_format
+  pol_matrix <- .create_spatial_metric_matrix(object,
+                                              values_from = values_from,
+                                              metric = "polarization")
+  pol_matrix <- as(pol_matrix, "dgCMatrix")
 
   # Create Assay from filled matrix
-  assay <- CreateAssayObject(data = tofillMat)
+  create_cg_assay_function <- ifelse(is(object, "CellGraphAssay"), CreateAssayObject, CreateAssay5Object)
+  assay <- create_cg_assay_function(data = pol_matrix)
 
   return(assay)
 }
+
+#' @rdname PolarizationScoresToAssay
+#' @method PolarizationScoresToAssay CellGraphAssay
+#' @docType methods
+#' @export
+#'
+PolarizationScoresToAssay.CellGraphAssay <- PolarizationScoresToAssay.MPXAssay
+
+#' @rdname PolarizationScoresToAssay
+#' @method PolarizationScoresToAssay CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+PolarizationScoresToAssay.CellGraphAssay5 <- PolarizationScoresToAssay.MPXAssay
 
 
 #' @param assay Name of the \code{\link{CellGraphAssay}} to pull polarization scores from
@@ -168,7 +164,7 @@ PolarizationScoresToAssay.Seurat <- function (
   pol_assay <- PolarizationScoresToAssay(cg_assay, values_from, ...)
 
   # Place new assay in Seurat object
-  object[[new_assay]] <- pol_assay
+  object@assays[[new_assay]] <- pol_assay
 
   return(object)
 }
@@ -180,8 +176,6 @@ PolarizationScoresToAssay.Seurat <- function (
 #' @examples
 #' library(pixelatorR)
 #' library(SeuratObject)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
@@ -198,20 +192,22 @@ PolarizationScoresToAssay.Seurat <- function (
 #'
 ColocalizationScoresToAssay.data.frame <- function (
   object,
-  values_from = c("pearson_z", "pearson", "pearson_mean",
-                  "jaccard_mean", "jaccard", "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 ) {
 
   # Validate input
   values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson", "pearson_mean",
-                                       "jaccard_mean", "jaccard", "jaccard_z"))
+                           choices = c("pearson_z", "pearson"))
   stopifnot(
-    "'component' must be present in input table" = "component" %in% colnames(object),
-    "'marker_1' must be present in input table" = "marker_1" %in% colnames(object),
-    "'marker_2' must be present in input table" = "marker_2" %in% colnames(object),
-    "'values_from' must be present in input table" = values_from %in% colnames(object)
+    "'component' must be present in input table" =
+      "component" %in% colnames(object),
+    "'marker_1' must be present in input table" =
+      "marker_1" %in% colnames(object),
+    "'marker_2' must be present in input table" =
+      "marker_2" %in% colnames(object),
+    "'values_from' must be present in input table" =
+      values_from %in% colnames(object)
   )
 
   # Cast data.frame to wide format
@@ -233,11 +229,11 @@ ColocalizationScoresToAssay.data.frame <- function (
 
 
 #' @rdname ColocalizationScoresToAssay
-#' @method ColocalizationScoresToAssay CellGraphAssay
+#' @method ColocalizationScoresToAssay MPXAssay
 #'
 #' @examples
 #' # Create a Seurat object
-#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Fetch CellGraphAssay and create new polarization
 #' # scores Assay
@@ -248,42 +244,38 @@ ColocalizationScoresToAssay.data.frame <- function (
 #'
 #' @export
 #'
-ColocalizationScoresToAssay.CellGraphAssay <- function (
+ColocalizationScoresToAssay.MPXAssay <- function (
   object,
-  values_from = c("pearson_z", "pearson", "pearson_mean",
-                  "jaccard_mean", "jaccard", "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 ) {
 
-  # fetch polarization scores
-  col_table <- slot(object, name = "colocalization")
-  if (is.null(col_table)) {
-    abort("'colocalization' scores are missing from 'CellGraphAssay'")
-  }
-
-  # Validate input
-  values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson", "pearson_mean",
-                                       "jaccard_mean", "jaccard", "jaccard_z"))
-
-  col_scores_wide_format <- ColocalizationScoresToAssay(col_table, values_from, ...)
-
-  # Make sure that the components match
-  # Create an empty matrix (all 0's)
-  tofillMat <- matrix(data = 0,
-                      nrow = nrow(col_scores_wide_format),
-                      ncol = ncol(object),
-                      dimnames = list(rownames(col_scores_wide_format), colnames(object)))
-
-  # Fill matrix where it overlaps
-  # Any missing columns will be keep 0's
-  tofillMat[, colnames(col_scores_wide_format)] <- col_scores_wide_format
+  coloc_matrix <- .create_spatial_metric_matrix(object,
+                                                values_from = values_from,
+                                                metric = "colocalization")
+  coloc_matrix <- as(coloc_matrix, "dgCMatrix")
 
   # Create Assay from filled matrix
-  assay <- CreateAssayObject(data = tofillMat)
+  create_cg_assay_function <- ifelse(is(object, "CellGraphAssay"), CreateAssayObject, CreateAssay5Object)
+  assay <- create_cg_assay_function(data = coloc_matrix)
 
   return(assay)
 }
+
+
+#' @rdname ColocalizationScoresToAssay
+#' @method ColocalizationScoresToAssay CellGraphAssay
+#' @docType methods
+#' @export
+#'
+ColocalizationScoresToAssay.CellGraphAssay <- ColocalizationScoresToAssay.MPXAssay
+
+#' @rdname ColocalizationScoresToAssay
+#' @method ColocalizationScoresToAssay CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+ColocalizationScoresToAssay.CellGraphAssay5 <- ColocalizationScoresToAssay.MPXAssay
 
 
 #' @param assay Name of the \code{\link{CellGraphAssay}} to pull polarization scores from
@@ -312,8 +304,7 @@ ColocalizationScoresToAssay.Seurat <- function (
   object,
   assay = NULL,
   new_assay = NULL,
-  values_from = c("pearson_z", "pearson", "pearson_mean",
-                  "jaccard_mean", "jaccard", "jaccard_z"),
+  values_from = c("pearson_z", "pearson"),
   ...
 ) {
 
@@ -346,14 +337,59 @@ ColocalizationScoresToAssay.Seurat <- function (
 
   # Validate input
   values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson", "pearson_mean",
-                                       "jaccard_mean", "jaccard", "jaccard_z"))
+                           choices = c("pearson_z", "pearson"))
 
   # Create new assay
   col_assay <- ColocalizationScoresToAssay(cg_assay, values_from, ...)
 
   # Place new assay in Seurat object
-  object[[new_assay]] <- col_assay
+  object@assays[[new_assay]] <- col_assay
 
   return(object)
+}
+
+#' Utility function to fetch spatial metrics from
+#' a CellGraphAssay(5) object and convert them to a matrix
+#'
+#' @noRd
+#'
+.create_spatial_metric_matrix <- function (
+  object,
+  values_from,
+  metric,
+  ...
+) {
+  # fetch polarization scores
+  spatial_metric_table <- slot(object, name = metric)
+  if (is.null(spatial_metric_table)) {
+    abort(glue("'{metric}' scores are missing from '{class(object)}'"))
+  }
+
+  # Validate input
+  values_from <- match.arg(values_from, choices = switch(
+    metric,
+    "polarization" = c("morans_z", "morans_i"),
+    "colocalization" = c("pearson_z", "pearson")
+  ))
+
+
+  pivot_assay_func <- switch(
+    metric,
+    "polarization" = PolarizationScoresToAssay,
+    "colocalization" = ColocalizationScoresToAssay
+  )
+  spatial_metric_wide_format <- pivot_assay_func(spatial_metric_table, values_from, ...)
+
+  # Make sure that the components match
+  # Create an empty matrix (all 0's)
+  tofillMat <- matrix(data = 0,
+                      nrow = nrow(spatial_metric_wide_format),
+                      ncol = ncol(object),
+                      dimnames = list(rownames(spatial_metric_wide_format), colnames(object)))
+
+  # Fill matrix where it overlaps
+  # Any missing columns will be kept as 0's
+  tofillMat[, colnames(spatial_metric_wide_format)] <- spatial_metric_wide_format
+
+  return(tofillMat)
 }

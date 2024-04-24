@@ -5,7 +5,7 @@
 \alias{ReadMPX_polarization}
 \alias{ReadMPX_colocalization}
 \alias{ReadMPX_edgelist}
-\title{Read a pixel data item}
+\title{Read an MPX data item}
 \usage{
 ReadMPX_item(
   filename,
@@ -22,7 +22,7 @@ ReadMPX_edgelist(filename, verbose = TRUE)
 \arguments{
 \item{filename}{Path to a .pxl file}
 
-\item{items}{One of "colocalization", "polarization", "edgelist"}
+\item{items}{One or several of "colocalization", "polarization", "edgelist"}
 
 \item{verbose}{Print messages}
 }
@@ -31,10 +31,11 @@ Either an object of class \code{tbl_df} or a list of \code{tbl_df}
 objects if multiple \code{items} are selected
 }
 \description{
-Function that unzips a .pxl file into a temporary folder and reads any
-number of items (not anndata) as specified in items. If more than one
-item is fetched, the output is a list of data frames. Otherwise the output
-is a single \code{tbl_df}.
+\code{ReadMPX_item} reads any number of items from a .pxl file. If multiple
+items are specified, the output is a list of  \code{tbl_df} objects.
+Otherwise the output is a single \code{tbl_df}. \code{ReadMPX_polarization},
+\code{ReadMPX_colocalization} and \code{ReadMPX_edgelist} are wrappers for
+\code{ReadMPX_item} to read specific items.
 }
 \examples{
 

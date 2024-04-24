@@ -1,5 +1,4 @@
 #' @include generics.R
-#' @importFrom methods setClass setClassUnion setMethod slot slot<- new as slotNames
 #' @importClassesFrom Matrix dgCMatrix
 NULL
 
@@ -17,14 +16,13 @@ globalVariables(
 #' The CellGraphAssay class
 #'
 #' The CellGraphAssay object is an extended \code{\link[SeuratObject]{Assay}}
-#' for the storage and analysis of mpx single-cell data.
+#' for the storage and analysis of MPX single-cell data.
 #'
 #' @slot cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @slot polarization A \code{tbl_df} with polarization scores
 #' @slot colocalization A \code{tbl_df} with colocalization scores
-#' @slot arrow_dir A character giving the name of the directory where the edgelist
-#' parquet file(s) are stored
-#' @slot arrow_data An \code{R6} class object with an arrow Dataset
+#' @slot fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #'
 #' @name CellGraphAssay-class
 #' @rdname CellGraphAssay-class
@@ -38,10 +36,51 @@ CellGraphAssay <- setClass(
     cellgraphs = "list",
     polarization = "data.frame",
     colocalization = "data.frame",
-    arrow_dir = "character",
-    arrow_data = "ANY"
+    fs_map = "data.frame"
   )
 )
+
+#' The CellGraphAssay5 class
+#'
+#' The CellGraphAssay5 object is an extended \code{\link[SeuratObject]{Assay5}}
+#' for the storage and analysis of MPX single-cell data.
+#'
+#' @slot cellgraphs A named list of \code{\link{CellGraph}} objects
+#' @slot polarization A \code{tbl_df} with polarization scores
+#' @slot colocalization A \code{tbl_df} with colocalization scores
+#' @slot fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
+#'
+#' @name CellGraphAssay5-class
+#' @rdname CellGraphAssay5-class
+#' @importClassesFrom SeuratObject Assay5
+#' @exportClass CellGraphAssay5
+#' @concept assay
+CellGraphAssay5 <- setClass(
+  Class = "CellGraphAssay5",
+  contains = "Assay5",
+  slots = list(
+    cellgraphs = "list",
+    polarization = "data.frame",
+    colocalization = "data.frame",
+    fs_map = "data.frame"
+  )
+)
+
+
+#' MPXAssay class
+#'
+#' The MPXAssay class is defined as the union of the CellGraphAssay and CellGraphAssay5
+#' class. In other words, it is a virtual class defined as a superclass of these two classes.
+#'
+#' @name MPXAssay-class
+#' @rdname MPXAssay-class
+#' @aliases MPXAssay
+#'
+#' @exportClass MPXAssay
+#' @concept assay
+setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
+
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -58,13 +97,12 @@ CellGraphAssay <- setClass(
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects
 #' @param polarization A \code{tbl_df} with polarization scores
 #' @param colocalization A \code{tbl_df} with colocalization scores
-#' @param arrow_dir A path to an existing directory
+#' @param fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #' @param ... Additional arguments passed to \code{\link{CreateAssayObject}}
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
 #' @import rlang
-#' @importFrom SeuratObject CreateAssayObject
-#' @importFrom Matrix rowSums colSums
 #' @concept assay
 #'
 #' @return A \code{CellGraphAssay} object
@@ -108,9 +146,7 @@ CreateCellGraphAssay <- function (
   cellgraphs,
   polarization = NULL,
   colocalization = NULL,
-  arrow_dir = NULL,
-  outdir = NULL,
-  overwrite = FALSE,
+  fs_map = NULL,
   verbose = FALSE,
   ...
 ) {
@@ -128,63 +164,149 @@ CreateCellGraphAssay <- function (
   )
   cellgraphs <- cellgraphs[colnames(counts)]
 
-  # Set path to NA if NULL
-  arrow_dir <- arrow_dir %||% NA_character_
-
   # Validate polarization and colocalization
-  polarization <- .validate_polarization(polarization, cell_ids = colnames(counts), markers = rownames(counts), verbose = verbose)
-  colocalization <- .validate_colocalization(colocalization, cell_ids = colnames(counts), markers = rownames(counts), verbose = verbose)
-
-  # If arrow_dir are provided, attempt to lazy load edgelist
-  if (!is.na(arrow_dir)) {
-    stopifnot("'arrow_dir' must be a non-empty character" = is.character(arrow_dir) && (length(arrow_dir) >= 1))
-    for (path in arrow_dir) {
-      if (!(dir.exists(path) || file.exists(path))) {
-        abort(glue("Directory/file {path} doesn't exist"))
-      }
-    }
-    arrow_dir <- sapply(arrow_dir, normalizePath)
-
-    # Load arrow dataset
-    fsd <- ReadMPX_arrow_edgelist(path = arrow_dir, outdir = outdir, return_list = TRUE, overwrite = overwrite, verbose = FALSE)
-
-    # Update arrow_dir to new temporary directory
-    arrow_dir <- fsd$arrow_dir
-    fsd <- fsd$ArrowObject
-    if (!all(c("upia", "marker", "component", "sample") %in% names(fsd))) {
-      abort(glue("The following columns need to be present in the edgelist:",
-                 " 'upia', 'marker', 'component', 'sample'\n",
-                 "Check that {arrow_dir} is correctly formatted."))
-    }
-
-    # check for required fields
-    stopifnot(
-      "column 'component' is missing from cellgraphs" =
-        "component" %in% names(fsd)
+  polarization <-
+    .validate_polarization(
+      polarization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
     )
-    available_components <- fsd %>% pull(component, as_vector = TRUE) %>% unique()
-    if (!all(colnames(counts) %in% available_components))
-      abort(glue("Some components are not available in the edge list"))
-  } else {
-    fsd <- NULL
-  }
+  colocalization <-
+    .validate_colocalization(
+      colocalization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
+    )
 
-  # Create the Seurat assay
+  # Create the Seurat assay object
+  counts <- as(counts, "dgCMatrix")
   seurat.assay <- CreateAssayObject(
     counts = counts,
     ...
   )
 
   # Convert Seurat Assay to a CellGraphAssay
-  pxCell.assay <- as.CellGraphAssay(
+  cg_assay <- as.CellGraphAssay(
     x = seurat.assay,
     cellgraphs = cellgraphs,
     polarization = polarization,
     colocalization = colocalization,
-    arrow_dir = arrow_dir,
-    arrow_data = fsd
+    fs_map = fs_map
   )
-  return(pxCell.assay)
+  return(cg_assay)
+}
+
+
+#' Create a CellGraphAssay5 object
+#'
+#' Create a \code{\link{CellGraphAssay5}} object from a count matrix. The expected
+#' format of the input matrix is features x cells.
+#'
+#' @param counts Unnormalized data (raw counts)
+#' @param cellgraphs A named list of \code{\link{CellGraph}} objects
+#' @param polarization A \code{tbl_df} with polarization scores
+#' @param colocalization A \code{tbl_df} with colocalization scores
+#' @param fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
+#' @param ... Additional arguments passed to \code{\link{CreateAssay5Object}}
+#' @inheritParams ReadMPX_arrow_edgelist
+#'
+#' @import rlang
+#' @concept assay
+#'
+#' @return A \code{CellGraphAssay5} object
+#'
+#' @examples
+#'
+#' library(pixelatorR)
+#' library(dplyr)
+#' library(tidygraph)
+#'
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' counts <- ReadMPX_counts(pxl_file)
+#' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
+#' components <- colnames(counts)
+#' edgelist_split <-
+#'   edgelist %>%
+#'   select(upia, upib, component) %>%
+#'   distinct() %>%
+#'   group_by(component) %>%
+#'   group_split() %>%
+#'   setNames(nm = components)
+#'
+#' # Convert data into a list of CellGraph objects
+#' bipartite_graphs <- lapply(edgelist_split, function(x) {
+#'   x <- x %>% as_tbl_graph(directed = FALSE)
+#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   attr(x, "type") <- "bipartite"
+#'   CreateCellGraphObject(cellgraph = x)
+#' })
+#'
+#' # Create CellGraphAssay5
+#' cg_assay5 <- CreateCellGraphAssay5(counts = counts, cellgraphs = bipartite_graphs)
+#' cg_assay5
+#'
+#' @export
+#'
+CreateCellGraphAssay5 <- function (
+    counts,
+    cellgraphs,
+    polarization = NULL,
+    colocalization = NULL,
+    fs_map = NULL,
+    verbose = FALSE,
+    ...
+) {
+
+  # Check input parameters
+  stopifnot(
+    "'counts' must be a matrix-like object" =
+      inherits(counts, what =  c("matrix", "dgCMatrix")),
+    "'cellgraphs' must be a 'list'" =
+      inherits(cellgraphs, what = "list")
+  )
+  stopifnot(
+    "'cellgraphs' names must be match the colnames of the count matrix" =
+      all(names(cellgraphs) == colnames(counts))
+  )
+  cellgraphs <- cellgraphs[colnames(counts)]
+
+  # Validate polarization and colocalization
+  polarization <-
+    .validate_polarization(
+      polarization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
+    )
+  colocalization <-
+    .validate_colocalization(
+      colocalization,
+      cell_ids = colnames(counts),
+      markers = rownames(counts),
+      verbose = verbose
+    )
+
+  # Create the Seurat assay5 object
+  counts <- as(counts, "dgCMatrix")
+  seurat_assay <- CreateAssay5Object(
+    counts = counts,
+    ...
+  )
+
+  # Convert Seurat Assay5 to a CellGraphAssay5
+  cg_assay5 <- as.CellGraphAssay5(
+    x = seurat_assay,
+    cellgraphs = cellgraphs,
+    polarization = polarization,
+    colocalization = colocalization,
+    fs_map = fs_map
+  )
+  return(cg_assay5)
 }
 
 
@@ -194,7 +316,7 @@ CreateCellGraphAssay <- function (
 
 
 #' @rdname CellGraphs
-#' @method CellGraphs CellGraphAssay
+#' @method CellGraphs MPXAssay
 #' @export
 #' @concept assay
 #' @concept cellgraphs
@@ -204,8 +326,6 @@ CreateCellGraphAssay <- function (
 #' library(pixelatorR)
 #' library(dplyr)
 #' library(tidygraph)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
@@ -239,7 +359,7 @@ CreateCellGraphAssay <- function (
 #' # Get cellgraphs from a CellGraphAssay object
 #' CellGraphs(cg_assay)
 #'
-CellGraphs.CellGraphAssay <- function (
+CellGraphs.MPXAssay <- function (
   object,
   ...
 ) {
@@ -248,7 +368,7 @@ CellGraphs.CellGraphAssay <- function (
 
 
 #' @export
-#' @method CellGraphs<- CellGraphAssay
+#' @method CellGraphs<- MPXAssay
 #' @rdname CellGraphs
 #' @concept assay
 #' @concept cellgraphs
@@ -261,15 +381,15 @@ CellGraphs.CellGraphAssay <- function (
 #' # Set cellgraphs in a CellGraphAssay object
 #' CellGraphs(cg_assay) <- cg_assay@cellgraphs
 #'
-"CellGraphs<-.CellGraphAssay" <- function (
+"CellGraphs<-.MPXAssay" <- function (
   object,
   ...,
   value
 ) {
 
-  # Clean cellgraphs slot if balue = NULL
+  # Clean cellgraphs slot if value = NULL
   if (is.null(x = value)) {
-    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% setNames(nm = colnames(object))
+    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
     return(object)
   }
 
@@ -290,146 +410,48 @@ CellGraphs.CellGraphAssay <- function (
 }
 
 
-#' @importFrom SeuratObject RenameCells LayerData
-#' @importFrom arrow schema unify_schemas open_dataset arrow_table write_dataset
+#' @param object A \code{MPXAssay} object, i.e. one of \code{CellGraphAssay} or
+#' \code{CellGraphAssay5}
+#' @param new.names A character vector with new cell IDs. The length of the vector
+#' must be equal to the number of cells in the object and the names must be unique.
+#' @param ... Additional arguments (not used)
 #'
-#' @rdname RenameCells
-#' @method RenameCells CellGraphAssay
+#' @describeIn MPXAssay-methods Rename cell IDs of a \code{CellGraphAssay} or
+#' \code{CellGraphAssay5} object
+#' @method RenameCells MPXAssay
 #' @concept assay
+#' @docType methods
 #'
 #' @export
-RenameCells.CellGraphAssay <- function (
+RenameCells.MPXAssay <- function (
   object,
   new.names = NULL,
   ...
 ) {
 
-  stopifnot(
-    "'new.names' must be a character vector with the same length as the number of cells present in 'object'" =
-      inherits(new.names, what = "character") &&
-      (length(new.names) == ncol(object))
-  )
+  if (!inherits(new.names, what = "character") ||
+      !(length(new.names) == ncol(object)) ||
+      !sum(duplicated(new.names)) == 0) {
+    abort(glue("'new.names' must be a character vector where length(new.names) == ncol(object),",
+               " and the names must be unique."))
+  }
+  if (is.null(names(new.names))) {
+    new.names <- set_names(new.names, nm = colnames(object))
+  }
 
-  # save original cell IDs
   orig.names <- colnames(object)
 
-  # Fetch unique sample IDs from orig.names and new.names
-  new_sample_id_table <- do.call(rbind, strsplit(new.names, "_"))
-  new_sample_id <- new_sample_id_table[, 1] %>% unique()
-  old_sample_id_table <- do.call(rbind, strsplit(orig.names, "_"))
-  if (ncol(old_sample_id_table) == 1) {
-    old_sample_id <- "S1"
-  } else {
-    old_sample_id <- old_sample_id_table[, 1] %>% unique()
-  }
+  assay <- as(object, Class = ifelse(is(object, "CellGraphAssay"), "Assay", "Assay5"))
+  assay <- RenameCells(assay, new.names = new.names, ...)
 
-  # Validate names
-  names_checked <- sapply(new.names, function(s) {
-    stringr::str_like(s, pattern = "^[a-zA-Z][a-zA-Z0-9]*\\_RCVCMP\\d{7}$")
-  })
-  if (!any(names_checked)) {
-    abort(glue("Failed to merge CellGraphAssays.\n\n",
-               "Make sure to follow these steps:\n\n",
-               "1. CellGraphAssay column names should have the following format:\n",
-               "   ^[a-zA-Z][a-zA-Z0-9]*_RCVCMP\\d{7}$\n",
-               "   where the first part is a sample ID and the second part is the PXL ID, \n",
-               "   separated by an underscore. For example, {col_green('Sample1_RCVCMP0000000')}.\n\n",
-               "2. When merging Seurat objects, make sure to set {col_green('add.cell.ids')}.\n\n",
-               "3. Cannot merge Seurat objects with CellGraphAssays twice due to naming conflicts. \n",
-               "   Instead, merge all data sets once:\n",
-               "   {col_green('se_merged <- merge(se1, list(se2, se3, se4, ...))')}\n",
-               "   Attempting to merge the merged object again will fail:\n",
-               "   {col_red('se_double_merged <- merge(se_merged, se_merged)')}"))
-  }
+  # Recreate the CellGraphAssay object
+  as_assay_function <- ifelse(is(object, "CellGraphAssay"), as.CellGraphAssay, as.CellGraphAssay5)
+  cg_assay_renamed <- as_assay_function(assay)
 
-  names(slot(object = object, name = "cellgraphs")) <- new.names
-
-  names(x = new.names) <- NULL
-  for (data.slot in object[]) {
-    old.data <- LayerData(object = object, layer = data.slot)
-    if (ncol(x = old.data) <= 1) {
-      next
-    }
-    colnames(x = slot(object = object, name = data.slot)) <- new.names
-  }
-
-  # Get arrow dir
-  arrow_dir <- ArrowDir(object)
-  if (!is.null(arrow_dir)) {
-    arrow_dirs <- list.files(arrow_dir, full.names = TRUE)
-
-    # Create new directory
-    session_tmpdir_random <-
-      file.path(
-        getOption("pixelatorR.arrow_outdir"),
-        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
-
-    # Trigger garbage cleaning if the edgelist directories exceed the
-    # maximum allowed size
-    .run_clean()
-
-    if (length(arrow_dirs) == 1) {
-      # Handle renaming if 1 hive-style directory is present
-
-      # Check sample ID
-      if (length(new_sample_id) > 1) {
-        abort(glue("Found multiple sample IDs in 'new.names' but only 1 edgelist in the arrow directory."))
-      }
-
-      # Copy directory
-      if (dir.exists(arrow_dirs)) {
-        dir.create(session_tmpdir_random)
-        file.copy(from = arrow_dirs, to = session_tmpdir_random, recursive = TRUE)
-        # Rename hive-style directory
-        hive_style_dir_sample1 <- list.files(session_tmpdir_random, full.names = TRUE)
-        file.rename(from = hive_style_dir_sample1, file.path(session_tmpdir_random, paste0("sample=", new_sample_id)))
-      } else {
-        abort(glue("Directory '{arrow_dirs}' is missing Cannot rename cell IDs in edgelists."))
-      }
-    } else {
-      # Handle renaming if more than 1 hive-style directories are present
-
-      if (!length(arrow_dirs) == length(new_sample_id)) {
-        abort(glue("Found {length(arrow_dirs)} samples in arrow directory, but {length(new_sample_id)} samples in 'new.names'"))
-      }
-
-      # Copy directories to new folder
-      if (all(dir.exists(arrow_dirs))) {
-        dir.create(session_tmpdir_random)
-        for (i in seq_along(arrow_dirs)) {
-          file.copy(from = arrow_dirs[i], to = session_tmpdir_random, recursive = TRUE)
-        }
-        hive_style_dir_samples <- list.files(session_tmpdir_random, full.names = TRUE)
-        hive_style_dir_sample_IDs <- basename(hive_style_dir_samples) %>% gsub(pattern = "sample=", replacement = "", x = .)
-        hive_style_dir_samples <- setNames(hive_style_dir_samples, nm = hive_style_dir_sample_IDs)
-
-        # Reorder hive_style_dir_samples
-        hive_style_dir_samples <- hive_style_dir_samples[old_sample_id]
-
-        # Rename hive-style directory
-        for (i in seq_along(arrow_dirs)) {
-          file.rename(from = hive_style_dir_samples[i], file.path(session_tmpdir_random, paste0("sample=", new_sample_id[i])))
-        }
-      } else {
-        abort(glue("The following directories are missing:\n {paste0(arrow_dirs, collapse='\n')} ",
-                   "\nCannot rename cell IDs in edgelists."))
-      }
-    }
-
-    # Log command
-    command <- sys.calls()[[1]][1] %>% as.character()
-    options(pixelatorR.edgelist_copies = bind_rows(
-      getOption("pixelatorR.edgelist_copies"),
-      tibble(command = command,
-             edgelist_dir = normalizePath(session_tmpdir_random),
-             timestamp = Sys.time())
-    ))
-
-    # Reload arrow dataset
-    fsd_new <- open_dataset(session_tmpdir_random)
-    slot(object, name = "arrow_data") <- fsd_new
-    slot(object, name = "arrow_dir") <- session_tmpdir_random
-  }
+  # Rename cellgraphs
+  cellgraphs <- slot(object, name = "cellgraphs")
+  cellgraphs <- set_names(cellgraphs, nm = new.names)
+  slot(cg_assay_renamed, name = "cellgraphs") <- cellgraphs
 
   # Handle polarization slot
   name_conversion <- tibble(new = new.names, component = orig.names)
@@ -440,7 +462,7 @@ RenameCells.CellGraphAssay <- function (
       select(-component) %>%
       rename(component = new)
   }
-  slot(object, name = "polarization") <- polarization
+  slot(cg_assay_renamed, name = "polarization") <- polarization
 
   # Handle colocalization slot
   colocalization <- slot(object, name = "colocalization")
@@ -450,17 +472,46 @@ RenameCells.CellGraphAssay <- function (
       select(-component) %>%
       rename(component = new)
   }
-  slot(object, name = "colocalization") <- colocalization
+  slot(cg_assay_renamed, name = "colocalization") <- colocalization
 
-  return(object)
+  # Handle fs_map
+  fs_map <- slot(object, name = "fs_map")
+  if (nrow(fs_map) > 0) {
+    fs_map$id_map <- fs_map %>% pull(id_map) %>%
+      lapply(function(x) {
+        x$current_id <- new.names[x$current_id]
+        return(x)
+      })
+  }
+  slot(cg_assay_renamed, name = "fs_map") <- fs_map
+
+  return(cg_assay_renamed)
 }
+
+#' @inheritParams RenameCells.MPXAssay
+#' @describeIn CellGraphAssay-methods Rename cell IDs of a \code{CellGraphAssay} object
+#' @concept assay
+#' @method RenameCells CellGraphAssay
+#' @docType methods
+#' @export
+#'
+RenameCells.CellGraphAssay <- RenameCells.MPXAssay
+
+#' @inheritParams RenameCells.MPXAssay
+#' @describeIn CellGraphAssay5-methods Rename cell IDs of a \code{CellGraphAssay5} object
+#' @concept assay
+#' @method RenameCells CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+RenameCells.CellGraphAssay5 <- RenameCells.MPXAssay
 
 
 #' @param cellgraphs A list of \code{\link{CellGraph}} objects
 #' @param polarization A \code{tbl_df} with polarization scores
 #' @param colocalization A \code{tbl_df} with colocalization scores
-#' @param arrow_dir TODO
-#' @param arrow_data An \code{R6} class object created with arrow
+#' @param fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
 #'
 #' @import rlang
 #'
@@ -513,8 +564,7 @@ as.CellGraphAssay.Assay <- function (
   cellgraphs = NULL,
   polarization = NULL,
   colocalization = NULL,
-  arrow_dir = NULL,
-  arrow_data = NULL,
+  fs_map = NULL,
   ...
 ) {
 
@@ -534,62 +584,31 @@ as.CellGraphAssay.Assay <- function (
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% setNames(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
+  }
+
+  # Check fs_map
+  if (!is.null(fs_map)) {
+    .validate_fs_map(fs_map)
   }
 
   # Validate polarization and colocalization
   polarization <- .validate_polarization(polarization, cell_ids = colnames(x), markers = rownames(x))
   colocalization <- .validate_colocalization(colocalization, cell_ids = colnames(x), markers = rownames(x))
 
-  # Abort if cellgraphs is empty and neither arrow_dir or arrow_data is provided
-  loaded_graphs <- sum(sapply(cellgraphs, is.null))
-  if (loaded_graphs == ncol(x)) {
-    stopifnot(
-      "One of 'arrow_dir' or 'arrow_data' must be provided if 'cellgraphs is empty'" =
-        (!is.null(arrow_dir)) ||
-        (!is.null(arrow_data))
-    )
-  }
-
-  # Handle arrow_dir
-  arrow_dir <- arrow_dir %||% NA_character_
-  if (!is.na(arrow_dir)) {
-    stopifnot(
-      "'arrow_dir' must be a non-empty character" =
-        is.character(arrow_dir) &&
-        (length(arrow_dir) >= 1)
-    )
-    for (path in arrow_dir) {
-      if (!(dir.exists(path) || file.exists(path))) {
-        abort(glue("Directory/file {path} doesn't exist"))
-      }
-    }
-    arrow_dir <- sapply(arrow_dir, normalizePath) %>% unname()
-  }
-
-  # Handle arrow_data
-  if (!is.null(arrow_data)) {
-    #TODO: validate class
-    stopifnot(all(c("upia", "marker", "component", "sample") %in% names(arrow_data)))
-    stopifnot("A valid 'arrow_dir' must be provided if 'arrow_data' is provided" = !is.na(arrow_dir))
-    stopifnot("column 'component' is missing from 'arrow_data" = "component" %in% names(arrow_data))
-    #stopifnot("One or several components are missing from 'arrow_data'" = all(colnames(x) %in% (arrow_data %>% pull(component, as_vector = TRUE))))
-  }
-
-  new.assay <- as(object = x, Class = "CellGraphAssay")
-  slot(new.assay, name = "arrow_dir") <- NA_character_
+  new_assay <- as(object = x, Class = "CellGraphAssay")
 
   # Add slots
-  slot(new.assay, name = "cellgraphs") <- cellgraphs
-  slot(new.assay, name = "polarization") <- polarization
-  slot(new.assay, name = "colocalization") <- colocalization
-  if (!is.null(arrow_data)) {
-    # If an R6 class object exists, add it and arrow_dir to the appropriate slots
-    slot(new.assay, name = "arrow_data") <- arrow_data
-    slot(new.assay, name = "arrow_dir") <- arrow_dir
+  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "polarization") <- polarization
+  slot(new_assay, name = "colocalization") <- colocalization
+
+  # Add fs_map
+  if (!is.null(fs_map)) {
+    slot(new_assay, name = "fs_map") <- fs_map
   }
 
-  return(new.assay)
+  return(new_assay)
 }
 
 setAs(
@@ -614,13 +633,139 @@ setAs(
 )
 
 
-#' @method PolarizationScores CellGraphAssay
+#' @param cellgraphs A list of \code{\link{CellGraph}} objects
+#' @param polarization A \code{tbl_df} with polarization scores
+#' @param colocalization A \code{tbl_df} with colocalization scores
+#' @param fs_map A \code{tbl_df} with information on source pxl file 
+#' paths, sample IDs, and component IDs
+#'
+#' @import rlang
+#'
+#' @rdname as.CellGraphAssay5
+#' @method as.CellGraphAssay5 Assay5
+#' @concept assay
+#'
+#' @return A \code{CellGraphAssay5} object
+#'
+#' @examples
+#'
+#' library(pixelatorR)
+#' library(SeuratObject)
+#' library(dplyr)
+#' library(tidygraph)
+#'
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' counts <- ReadMPX_counts(pxl_file)
+#' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
+#' components <- colnames(counts)
+#' edgelist_split <-
+#'   edgelist %>%
+#'   select(upia, upib, component) %>%
+#'   distinct() %>%
+#'   group_by(component) %>%
+#'   group_split() %>%
+#'   setNames(nm = components)
+#'
+#' # Convert data into a list of CellGraph objects
+#' bipartite_graphs <- lapply(edgelist_split, function(x) {
+#'   x <- x %>% as_tbl_graph(directed = FALSE)
+#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   attr(x, "type") <- "bipartite"
+#'   CreateCellGraphObject(cellgraph = x)
+#' })
+#'
+#' # Create Assay5
+#' assay5 <- CreateAssay5Object(counts = counts)
+#'
+#' # Convert Assay5 to CellGraphAssay5
+#' cg_assay <- as.CellGraphAssay5(assay5, cellgraphs = bipartite_graphs)
+#' cg_assay
+#'
+#' @export
+#'
+as.CellGraphAssay5.Assay5 <- function (
+    x,
+    cellgraphs = NULL,
+    polarization = NULL,
+    colocalization = NULL,
+    fs_map = NULL,
+    ...
+) {
+
+  # Check cellgraphs
+  if (!is.null(cellgraphs)) {
+    stopifnot(
+      "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay5" =
+        is.list(cellgraphs) &&
+        (length(cellgraphs) == ncol(x)))
+    stopifnot(
+      "'cellgraphs' names must match colnames of the Assay5" =
+        all(names(cellgraphs) == colnames(x))
+    )
+    for (i in seq_along(cellgraphs)) {
+      if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
+        abort(glue("Element {i} is not a CellGraph object or NULL"))
+      }
+    }
+  } else {
+    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
+  }
+
+  # Check fs_map
+  if (!is.null(fs_map)) {
+    .validate_fs_map(fs_map)
+  }
+
+  # Validate polarization and colocalization
+  polarization <- .validate_polarization(polarization, cell_ids = colnames(x), markers = rownames(x))
+  colocalization <- .validate_colocalization(colocalization, cell_ids = colnames(x), markers = rownames(x))
+
+  new_assay <- as(object = x, Class = "CellGraphAssay5")
+
+  # Add slots
+  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "polarization") <- polarization
+  slot(new_assay, name = "colocalization") <- colocalization
+
+  # Add fs_map
+  if (!is.null(fs_map)) {
+    slot(new_assay, name = "fs_map") <- fs_map
+  }
+
+  return(new_assay)
+}
+
+setAs(
+  from = "Assay5",
+  to = "CellGraphAssay5",
+  def = function(from) {
+    object.list <- sapply(
+      X = slotNames(x = from),
+      FUN = slot,
+      object = from,
+      simplify = FALSE,
+      USE.NAMES = TRUE
+    )
+    object.list <- c(
+      list(
+        "Class" = "CellGraphAssay5"
+      ),
+      object.list
+    )
+    return(do.call(what = "new", args = object.list))
+  }
+)
+
+
+#' @method PolarizationScores MPXAssay
 #'
 #' @rdname PolarizationScores
 #'
 #' @export
 #'
-PolarizationScores.CellGraphAssay <- function (
+PolarizationScores.MPXAssay <- function (
   object,
   ...
 ) {
@@ -628,13 +773,13 @@ PolarizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method PolarizationScores<- CellGraphAssay
+#' @method PolarizationScores<- MPXAssay
 #'
 #' @rdname PolarizationScores
 #'
 #' @export
 #'
-"PolarizationScores<-.CellGraphAssay" <- function (
+"PolarizationScores<-.MPXAssay" <- function (
   object,
   ...,
   value
@@ -646,13 +791,13 @@ PolarizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method ColocalizationScores CellGraphAssay
+#' @method ColocalizationScores MPXAssay
 #'
 #' @rdname ColocalizationScores
 #'
 #' @export
 #'
-ColocalizationScores.CellGraphAssay <- function (
+ColocalizationScores.MPXAssay <- function (
   object,
   ...
 ) {
@@ -660,13 +805,13 @@ ColocalizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method ColocalizationScores<- CellGraphAssay
+#' @method ColocalizationScores<- MPXAssay
 #'
 #' @rdname ColocalizationScores
 #'
 #' @export
 #'
-"ColocalizationScores<-.CellGraphAssay" <- function (
+"ColocalizationScores<-.MPXAssay" <- function (
   object,
   ...,
   value
@@ -678,80 +823,34 @@ ColocalizationScores.CellGraphAssay <- function (
 }
 
 
-#' @method ArrowData CellGraphAssay
+#' @method FSMap MPXAssay
 #'
-#' @rdname ArrowData
+#' @rdname FSMap
 #'
 #' @export
 #'
-ArrowData.CellGraphAssay <- function (
-    object,
-    ...
+FSMap.MPXAssay <- function (
+  object,
+  ...
 ) {
-  slot(object, name = "arrow_data")
+  slot(object, name = "fs_map")
 }
 
 
-#' @method ArrowData<- CellGraphAssay
+#' @method FSMap<- MPXAssay
 #'
-#' @rdname ArrowData
+#' @rdname FSMap
 #'
 #' @export
 #'
-"ArrowData<-.CellGraphAssay" <- function (
+"FSMap<-.MPXAssay" <- function (
   object,
   ...,
   value
 ) {
   # Validate value
-  if (!inherits(value, what = c("Dataset", "arrow_dplyr_query", "ArrowObject"))) {
-    abort(glue("Invalid class '{class(value)[1]}'."))
-  }
-  msg <- tryCatch(value %>% nrow(), error = function(e) "Error")
-  if (msg == "Error") {
-    abort("Invalid 'value'")
-  }
-  slot(object = object, name = "arrow_data") <- value
-  return(object)
-}
-
-
-#' @param assay Name of a \code{CellGraphAssay}
-#'
-#' @method ArrowDir CellGraphAssay
-#'
-#' @rdname ArrowDir
-#'
-#' @export
-#'
-ArrowDir.CellGraphAssay <- function (
-  object,
-  ...
-) {
-  slot(object, name = "arrow_dir")
-}
-
-
-#' @method ArrowDir<- CellGraphAssay
-#'
-#' @rdname ArrowDir
-#'
-#' @export
-#'
-"ArrowDir<-.CellGraphAssay" <- function (
-  object,
-  ...,
-  value
-) {
-  stopifnot(
-    "'value' must be a non-empty character vector" =
-      is.character(value) &&
-      (length(value) == 1)
-  )
-  if (!file.exists(value)) {
-    abort(glue("{value} doesn't exist"))
-  }
-  slot(object = object, name = "arrow_dir") <- value
+  .validate_fs_map(value)
+  slot(object, name = "fs_map") <- value
   return(object)
 }
 
@@ -760,6 +859,26 @@ ArrowDir.CellGraphAssay <- function (
 # Methods for R-defined generics
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
+#' MPXAssay Methods
+#'
+#' Methods for \code{\link{MPXAssay}} objects for generics defined in other
+#' packages
+#'
+#' @param x A \code{\link{MPXAssay}} object
+#' @param features Feature names
+#' @param cells Cell names
+#' @param y A \code{\link{MPXAssay}} object or a list of \code{\link{MPXAssay}} objects
+#' @param merge.data Merge the data slots instead of just merging the counts (which requires renormalization);
+#' this is recommended if the same normalization approach was applied to all objects
+#' @param ... Arguments passed to other methods
+#'
+#' @name MPXAssay-methods
+#' @rdname MPXAssay-methods
+#'
+#' @concept assay
+#'
+NULL
 
 #' CellGraphAssay Methods
 #'
@@ -781,17 +900,35 @@ ArrowDir.CellGraphAssay <- function (
 #'
 NULL
 
+#' CellGraphAssay5 Methods
+#'
+#' Methods for \code{\link{CellGraphAssay5}} objects for generics defined in other
+#' packages
+#'
+#' @param x A \code{\link{CellGraphAssay5}} object
+#' @param features Feature names
+#' @param cells Cell names
+#' @param y A \code{\link{CellGraphAssay5}} object or a list of \code{\link{CellGraphAssay5}} objects
+#' @param merge.data Merge the data slots instead of just merging the counts (which requires renormalization);
+#' this is recommended if the same normalization approach was applied to all objects
+#' @param ... Arguments passed to other methods
+#'
+#' @name CellGraphAssay5-methods
+#' @rdname CellGraphAssay5-methods
+#'
+#' @concept assay
+#'
+NULL
+
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Base methods
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-#' Show method for \code{CellGraphAssay} object
-#'
-#' @param object A \code{CellGraphAssay} object
-#'
-#' @importFrom methods show
+#' @describeIn MPXAssay-methods Show method for a \code{CellGraphAssay} or a
+#' \code{CellGraphAssay5} object
+#' @param object A \code{CellGraphAssay} or a \code{CellGraphAssay5} object
 #'
 #' @examples
 #'
@@ -828,60 +965,92 @@ NULL
 #' # Show method
 #' cg_assay
 #'
+#' @export
+#'
 setMethod (
   f = "show",
-  signature = "CellGraphAssay",
+  signature = "MPXAssay",
   definition = function(object) {
     cellgraphs <- slot(object, "cellgraphs")
     loaded_graphs <- !sapply(cellgraphs, is.null)
-    show(as(object, Class = "Assay"))
-    cat(
-      "Loaded CellGraph objects:",
-      sum(loaded_graphs),
-      "\n"
-    )
+    msg <-
+      capture.output(show(as(
+        object, Class = ifelse(
+          is(object, "CellGraphAssay5"),
+          "Assay5",
+          "Assay"
+        )
+      )))
+    msg[1] <- gsub(pattern = "^Assay",
+                   x = msg[1],
+                   replacement = "CellGraphAssay")
+    msg <- c(msg, paste0("Loaded CellGraph objects:\n ",
+                         sum(loaded_graphs),
+                         "\n"))
+    cat(paste(msg, collapse = "\n"))
   }
 )
 
-
-
-#' @describeIn CellGraphAssay-methods Subset a \code{CellGraphAssay} object
-#' @importClassesFrom SeuratObject Assay
+#' @describeIn CellGraphAssay-methods Show method for
+#' \code{CellGraphAssay} objects
 #' @concept assay
-#' @method subset CellGraphAssay
+#' @method show CellGraphAssay
+#' @docType methods
 #'
-#' @importFrom arrow write_dataset
+#' @export
 #'
-#' @return A \code{CellGraphAssay} object
+setMethod (
+  f = "show",
+  signature = "CellGraphAssay",
+  definition = function(object) as(getMethod("show", "MPXAssay"), "function")(object)
+)
+
+#' @describeIn CellGraphAssay5-methods Show method for
+#' \code{CellGraphAssay5} objects
+#' @concept assay
+#' @method show CellGraphAssay5
+#' @docType methods
+#'
+#' @export
+#'
+setMethod (
+  f = "show",
+  signature = "CellGraphAssay5",
+  definition = function(object) as(getMethod("show", "MPXAssay"), "function")(object)
+)
+
+
+#' @describeIn MPXAssay-methods Subset a \code{CellGraphAssay} or a
+#' \code{CellGraphAssay5} object
+#' @concept assay
+#' @method subset MPXAssay
+#' @docType methods
+#'
+#' @return A \code{MPXAssay} object
 #'
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
+#' options(Seurat.object.assay.version = "v3")
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
-#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur)
 #' cg_assay <- seur[["mpxCells"]]
 #'
-#' # Subset CellGraphAssay
+#' # Subset CellGraphAssay(5)
 #' # ---------------------------------
 #' cg_assay_subset <- subset(cg_assay, cells = colnames(cg_assay)[1:3])
 #'
-#' # Subset Seurat object containing a CellGraphAssay
+#' # Subset Seurat object containing a CellGraphAssay(5)
 #' # --------------------------------
 #' seur_subset <- subset(seur, cells = colnames(seur)[1:3])
 #'
-#' # Compare size of edge lists stored on disk
-#' ArrowData(seur) %>% dim()
-#' ArrowData(seur_subset) %>% dim()
-#'
 #' @export
 #'
-subset.CellGraphAssay <- function (
+subset.MPXAssay <- function (
   x,
   features = NULL,
   cells = NULL,
@@ -897,89 +1066,18 @@ subset.CellGraphAssay <- function (
   cellgraphs <- x@cellgraphs
 
   # subset elements in the standard assay
-  standardassay <- as(object = x, Class = "Assay")
-  standardassay <- subset(x = standardassay, features = features, cells = cells)
+  assay <- as(object = x, Class = ifelse(is(x, "CellGraphAssay"),
+                                         "Assay",
+                                         "Assay5"))
+  assay_subset <- subset(x = assay, features = features, cells = cells)
 
   # Filter cellgraphs
-  cellgraphs_filtered <- cellgraphs[colnames(standardassay)]
+  cellgraphs_filtered <- cellgraphs[colnames(assay_subset)]
 
-  # Fetch arrow_dir
-  arrow_dir <- slot(x, name = "arrow_dir")
+  # Filter cellgraphs
+  cellgraphs_filtered <- cellgraphs[colnames(assay_subset)]
 
-  # Get sample ids
-  sample_id_table <- do.call(rbind, strsplit(colnames(x), "_"))
-  rownames(sample_id_table) <- colnames(x)
-  if (ncol(sample_id_table) == 1) {
-    sample_id <- NULL
-  } else {
-    sample_id <- sample_id_table[, 1] %>% unique()
-  }
-
-  # Handle arrow data set if available
-  if (!is.na(arrow_dir)) {
-    x <- RestoreArrowConnection(x, verbose = FALSE)
-
-    # Filter edgelists
-    if (!is.null(cells)) {
-
-      # Only filter by cells
-      if (length(cells) < ncol(x)) {
-
-        # Trigger garbage cleaning if the edgelist directories exceed the
-        # maximum allowed size
-        .run_clean()
-
-        # Create a temporary directory with a unique name
-        session_tmpdir_random <-
-          file.path(
-            getOption("pixelatorR.arrow_outdir"),
-            glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
-        dir.create(session_tmpdir_random)
-
-        # Handle samples
-        if (ncol(sample_id_table) > 1) {
-          components_keep_list <- split(sample_id_table[cells, 2], sample_id_table[cells, 1])
-          for (s in sample_id) {
-            components_keep <- components_keep_list[[s]]
-            slot(x, name = "arrow_data") %>%
-              filter(sample == s) %>%
-              filter(component %in% components_keep) %>%
-              group_by(sample) %>%
-              write_dataset(path = session_tmpdir_random)
-          }
-        } else {
-          # Filter edgelist and export it
-          slot(x, name = "arrow_data") %>%
-            filter(component %in% cells) %>%
-            group_by(sample) %>%
-            write_dataset(session_tmpdir_random)
-        }
-
-        # Rename parquet files for consistensy with other functions
-        files <- list.files(session_tmpdir_random, pattern = "parquet", recursive = TRUE, full.names = TRUE)
-        for (f in files) {
-          if (basename(f) != "edgelist.parquet") {
-            file.rename(from = f, file.path(dirname(f), "edgelist.parquet"))
-          }
-        }
-
-        # Log command
-        command <- sys.calls()[[1]][1] %>% as.character()
-        options(pixelatorR.edgelist_copies = bind_rows(
-          getOption("pixelatorR.edgelist_copies"),
-          tibble(command = command,
-                 edgelist_dir = normalizePath(session_tmpdir_random),
-                 timestamp = Sys.time())
-        ))
-
-        # Update arrow_dir
-        arrow_dir <- session_tmpdir_random
-      }
-    }
-    slot(x, name = "arrow_data") <- arrow::open_dataset(arrow_dir)
-  }
-
-  # Filter polarization and colocaliation
+  # Filter polarization and colocalization scores
   polarization <- slot(x, name = "polarization")
   if (length(polarization) > 0) {
     if (!is.null(cells)) {
@@ -999,189 +1097,145 @@ subset.CellGraphAssay <- function (
     }
   }
 
-  # convert standard assay to CellGraphAssay
-  pxcellassay <- as.CellGraphAssay(
-    x = standardassay,
+  # Filter fs_map
+  fs_map <- slot(x, name = "fs_map")
+  if (length(fs_map) > 0) {
+    fs_map$id_map <- lapply(fs_map$id_map, function(x) {
+      x %>% filter(current_id %in% cells)
+    })
+    fs_map <- na.omit(fs_map)
+  }
+
+  # convert standard assay to CellGraphAssay or CellGraphAssay5
+  as_assay_func <- ifelse(is(x, "CellGraphAssay"),
+                          as.CellGraphAssay,
+                          as.CellGraphAssay5)
+  cg_assay <- as_assay_func(
+    x = assay_subset,
     cellgraphs = cellgraphs_filtered,
     polarization = polarization,
     colocalization = colocalization,
-    arrow_dir = arrow_dir,
-    arrow_data = slot(x, name = "arrow_data")
+    fs_map = fs_map
   )
-  return(pxcellassay)
+  return(cg_assay)
 }
+
+#' @describeIn CellGraphAssay-methods Subset a \code{CellGraphAssay} object
+#' @concept assay
+#' @method subset CellGraphAssay
+#' @docType methods
+#' @export
+#'
+subset.CellGraphAssay <- subset.MPXAssay
+
+#' @describeIn CellGraphAssay5-methods Subset a \code{CellGraphAssay5} object
+#' @concept assay
+#' @method subset CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+subset.CellGraphAssay5 <- subset.MPXAssay
 
 
 #' @param add.cell.ids A character vector with sample names
+#' @param collapse If TRUE, merge layers of the same name together
 #'
-#' @importFrom SeuratObject Key Key<- RenameCells
-#' @describeIn CellGraphAssay-methods Merge two or more \code{CellGraphAssay} objects together
+#' @describeIn MPXAssay-methods Merge two or more \code{CellGraphAssay} or
+#' \code{CellGraphAssay5} objects together
 #' @concept assay
-#' @method merge CellGraphAssay
-#'
-#' @importFrom SeuratObject RowMergeSparseMatrices Cells Key Key<- RenameCells
-#' @importFrom stringr str_c
-#' @importFrom arrow open_dataset write_parquet
+#' @method merge MPXAssay
+#' @docType methods
 #'
 #' @examples
-#' # Merge CellGraphAssays
+#' # Merge multiple CellGraphAssay(5) objects
 #' # ---------------------------------
 #'
-#' # Merge 3 CellGraphAssays
-#' cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay))
-#'
-#' # Check size of merged edge lists stored on disk
-#' ArrowData(cg_assay_merged) %>% dim()
+#' # Merge 3 CellGraphAssay(5) objects
+#' cg_assay_merged <- merge(cg_assay,
+#'                          y = list(cg_assay, cg_assay),
+#'                          add.cell.ids = c("A", "B", "C"))
 #'
 #' @export
 #'
-merge.CellGraphAssay <- function (
-    x = NULL,
-    y = NULL,
-    merge.data = TRUE,
-    add.cell.ids = NULL,
-    ...
+merge.MPXAssay <- function (
+  x = NULL,
+  y = NULL,
+  merge.data = TRUE,
+  add.cell.ids = NULL,
+  collapse = TRUE,
+  ...
 ) {
 
   # Validate input parameters
-  if (!inherits(y, what = c("list", "CellGraphAssay")))
-    abort("'y' must be a 'CellGraphAssay' object or a list of 'CellGraphAssay' objects")
+  if (!inherits(y, what = c("list", "MPXAssay")))
+    abort("'y' must be a 'CellGraphAssay(5)' object or a list of 'CellGraphAssay(5)' objects")
   if (is.list(y)) {
     for (i in seq_along(y)) {
-      if (!inherits(y[[i]], what = "CellGraphAssay")) {
-        abort(glue("Element {i} in 'y' is not a 'CellGraphAssay'"))
+      if (!inherits(y[[i]], what = "MPXAssay")) {
+        abort(glue("Element {i} in 'y' is not a 'CellGraphAssay(5)' object"))
       }
     }
   }
 
   objects <- c(x, y)
+  cell.names <- unlist(lapply(objects, colnames))
+  name_conversion <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
+    tibble(component = colnames(objects[[i]]), sample = i)
+  })) %>% mutate(component_new = cell.names) %>%
+    group_by(sample) %>%
+    group_split()
 
   # Define add.cell.ids
-  # add.cell.ids <- add.cell.ids %||% paste0("Sample", seq_along(objects))
   if (!is.null(add.cell.ids)) {
     stopifnot(
       "Length of 'add.cell.ids' must match the number of objects to merge" =
         length(add.cell.ids) == length(objects)
     )
+    objects <- lapply(seq_along(objects), function(i) {
+      objects[[i]] %>% RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) %>%
+                                     set_names(nm = colnames(objects[[i]])))
+    })
   }
 
   # Check duplicate cell names
-  cell.names <- unlist(lapply(objects, colnames))
   unique_names <- table(cell.names)
   names_are_duplicated <- any(unique_names > 1)
-  sample_id_old_table <- do.call(rbind, strsplit(cell.names, "_"))
-  if (names_are_duplicated && is.null(add.cell.ids)) {
-    if (ncol(sample_id_old_table) == 1) {
-      add.cell.ids <- paste0("Sample", seq_along(objects))
-    } else if (ncol(sample_id_old_table) == 2) {
-      abort("Found non-unique IDs across samples. A 'add.cell.ids' must be specified.")
-    }
+  if (names_are_duplicated & is.null(add.cell.ids)) {
+    abort(glue("Found non-unique IDs across samples. A 'add.cell.ids' must be specified. ",
+               "Alternatively, make sure that each separate object has unique cell names."))
   }
-
-  # Fetch sample IDs from column names
-  if (ncol(sample_id_old_table) == 1) {
-    objects <-
-      lapply(seq_along(objects), function(i) {
-        if (is.null(add.cell.ids)) {
-          return(objects[[i]])
-        } else {
-          new_names_modified <- paste0(add.cell.ids[i], "_", Cells(x = objects[[i]]))
-          return(RenameCells(object = objects[[i]], new.names = new_names_modified))
-        }
-      })
-  } else {
-    objects <-
-      lapply(seq_along(objects), function(i) {
-        if (is.null(add.cell.ids)) {
-          return(objects[[i]])
-        } else {
-          cli_alert_warning("Found multiple samples in objects. 'add.cell.ids' will be added as a prefix to old IDs.")
-          new_names_modified <- paste0(add.cell.ids[i], Cells(x = objects[[i]]))
-          return(RenameCells(object = objects[[i]], new.names = new_names_modified))
-        }
-      })
-  }
-
-  # Fetch cellgraphs
-  cellgraphs_new <- Reduce(c, lapply(seq_along(objects), function(i) {
-    el <- objects[[i]]
-    return(el@cellgraphs)
-  }))
 
   # Fetch standard assays
-  standardassays <- lapply(objects, function(el) {
-    assay <- as(object = el, Class = "Assay")
+  standardassays <- lapply(objects, function(cg_assay) {
+    assay <- as(object = cg_assay, Class = ifelse(is(cg_assay, "CellGraphAssay"), "Assay", "Assay5"))
     if (length(Key(assay)) == 0) Key(assay) <- "px_"
     return(assay)
   })
 
-  # Fetch all arrow_dirs
-  all_arrow_dirs <- sapply(objects, function(el) slot(el, name = "arrow_dir"))
-
   # Merge Seurat assays
   new_assay <- merge(x = standardassays[[1]],
-                     y = standardassays[2:length(standardassays)],
+                     y = standardassays[-1],
                      merge.data = merge.data,
                      ...)
 
-  # Rename cellgraphs
-  names(cellgraphs_new) <- colnames(new_assay)
-
-  # Run edgelist merge if arrow_dirs exists
-  if (!any(is.na(all_arrow_dirs))) {
-
-    # Trigger garbage cleaning if the edgelist directories exceed the
-    # maximum allowed size
-    .run_clean()
-
-    if (!any(dir.exists(all_arrow_dirs)))
-      abort(glue("Paths to edgelist parquet file directories {paste(all_arrow_dirs, collapse = ',')} doesn't exist"))
-
-    # Create a new temporary directory with a time stamp
-    new_dir <-
-      file.path(
-        getOption("pixelatorR.arrow_outdir"),
-        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
-    dir.create(path = new_dir, showWarnings = FALSE)
-
-    # Move hive-style old sample diretories to new directory
-    for (i in seq_along(all_arrow_dirs)) {
-      hive_style_dirs <- list.files(all_arrow_dirs[i], full.names = TRUE)
-      for (ii in seq_along(hive_style_dirs)) {
-        file.copy(from = hive_style_dirs[ii], to = new_dir, recursive = TRUE)
-      }
-    }
-
-    # Log command
-    command <- sys.calls()[[1]][1] %>% as.character()
-    options(pixelatorR.edgelist_copies = bind_rows(
-      getOption("pixelatorR.edgelist_copies"),
-      tibble(command = command,
-             edgelist_dir = normalizePath(new_dir),
-             timestamp = Sys.time())
-    ))
-
-    # Open arrow data
-    arrow_data <- open_dataset(new_dir)
-  } else {
-    # If any path in the input objects is NA, simply inactivate the
-    # slots required to handle the arrow Dataset
-    arrow_data <- NULL
-    new_dir <- NA_character_
+  # Join layers
+  if (collapse & is(new_assay, "Assay5")) {
+    new_assay <- JoinLayers(new_assay)
   }
 
+  # Fetch cellgraphs
+  cellgraphs_new <- Reduce(c, lapply(objects, function(cg_assay) {
+    return(cg_assay@cellgraphs)
+  })) %>% set_names(nm = colnames(new_assay))
+
+
   # Merge polarization and colocalization scores
-  name_conversion <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
-    tibble(new = colnames(objects[[i]]), sample = i)
-  })) %>% mutate(component = cell.names) %>%
-    group_by(sample) %>%
-    group_split()
   polarization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
     pl <- slot(objects[[i]], name = "polarization")
     if (length(pl) == 0) return(pl)
     pl <- pl %>% left_join(name_conversion[[i]], by = "component") %>%
       select(-component, -sample) %>%
-      rename(component = new)
+      rename(component = component_new)
     return(pl)
   }))
   colocalization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
@@ -1189,19 +1243,75 @@ merge.CellGraphAssay <- function (
     if (length(cl) == 0) return(cl)
     cl <- cl %>% left_join(name_conversion[[i]], by = "component") %>%
       select(-component, -sample) %>%
-      rename(component = new)
+      rename(component = component_new)
     return(cl)
   }))
 
+  # Merge fs_map
+  fs_map <- tibble()
+  for (cg_assay in objects) {
+    if (length(slot(cg_assay, name = "fs_map")) == 0) {
+      fs_map <- NULL
+      break
+    }
+  }
+  if (!is.null(fs_map)) {
+    fs_map <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
+      slot(objects[[i]], name = "fs_map")
+    })) %>% mutate(sample = seq_len(n()))
+  }
+
   # Convert to CellGraphAssay and add cellgraphs
-  pxcellassay <- as.CellGraphAssay(
+  as_assay_func <-
+    ifelse(is(cg_assay, "CellGraphAssay"),
+           as.CellGraphAssay,
+           as.CellGraphAssay5)
+  merged_cg_assay <- as_assay_func(
     x = new_assay,
     cellgraphs = cellgraphs_new,
     polarization = polarization,
     colocalization = colocalization,
-    arrow_dir = new_dir,
-    arrow_data = arrow_data
+    fs_map = fs_map
   )
 
-  return(pxcellassay)
+  # Add meta.features for CellGraphAssay
+  if (is(merged_cg_assay, "CellGraphAssay")) {
+
+    can_merge_meta_features <- TRUE
+    ob_features <- lapply(objects, function(x) rownames(x@meta.features))
+    for (i in 2:length(ob_features)) {
+      if (!all(ob_features[[i]] == ob_features[[1]])) {
+        cli_alert_danger("Meta features are not the same across objects. ",
+                         "Cannot merge meta.features slots.")
+        can_merge_meta_features <- FALSE
+        break
+      }
+    }
+
+    if (can_merge_meta_features) {
+      meta_features <- objects[[1]]@meta.features %>% select(any_of(c("control", "marker", "nuclear")))
+    }
+
+    # Place meta.features in CellGraphAssay
+    merged_cg_assay@meta.features <- meta_features
+
+  }
+
+  return(merged_cg_assay)
 }
+
+#' @describeIn CellGraphAssay-methods Merge two or more \code{CellGraphAssay} objects together
+#' @concept assay
+#' @method merge CellGraphAssay
+#' @docType methods
+#' @export
+#'
+merge.CellGraphAssay <- merge.MPXAssay
+
+#' @describeIn CellGraphAssay5-methods Merge two or more \code{CellGraphAssay5} objects together
+#' @concept assay
+#' @method merge CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+merge.CellGraphAssay5 <- merge.MPXAssay

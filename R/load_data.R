@@ -1,10 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('.'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
 #' Read a count matrix from a pxl file
 #'
 #' @param filename Path to a .pxl file
@@ -13,8 +6,6 @@ globalVariables(
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @importFrom rhdf5 h5read
-#' @importFrom utils unzip
 #'
 #' @return A count matrix or a list if \code{return_list = TRUE}
 #'
@@ -35,7 +26,12 @@ ReadMPX_counts <- function (
   return_list = FALSE,
   verbose = TRUE
 ) {
-  stopifnot("filename must be a character of length 1" = is.character(filename) & (length(filename) == 1))
+
+  stopifnot(
+    "filename must be a character of length 1" =
+      is.character(filename) &&
+      (length(filename) == 1)
+  )
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
   # Reads anndata from a .pxl file by unzipping it into a temporary folder and reading the anndata object within.
@@ -45,28 +41,32 @@ ReadMPX_counts <- function (
   # Unzip pxl file
   original_filename <- filename
   if (endsWith(filename, ".pxl")) {
-    # LL: Returns error message
-    filename <- tryCatch(unzip(filename, "adata.h5ad", exdir = tempdir()),
+    res <- tryCatch(unzip(filename, exdir = fs::path_temp()),
                          error = function(e) e,
                          warning = function(w) w)
-    if (inherits(x = filename, what = "simpleWarning")) abort("Failed to unzip data")
+    if (inherits(x = res, what = "simpleWarning"))
+      abort("Failed to unzip 'adata.h5ad' data")
   } else {
     abort(glue("Invalid file format .{.file_ext(filename)}. Expected a .pxl file."))
   }
 
   # Read temporary file
-  anndata_hier <- h5read(filename, "/")
-
-  # Remove temporary file
-  if (endsWith(original_filename, ".pxl")) file.remove(filename)
+  adata_file <- file.path(fs::path_temp(), "adata.h5ad")
+  tmp_file <- fs::file_temp(ext = "h5ad")
+  fs::file_move(adata_file, tmp_file)
+  hd5_object <- hdf5r::H5File$new(tmp_file, "r")
 
   # Extract contents
-  X <- anndata_hier$X
-  colnames(X) <- anndata_hier$obs$component
-  rownames(X) <- anndata_hier$var$marker
+  X <- hd5_object[["X"]]$read()
+  colnames(X) <- hd5_object[["obs"]][["component"]]$read()
+  rownames(X) <- hd5_object[["var"]][["marker"]]$read()
+
+  X <- X[seq_len(nrow(X)), seq_len(ncol(X))]
+
+  hd5_object$close_all()
 
   if (return_list) {
-    return(list(X = X, anndata_hier = anndata_hier))
+    return(list(X = X, tmp_file = tmp_file))
   } else {
     return(X)
   }
@@ -75,18 +75,14 @@ ReadMPX_counts <- function (
 #' Load data from PXL file into a \code{Seurat} object
 #'
 #' This wrapper function can be used to load data from a PXL file, and returns
-#' a \code{Seurat} object with the desired data. By default, the MPX count matrix
-#' is returned as an \code{Assay} and the graph data is excluded.
+#' a \code{Seurat} object.
 #'
-#' The graph data is stored as an edgelist in the PXL file, and this edgelist
-#' can be inconvenient to work with in memory for larger datasets. If you want to
-#' have the edgelist available in your \code{Seurat} object, you can set \code{return_cellgraphassay = TRUE}
-#' to return a \code{\link{CellGraphAssay}} class object instead. The \code{\link{CellGraphAssay}}
-#' object extends the \code{Assay} class but can keep additional slots with graph-related data.
-#' The edgelist is not loaded into memory, but is provided as an arrow Dataset stored in the
-#' \code{\link{CellGraphAssay}}. This arrow Dataset makes it possible manipulate and fetch
-#' information from the edgelist whenever necessary, without having to load it into memory.
-#' See \code{\link{CellGraphAssay}} for more details.
+#' By default, the MPX count matrix is returned in a \code{CellGraphAssay} object.
+#' Graphs are not loaded directly unless \code{load_cell_graphs = TRUE}. Graphs
+#' can also be loaded at a later stage with \code{\link{LoadCellGraphs}}.
+#'
+#' When setting the global option \code{Seurat.object.assay.version} to \code{"v5"},
+#' the function will return a \code{CellGraphAssay5} object instead.
 #'
 #' @param assay Assay name
 #' @param return_cellgraphassay Should data be loaded as a \code{CellGraphAssay} object?
@@ -103,8 +99,6 @@ ReadMPX_counts <- function (
 #' @inheritParams ReadMPX_counts
 #'
 #' @import rlang
-#' @importFrom SeuratObject CreateSeuratObject CreateAssayObject `VariableFeatures<-`
-#' @importFrom stats setNames
 #'
 #' @family data-loaders
 #'
@@ -113,14 +107,12 @@ ReadMPX_counts <- function (
 #' @examples
 #'
 #' library(pixelatorR)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
-#' seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
 #' @export
@@ -139,36 +131,39 @@ ReadMPX_Seurat <- function (
   ...
 ) {
 
-  # Trigger garbage cleaning if the edgelist directories exceed the
-  # maximum allowed size
-  .run_clean()
-
   stopifnot(
     "assay must be a character of length 1" =
       is.character(assay) &&
       (length(assay) == 1)
   )
 
-  # Display message first time function is called
-  if (getOption("pixelatorR.startup_message", TRUE) && return_cellgraphassay && getOption("pixelatorR.verbose")) {
-    .initial_call_message()
-  }
-
   # Load count matrix
   data <- ReadMPX_counts(filename = filename, return_list = TRUE, verbose = FALSE)
-  X <- data$X; anndata_hier <- data$anndata_hier
+  X <- data$X
+  hd5_object <- hdf5r::H5File$new(data$tmp_file, "r")
 
   # Load edgelist
-  empty_graphs <- rep(list(NULL), ncol(X)) %>% setNames(nm = colnames(X))
+  empty_graphs <- rep(list(NULL), ncol(X)) %>% set_names(nm = colnames(X))
 
   if (return_cellgraphassay) {
 
-    # Create CellGraphAssay
-    cg_assay <- CreateCellGraphAssay(counts = X,
-                                     cellgraphs = empty_graphs,
-                                     arrow_dir = filename,
-                                     outdir = edgelist_outdir,
-                                     overwrite = overwrite)
+    # Create CellGraphAssay(5)
+    cg_assay_create_func <- switch(
+      getOption("Seurat.object.assay.version", "v3"),
+      "v3" = CreateCellGraphAssay,
+      "v5" = CreateCellGraphAssay5
+    )
+    cg_assay <- cg_assay_create_func(
+      counts = X,
+      cellgraphs = empty_graphs,
+      fs_map = tibble(
+        id_map = list(tibble(
+          current_id = colnames(X),
+          original_id = colnames(X)
+        )),
+        sample = 1L,
+        pxl_file = ifelse(.is_absolute_path(filename), normalizePath(filename), filename))
+    )
     Key(cg_assay) <- paste0(assay, "_")
 
     if (load_cell_graphs) {
@@ -188,75 +183,81 @@ ReadMPX_Seurat <- function (
       cg_assay@colocalization <- colocalization
     }
   } else {
-    cg_assay <- CreateAssayObject(counts = X)
+    cg_assay <- switch(
+      getOption("Seurat.object.assay.version", "v3"),
+      "v3" = CreateAssayObject(counts = X),
+      "v5" = CreateAssay5Object(counts = X)
+    )
     Key(cg_assay) <- paste0(assay, "_")
   }
 
   # Create Seurat object
   seur_obj <- CreateSeuratObject(counts = cg_assay, assay = assay, ...)
   if (verbose && check_global_verbosity())
-    cli_alert_success("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells and {col_br_blue(nrow(X))} targeted surface proteins")
-
-  if (add_additional_assays) {
-    for (layr in names(anndata_hier$obsm)) {
-
-      # Add only normalized counts as individual assays
-      if (!layr %in% c("denoised", "normalized_clr", "normalized_rel")) next
-
-      X_assay <-
-        anndata_hier$obsm[[layr]] %>%
-        as_tibble() %>%
-        column_to_rownames("component") %>%
-        t()
-      layer_assay <- CreateAssayObject(counts = X_assay)
-      suppressWarnings(seur_obj[[layr]] <- layer_assay)
-    }
-  }
-
+    cli_alert_success(glue("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells ",
+                           "and {col_br_blue(nrow(X))} targeted surface proteins"))
 
   # Extract meta data
-  seur_obj@meta.data <-
-    anndata_hier$obs %>%
-    {
-      newdata <- .
-      for (name in names(newdata)) {
-        if (length(newdata[[name]]) == dim(anndata_hier$X)[2]) next
-        indicies <- newdata[[name]]$codes + 1
-        categories <- newdata[[name]]$categories
-        newdata[[name]] <- factor(categories[indicies], categories)
+  meta_data <-
+    names(hd5_object[["obs"]]) %>% lapply(function(nm) {
+      if (length(names(hd5_object[["obs"]][[nm]])) == 2) {
+        indices <- hd5_object[["obs"]][[nm]][["codes"]]$read() + 1
+        categories <- hd5_object[["obs"]][[nm]][["categories"]]$read()
+        col <- tibble(!!sym(nm) := factor(categories[indices], categories))
+      } else {
+        col <- tibble(!!sym(nm) := hd5_object[["obs"]][[nm]]$read())
       }
-      newdata
-    } %>%
+      return(col)
+    }) %>%
+    do.call(bind_cols, .) %>%
     as.data.frame() %>%
     column_to_rownames("component")
 
-  # Extract variable meta data (var)
-  var_meta <- anndata_hier$var %>%
-    as.data.frame()
-  rownames(var_meta) <- var_meta$marker
+  if (!all(rownames(meta_data) == colnames(seur_obj)))
+    abort(glue("The cell names in the Seurat object and the metadata do not match. ",
+               "\nFailed to create Seurat object."))
+  seur_obj@meta.data <- meta_data
 
-  seur_obj[[assay]]@meta.features <- var_meta
+  # Extract feature meta data (var)
+  feature_meta_data <-
+    names(hd5_object[["var"]]) %>% lapply(function(nm) {
+      col <- tibble(!!sym(nm) := hd5_object[["var"]][[nm]]$read())
+    }) %>%
+    do.call(bind_cols, .) %>%
+    as.data.frame()
+
+  # Close hdf5 file
+  hd5_object$close()
+
+  if (getOption("Seurat.object.assay.version", "v3") == "v3") {
+    rownames(feature_meta_data) <- feature_meta_data$marker
+    seur_obj[[assay]]@meta.features <- feature_meta_data
+  } else {
+    seur_obj[[assay]]@meta.data <- feature_meta_data
+  }
 
   # Set variable features to all features
   VariableFeatures(seur_obj) <- rownames(seur_obj)
 
+  # Remove redundant meta data columns
+  seur_obj@meta.data <- seur_obj@meta.data %>% select(-contains(c("nFeature", "nCount", "_index")))
+
   return(seur_obj)
 }
 
-#' Read a pixel data item
+#' Read an MPX data item
 #'
-#' Function that unzips a .pxl file into a temporary folder and reads any
-#' number of items (not anndata) as specified in items. If more than one
-#' item is fetched, the output is a list of data frames. Otherwise the output
-#' is a single \code{tbl_df}.
+#' \code{ReadMPX_item} reads any number of items from a .pxl file. If multiple
+#' items are specified, the output is a list of  \code{tbl_df} objects.
+#' Otherwise the output is a single \code{tbl_df}. \code{ReadMPX_polarization},
+#' \code{ReadMPX_colocalization} and \code{ReadMPX_edgelist} are wrappers for
+#' \code{ReadMPX_item} to read specific items.
 #'
 #' @param filename Path to a .pxl file
-#' @param items One of "colocalization", "polarization", "edgelist"
+#' @param items One or several of "colocalization", "polarization", "edgelist"
 #' @param verbose Print messages
 #'
 #' @import rlang
-#' @importFrom arrow read_parquet
-#' @importFrom utils read.csv
 #'
 #' @family data-loaders
 #'

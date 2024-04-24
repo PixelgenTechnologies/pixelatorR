@@ -7,7 +7,7 @@
 \title{The CellGraphAssay class}
 \description{
 The CellGraphAssay object is an extended \code{\link[SeuratObject]{Assay}}
-for the storage and analysis of mpx single-cell data.
+for the storage and analysis of MPX single-cell data.
 }
 \section{Slots}{
 
@@ -18,10 +18,8 @@ for the storage and analysis of mpx single-cell data.
 
 \item{\code{colocalization}}{A \code{tbl_df} with colocalization scores}
 
-\item{\code{arrow_dir}}{A character giving the name of the directory where the edgelist
-parquet file(s) are stored}
-
-\item{\code{arrow_data}}{An \code{R6} class object with an arrow Dataset}
+\item{\code{fs_map}}{A \code{tbl_df} with information on source pxl file
+paths, sample IDs, and component IDs}
 }}
 
 \concept{assay}

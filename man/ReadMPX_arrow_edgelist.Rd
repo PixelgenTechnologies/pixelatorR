@@ -4,32 +4,20 @@
 \alias{ReadMPX_arrow_edgelist}
 \title{Read edgelists from .pxl files}
 \usage{
-ReadMPX_arrow_edgelist(
-  path,
-  outdir = NULL,
-  return_list = FALSE,
-  overwrite = FALSE,
-  verbose = TRUE,
-  ...
-)
+ReadMPX_arrow_edgelist(pxl_file, edge_list_file = NULL, verbose = TRUE, ...)
 }
 \arguments{
-\item{path}{Path to a .pxl file or a directory containing .parquet files}
+\item{pxl_file}{Path to a .pxl file}
 
-\item{outdir}{A path to an existing directory}
-
-\item{return_list}{If TRUE, returns a list with an \code{ArrowObject},
-a vector with sample IDs and a the path to the parquet output directory}
-
-\item{overwrite}{If the output directory already exists, set this parameter
-to TRUE to overwrite the directory}
+\item{edge_list_file}{Path to the output edgelist.parquet file}
 
 \item{verbose}{Print messages}
 
 \item{...}{Parameters passed to other methods}
 }
 \value{
-An \code{ArrowObject}
+Nothing. The edgelist is saved to a parquet file
+set with \code{edge_list_file}
 }
 \description{
 This function uses arrow to read edgelists from one or several
@@ -37,16 +25,13 @@ This function uses arrow to read edgelists from one or several
 the \code{outdir} directory which can be modified on disk.
 }
 \examples{
-
 library(pixelatorR)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 # Load example data
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
                         package = "pixelatorR")
-edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
+edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file)
 edgelist_arrow
 
 }

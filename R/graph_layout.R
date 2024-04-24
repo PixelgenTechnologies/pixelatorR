@@ -1,9 +1,5 @@
-# Declarations used in package check
-globalVariables(
-  names = c('x', 'y', 'z', 'name'),
-  package = 'pixelatorR',
-  add = TRUE
-)
+#' @include generics.R
+NULL
 
 #' Get a graph layout
 #'
@@ -41,15 +37,13 @@ globalVariables(
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #'
 #' # Load example data
-#' seur <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = TRUE, overwrite = TRUE)
+#' seur <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Load 1 cellgraph
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[1],
@@ -103,7 +97,6 @@ ComputeLayout.tbl_graph <- function (
   }
 
   # Set seed
-  old_seed <- .Random.seed
   set.seed(seed)
 
   # validate and use custom layout function if available
@@ -159,14 +152,13 @@ ComputeLayout.tbl_graph <- function (
   }
 
   # Restore old seed
-  .Random.seed <- old_seed
+  rm(.Random.seed, envir = globalenv())
 
   return(layout)
 }
 
-#' @param custom_layout_name A name for the layout computed with
-#' \code{custom_layout_function}. Should not be one of "pmds", "fr",
-#' "kk" or "drl".
+#' @param layout_name The name of the computed layout. If this name is not given,
+#' the \code{layout_method} will be used as the name.
 #'
 #' @rdname ComputeLayout
 #' @method ComputeLayout CellGraph
@@ -181,6 +173,7 @@ ComputeLayout.tbl_graph <- function (
 ComputeLayout.CellGraph <- function (
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -189,16 +182,23 @@ ComputeLayout.CellGraph <- function (
   seed = 123,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   ...
 ) {
 
-  # Validate custom_layout_name
-  stopifnot(
-    "'custom_layout_name' should be a character of length 1" =
-      is.character(custom_layout_name) &&
-      (length(custom_layout_name) == 1)
-  )
+  if (is.null(custom_layout_function) & is.null(layout_name)) {
+    layout_name <- match.arg(layout_method, choices = c("pmds", "fr", "kk", "drl"))
+  }
+  if (!is.null(custom_layout_function) & is.null(layout_name)) {
+    layout_name <- "custom"
+  }
+
+  if (!is.null(layout_name)) {
+    stopifnot(
+      "'layout_name' should be a character of length 1" =
+        is.character(layout_name) &&
+        (length(layout_name) == 1)
+    )
+  }
 
   layout <-
     ComputeLayout(
@@ -219,22 +219,20 @@ ComputeLayout.CellGraph <- function (
   }
 
   # Add layout to CellGraph layout slot
-  if (!is.null(custom_layout_function)) {
-    slot(object, name = "layout")[[custom_layout_name]] <- layout
-  } else {
-    slot(object, name = "layout")[[match.arg(layout_method, choices = c("pmds", "fr", "kk", "drl"))]] <- layout
-  }
+  slot(object, name = "layout")[[layout_name]] <- layout
 
   return(object)
 }
 
-
+#' @param cl A cluster object created by makeCluster, or an integer
+#' to indicate number of child-processes (integer values are ignored
+#' on Windows) for parallel evaluations. See Details on performance
+#' in the documentation for \code{pbapply}. The default is NULL,
+#' which means that no parallelization is used.
 #' @param verbose Print messages
 #'
 #' @rdname ComputeLayout
-#' @method ComputeLayout CellGraphAssay
-#'
-#' @importFrom progressr progressor
+#' @method ComputeLayout MPXAssay
 #'
 #' @examples
 #'
@@ -243,9 +241,10 @@ ComputeLayout.CellGraph <- function (
 #'
 #' @export
 #'
-ComputeLayout.CellGraphAssay <- function (
+ComputeLayout.MPXAssay <- function (
   object,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -255,7 +254,7 @@ ComputeLayout.CellGraphAssay <- function (
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
+  cl = NULL,
   ...
 ) {
 
@@ -265,7 +264,7 @@ ComputeLayout.CellGraphAssay <- function (
 
   if (sum(loaded_graphs) == 0) {
     if (verbose && check_global_verbosity())
-      cli_alert_info("No 'cellgraphs' loaded in 'CellGraphAssay'. Returning unmodified 'CellGraphAssay'.")
+      cli_alert_info("No 'cellgraphs' loaded. Returning unmodified object.")
     return(object)
   }
 
@@ -276,11 +275,11 @@ ComputeLayout.CellGraphAssay <- function (
     cli_alert_info("Computing layouts for {length(cellgraphs_loaded)} graphs")
 
   # Calculate layout for each cell graph object sequentially
-  p <- progressor(along = cellgraphs_loaded)
-  cellgraphs_loaded <- lapply(cellgraphs_loaded, function(g) {
+  cellgraphs_loaded <- pblapply(cellgraphs_loaded, function(g) {
     g <- ComputeLayout(
       g,
       layout_method = layout_method,
+      layout_name = layout_name,
       dim = dim,
       normalize_layout = normalize_layout,
       project_on_unit_sphere = project_on_unit_sphere,
@@ -289,17 +288,30 @@ ComputeLayout.CellGraphAssay <- function (
       seed = seed,
       custom_layout_function = custom_layout_function,
       custom_layout_function_args = custom_layout_function_args,
-      custom_layout_name = custom_layout_name,
       ...
     )
-    p()
     return(g)
-  })
+  }, cl = cl)
 
   slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- cellgraphs_loaded
 
   return(object)
 }
+
+#' @rdname ComputeLayout
+#' @method ComputeLayout CellGraphAssay
+#' @docType methods
+#' @export
+#'
+ComputeLayout.CellGraphAssay <- ComputeLayout.MPXAssay
+
+#' @rdname ComputeLayout
+#' @method ComputeLayout CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+ComputeLayout.CellGraphAssay5 <- ComputeLayout.MPXAssay
+
 
 #' @param assay Name of assay to compute layouts for
 #' @rdname ComputeLayout
@@ -316,6 +328,7 @@ ComputeLayout.Seurat <- function (
   object,
   assay = NULL,
   layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -325,7 +338,6 @@ ComputeLayout.Seurat <- function (
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
-  custom_layout_name = "custom",
   ...
 ) {
 
@@ -333,8 +345,8 @@ ComputeLayout.Seurat <- function (
   assay <- assay %||% DefaultAssay(object)
 
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("assay '{assay}' is not a 'CellGraphAssay'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
   }
 
   # Check cellgraphs
@@ -351,6 +363,7 @@ ComputeLayout.Seurat <- function (
     ComputeLayout(
       cg_assay,
       layout_method = layout_method,
+      layout_name = layout_name,
       dim = dim,
       normalize_layout = normalize_layout,
       project_on_unit_sphere = project_on_unit_sphere,
@@ -360,7 +373,6 @@ ComputeLayout.Seurat <- function (
       verbose = verbose,
       custom_layout_function = custom_layout_function,
       custom_layout_function_args = custom_layout_function_args,
-      custom_layout_name = custom_layout_name,
       ...
     )
 

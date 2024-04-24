@@ -1,3 +1,19 @@
+#' @include generics.R
+NULL
+
+#' Convert objects to a \code{\link{CellGraphAssay5}}
+#'
+#' @param x An object to convert to class \code{\link{CellGraphAssay5}}
+#' @param ... Arguments passed to other methods
+#' @rdname as.CellGraphAssay5
+#' @export as.CellGraphAssay5
+as.CellGraphAssay5 <- function (
+  x,
+  ...
+) {
+  UseMethod(generic = "as.CellGraphAssay5", object = x)
+}
+
 #' Convert objects to a \code{\link{CellGraphAssay}}
 #'
 #' @param x An object to convert to class \code{\link{CellGraphAssay}}
@@ -13,17 +29,16 @@ as.CellGraphAssay <- function (
 
 #' CellGraphs
 #'
-#' Get and set \code{\link{CellGraph}} lists for \code{\link{CellGraphAssay}} and
-#' \code{Seurat} objects
+#' Get and set \code{\link{CellGraph}} lists for different objects.
 #'
+#' @param object A \code{Seurat}, \code{CellGraphAssay} or \code{CellGraphAssay} object
 #' @param ... Arguments passed to other methods
 #'
 #' @return Returns a list of \code{\link{CellGraph}} objects. If there are
-#' no \code{\link{CellGraph}} objects present, returns an empty list.
+#' no \code{\link{CellGraph}} objects present, returns an empty named list.
 #'
 #' @rdname CellGraphs
-#' @seealso [PolarizationScores()] and [ColocalizationScores()] for getting/setting spatial metrics,
-#' and [ArrowData()]/[ArrowDir()] for getting/setting arrow data
+#' @seealso [PolarizationScores()] and [ColocalizationScores()] for getting/setting spatial metrics
 #'
 #' @export CellGraphs
 #'
@@ -49,15 +64,8 @@ CellGraphs <- function (
 
 #' Load CellGraphs
 #'
-#' Loads a list of \code{\link{CellGraph}} object into the "cellgraphs" slot, provided that
-#' an arrow_data object exists in the "arrow_data" slot of a \code{\link{CellGraphAssay}}.
-#' If the arrow_data is missing or the connection to it is dead, the method will attempt
-#' to load the edgelist from the arrow_dir stored in the "arrow_dir" slot of the \code{\link{CellGraphAssay}}.
-#'
-#' One can specify cells to load by their names using the \code{cells} parameter. Only
-#' the \code{cells} specified will be loaded into the object. Note that the cell graphs
-#' are large and will consume a lot of memory. For this reason, it is advisable to load
-#' \code{\link{CellGraph}}s __only__ for cells of interest.
+#' Loads a list of \code{\link{CellGraph}} objects. One can specify cells to load by
+#' their names using the \code{cells} parameter.
 #'
 #' Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of
 #' these graph representations in the sections below.
@@ -103,7 +111,7 @@ LoadCellGraphs <- function (
 
 #' Remove CellGraphs
 #'
-#' Removes \code{\link{CellGraph}} list from the "cellgraphs" slot.
+#' Clears the \code{\link{CellGraph}} objects from the "cellgraphs" slot.
 #'
 #' @param object A \code{Seurat} object or an \code{\link{CellGraphAssay}} object
 #' @param ... Parameters passed to other methods
@@ -123,7 +131,7 @@ RemoveCellGraphs <- function (
 
 #' Edge Rank Plot
 #'
-#' Plots the number of edges per component against the component rank
+#' Plots the number of edges/molecules per component against the component rank
 #'
 #' @param object A \code{data.frame}-like object or a \code{Seurat} object
 #' @param ... Parameters passed to other methods
@@ -196,51 +204,6 @@ TauPlot <- function (
   UseMethod(generic = "TauPlot", object = object)
 }
 
-#' Write MPX data objects
-#'
-#' Saves a \code{\link{CellGraphAssay}} object or a \code{Seurat} object
-#' containing a \code{\link{CellGraphAssay}} object. Use this function
-#' as a replacement for \code{saveRDS} to ensure that the associated arrow data
-#' is exported to the same folder as the \code{Seurat} object.
-#'
-#' If the \code{\link{CellGraphAssay}} doesn't contain any arrow Dataset, the
-#' function will simply export the object using \code{saveRDS}. If it does contain a
-#' Dataset, \code{WriteMPX} will export the Dataset to a new directory and update
-#' the "arrow_dir" slot of the object with this new directory before exporting it.
-#'
-#' @param object An object
-#' @param ... Additional parameters passed to \code{saveRDS}
-#'
-#' @rdname WriteMPX
-#'
-#' @return Nothing
-#'
-#' @export
-#'
-WriteMPX <- function (
-  object,
-  ...
-) {
-  UseMethod(generic = "WriteMPX", object = object)
-}
-
-#' Restore connection to arrow Dataset
-#'
-#' @param object An object
-#' @param ... Additional parameters passed to other methods
-#'
-#' @rdname RestoreArrowConnection
-#'
-#' @return An object with restored arrow Dataset connection(s)
-#'
-#' @export
-#'
-RestoreArrowConnection <- function (
-  object,
-  ...
-) {
-  UseMethod(generic = "RestoreArrowConnection", object = object)
-}
 
 #' Compute a graph layout
 #'
@@ -404,7 +367,7 @@ RunDCA <- function (
 }
 
 
-#' Convert polarization scores to Assay
+#' Convert polarization score table to an Assay or Assay5
 #'
 #' @section Behavior:
 #'
@@ -459,7 +422,7 @@ PolarizationScoresToAssay <- function (
 }
 
 
-#' Convert colocalization scores to Assay
+#' Convert colocalization score table to an Assay or Assay5
 #'
 #' @section Behavior:
 #'
@@ -498,7 +461,7 @@ PolarizationScoresToAssay <- function (
 #'
 #' @param object An object with colocalization scores
 #' @param values_from What column to pick colocalization scores from. One of
-#' "pearson", "pearson_mean", "pearson_z", "jaccard_mean", "jaccard" or "jaccard_z"
+#' "pearson" or "pearson_z"
 #' @param ... Not yet implemented
 #'
 #' @rdname ColocalizationScoresToAssay
@@ -515,8 +478,8 @@ ColocalizationScoresToAssay <- function (
 
 #' PolarizationScores
 #'
-#' Get and set polarization scores for a \code{\link{CellGraphAssay}} or
-#' a \code{Seurat} object
+#' Get and set polarization scores for a \code{\link{CellGraphAssay}},
+#' \code{\link{CellGraphAssay5}} or a \code{Seurat} object
 #'
 #' @param object An object with polarization scores
 #' @param ... Not implemented
@@ -556,8 +519,8 @@ PolarizationScores <- function (
 
 #' ColocalizationScores
 #'
-#' Get and set colocalization scores for a \code{\link{CellGraphAssay}} or
-#' a \code{Seurat} object
+#' Get and set colocalization scores for a \code{\link{CellGraphAssay}},
+#' \code{\link{CellGraphAssay5}} or a \code{Seurat} object
 #'
 #' @param object An object with polarization scores
 #' @param ... Not implemented
@@ -595,86 +558,44 @@ ColocalizationScores <- function (
 }
 
 
-#' ArrowData
+#' FS map
 #'
-#' Get and set arrow data for a \code{\link{CellGraphAssay}} or
-#' a \code{Seurat} object
-#'
-#' @param object An object containing arrow data
-#' @param ... Not implemented
-#'
-#' @rdname ArrowData
-#' @family arrow data methods
-#' @seealso [CellGraphs()] for getting/setting \code{\link{CellGraph}} lists
-#' and [PolarizationScores()],[ColocalizationScores()] for getting/setting
-#' spatial metrics
-#'
-#' @return \code{ArrowData}: Get the arrow data set
-#'
-#' @export
-#'
-ArrowData <- function (
-  object,
-  ...
-) {
-  UseMethod(generic = "ArrowData", object = object)
-}
-
-
-#' @param value A \code{FileSystemDataset}
-#'
-#' @rdname ArrowData
-#'
-#' @return \code{ArrowData<-}: An object with the arrow data updated
-#'
-#' @export
-#'
-"ArrowData<-" <- function (
-  object,
-  ...,
-  value
-) {
-  UseMethod(generic = "ArrowData<-", object = object)
-}
-
-#' ArrowDir
-#'
-#' Get and set arrow directory path for a \code{\link{CellGraphAssay}} or
-#' a \code{Seurat} object
+#' Get and set \code{fs_map} tibble for a \code{\link{CellGraphAssay}},
+#' \code{\link{CellGraphAssay5}} or a \code{Seurat} object
 #'
 #' @param object An object containing arrow data
 #' @param ... Not implemented
 #'
-#' @rdname ArrowDir
-#' @family arrow data methods
+#' @rdname FSMap
+#'
 #' @seealso [CellGraphs()] for getting/setting \code{\link{CellGraph}} lists
 #' and [PolarizationScores()],[ColocalizationScores()] for getting/setting
 #' spatial metrics
 #'
-#' @return \code{ArrowDir}: The arrow data directory path
+#' @return \code{FSMap}: An \code{fs_map} tibble
 #'
 #' @export
 #'
-ArrowDir <- function (
+FSMap <- function (
   object,
   ...
 ) {
-  UseMethod(generic = "ArrowDir", object = object)
+  UseMethod(generic = "FSMap", object = object)
 }
 
-#' @param value A string specifying a path to an existing directory
+
+#' @param value A \code{tbl_df}
 #'
-#' @rdname ArrowDir
+#' @rdname FSMap
 #'
-#' @return \code{ArrowDir<-}: An object with the arrow data directory path
-#' updated
+#' @return \code{FSMap<-}: An object with an updated \code{fs_map} tibble
 #'
 #' @export
 #'
-"ArrowDir<-" <- function (
+"FSMap<-" <- function (
   object,
   ...,
   value
 ) {
-  UseMethod(generic = "ArrowDir<-", object = object)
+  UseMethod(generic = "FSMap<-", object = object)
 }

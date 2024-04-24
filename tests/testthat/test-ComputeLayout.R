@@ -1,105 +1,109 @@
-options(pixelatorR.arrow_outdir = tempdir())
-se <- ReadMPX_Seurat(system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
-                     overwrite = TRUE, return_cellgraphassay = TRUE)
+for (assay_version in c("v3", "v5")) {
 
-se <- LoadCellGraphs(se, cells = colnames(se)[1:2])
+  options(Seurat.object.assay.version = assay_version)
 
-test_that("ComputeLayout works as expected", {
+  se <- ReadMPX_Seurat(system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
+                       overwrite = TRUE, return_cellgraphassay = TRUE)
 
-  # Seurat object
-  expect_no_error(se <- se %>% ComputeLayout())
+  se <- LoadCellGraphs(se, cells = colnames(se)[1:2])
 
-  # CellGraphAssay
-  layout_method <- "pmds"
-  expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(layout_method = layout_method))
-  expect_true(layout_method %in% names(cg_assay@cellgraphs[[1]]@layout))
-  expect_equal(c("x", "y"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method]]))
+  test_that("ComputeLayout works as expected", {
 
-  # Test with three dimensions
-  expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3))
-  expect_equal(c("x", "y", "z"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method]]))
+    # Seurat object
+    expect_no_error(se <- se %>% ComputeLayout())
 
-  # Test with normalize_layout
-  expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = "pmds", normalize_layout = TRUE))
-  median_radius <- cg_assay@cellgraphs[[1]]@layout[[layout_method]] %>%
-    mutate(across(x:z, ~.x^2)) %>%
-    rowSums() %>%
-    sqrt() %>%
-    median()
-  expect_equal(median_radius, 1)
+    # CellGraphAssay
+    layout_method <- "pmds"
+    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(layout_method = layout_method))
+    expect_true(layout_method %in% names(cg_assay@cellgraphs[[1]]@layout))
+    expect_equal(c("x", "y"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method]]))
 
-  # Test with project_on_unit_sphere
-  expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = "pmds", project_on_unit_sphere = TRUE))
-  radii <- cg_assay@cellgraphs[[1]]@layout[[layout_method]] %>%
-    mutate(across(x:z, ~.x^2)) %>%
-    rowSums() %>%
-    sqrt() %>%
-    max()
-  expect_equal(unique(radii) %>% length(), 1)
-})
+    # Test with three dimensions
+    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3))
+    expect_equal(c("x", "y", "z"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method]]))
 
-test_that("ComputeLayout works as expected with a custom layout function", {
+    # Test with normalize_layout
+    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = "pmds", normalize_layout = TRUE))
+    median_radius <- cg_assay@cellgraphs[[1]]@layout[[layout_method]] %>%
+      mutate(across(x:z, ~.x^2)) %>%
+      rowSums() %>%
+      sqrt() %>%
+      median()
+    expect_equal(median_radius, 1)
 
-  custom_layout_fkn <- graphlayouts::layout_with_pmds
+    # Test with project_on_unit_sphere
+    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = "pmds", project_on_unit_sphere = TRUE))
+    radii <- cg_assay@cellgraphs[[1]]@layout[[layout_method]] %>%
+      mutate(across(x:z, ~.x^2)) %>%
+      rowSums() %>%
+      sqrt() %>%
+      max()
+    expect_equal(unique(radii) %>% length(), 1)
+  })
 
-  cg <- CellGraphs(se)[[colnames(se)[1]]]
+  test_that("ComputeLayout works as expected with a custom layout function", {
 
-  # tbl_graph
-  expect_no_error(layout <- ComputeLayout(cg@cellgraph, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
-  expect_equal(dim(layout), c(2470, 2))
+    custom_layout_fkn <- graphlayouts::layout_with_pmds
 
-  # CellGraph
-  expect_no_error(cg_layout <- ComputeLayout(cg, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
-  expect_equal(names(cg_layout@layout), "custom")
-  expect_equal(dim(cg_layout@layout[["custom"]]), c(2470, 2))
+    cg <- CellGraphs(se)[[colnames(se)[1]]]
 
-  # CellGraphAssay
-  expect_no_error(cg_assay_layout <- ComputeLayout(se[["mpxCells"]], custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
-  expect_equal(names(CellGraphs(cg_assay_layout)[[1]]@layout), "custom")
-  expect_equal(dim(CellGraphs(cg_assay_layout)[[1]]@layout[["custom"]]), c(2470, 2))
+    # tbl_graph
+    expect_no_error(layout <- ComputeLayout(cg@cellgraph, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
+    expect_equal(dim(layout), c(2470, 2))
 
-  # Seurat
-  expect_no_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
-  expect_equal(names(CellGraphs(se_layout)[[1]]@layout), "custom")
-  expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["custom"]]), c(2470, 2))
+    # CellGraph
+    expect_no_error(cg_layout <- ComputeLayout(cg, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
+    expect_true("custom" %in% names(cg_layout@layout))
+    expect_equal(dim(cg_layout@layout[["custom"]]), c(2470, 2))
 
-  # Test with new layout name
-  expect_no_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn,
-                                             custom_layout_function_args = list(pivots = 100), custom_layout_name = "my_layout"))
-  expect_equal(names(CellGraphs(se_layout)[[1]]@layout), "my_layout")
-  expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["my_layout"]]), c(2470, 2))
+    # CellGraphAssay
+    expect_no_error(cg_assay_layout <- ComputeLayout(se[["mpxCells"]], custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
+    expect_true("custom" %in% names(CellGraphs(cg_assay_layout)[[1]]@layout))
+    expect_equal(dim(CellGraphs(cg_assay_layout)[[1]]@layout[["custom"]]), c(2470, 2))
 
-})
+    # Seurat
+    expect_no_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
+    expect_true("custom" %in% names(CellGraphs(se_layout)[[1]]@layout))
+    expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["custom"]]), c(2470, 2))
+
+    # Test with new layout name
+    expect_no_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn,
+                                               custom_layout_function_args = list(pivots = 100), layout_name = "my_layout"))
+    expect_true("my_layout" %in% names(CellGraphs(se_layout)[[1]]@layout))
+    expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["my_layout"]]), c(2470, 2))
+
+  })
 
 
-test_that("ComputeLayout fails when invalid input is provided", {
+  test_that("ComputeLayout fails when invalid input is provided", {
 
-  # Invalid object
-  expect_error(ComputeLayout("Invalid"))
-  e <- tryCatch(se[["mpxCells"]] %>% ComputeLayout(layout_method = "Invalid", verbose = FALSE), error = function(e) e, silent = TRUE)
-  expect_s3_class(e, "simpleError")
+    # Invalid object
+    expect_error(ComputeLayout("Invalid"))
+    e <- tryCatch(se[["mpxCells"]] %>% ComputeLayout(layout_method = "Invalid", verbose = FALSE), error = function(e) e, silent = TRUE)
+    expect_s3_class(e, "simpleError")
 
-  # Invalid combination of normalize_layout and project_on_unit_sphere
-  expect_error(se[["mpxCells"]] %>% ComputeLayout(normalize_layout = TRUE, project_on_unit_sphere = TRUE, dim = 3),
-               "Only one of 'project_on_unit_sphere' or 'normalize_layout' can be set to TRUE")
+    # Invalid combination of normalize_layout and project_on_unit_sphere
+    expect_error(se[["mpxCells"]] %>% ComputeLayout(normalize_layout = TRUE, project_on_unit_sphere = TRUE, dim = 3),
+                 "Only one of 'project_on_unit_sphere' or 'normalize_layout' can be set to TRUE")
 
-  # Invalid combination of dim and project_on_unit_sphere
-  expect_error(se[["mpxCells"]] %>% ComputeLayout(dim = 2, project_on_unit_sphere = TRUE),
-               "Projecting onto a unit sphere is only possible for 3D layouts")
+    # Invalid combination of dim and project_on_unit_sphere
+    expect_error(se[["mpxCells"]] %>% ComputeLayout(dim = 2, project_on_unit_sphere = TRUE),
+                 "Projecting onto a unit sphere is only possible for 3D layouts")
 
-  custom_layout_fkn <- function(g) return("Invalid")
+    custom_layout_fkn <- function(g) return("Invalid")
 
-  cg <- CellGraphs(se)[[colnames(se)[1]]]
+    cg <- CellGraphs(se)[[colnames(se)[1]]]
 
-  # tbl_graph
-  expect_error(layout <- ComputeLayout(cg@cellgraph, custom_layout_function = custom_layout_fkn))
+    # tbl_graph
+    expect_error(layout <- ComputeLayout(cg@cellgraph, custom_layout_function = custom_layout_fkn))
 
-  # CellGraph
-  expect_error(cg_layout <- ComputeLayout(cg, custom_layout_function = custom_layout_fkn))
+    # CellGraph
+    expect_error(cg_layout <- ComputeLayout(cg, custom_layout_function = custom_layout_fkn))
 
-  # CellGraphAssay
-  expect_error(cg_assay_layout <- ComputeLayout(se[["mpxCells"]], custom_layout_function = custom_layout_fkn))
+    # CellGraphAssay
+    expect_error(cg_assay_layout <- ComputeLayout(se[["mpxCells"]], custom_layout_function = custom_layout_fkn))
 
-  # Seurat
-  expect_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn))
-})
+    # Seurat
+    expect_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn))
+  })
+}

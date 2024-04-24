@@ -89,8 +89,6 @@ for each cell type.
 \examples{
 library(pixelatorR)
 library(dplyr)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
@@ -108,7 +106,7 @@ dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample",
 dpa_markers
 
 # Seurat objects
-seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))

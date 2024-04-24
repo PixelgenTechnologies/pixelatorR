@@ -15,7 +15,6 @@ dependencies:
   - r-jsonlite
   - r-rlang
   - r-scales
-  - r-shiny
   - r-stringr
   - r-testthat
   - r-tibble
@@ -23,8 +22,14 @@ dependencies:
   - r-tidyr
   - r-dplyr
   - r-seuratobject
+  - r-seurat
   - r-matrix
   - r-patchwork
   - r-pheatmap
   - r-duckdb
-  - bioconductor-rhdf5
+  - r-hdf5r
+  - r-pbapply
+  - r-fs
+  - r-zip
+  - r-plotly
+  - r-duckdb

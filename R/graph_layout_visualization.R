@@ -42,14 +42,12 @@ globalVariables(
 #'
 #' @examples
 #' library(pixelatorR)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #'
-#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
 #'
@@ -132,8 +130,8 @@ Plot2DGraph <- function (
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay' or a 'CellGraphAssay5' object."))
   }
 
   # Fetch data
@@ -206,7 +204,7 @@ Plot2DGraph <- function (
 
     data <- list(graph = graph, layout = layout, type = attr(graph, "type"), layout_type = layout_method)
     return(data)
-  }) %>% setNames(nm = cells)
+  }) %>% set_names(nm = cells)
 
   # Set limits
   if (!is.null(marker)) {
@@ -215,7 +213,7 @@ Plot2DGraph <- function (
         if (is.null(x)) return(NULL)
         x$graph %>% pull(marker)
       }) %>% unlist() %>% max()
-      limits <- c(rep(list(c(0, max_val)), length(data_list))) %>% setNames(names(data_list))
+      limits <- c(rep(list(c(0, max_val)), length(data_list))) %>% set_names(names(data_list))
     } else {
       limits <- lapply(data_list, function(x) {
         if (is.null(x)) return(NULL)
@@ -305,23 +303,18 @@ Plot2DGraph <- function (
 #' @param ... Parameters passed to Plot2DGraph
 #' @inheritParams Plot2DGraph
 #'
-#' @importFrom stats setNames
-#' @importFrom grid textGrob gpar
-#'
 #' @return A \code{patchwork} object
 #'
 #' @seealso [Plot2DGraph()]
 #'
 #' @examples
 #' library(pixelatorR)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #'
-#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
 #'
@@ -525,14 +518,12 @@ Plot2DGraphM <- function (
 #'
 #' @examples
 #' library(pixelatorR)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #'
-#' seur <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+#' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[5])
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 3)
 #'
@@ -602,8 +593,8 @@ Plot3DGraph <- function (
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay' or a 'CellGraphAssay5' object"))
   }
 
   # Fetch component graph
