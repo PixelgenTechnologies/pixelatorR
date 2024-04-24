@@ -19,8 +19,6 @@ globalVariables(
 #' @param component_edge_list An object of class \code{tbl_df}
 #' @param k Number of neighbors to include
 #'
-#' @importFrom igraph get.adjacency connect
-#'
 #' @return A matrix with node marker counts
 #'
 #' @export
@@ -60,7 +58,7 @@ node_markers_counts <- function (
     # fetch adjacency matrix
     adj_mat <-
       connect(simple_graph[[1]], order = k) %>%
-      get.adjacency()
+      as_adjacency_matrix()
     diag(adj_mat) <- 1
 
     # Filter component_counts

@@ -29,6 +29,18 @@
 }
 
 
+#' Check if a path is absolute
+#' @noRd
+.is_absolute_path <- function (
+  x
+) {
+  if (.Platform$OS.type == 'unix') {
+    str_detect(x, '^[/~]')
+  } else {
+    str_detect(x, "^(~|.:)(/|\\\\)")
+  }
+}
+
 #' Validate polarization \code{tbl_df}
 #'
 #' @param polarization A \code{tbl_df} with polarization scores
@@ -40,10 +52,10 @@
 #'
 #' @noRd
 .validate_polarization <- function (
-    polarization,
-    cell_ids,
-    markers,
-    verbose = FALSE
+  polarization,
+  cell_ids,
+  markers,
+  verbose = FALSE
 ) {
   # Set polarization to empty tibble if NULL
   polarization <- polarization %||% tibble()
@@ -91,10 +103,10 @@
 #'
 #' @noRd
 .validate_colocalization <- function (
-    colocalization,
-    cell_ids,
-    markers,
-    verbose = FALSE
+  colocalization,
+  cell_ids,
+  markers,
+  verbose = FALSE
 ) {
 
   # Set colocalization to empty tibble if NULL
@@ -127,4 +139,57 @@
     }
   }
   return(colocalization)
+}
+
+
+#' Validate an fs_map tibble
+#'
+#' @noRd
+.validate_fs_map <- function (
+  fs_map
+) {
+
+  if (!inherits(fs_map, what = "tbl_df"))
+    abort("'fs_map' must be a 'tbl_df'")
+  if (length(fs_map) == 0)
+    abort("'fs_map' must be a non-empty 'tbl_df'")
+  if (!all(c("id_map", "sample", "pxl_file") == colnames(fs_map)))
+    abort("'fs_map' must have columns 'id_map', 'sample', and 'pxl_file'")
+
+  # Validate columns
+  fs_map_classes <- sapply(fs_map, class)
+  if (fs_map_classes["id_map"] != "list")
+    abort(glue("Column 'id_map' of `fs_map` must be a 'list'. Got '{fs_map_classes['id_map']}'"))
+  if (fs_map_classes["sample"] != "integer")
+    abort(glue("Column 'sample' of `fs_map` must be an 'integer' vector. Got '{fs_map_classes['sample']}'"))
+  if (fs_map_classes["pxl_file"] != "character")
+    abort(glue("Column 'sample' of `fs_map` must be an 'character' vector. Got '{fs_map_classes['pxl_file']}'"))
+  id_map_check1 <- sapply(fs_map$id_map, function(x) inherits(x, what = "tbl_df"))
+  if (!all(id_map_check1))
+    abort("All elements of 'id_map' must be 'tbl_df' objects")
+  id_map_check2 <- sapply(fs_map$id_map, function(x) all(colnames(x) == c("current_id", "original_id")))
+  if (!all(id_map_check2))
+    abort("All elements of 'id_map' must be 'tbl_df' objects with columns 'current_id' and 'original_id'")
+  id_map_check3 <- sapply(fs_map$id_map, function(x) {
+    all(sapply(x, class) == c("character", "character"))
+  })
+  if (!all(id_map_check3))
+    abort("Invalid classes found in 'id_map' columns 'current_id' and 'original_id'")
+
+  # Validate pxl files
+  for (i in seq_len(nrow(fs_map))) {
+    f <- fs_map$pxl_file[i]
+    if (!fs::file_exists(f)) {
+      abort(glue("The pxl file '{col_br_blue(f)}' linked to sample {i} does not exist. ",
+                 "Make sure that the path is correct and that the file has not been moved/deleted."))
+    }
+    # Check .pxl file for content
+    pxl_files <- unzip(f, list = TRUE)$Name
+    if (!all(c("adata.h5ad", "colocalization.parquet", "edgelist.parquet",
+               "metadata.json", "polarization.parquet") %in% pxl_files)) {
+      abort(glue("The pxl file '{col_br_blue(f)}' is invalid. "))
+    }
+  }
+
+  return(invisible(NULL))
 }

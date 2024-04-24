@@ -14,15 +14,13 @@ globalVariables(
 #' @examples
 #' library(pixelatorR)
 #' library(tidygraph)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' pxl_file <- system.file("extdata/five_cells",
 #'                        "five_cells.pxl",
 #'                        package = "pixelatorR")
 #'
 #' # Read edgelist
-#' edgelist <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
+#' edgelist <- ReadMPX_arrow_edgelist(pxl_file)
 #'
 #' # Load graph from edge list and store in a CellGraph object
 #' cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000217")[[1]]
@@ -119,11 +117,11 @@ KeepLargestComponent.CellGraph <- function (
 #' @param verbose Print messages
 #'
 #' @rdname KeepLargestComponent
-#' @method KeepLargestComponent CellGraphAssay
+#' @method KeepLargestComponent MPXAssay
 #'
 #' @export
 #'
-KeepLargestComponent.CellGraphAssay <- function (
+KeepLargestComponent.MPXAssay <- function (
   object,
   verbose = TRUE,
   ...
@@ -135,7 +133,7 @@ KeepLargestComponent.CellGraphAssay <- function (
 
   if (sum(loaded_graphs) == 0) {
     if (verbose && check_global_verbosity())
-      cli_alert_info("No 'cellgraphs' loaded in 'CellGraphAssay'. Returning unmodified 'CellGraphAssay'.")
+      cli_alert_info("No 'cellgraphs' loaded in object. Returning object unmodified.")
     return(object)
   }
 
@@ -154,7 +152,8 @@ KeepLargestComponent.CellGraphAssay <- function (
 }
 
 
-#' @param assay Name of a \code{CellGraphAssay} stored on the \code{Seurat} object
+#' @param assay Name of a \code{CellGraphAssay} or \code{CellGraphAssay5}
+#' assay stored on the \code{Seurat} object
 #'
 #' @rdname KeepLargestComponent
 #' @method KeepLargestComponent Seurat
@@ -172,8 +171,8 @@ KeepLargestComponent.Seurat <- function (
   assay <- assay %||% DefaultAssay(object)
 
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("assay '{assay}' is not a 'CellGraphAssay'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("assay '{assay}' is not a 'CellGraphAssay' or a 'CellGraphassay5' object.'"))
   }
 
   cg_assay <- KeepLargestComponent(cg_assay, verbose = verbose, ...)

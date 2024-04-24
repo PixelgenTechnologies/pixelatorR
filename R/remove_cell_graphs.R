@@ -1,13 +1,13 @@
 #' @rdname RemoveCellGraphs
-#' @method RemoveCellGraphs CellGraphAssay
+#' @method RemoveCellGraphs MPXAssay
 #'
 #' @export
 #'
-RemoveCellGraphs.CellGraphAssay <- function (
+RemoveCellGraphs.MPXAssay <- function (
   object,
   ...
 ){
-  slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% setNames(nm = colnames(object))
+  slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
   return(object)
 }
 
@@ -34,8 +34,9 @@ RemoveCellGraphs.Seurat <- function (
   }
 
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, what = "CellGraphAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'"))
+  if (!is(cg_assay, "MPXAssay")) {
+    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'",
+               " or a 'CellGraphAssay5' object."))
   }
   cg_assay <- RemoveCellGraphs(cg_assay)
 

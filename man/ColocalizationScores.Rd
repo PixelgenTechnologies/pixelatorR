@@ -3,8 +3,8 @@
 \name{ColocalizationScores}
 \alias{ColocalizationScores}
 \alias{ColocalizationScores<-}
-\alias{ColocalizationScores.CellGraphAssay}
-\alias{ColocalizationScores<-.CellGraphAssay}
+\alias{ColocalizationScores.MPXAssay}
+\alias{ColocalizationScores<-.MPXAssay}
 \alias{ColocalizationScores.Seurat}
 \alias{ColocalizationScores<-.Seurat}
 \title{ColocalizationScores}
@@ -13,9 +13,9 @@ ColocalizationScores(object, ...)
 
 ColocalizationScores(object, ...) <- value
 
-\method{ColocalizationScores}{CellGraphAssay}(object, ...)
+\method{ColocalizationScores}{MPXAssay}(object, ...)
 
-\method{ColocalizationScores}{CellGraphAssay}(object, ...) <- value
+\method{ColocalizationScores}{MPXAssay}(object, ...) <- value
 
 \method{ColocalizationScores}{Seurat}(object, assay = NULL, meta_data_columns = NULL, ...)
 
@@ -41,8 +41,8 @@ score table.}
 updated
 }
 \description{
-Get and set colocalization scores for a \code{\link{CellGraphAssay}} or
-a \code{Seurat} object
+Get and set colocalization scores for a \code{\link{CellGraphAssay}},
+\code{\link{CellGraphAssay5}} or a \code{Seurat} object
 }
 \seealso{
 Other spatial metrics: 

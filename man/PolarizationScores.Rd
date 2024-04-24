@@ -3,8 +3,8 @@
 \name{PolarizationScores}
 \alias{PolarizationScores}
 \alias{PolarizationScores<-}
-\alias{PolarizationScores.CellGraphAssay}
-\alias{PolarizationScores<-.CellGraphAssay}
+\alias{PolarizationScores.MPXAssay}
+\alias{PolarizationScores<-.MPXAssay}
 \alias{PolarizationScores.Seurat}
 \alias{PolarizationScores<-.Seurat}
 \title{PolarizationScores}
@@ -13,9 +13,9 @@ PolarizationScores(object, ...)
 
 PolarizationScores(object, ...) <- value
 
-\method{PolarizationScores}{CellGraphAssay}(object, ...)
+\method{PolarizationScores}{MPXAssay}(object, ...)
 
-\method{PolarizationScores}{CellGraphAssay}(object, ...) <- value
+\method{PolarizationScores}{MPXAssay}(object, ...) <- value
 
 \method{PolarizationScores}{Seurat}(object, assay = NULL, meta_data_columns = NULL, ...)
 
@@ -41,8 +41,8 @@ score table.}
 updated
 }
 \description{
-Get and set polarization scores for a \code{\link{CellGraphAssay}} or
-a \code{Seurat} object
+Get and set polarization scores for a \code{\link{CellGraphAssay}},
+\code{\link{CellGraphAssay5}} or a \code{Seurat} object
 }
 \seealso{
 Other spatial metrics: 

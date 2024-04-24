@@ -2,7 +2,7 @@
 [![DOI](https://img.shields.io/badge/DOI-10.1101/2023.06.05.543770-B31B1B.svg)](https://www.biorxiv.org/content/10.1101/2023.06.05.543770v1)
 [![codecov](https://codecov.io/gh/PixelgenTechnologies/pixelatorR/graph/badge.svg?token=ClGH1zHvuD)](https://codecov.io/gh/PixelgenTechnologies/pixelatorR)
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
-![Static Badge](https://img.shields.io/badge/beta_release-v0.3.0-orange)
+![Static Badge](https://img.shields.io/badge/beta_release-v0.4.0-orange)
 <!-- badges: end -->
 
 [**Installation**](#installation) |
@@ -73,5 +73,8 @@ Main developers:
 
 - Ludvig Larsson ([@ludvigla](https://github.com/ludvigla))
 - Max Karlsson ([@maxkarlsson](https://github.com/maxkarlsson))
+- Vincent van Hoef ([@incent-van-hoef](https://github.com/vincent-van-hoef))
+- Alvaro Martinez Barrio ([@ambarrio](https://github.com/ambarrio))
+- Johan Dahlberg ([@johandahlberg](https://github.com/johandahlberg))
 
 A huge thank you to all [code contributors](https://github.com/PixelgenTechnologies/pixelatorR/graphs/contributors)!

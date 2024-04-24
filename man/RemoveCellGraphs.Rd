@@ -2,13 +2,13 @@
 % Please edit documentation in R/generics.R, R/remove_cell_graphs.R
 \name{RemoveCellGraphs}
 \alias{RemoveCellGraphs}
-\alias{RemoveCellGraphs.CellGraphAssay}
+\alias{RemoveCellGraphs.MPXAssay}
 \alias{RemoveCellGraphs.Seurat}
 \title{Remove CellGraphs}
 \usage{
 RemoveCellGraphs(object, ...)
 
-\method{RemoveCellGraphs}{CellGraphAssay}(object, ...)
+\method{RemoveCellGraphs}{MPXAssay}(object, ...)
 
 \method{RemoveCellGraphs}{Seurat}(object, assay = NULL, ...)
 }
@@ -23,5 +23,5 @@ RemoveCellGraphs(object, ...)
 An object without CellGraphs
 }
 \description{
-Removes \code{\link{CellGraph}} list from the "cellgraphs" slot.
+Clears the \code{\link{CellGraph}} objects from the "cellgraphs" slot.
 }

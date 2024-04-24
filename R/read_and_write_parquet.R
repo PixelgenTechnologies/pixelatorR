@@ -4,223 +4,75 @@
 #' .pxl files. The edgelists are stored in parquet files in
 #' the \code{outdir} directory which can be modified on disk.
 #'
-#' @param path Path to a .pxl file or a directory containing .parquet files
-#' @param outdir A path to an existing directory
-#' @param return_list If TRUE, returns a list with an \code{ArrowObject},
-#' a vector with sample IDs and a the path to the parquet output directory
-#' @param overwrite If the output directory already exists, set this parameter
-#' to TRUE to overwrite the directory
+#' @param pxl_file Path to a .pxl file
+#' @param edge_list_file Path to the output edgelist.parquet file
 #' @param verbose Print messages
 #' @param ... Parameters passed to other methods
 #'
 #' @import rlang
-#' @importFrom arrow open_dataset
-#' @importFrom utils unzip
 #'
-#' @return An \code{ArrowObject}
+#' @return Nothing. The edgelist is saved to a parquet file
+#' set with \code{edge_list_file}
 #'
 #' @examples
-#'
 #' library(pixelatorR)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/five_cells",
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
-#' edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
+#' edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file)
 #' edgelist_arrow
 #'
 #' @export
 #'
 ReadMPX_arrow_edgelist <- function (
-  path,
-  outdir = NULL,
-  return_list = FALSE,
-  overwrite = FALSE,
+  pxl_file,
+  edge_list_file = NULL,
   verbose = TRUE,
   ...
 ) {
 
   # Check input parameters
   stopifnot(
-    "'path' must be a non-empty character of length 1" =
-      inherits(path, what = "character") &&
-      (length(path) == 1)
+    "'pxl_file' must be a non-empty character of length 1" =
+      inherits(pxl_file, what = "character") &&
+      (length(pxl_file) == 1)
   )
 
   # Validate path
-  if (dir.exists(path)) {
-    # Check for parquet files if a directory is provided
-    fs <- list.files(path, recursive = TRUE)
-    stopifnot("Found no files in provided directory" = length(fs) > 0)
-    for (f in fs) {
-      if (.file_ext(f) != "parquet")
-        abort(glue("'path' must provide a valid path to directory containing .parquet files"))
-    }
-  } else {
-    # Check for pxl files if files are provided
-    if (!file.exists(path)) abort(glue("file '{path}' doesn't exist"))
-    if (.file_ext(path) != "pxl") abort(glue("'path' must provide a valid path to a .pxl file"))
+  if (!fs::file_exists(pxl_file)) {
+    abort(glue("File '{pxl_file}' does not exist"))
   }
 
-  # Use getOption("pixelatorR.arrow_outdir") if no outdir is provided
-  if (is.null(outdir)) {
-    outdir <- getOption("pixelatorR.arrow_outdir")
-    if (verbose && check_global_verbosity())
-      cli_alert_info("Output directory set to '{outdir}'")
-    if (!dir.exists(outdir)) {
-      check <- try({
-        dir.create(outdir, showWarnings = FALSE)
-      })
-      if (!check)
-        abort(glue("Failed to create output directory '{outdir}'."))
-    }
-  } else {
+  available_files <- unzip(pxl_file, list = TRUE)$Name
+  if (!"edgelist.parquet" %in% available_files) {
+    abort(glue(".pxl file {filename} does not contain an 'edgelist.parquet' file"))
+  }
+
+  # Extract the edgelist parquet file
+  if (!is.null(edge_list_file)) {
     stopifnot(
-      "'outdir' must be a character vector of length 1" =
-        is.character(outdir) &&
-        (length(outdir) == 1)
+      "'edge_list_file' must be a non-empty character of length 1" =
+        inherits(edge_list_file, what = "character") &&
+        (length(edge_list_file) == 1),
+      "'edge_list_file' must be a .parquet file" =
+        .file_ext(edge_list_file) == "parquet"
     )
-    outdir <- normalizePath(outdir)
-    if (!dir.exists(outdir)) abort(glue("outdir '{outdir}' doesn't exist"))
-  }
-
-  # If pxl files are provided, make a copy of the parquet files stored internally
-  # Otherwise, simply load the edgelist from the directory provided
-  if (!dir.exists(path)) {
-
-    # Create a new folder names by date, hour and minute
-    session_tmpdir_random <-
-      file.path(
-        outdir,
-        glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
-    if (dir.exists(session_tmpdir_random) && !overwrite)
-      abort(glue("Output directory '{session_tmpdir_random}' already exists.",
-                 " Set 'overwrite=TRUE' to overwrite this directory."))
-
-    # Create empty directory
-    if (verbose && check_global_verbosity())
-      cli_alert_info("Copying parquet files to {session_tmpdir_random}")
-    suppressWarnings({dir.create(path = session_tmpdir_random)})
-
-    # Copy parquet file
-    newdir <- file.path(session_tmpdir_random, paste0("sample=S", 1))
-    suppressWarnings({dir.create(path = newdir)})
-    unzip(path, paste0("edgelist.parquet"), exdir = newdir)
-
-    # Open copied parquet file
-    ds <- open_dataset(session_tmpdir_random)
-
-    # Log command
-    command <- sys.calls()[[1]][1] %>% as.character()
-    options(pixelatorR.edgelist_copies = bind_rows(
-      getOption("pixelatorR.edgelist_copies"),
-      tibble(command = command,
-             edgelist_dir = normalizePath(session_tmpdir_random),
-             timestamp = Sys.time())
-    ))
-
-    # Update path to session_tmpdir_random
-    path <- session_tmpdir_random
-
   } else {
-
-    # Open data set directly if a directory is provided
-    ds <- open_dataset(path)
-
+    edge_list_dir <- fs::path_temp()
+    if (verbose && check_global_verbosity())
+      cli_alert_info("Extracting edgelist.parquet file to {col_br_blue(file.path(edge_list_dir, 'edgelist.parquet'))}")
   }
+
+  # Extract the edgelist.parquet file
+  zip::unzip(pxl_file, files = "edgelist.parquet", exdir = edge_list_dir)
+
+  # Read the parquet file
+  ds <- arrow::open_dataset(fs::path(edge_list_dir, "edgelist.parquet"))
 
   if (verbose && check_global_verbosity()) cli_alert_success("Returning FileSystemDataset")
 
   # Return list with additional info if return_list = TRUE
-  if (return_list) {
-    return(list(ArrowObject = ds, arrow_dir = path))
-  } else {
-    return(ds)
-  }
-}
-
-#' Export a FileSystemDataset to .parquet files
-#'
-#' This function can be used to export a \code{FileSystemDataset} to a
-#' folder containing .parquet files readable with \code{\link{open_dataset}}
-#'
-#' @param object An \code{FileSystemDataset}
-#' @param outdir A path to an existing directory
-#' @param overwrite If the output directory already exists, set this parameter
-#' to TRUE to overwrite the directory
-#' @param verbose Print messages
-#'
-#' @import rlang
-#' @importFrom arrow write_dataset
-#' @importFrom utils unzip
-#'
-#' @return Path to the output folder
-#'
-#' @examples
-#' library(pixelatorR)
-#' library(dplyr)
-#' # Set arrow data output directory to temp for tests
-#' options(pixelatorR.arrow_outdir = tempdir())
-#'
-#' # Load example data
-#' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
-#' edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file, overwrite = TRUE)
-#'
-#' # Manipulate edgelist with dplyr verbs
-#' sorted_components <- edgelist_arrow %>%
-#'   group_by(component) %>%
-#'   summarize(component_size = n()) %>%
-#'   arrange(-component_size)
-#'
-#' # Inspect results
-#' sorted_components %>% collect()
-#'
-#' # Export results to a parquet file
-#' tmp_dir <- tempdir()
-#' outdir <- file.path(tmp_dir, "sorted_components")
-#' dir.create(outdir, showWarnings = FALSE)
-#' outpath <- export_edgelist_to_parquet(object = sorted_components,
-#'                                       outdir = outdir,
-#'                                       overwrite = TRUE)
-#' outpath
-#'
-#' @export
-#'
-export_edgelist_to_parquet <- function (
-  object,
-  outdir,
-  overwrite = FALSE,
-  verbose = TRUE
-) {
-  stopifnot(inherits(object, what = c("arrow_dplyr_query", "FileSystemDataset", "tbl_df")))
-  stopifnot("'outdir' must be a character vector of length 1" = is.character(outdir) & (length(outdir) == 1))
-  outdir <- normalizePath(outdir)
-  if (!dir.exists(outdir))  abort(glue("outdir '{outdir}' doesn't exist"))
-  session_tmpdir_random <-
-    file.path(
-      outdir,
-      glue("{.generate_random_string()}-{format(Sys.time(), '%Y-%m-%d-%H%M%S')}"))
-
-  if ((!overwrite) && dir.exists(session_tmpdir_random))
-    abort(glue("Output directory '{session_tmpdir_random}' already exists. ",
-               "Set 'overwrite=TRUE' to overwrite this directory."))
-  if (verbose && check_global_verbosity())
-    cli_alert_info("Saving edgelist to {session_tmpdir_random}")
-  write_dataset(object %>% ungroup(), path = session_tmpdir_random, existing_data_behavior = "overwrite")
-
-  # Log command
-  command <- sys.calls()[[1]][1] %>% as.character()
-  options(pixelatorR.edgelist_copies = bind_rows(
-    getOption("pixelatorR.edgelist_copies"),
-    tibble(command = command,
-           edgelist_dir = normalizePath(session_tmpdir_random),
-           timestamp = Sys.time())
-  ))
-
-  return(session_tmpdir_random)
+  return(ds)
 }

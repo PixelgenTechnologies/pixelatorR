@@ -3,8 +3,8 @@
 \name{CellGraphs}
 \alias{CellGraphs}
 \alias{CellGraphs<-}
-\alias{CellGraphs.CellGraphAssay}
-\alias{CellGraphs<-.CellGraphAssay}
+\alias{CellGraphs.MPXAssay}
+\alias{CellGraphs<-.MPXAssay}
 \alias{CellGraphs.Seurat}
 \alias{CellGraphs<-.Seurat}
 \title{CellGraphs}
@@ -13,16 +13,16 @@ CellGraphs(object, ...)
 
 CellGraphs(object, ...) <- value
 
-\method{CellGraphs}{CellGraphAssay}(object, ...)
+\method{CellGraphs}{MPXAssay}(object, ...)
 
-\method{CellGraphs}{CellGraphAssay}(object, ...) <- value
+\method{CellGraphs}{MPXAssay}(object, ...) <- value
 
 \method{CellGraphs}{Seurat}(object, ...)
 
 \method{CellGraphs}{Seurat}(object, ...) <- value
 }
 \arguments{
-\item{object}{A Seurat object or CellGraphAssay object}
+\item{object}{A \code{Seurat}, \code{CellGraphAssay} or \code{CellGraphAssay} object}
 
 \item{...}{Arguments passed to other methods}
 
@@ -30,19 +30,16 @@ CellGraphs(object, ...) <- value
 }
 \value{
 Returns a list of \code{\link{CellGraph}} objects. If there are
-no \code{\link{CellGraph}} objects present, returns an empty list.
+no \code{\link{CellGraph}} objects present, returns an empty named list.
 }
 \description{
-Get and set \code{\link{CellGraph}} lists for \code{\link{CellGraphAssay}} and
-\code{Seurat} objects
+Get and set \code{\link{CellGraph}} lists for different objects.
 }
 \examples{
 
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
-# Set arrow data output directory to temp for tests
-options(pixelatorR.arrow_outdir = tempdir())
 
 pxl_file <- system.file("extdata/five_cells",
                         "five_cells.pxl",
@@ -86,7 +83,7 @@ CellGraphs(cg_assay) <- cg_assay@cellgraphs
 
 # CellGraphs getter Seurat
 # ---------------------------------
-se <- ReadMPX_Seurat(pxl_file, overwrite = TRUE, return_cellgraphassay = TRUE)
+se <- ReadMPX_Seurat(pxl_file)
 
 # Get cellgraphs from a Seurat object
 CellGraphs(se)
@@ -100,8 +97,7 @@ CellGraphs(se) <- cg_assay@cellgraphs
 
 }
 \seealso{
-\code{\link[=PolarizationScores]{PolarizationScores()}} and \code{\link[=ColocalizationScores]{ColocalizationScores()}} for getting/setting spatial metrics,
-and \code{\link[=ArrowData]{ArrowData()}}/\code{\link[=ArrowDir]{ArrowDir()}} for getting/setting arrow data
+\code{\link[=PolarizationScores]{PolarizationScores()}} and \code{\link[=ColocalizationScores]{ColocalizationScores()}} for getting/setting spatial metrics
 }
 \concept{assay}
 \concept{cellgraphs}

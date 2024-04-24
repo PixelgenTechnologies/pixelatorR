@@ -172,8 +172,6 @@ color_by_marker <- function (
 #' @param x A numeric vector
 #' @param bottom_q,top_q Quantiles used for trimming
 #'
-#' @importFrom stats quantile
-#'
 #' @noRd
 #'
 .trim_quantiles <- function (
@@ -209,9 +207,6 @@ color_by_marker <- function (
 
   # Set global variables to NULL (required by shinytest2)
   from <- to <- NULL
-
-  # Require jsonlite library
-  expect_jsonlite()
 
   # Validate data
   stopifnot("'data' must be a 'tbl_graph' object" = inherits(data, what = "tbl_graph"))
