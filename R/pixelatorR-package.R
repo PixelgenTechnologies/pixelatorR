@@ -98,6 +98,7 @@
 #' @importFrom igraph layout_with_fr
 #' @importFrom igraph layout_with_kk
 #' @importFrom igraph vertex_attr_names
+#' @importFrom lifecycle deprecated
 #' @importFrom Matrix colSums
 #' @importFrom Matrix rowSums
 #' @importFrom methods as

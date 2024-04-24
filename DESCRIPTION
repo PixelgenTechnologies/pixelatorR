@@ -37,7 +37,8 @@ Imports:
     pbapply,
     zip,
     jsonlite,
-    parallel
+    parallel,
+    lifecycle
 Remotes:
     cran/arrow@14.0.2.1
 Suggests:

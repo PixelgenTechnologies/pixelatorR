@@ -7,6 +7,9 @@ globalVariables(
 
 #' Export Seurat object data to a .pxl file
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' The function only exports the essential data required to create a functional
 #' .pxl file. See details below for a description of what data is exported.
 #'

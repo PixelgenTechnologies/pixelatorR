@@ -23,6 +23,8 @@ if it already exists.}
 Nothing. The function writes the .pxl file to the specified location.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 The function only exports the essential data required to create a functional
 .pxl file. See details below for a description of what data is exported.
 }

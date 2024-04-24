@@ -7,7 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED] - 2024-??-??
 
-## [0.2.1] 2024-03-28
+## [0.4.0] - 2024-04-24
+
+### Updated `pixelatorR` classes and their methods for improved I/O
+
+- `pixelatorR` now provides two classes to store MPX data: `CellGraphAssay5` and `CellGraphAssay5`
+  - `CellGraphAssay5` inherits the `Assay5` class introduced in Seurat v5 and will be used when `options(Seurat.object.assay.version = "v5")`
+  - `CellGraphAssay` inherits the `Assay` class from Seurat v3 and will be used when `options(Seurat.object.assay.version = "v3")`
+- All `CellGraphAssay` methods now handle `CellGraphAssay5` class objects
+  
+### hdf5
+
+- Switched from R package `rhdf5` (Bioconductor) to `hdf5r` (CRAN) to handle reading and writing of HDF5 files
+
+### Writing PXL files
+
+- Introduced experimental function `WriteMPX_pxl_file` to write MPX data from a Seurat object to a PXL file
+
+## [0.3.0] - 2024-03-28
 
 ### Added utility functions to clean up edgelist directories
 
