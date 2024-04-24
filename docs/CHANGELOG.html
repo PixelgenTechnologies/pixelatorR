@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,7 +26,6 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
     <a class="dropdown-item" href="articles/introduction.html">Introduction</a>
     <a class="dropdown-item" href="articles/load_data.html">Load Data</a>
-    <a class="dropdown-item" href="articles/subset_and_merge.html">Merge &amp; subset</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -57,7 +56,35 @@
 <h2 id="unreleased---2024--">[UNRELEASED] - 2024-??-??<a class="anchor" aria-label="anchor" href="#unreleased---2024--"></a></h2>
 </div>
 <div class="section level2">
-<h2 id="id_021-2024-03-28">[0.2.1] 2024-03-28<a class="anchor" aria-label="anchor" href="#id_021-2024-03-28"></a></h2>
+<h2 id="id_040---2024-04-24">[0.4.0] - 2024-04-24<a class="anchor" aria-label="anchor" href="#id_040---2024-04-24"></a></h2>
+<div class="section level3">
+<h3 id="updated-pixelatorr-classes-and-their-methods-for-improved-io">Updated <code>pixelatorR</code> classes and their methods for improved I/O<a class="anchor" aria-label="anchor" href="#updated-pixelatorr-classes-and-their-methods-for-improved-io"></a></h3>
+<ul><li>
+<code>pixelatorR</code> now provides two classes to store MPX data: <code>CellGraphAssay5</code> and <code>CellGraphAssay5</code>
+<ul><li>
+<code>CellGraphAssay5</code> inherits the <code>Assay5</code> class introduced in Seurat v5 and will be used when <code>options(Seurat.object.assay.version = "v5")</code>
+</li>
+<li>
+<code>CellGraphAssay</code> inherits the <code>Assay</code> class from Seurat v3 and will be used when <code>options(Seurat.object.assay.version = "v3")</code>
+</li>
+</ul></li>
+<li>All <code>CellGraphAssay</code> methods now handle <code>CellGraphAssay5</code> class objects</li>
+</ul></div>
+<div class="section level3">
+<h3 id="hdf5">hdf5<a class="anchor" aria-label="anchor" href="#hdf5"></a></h3>
+<ul><li>Switched from R package <code>rhdf5</code> (Bioconductor) to <code>hdf5r</code> (CRAN) to handle reading and writing of HDF5 files</li>
+</ul></div>
+<div class="section level3">
+<h3 id="writing-pxl-files">Writing PXL files<a class="anchor" aria-label="anchor" href="#writing-pxl-files"></a></h3>
+<ul><li>Introduced experimental function <code>WriteMPX_pxl_file</code> to write MPX data from a Seurat object to a PXL file</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes">Fixes<a class="anchor" aria-label="anchor" href="#fixes"></a></h3>
+<ul><li>Made <code>EdgeRankPlot</code> compatible with incoming changes in pixelator Python &gt;0.16.2 where <code>edges</code> is renamed to <code>molecules</code> in <code>CellGraphAssay</code> objects</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_030-2024-03-28">[0.3.0] 2024-03-28<a class="anchor" aria-label="anchor" href="#id_030-2024-03-28"></a></h2>
 <div class="section level3">
 <h3 id="added-utility-functions-to-clean-up-edgelist-directories">Added utility functions to clean up edgelist directories<a class="anchor" aria-label="anchor" href="#added-utility-functions-to-clean-up-edgelist-directories"></a></h3>
 <ul><li>

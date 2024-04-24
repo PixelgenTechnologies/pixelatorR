@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,7 +26,6 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
     <a class="dropdown-item" href="../articles/introduction.html">Introduction</a>
     <a class="dropdown-item" href="../articles/load_data.html">Load Data</a>
-    <a class="dropdown-item" href="../articles/subset_and_merge.html">Merge &amp; subset</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -57,13 +56,7 @@
 
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>Available options:</p><ul><li><p><code>pixelatorR.arrow_outdir</code> The directory where the edgelists are stored.</p></li>
-<li><p><code>pixelatorR.arrowdir_maxsize</code> The maximum allowed size of the edgelists directory.</p></li>
-<li><p><code>pixelatorR.auto_cleanup</code> Whether to run <code>edgelists_directories_clean()</code>
-automatically when the size of the edgelists directory exceeds <code>pixelatorR.arrowdir_maxsize</code>.
-The cleanup is triggered by functions which create new edgelist copies, such as <code>subset</code>,
-<code>merge</code> and <code>RenameCells</code>.</p></li>
-<li><p><code>pixelatorR.verbose</code> Whether to print messages to the console.</p></li>
+    <p>Available options:</p><ul><li><p><code>pixelatorR.verbose</code> Whether to print messages to the console.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="verbosity">Verbosity<a class="anchor" aria-label="anchor" href="#verbosity"></a></h2>
@@ -72,76 +65,10 @@ The cleanup is triggered by functions which create new edgelist copies, such as 
 <p>Verbosity can be turned off globally for all pixelatorR function by setting
 <code>options(pixelatorR.verbose = FALSE)</code>.</p>
     </div>
-    <div class="section level2">
-    <h2 id="edgelists-stored-on-disk">Edgelists stored on disk<a class="anchor" aria-label="anchor" href="#edgelists-stored-on-disk"></a></h2>
-    
-
-<p>When creating Seurat objects with pixelatorR, the graph data will be stored on disk
-in a directory that can be set with the global option <code>pixelatorR.arrow_outdir</code>.
-By default, this directory is set to './edgelists' which will be created in the
-current working directory.</p>
-<p>Certain operations, such as <code>subset</code>, <code>merge</code>
-and <code>RenameCells</code>, will create copies of the graph data in new sub directories within
-this folder to make sure that each Seurat object that is created has it's own
-edgelist file(s) associated with it.</p>
-<p>A downside with this strategy is that
-the size of the directory can grow very large if many Seurat objects are created
-or if the functions mentioned above are called many times. When Seurat
-objects are overwritten or removed, some directories may no longer be linked to any
-global variable in the current R session, but these directories
-will not be removed automatically. pixelatorR offers a utility function called
-<code>edgelists_directories_clean()</code> to remove them.</p>
-<p>To make the user aware of this behavior, a message will be displayed once the
-first time <code>ReadMPX_Seurat</code> that creates a new edgelist directory is called.</p>
-<p>Moreover, when the size of the directory exceeds the size limit set with
-the global option <code>pixelatorR.arrowdir_maxsize</code> (which is set to 5GB by default),
-<code>edgelists_directories_clean()</code> will be run automatically. Users will be given
-a prompt to confirm the cleanup before it is executed. This behavior can be turned off
-by setting <code>options(pixelatorR.auto_cleanup = TRUE)</code>. You can also run
-<code><a href="edgelist_directories_du.html">edgelist_directories_du()</a></code> to get the current size of the directory.</p>
-    </div>
-    <div class="section level2">
-    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p><code><a href="edgelist_directories_clean.html">edgelist_directories_clean()</a></code> to clean up the edgelist directory,
-<code><a href="edgelist_directories_du.html">edgelist_directories_du()</a></code> to get the current size of the edgelist directory.</p></div>
-    </div>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Set edgelist directory to a temporary folder</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Check the current size of the edgelist directory</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="edgelist_directories_du.html">edgelist_directories_du</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1.39M</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># List files in the edgelist directory</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"pixelatorR.arrow_outdir"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/dir_ls.html" class="external-link">dir_ls</a></span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB; font-weight: bold;">/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/5UDHo-2024-04-02-114046</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB; font-weight: bold;">/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/ST5VC-2024-04-02-114046</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB; font-weight: bold;">/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/bslib-b2b014205f363e69651141537d9e56af</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB; font-weight: bold;">/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/d1Ihl-2024-04-02-114046</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB; font-weight: bold;">/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/downlit</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/file17ca91d048560</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/file17ca92bb67dfc</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/file17ca95a0941cf</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/file17ca95c97e0a7</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/file17ca9771e236e</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/file17ca97883bac4</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/file17ca97f08409c</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB; font-weight: bold;">/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpBhxvH3/sorted_components</span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Increase maximum allowed size of edgelist directory to 5GB</span></span></span>
-<span class="r-in"><span><span class="co"># This will generate a prompt asking users to cleanup the edgelist directory</span></span></span>
-<span class="r-in"><span><span class="co"># if the total size exceeds 50GB</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrowdir_maxsize <span class="op">=</span> <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/fs_bytes.html" class="external-link">fs_bytes</a></span><span class="op">(</span><span class="fl">5</span> <span class="op">*</span> <span class="fl">1024</span><span class="op">^</span><span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Turn of prompts for automatic cleanup</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.auto_cleanup <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Turn off verbosity</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># Turn off verbosity</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

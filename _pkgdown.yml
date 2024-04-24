@@ -34,8 +34,6 @@ navbar:
         href: articles/introduction.html
       - text: Load Data
         href: articles/load_data.html
-      - text: Merge & subset
-        href: articles/subset_and_merge.html
 
 reference:
   - title: Function reference
@@ -66,7 +64,6 @@ reference:
   - contents:
     - KeepLargestComponent
     - RemoveCellGraphs
-    - RestoreArrowConnection
     - LoadCellGraphs
   - subtitle: Differential analysis
   - contents:
@@ -77,18 +74,20 @@ reference:
   - contents:
     - PolarizationScoresToAssay
     - ColocalizationScoresToAssay
-  - subtitle: CellGraphAssay and CellGraph methods
+  - subtitle: CellGraphAssay(5) and CellGraph methods
   - contents:
-    - CellGraphAssay
     - CellGraphAssay-methods
+    - CellGraphAssay5-methods
+    - MPXAssay-methods
     - CreateCellGraphAssay
+    - CreateCellGraphAssay5
     - CellGraphs
     - PolarizationScores
     - ColocalizationScores
-    - ArrowData
-    - ArrowDir
+    - FSMap
     - CellGraphData
     - as.CellGraphAssay
+    - as.CellGraphAssay5
     - CellGraph
     - CreateCellGraphObject
   - subtitle: Graph functions
@@ -99,12 +98,12 @@ reference:
     - color_by_marker
   - subtitle: Export
   - contents:
-    - export_edgelist_to_parquet
-    - WriteMPX
-  - subtitle: Edge lists
+    - WriteMPX_pxl_file
+  - subtitle: Classes
   - contents:
-    - edgelist_directories_clean
-    - edgelist_directories_du
+    - CellGraphAssay
+    - CellGraphAssay5
+    - MPXAssay
   - subtitle: Misc
   - contents:
     - pixelatorR_options

@@ -12,7 +12,7 @@ representing a bipartite graph."><!-- mathjax --><script src="https://cdnjs.clou
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,7 +28,6 @@ representing a bipartite graph."><!-- mathjax --><script src="https://cdnjs.clou
   <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
     <a class="dropdown-item" href="../articles/introduction.html">Introduction</a>
     <a class="dropdown-item" href="../articles/load_data.html">Load Data</a>
-    <a class="dropdown-item" href="../articles/subset_and_merge.html">Merge &amp; subset</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -62,7 +61,13 @@ representing a bipartite graph.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">edgelist_to_simple_Anode_graph</span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for data.frame</span></span>
-<span><span class="fu">edgelist_to_simple_Anode_graph</span><span class="op">(</span><span class="va">object</span>, components <span class="op">=</span> <span class="cn">NULL</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span>
+<span><span class="fu">edgelist_to_simple_Anode_graph</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  components <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for FileSystemDataset</span></span>
 <span><span class="fu">edgelist_to_simple_Anode_graph</span><span class="op">(</span><span class="va">object</span>, components <span class="op">=</span> <span class="cn">NULL</span>, verbose <span class="op">=</span> <span class="cn">TRUE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
@@ -82,6 +87,14 @@ representing a bipartite graph.</p>
 <dd><p>Components to compute A node projection for</p></dd>
 
 
+<dt>cl</dt>
+<dd><p>A cluster object created by makeCluster, or an integer
+to indicate number of child-processes (integer values are ignored
+on Windows) for parallel evaluations. See Details on performance
+in the documentation for <code>pbapply</code>. The default is NULL,
+which means that no parallelization is used.</p></dd>
+
+
 <dt>verbose</dt>
 <dd><p>Print messages</p></dd>
 
@@ -98,16 +111,11 @@ representing a bipartite graph.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tibble.tidyverse.org/" class="external-link">tibble</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># Set arrow data output directory to temp for tests</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/five_cells"</span>, <span class="st">"five_cells.pxl"</span>, package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load edgelist</span></span></span>
-<span class="r-in"><span><span class="va">el</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_arrow_edgelist.html">ReadMPX_arrow_edgelist</a></span><span class="op">(</span><span class="va">pxl_file</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Output directory set to '/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpBhxvH3'</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Copying parquet files to /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpBhxvH3/d1Ihl-2024-04-02-114046</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning FileSystemDataset</span>
+<span class="r-in"><span><span class="va">el</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_arrow_edgelist.html">ReadMPX_arrow_edgelist</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Convert to tbl_df</span></span></span>
 <span class="r-in"><span><span class="va">el_tbl_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble</a></span><span class="op">(</span><span class="va">el</span><span class="op">)</span></span></span>
@@ -115,16 +123,11 @@ representing a bipartite graph.</p>
 <span class="r-in"><span><span class="co"># data.frame method --------------------------------</span></span></span>
 <span class="r-in"><span><span class="co"># Create list of A-node projected tbl_graphs</span></span></span>
 <span class="r-in"><span><span class="va">anode_proj</span> <span class="op">&lt;-</span> <span class="fu">edgelist_to_simple_Anode_graph</span><span class="op">(</span><span class="va">el_tbl_df</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Simplifying edge list</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Creating A-node projected graphs</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning an A-node projected graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                  | 0 % ~calculating    |++++++++++                                        | 20% ~00s            |++++++++++++++++++++                              | 40% ~00s            |++++++++++++++++++++++++++++++                    | 60% ~00s            |++++++++++++++++++++++++++++++++++++++++          | 80% ~00s            |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=00s  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># FileSystemDataset method -------------------------</span></span></span>
 <span class="r-in"><span><span class="co"># Create list of A-node projected tbl_graphs</span></span></span>
 <span class="r-in"><span><span class="va">anode_proj</span> <span class="op">&lt;-</span> <span class="fu">edgelist_to_simple_Anode_graph</span><span class="op">(</span><span class="va">el</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Simplifying edge list</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Creating A-node projected graphs</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning an A-node projected graphs</span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

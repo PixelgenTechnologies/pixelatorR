@@ -12,7 +12,7 @@ with the bipartite graph, layout, and antibody counts per A pixel."><!-- mathjax
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -28,7 +28,6 @@ with the bipartite graph, layout, and antibody counts per A pixel."><!-- mathjax
   <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
     <a class="dropdown-item" href="../articles/introduction.html">Introduction</a>
     <a class="dropdown-item" href="../articles/load_data.html">Load Data</a>
-    <a class="dropdown-item" href="../articles/subset_and_merge.html">Merge &amp; subset</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -80,6 +79,7 @@ with the bipartite graph, layout, and antibody counts per A pixel.</p>
 <span><span class="fu">ComputeLayout</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  layout_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pmds"</span>, <span class="st">"fr"</span>, <span class="st">"kk"</span>, <span class="st">"drl"</span><span class="op">)</span>,</span>
+<span>  layout_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dim <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  normalize_layout <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  project_on_unit_sphere <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -88,14 +88,14 @@ with the bipartite graph, layout, and antibody counts per A pixel.</p>
 <span>  seed <span class="op">=</span> <span class="fl">123</span>,</span>
 <span>  custom_layout_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  custom_layout_function_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  custom_layout_name <span class="op">=</span> <span class="st">"custom"</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># S3 method for CellGraphAssay</span></span>
+<span><span class="co"># S3 method for MPXAssay</span></span>
 <span><span class="fu">ComputeLayout</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  layout_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pmds"</span>, <span class="st">"fr"</span>, <span class="st">"kk"</span>, <span class="st">"drl"</span><span class="op">)</span>,</span>
+<span>  layout_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dim <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  normalize_layout <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  project_on_unit_sphere <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -105,7 +105,43 @@ with the bipartite graph, layout, and antibody counts per A pixel.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  custom_layout_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  custom_layout_function_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  custom_layout_name <span class="op">=</span> <span class="st">"custom"</span>,</span>
+<span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for CellGraphAssay</span></span>
+<span><span class="fu">ComputeLayout</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  layout_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pmds"</span>, <span class="st">"fr"</span>, <span class="st">"kk"</span>, <span class="st">"drl"</span><span class="op">)</span>,</span>
+<span>  layout_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dim <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  normalize_layout <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  project_on_unit_sphere <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  k <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  pivots <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">123</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  custom_layout_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  custom_layout_function_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for CellGraphAssay5</span></span>
+<span><span class="fu">ComputeLayout</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  layout_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pmds"</span>, <span class="st">"fr"</span>, <span class="st">"kk"</span>, <span class="st">"drl"</span><span class="op">)</span>,</span>
+<span>  layout_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dim <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  normalize_layout <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  project_on_unit_sphere <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  k <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  pivots <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  seed <span class="op">=</span> <span class="fl">123</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  custom_layout_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  custom_layout_function_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -114,6 +150,7 @@ with the bipartite graph, layout, and antibody counts per A pixel.</p>
 <span>  <span class="va">object</span>,</span>
 <span>  assay <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  layout_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pmds"</span>, <span class="st">"fr"</span>, <span class="st">"kk"</span>, <span class="st">"drl"</span><span class="op">)</span>,</span>
+<span>  layout_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dim <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  normalize_layout <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  project_on_unit_sphere <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -123,7 +160,6 @@ with the bipartite graph, layout, and antibody counts per A pixel.</p>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  custom_layout_function <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  custom_layout_function_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  custom_layout_name <span class="op">=</span> <span class="st">"custom"</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -185,14 +221,21 @@ The <code>dim</code> is automatically passed to <code>custom_layout_function</co
 included in <code>custom_layout_function_args</code>.</p></dd>
 
 
-<dt>custom_layout_name</dt>
-<dd><p>A name for the layout computed with
-<code>custom_layout_function</code>. Should not be one of "pmds", "fr",
-"kk" or "drl".</p></dd>
+<dt>layout_name</dt>
+<dd><p>The name of the computed layout. If this name is not given,
+the <code>layout_method</code> will be used as the name.</p></dd>
 
 
 <dt>verbose</dt>
 <dd><p>Print messages</p></dd>
+
+
+<dt>cl</dt>
+<dd><p>A cluster object created by makeCluster, or an integer
+to indicate number of child-processes (integer values are ignored
+on Windows) for parallel evaluations. See Details on performance
+in the documentation for <code>pbapply</code>. The default is NULL,
+which means that no parallelization is used.</p></dd>
 
 
 <dt>assay</dt>
@@ -216,22 +259,18 @@ included in <code>custom_layout_function_args</code>.</p></dd>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="co"># Set arrow data output directory to temp for tests</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.arrow_outdir <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/five_cells"</span>,</span></span>
 <span class="r-in"><span>                        <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load example data</span></span></span>
-<span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span>, return_cellgraphassay <span class="op">=</span> <span class="cn">TRUE</span>, overwrite <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
+<span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load 1 cellgraph</span></span></span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="LoadCellGraphs.html">LoadCellGraphs</a></span><span class="op">(</span><span class="va">seur</span>, cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span>,</span></span>
 <span class="r-in"><span>                       load_as <span class="op">=</span> <span class="st">"Anode"</span>, force <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading 1 edgelist(s) as <span style="color: #FF55FF;">Anode</span> graph(s)</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Successfully loaded 1 CellGraph object(s).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                  | 0 % ~calculating    |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=00s  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get CellGraph</span></span></span>
 <span class="r-in"><span><span class="va">cg</span> <span class="op">&lt;-</span> <span class="fu"><a href="CellGraphs.html">CellGraphs</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span><span class="op">[[</span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span><span class="op">[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">]</span></span></span>
@@ -259,12 +298,12 @@ included in <code>custom_layout_function_args</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compute layout for a CellGraphAssay</span></span></span>
 <span class="r-in"><span><span class="va">cg_assay</span> <span class="op">&lt;-</span> <span class="fu">ComputeLayout</span><span class="op">(</span><span class="va">seur</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span>, layout_method <span class="op">=</span> <span class="st">"fr"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Computing layouts for 1 graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                  | 0 % ~calculating    |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=00s  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Compute layout for a Seurat object</span></span></span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu">ComputeLayout</span><span class="op">(</span><span class="va">seur</span>, layout_method <span class="op">=</span> <span class="st">"fr"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Computing layouts for 1 graphs</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                  | 0 % ~calculating    |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=00s  </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

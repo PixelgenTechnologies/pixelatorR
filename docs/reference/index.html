@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,7 +26,6 @@
   <div class="dropdown-menu" aria-labelledby="dropdown-tutorials">
     <a class="dropdown-item" href="../articles/introduction.html">Introduction</a>
     <a class="dropdown-item" href="../articles/load_data.html">Load Data</a>
-    <a class="dropdown-item" href="../articles/subset_and_merge.html">Merge &amp; subset</a>
   </div>
 </li>
       </ul><form class="form-inline my-2 my-lg-0" role="search">
@@ -79,7 +78,7 @@
           
           <code><a href="ReadMPX_item.html">ReadMPX_item()</a></code> <code><a href="ReadMPX_item.html">ReadMPX_polarization()</a></code> <code><a href="ReadMPX_item.html">ReadMPX_colocalization()</a></code> <code><a href="ReadMPX_item.html">ReadMPX_edgelist()</a></code> 
         </dt>
-        <dd>Read a pixel data item</dd>
+        <dd>Read an MPX data item</dd>
       </dl><dl><dt>
           
           <code><a href="ReadMPX_arrow_edgelist.html">ReadMPX_arrow_edgelist()</a></code> 
@@ -170,11 +169,6 @@
         <dd>Remove CellGraphs</dd>
       </dl><dl><dt>
           
-          <code><a href="RestoreArrowConnection.html">RestoreArrowConnection()</a></code> 
-        </dt>
-        <dd>Restore connection to arrow Dataset</dd>
-      </dl><dl><dt>
-          
           <code><a href="LoadCellGraphs.html">LoadCellGraphs()</a></code> 
         </dt>
         <dd>Load CellGraphs</dd>
@@ -219,15 +213,15 @@
           
           <code><a href="PolarizationScoresToAssay.html">PolarizationScoresToAssay()</a></code> 
         </dt>
-        <dd>Convert polarization scores to Assay</dd>
+        <dd>Convert polarization score table to an Assay or Assay5</dd>
       </dl><dl><dt>
           
           <code><a href="ColocalizationScoresToAssay.html">ColocalizationScoresToAssay()</a></code> 
         </dt>
-        <dd>Convert colocalization scores to Assay</dd>
+        <dd>Convert colocalization score table to an Assay or Assay5</dd>
       </dl></div><div class="section level2">
       
-      <h3 id="cellgraphassay-and-cellgraph-methods">CellGraphAssay and CellGraph methods<a class="anchor" aria-label="anchor" href="#cellgraphassay-and-cellgraph-methods"></a></h3>
+      <h3 id="cellgraphassay-and-cellgraph-methods">CellGraphAssay(5) and CellGraph methods<a class="anchor" aria-label="anchor" href="#cellgraphassay-and-cellgraph-methods"></a></h3>
       
 
       
@@ -238,19 +232,29 @@
 
       <dl><dt>
           
-          <code><a href="CellGraphAssay-class.html">CellGraphAssay-class</a></code> <code><a href="CellGraphAssay-class.html">CellGraphAssay</a></code> 
-        </dt>
-        <dd>The CellGraphAssay class</dd>
-      </dl><dl><dt>
-          
-          <code><a href="CellGraphAssay-methods.html">subset(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">merge(<i>&lt;CellGraphAssay&gt;</i>)</a></code> 
+          <code><a href="CellGraphAssay-methods.html">RenameCells(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">show(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">subset(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">merge(<i>&lt;CellGraphAssay&gt;</i>)</a></code> 
         </dt>
         <dd>CellGraphAssay Methods</dd>
+      </dl><dl><dt>
+          
+          <code><a href="CellGraphAssay5-methods.html">RenameCells(<i>&lt;CellGraphAssay5&gt;</i>)</a></code> <code><a href="CellGraphAssay5-methods.html">show(<i>&lt;CellGraphAssay5&gt;</i>)</a></code> <code><a href="CellGraphAssay5-methods.html">subset(<i>&lt;CellGraphAssay5&gt;</i>)</a></code> <code><a href="CellGraphAssay5-methods.html">merge(<i>&lt;CellGraphAssay5&gt;</i>)</a></code> 
+        </dt>
+        <dd>CellGraphAssay5 Methods</dd>
+      </dl><dl><dt>
+          
+          <code><a href="MPXAssay-methods.html">RenameCells(<i>&lt;MPXAssay&gt;</i>)</a></code> <code><a href="MPXAssay-methods.html">show(<i>&lt;MPXAssay&gt;</i>)</a></code> <code><a href="MPXAssay-methods.html">subset(<i>&lt;MPXAssay&gt;</i>)</a></code> <code><a href="MPXAssay-methods.html">merge(<i>&lt;MPXAssay&gt;</i>)</a></code> 
+        </dt>
+        <dd>MPXAssay Methods</dd>
       </dl><dl><dt>
           
           <code><a href="CreateCellGraphAssay.html">CreateCellGraphAssay()</a></code> 
         </dt>
         <dd>Create a CellGraphAssay object</dd>
+      </dl><dl><dt>
+          
+          <code><a href="CreateCellGraphAssay5.html">CreateCellGraphAssay5()</a></code> 
+        </dt>
+        <dd>Create a CellGraphAssay5 object</dd>
       </dl><dl><dt>
           
           <code><a href="CellGraphs.html">CellGraphs()</a></code> <code><a href="CellGraphs.html">`CellGraphs&lt;-`()</a></code> 
@@ -268,14 +272,9 @@
         <dd>ColocalizationScores</dd>
       </dl><dl><dt>
           
-          <code><a href="ArrowData.html">ArrowData()</a></code> <code><a href="ArrowData.html">`ArrowData&lt;-`()</a></code> 
+          <code><a href="FSMap.html">FSMap()</a></code> <code><a href="FSMap.html">`FSMap&lt;-`()</a></code> 
         </dt>
-        <dd>ArrowData</dd>
-      </dl><dl><dt>
-          
-          <code><a href="ArrowDir.html">ArrowDir()</a></code> <code><a href="ArrowDir.html">`ArrowDir&lt;-`()</a></code> 
-        </dt>
-        <dd>ArrowDir</dd>
+        <dd>FS map</dd>
       </dl><dl><dt>
           
           <code><a href="CellGraphData.html">CellGraphData()</a></code> <code><a href="CellGraphData.html">`CellGraphData&lt;-`()</a></code> 
@@ -285,7 +284,12 @@
           
           <code><a href="as.CellGraphAssay.html">as.CellGraphAssay()</a></code> 
         </dt>
-        <dd>Convert objects to a <code>CellGraphAssay</code></dd>
+        <dd>Convert objects to a <code><a href="https://pixelgentechnologies.github.io/pixelatorR/reference/CellGraphAssay-class.html" class="external-link">CellGraphAssay</a></code></dd>
+      </dl><dl><dt>
+          
+          <code><a href="as.CellGraphAssay5.html">as.CellGraphAssay5()</a></code> 
+        </dt>
+        <dd>Convert objects to a <code><a href="https://pixelgentechnologies.github.io/pixelatorR/reference/CellGraphAssay5-class.html" class="external-link">CellGraphAssay5</a></code></dd>
       </dl><dl><dt>
           
           <code><a href="CellGraph-class.html">CellGraph-class</a></code> <code><a href="CellGraph-class.html">CellGraph</a></code> 
@@ -340,17 +344,12 @@
 
       <dl><dt>
           
-          <code><a href="export_edgelist_to_parquet.html">export_edgelist_to_parquet()</a></code> 
+          <code><a href="WriteMPX_pxl_file.html">WriteMPX_pxl_file()</a></code> 
         </dt>
-        <dd>Export a FileSystemDataset to .parquet files</dd>
-      </dl><dl><dt>
-          
-          <code><a href="WriteMPX.html">WriteMPX()</a></code> 
-        </dt>
-        <dd>Write MPX data objects</dd>
+        <dd>Export Seurat object data to a .pxl file</dd>
       </dl></div><div class="section level2">
       
-      <h3 id="edge-lists">Edge lists<a class="anchor" aria-label="anchor" href="#edge-lists"></a></h3>
+      <h3 id="classes">Classes<a class="anchor" aria-label="anchor" href="#classes"></a></h3>
       
 
       
@@ -361,14 +360,19 @@
 
       <dl><dt>
           
-          <code><a href="edgelist_directories_clean.html">edgelist_directories_clean()</a></code> 
+          <code><a href="CellGraphAssay-class.html">CellGraphAssay-class</a></code> <code><a href="CellGraphAssay-class.html">CellGraphAssay</a></code> 
         </dt>
-        <dd>Clean up Unlinked Edgelist Directories</dd>
+        <dd>The CellGraphAssay class</dd>
       </dl><dl><dt>
           
-          <code><a href="edgelist_directories_du.html">edgelist_directories_du()</a></code> 
+          <code><a href="CellGraphAssay5-class.html">CellGraphAssay5-class</a></code> <code><a href="CellGraphAssay5-class.html">CellGraphAssay5</a></code> 
         </dt>
-        <dd>Check Disk Usage of Edgelist Directories</dd>
+        <dd>The CellGraphAssay5 class</dd>
+      </dl><dl><dt>
+          
+          <code><a href="MPXAssay-class.html">MPXAssay-class</a></code> <code><a href="MPXAssay-class.html">MPXAssay</a></code> 
+        </dt>
+        <dd>MPXAssay class</dd>
       </dl></div><div class="section level2">
       
       <h3 id="misc">Misc<a class="anchor" aria-label="anchor" href="#misc"></a></h3>
@@ -402,9 +406,9 @@
         <dd>Show method for <code>CellGraph</code> object</dd>
       </dl><dl><dt>
           
-          <code><a href="show-CellGraphAssay-method.html">show(<i>&lt;CellGraphAssay&gt;</i>)</a></code> 
+          <code><a href="CellGraphAssay-methods.html">RenameCells(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">show(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">subset(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">merge(<i>&lt;CellGraphAssay&gt;</i>)</a></code> 
         </dt>
-        <dd>Show method for <code>CellGraphAssay</code> object</dd>
+        <dd>CellGraphAssay Methods</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc"><h2>On this page</h2>
     </nav></aside></div>
