@@ -622,7 +622,7 @@ WriteMPX_pxl_file <- function (
 
   # Write dataset
   arrow::write_dataset(layout_and_counts_arr,
-                       path = file.path(pxl_folder, "layout.parquet"))
+                       path = file.path(pxl_folder, "layouts.parquet"))
 
   cli_status_clear(id = sb)
   cli_alert_success("Exported layouts")
