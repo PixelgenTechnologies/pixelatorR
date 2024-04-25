@@ -17,3 +17,12 @@ in the PXL file
 This function inspects a PXL file and returns a tibble with
 information about the files contained in the PXL file.
 }
+\examples{
+pxl_file <- system.file("extdata/five_cells",
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
+
+inspect_pxl_file(pxl_file)
+
+}

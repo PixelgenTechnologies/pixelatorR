@@ -42,6 +42,10 @@ globalVariables(
 #' file to be created.
 #' @param assay A character string specifying the name of the \code{CellGraphAssay5}.
 #' If set to \code{NULL} the default assay will be used.
+#' @param export_layouts A logical value specifying whether to export the layouts from
+#' the \code{Seurat} object. If set to \code{TRUE}, each component must have a layout.
+#' See \code{\link{LoadCellGraphs}} and \code{\link{ComputeLayout}} for details about
+#' how to load graphs and compute layouts.
 #' @param overwrite A logical value specifying whether to overwrite the \code{file}
 #' if it already exists.
 #'
@@ -75,6 +79,7 @@ WriteMPX_pxl_file <- function (
   object,
   file,
   assay = NULL,
+  export_layouts = FALSE,
   overwrite = FALSE
 ) {
 
@@ -137,6 +142,25 @@ WriteMPX_pxl_file <- function (
                       cg_assay = cg_assay,
                       pxl_folder = pxl_folder)
 
+  # Export layout data
+  if (export_layouts) {
+    cg_list <- CellGraphs(object)
+    graphs_check <- sapply(cg_list, function(cg) !is.null(cg))
+    if (!all(graphs_check)) {
+      abort(glue("CellGraphs must be available for all {length(cg_list)} components. ",
+                 "Found CellGraphs for {sum(graphs_check)} components. \n",
+                 "You can either run LoadCellGraphs and ComputeLayout to ",
+                 "obtain layouts or set export_layouts = FALSE if you don't want to export the layouts."))
+    }
+    layouts_check <- sapply(cg_list, function(cg) !is.null(cg@layout))
+    if (all(layouts_check)) {
+      .merge_layout_with_counts_and_write_to_parquet(cg_list = cg_list, pxl_folder = pxl_folder)
+    } else {
+      abort(glue("Layouts must be available for all {length(cg_list)} components. ",
+                 "Found layouts for {sum(layouts_check)} components. "))
+    }
+  }
+
   # Zip the pxl folder and move to the target file
   # We use the simplest compression here since the
   # files are already compressed
@@ -147,7 +171,8 @@ WriteMPX_pxl_file <- function (
     files = list.files(pxl_folder),
     root = pxl_folder,
     compression_level = 0,
-    recurse = FALSE
+    recurse = TRUE,
+    include_directories = FALSE
   )
 
   cli_alert_success("Finished!")
@@ -500,3 +525,105 @@ WriteMPX_pxl_file <- function (
   fs::file_delete(parquet_files)
 }
 
+
+#' @param cg_list A list of \code{CellGraph} objects
+#' @param pxl_folder A character string specifying the path to a temporary
+#' directory where the merged layouts.parquet directory will be created.
+#'
+#' @return Nothing
+#'
+#' @noRd
+#'
+.merge_layout_with_counts_and_write_to_parquet <- function (
+  cg_list,
+  pxl_folder
+) {
+
+  sb <- cli_status("{symbol$arrow_right} Fetching layouts and marker count data for {length(cg_list)} components...")
+
+  all_data <- lapply(names(cg_list), function(nm) {
+
+    cg <- cg_list[[nm]]
+
+    if (is.null(cg@layout)) return(invisible(NULL))
+    if (is.null(cg@counts)) return(invisible(NULL))
+
+    layouts <- cg@layout
+
+    layout_types <- names(layouts)
+    layout_types <- sapply(layout_types, function(layout_type) {
+      ifelse((!str_detect(layout_type, "_3d$")) & (ncol(layouts[[layout_type]]) == 3),
+             paste0(layout_type, "_3d"),
+             layout_type)
+    })
+    layouts <- set_names(layouts, layout_types %>% unname())
+
+    merged_counts <- lapply(layouts, function(layout) {
+
+      # Combine counts with layout
+      if (nrow(cg@counts) != nrow(layout))
+        abort("Counts and layout must have the same number of rows")
+      return(cg@counts %>% t())
+    }) %>% do.call(cbind, .)
+    #merged_counts <- SeuratObject::RowMergeSparseMatrices(all_counts[[1]], all_counts[-1])
+
+    merged_layouts <- lapply(names(layouts), function(layout_type) {
+      layout_tbl <- layouts[[layout_type]]
+      if (ncol(layout_tbl) == 2 & !"z" %in% names(layout_tbl)) {
+        layout_tbl <- layout_tbl %>% mutate(z = NA_real_)
+      }
+      layout_tbl <- layout_tbl[, c("x", "y", "z")]
+      layout_tbl <- layout_tbl %>%
+        mutate(layout = layout_type, component = nm, graph_projection = attr(cg@cellgraph, "type"))
+      return(layout_tbl)
+    }) %>% do.call(bind_rows, .)
+
+    return(list(merged_counts = merged_counts, merged_layouts = merged_layouts))
+
+  })
+
+  cli_status_update(id = sb,
+                    "{symbol$arrow_right} Merging marker count data")
+
+  # merge all count data
+  all_count_data_merged <- lapply(all_data, function(data) data$merged_counts)
+  all_count_data_merged <- SeuratObject::RowMergeSparseMatrices(all_count_data_merged[[1]], all_count_data_merged[-1]) %>% t()
+
+  cli_status_update(id = sb,
+                    "{symbol$arrow_right} Merging layouts")
+
+  # merge all layouts
+  all_layout_merged <- lapply(all_data, function(data) data$merged_layouts) %>% do.call(bind_rows, .)
+
+  cli_status_update(id = sb,
+                    "{symbol$arrow_right} Merging count data with layouts")
+
+  # Set schema for arrow table
+  # Marker counts are "int64" and layout coordinates are "double"
+  arr_table_schema <- arrow::schema(
+    c(rep(list(arrow::int64()), ncol(all_count_data_merged)),
+      c(rep(list(double()), ncol(all_layout_merged) - 3),
+        arrow::string(),
+        arrow::string(),
+        arrow::string())) %>%
+      set_names(nm = c(colnames(all_count_data_merged), colnames(all_layout_merged))))
+
+  # Merge data
+  all_layout_and_counts_merged <-
+    cbind(all_count_data_merged %>% as.matrix(), all_layout_merged)
+
+  # Convert data to arrow table
+  layout_and_counts_arr <- arrow::arrow_table(all_layout_and_counts_merged,
+                                             schema = arr_table_schema)
+
+  # Group by graph_projection, layout and component
+  layout_and_counts_arr <- layout_and_counts_arr %>%
+    group_by(graph_projection, layout, component)
+
+  # Write dataset
+  arrow::write_dataset(layout_and_counts_arr,
+                       path = file.path(pxl_folder, "layout.parquet"))
+
+  cli_status_clear(id = sb)
+  cli_alert_success("Exported layouts")
+}
