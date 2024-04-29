@@ -1,6 +1,6 @@
-#' Load pre-computed layouts from an MPX file
+#' Load pre-computed layouts from an PXL file
 #'
-#' @param filename Path to a .pxl file
+#' @param filename Path to a PXL file
 #' @param cells A character vector with component IDs. If NULL, all components are loaded.
 #' @param graph_projection The graph projection to load. Default is 'bipartite'. If multiple
 #'  projections are present in the file, only the selected one is loaded.
@@ -9,7 +9,7 @@
 #' @return A list of lists with the pre-computed layouts. At the top level, the list is split by
 #' layout. At the second level, the list is split by component.
 #'
-#' @noRd
+#' @export
 #'
 ReadMPX_layouts <- function (
   filename,
@@ -36,7 +36,7 @@ ReadMPX_layouts <- function (
   }
 
   # Create temporary directory
-  temp_layout_dir <- file.path(fs::path_temp(), .generate_random_string())
+  temp_layout_dir <- file.path(fs::path_temp(), "temp_layouts")
   fs::dir_create(temp_layout_dir)
 
   # Unzip layout parquet files

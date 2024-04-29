@@ -77,6 +77,7 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
+  load_precomputed_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -99,7 +100,8 @@ LoadCellGraphs(object, ...)
 
 \item{verbose}{Print messages}
 
-\item{load_precomputed_layouts}{Currently does nothing}
+\item{load_precomputed_layouts}{Loads pre-computed layouts from
+the PXL file if available.}
 
 \item{force}{Force load graph(s) if they are already loaded}
 

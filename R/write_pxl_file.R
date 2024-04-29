@@ -94,7 +94,7 @@ WriteMPX_pxl_file <- function (
 
   # Check if file exists
   if (fs::file_exists(file) & !overwrite) {
-    abort(glue("{col_br_blue(file)} already exists. Please select a different ",
+    abort(glue("{col_br_blue(file)} already exists. \nPlease select a different ",
                "file name or set overwrite = TRUE if you are certain that the ",
                "existing file should be replaced."))
   }
@@ -239,12 +239,14 @@ WriteMPX_pxl_file <- function (
 
   # Create a writable .h5ad file
   adata_new <- hdf5r::H5File$new(file.path(pxl_folder, "adata.h5ad"), "w")
+  hdf5r::h5attr(adata_new, which = "encoding-type") <- "anndata"
+  hdf5r::h5attr(adata_new, which = "encoding-version") <- "0.1.0"
 
   # Fetch raw counts from CellgraphAssay(5) object
   X <- .fetch_counts(cg_assay)
   adata_new$create_dataset("X", robj = as.matrix(X),
                            dims = dim(X),
-                           dtype = hdf5r::h5types$double,
+                           dtype = hdf5r::h5types$int64_t,
                            chunk_dims = NULL)
   hdf5r::h5attr(adata_new[["X"]], which = "encoding-type") <- "array"
   hdf5r::h5attr(adata_new[["X"]], which = "encoding-version") <- "0.2.0"
@@ -256,23 +258,42 @@ WriteMPX_pxl_file <- function (
 
   # Create obs group
   obs <- adata_new$create_group("obs")
+  obs$create_dataset("_index", robj = colnames(object), chunk_dims = NULL)
+  hdf5r::h5attr(obs[["_index"]], which = "encoding-type") <- "string-array"
+  hdf5r::h5attr(obs[["_index"]], which = "encoding-version") <- "0.2.0"
   obs$create_dataset("component", robj = colnames(object), chunk_dims = NULL)
-  hdf5r::h5attr(obs, which = "_index") <- "component"
+  hdf5r::h5attr(obs[["component"]], which = "encoding-type") <- "string-array"
+  hdf5r::h5attr(obs[["component"]], which = "encoding-version") <- "0.2.0"
 
   # Only export selected meta data columns if they are available
   cols_of_interest <-
     c("vertices", "edges", "molecules", "antibodies", "upia", "upib", "umi", "reads",
       "mean_reads", "median_reads", "mean_upia_degree", "median_upia_degree",
       "mean_umi_per_upia", "median_umi_per_upia", "umi_per_upia", "upia_per_upib",
-      "leiden", "tau_type", "tau")
+      "tau_type", "tau")
   obs_cols_keep <- intersect(
     cols_of_interest,
     colnames(object[[]])
   )
-  hdf5r::h5attr(obs, which = "col-order") <- obs_cols_keep
+  hdf5r::h5attr(obs, which = "column-order") <- obs_cols_keep
+  hdf5r::h5attr(obs, which = "_index") <- "_index"
+
   if (length(obs_cols_keep) > 0) {
     for (col_name in obs_cols_keep) {
-      obs$create_dataset(col_name, robj = object[[]] %>% pull(col_name), chunk_dims = NULL)
+      col_vals <- object[[]] %>% pull(col_name)
+      if (is.integer(col_vals)) {
+        dtype <- hdf5r::h5types$int64_t
+        encoding_type <- "array"
+      } else if (is.double(col_vals)) {
+        dtype <- hdf5r::h5types$H5T_IEEE_F64LE
+        encoding_type <- "array"
+      } else {
+        dtype <- NULL
+        encoding_type <- "string-array"
+      }
+      obs$create_dataset(col_name, robj = object[[]] %>% pull(col_name), dtype = dtype, chunk_dims = NULL)
+      hdf5r::h5attr(obs[[col_name]], which = "encoding-type") <- encoding_type
+      hdf5r::h5attr(obs[[col_name]], which = "encoding-version") <- "0.2.0"
     }
   }
   hdf5r::h5attr(obs, which = "encoding-type") <- "dataframe"
@@ -563,8 +584,9 @@ WriteMPX_pxl_file <- function (
       # Combine counts with layout
       if (nrow(cg@counts) != nrow(layout))
         abort("Counts and layout must have the same number of rows")
-      return(cg@counts %>% t())
+      return(cg@counts %>% Matrix::t())
     }) %>% do.call(cbind, .)
+    colnames(merged_counts) <- 1:ncol(merged_counts)
     #merged_counts <- SeuratObject::RowMergeSparseMatrices(all_counts[[1]], all_counts[-1])
 
     merged_layouts <- lapply(names(layouts), function(layout_type) {
@@ -587,7 +609,7 @@ WriteMPX_pxl_file <- function (
 
   # merge all count data
   all_count_data_merged <- lapply(all_data, function(data) data$merged_counts)
-  all_count_data_merged <- SeuratObject::RowMergeSparseMatrices(all_count_data_merged[[1]], all_count_data_merged[-1]) %>% t()
+  all_count_data_merged <- SeuratObject::RowMergeSparseMatrices(all_count_data_merged[[1]], all_count_data_merged[-1]) %>% Matrix::t()
 
   cli_status_update(id = sb,
                     "{symbol$arrow_right} Merging layouts")
@@ -627,3 +649,4 @@ WriteMPX_pxl_file <- function (
   cli_status_clear(id = sb)
   cli_alert_success("Exported layouts")
 }
+

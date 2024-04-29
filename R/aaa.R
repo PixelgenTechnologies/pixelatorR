@@ -41,3 +41,4 @@ expect_pheatmap <- function(...) {
 expect_duckdb <- function(...) {
   rlang::check_installed('duckdb', ...)
 }
+

@@ -133,7 +133,8 @@ LoadCellGraphs.tbl_df <- function (
 }
 
 
-#' @param load_precomputed_layouts Currently does nothing
+#' @param load_precomputed_layouts Loads pre-computed layouts from
+#' the PXL file if available.
 #' @param force Force load graph(s) if they are already loaded
 #' @param cl A cluster object created by makeCluster, or an integer
 #' to indicate number of child-processes (integer values are ignored
@@ -158,9 +159,6 @@ LoadCellGraphs.MPXAssay <- function (
   verbose = TRUE,
   ...
 ) {
-
-  # TODO: Implement loading precomputed layouts
-  load_precomputed_layouts <- FALSE
 
   # Validate input parameters
   stopifnot(
@@ -208,7 +206,7 @@ LoadCellGraphs.MPXAssay <- function (
       pxl_file_info <- inspect_pxl_file(f)
       # Check if the file contains layouts
       if (!"layouts.parquet" %in% pxl_file_info$file_type) {
-        abort(glue("File '{col_br_blue(filename)}' does not contain any pre-computed layouts."))
+        abort(glue("File '{col_br_blue(f)}' does not contain any pre-computed layouts."))
       }
     }
 
@@ -316,7 +314,8 @@ LoadCellGraphs.MPXAssay <- function (
       for (layout_type in all_layout_types) {
         cg@layout[[layout_type]] <- precomputed_layouts_merged[[layout_type]][[nm]]
       }
-    })
+      return(cg)
+    }) %>% set_names(nm = names(cg_list_full))
   }
 
   # Fill cellgraphs slot list with the loaded CellGraphs
@@ -359,6 +358,7 @@ LoadCellGraphs.Seurat <- function (
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
+  load_precomputed_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -392,6 +392,7 @@ LoadCellGraphs.Seurat <- function (
       cells = cells,
       load_as = load_as,
       add_marker_counts = add_marker_counts,
+      load_precomputed_layouts = load_precomputed_layouts,
       force = force,
       chunk_size = chunk_size,
       cl = cl,
