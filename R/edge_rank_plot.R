@@ -10,8 +10,8 @@ globalVariables(
 
 #' @param group_by A character specifying a column to group by
 #'
-#' @rdname EdgeRankPlot
-#' @method EdgeRankPlot data.frame
+#' @rdname CellRankPlot
+#' @method CellRankPlot data.frame
 #' @concept plots
 #'
 #' @examples
@@ -26,11 +26,11 @@ globalVariables(
 #' seur_obj
 #'
 #' # Plot edge ranks with data.frame
-#' EdgeRankPlot(seur_obj[[]])
+#' CellRankPlot(seur_obj[[]])
 #'
 #' @export
 #'
-EdgeRankPlot.data.frame <- function (
+CellRankPlot.data.frame <- function (
   object,
   group_by = NULL,
   ...
@@ -91,24 +91,24 @@ EdgeRankPlot.data.frame <- function (
   return(edgerank_plot)
 }
 
-#' @rdname EdgeRankPlot
-#' @method EdgeRankPlot Seurat
+#' @rdname CellRankPlot
+#' @method CellRankPlot Seurat
 #' @concept plots
 #'
 #' @examples
 #' library(pixelatorR)
 #'
 #' # Plot edge ranks with Seurat object
-#' EdgeRankPlot(seur_obj)
+#' CellRankPlot(seur_obj)
 #'
 #' @export
 #'
-EdgeRankPlot.Seurat <- function (
+CellRankPlot.Seurat <- function (
   object,
   group_by = NULL,
   ...
 ) {
 
-  edgerank_plot <- EdgeRankPlot(object[[]], group_by = group_by)
+  edgerank_plot <- CellRankPlot(object[[]], group_by = group_by)
   return(edgerank_plot)
 }

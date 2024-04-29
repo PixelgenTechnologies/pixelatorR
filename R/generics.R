@@ -136,17 +136,17 @@ RemoveCellGraphs <- function (
 #' @param object A \code{data.frame}-like object or a \code{Seurat} object
 #' @param ... Parameters passed to other methods
 #'
-#' @rdname EdgeRankPlot
+#' @rdname CellRankPlot
 #'
 #' @return A \code{ggplot} object
 #'
-#' @export EdgeRankPlot
+#' @export CellRankPlot
 #'
-EdgeRankPlot <- function (
+CellRankPlot <- function (
   object,
   ...
 ) {
-  UseMethod(generic = "EdgeRankPlot", object = object)
+  UseMethod(generic = "CellRankPlot", object = object)
 }
 
 #' Plot cell counts per group
