@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED] - 2024-??-??
 
+## [0.4.1] - 2024-04-29
+
+### Updates
+
+- Seurat methods `PolarizationSsoresToAssay` and `PolarizationSsoresToAssay` now adds a key to the returned assay object
+
 ## [0.4.0] - 2024-04-24
 
 ### Updated `pixelatorR` classes and their methods for improved I/O
