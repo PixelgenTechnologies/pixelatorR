@@ -1,10 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('original_id', 'current_id'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
 #' Export Seurat object data to a .pxl file
 #'
 #' @description
@@ -35,6 +28,8 @@ globalVariables(
 #' |-- edgelist.parquet
 #'
 #' The merged files are converted into a zip archive and saved to the target .pxl file.
+#'
+#' NOTE: Factors are currently not supported. These will be converted to string arrays.
 #'
 #' @param object A \code{Seurat} object with a \code{CellGraphAssay5}
 #' assay object created with pixelatorR.
@@ -239,8 +234,8 @@ WriteMPX_pxl_file <- function (
 
   # Create a writable .h5ad file
   adata_new <- hdf5r::H5File$new(file.path(pxl_folder, "adata.h5ad"), "w")
-  hdf5r::h5attr(adata_new, which = "encoding-type") <- "anndata"
-  hdf5r::h5attr(adata_new, which = "encoding-version") <- "0.1.0"
+  .add_encoding_type_attr(adata_new, type = "anndata")
+  .add_encoding_version_attribute(adata_new, version = "0.1.0")
 
   # Fetch raw counts from CellgraphAssay(5) object
   X <- .fetch_counts(cg_assay)
@@ -248,22 +243,23 @@ WriteMPX_pxl_file <- function (
                            dims = dim(X),
                            dtype = hdf5r::h5types$int64_t,
                            chunk_dims = NULL)
-  hdf5r::h5attr(adata_new[["X"]], which = "encoding-type") <- "array"
-  hdf5r::h5attr(adata_new[["X"]], which = "encoding-version") <- "0.2.0"
+  .add_encoding_type_attr(adata_new[["X"]], type = "array")
+  .add_encoding_version_attribute(adata_new[["X"]], version = "0.2.0")
 
   # Create layers group (currently empty)
   layers <- adata_new$create_group("layers")
-  hdf5r::h5attr(layers, which = "encoding-type") <- "dict"
-  hdf5r::h5attr(layers, which = "encoding-version") <- "0.1.0"
+  .add_encoding_type_attr(layers, type = "dict")
+  .add_encoding_version_attribute(layers, version = "0.1.0")
 
   # Create obs group
   obs <- adata_new$create_group("obs")
   obs$create_dataset("_index", robj = colnames(object), chunk_dims = NULL)
-  hdf5r::h5attr(obs[["_index"]], which = "encoding-type") <- "string-array"
-  hdf5r::h5attr(obs[["_index"]], which = "encoding-version") <- "0.2.0"
+  .add_encoding_type_attr(obs[["_index"]], type = "string-array")
+  .add_encoding_version_attribute(obs[["_index"]], version = "0.2.0")
+
   obs$create_dataset("component", robj = colnames(object), chunk_dims = NULL)
-  hdf5r::h5attr(obs[["component"]], which = "encoding-type") <- "string-array"
-  hdf5r::h5attr(obs[["component"]], which = "encoding-version") <- "0.2.0"
+  .add_encoding_type_attr(obs[["component"]], type = "string-array")
+  .add_encoding_version_attribute(obs[["component"]], version = "0.2.0")
 
   # Only export selected meta data columns if they are available
   cols_of_interest <-
@@ -275,44 +271,56 @@ WriteMPX_pxl_file <- function (
     cols_of_interest,
     colnames(object[[]])
   )
+  if (length(obs_cols_keep) == 0) {
+    abort("Found no meta data columns to export.")
+  }
+
+  .add_any_string_attr(obs, "_index", "_index")
   hdf5r::h5attr(obs, which = "column-order") <- obs_cols_keep
-  hdf5r::h5attr(obs, which = "_index") <- "_index"
 
   if (length(obs_cols_keep) > 0) {
     for (col_name in obs_cols_keep) {
       col_vals <- object[[]] %>% pull(col_name)
+      encoding_type <- "array"
       if (is.integer(col_vals)) {
         dtype <- hdf5r::h5types$int64_t
-        encoding_type <- "array"
       } else if (is.double(col_vals)) {
         dtype <- hdf5r::h5types$H5T_IEEE_F64LE
-        encoding_type <- "array"
+      } else if (is.logical(col_vals)) {
+        bool_to_int <- function(x) {
+          x <- as.integer(x)
+          x[is.na(x)] <- 2
+          return(x)
+        }
+        col_vals <- bool_to_int(col_vals)
+        dtype <- hdf5r::h5types$H5T_LOGICAL
       } else {
-        dtype <- NULL
+        col_vals <- as.character(col_vals)
+        dtype <- hdf5r::guess_dtype(col_vals)
         encoding_type <- "string-array"
       }
-      obs$create_dataset(col_name, robj = object[[]] %>% pull(col_name), dtype = dtype, chunk_dims = NULL)
-      hdf5r::h5attr(obs[[col_name]], which = "encoding-type") <- encoding_type
-      hdf5r::h5attr(obs[[col_name]], which = "encoding-version") <- "0.2.0"
+      obs$create_dataset(col_name, robj = col_vals, dtype = dtype, chunk_dims = NULL)
+      .add_encoding_type_attr(obs[[col_name]], type = encoding_type)
+      .add_encoding_version_attribute(obs[[col_name]], version = "0.2.0")
     }
   }
-  hdf5r::h5attr(obs, which = "encoding-type") <- "dataframe"
-  hdf5r::h5attr(obs, which = "encoding-version") <- "0.2.0"
+  .add_encoding_type_attr(obs, type = "dataframe")
+  .add_encoding_version_attribute(obs, version = "0.2.0")
 
   # Create obsm H5Group (currently empty)
   obsm <- adata_new$create_group("obsm")
-  hdf5r::h5attr(obsm, which = "encoding-type") <- "dict"
-  hdf5r::h5attr(obsm, which = "encoding-version") <- "0.1.0"
+  .add_encoding_type_attr(obsm, type = "dict")
+  .add_encoding_version_attribute(obsm, version = "0.1.0")
 
   # Create obsp H5Group (currently empty)
   obsp <- adata_new$create_group("obsp")
-  hdf5r::h5attr(obsp, which = "encoding-type") <- "dict"
-  hdf5r::h5attr(obsp, which = "encoding-version") <- "0.1.0"
+  .add_encoding_type_attr(obsp, type = "dict")
+  .add_encoding_version_attribute(obsp, version = "0.1.0")
 
   # Create uns H5Group (currently empty)
   uns <- adata_new$create_group("uns")
-  hdf5r::h5attr(uns, which = "encoding-type") <- "dict"
-  hdf5r::h5attr(uns, which = "encoding-version") <- "0.1.0"
+  .add_encoding_type_attr(uns, type = "dict")
+  .add_encoding_version_attribute(uns, version = "0.1.0")
 
   # Create var H5Group
   var <- adata_new$create_group("var")
@@ -325,6 +333,8 @@ WriteMPX_pxl_file <- function (
   # Only export selected faeture meta data columns if they are available
   if (length(feature_meta_data) > 0) {
     var$create_dataset("marker", robj = feature_meta_data %>% pull(marker), chunk_dims = NULL)
+    .add_encoding_type_attr(var[["marker"]], type = "string-array")
+    .add_encoding_version_attribute(var[["marker"]], version = "0.2.0")
     var_cols_of_interest <- c("antibody_count", "components", "antibody_pct", "nuclear", "control")
     var_cols_keep <- intersect(
       var_cols_of_interest,
@@ -332,30 +342,81 @@ WriteMPX_pxl_file <- function (
     )
     if (length(var_cols_keep) > 0) {
       for (col_name in var_cols_keep) {
-        var$create_dataset(col_name, robj = feature_meta_data %>% pull(col_name), chunk_dims = NULL)
+        col_vals <- feature_meta_data %>% pull(col_name)
+        encoding_type <- "array"
+        if (is.integer(col_vals)) {
+          dtype <- hdf5r::h5types$int64_t
+        } else if (is.double(col_vals)) {
+          dtype <- hdf5r::h5types$H5T_IEEE_F64LE
+        } else if (is.logical(col_vals)) {
+          bool_to_int <- function(x) {
+            x <- as.integer(x)
+            x[is.na(x)] <- 2
+            return(x)
+          }
+          col_vals <- bool_to_int(col_vals)
+          dtype <- hdf5r::h5types$H5T_LOGICAL
+        } else {
+          dtype <- hdf5r::guess_dtype(col_vals)
+          encoding_type <- "string-array"
+        }
+        var$create_dataset(col_name, robj = col_vals, chunk_dims = NULL, dtype = dtype)
+        .add_encoding_type_attr(var[[col_name]], type = encoding_type)
+        .add_encoding_version_attribute(var[[col_name]], version = "0.2.0")
       }
     }
+    hdf5r::h5attr(var, which = "column-order") <- var_cols_keep
   } else {
     var$create_dataset("marker", robj = cg_assay %>% rownames(), chunk_dims = NULL)
   }
-  hdf5r::h5attr(var, which = "_index") <- "marker"
-  hdf5r::h5attr(var, which = "encoding-type") <- "dataframe"
-  hdf5r::h5attr(var, which = "encoding-version") <- "0.2.0"
+  .add_any_string_attr(var, "_index", "marker")
+  .add_encoding_type_attr(var, type = "dataframe")
+  .add_encoding_version_attribute(var, version = "0.2.0")
 
   # Create varm H5Group (currently empty)
   varm <- adata_new$create_group("varm")
-  hdf5r::h5attr(varm, which = "encoding-type") <- "dict"
-  hdf5r::h5attr(varm, which = "encoding-version") <- "0.1.0"
+  .add_encoding_type_attr(varm, type = "dict")
+  .add_encoding_version_attribute(varm, version = "0.1.0")
 
   # Create varp H5Group (currently empty)
   varp <- adata_new$create_group("varp")
-  hdf5r::h5attr(varp, which = "encoding-type") <- "dict"
-  hdf5r::h5attr(varp, which = "encoding-version") <- "0.1.0"
+  .add_encoding_type_attr(varp, type = "dict")
+  .add_encoding_version_attribute(varp, version = "0.1.0")
 
   # Close the .h5ad file and its groups
   adata_new$close_all()
 
   cli_alert_success("Exported anndata file")
+}
+
+#' Add attributes to H5File
+#'
+#' @noRd
+#'
+.add_encoding_type_attr <- function(x, type = "anndata") {
+  x$create_attr(attr_name = "encoding-type",
+                dtype = hdf5r::H5T_STRING$new(size = Inf)$set_cset(cset = hdf5r::h5const$H5T_CSET_UTF8),
+                robj = type,
+                space = hdf5r::H5S$new(type = 'scalar'))
+  return(invisible(NULL))
+}
+#' @noRd
+#'
+.add_encoding_version_attribute <- function(x, version = "0.1.0") {
+  x$create_attr(attr_name = "encoding-version",
+                dtype = hdf5r::H5T_STRING$new(size = Inf)$set_cset(cset = hdf5r::h5const$H5T_CSET_UTF8),
+                robj = version,
+                space = hdf5r::H5S$new(type = 'scalar'))
+  return(invisible(NULL))
+}
+#' @noRd
+#'
+.add_any_string_attr <- function(x, attr_name, value) {
+  x$create_attr(attr_name = attr_name,
+                dtype = hdf5r::H5T_STRING$new(size = Inf)$set_cset(cset = hdf5r::h5const$H5T_CSET_UTF8),
+                robj = value,
+                space = hdf5r::H5S$new(type = 'scalar'))
+  return(invisible(NULL))
 }
 
 

@@ -63,6 +63,8 @@ The structure of the .pxl file is detailed below:
 |-- edgelist.parquet
 
 The merged files are converted into a zip archive and saved to the target .pxl file.
+
+NOTE: Factors are currently not supported. These will be converted to string arrays.
 }
 
 \examples{
