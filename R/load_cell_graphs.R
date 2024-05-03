@@ -288,8 +288,8 @@ LoadCellGraphs.MPXAssay <- function (
           cells = id_chunk$original_id,
           load_as = load_as,
           add_marker_counts = add_marker_counts,
-          verbose = verbose)#,
-          #... = ...)
+          verbose = verbose,
+          ... = ...)
 
       return(cg_list)
     }, cl = cl) %>% unlist()

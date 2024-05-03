@@ -237,7 +237,8 @@ WriteMPX_pxl_file <- function (
   .add_encoding_type_attr(adata_new, type = "anndata")
   .add_encoding_version_attribute(adata_new, version = "0.1.0")
 
-  # Fetch raw counts from CellgraphAssay(5) object
+  # Fetch raw counts from CellgraphAssay(5) object and
+  # add as dataset to to /X
   X <- .fetch_counts(cg_assay)
   adata_new$create_dataset("X", robj = as.matrix(X),
                            dims = dim(X),
@@ -246,13 +247,15 @@ WriteMPX_pxl_file <- function (
   .add_encoding_type_attr(adata_new[["X"]], type = "array")
   .add_encoding_version_attribute(adata_new[["X"]], version = "0.2.0")
 
-  # Create layers group (currently empty)
+  # Create layers group (currently empty) at /layers
   layers <- adata_new$create_group("layers")
   .add_encoding_type_attr(layers, type = "dict")
   .add_encoding_version_attribute(layers, version = "0.1.0")
 
-  # Create obs group
+  # Create obs group at /obs
   obs <- adata_new$create_group("obs")
+
+  # Add metadata columns to /obs
   obs$create_dataset("_index", robj = colnames(object), chunk_dims = NULL)
   .add_encoding_type_attr(obs[["_index"]], type = "string-array")
   .add_encoding_version_attribute(obs[["_index"]], version = "0.2.0")
@@ -261,7 +264,8 @@ WriteMPX_pxl_file <- function (
   .add_encoding_type_attr(obs[["component"]], type = "string-array")
   .add_encoding_version_attribute(obs[["component"]], version = "0.2.0")
 
-  # Only export selected meta data columns if they are available
+  # Only export selected meta data columns from object@meta.data if they are available
+  # TODO: add option to export all meta data columns
   cols_of_interest <-
     c("vertices", "edges", "molecules", "antibodies", "upia", "upib", "umi", "reads",
       "mean_reads", "median_reads", "mean_upia_degree", "median_upia_degree",
@@ -282,6 +286,8 @@ WriteMPX_pxl_file <- function (
     for (col_name in obs_cols_keep) {
       col_vals <- object[[]] %>% pull(col_name)
       encoding_type <- "array"
+
+      # Switch data type depending on column type
       if (is.integer(col_vals)) {
         dtype <- hdf5r::h5types$int64_t
       } else if (is.double(col_vals)) {
@@ -295,6 +301,8 @@ WriteMPX_pxl_file <- function (
         col_vals <- bool_to_int(col_vals)
         dtype <- hdf5r::h5types$H5T_LOGICAL
       } else {
+        # If the data type is other than integer, double or logical, convert to character
+        # TODO: add support for factors
         col_vals <- as.character(col_vals)
         dtype <- hdf5r::guess_dtype(col_vals)
         encoding_type <- "string-array"
@@ -307,22 +315,22 @@ WriteMPX_pxl_file <- function (
   .add_encoding_type_attr(obs, type = "dataframe")
   .add_encoding_version_attribute(obs, version = "0.2.0")
 
-  # Create obsm H5Group (currently empty)
+  # Create obsm H5Group (currently empty) at /obsm
   obsm <- adata_new$create_group("obsm")
   .add_encoding_type_attr(obsm, type = "dict")
   .add_encoding_version_attribute(obsm, version = "0.1.0")
 
-  # Create obsp H5Group (currently empty)
+  # Create obsp H5Group (currently empty) at /obsp
   obsp <- adata_new$create_group("obsp")
   .add_encoding_type_attr(obsp, type = "dict")
   .add_encoding_version_attribute(obsp, version = "0.1.0")
 
-  # Create uns H5Group (currently empty)
+  # Create uns H5Group (currently empty) at /uns
   uns <- adata_new$create_group("uns")
   .add_encoding_type_attr(uns, type = "dict")
   .add_encoding_version_attribute(uns, version = "0.1.0")
 
-  # Create var H5Group
+  # Create var H5Group at /var
   var <- adata_new$create_group("var")
   if (is(cg_assay, "CellGraphAssay5")) {
     feature_meta_data <- cg_assay@meta.data
@@ -357,6 +365,9 @@ WriteMPX_pxl_file <- function (
           col_vals <- bool_to_int(col_vals)
           dtype <- hdf5r::h5types$H5T_LOGICAL
         } else {
+          # If the data type is other than integer, double or logical, convert to character
+          # TODO: add support for factors
+          col_vals <- as.character(col_vals)
           dtype <- hdf5r::guess_dtype(col_vals)
           encoding_type <- "string-array"
         }
@@ -373,12 +384,12 @@ WriteMPX_pxl_file <- function (
   .add_encoding_type_attr(var, type = "dataframe")
   .add_encoding_version_attribute(var, version = "0.2.0")
 
-  # Create varm H5Group (currently empty)
+  # Create varm H5Group (currently empty) at /varm
   varm <- adata_new$create_group("varm")
   .add_encoding_type_attr(varm, type = "dict")
   .add_encoding_version_attribute(varm, version = "0.1.0")
 
-  # Create varp H5Group (currently empty)
+  # Create varp H5Group (currently empty) at /varp
   varp <- adata_new$create_group("varp")
   .add_encoding_type_attr(varp, type = "dict")
   .add_encoding_version_attribute(varp, version = "0.1.0")
@@ -389,7 +400,7 @@ WriteMPX_pxl_file <- function (
   cli_alert_success("Exported anndata file")
 }
 
-#' Add attributes to H5File
+#' Add "encoding-type" attribute to H5File object
 #'
 #' @noRd
 #'
@@ -400,6 +411,8 @@ WriteMPX_pxl_file <- function (
                 space = hdf5r::H5S$new(type = 'scalar'))
   return(invisible(NULL))
 }
+#' Add "encoding-version" attribute to H5File object
+#'
 #' @noRd
 #'
 .add_encoding_version_attribute <- function(x, version = "0.1.0") {
@@ -409,6 +422,8 @@ WriteMPX_pxl_file <- function (
                 space = hdf5r::H5S$new(type = 'scalar'))
   return(invisible(NULL))
 }
+#' Add any string attribute to H5File object
+#'
 #' @noRd
 #'
 .add_any_string_attr <- function(x, attr_name, value) {
