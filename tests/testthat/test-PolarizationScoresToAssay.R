@@ -59,6 +59,11 @@ for (assay_version in c("v3", "v5")) {
         factors = list()
       )
     )
+
+    # Use dashes in component IDs
+    expect_no_error({seur_obj <- SeuratObject::RenameCells(seur_obj, new.names = paste0("A-1_", colnames(seur_obj)))})
+    expect_no_error(seur_obj <- PolarizationScoresToAssay(seur_obj))
+
   })
 
 

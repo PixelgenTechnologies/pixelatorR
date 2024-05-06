@@ -41,7 +41,7 @@ PolarizationScoresToAssay.data.frame <- function (
                 names_from = "component",
                 values_from = all_of(values_from),
                 values_fill = 0) %>%
-    data.frame(row.names = 1) %>%
+    data.frame(row.names = 1, check.names = FALSE) %>%
     as.matrix()
 
   # Replace missing values with 0
@@ -219,7 +219,7 @@ ColocalizationScoresToAssay.data.frame <- function (
                 values_fill = 0) %>%
     dplyr::filter(marker_1 != marker_2) %>%
     unite(marker_1, marker_2, col = "pair", sep = "-") %>%
-    data.frame(row.names = 1) %>%
+    data.frame(row.names = 1, check.names = FALSE) %>%
     as.matrix()
 
   # Replace missing values with 0

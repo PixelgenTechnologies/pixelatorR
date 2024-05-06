@@ -40,6 +40,11 @@ for (assay_version in c("v3", "v5")) {
     expect_s4_class(seur_obj[["coloc"]], expected_assay_class)
     expect_equal(ncol(seur_obj[["coloc"]]), ncol(seur_obj[["mpxCells"]]))
     expect_equal(nrow(seur_obj[["coloc"]]), 3160)
+
+    # Use dashes in component IDs
+    expect_no_error({seur_obj <- SeuratObject::RenameCells(seur_obj, new.names = paste0("A-1_", colnames(seur_obj)))})
+    expect_no_error(seur_obj <- ColocalizationScoresToAssay(seur_obj))
+
   })
 
 
