@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED] - 2024-??-??
 
+## [0.4.2] - 2024-05-06
+
+### Fixes
+
+- Fixed bug in `PolarizationSsoresToAssay` and `PolarizationSsoresToAssay` which failed when column IDs included dashes
+
 ## [0.4.1] - 2024-04-29
 
 ### Updates
