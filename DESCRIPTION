@@ -38,8 +38,7 @@ Imports:
     zip,
     jsonlite,
     parallel,
-    lifecycle,
-    arrow
+    lifecycle
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
