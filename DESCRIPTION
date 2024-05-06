@@ -38,9 +38,8 @@ Imports:
     zip,
     jsonlite,
     parallel,
-    lifecycle
-Remotes:
-    cran/arrow@14.0.2.1
+    lifecycle,
+    arrow
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
