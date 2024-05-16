@@ -67,7 +67,7 @@ pixelatorR is developed and maintained by the [developers](https://github.com/Pi
 
 When using pixelator in your research, please cite the following publication:
 
-> Karlsson, Filip, Tomasz Kallas, Divya Thiagarajan, Max Karlsson, Maud Schweitzer, Jose Fernandez Navarro, Louise Leijonancker, _et al._ “Molecular Pixelation: Single Cell Spatial Proteomics by Sequencing.” bioRxiv, June 8, 2023. https://doi.org/10.1101/2023.06.05.543770.
+> Karlsson, F., Kallas, T., Thiagarajan, D. et al. Molecular pixelation: spatial proteomics of single cells by sequencing. Nat Methods (2024). https://doi.org/10.1038/s41592-024-02268-9
 
 Main developers:
 
