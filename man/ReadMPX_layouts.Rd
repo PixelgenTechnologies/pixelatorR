@@ -23,8 +23,13 @@ projections are present in the file, only the selected one is loaded.}
 }
 \value{
 A list of lists with the pre-computed layouts. At the top level, the list is split by
-layout. At the second level, the list is split by component.
+layout. At the second level, the list is split by component. The components are sorted in
+the order they appear in the PXL file.
 }
 \description{
-Load pre-computed layouts from an PXL file
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Layouts can be pre-computed with the Pixelator data processing pipeline and
+are stored in a hive-styled partitioning in the PXL file. This function reads
+the pre-computed layouts from the PXL file and returns them as a list. Use
+\code{\link{inspect_pxl_file}} to check the contents of a PXL file.
 }

@@ -1,5 +1,12 @@
 #' Load pre-computed layouts from an PXL file
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#' Layouts can be pre-computed with the Pixelator data processing pipeline and
+#' are stored in a hive-styled partitioning in the PXL file. This function reads
+#' the pre-computed layouts from the PXL file and returns them as a list. Use
+#' \code{\link{inspect_pxl_file}} to check the contents of a PXL file.
+#'
 #' @param filename Path to a PXL file
 #' @param cells A character vector with component IDs. If NULL, all components are loaded.
 #' @param graph_projection The graph projection to load. Default is 'bipartite'. If multiple
@@ -7,7 +14,8 @@
 #' @param verbose Print messages
 #'
 #' @return A list of lists with the pre-computed layouts. At the top level, the list is split by
-#' layout. At the second level, the list is split by component.
+#' layout. At the second level, the list is split by component. The components are sorted in
+#' the order they appear in the PXL file.
 #'
 #' @export
 #'
