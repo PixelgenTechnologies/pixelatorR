@@ -12,7 +12,7 @@ packages"><!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/ma
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,7 @@ packages</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">x</span>, features <span class="op">=</span> <span class="cn">NULL</span>, cells <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for MPXAssay</span></span>
-<span><span class="fu"><a href="https://rdrr.io/pkg/sp/man/merge.html" class="external-link">merge</a></span><span class="op">(</span></span>
+<span><span class="fu"><a href="https://edzer.github.io/sp/reference/merge.html" class="external-link">merge</a></span><span class="op">(</span></span>
 <span>  x <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  y <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  merge.data <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -152,7 +152,11 @@ this is recommended if the same normalization approach was applied to all object
 <span class="r-in"><span>                        <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_counts.html">ReadMPX_counts</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpsnxf2c/temp_libpathc24924e2f723/pixelatorR/extdata/five_cells/five_cells.pxl</span>
 <span class="r-in"><span><span class="va">edgelist</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="st">"edgelist"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpsnxf2c/temp_libpathc24924e2f723/pixelatorR/extdata/five_cells/five_cells.pxl</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">edgelist</span> data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
 <span class="r-in"><span><span class="va">components</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">edgelist_split</span> <span class="op">&lt;-</span></span></span>
 <span class="r-in"><span>  <span class="va">edgelist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
@@ -195,8 +199,10 @@ this is recommended if the same normalization approach was applied to all object
 <span class="r-in"><span>                        <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="LoadCellGraphs.html">LoadCellGraphs</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                  | 0 % ~calculating    |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=01s  </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> →    Loading CellGraphs for 5 cells from sample 1</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Successfully loaded 5 CellGraph object(s).</span>
 <span class="r-in"><span><span class="va">cg_assay</span> <span class="op">&lt;-</span> <span class="va">seur</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Subset CellGraphAssay(5)</span></span></span>
@@ -211,7 +217,7 @@ this is recommended if the same normalization approach was applied to all object
 <span class="r-in"><span><span class="co"># ---------------------------------</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Merge 3 CellGraphAssay(5) objects</span></span></span>
-<span class="r-in"><span><span class="va">cg_assay_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/sp/man/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">cg_assay</span>,</span></span>
+<span class="r-in"><span><span class="va">cg_assay_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://edzer.github.io/sp/reference/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">cg_assay</span>,</span></span>
 <span class="r-in"><span>                         y <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">cg_assay</span>, <span class="va">cg_assay</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                         add.cell.ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span>, <span class="st">"C"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>

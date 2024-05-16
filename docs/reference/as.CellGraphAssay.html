@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,7 +114,11 @@ paths, sample IDs, and component IDs</p></dd>
 <span class="r-in"><span>                        <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_counts.html">ReadMPX_counts</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpsnxf2c/temp_libpathc24924e2f723/pixelatorR/extdata/five_cells/five_cells.pxl</span>
 <span class="r-in"><span><span class="va">edgelist</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="st">"edgelist"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpsnxf2c/temp_libpathc24924e2f723/pixelatorR/extdata/five_cells/five_cells.pxl</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">edgelist</span> data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
 <span class="r-in"><span><span class="va">components</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">edgelist_split</span> <span class="op">&lt;-</span></span></span>
 <span class="r-in"><span>  <span class="va">edgelist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>

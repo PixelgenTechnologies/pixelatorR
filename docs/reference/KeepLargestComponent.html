@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,11 +101,15 @@ assay stored on the <code>Seurat</code> object</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Read edgelist</span></span></span>
 <span class="r-in"><span><span class="va">edgelist</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_arrow_edgelist.html">ReadMPX_arrow_edgelist</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Extracting edgelist.parquet file to <span style="color: #5555FF;">/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpYOju9G/edgelist.parquet</span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning FileSystemDataset</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load graph from edge list and store in a CellGraph object</span></span></span>
 <span class="r-in"><span><span class="va">cg</span> <span class="op">&lt;-</span> <span class="fu"><a href="LoadCellGraphs.html">LoadCellGraphs</a></span><span class="op">(</span><span class="va">edgelist</span>, cells <span class="op">=</span> <span class="st">"RCVCMP0000217"</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading 1 edgelist(s) as <span style="color: #FF55FF;">bipartite</span> graph(s)</span>
 <span class="r-in"><span><span class="va">cg</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a bipartite graph with <span style="color: #5555FF;">2470</span> nodes and <span style="color: #5555FF;">5138</span> edges covering 79 markers</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">2470</span> nodes and <span style="color: #5555FF;">5138</span> edges</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Number of markers:  <span style="color: #5555FF;">79</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fetch tbl_graph from CellGraph object</span></span></span>
 <span class="r-in"><span><span class="va">g</span> <span class="op">&lt;-</span> <span class="fu"><a href="CellGraphData.html">CellGraphData</a></span><span class="op">(</span><span class="va">cg</span>, slot <span class="op">=</span> <span class="st">"cellgraph"</span><span class="op">)</span></span></span>
@@ -144,6 +148,7 @@ assay stored on the <code>Seurat</code> object</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fetch largest component from a tbl_graph</span></span></span>
 <span class="r-in"><span><span class="va">g_largest</span> <span class="op">&lt;-</span> <span class="fu">KeepLargestComponent</span><span class="op">(</span><span class="va">g</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Removed 35 out of 2470 nodes</span>
 <span class="r-in"><span><span class="va">g_largest</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tbl_graph: 2435 nodes and 5103 edges</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#</span></span>
@@ -177,8 +182,10 @@ assay stored on the <code>Seurat</code> object</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fetch largest component from a CellGraph</span></span></span>
 <span class="r-in"><span><span class="va">cg_largest</span> <span class="op">&lt;-</span> <span class="fu">KeepLargestComponent</span><span class="op">(</span><span class="va">cg</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Graph is already connected</span>
 <span class="r-in"><span><span class="va">cg_largest</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a bipartite graph with <span style="color: #5555FF;">2435</span> nodes and <span style="color: #5555FF;">5103</span> edges covering 79 markers</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">2435</span> nodes and <span style="color: #5555FF;">5103</span> edges</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Number of markers:  <span style="color: #5555FF;">79</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

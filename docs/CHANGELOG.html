@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -56,6 +56,38 @@
 <h2 id="unreleased---2024--">[UNRELEASED] - 2024-??-??<a class="anchor" aria-label="anchor" href="#unreleased---2024--"></a></h2>
 </div>
 <div class="section level2">
+<h2 id="id_050---2024-05-16">[0.5.0] - 2024-05-16<a class="anchor" aria-label="anchor" href="#id_050---2024-05-16"></a></h2>
+<div class="section level3">
+<h3 id="added">Added<a class="anchor" aria-label="anchor" href="#added"></a></h3>
+<ul><li>
+<code>inspect_pxl_file</code> : utility function to inspect the contents of a PXL file</li>
+<li>
+<code>ReadMPX_layouts</code> : read function to import pre-computed layouts</li>
+</ul></div>
+<div class="section level3">
+<h3 id="updates">Updates<a class="anchor" aria-label="anchor" href="#updates"></a></h3>
+<ul><li>Updated show method for <code>CellGraph</code> class objects</li>
+</ul></div>
+<div class="section level3">
+<h3 id="fixes">Fixes<a class="anchor" aria-label="anchor" href="#fixes"></a></h3>
+<ul><li>Updated experimental function <code>WriteMPX_pxl_file</code> for compatibility with the anndata Python library. Note that since the <code>WriteMPX_pxl_file</code> function is experimental, the function may change at any point in the future.</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_042---2024-05-06">[0.4.2] - 2024-05-06<a class="anchor" aria-label="anchor" href="#id_042---2024-05-06"></a></h2>
+<div class="section level3">
+<h3 id="fixes-1">Fixes<a class="anchor" aria-label="anchor" href="#fixes-1"></a></h3>
+<ul><li>Fixed bug in <code>PolarizationSsoresToAssay</code> and <code>PolarizationSsoresToAssay</code> which failed when column IDs included dashes</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_041---2024-04-29">[0.4.1] - 2024-04-29<a class="anchor" aria-label="anchor" href="#id_041---2024-04-29"></a></h2>
+<div class="section level3">
+<h3 id="updates-1">Updates<a class="anchor" aria-label="anchor" href="#updates-1"></a></h3>
+<ul><li>Seurat methods <code>PolarizationSsoresToAssay</code> and <code>PolarizationSsoresToAssay</code> now adds a key to the returned assay object</li>
+</ul></div>
+</div>
+<div class="section level2">
 <h2 id="id_040---2024-04-24">[0.4.0] - 2024-04-24<a class="anchor" aria-label="anchor" href="#id_040---2024-04-24"></a></h2>
 <div class="section level3">
 <h3 id="updated-pixelatorr-classes-and-their-methods-for-improved-io">Updated <code>pixelatorR</code> classes and their methods for improved I/O<a class="anchor" aria-label="anchor" href="#updated-pixelatorr-classes-and-their-methods-for-improved-io"></a></h3>
@@ -79,7 +111,7 @@
 <ul><li>Introduced experimental function <code>WriteMPX_pxl_file</code> to write MPX data from a Seurat object to a PXL file</li>
 </ul></div>
 <div class="section level3">
-<h3 id="fixes">Fixes<a class="anchor" aria-label="anchor" href="#fixes"></a></h3>
+<h3 id="fixes-2">Fixes<a class="anchor" aria-label="anchor" href="#fixes-2"></a></h3>
 <ul><li>Made <code>EdgeRankPlot</code> compatible with incoming changes in pixelator Python &gt;0.16.2 where <code>edges</code> is renamed to <code>molecules</code> in <code>CellGraphAssay</code> objects</li>
 </ul></div>
 </div>

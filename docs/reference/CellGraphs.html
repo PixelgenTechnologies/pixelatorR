@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,7 +109,11 @@ no <code><a href="CellGraph-class.html">CellGraph</a></code> objects present, re
 <span class="r-in"><span>                        <span class="st">"five_cells.pxl"</span>,</span></span>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_counts.html">ReadMPX_counts</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpsnxf2c/temp_libpathc24924e2f723/pixelatorR/extdata/five_cells/five_cells.pxl</span>
 <span class="r-in"><span><span class="va">edgelist</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="st">"edgelist"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpsnxf2c/temp_libpathc24924e2f723/pixelatorR/extdata/five_cells/five_cells.pxl</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">edgelist</span> data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
 <span class="r-in"><span><span class="va">components</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">counts</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">edgelist_split</span> <span class="op">&lt;-</span></span></span>
 <span class="r-in"><span>  <span class="va">edgelist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
@@ -142,19 +146,19 @@ no <code><a href="CellGraph-class.html">CellGraph</a></code> objects present, re
 <span class="r-in"><span><span class="co"># Get cellgraphs from a CellGraphAssay object</span></span></span>
 <span class="r-in"><span><span class="fu">CellGraphs</span><span class="op">(</span><span class="va">cg_assay</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $RCVCMP0000217</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a bipartite graph with <span style="color: #5555FF;">3507</span> nodes and <span style="color: #5555FF;">7580</span> edges </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">3507</span> nodes and <span style="color: #5555FF;">7580</span> edges</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $RCVCMP0000118</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a bipartite graph with <span style="color: #5555FF;">2470</span> nodes and <span style="color: #5555FF;">5138</span> edges </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">2470</span> nodes and <span style="color: #5555FF;">5138</span> edges</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $RCVCMP0000487</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a bipartite graph with <span style="color: #5555FF;">4225</span> nodes and <span style="color: #5555FF;">8150</span> edges </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">4225</span> nodes and <span style="color: #5555FF;">8150</span> edges</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $RCVCMP0000655</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a bipartite graph with <span style="color: #5555FF;">4340</span> nodes and <span style="color: #5555FF;">9918</span> edges </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">4340</span> nodes and <span style="color: #5555FF;">9918</span> edges</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $RCVCMP0000263</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a bipartite graph with <span style="color: #5555FF;">2258</span> nodes and <span style="color: #5555FF;">4303</span> edges </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">2258</span> nodes and <span style="color: #5555FF;">4303</span> edges</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
@@ -168,6 +172,7 @@ no <code><a href="CellGraph-class.html">CellGraph</a></code> objects present, re
 <span class="r-in"><span><span class="co"># CellGraphs getter Seurat</span></span></span>
 <span class="r-in"><span><span class="co"># ---------------------------------</span></span></span>
 <span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Get cellgraphs from a Seurat object</span></span></span>
 <span class="r-in"><span><span class="fu">CellGraphs</span><span class="op">(</span><span class="va">se</span><span class="op">)</span></span></span>

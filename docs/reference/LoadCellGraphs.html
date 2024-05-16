@@ -12,7 +12,7 @@ their names using the cells parameter."><!-- mathjax --><script src="https://cdn
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -87,6 +87,7 @@ their names using the <code>cells</code> parameter.</p>
 <span>  cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span>,</span>
 <span>  load_as <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bipartite"</span>, <span class="st">"Anode"</span>, <span class="st">"linegraph"</span><span class="op">)</span>,</span>
 <span>  add_marker_counts <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  load_precomputed_layouts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  force <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  chunk_size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -100,6 +101,7 @@ their names using the <code>cells</code> parameter.</p>
 <span>  cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span>,</span>
 <span>  load_as <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bipartite"</span>, <span class="st">"Anode"</span>, <span class="st">"linegraph"</span><span class="op">)</span>,</span>
 <span>  add_marker_counts <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  load_precomputed_layouts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  force <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  chunk_size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -113,6 +115,7 @@ their names using the <code>cells</code> parameter.</p>
 <span>  cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span>,</span>
 <span>  load_as <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bipartite"</span>, <span class="st">"Anode"</span>, <span class="st">"linegraph"</span><span class="op">)</span>,</span>
 <span>  add_marker_counts <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  load_precomputed_layouts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  force <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  chunk_size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -127,6 +130,7 @@ their names using the <code>cells</code> parameter.</p>
 <span>  cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span>,</span>
 <span>  load_as <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bipartite"</span>, <span class="st">"Anode"</span>, <span class="st">"linegraph"</span><span class="op">)</span>,</span>
 <span>  add_marker_counts <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  load_precomputed_layouts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  force <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  chunk_size <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -163,6 +167,11 @@ their names using the <code>cells</code> parameter.</p>
 
 <dt>verbose</dt>
 <dd><p>Print messages</p></dd>
+
+
+<dt>load_precomputed_layouts</dt>
+<dd><p>Loads pre-computed layouts from
+the PXL file if available.</p></dd>
 
 
 <dt>force</dt>

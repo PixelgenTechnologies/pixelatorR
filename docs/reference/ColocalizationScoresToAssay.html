@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -154,6 +154,15 @@ to show the distribution of colocalization scores.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mojaveazure.github.io/seurat-object/" class="external-link">SeuratObject</a></span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: sp</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> ‘SeuratObject’ was built with package ‘Matrix’ 1.6.3 but the current</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> version is 1.6.5; it is recomended that you reinstall ‘SeuratObject’ as</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> the ABI for ‘Matrix’ may have changed</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Attaching package: ‘SeuratObject’</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> The following object is masked from ‘package:base’:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>     intersect</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load example data as a Seurat object</span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/system.file.html" class="external-link">system.file</a></span><span class="op">(</span><span class="st">"extdata/five_cells"</span>,</span></span>
@@ -161,6 +170,9 @@ to show the distribution of colocalization scores.</p>
 <span class="r-in"><span>  package <span class="op">=</span> <span class="st">"pixelatorR"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">col_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_item.html">ReadMPX_colocalization</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpsnxf2c/temp_libpathc24924e2f723/pixelatorR/extdata/five_cells/five_cells.pxl</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">colocalization</span> data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># ColocalizationScoresToAssay returns a matrix for a tbl_df</span></span></span>
 <span class="r-in"><span><span class="va">col_scores_mat</span> <span class="op">&lt;-</span> <span class="fu">ColocalizationScoresToAssay</span><span class="op">(</span><span class="va">col_scores</span><span class="op">)</span></span></span>
@@ -178,17 +190,18 @@ to show the distribution of colocalization scores.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a Seurat object</span></span></span>
 <span class="r-in"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Fetch CellGraphAssay and create new polarization</span></span></span>
 <span class="r-in"><span><span class="co"># scores Assay</span></span></span>
 <span class="r-in"><span><span class="va">cg_assay</span> <span class="op">&lt;-</span> <span class="va">seur</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">cg_assay</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "CellGraphAssay"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "CellGraphAssay5"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"package")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "pixelatorR"</span>
 <span class="r-in"><span><span class="va">col_assay</span> <span class="op">&lt;-</span> <span class="fu">ColocalizationScoresToAssay</span><span class="op">(</span><span class="va">cg_assay</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">col_assay</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Assay"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Assay5"</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"package")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] "SeuratObject"</span>
 <span class="r-in"><span></span></span>
@@ -197,10 +210,12 @@ to show the distribution of colocalization scores.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># After conversion, we now have a new assay called "colocalization"</span></span></span>
 <span class="r-in"><span><span class="va">seur</span><span class="op">[[</span><span class="st">"colocalization"</span><span class="op">]</span><span class="op">]</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Assay data with 3160 features for 5 cells</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Assay (v5) data with 3160 features for 5 cells</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> First 10 features:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  ACTB-B2M, ACTB-CD102, B2M-CD102, ACTB-CD11a, B2M-CD11a, CD102-CD11a,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ACTB-CD11b, B2M-CD11b, CD102-CD11b, CD11a-CD11b </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Layers:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  data </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Switch default assay to polarization</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/pkg/SeuratObject/man/DefaultAssay.html" class="external-link">DefaultAssay</a></span><span class="op">(</span><span class="va">seur</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"colocalization"</span></span></span>

@@ -12,7 +12,7 @@ Pixelator data processing pipeline."><!-- mathjax --><script src="https://cdnjs.
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -191,9 +191,10 @@ for each cell type.</p>
 <span class="r-in"><span>                        package <span class="op">=</span> <span class="st">"pixelatorR"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Seurat objects</span></span></span>
 <span class="r-in"><span><span class="va">seur1</span> <span class="op">&lt;-</span> <span class="va">seur2</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span><span class="va">seur1</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample1"</span></span></span>
 <span class="r-in"><span><span class="va">seur2</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample2"</span></span></span>
-<span class="r-in"><span><span class="va">seur_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/pkg/sp/man/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">seur1</span>, <span class="va">seur2</span>, add.cell.ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">seur_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://edzer.github.io/sp/reference/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">seur1</span>, <span class="va">seur2</span>, add.cell.ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Subset data to run test on a few markers</span></span></span>
 <span class="r-in"><span><span class="va">seur_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">seur_merged</span>,</span></span>
@@ -203,37 +204,28 @@ for each cell type.</p>
 <span class="r-in"><span><span class="co"># Run DCA</span></span></span>
 <span class="r-in"><span><span class="va">dca_markers</span> <span class="op">&lt;-</span> <span class="fu">RunDCA</span><span class="op">(</span><span class="va">seur_merged</span>, contrast_column <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
 <span class="r-in"><span>                      target <span class="op">=</span> <span class="st">"Sample1"</span>, reference <span class="op">=</span> <span class="st">"Sample2"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |                                                  | 0 % ~calculating  </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Splitting data by: marker_1, marker_2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running 10 tests</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |+++++                                             | 10% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |++++++++++                                        | 20% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |+++++++++++++++                                   | 30% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |++++++++++++++++++++                              | 40% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |+++++++++++++++++++++++++                         | 50% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |++++++++++++++++++++++++++++++                    | 60% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |+++++++++++++++++++++++++++++++++++               | 70% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |++++++++++++++++++++++++++++++++++++++++          | 80% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |+++++++++++++++++++++++++++++++++++++++++++++     | 90% ~00s          </span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact p-value with ties</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>cannot compute exact confidence intervals with ties</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   |++++++++++++++++++++++++++++++++++++++++++++++++++| 100% elapsed=00s  </span>
 <span class="r-in"><span><span class="va">dca_markers</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 10 × 15</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      estimate data_type target  reference    n1    n2 statistic     p conf.low</span>

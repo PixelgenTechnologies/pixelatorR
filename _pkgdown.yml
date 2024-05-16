@@ -46,6 +46,7 @@ reference:
     - ReadMPX_polarization
     - ReadMPX_colocalization
     - ReadMPX_arrow_edgelist
+    - ReadMPX_layouts
   - subtitle: Visualization
   - contents:
     - CellCountPlot
@@ -111,6 +112,7 @@ reference:
     - pxl_dataset
     - show,CellGraph-method
     - show,CellGraphAssay-method
+    - inspect_pxl_file
 
 footer:
   structure:
