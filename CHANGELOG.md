@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED] - 2024-??-??
 
+## [0.5.0] - 2024-05-16
+
+### Added
+
+- `inspect_pxl_file` : utility function to inspect the contents of a PXL file
+- `ReadMPX_layouts` : read function to import pre-computed layouts
+
+### Updates
+
+- Updated show method for `CellGraph` class objects
+
+### Fixes
+
+- Updated experimental function `WriteMPX_pxl_file` for compatibility with the anndata Python library. Note that since the `WriteMPX_pxl_file` function is experimental, the function may change at any point in the future.
+
+## [0.4.2] - 2024-05-06
+
+### Fixes
+
+- Fixed bug in `PolarizationSsoresToAssay` and `PolarizationSsoresToAssay` which failed when column IDs included dashes
+
+## [0.4.1] - 2024-04-29
+
+### Updates
+
+- Seurat methods `PolarizationSsoresToAssay` and `PolarizationSsoresToAssay` now adds a key to the returned assay object
+
 ## [0.4.0] - 2024-04-24
 
 ### Updated `pixelatorR` classes and their methods for improved I/O

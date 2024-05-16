@@ -334,16 +334,19 @@ setMethod (
       n_markers <- ncol(slot(object, "counts"))
     }
     cat(
-      "A CellGraph object containing a", graph_type, "graph with",
+      "A CellGraph object containing a", col_br_blue(graph_type), "graph with",
       slot(object = object, name = "cellgraph") %>% length() %>% col_br_blue(),
       "nodes and",
       slot(object = object, name = "cellgraph") %>% gsize() %>% col_br_blue(),
-      "edges "
+      "edges"
     )
     if (is.null(n_markers)) {
       cat("\n")
     } else {
-      cat("covering", n_markers, "markers\n")
+      cat("\nNumber of markers: ", col_br_blue(n_markers), "\n")
+    }
+    if (!is.null(slot(object, "layout"))) {
+      cat("Layouts:", col_br_blue(paste(names(slot(object, "layout"))), collapse = ", "), "\n")
     }
   }
 )

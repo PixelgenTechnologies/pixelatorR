@@ -29,7 +29,9 @@ dependencies:
   - r-duckdb
   - r-hdf5r
   - r-pbapply
+  - r-dbplyr
   - r-fs
   - r-zip
   - r-plotly
   - r-duckdb
+  - r-lifecycle

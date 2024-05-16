@@ -41,7 +41,7 @@ PolarizationScoresToAssay.data.frame <- function (
                 names_from = "component",
                 values_from = all_of(values_from),
                 values_fill = 0) %>%
-    data.frame(row.names = 1) %>%
+    data.frame(row.names = 1, check.names = FALSE) %>%
     as.matrix()
 
   # Replace missing values with 0
@@ -80,9 +80,9 @@ PolarizationScoresToAssay.MPXAssay <- function (
 
   # Create Assay from filled matrix
   create_cg_assay_function <- ifelse(is(object, "CellGraphAssay"), CreateAssayObject, CreateAssay5Object)
-  assay <- create_cg_assay_function(data = pol_matrix)
+  pol_assay <- create_cg_assay_function(data = pol_matrix)
 
-  return(assay)
+  return(pol_assay)
 }
 
 #' @rdname PolarizationScoresToAssay
@@ -162,6 +162,7 @@ PolarizationScoresToAssay.Seurat <- function (
 
   # Create new assay
   pol_assay <- PolarizationScoresToAssay(cg_assay, values_from, ...)
+  Key(pol_assay) <- "pol_"
 
   # Place new assay in Seurat object
   object@assays[[new_assay]] <- pol_assay
@@ -218,7 +219,7 @@ ColocalizationScoresToAssay.data.frame <- function (
                 values_fill = 0) %>%
     dplyr::filter(marker_1 != marker_2) %>%
     unite(marker_1, marker_2, col = "pair", sep = "-") %>%
-    data.frame(row.names = 1) %>%
+    data.frame(row.names = 1, check.names = FALSE) %>%
     as.matrix()
 
   # Replace missing values with 0
@@ -257,9 +258,9 @@ ColocalizationScoresToAssay.MPXAssay <- function (
 
   # Create Assay from filled matrix
   create_cg_assay_function <- ifelse(is(object, "CellGraphAssay"), CreateAssayObject, CreateAssay5Object)
-  assay <- create_cg_assay_function(data = coloc_matrix)
+  col_assay <- create_cg_assay_function(data = coloc_matrix)
 
-  return(assay)
+  return(col_assay)
 }
 
 
@@ -341,6 +342,7 @@ ColocalizationScoresToAssay.Seurat <- function (
 
   # Create new assay
   col_assay <- ColocalizationScoresToAssay(cg_assay, values_from, ...)
+  Key(col_assay) <- "coloc_"
 
   # Place new assay in Seurat object
   object@assays[[new_assay]] <- col_assay
