@@ -3,7 +3,6 @@ CLR
 CMD
 CellGraph
 CellGraphAssay
-CellGraphAssays
 CellGraphs
 Colocalization
 ColocalizationScores
@@ -67,7 +66,6 @@ fdr
 hochberg
 holm
 hommel
-infobox
 json
 kk
 linegraph
@@ -78,17 +76,18 @@ mpx
 mpxCells
 multigraph
 origo
-outdir
 parallelization
 partite
 pearson
 pixelator
 pmds
+pre
 pxl
 renormalization
 reproducibility
 th
 tibble
+unnest
 upia
 upias
 upib

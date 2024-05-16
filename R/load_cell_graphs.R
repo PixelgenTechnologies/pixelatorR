@@ -133,6 +133,8 @@ LoadCellGraphs.tbl_df <- function (
 }
 
 
+#' @param load_precomputed_layouts Loads pre-computed layouts from
+#' the PXL file if available.
 #' @param force Force load graph(s) if they are already loaded
 #' @param cl A cluster object created by makeCluster, or an integer
 #' to indicate number of child-processes (integer values are ignored
@@ -150,6 +152,7 @@ LoadCellGraphs.MPXAssay <- function (
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
+  load_precomputed_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -192,6 +195,51 @@ LoadCellGraphs.MPXAssay <- function (
     filter(current_id %in% cells)
   fs_map_nested_filtered <- fs_map_unnested_filtered %>%
     tidyr::nest(data = c("current_id", "original_id"))
+
+  # Check for pre-computed layouts
+  if (load_precomputed_layouts) {
+    if (load_as != "bipartite") {
+      abort(glue("Pre-computed layouts are currently only supported ",
+            "for bipartite graphs."))
+    }
+    for (f in fs_map_nested_filtered$pxl_file) {
+      pxl_file_info <- inspect_pxl_file(f)
+      # Check if the file contains layouts
+      if (!"layouts.parquet" %in% pxl_file_info$file_type) {
+        abort(glue("File '{col_br_blue(f)}' does not contain any pre-computed layouts."))
+      }
+    }
+
+    # Load precomputed layouts
+    precomputed_layouts_sample <- list()
+    layout_types_sample <- list()
+    for (i in seq_len(nrow(fs_map_nested_filtered))) {
+      f <- fs_map_nested_filtered$pxl_file[i]
+      cell_id_data <- fs_map_nested_filtered$data[[i]] %>%
+        filter(current_id %in% cells)
+      original_id <- cell_id_data$original_id
+      current_id <- cell_id_data$current_id
+      precomputed_layouts <- ReadMPX_layouts(f, cells = original_id, graph_projection = load_as)
+      precomputed_layouts <- lapply(precomputed_layouts, function(x) {
+        x %>% set_names(nm = current_id)
+      })
+      layout_types_sample[[i]] <- names(precomputed_layouts)
+      precomputed_layouts_sample[[i]] <- precomputed_layouts
+    }
+
+    # Keep union of all layout types
+    all_layout_types <- Reduce(union, layout_types_sample)
+
+    # Merge layout lists
+    precomputed_layouts_merged <- list()
+    for (layout_type in all_layout_types) {
+      precomputed_layouts_merged[[layout_type]] <-
+        Reduce(c, lapply(precomputed_layouts_sample, function(x) {
+          x[[layout_type]]
+        }))
+    }
+
+  }
 
   # Load cell graphs in chunks
   cg_list_full <- lapply(seq_len(nrow(fs_map_nested_filtered)), function(i) {
@@ -258,6 +306,18 @@ LoadCellGraphs.MPXAssay <- function (
     return(cg_list)
   }) %>% unlist()
 
+  # Add layouts to the list of cellgraphs is precomputed layouts were loaded
+  if (load_precomputed_layouts) {
+    cg_list_full <- lapply(names(cg_list_full), function(nm) {
+      cg <- cg_list_full[[nm]]
+      cg@layout <- list()
+      for (layout_type in all_layout_types) {
+        cg@layout[[layout_type]] <- precomputed_layouts_merged[[layout_type]][[nm]]
+      }
+      return(cg)
+    }) %>% set_names(nm = names(cg_list_full))
+  }
+
   # Fill cellgraphs slot list with the loaded CellGraphs
   slot(object, name = "cellgraphs")[fs_map_unnested_filtered$current_id] <- cg_list_full
 
@@ -298,6 +358,7 @@ LoadCellGraphs.Seurat <- function (
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
+  load_precomputed_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -331,6 +392,7 @@ LoadCellGraphs.Seurat <- function (
       cells = cells,
       load_as = load_as,
       add_marker_counts = add_marker_counts,
+      load_precomputed_layouts = load_precomputed_layouts,
       force = force,
       chunk_size = chunk_size,
       cl = cl,

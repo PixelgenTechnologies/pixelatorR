@@ -1,5 +1,4 @@
 library(tidygraph)
-options(Seurat.object.assay.version = "v3")
 
 edge_list <-
   ReadMPX_item(
@@ -50,5 +49,5 @@ test_that("CellGraphData<- fails when invalid input is provided", {
 # show method
 test_that("show.CellGraph works as expected", {
   msg <- capture_output(show(cg))
-  expect_equal(msg, "A CellGraph object containing a bipartite graph with 16800 nodes and 68255 edges ")
+  expect_equal(msg, "A CellGraph object containing a bipartite graph with 16800 nodes and 68255 edges")
 })

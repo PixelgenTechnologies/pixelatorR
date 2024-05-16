@@ -72,3 +72,29 @@ for (assay_version in c("v3", "v5")) {
   })
 
 }
+
+if (TRUE) skip()
+
+## Test anndata
+pxl_file <- system.file("extdata/five_cells",
+                        "five_cells.pxl",
+                        package = "pixelatorR")
+seur_obj <- ReadMPX_Seurat(pxl_file) %>% LoadCellGraphs() %>% ComputeLayout(dim = 3)
+temp_pxl_file <- fs::file_temp(ext = ".pxl")
+WriteMPX_pxl_file(seur_obj, temp_pxl_file)
+
+# Unpack adata.h5ad
+unzip(temp_pxl_file, files = "adata.h5ad", exdir = fs::path_temp())
+
+# Import anndata python library
+anndata <- reticulate::import("anndata")
+
+test_that("anndata file can be loaded with the anndata python library", {
+
+  adata = anndata$read_h5ad(file.path(fs::path_temp(), "adata.h5ad"))
+  expect_equal(rownames(adata$obs), colnames(seur_obj))
+  X <- t(adata$X)
+  rownames(X) <- rownames(adata$var)
+  colnames(X) <- rownames(adata$obs)
+  expect_equal(X, LayerData(seur_obj, layer = "counts") %>% as.matrix())
+})

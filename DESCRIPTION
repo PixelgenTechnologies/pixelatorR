@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.4.2
+Version: 0.5.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
@@ -49,7 +49,8 @@ Suggests:
     scales,
     pheatmap,
     duckdb,
-    dbplyr
+    dbplyr,
+    reticulate
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -67,9 +68,11 @@ Collate:
     'graph_conversion.R'
     'graph_layout.R'
     'graph_layout_visualization.R'
+    'inspect_pxl_file.R'
     'keep_largest_component.R'
     'load_cell_graphs.R'
     'load_data.R'
+    'load_precomputed_layouts.R'
     'objects.R'
     'pivot_tables.R'
     'pixelatorR-package.R'

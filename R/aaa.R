@@ -3,7 +3,8 @@ globalVariables(
   names = c('id_map', 'component_new', 'tau', 'tau_type', 'umi_per_upia',
             'upia1', 'upia2', 'component', 'rn', 'x', 'y', 'z', 'name',
             'type', 'g', 'from', 'to', 'node_type', 'id', 'layout',
-            'pearson_z', 'p', 'p.value', '.'),
+            'pearson_z', 'p', 'p.value', '.', 'original_id', 'current_id',
+            'graph_projection'),
   package = 'pixelatorR',
   add = TRUE
 )
@@ -41,3 +42,4 @@ expect_pheatmap <- function(...) {
 expect_duckdb <- function(...) {
   rlang::check_installed('duckdb', ...)
 }
+

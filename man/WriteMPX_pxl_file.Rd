@@ -4,7 +4,13 @@
 \alias{WriteMPX_pxl_file}
 \title{Export Seurat object data to a .pxl file}
 \usage{
-WriteMPX_pxl_file(object, file, assay = NULL, overwrite = FALSE)
+WriteMPX_pxl_file(
+  object,
+  file,
+  assay = NULL,
+  export_layouts = FALSE,
+  overwrite = FALSE
+)
 }
 \arguments{
 \item{object}{A \code{Seurat} object with a \code{CellGraphAssay5}
@@ -15,6 +21,11 @@ file to be created.}
 
 \item{assay}{A character string specifying the name of the \code{CellGraphAssay5}.
 If set to \code{NULL} the default assay will be used.}
+
+\item{export_layouts}{A logical value specifying whether to export the layouts from
+the \code{Seurat} object. If set to \code{TRUE}, each component must have a layout.
+See \code{\link{LoadCellGraphs}} and \code{\link{ComputeLayout}} for details about
+how to load graphs and compute layouts.}
 
 \item{overwrite}{A logical value specifying whether to overwrite the \code{file}
 if it already exists.}
@@ -52,6 +63,8 @@ The structure of the .pxl file is detailed below:
 |-- edgelist.parquet
 
 The merged files are converted into a zip archive and saved to the target .pxl file.
+
+NOTE: Factors are currently not supported. These will be converted to string arrays.
 }
 
 \examples{

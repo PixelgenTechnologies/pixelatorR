@@ -2,7 +2,7 @@
 [![DOI](https://img.shields.io/badge/DOI-10.1101/2023.06.05.543770-B31B1B.svg)](https://www.biorxiv.org/content/10.1101/2023.06.05.543770v1)
 [![codecov](https://codecov.io/gh/PixelgenTechnologies/pixelatorR/graph/badge.svg?token=ClGH1zHvuD)](https://codecov.io/gh/PixelgenTechnologies/pixelatorR)
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
-![Static Badge](https://img.shields.io/badge/beta_release-v0.4.2-orange)
+![Static Badge](https://img.shields.io/badge/beta_release-v0.5.0-orange)
 <!-- badges: end -->
 
 [**Installation**](#installation) |
@@ -65,9 +65,9 @@ You can also email the development team at [developers@pixelgen.com](mailto:deve
 
 pixelatorR is developed and maintained by the [developers](https://github.com/PixelgenTechnologies) at [Pixelgen Technologies](https://pixelgen.com).
 
-When using pixelator in your research, please cite the following publication:
+When using pixelatorR in your research, please cite the following publication:
 
-> Karlsson, Filip, Tomasz Kallas, Divya Thiagarajan, Max Karlsson, Maud Schweitzer, Jose Fernandez Navarro, Louise Leijonancker, _et al._ “Molecular Pixelation: Single Cell Spatial Proteomics by Sequencing.” bioRxiv, June 8, 2023. https://doi.org/10.1101/2023.06.05.543770.
+> Karlsson, F., Kallas, T., Thiagarajan, D. et al. Molecular pixelation: spatial proteomics of single cells by sequencing. Nat Methods (2024). https://doi.org/10.1038/s41592-024-02268-9
 
 Main developers:
 
