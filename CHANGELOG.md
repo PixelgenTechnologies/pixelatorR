@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED] - 2024-??-??
 
+## [0.5.1] - 2024-05-20
+
+### Updates
+
+- Loading A-node projected graphs from PXL files with upia/upib stored as dictionaries is now supported when using `LoadCellGraphs`
+
 ## [0.5.0] - 2024-05-16
 
 ### Added
