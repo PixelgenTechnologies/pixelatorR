@@ -69,9 +69,9 @@
     # Check column names
     stopifnot(
       "'polarization' names are invalid" =
-        all(names(polarization) ==
-              c("morans_i", "morans_p_value", "morans_p_adjusted",
-                "morans_z", "marker", "component"))
+        all(sort(names(polarization)) ==
+              sort(c("morans_i", "morans_p_value", "morans_p_adjusted",
+                     "morans_z", "marker", "component")))
     )
     # Check component names
     cells_in_polarization <- cell_ids %in% (polarization$component %>% unique())

@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.5.1
+Version: 0.5.2
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),

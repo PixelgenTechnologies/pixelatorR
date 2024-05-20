@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED] - 2024-??-??
 
+## [0.5.2] - 2024-05-20
+
+### Fixes
+
+- Fixed bug in `.validate_polarization` that would throw an error if columns were in unexpected order in `polarization.parquet`. 
+
 ## [0.5.1] - 2024-05-20
 
 ### Updates
