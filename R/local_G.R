@@ -141,7 +141,7 @@ local_G <- function (
     k = 1,
     W = NULL,
     use_weights = TRUE,
-    normalize_counts = TRUE,
+    normalize_counts = FALSE,
     type = c("gi", "gstari"),
     return_p_vals = FALSE,
     p_adjust_method = "BH",
