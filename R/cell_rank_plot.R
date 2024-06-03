@@ -72,7 +72,7 @@ CellRankPlot.data.frame <- function (
     mutate(rank = rank(-molecules, ties.method = "random"))
 
   # Create edge rank plot
-  edgerank_plot <-
+  cellrank_plot <-
     object %>%
       {
         if (!is.null(group_by)) {
@@ -88,7 +88,7 @@ CellRankPlot.data.frame <- function (
            y = "Number of molecules") +
       theme_minimal()
 
-  return(edgerank_plot)
+  return(cellrank_plot)
 }
 
 #' @rdname CellRankPlot
@@ -109,6 +109,6 @@ CellRankPlot.Seurat <- function (
   ...
 ) {
 
-  edgerank_plot <- CellRankPlot(object[[]], group_by = group_by)
-  return(edgerank_plot)
+  cellrank_plot <- CellRankPlot(object[[]], group_by = group_by)
+  return(cellrank_plot)
 }
