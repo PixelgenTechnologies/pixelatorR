@@ -7,7 +7,7 @@
 #' @param new Name of new layers
 #' @param ... Additional arguments passed to other methods
 #'
-#' @rdname LoinLayers-CellGraphAssay5
+#' @rdname JoinLayers-CellGraphAssay5
 #' @method JoinLayers CellGraphAssay5
 #'
 #' @return A \code{CelLGraphAssay5} object with layers joined
