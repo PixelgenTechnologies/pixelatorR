@@ -10,8 +10,8 @@ globalVariables(
 
 #' @param group_by A character specifying a column to group by
 #'
-#' @rdname CellRankPlot
-#' @method CellRankPlot data.frame
+#' @rdname MoleculeRankPlot
+#' @method MoleculeRankPlot data.frame
 #' @concept plots
 #'
 #' @examples
@@ -26,11 +26,11 @@ globalVariables(
 #' seur_obj
 #'
 #' # Plot edge ranks with data.frame
-#' CellRankPlot(seur_obj[[]])
+#' MoleculeRankPlot(seur_obj[[]])
 #'
 #' @export
 #'
-CellRankPlot.data.frame <- function (
+MoleculeRankPlot.data.frame <- function (
   object,
   group_by = NULL,
   ...
@@ -91,24 +91,24 @@ CellRankPlot.data.frame <- function (
   return(cellrank_plot)
 }
 
-#' @rdname CellRankPlot
-#' @method CellRankPlot Seurat
+#' @rdname MoleculeRankPlot
+#' @method MoleculeRankPlot Seurat
 #' @concept plots
 #'
 #' @examples
 #' library(pixelatorR)
 #'
 #' # Plot edge ranks with Seurat object
-#' CellRankPlot(seur_obj)
+#' MoleculeRankPlot(seur_obj)
 #'
 #' @export
 #'
-CellRankPlot.Seurat <- function (
+MoleculeRankPlot.Seurat <- function (
   object,
   group_by = NULL,
   ...
 ) {
 
-  cellrank_plot <- CellRankPlot(object[[]], group_by = group_by)
+  cellrank_plot <- MoleculeRankPlot(object[[]], group_by = group_by)
   return(cellrank_plot)
 }
