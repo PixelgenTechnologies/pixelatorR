@@ -97,6 +97,8 @@ reference:
     - edgelist_to_simple_bipart_graph
     - node_markers_counts
     - color_by_marker
+    - compute_transition_probabilities
+    - local_G
   - subtitle: Export
   - contents:
     - WriteMPX_pxl_file
