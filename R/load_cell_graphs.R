@@ -433,6 +433,7 @@ LoadCellGraphs.Seurat <- function (
     # Add a suffix to upia / upib and convert to a tbl_graph
     g <- edge_table %>%
       select(upia, upib, marker) %>%
+      mutate(across(where(is.factor), as.character)) %>%
       mutate(upia = paste0(upia, "-A"), upib = paste0(upib, "-B")) %>%
       as_tbl_graph(directed = FALSE)
 
@@ -582,11 +583,12 @@ LoadCellGraphs.Seurat <- function (
 
   edge_table_split <- lapply(names(edge_table_split), function(nm) {
 
-    edge_table <- edge_table_split[[nm]]
+    edge_table <- edge_table_split[[nm]] %>%
+      select(upia, upib, marker) %>%
+      mutate(across(where(is.factor), as.character))
 
     # Anode projection
     g_anode <- edge_table %>%
-      select(upia, upib, marker) %>%
       left_join(edge_table,
                 by = c("upib"),
                 relationship = "many-to-many",
