@@ -1,4 +1,5 @@
 BH
+Bivand
 CLR
 CMD
 CellGraph
@@ -13,6 +14,7 @@ Dahlberg
 Edgelist
 FS
 Fruchterman
+Getis
 Hoef
 Johan
 Kallas
@@ -22,6 +24,7 @@ MPX
 MPXAssay
 NxD
 ORCID
+Ord
 PBMCs
 PMDS
 PXL
@@ -57,10 +60,13 @@ edgelists
 enviroment
 et
 fdr
+gi
+gstari
 hochberg
 holm
 hommel
 json
+k'th
 kk
 linegraph
 linegraphs
@@ -82,6 +88,7 @@ renormalization
 reproducibility
 th
 tibble
+undirected
 unnest
 upia
 upias
