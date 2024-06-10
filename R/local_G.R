@@ -1,5 +1,8 @@
 #' Calculate Local G
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' Local G is a metric that measures spatial association of some numerical node feature.
 #' The metric can for instance be used to detect hot spots for protein markers in a graph, where nodes
 #' that are close to each other have similar marker count values. The metric is a Z-score that
@@ -33,7 +36,7 @@
 #'
 #' @section \eqn{G_{i}^{*}} ("gstari"):
 #' In the equation for \eqn{G_{i}}, the condition that \eqn{i\neq j} is central. \eqn{G_i^*}
-#' relaxes this constraint, by including \eqn{i} as a neighbor of itself This local measure
+#' relaxes this constraint, by including \eqn{i} as a neighbor of itself. This local measure
 #' is expressed as (Getis and Ord 1996, p. 263, equation 14.3):
 #' \deqn{
 #' Z(G_i^*)=\dfrac{[\sum_{j=1}^{n}w_{i,j}x_j]-[(\sum_{j=1}^{n}w_{i,j})\bar x^*]}
