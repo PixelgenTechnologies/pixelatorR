@@ -107,6 +107,15 @@ test_that("local_G works as expected", {
   # Higher k
   expect_no_error(gi_mat <- local_G(g = g, counts = counts, k = 3))
 
+  # k = 1 and use_weights=FALSE
+  expect_no_error(gi_mat_use_weights_F <- local_G(g = g, counts = counts, use_weights = FALSE))
+
+  # Higher k and use_weights=FALSE
+  expect_no_error(gi_mat_use_k3_weights_F <- local_G(g = g, k = 3, counts = counts, use_weights = FALSE))
+
+  # The two matrices should be different
+  expect_true(!sum(gi_mat_use_weights_F == gi_mat_use_k3_weights_F))
+
 })
 
 

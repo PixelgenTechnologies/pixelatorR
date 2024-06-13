@@ -4,6 +4,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
+  - r-base
   - r-arrow
   - r-cli
   - r-duckdb

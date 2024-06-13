@@ -24,11 +24,10 @@ local_G(
 \item{counts}{A \code{dgCMatrix} (sparse matrix) with node marker counts. Raw counts
 are recommended.}
 
-\item{k}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} An integer value specifying the
-distance from each node where additional edges are added to expand the neighborhood from each node. E.g.
-with \code{k = 2}, each node will additionally be connected with all neighbors
-of the nodes their original neighborhood. With \code{k = 1} (default), only
-the adjacent neighbors will be used.}
+\item{k}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} An integer value specifying the maximum steps
+from each node to expand the neighborhood. E.g. with \code{k = 2}, each node neighborhood
+will include the direct neighbors and nodes two steps away. With \code{k = 1} (default), only
+the direct neighbors will be used.}
 
 \item{W}{A \code{dgCMatrix} (sparse matrix) with edge weights. If not provided,
 the function will use the adjacency matrix of the graph to compute weights.}

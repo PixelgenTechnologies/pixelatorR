@@ -10,8 +10,8 @@ globalVariables(
 
 #' @param group_by A character specifying a column to group by
 #'
-#' @rdname EdgeRankPlot
-#' @method EdgeRankPlot data.frame
+#' @rdname MoleculeRankPlot
+#' @method MoleculeRankPlot data.frame
 #' @concept plots
 #'
 #' @examples
@@ -26,11 +26,11 @@ globalVariables(
 #' seur_obj
 #'
 #' # Plot edge ranks with data.frame
-#' EdgeRankPlot(seur_obj[[]])
+#' MoleculeRankPlot(seur_obj[[]])
 #'
 #' @export
 #'
-EdgeRankPlot.data.frame <- function (
+MoleculeRankPlot.data.frame <- function (
   object,
   group_by = NULL,
   ...
@@ -72,7 +72,7 @@ EdgeRankPlot.data.frame <- function (
     mutate(rank = rank(-molecules, ties.method = "random"))
 
   # Create edge rank plot
-  edgerank_plot <-
+  cellrank_plot <-
     object %>%
       {
         if (!is.null(group_by)) {
@@ -88,27 +88,71 @@ EdgeRankPlot.data.frame <- function (
            y = "Number of molecules") +
       theme_minimal()
 
-  return(edgerank_plot)
+  return(cellrank_plot)
 }
 
-#' @rdname EdgeRankPlot
-#' @method EdgeRankPlot Seurat
+#' @rdname MoleculeRankPlot
+#' @method MoleculeRankPlot Seurat
 #' @concept plots
 #'
 #' @examples
 #' library(pixelatorR)
 #'
 #' # Plot edge ranks with Seurat object
-#' EdgeRankPlot(seur_obj)
+#' MoleculeRankPlot(seur_obj)
 #'
 #' @export
 #'
-EdgeRankPlot.Seurat <- function (
+MoleculeRankPlot.Seurat <- function (
   object,
   group_by = NULL,
   ...
 ) {
 
-  edgerank_plot <- EdgeRankPlot(object[[]], group_by = group_by)
-  return(edgerank_plot)
+  cellrank_plot <- MoleculeRankPlot(object[[]], group_by = group_by)
+  return(cellrank_plot)
+}
+
+#' Edge Rank Plot
+#'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
+#' The function has been replaced by \code{\link{MoleculeRankPlot}} and
+#' will be removed in a future release.
+#'
+#' @param object A Seurat object
+#' @param group_by A character specifying a column to group by
+#' @param ... Additional arguments to pass to \code{\link{MoleculeRankPlot}}
+#'
+#' @rdname EdgeRankPlot
+#' @concept plots
+#'
+#' @examples
+#' library(pixelatorR)
+#'
+#' # Load example data as a Seurat object
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' seur_obj <- ReadMPX_Seurat(pxl_file)
+#' seur_obj
+#'
+#' # Plot edge ranks with data.frame
+#' EdgeRankPlot(seur_obj)
+#'
+#' @export
+#'
+EdgeRankPlot <- function (
+  object,
+  group_by = NULL,
+  ...
+) {
+
+  stopifnot(
+    "'object' must be a 'Seurat' object" = inherits(object, "Seurat")
+  )
+
+  moleculerank_plot <- MoleculeRankPlot(object[[]], group_by = group_by, ...)
+  return(moleculerank_plot)
 }

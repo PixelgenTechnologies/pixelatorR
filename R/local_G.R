@@ -200,8 +200,19 @@ local_G <- function (
       # Compute transition probabilities
       W <- compute_transition_probabilities(A, k = k, remove_self_loops = (type == "gi")) %>% Matrix::t()
     } else {
-      # If no normalization is desired, use the adjacency matrix for weighting
+      # If no normalization is desired, use the adjacency matrix where
+      # each weight is 1
       W <- A
+      if (k > 1) {
+        # Exapand local neighborhood using matrix powers
+        W <- Reduce(`%*%`, rep(list(W), k))
+        W@x <- rep(1, length(W@x))
+        if (type == "gstari") {
+          diag(W) <- 1
+        } else {
+          diag(W) <- 0
+        }
+      }
     }
   }
 
@@ -283,11 +294,10 @@ local_G <- function (
 #' Create a transition probability matrix from an adjacency matrix.
 #'
 #' @param A An adjacency matrix
-#' @param k `r lifecycle::badge("experimental")` An integer value specifying the
-#' distance from each node where additional edges are added to expand the neighborhood from each node. E.g.
-#' with \code{k = 2}, each node will additionally be connected with all neighbors
-#' of the nodes their original neighborhood. With \code{k = 1} (default), only
-#' the adjacent neighbors will be used.
+#' @param k `r lifecycle::badge("experimental")` An integer value specifying the maximum steps
+#' from each node to expand the neighborhood. E.g. with \code{k = 2}, each node neighborhood
+#' will include the direct neighbors and nodes two steps away. With \code{k = 1} (default), only
+#' the direct neighbors will be used.
 #' @param remove_self_loops Whether to remove self-loops from the transition probability matrix.
 #'
 #' @examples
