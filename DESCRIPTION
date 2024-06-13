@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.6.1
+Version: 0.7.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
@@ -62,7 +62,6 @@ Collate:
     'd3_graph_helpers.R'
     'differential_colocalization_analysis.R'
     'differential_polarity_analysis.R'
-    'edge_rank_plot.R'
     'extdata.R'
     'global_options.R'
     'graph_analysis.R'
@@ -76,6 +75,7 @@ Collate:
     'load_data.R'
     'load_precomputed_layouts.R'
     'local_G.R'
+    'molecule_rank_plot.R'
     'objects.R'
     'pivot_tables.R'
     'pixelatorR-package.R'
