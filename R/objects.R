@@ -25,6 +25,60 @@ CellGraphs.Seurat <- function (
   return(CellGraphs(object = object[[assay]]))
 }
 
+#' @method FSMap Seurat
+#'
+#' @rdname FSMap
+#'
+#' @examples
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' seur_obj <- ReadMPX_Seurat(pxl_file)
+#'
+#' # Check PXL file paths in a Seurat object
+#' FSMap(seur_obj)
+#'
+#' @export
+#'
+FSMap.Seurat <- function (
+  object,
+  ...
+) {
+  assay <- DefaultAssay(object = object)
+  FSMap(object[[assay]])
+  return(FSMap(object[[assay]]))
+}
+
+#' @method FSMap<- Seurat
+#'
+#' @rdname FSMap
+#'
+#' @examples
+#' \dontrun{
+#' # Update PXL file paths in a Seurat object
+#' new_pxl_file_paths <- c("<path_to_pxl_file>")
+#' FSMap(seur_obj) <- FSMap(seur_obj) %>%
+#'   mutate(pxl_file = new_pxl_file_paths)
+#' }
+#'
+#' @export
+#'
+"FSMap<-.Seurat" <- function (
+  object,
+  ...,
+  value
+) {
+  # Validate value
+  .validate_fs_map(value)
+  assay <- DefaultAssay(object = object)
+  cg_assay <- object[[assay]]
+  if (!inherits(cg_assay, "MPXAssay"))
+    abort(glue("Assay '{assay}' must be a 'CellGraphAssay' or 'CellGraphAssay5' object."))
+  slot(cg_assay, name = "fs_map") <- value
+  object[[assay]] <- cg_assay
+  return(object)
+}
+
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Set methods
