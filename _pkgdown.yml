@@ -50,6 +50,7 @@ reference:
   - subtitle: Visualization
   - contents:
     - CellCountPlot
+    - MoleculeRankPlot
     - EdgeRankPlot
     - TauPlot
     - Plot2DGraph

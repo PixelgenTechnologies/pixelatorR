@@ -10,7 +10,7 @@
     
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.7.0</small>
 
     
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -65,11 +65,10 @@
 
 
 <dt>k</dt>
-<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="figures/lifecycle-experimental.svg" alt="[Experimental]"></a> An integer value specifying the
-distance from each node where additional edges are added to expand the neighborhood from each node. E.g.
-with <code>k = 2</code>, each node will additionally be connected with all neighbors
-of the nodes their original neighborhood. With <code>k = 1</code> (default), only
-the adjacent neighbors will be used.</p></dd>
+<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#experimental" class="external-link"><img src="figures/lifecycle-experimental.svg" alt="[Experimental]"></a> An integer value specifying the maximum steps
+from each node to expand the neighborhood. E.g. with <code>k = 2</code>, each node neighborhood
+will include the direct neighbors and nodes two steps away. With <code>k = 1</code> (default), only
+the direct neighbors will be used.</p></dd>
 
 
 <dt>remove_self_loops</dt>
