@@ -298,6 +298,7 @@ LoadCellGraphs.MPXAssay <- function(
       # MPX component ids. current_id are the ids currenty used
       # for components in object
       edgelist_data <- ar %>%
+        mutate(component = as.character(component)) %>%
         filter(component %in% id_chunk$original_id) %>%
         collect()
 
@@ -453,6 +454,7 @@ LoadCellGraphs.Seurat <- function(
   add_markers = TRUE
 ) {
   edge_table <- arrow_data %>%
+    mutate(component = as.character(component)) %>%
     filter(component %in% cell_ids) %>%
     collect() %>%
     group_by(component)
@@ -603,6 +605,7 @@ LoadCellGraphs.Seurat <- function(
 ) {
   # Fetch edgelist from parquet file and group by component
   edge_table <- arrow_data %>%
+    mutate(component = as.character(component)) %>%
     filter(component %in% cell_ids) %>%
     collect() %>%
     group_by(component)
