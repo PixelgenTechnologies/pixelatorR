@@ -9,3 +9,4 @@
 ^vignettes
 ^CHANGELOG.md
 ^pkgdown
+^environment_arm.yml
