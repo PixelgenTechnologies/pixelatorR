@@ -147,7 +147,7 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function(
 
   object <- object %>% to_duckdb()
 
-  if (!is.null(components) && ("component" %in% names(object))) {
+  if (!is.null(components)) {
     stopifnot(
       "'components' must be a character vector" =
         is.character(components) && (length(components) > 0)
