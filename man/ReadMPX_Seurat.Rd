@@ -32,7 +32,7 @@ and colocalization scores should be loaded. These parameters only have an effect
 \code{return_cellgraphassay = TRUE}.}
 
 \item{add_additional_assays}{If other matrix representations are stored in the PXL file,
-for instance CLR-normalized counts or denoised, set this parameter to {TRUE} to load these
+for instance CLR-normalized counts or denoised, set this parameter to \code{TRUE} to load these
 in separate Assays.}
 
 \item{edgelist_outdir}{A directory where the edgelist should be stored}
