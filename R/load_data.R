@@ -91,7 +91,7 @@ ReadMPX_counts <- function (
 #' and colocalization scores should be loaded. These parameters only have an effect if
 #' \code{return_cellgraphassay = TRUE}.
 #' @param add_additional_assays If other matrix representations are stored in the PXL file,
-#' for instance CLR-normalized counts or denoised, set this parameter to {TRUE} to load these
+#' for instance CLR-normalized counts or denoised, set this parameter to \code{TRUE} to load these
 #' in separate Assays.
 #' @param edgelist_outdir A directory where the edgelist should be stored
 #' @param overwrite Should \code{edgelist_outdir} be overwritten?

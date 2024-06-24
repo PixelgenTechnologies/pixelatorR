@@ -278,6 +278,7 @@ LoadCellGraphs.MPXAssay <- function (
       # MPX component ids. current_id are the ids currenty used
       # for components in object
       edgelist_data <- ar %>%
+        mutate(component = as.character(component)) %>%
         filter(component %in% id_chunk$original_id) %>%
         collect()
 
@@ -301,7 +302,7 @@ LoadCellGraphs.MPXAssay <- function (
     # Remove temporary file
     try_delete <- try(fs::file_delete(pq_file), silent = TRUE)
     if (inherits(try_delete, what = "try-error"))
-      cli_alert_warning("Failed to delete temporary edge list parquet file {pq}.")
+      cli_alert_warning("Failed to delete temporary edge list parquet file {pq_file}.")
 
     return(cg_list)
   }) %>% unlist()
@@ -418,6 +419,7 @@ LoadCellGraphs.Seurat <- function (
   add_markers = TRUE
 ) {
   edge_table <- arrow_data %>%
+    mutate(component = as.character(component)) %>%
     filter(component %in% cell_ids) %>%
     collect() %>%
     group_by(component)
@@ -572,6 +574,7 @@ LoadCellGraphs.Seurat <- function (
 
   # Fetch edgelist from parquet file and group by component
   edge_table <- arrow_data %>%
+    mutate(component = as.character(component)) %>%
     filter(component %in% cell_ids) %>%
     collect() %>%
     group_by(component)

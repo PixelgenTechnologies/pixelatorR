@@ -595,6 +595,7 @@ WriteMPX_pxl_file <- function (
       left_join(a_table, by = "component") %>%
       select(-component) %>%
       rename(component = current_id) %>%
+      mutate(component = as.character(component)) %>%
       # Filter out components that are not in the current_id
       filter(component %in% (fs_map_unnest_filtered$current_id %>% levels())) %>%
       # Force computation (this can be slow and requires the data to be loaded in memory)
