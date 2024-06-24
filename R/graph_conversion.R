@@ -158,11 +158,10 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function(
   }
 
   if (!"component" %in% names(object)) {
-    abort("Function only implemented for edgelists with a component column")
+    abort("Column 'component' is missing from egelist")
   }
 
   object <- object %>%
-    #to_duckdb() %>%
     select(upia, upib, component) %>%
     group_by(component)
 
