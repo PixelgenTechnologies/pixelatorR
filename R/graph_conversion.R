@@ -137,6 +137,9 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
     "One or several of 'upia', 'upib' are missing from edgelist" =
       all(c('upia', 'upib') %in% names(object))
   )
+  if (!"component" %in% names(object)) {
+    abort("Column 'component' is missing from edgelist")
+  }
 
   object <- object %>% to_duckdb()
 
@@ -151,10 +154,6 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
     # Filter components
     object <- object %>%
       filter(component %in% components)
-  }
-
-  if (!"component" %in% names(object)) {
-    abort("Column 'component' is missing from egelist")
   }
 
   object <- object %>%

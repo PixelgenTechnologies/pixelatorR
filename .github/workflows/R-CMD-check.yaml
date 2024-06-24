@@ -8,9 +8,6 @@ on:
 
 name: R-CMD-check
 
-env:
-  LIBARROW_MINIMAL: false
-
 jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
