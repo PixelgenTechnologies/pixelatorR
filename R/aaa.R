@@ -43,3 +43,6 @@ expect_duckdb <- function(...) {
   rlang::check_installed('duckdb', ...)
 }
 
+expect_mclust <- function(...) {
+  rlang::check_installed('mclust', ...)
+}
