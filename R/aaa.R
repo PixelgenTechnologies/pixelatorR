@@ -48,3 +48,6 @@ expect_MASS <- function(...) {
   rlang::check_installed('MASS', ...)
 }
 
+expect_mclust <- function(...) {
+  rlang::check_installed('mclust', ...)
+}

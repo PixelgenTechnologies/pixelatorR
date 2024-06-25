@@ -53,11 +53,14 @@ Suggests:
     dbplyr,
     reticulate,
     MASS
+    limma,
+    mclust
 Collate: 
     'generics.R'
     'CellGraph.R'
     'CellGraphAssay.R'
     'aaa.R'
+    'abundance_normalization.R'
     'cell_count_plot.R'
     'colocalization_heatmap.R'
     'd3_graph_helpers.R'
