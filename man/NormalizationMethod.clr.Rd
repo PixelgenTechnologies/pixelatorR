@@ -17,3 +17,14 @@ A matrix of normalized MPX counts
 \description{
 Normalize an MPX count matrix using CLR.
 }
+\examples{
+
+library(pixelatorR)
+
+pxl_file <- system.file("extdata/five_cells",
+                       "five_cells.pxl",
+                       package = "pixelatorR")
+se <- ReadMPX_Seurat(pxl_file)
+norm_data_clr <- NormalizeMPX(se, method = "clr")
+
+}

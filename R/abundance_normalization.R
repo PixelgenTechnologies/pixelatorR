@@ -19,6 +19,18 @@
 #' @param ... Additional arguments. Currently not used.
 #'
 #' @importFrom stats prcomp
+#' 
+#' @examples
+#'
+#' library(pixelatorR)
+#'
+#' pxl_file <- system.file("extdata/five_cells",
+#'                        "five_cells.pxl",
+#'                        package = "pixelatorR")
+#' se <- ReadMPX_Seurat(pxl_file)
+#' norm_data_dsb <- NormalizeMPX(se,
+#'                               method = "dsb",
+#'                               isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"))
 #'
 #' @return A matrix of normalized MPX counts
 #'
@@ -46,10 +58,10 @@ NormalizationMethod.dsb <- function(
       all(isotype_controls %in% rownames(object))
   )
 
-  markers = rownames(object)
+  markers <- rownames(object)
 
   # Get protein negative population means
-  object_log = log1p(object)
+  object_log <- log1p(object)
 
   protein_model <-
     apply(object_log, 1, function(x) {
@@ -68,14 +80,14 @@ NormalizationMethod.dsb <- function(
     cli_alert_warning("Empirical background cound not be fit for {length(failed_markers)} proteins: {paste(failed_markers, collapse = ', ')}.")
     cli_alert_info("Values returned will be log transformed without background correction.")
 
-    ad = as.numeric(rep(x = 0, length(failed_markers)))
-    names(ad) = failed_markers
-    mu1 = c(mu1, ad)
-    mu1 = mu1[match(rownames(object_log) , names(mu1) )]
+    ad        <- as.numeric(rep(x = 0, length(failed_markers)))
+    names(ad) <- failed_markers
+    mu1       <- c(mu1, ad)
+    mu1       <- mu1[match(rownames(object_log) , names(mu1) )]
   }
 
   # Center data to negative mean
-  object_norm = apply(object_log, 2, function(x) (x - mu1))
+  object_norm <- apply(object_log, 2, function(x) (x - mu1))
 
   # Adjust for noise
   cellwise_background_mean <-
@@ -103,6 +115,16 @@ NormalizationMethod.dsb <- function(
 #'
 #' @param object A matrix of MPX counts
 #' @param ... Additional arguments. Currently not used.
+#' 
+#' @examples
+#'
+#' library(pixelatorR)
+#'
+#' pxl_file <- system.file("extdata/five_cells",
+#'                        "five_cells.pxl",
+#'                        package = "pixelatorR")
+#' se <- ReadMPX_Seurat(pxl_file)
+#' norm_data_clr <- NormalizeMPX(se, method = "clr")
 #'
 #' @return A matrix of normalized MPX counts
 #'
@@ -150,8 +172,6 @@ NormalizeMPX.Matrix <- function(
 
   return(norm_object)
 }
-
-
 
 
 #' @rdname NormalizeMPX
