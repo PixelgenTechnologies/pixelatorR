@@ -73,7 +73,7 @@ for (assay_version in c("v3", "v5")) {
 
 }
 
-if (TRUE) skip()
+if (TRUE) skip("Skipping anndata tests")
 
 ## Test anndata
 pxl_file <- system.file("extdata/five_cells",
