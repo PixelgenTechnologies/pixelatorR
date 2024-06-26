@@ -26,3 +26,16 @@ data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022).
 https://doi.org/10.1038/s41467-022-29356-8
 }
 
+\examples{
+
+library(pixelatorR)
+
+pxl_file <- system.file("extdata/five_cells",
+                       "five_cells.pxl",
+                       package = "pixelatorR")
+se <- ReadMPX_Seurat(pxl_file)
+norm_data_dsb <- NormalizeMPX(se,
+                              method = "dsb",
+                              isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"))
+
+}
