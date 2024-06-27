@@ -142,6 +142,7 @@
 #' @importFrom SeuratObject Key
 #' @importFrom SeuratObject Key<-
 #' @importFrom SeuratObject LayerData
+#' @importFrom SeuratObject LayerData<-
 #' @importFrom SeuratObject Layers
 #' @importFrom SeuratObject RenameCells
 #' @importFrom SeuratObject VariableFeatures<-
