@@ -592,42 +592,11 @@ FSMap <- function (
 #'
 #' @export
 #'
-"FSMap<-" <- function (
-  object,
-  ...,
-  value
-) {
-  UseMethod(generic = "FSMap<-", object = object)
-}
-
-
-#' Estimate positive and negative distributions of abundance
-#'
-#' Estimate the parameters of a mixture model for the positive and negative
-#' distributions of abundance in a cell or marker
-#'
-#' @param object An object.
-#' @param margin The margin of the object to apply the mixture model on. 1 indicates markers, 2 indicates cells.
-#' @param modalities The number of modalities to fit in the mixture model. Can be a single number or a vector of
-#'                    numbers.
-#' @param layer Name of layer to use.
-#' @param assay Name of assay to use; defaults to the default assay.
-#' @param ... Additional arguments. Currently not used.
-#'
-#' @rdname FitGaussMix
-#'
-#' @return A tibble with the estimated parameters of the mixture model.
-#'
-#' @export
-#'
-FitGaussMix <- function(
+"FSMap<-" <- function(
     object,
-    margin = 2,
-    modalities = 2,
-    assay = NULL,
-    layer = NULL,
-    ...) {
-  UseMethod(generic = "FitGaussMix", object = object)
+    ...,
+    value) {
+  UseMethod(generic = "FSMap<-", object = object)
 }
 
 
@@ -644,19 +613,14 @@ FitGaussMix <- function(
 #' based on their abundance in a negative population across all cells and regresses out a per-cell noise component based on isotype
 #' controls and non-specific marker abundance.
 #'
-#'
-#' @section References:
-#' Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression
-#' data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022).
-#' https://doi.org/10.1038/s41467-022-29356-8
+#' @references Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022). \url{https://doi.org/10.1038/s41467-022-29356-8}
 #'
 #' @param object An object.
-#' @param method The normalization method to use. Can be "dsb"
-#'               (\href{https://doi.org/10.1038/s41467-022-29356-8}{Mulè et al, 2022}) or "clr".
+#' @param method The normalization method to use. Can be "dsb" or "clr".
 #' @param isotype_controls A vector of isotype controls to use for normalization.
 #' @param assay Name of assay to use; defaults to the default assay.
 #' @param ... Additional arguments. Currently not used.
-#'
+#' 
 #' @rdname NormalizeMPX
 #'
 #' @return An object with normalized MPX data.
