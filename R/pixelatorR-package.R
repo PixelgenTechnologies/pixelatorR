@@ -149,6 +149,7 @@
 #' @importFrom stats na.omit
 #' @importFrom stats p.adjust
 #' @importFrom stats pnorm
+#' @importFrom stats prcomp
 #' @importFrom stats quantile
 #' @importFrom stats wilcox.test
 #' @importFrom stringr str_c

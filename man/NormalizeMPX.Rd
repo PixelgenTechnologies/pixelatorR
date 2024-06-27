@@ -57,8 +57,7 @@ NormalizeMPX(
 \arguments{
 \item{object}{An object.}
 
-\item{method}{The normalization method to use. Can be "dsb"
-(\href{https://doi.org/10.1038/s41467-022-29356-8}{Mulè et al, 2022}) or "clr".}
+\item{method}{The normalization method to use. Can be "dsb" or "clr".}
 
 \item{isotype_controls}{A vector of isotype controls to use for normalization.}
 
@@ -82,10 +81,6 @@ For these reasons, the dsb normalization method can be a useful alternative in m
 based on their abundance in a negative population across all cells and regresses out a per-cell noise component based on isotype
 controls and non-specific marker abundance.
 }
-\section{References}{
-
-Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression
-data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022).
-https://doi.org/10.1038/s41467-022-29356-8
+\references{
+Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022). \url{https://doi.org/10.1038/s41467-022-29356-8}
 }
-
