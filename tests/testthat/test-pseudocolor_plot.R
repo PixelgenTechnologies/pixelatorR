@@ -17,31 +17,38 @@ object <-
 
 
 
-test_that("pseudocolor_plot works as expected", {
+test_that("PseudocolorPlot works as expected", {
 
   # No facetting, no gating
-  expect_no_error(pseudocolor_plot(object,
+  expect_no_error(PseudocolorPlot(object,
                                    marker1 = "Feature1",
                                    marker2 = "Feature2",
                                    layer = "counts"))
 
+  # Other colors
+  expect_no_error(PseudocolorPlot(object,
+                                   marker1 = "Feature1",
+                                   marker2 = "Feature2",
+                                   layer = "counts",
+                                   colors = c("blue", "red")))
+
   # Marginal density
-  expect_no_error(pseudocolor_plot(object,
+  expect_no_error(PseudocolorPlot(object,
                                    marker1 = "Feature1",
                                    marker2 = "Feature2",
                                    layer = "counts",
                                    margin_density = T,
-                                   coord.fixed = F))
-  expect_warning(pseudocolor_plot(object,
+                                   coord_fixed = F))
+  expect_warning(PseudocolorPlot(object,
                                   marker1 = "Feature1",
                                   marker2 = "Feature2",
                                   layer = "counts",
                                   margin_density = T,
-                                  coord.fixed = T))
+                                  coord_fixed = T))
 
 
   # Facetting by two variables
-  expect_no_error(pseudocolor_plot(object,
+  expect_no_error(PseudocolorPlot(object,
                                    marker1 = "Feature1",
                                    marker2 = "Feature2",
                                    layer = "counts",
@@ -56,14 +63,14 @@ test_that("pseudocolor_plot works as expected", {
            ymax = 50)
 
   # No facetting
-  expect_no_error(pseudocolor_plot(object,
+  expect_no_error(PseudocolorPlot(object,
                                    marker1 = "Feature1",
                                    marker2 = "Feature2",
                                    layer = "counts",
                                    plot_gate = plot_gate))
 
   # Facetting by one variable
-  expect_no_error(pseudocolor_plot(object,
+  expect_no_error(PseudocolorPlot(object,
                                    marker1 = "Feature1",
                                    marker2 = "Feature2",
                                    facet_vars = "sample",
@@ -80,7 +87,7 @@ test_that("pseudocolor_plot works as expected", {
            sample = c("A", "B"))
 
   # Facetting by one variable
-  expect_no_error(pseudocolor_plot(object,
+  expect_no_error(PseudocolorPlot(object,
                                    marker1 = "Feature1",
                                    marker2 = "Feature2",
                                    facet_vars = "sample",
@@ -88,7 +95,7 @@ test_that("pseudocolor_plot works as expected", {
                                    plot_gate = plot_gate))
 
   # Facetting by two variables
-  expect_no_error(pseudocolor_plot(object,
+  expect_no_error(PseudocolorPlot(object,
                                    marker1 = "Feature1",
                                    marker2 = "Feature2",
                                    facet_vars = c("sample", "sample_type"),
@@ -99,31 +106,31 @@ test_that("pseudocolor_plot works as expected", {
 
   # Expected errors
 
-  expect_error(pseudocolor_plot(object,
+  expect_error(PseudocolorPlot(object,
                                 marker1 = "Feature1",
                                 marker2 = "Feature2",
                                 layer = "counts",
                                 facet_vars = "sample",
                                 margin_density = T),
                regexp = "Marginal density is not supported")
-  expect_error(pseudocolor_plot(object,
+  expect_error(PseudocolorPlot(object,
                                 marker1 = "FeatureNotHere",
                                 marker2 = "Feature2",
                                 layer = "counts"),
                regexp = "'marker1' must be available in the object")
-  expect_error(pseudocolor_plot(object,
+  expect_error(PseudocolorPlot(object,
                                 marker1 = "Feature1",
                                 marker2 = "Feature2",
                                 layer = "counts",
                                 facet_vars = c("sample", "sample_type", "sample_type")),
                regexp = "must either be NULL or be a character vector with 1 or 2 elements")
-  expect_error(pseudocolor_plot(object,
+  expect_error(PseudocolorPlot(object,
                                 marker1 = "Feature1",
                                 marker2 = "Feature2",
                                 layer = "counts",
                                 facet_vars = c("sample", "columnNotHere")),
                regexp = "Variables in 'facet_vars' must be available in the object")
-  expect_error(pseudocolor_plot(object,
+  expect_error(PseudocolorPlot(object,
                                 marker1 = "Feature1",
                                 marker2 = "Feature2",
                                 layer = "counts",
@@ -131,7 +138,7 @@ test_that("pseudocolor_plot works as expected", {
                regexp = "must have columns 'xmin', 'xmax', 'ymin', 'ymax'")
 
   # Warning
-  expect_warning(pseudocolor_plot(object,
+  expect_warning(PseudocolorPlot(object,
                                   marker1 = "Feature1",
                                   marker2 = "Feature2",
                                   layer = "counts",

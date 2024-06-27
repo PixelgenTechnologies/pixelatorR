@@ -53,11 +53,12 @@
 #'                  contain the variables in 'facet_vars' to plot different gates by facets.
 #' @param scale_density Scale the density to the maximum density per facet.
 #' @param margin_density Add marginal density plots. Only supported when 'facet_vars' is NULL.
-#' @param coord.fixed Fix the aspect ratio of the plot. Only supported when 'margin_density' is FALSE.
-#' @param pt.size Size of the points.
+#' @param coord_fixed Fix the aspect ratio of the plot. Only supported when 'margin_density' is FALSE.
+#' @param pt_size Size of the points.
 #' @param alpha Transparency of the points.
 #' @param layer Name of layer to plot.
 #' @param grid_n Number of grid points to calculate the density.
+#' @param colors Colors to use for the density plot. If NULL, the 'viridis' "turbo" palette is used.
 #' @param ... Additional arguments to pass to 'MASS::kde2d'.
 #'
 #' @return A ggplot object.
@@ -92,7 +93,7 @@
 #'              sample = c("A", "B"))
 #'
 #'
-#' pseudocolor_plot(object,
+#' PseudocolorPlot(object,
 #'                  marker1 = "Feature1",
 #'                  marker2 = "Feature2",
 #'                  facet_vars = "sample",
@@ -101,7 +102,7 @@
 #'
 #' @export
 #'
-pseudocolor_plot <- function(
+PseudocolorPlot <- function(
     object,
     marker1,
     marker2,
@@ -109,11 +110,12 @@ pseudocolor_plot <- function(
     plot_gate = NULL,
     scale_density = TRUE,
     margin_density = FALSE,
-    coord.fixed = T,
-    pt.size = 1,
+    coord_fixed = T,
+    pt_size = 1,
     alpha = 1,
-    layer = "data",
+    layer = NULL,
     grid_n = 500,
+    colors = NULL,
     ...
 ) {
 
@@ -121,7 +123,7 @@ pseudocolor_plot <- function(
   stopifnot(
     "'facet_vars' must either be NULL or be a character vector with 1 or 2 elements" =
       is.null(facet_vars) | length(facet_vars) %in% 1:2,
-    "Variables in 'facet_vars' must be available in the object" =
+    "Variables in 'facet_vars' must be available in the objects 'meta.data' slot" =
       is.null(facet_vars) | all(facet_vars %in% colnames(object[[]])),
 
     "'marker1' must be a character of length 1" =
@@ -140,14 +142,14 @@ pseudocolor_plot <- function(
     "'margin_density' must be either TRUE or FALSE" =
       is.logical(margin_density),
 
-    "'pt.size' must be a numeric of length 1" =
-      is.numeric(pt.size),
+    "'pt_size' must be a numeric of length 1" =
+      is.numeric(pt_size),
     "'alpha' must be a numeric of length 1" =
       is.numeric(alpha),
     "'layer' must be a character of length 1" =
       is.character(layer),
-    "'coord.fixed' must be either TRUE or FALSE" =
-      is.logical(coord.fixed),
+    "'coord_fixed' must be either TRUE or FALSE" =
+      is.logical(coord_fixed),
 
     "'plot_gate' must be either NULL or a data.frame" =
       is.null(plot_gate) | is.data.frame(plot_gate),
@@ -161,8 +163,8 @@ pseudocolor_plot <- function(
       is.null(facet_vars) | !isTRUE(margin_density)
   )
 
-  if(isTRUE(coord.fixed) && isTRUE(margin_density)) {
-    warning("Fixed coordinates ('coord.fixed' = TRUE) is not supported when 'margin_density' is TRUE")
+  if(isTRUE(coord_fixed) && isTRUE(margin_density)) {
+    warn("Fixed coordinates ('coord_fixed' = TRUE) is not supported when 'margin_density' is TRUE")
   }
 
   # Get data
@@ -172,28 +174,25 @@ pseudocolor_plot <- function(
 
   plot_data <-
     plot_data %>%
-    rename(marker1 = all_of(marker1),
-           marker2 = all_of(marker2)) %>%
-    group_by_at(all_of(facet_vars)) %>%
+    rename(marker1 = !!marker1,
+           marker2 = !!marker2) %>%
+    group_by_at(facet_vars) %>%
     mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
     ungroup()
 
   if(isTRUE(scale_density)) {
     plot_data <-
       plot_data %>%
-      group_by_at(all_of(facet_vars)) %>%
+      group_by_at(facet_vars) %>%
       mutate(dens = dens / max(dens)) %>%
       ungroup()
   }
 
   # Set plot theme
-  plot_theme <-
-    theme_bw()
-
   if(is.null(facet_vars)) {
 
     plot_theme <-
-      plot_theme +
+      theme_bw() +
       theme(panel.grid = element_blank(),
             panel.spacing = unit(0, "lines"),
             plot.margin = unit(c(0, 0, 0, 0), "lines"))
@@ -201,7 +200,7 @@ pseudocolor_plot <- function(
   } else {
 
     plot_theme <-
-      plot_theme +
+      theme_bw() +
       theme(panel.grid = element_blank())
 
   }
@@ -222,18 +221,30 @@ pseudocolor_plot <- function(
     ggplot(aes(marker1, marker2, color = dens)) +
     geom_hline(yintercept = 0, color = "gray") +
     geom_vline(xintercept = 0, color = "gray") +
-    geom_point(size = pt.size,
+    geom_point(size = pt_size,
                alpha = alpha,
                show.legend = F) +
-    scale_color_viridis_c(option = "H") +
     scale_x_continuous(limits = plot_range) +
     scale_y_continuous(limits = plot_range) +
     plot_theme +
     labs(x = marker1,
          y = marker2)
 
-  if(isTRUE(coord.fixed) && isFALSE(margin_density)) {
+  if(isTRUE(coord_fixed) && isFALSE(margin_density)) {
     plot <- plot + coord_fixed()
+  }
+
+  if(!is.null(colors)) {
+
+    plot <-
+      plot +
+      scale_color_gradientn(colors = colors)
+
+  } else {
+
+    plot <-
+      plot +
+      scale_color_viridis_c(option = "H")
   }
 
   # Facet
