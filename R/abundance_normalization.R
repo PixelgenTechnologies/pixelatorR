@@ -170,8 +170,6 @@ NormalizeMPX.Matrix <- function(
 #' @rdname NormalizeMPX
 #' @method NormalizeMPX MPXAssay
 #'
-#' @importFrom SeuratObject LayerData LayerData<-
-#'
 #' @export
 #'
 NormalizeMPX.MPXAssay <- function(
