@@ -119,6 +119,13 @@ WriteMPX_pxl_file <- function (
 
   # Create a temporary directory
   pxl_folder <- file.path(fs::path_temp(), .generate_random_string())
+  while (fs::dir_exists(pxl_folder)) {
+    err <- try(fs::dir_delete(pxl_folder))
+    if (inherits(err, "try-error")) {
+      warn(glue("Failed to delete temporary directory '{col_br_blue(pxl_folder)}'."))
+      pxl_folder <- file.path(fs::path_temp(), .generate_random_string())
+    }
+  }
   fs::dir_create(path = pxl_folder)
 
   cli_rule(left = "Creating .pxl file")
@@ -636,7 +643,8 @@ WriteMPX_pxl_file <- function (
   pxl_folder
 ) {
 
-  sb <- cli_status("{symbol$arrow_right} Fetching layouts and marker count data for {length(cg_list)} components...")
+  sb <- cli_status(glue("{symbol$arrow_right} Fetching layouts and ",
+                        "marker count data for {length(cg_list)} components..."))
 
   all_data <- lapply(names(cg_list), function(nm) {
 
@@ -647,9 +655,20 @@ WriteMPX_pxl_file <- function (
 
     layouts <- cg@layout
 
+    # Add node names to layout tibbles
+    layouts <- lapply(layouts, function(ly) {
+      node_names <- rownames(cg@counts)
+      if (attr(cg@cellgraph, "type") == "bipartite") {
+        node_names <- stringr::str_replace(node_names, "-[A|B]", "")
+      }
+      ly %>% mutate(name = node_names) %>% relocate(name, .before = x)
+    })
+
     layout_types <- names(layouts)
+
+    # Modify layout names to include "_3d" if needed
     layout_types <- sapply(layout_types, function(layout_type) {
-      ifelse((!str_detect(layout_type, "_3d$")) & (ncol(layouts[[layout_type]]) == 3),
+      ifelse((!str_detect(layout_type, "_3d$")) & (ncol(layouts[[layout_type]]) == 4),
              paste0(layout_type, "_3d"),
              layout_type)
     })
@@ -663,14 +682,14 @@ WriteMPX_pxl_file <- function (
       return(cg@counts %>% Matrix::t())
     }) %>% do.call(cbind, .)
     colnames(merged_counts) <- 1:ncol(merged_counts)
-    #merged_counts <- SeuratObject::RowMergeSparseMatrices(all_counts[[1]], all_counts[-1])
 
     merged_layouts <- lapply(names(layouts), function(layout_type) {
       layout_tbl <- layouts[[layout_type]]
+      # If the layout only has x,y columns, add a third z column of NAs
       if (ncol(layout_tbl) == 2 & !"z" %in% names(layout_tbl)) {
         layout_tbl <- layout_tbl %>% mutate(z = NA_real_)
       }
-      layout_tbl <- layout_tbl[, c("x", "y", "z")]
+      layout_tbl <- layout_tbl %>% select(all_of(c("name", "x", "y", "z")))
       layout_tbl <- layout_tbl %>%
         mutate(layout = layout_type, component = nm, graph_projection = attr(cg@cellgraph, "type"))
       return(layout_tbl)
@@ -700,10 +719,14 @@ WriteMPX_pxl_file <- function (
   # Marker counts are "int64" and layout coordinates are "double"
   arr_table_schema <- arrow::schema(
     c(rep(list(arrow::int64()), ncol(all_count_data_merged)),
-      c(rep(list(double()), ncol(all_layout_merged) - 3),
+      c(rep(list(double()), ncol(all_layout_merged) - 7),
         arrow::string(),
-        arrow::string(),
-        arrow::string())) %>%
+        rep(list(double()), 3),
+        rep(list(arrow::string()), 3))) %>%
+        #arrow::string(),
+        #arrow::string(),
+        #arrow::string(),
+        #arrow::string())) %>%
       set_names(nm = c(colnames(all_count_data_merged), colnames(all_layout_merged))))
 
   # Merge data

@@ -312,7 +312,16 @@ LoadCellGraphs.MPXAssay <- function (
       cg <- cg_list_full[[nm]]
       cg@layout <- list()
       for (layout_type in all_layout_types) {
-        cg@layout[[layout_type]] <- precomputed_layouts_merged[[layout_type]][[nm]]
+        if (attr(cg@cellgraph, "type") == "bipartite") {
+          node_names <- rownames(cg@counts) %>%
+            stringr::str_replace("-[A|B]", "")
+        } else {
+          node_names <- rownames(cg@counts)
+        }
+        # Rearrange layout node coordinates to match CellGraph node order
+        coords <- precomputed_layouts_merged[[layout_type]][[nm]]
+        coords <- coords[match(node_names, coords$name), ]
+        cg@layout[[layout_type]] <- coords %>% select(-all_of("name"))
       }
       return(cg)
     }) %>% set_names(nm = names(cg_list_full))

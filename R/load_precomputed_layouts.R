@@ -45,6 +45,13 @@ ReadMPX_layouts <- function (
 
   # Create temporary directory
   temp_layout_dir <- file.path(fs::path_temp(), "temp_layouts")
+  while (fs::dir_exists(temp_layout_dir)) {
+    err <- try(fs::dir_delete(temp_layout_dir))
+    if (inherits(err, "try-error")) {
+      warn(glue("Failed to delete temporary directory '{col_br_blue(temp_layout_dir)}'."))
+      temp_layout_dir <- file.path(fs::path_temp(), "temp_layouts", .generate_random_string())
+    }
+  }
   fs::dir_create(temp_layout_dir)
 
   # Unzip layout parquet files
@@ -60,7 +67,7 @@ ReadMPX_layouts <- function (
   # Load hive-styled parquet files
   coords <- arrow::open_dataset(temp_layout_dir)
   coords <- coords %>%
-    select(any_of(c("x", "y", "z", "sample")), component, graph_projection, layout) %>%
+    select(any_of(c("name", "x", "y", "z", "sample")), component, graph_projection, layout) %>%
     collect()
 
   # Handle graph_projections
