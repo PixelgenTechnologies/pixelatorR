@@ -161,6 +161,10 @@ pseudocolor_plot <- function(
       is.null(facet_vars) | !isTRUE(margin_density)
   )
 
+  if(isTRUE(coord.fixed) && isTRUE(margin_density)) {
+    warning("Fixed coordinates ('coord.fixed' = TRUE) is not supported when 'margin_density' is TRUE")
+  }
+
   # Get data
   plot_data <-
     FetchData(object, vars = c(facet_vars, marker1, marker2),
@@ -227,10 +231,6 @@ pseudocolor_plot <- function(
     plot_theme +
     labs(x = marker1,
          y = marker2)
-
-  if(isTRUE(coord.fixed) && isTRUE(margin_density)) {
-    warning("Fixed coordinates ('coord.fixed' = TRUE) is not supported when 'margin_density' is TRUE")
-  }
 
   if(isTRUE(coord.fixed) && isFALSE(margin_density)) {
     plot <- plot + coord_fixed()
