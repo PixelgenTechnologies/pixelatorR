@@ -28,6 +28,30 @@
          alternative = test_result$alternative)
 }
 
+#' Create a temporary directory
+#'
+#' This function will attempt to create a clean directory in
+#' temp dir with the given name \code{dir_name}. If the directory
+#' already exists, it will first be deleted. If the deletion fails,
+#' a random string will be appended to the directory name to make
+#' sure that the directory is unique.
+#'
+#' @param dir_name A character string with the directory name
+#'
+#' @noRd
+.create_unique_temp_dir <- function(dir_name) {
+  temp_layout_dir <- file.path(fs::path_temp(), dir_name)
+  while (fs::dir_exists(temp_layout_dir)) {
+    err <- try(fs::dir_delete(temp_layout_dir))
+    if (inherits(err, "try-error")) {
+      warn(glue("Failed to delete temporary directory '{col_br_blue(temp_layout_dir)}'."))
+      temp_layout_dir <- file.path(fs::path_temp(), dir_name, .generate_random_string())
+    }
+  }
+  fs::dir_create(temp_layout_dir)
+  return(temp_layout_dir)
+}
+
 
 #' Check if a path is absolute
 #' @noRd

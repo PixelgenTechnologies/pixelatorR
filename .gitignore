@@ -4,3 +4,4 @@
 **/.DS_Store
 ^default.profraw
 ^pkgdown
+environment_arm.yml

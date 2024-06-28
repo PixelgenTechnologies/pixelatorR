@@ -20,35 +20,43 @@ test_that("ReadMPX_layouts works as expected", {
   expect_no_error({layouts <- ReadMPX_layouts(filename = pxl_file_new)})
   expect_type(layouts, "list")
   expect_equal(names(layouts), "pmds_3d")
-  expect_equal(dim(layouts[[1]][[1]]), c(3507, 3))
+  expect_equal(dim(layouts[[1]][[1]]), c(3507, 4))
   expect_equal(layouts$pmds_3d[[1]] %>% head(),
                structure(
                  list(
+                   name = c(
+                     "CTAACGGCGAGAATCGTGAAGTGTA",
+                     "TGTGGTATGTCGTTTAAGAATTAGT",
+                     "TTTTGGTTAAGGCATAAATAGTGAG",
+                     "CGGGCGTAGGATAGGTCTGGGTAGT",
+                     "GGTAGGTCCACTCTTATAGGTTTGT",
+                     "TATAAAGCAATAGTTGAAGGTATTT"
+                   ),
                    x = c(
                      -36.9081349119502,
-                     17.7141032144432,
-                     -17.1958361894218,
+                     17.7141032144432,-17.1958361894217,
                      11.5713232744387,
-                     -75.9335522318153,
+                     -75.9335522318152,
                      82.3431503327363
                    ),
                    y = c(
-                     -33.0424053966678,-0.636065155831885,
-                     -62.6655711057752,
-                     -3.26614274789455,
-                     14.9023914761144,
-                     7.63387064966918
+                     -33.0424053966679,
+                     -0.63606515583166,
+                     -62.6655711057752,-3.26614274789496,
+                     14.9023914761145,
+                     7.63387064966907
                    ),
                    z = c(
-                     10.8652645884172,
-                     -34.6108549880661,-17.6882955492481,
-                     68.6908927991004,
+                     10.865264588417,-34.610854988066,
+                     -17.6882955492484,
+                     68.6908927991003,
                      -24.7593144859087,
-                     22.3289299020928
+                     22.328929902093
                    )
                  ),
                  row.names = c(NA,-6L),
-                 class = c("tbl_df", "tbl", "data.frame")
+                 class = c("tbl_df",
+                           "tbl", "data.frame")
                ))
 
 })
@@ -63,3 +71,4 @@ test_that("ReadMPX_layouts fails with invalid input", {
   expect_error({layouts <- ReadMPX_layouts(filename = pxl_file)})
 
 })
+

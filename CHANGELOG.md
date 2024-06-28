@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - 2024-06-27
+
+### Fixes
+
+- Updated `ReadMPX_layouts` to handle new layout parquet file format (including node names). This update is necessary to ensure that the order of pre-computed layout node coordinates match the order of nodes in loaded graphs.
+- Updated `LoadCellGraphs` to add pre-computed layouts to `CellGraph` objects with correct node order.
+- Updated `WriteMPX_pxl_file` to include node names in the exported layout parquet files. 
+
 ## [0.7.1] - 2024-06-24
 
 ### Added

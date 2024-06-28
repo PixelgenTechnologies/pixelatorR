@@ -133,8 +133,7 @@ LoadCellGraphs.tbl_df <- function (
 }
 
 
-#' @param load_precomputed_layouts Loads pre-computed layouts from
-#' the PXL file if available.
+#' @param load_layouts Load layouts from the PXL file if available.
 #' @param force Force load graph(s) if they are already loaded
 #' @param cl A cluster object created by makeCluster, or an integer
 #' to indicate number of child-processes (integer values are ignored
@@ -152,7 +151,7 @@ LoadCellGraphs.MPXAssay <- function (
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_precomputed_layouts = FALSE,
+  load_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -196,17 +195,17 @@ LoadCellGraphs.MPXAssay <- function (
   fs_map_nested_filtered <- fs_map_unnested_filtered %>%
     tidyr::nest(data = c("current_id", "original_id"))
 
-  # Check for pre-computed layouts
-  if (load_precomputed_layouts) {
+  # Check for layouts
+  if (load_layouts) {
     if (load_as != "bipartite") {
-      abort(glue("Pre-computed layouts are currently only supported ",
-            "for bipartite graphs."))
+      abort(glue("This function currently only supports ",
+            "bipartite graphs."))
     }
     for (f in fs_map_nested_filtered$pxl_file) {
       pxl_file_info <- inspect_pxl_file(f)
       # Check if the file contains layouts
       if (!"layouts.parquet" %in% pxl_file_info$file_type) {
-        abort(glue("File '{col_br_blue(f)}' does not contain any pre-computed layouts."))
+        abort(glue("File '{col_br_blue(f)}' does not contain any component layouts."))
       }
     }
 
@@ -306,13 +305,22 @@ LoadCellGraphs.MPXAssay <- function (
     return(cg_list)
   }) %>% unlist()
 
-  # Add layouts to the list of cellgraphs is precomputed layouts were loaded
-  if (load_precomputed_layouts) {
+  # Add layouts to the list of cellgraphs if layouts were loaded
+  if (load_layouts) {
     cg_list_full <- lapply(names(cg_list_full), function(nm) {
       cg <- cg_list_full[[nm]]
       cg@layout <- list()
       for (layout_type in all_layout_types) {
-        cg@layout[[layout_type]] <- precomputed_layouts_merged[[layout_type]][[nm]]
+        if (attr(cg@cellgraph, "type") == "bipartite") {
+          node_names <- rownames(cg@counts) %>%
+            stringr::str_replace("-[A|B]", "")
+        } else {
+          node_names <- rownames(cg@counts)
+        }
+        # Rearrange layout node coordinates to match CellGraph node order
+        coords <- precomputed_layouts_merged[[layout_type]][[nm]]
+        coords <- coords[match(node_names, coords$name), ]
+        cg@layout[[layout_type]] <- coords %>% select(-all_of("name"))
       }
       return(cg)
     }) %>% set_names(nm = names(cg_list_full))
@@ -358,7 +366,7 @@ LoadCellGraphs.Seurat <- function (
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_precomputed_layouts = FALSE,
+  load_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -392,7 +400,7 @@ LoadCellGraphs.Seurat <- function (
       cells = cells,
       load_as = load_as,
       add_marker_counts = add_marker_counts,
-      load_precomputed_layouts = load_precomputed_layouts,
+      load_layouts = load_layouts,
       force = force,
       chunk_size = chunk_size,
       cl = cl,
