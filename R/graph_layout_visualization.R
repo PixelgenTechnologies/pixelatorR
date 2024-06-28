@@ -508,7 +508,7 @@ Plot2DGraphM <- function (
 #' @param node_size Size of nodes
 #' @param show_Bnodes  Should B nodes be included in the visualization?
 #' This option is only applicable to bipartite graphs.
-#' @param ... Additional parameters
+#' @param ... Additional parameters passed to \code{plot_ly}
 #' @param showgrid Show the grid lines. Default TRUE
 #'
 #' @rdname Plot3DGraph
@@ -535,7 +535,7 @@ Plot3DGraph <- function (
   cell_id,
   marker = NULL,
   assay = NULL,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = "pmds",
   project = FALSE,
   aspectmode = c("data", "cube"),
   colors =  c("lightgrey", "mistyrose", "red", "darkred"),
@@ -567,15 +567,6 @@ Plot3DGraph <- function (
         (length(marker) == 1)
     )
   }
-
-  # Check and select a layout method
-  layout_method <- match.arg(layout_method, c("pmds", "wpmds", "fr", "kk", "drl"))
-  layout_method_ext <- switch (layout_method,
-                               "fr" = "Fruchterman Reingold (fr)",
-                               "kk" = "Kamada Kawai (kk)",
-                               "drl" = "DrL graph layout generator (drl)",
-                               "pmds" = "pivot MDS (pmds)"
-  )
 
   # Check and select an aspectmode
   aspectmode <- match.arg(aspectmode, choices = c("data", "cube"))
@@ -626,8 +617,9 @@ Plot3DGraph <- function (
 
   if (length(graph) == 0)
       abort(glue("Missing cellgraph for component '{cell_id}'"))
-  if (length(layout) < 3)
-      abort(glue("Too few dimensions for a 3D visualization of layout '{layout_method}' for component '{cell_id}'"))
+  if (ncol(layout) != 3)
+      abort(glue("Expected 3 dimensions in '{layout_method}'",
+                 " layout, found {ncol(layout)}'"))
 
   # Add node marker counts if needed
   if (!is.null(marker)) {
@@ -673,7 +665,8 @@ Plot3DGraph <- function (
                          y = ~y,
                          z = ~z,
                          marker = list(size = node_size),
-                         mode = "scatter3d")
+                         mode = "scatter3d",
+                         ...)
   if (!is.null(marker)) {
     if (marker == "node_type") {
       fig <- fig %>%

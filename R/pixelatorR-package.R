@@ -51,6 +51,7 @@
 #' @importFrom dplyr mutate_if
 #' @importFrom dplyr n
 #' @importFrom dplyr pull
+#' @importFrom dplyr relocate
 #' @importFrom dplyr rename
 #' @importFrom dplyr row_number
 #' @importFrom dplyr select

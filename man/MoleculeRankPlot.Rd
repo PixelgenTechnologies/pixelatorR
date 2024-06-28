@@ -36,12 +36,12 @@ pxl_file <- system.file("extdata/five_cells",
 seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj
 
-# Plot edge ranks with data.frame
+# Plot with data.frame
 MoleculeRankPlot(seur_obj[[]])
 
 library(pixelatorR)
 
-# Plot edge ranks with Seurat object
+# Plot with Seurat object
 MoleculeRankPlot(seur_obj)
 
 }

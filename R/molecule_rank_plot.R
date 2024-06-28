@@ -25,7 +25,7 @@ globalVariables(
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
-#' # Plot edge ranks with data.frame
+#' # Plot with data.frame
 #' MoleculeRankPlot(seur_obj[[]])
 #'
 #' @export
@@ -98,7 +98,7 @@ MoleculeRankPlot.data.frame <- function (
 #' @examples
 #' library(pixelatorR)
 #'
-#' # Plot edge ranks with Seurat object
+#' # Plot with Seurat object
 #' MoleculeRankPlot(seur_obj)
 #'
 #' @export
@@ -138,7 +138,6 @@ MoleculeRankPlot.Seurat <- function (
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
-#' # Plot edge ranks with data.frame
 #' EdgeRankPlot(seur_obj)
 #'
 #' @export

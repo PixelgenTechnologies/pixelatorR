@@ -29,7 +29,6 @@ pxl_file <- system.file("extdata/five_cells",
 seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj
 
-# Plot edge ranks with data.frame
 EdgeRankPlot(seur_obj)
 
 }

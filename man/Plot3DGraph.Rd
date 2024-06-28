@@ -9,7 +9,7 @@ Plot3DGraph(
   cell_id,
   marker = NULL,
   assay = NULL,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = "pmds",
   project = FALSE,
   aspectmode = c("data", "cube"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
@@ -52,7 +52,7 @@ with at least two color names.}
 \item{show_Bnodes}{Should B nodes be included in the visualization?
 This option is only applicable to bipartite graphs.}
 
-\item{...}{Additional parameters}
+\item{...}{Additional parameters passed to \code{plot_ly}}
 }
 \value{
 A interactive 3D plot of a component graph layout as a \code{plotly} object
