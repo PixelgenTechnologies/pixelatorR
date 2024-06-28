@@ -178,7 +178,7 @@ ReadMPX_Seurat <- function (
       cg_assay@polarization <- polarization
     }
     # Load colocalization scores
-    if (load_polarity_scores) {
+    if (load_colocalization_scores) {
       colocalization <- ReadMPX_item(filename = filename, items = "colocalization", verbose = FALSE)
       cg_assay@colocalization <- colocalization
     }
