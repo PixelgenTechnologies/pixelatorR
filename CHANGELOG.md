@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Updated `ReadMPX_layouts` to handle new layout parquet file format (including node names). This update is necessary to ensure that the order of pre-computed layout node coordinates match the order of nodes in loaded graphs.
 - Updated `LoadCellGraphs` to add pre-computed layouts to `CellGraph` objects with correct node order.
-- Updated `WriteMPX_pxl_file` to include node names in the layout parquet files. 
+- Updated `WriteMPX_pxl_file` to include node names in the exported layout parquet files. 
 
 ## [0.7.1] - 2024-06-24
 

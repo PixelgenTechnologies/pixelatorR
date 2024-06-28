@@ -42,7 +42,7 @@ for (assay_version in c("v3", "v5")) {
     expect_s4_class(seur_obj, "Seurat")
 
     # Data set with pre-computed layouts
-    seur_obj_precomputed <- LoadCellGraphs(seur_obj_precomputed, cells = colnames(seur_obj)[1], load_precomputed_layouts = TRUE)
+    seur_obj_precomputed <- LoadCellGraphs(seur_obj_precomputed, cells = colnames(seur_obj)[1], load_layouts = TRUE)
     layouts <- seur_obj_precomputed[["mpxCells"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(2470, 3))
     expect_equal(layouts[[1]] %>% head(),

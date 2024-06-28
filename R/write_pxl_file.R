@@ -118,15 +118,7 @@ WriteMPX_pxl_file <- function (
   }
 
   # Create a temporary directory
-  pxl_folder <- file.path(fs::path_temp(), .generate_random_string())
-  while (fs::dir_exists(pxl_folder)) {
-    err <- try(fs::dir_delete(pxl_folder))
-    if (inherits(err, "try-error")) {
-      warn(glue("Failed to delete temporary directory '{col_br_blue(pxl_folder)}'."))
-      pxl_folder <- file.path(fs::path_temp(), .generate_random_string())
-    }
-  }
-  fs::dir_create(path = pxl_folder)
+  pxl_folder <- .create_unique_temp_dir(paste0("pxl_files_", .generate_random_string()))
 
   cli_rule(left = "Creating .pxl file")
 
@@ -176,6 +168,12 @@ WriteMPX_pxl_file <- function (
     recurse = TRUE,
     include_directories = FALSE
   )
+
+  # Remove temporary directory
+  err <- try(fs::dir_delete(pxl_folder))
+  if (inherits(err, "try-error")) {
+    warn(glue("Failed to remove temporary directory '{col_br_blue(pxl_folder)}'."))
+  }
 
   cli_alert_success("Finished!")
 
@@ -723,10 +721,6 @@ WriteMPX_pxl_file <- function (
         arrow::string(),
         rep(list(double()), 3),
         rep(list(arrow::string()), 3))) %>%
-        #arrow::string(),
-        #arrow::string(),
-        #arrow::string(),
-        #arrow::string())) %>%
       set_names(nm = c(colnames(all_count_data_merged), colnames(all_layout_merged))))
 
   # Merge data

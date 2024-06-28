@@ -1,10 +1,10 @@
-#' Load pre-computed layouts from an PXL file
+#' Load layouts from an PXL file
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
 #' Layouts can be pre-computed with the Pixelator data processing pipeline and
 #' are stored in a hive-styled partitioning in the PXL file. This function reads
-#' the pre-computed layouts from the PXL file and returns them as a list. Use
+#' the layouts from the PXL file and returns them as a list. Use
 #' \code{\link{inspect_pxl_file}} to check the contents of a PXL file.
 #'
 #' @param filename Path to a PXL file
@@ -13,7 +13,7 @@
 #'  projections are present in the file, only the selected one is loaded.
 #' @param verbose Print messages
 #'
-#' @return A list of lists with the pre-computed layouts. At the top level, the list is split by
+#' @return A list of lists with the layouts. At the top level, the list is split by
 #' layout. At the second level, the list is split by component. The components are sorted in
 #' the order they appear in the PXL file.
 #'
@@ -40,19 +40,11 @@ ReadMPX_layouts <- function (
 
   # Check if the file contains layouts
   if (!"layouts.parquet" %in% pxl_file_info$file_type) {
-    abort(glue("File '{col_br_blue(filename)}' does not contain any pre-computed layouts."))
+    abort(glue("File '{col_br_blue(filename)}' does not contain any layouts."))
   }
 
   # Create temporary directory
-  temp_layout_dir <- file.path(fs::path_temp(), "temp_layouts")
-  while (fs::dir_exists(temp_layout_dir)) {
-    err <- try(fs::dir_delete(temp_layout_dir))
-    if (inherits(err, "try-error")) {
-      warn(glue("Failed to delete temporary directory '{col_br_blue(temp_layout_dir)}'."))
-      temp_layout_dir <- file.path(fs::path_temp(), "temp_layouts", .generate_random_string())
-    }
-  }
-  fs::dir_create(temp_layout_dir)
+  temp_layout_dir <- .create_unique_temp_dir("temp_layouts")
 
   # Unzip layout parquet files
   layout_files <- pxl_file_info$file[[which(pxl_file_info$file_type == "layouts.parquet")]]
@@ -112,6 +104,12 @@ ReadMPX_layouts <- function (
       set_names(nm = group_keys(coords_component_grouped)$component)
     return(coords_component_split[cells])
   })
+
+  # Remove temporary directory
+  err <- try(fs::dir_delete(temp_layout_dir))
+  if (inherits(err, "try-error")) {
+    warn(glue("Failed to remove temporary directory '{col_br_blue(temp_layout_dir)}'."))
+  }
 
   return(coords_layout_split)
 
