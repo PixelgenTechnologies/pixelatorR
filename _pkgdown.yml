@@ -53,6 +53,7 @@ reference:
     - MoleculeRankPlot
     - EdgeRankPlot
     - TauPlot
+    - PseudocolorPlot
     - Plot2DGraph
     - Plot2DGraphM
     - Plot3DGraph
