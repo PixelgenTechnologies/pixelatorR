@@ -52,7 +52,7 @@ Suggests:
     duckdb,
     dbplyr,
     reticulate,
-    MASS
+    MASS,
     limma,
     mclust
 Collate: 
