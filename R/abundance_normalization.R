@@ -25,6 +25,7 @@
 #'
 #' @return A matrix of normalized MPX counts
 #'
+#' @noRd
 .normalize_method_dsb <- function(
     counts,
     isotype_controls,
@@ -64,11 +65,11 @@ expect_limma()
 
     failed_markers <- setdiff(rownames(counts_log), names(mu1))
 
-    cli_alert_warning(  
+    cli_alert_warning(
     glue("Empirical background cound not be fit for ",
         "{length(failed_markers)} proteins: ",
         "{paste(failed_markers, collapse = ', ')}.")
-    ) 
+    )
     cli_alert_info(
       "Values returned will be log transformed without background correction."
     )
@@ -108,7 +109,7 @@ expect_limma()
 #'
 #' @param counts A matrix of MPX counts
 #' @param ... Additional arguments. Currently not used.
-#' 
+#'
 #' @examples
 #'
 #' library(pixelatorR)
@@ -121,6 +122,7 @@ expect_limma()
 #'
 #' @return A matrix of normalized MPX counts
 #'
+#' @noRd
 .normalize_method_clr <- function(
     counts,
     ...
