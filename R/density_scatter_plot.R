@@ -41,22 +41,27 @@
 
 }
 
-#' Create a pseudocolor plot.
+#' Create a density scatter / pseudocolor plot.
 #'
-#' Create a pseudocolor plot of two markers.
+#' Create a density scatter plot, also known as a pseudocolor plot, of two markers from a Seurat object. The points in
+#' the scatter plot are colored by the point density, determined by 2D kernel density estimation. Optionally, the plot
+#' can be faceted by one or two variables and a gate can be plotted.
+#'
 #'
 #' @param object A Seurat object.
 #' @param marker1 Marker to plot along the x-axis.
 #' @param marker2 Marker to plot along the y-axis.
-#' @param facet_vars Variables to facet the plot by.
+#' @param facet_vars Variables to facet the plot by. If NULL, no faceting is done. If a character vector with 1 element,
+#'                   the plot is faceted by rows. If a character vector with 2 elements, the plot is faceted by rows and
+#'                   columns.
 #' @param plot_gate A data.frame with columns 'xmin', 'xmax', 'ymin', 'ymax' to plot a gate. This data.frame can also
-#'                  contain the variables in 'facet_vars' to plot different gates by facets.
+#'                  contain the variables in 'facet_vars' to plot different gates in different facets.
 #' @param scale_density Scale the density to the maximum density per facet.
 #' @param margin_density Add marginal density plots. Only supported when 'facet_vars' is NULL.
 #' @param coord_fixed Fix the aspect ratio of the plot. Only supported when 'margin_density' is FALSE.
 #' @param pt_size Size of the points.
 #' @param alpha Transparency of the points.
-#' @param layer Name of layer to plot.
+#' @param layer Name of layer to plot. If NULL, the default layer is used.
 #' @param grid_n Number of grid points to calculate the density.
 #' @param colors Colors to use for the density plot. If NULL, the 'viridis' "turbo" palette is used.
 #' @param ... Additional arguments to pass to 'MASS::kde2d'.
@@ -93,16 +98,16 @@
 #'              sample = c("A", "B"))
 #'
 #'
-#' PseudocolorPlot(object,
-#'                  marker1 = "Feature1",
-#'                  marker2 = "Feature2",
-#'                  facet_vars = "sample",
-#'                  plot_gate = plot_gate,
-#'                  layer = "counts")
+#' DensityScatterPlot(object,
+#'                    marker1 = "Feature1",
+#'                    marker2 = "Feature2",
+#'                    facet_vars = "sample",
+#'                    plot_gate = plot_gate,
+#'                    layer = "counts")
 #'
 #' @export
 #'
-PseudocolorPlot <- function(
+DensityScatterPlot <- function(
     object,
     marker1,
     marker2,
@@ -110,7 +115,7 @@ PseudocolorPlot <- function(
     plot_gate = NULL,
     scale_density = TRUE,
     margin_density = FALSE,
-    coord_fixed = T,
+    coord_fixed = TRUE,
     pt_size = 1,
     alpha = 1,
     layer = NULL,
@@ -223,7 +228,7 @@ PseudocolorPlot <- function(
     geom_vline(xintercept = 0, color = "gray") +
     geom_point(size = pt_size,
                alpha = alpha,
-               show.legend = F) +
+               show.legend = FALSE) +
     scale_x_continuous(limits = plot_range) +
     scale_y_continuous(limits = plot_range) +
     plot_theme +
@@ -299,13 +304,13 @@ PseudocolorPlot <- function(
       plot +
       geom_rect(data = plot_gate,
                 aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
-                inherit.aes = F,
+                inherit.aes = FALSE,
                 fill = "transparent",
                 color = "black",
                 linetype = "dashed") +
       geom_text(data = gate_label,
                 aes(x = x, y = y, label = label),
-                inherit.aes = F,
+                inherit.aes = FALSE,
                 color = "black",
                 vjust = 1,
                 size = 3)
