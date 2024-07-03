@@ -4,16 +4,9 @@ globalVariables(
             'upia1', 'upia2', 'component', 'rn', 'x', 'y', 'z', 'name',
             'type', 'g', 'from', 'to', 'node_type', 'id', 'layout',
             'pearson_z', 'p', 'p.value', '.', 'original_id', 'current_id',
-<<<<<<< HEAD
-<<<<<<< HEAD
             'graph_projection', "label", "in_gate", "dens", "xmax",
-            "xmin", "ymax", "ymin"),
-=======
+            "xmin", "ymax", "ymin",
             'graph_projection', "modality", "mixture_component"),
->>>>>>> 74d3ea0 (PR fixes)
-=======
-            'graph_projection', "modality", "mixture_component"),
->>>>>>> a9e12c3655ced15ea594cf1fe352b3a7e55b968e
   package = 'pixelatorR',
   add = TRUE
 )
