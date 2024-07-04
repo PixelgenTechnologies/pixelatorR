@@ -5,7 +5,8 @@ globalVariables(
             'type', 'g', 'from', 'to', 'node_type', 'id', 'layout',
             'pearson_z', 'p', 'p.value', '.', 'original_id', 'current_id',
             'graph_projection', "label", "in_gate", "dens", "xmax",
-            "xmin", "ymax", "ymin",
+            "xmin", "ymax", "ymin", "marker_x", "marker_y",
+            "value_x", "value_y",
             'graph_projection', "modality", "mixture_component"),
   package = 'pixelatorR',
   add = TRUE
