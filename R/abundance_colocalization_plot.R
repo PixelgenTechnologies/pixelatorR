@@ -11,7 +11,7 @@
 #' @param coord_fixed Fix the aspect ratio of the plot.
 #' @param pt_size Size or size range of the points.
 #' @param draw_origo Draw lines through the origin (0, 0) in the plot.
-#' @param layer Name of layer to plot. If NULL, the default layer is used.
+#' @param layer Name of layer to fetch abundance data from. If NULL, the default layer is used.
 #' @param coloc_score Name of the colocalization score to plot.
 #' @param colors Colors to use for the colocalization score.
 #'
