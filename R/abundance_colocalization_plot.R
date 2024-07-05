@@ -5,8 +5,7 @@
 #' cell) in the scatter plot are colored by the colocalization of the two markers.
 #'
 #' @param object A Seurat object.
-#' @param markers_x A character vector of markers to plot along the x-axis.
-#' @param markers_y A character vector of markers to plot along the y-axis.
+#' @param markers_x,marker_y A character vector of markers to plot along the x- or y-axis.
 #' @param shared_scales Use the same scales for all plot panels.
 #' @param coord_fixed Fix the aspect ratio of the plot.
 #' @param pt_size Size or size range of the points.
