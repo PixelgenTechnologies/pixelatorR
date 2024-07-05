@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added 
 
-- `AbundanceColocalizationPlot` : Plot a scatter plot the abundance of two sets of markers, colored by the 
+- `AbundanceColocalizationPlot` : Plot a scatter plot of the abundance of two sets of markers, colored by the 
 colocalization score the marker pairs have in each component. 
 
 ## [0.9.0] - 2024-07-03
