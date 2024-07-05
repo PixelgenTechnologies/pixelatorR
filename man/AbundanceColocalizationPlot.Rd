@@ -21,9 +21,7 @@ AbundanceColocalizationPlot(
 \arguments{
 \item{object}{A Seurat object.}
 
-\item{markers_x}{A character vector of markers to plot along the x-axis.}
-
-\item{markers_y}{A character vector of markers to plot along the y-axis.}
+\item{markers_x, marker_y}{A character vector of markers to plot along the x- and y-axis.}
 
 \item{shared_scales}{Use the same scales for all plot panels.}
 
@@ -33,7 +31,7 @@ AbundanceColocalizationPlot(
 
 \item{draw_origo}{Draw lines through the origin (0, 0) in the plot.}
 
-\item{layer}{Name of layer to plot. If NULL, the default layer is used.}
+\item{layer}{Name of layer to fetch abundance data from. If NULL, the default layer is used.}
 
 \item{coloc_score}{Name of the colocalization score to plot.}
 
@@ -43,8 +41,8 @@ AbundanceColocalizationPlot(
 A ggplot object.
 }
 \description{
-Create a scatter plot, of the abundance markers from a Seurat object. The points (each corresponding to a
-cell) in the scatter plot are colored by the colocalization of the two markers.
+Create a scatter plot of the abundance values for two sets of markers from a Seurat object. The points
+(each corresponding to a cell) in the scatter plot are colored by the colocalization of the two markers.
 }
 \examples{
 
