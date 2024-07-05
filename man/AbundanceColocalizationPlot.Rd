@@ -21,7 +21,7 @@ AbundanceColocalizationPlot(
 \arguments{
 \item{object}{A Seurat object.}
 
-\item{markers_x, marker_y}{A character vector of markers to plot along the x- and y-axis.}
+\item{markers_x, markers_y}{A character vector of markers to plot along the x- and y-axis respectively.}
 
 \item{shared_scales}{Use the same scales for all plot panels.}
 
