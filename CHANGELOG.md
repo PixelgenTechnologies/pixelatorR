@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2024-??-??
+
+### Added 
+
+- `AbundanceColocalizationPlot` : Plot a scatter plot of the abundance of two sets of markers, colored by the 
+colocalization score the marker pairs have in each component. 
+
 ## [0.9.0] - 2024-07-03
 
 ### Added 

@@ -60,6 +60,7 @@ Collate:
     'CellGraph.R'
     'CellGraphAssay.R'
     'aaa.R'
+    'abundance_colocalization_plot.R'
     'abundance_normalization.R'
     'cell_count_plot.R'
     'colocalization_heatmap.R'
