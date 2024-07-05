@@ -1,7 +1,7 @@
 
 #' Create an abundance/colocalization scatterplot
 #'
-#' Create a scatter plot, of the abundance markers from a Seurat object. The points (each corresponding to a
+#' Create a scatter plot of the abundance values for two markers from a Seurat object. The points (each corresponding to a
 #' cell) in the scatter plot are colored by the colocalization of the two markers.
 #'
 #' @param object A Seurat object.
