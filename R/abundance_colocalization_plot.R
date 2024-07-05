@@ -103,7 +103,7 @@ AbundanceColocalizationPlot <- function(
   }
 
   if(!is.numeric(coloc_scores[[coloc_score]])) {
-    stop(glue::glue("'{coloc_score}' is not a valid colocalization score."))
+    abort(glue("'{coloc_score}' must reference a column with numeric values, got {class(coloc_scores[[coloc_score]])}."))
   }
 
   coloc_scores <-
