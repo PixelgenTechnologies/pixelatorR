@@ -181,9 +181,6 @@ plotly::plot_ly(
 }
 \references{
 \itemize{
-\item Bivand, R.S., Wong, D.W.S. Comparing implementations of global and
-local indicators of spatial association. TEST 27, 716–748 (2018).
-\url{https://doi.org/10.1007/s11749-018-0599-x}
 \item Ord, J. K., Getis. A. Local Spatial Autocorrelation Statistics:
 Distributional Issues and an Application
 \url{https://doi.org/10.1111/j.1538-4632.1995.tb00912.x}
