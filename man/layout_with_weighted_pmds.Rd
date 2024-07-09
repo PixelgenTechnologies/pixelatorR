@@ -14,7 +14,7 @@ layout_with_weighted_pmds(
 )
 }
 \arguments{
-\item{g}{An igraph object}
+\item{g}{An \code{igraph} or a \code{tbl_graph} object}
 
 \item{dim}{Desired number of dimensions. Can be 2 or 3}
 

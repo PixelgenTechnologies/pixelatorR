@@ -12,7 +12,7 @@
 #' - _prob_dist_ : see \code{\link{cos_distance_weights}}
 #' - _cos_dist_ : see \code{\link{prob_distance_weights}}
 #'
-#' @param g An igraph object
+#' @param g An \code{igraph} or a \code{tbl_graph} object
 #' @param pivots Number of pivots
 #' @param dim Desired number of dimensions. Can be 2 or 3
 #' @param method Edge weighting method to use for computing the layout.
