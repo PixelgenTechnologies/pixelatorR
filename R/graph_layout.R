@@ -6,16 +6,17 @@ NULL
 #' Calculates a graph layout for a component's edgelist, and outputs a list
 #' with the bipartite graph, layout, and antibody counts per A pixel.
 #'
-#' @param layout_method The method for calculating the graph layout; PMDS,
-#' Fruchterman-Reingold (fr), Kamada-Kawai (kk), drl.
+#' @param layout_method The method for calculating the graph layout:
+#' weighted Pivot MDS ("wpmds"), Pivot MDS (pmds), Fruchterman-Reingold ("fr"),
+#' Kamada-Kawai ("kk"), "drl".
 #' @param dim An integer specifying the dimensions of the layout (2 or 3)
 #' @param normalize_layout Logical specifying whether the coordinate system
 #' should be centered at origo and the coordinates scaled such that their median
 #' length (euclidean norm) is 1.
 #' @param k The size of the neighborhood from which to pool counts from in
 #' the UPIA antibody count table. 0 is recommended.
-#' @param pivots Only used for "pmds" graph layout. See \code{?layout_with_pmds}
-#' for details
+#' @param pivots Only used for "wpmds" and "pmds" layout algorithms.
+#' See \code{?layout_with_pmds} for details
 #' @param project_on_unit_sphere Should the resulting layout be projected onto
 #'  a unit sphere?
 #' @param seed Set seed for reproducibility
@@ -63,7 +64,7 @@ NULL
 #'
 ComputeLayout.tbl_graph <- function (
   object,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -114,10 +115,11 @@ ComputeLayout.tbl_graph <- function (
 
   } else {
     # Check and select a layout method
-    layout_method <- match.arg(layout_method, choices = c("pmds", "fr", "kk", "drl"))
+    layout_method <- match.arg(layout_method, choices = c("wpmds", "pmds", "fr", "kk", "drl"))
 
     layout_function <- switch(
       layout_method,
+      "wpmds" = layout_with_weighted_pmds,
       "fr" = layout_with_fr,
       "kk" = layout_with_kk,
       "drl" = layout_with_drl,
@@ -130,8 +132,8 @@ ComputeLayout.tbl_graph <- function (
     layout <-
       object %>%
       {
-        if (layout_method == "pmds") {
-          layout_function(., dim = dim, pivots = pivots)
+        if (layout_method %in% c("wpmds", "pmds")) {
+          layout_function(., dim = dim, pivots = pivots, ...)
         } else {
           layout_function(., dim = dim, ...)
         }
@@ -172,7 +174,7 @@ ComputeLayout.tbl_graph <- function (
 #'
 ComputeLayout.CellGraph <- function (
   object,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -186,7 +188,7 @@ ComputeLayout.CellGraph <- function (
 ) {
 
   if (is.null(custom_layout_function) & is.null(layout_name)) {
-    layout_name <- match.arg(layout_method, choices = c("pmds", "fr", "kk", "drl"))
+    layout_name <- match.arg(layout_method, choices = c("wpmds", "pmds", "fr", "kk", "drl"))
   }
   if (!is.null(custom_layout_function) & is.null(layout_name)) {
     layout_name <- "custom"
@@ -243,7 +245,7 @@ ComputeLayout.CellGraph <- function (
 #'
 ComputeLayout.MPXAssay <- function (
   object,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -327,7 +329,7 @@ ComputeLayout.CellGraphAssay5 <- ComputeLayout.MPXAssay
 ComputeLayout.Seurat <- function (
   object,
   assay = NULL,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,

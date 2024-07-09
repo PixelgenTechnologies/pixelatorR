@@ -15,7 +15,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{tbl_graph}(
   object,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -29,7 +29,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraph}(
   object,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -44,7 +44,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{MPXAssay}(
   object,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -61,7 +61,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay}(
   object,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -78,7 +78,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay5}(
   object,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -96,7 +96,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{Seurat}(
   object,
   assay = NULL,
-  layout_method = c("pmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -115,8 +115,9 @@ ComputeLayout(object, ...)
 
 \item{...}{Additional parameters passed to other methods}
 
-\item{layout_method}{The method for calculating the graph layout; PMDS,
-Fruchterman-Reingold (fr), Kamada-Kawai (kk), drl.}
+\item{layout_method}{The method for calculating the graph layout:
+weighted Pivot MDS ("wpmds"), Pivot MDS (pmds), Fruchterman-Reingold ("fr"),
+Kamada-Kawai ("kk"), "drl".}
 
 \item{dim}{An integer specifying the dimensions of the layout (2 or 3)}
 
@@ -130,8 +131,8 @@ a unit sphere?}
 \item{k}{The size of the neighborhood from which to pool counts from in
 the UPIA antibody count table. 0 is recommended.}
 
-\item{pivots}{Only used for "pmds" graph layout. See \code{?layout_with_pmds}
-for details}
+\item{pivots}{Only used for "wpmds" and "pmds" layout algorithms.
+See \code{?layout_with_pmds} for details}
 
 \item{seed}{Set seed for reproducibility}
 
