@@ -153,6 +153,7 @@
 #' @importFrom stats pnorm
 #' @importFrom stats prcomp
 #' @importFrom stats quantile
+#' @importFrom stats rnorm
 #' @importFrom stats wilcox.test
 #' @importFrom stringr str_c
 #' @importFrom stringr str_detect

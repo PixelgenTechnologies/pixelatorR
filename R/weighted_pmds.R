@@ -20,11 +20,6 @@
 #' @param scores_power Power to raise the scores to. Default is 3.
 #' @param seed Set seed for pivot sampling
 #'
-#' @import Matrix
-#' @importFrom tidygraph `%N>%` `%E>%` as_tbl_graph
-#' @importFrom stats rnorm
-#' @import dplyr
-#'
 #' @return A matrix of 2D or 3D coordinates
 #'
 #' @examples
@@ -145,8 +140,8 @@ cos_distance_weights <- function (
 
   D <- t(igraph::distances(g, v = pivs, weights = NA))
   D <- D^2
-  cmean <- colMeans(D)
-  rmean <- rowMeans(D)
+  cmean <- Matrix::colMeans(D)
+  rmean <- Matrix::rowMeans(D)
   Dmat <- D - outer(rmean, cmean, function(x, y) x + y) +
     mean(D)
 
@@ -200,7 +195,7 @@ prob_distance_weights <- function (
 
   A <- as_adjacency_matrix(g)
   diag(A) <- 1
-  P <- A / rowSums(A)
+  P <- A / Matrix::rowSums(A)
 
   P_steps <- Reduce("%*%", rep(list(P), k))
   P_steps <- P_steps * A
