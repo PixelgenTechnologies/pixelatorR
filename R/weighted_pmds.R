@@ -92,7 +92,7 @@ layout_with_weighted_pmds <- function (
 #'
 #' @noRd
 cos_dist2 <- function(A, B){
-  rowSums(A * B) / sqrt(rowSums(A * A) * rowSums(B * B))
+  Matrix::rowSums(A * B) / sqrt(Matrix::rowSums(A * A) * Matrix::rowSums(B * B))
 }
 
 #' Calculate edge weights for pMDS
