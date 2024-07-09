@@ -3,8 +3,10 @@
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' Local G is a metric that measures spatial association of some numerical node feature.
-#' The metric can for instance be used to detect hot spots for protein markers in a graph, where nodes
+#' Local G is a local spatial statistic that measures the degree of clustering protein marker counts.
+#'
+#' @section Details:
+#' Local G can for instance be used to detect hot spots for protein markers in a graph, where nodes
 #' that are close to each other have similar marker count values. The metric is a Z-score that
 #' measures the deviation of the observed local marker expression from the expected marker
 #' expression under the null hypothesis of no spatial association. The sign of the score
@@ -22,50 +24,54 @@
 #' as it enhances spatial trends across neighborhoods in the graph, even if the marker counts in
 #' individual nodes are sparse.
 #'
-#' @section \eqn{G_{i}} ("gi"):
-#' Definition of local G (Getis and Ord 1996, p. 263, equation 14.2):
+#' @section Definition of \eqn{G_{i}} ("gi"):
+#' Definition of local G (Ord and Getis 1995, equation 6):
 #' \deqn{
-#' Z(G_i)=\dfrac{[\sum_{j=1}^{n}w_{i,j}x_j]-[\sum_{j=1}^{n}w_{i,j}\bar x_i]}
-#' {s_i\{[n\sum_{j=1}^{n}w_{i,j}^2-(\sum_{j=1}^{n}w_{i,j})^2]/(n-1)\}^{1/2}},\forall j\neq i
+#' Z(G_i)=\dfrac{[\sum_{j=1}^{n}w_{i,j}x_j]-[(\sum_{j=1}^{n}w_{i,j})\bar x^*]}
+#' {s^*\{[(n-1)\sum_{j=1}^{n}w_{i,j}^2-(\sum_{j=1}^{n}w_{i,j})^2]/(n-2)\}^{1/2}},\forall j\neq i
 #' }
 #' \cr
 #' where \deqn{s_i = \sqrt{((\sum_{j=1}^{n}x_j^2)/(n-1))-[\bar x_i]^2},\forall j\neq i}
 #' and \deqn{\bar x_i=(\sum_{j=1}^{n}x_j)/(n-1),\forall j\neq i}
-#' The left numerator corresponds to \eqn{G_i}, the right to \eqn{E(G_i)},
-#' and the denominator to \eqn{Var(G_i)}.
 #'
-#' @section \eqn{G_{i}^{*}} ("gstari"):
+#' @section Definition of \eqn{G_{i}^{*}} ("gstari"):
 #' In the equation for \eqn{G_{i}}, the condition that \eqn{i\neq j} is central. \eqn{G_i^*}
-#' relaxes this constraint, by including \eqn{i} as a neighbor of itself. This local measure
-#' is expressed as (Getis and Ord 1996, p. 263, equation 14.3):
+#' relaxes this constraint, by including \eqn{i} as a neighbor of itself. This statistic
+#' is expressed as (Ord and Getis 1995, equation 7):
 #' \deqn{
-#' Z(G_i^*)=\dfrac{[\sum_{j=1}^{n}w_{i,j}x_j]-[(\sum_{j=1}^{n}w_{i,j})\bar x^*]}
-#' {s^*\{[(n-1)\sum_{j=1}^{n}w_{i,j}^2-(\sum_{j=1}^{n}w_{i,j})^2]/(n-2)\}^{1/2}},\forall j
+#' Z(G_i^*)=\dfrac{[\sum_{j=1}^{n}w_{i,j}x_j]-[\sum_{j=1}^{n}w_{i,j}\bar x_i]}
+#' {s_i\{[n\sum_{j=1}^{n}w_{i,j}^2-(\sum_{j=1}^{n}w_{i,j})^2]/(n-1)\}^{1/2}}
 #' }
 #' \cr
 #' where \deqn{s^* = \sqrt{((\sum_{j=1}^{n}x_j^2)/n)-\bar x_i^{*2}}}
-#' and \deqn{\bar x_i^*=(\sum_{j=1}^{n}x_j)/n,\forall j}
+#' and \deqn{\bar x_i^*=(\sum_{j=1}^{n}x_j)/n}
+#' The left numerator corresponds to \eqn{G_i}, the right to \eqn{E(G_i)},
+#' and the denominator to \eqn{Var(G_i)}.
 #'
-#' @section weights:
-#' Weights are calculated for node pairs if \code{use_weights = TRUE}. For an undirected
-#' path between nodes \eqn{i \sim j}, the weight is defined as the transition probability
-#' for a k-step walk between \eqn{i} and \eqn{j}. This helps normalizing the contribution
-#' by each neighbor in a manner that reduces the influence of high degree nodes. The strategy
-#' rests on the assumption that node degree correlates strongly with the node marker count.
+#' @section Weights:
+#' Weights are calculated for node pairs if \code{use_weights = TRUE}. For a center node \eqn{i},
+#' we calculate weights for each neighbor \eqn{j \in N(i)} as the the transition probability
+#' for a k-step walk from \eqn{j} to \eqn{i}. This helps normalizing the contribution
+#' by each neighbor in a manner that reduces the influence of high degree nodes. It also
+#' ensures that nodes that are further away from the central node in each neighborhood
+#' are given lower weights. The strategy rests on the assumption that node degree correlates
+#' strongly with the node marker count.
 #'
 #' In practice, the weights are calculated by normalizing the adjacency matrix of the graph
 #' such that each row sums to 1 (also known as the stochastic matrix). By multiplying the
 #' transpose of the stochastic matrix with the count matrix, we obtain a "lag matrix" with the weighted
 #' marker expression for each node neighborhood which is leveraged in the computation of local G.
 #'
-#' When using \code{k > 1}, the k'th power of the stochastic matrix is used instead. In this
-#' case, the transition probabilities are calculated for a k-step random walk.
+#' When using \code{k > 1}, the \code{k}'th power of the stochastic matrix is used instead. In this
+#' case, the transition probabilities are calculated for a random walk of length \code{2} or higher.
 #' Since the random walker can reach a larger neighborhood when \code{k > 1}, we will
-#' also include information about the marker expression for nodes that are more than 1 steps
+#' also include information about the marker expression for nodes that are more than 1 step
 #' away from the center node. Moreover, when \code{k > 1}, the weights for \eqn{i \sim i}
-#' (self-loops) can become positive. These transitions are not allowed in the calculation of
+#' (self-loops) can become positive. These weights are not allowed in the calculation of
 #' \eqn{G_i} and are therefore set to 0, and the remaining transition probabilities are normalized
-#' to 1 within each node neighborhood. This weighing scheme is ignored if \code{W} is provided.
+#' to 1 within each node neighborhood.
+#'
+#' The weighting scheme is ignored if \code{W} is provided.
 #'
 #' @param g A \code{tbl_graph} object representing an MPX component
 #' @param counts A \code{dgCMatrix} (sparse matrix) with node marker counts. Raw counts
@@ -87,9 +93,10 @@
 #'
 #' @inheritParams compute_transition_probabilities
 #'
-#' @references Bivand, R.S., Wong, D.W.S. Comparing implementations of global and
-#' local indicators of spatial association. TEST 27, 716–748 (2018).
-#' \url{https://doi.org/10.1007/s11749-018-0599-x}
+#' @references
+#' - Ord, J. K., Getis. A. Local Spatial Autocorrelation Statistics:
+#' Distributional Issues and an Application
+#' \url{https://doi.org/10.1111/j.1538-4632.1995.tb00912.x}
 #'
 #' @examples
 #' library(dplyr)

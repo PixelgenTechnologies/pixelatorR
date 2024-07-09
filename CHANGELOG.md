@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2024-??-??
 
+### Fix
+
+- Updated documentation for `local_G`. The equations for the Z-scores have been corrected according to the original publication by Ord and Getis.
+
 ### Added 
 
 - `AbundanceColocalizationPlot` : Plot a scatter plot of the abundance of two sets of markers, colored by the 
