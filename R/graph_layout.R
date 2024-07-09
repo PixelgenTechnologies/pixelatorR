@@ -64,7 +64,7 @@ NULL
 #'
 ComputeLayout.tbl_graph <- function (
   object,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -115,7 +115,7 @@ ComputeLayout.tbl_graph <- function (
 
   } else {
     # Check and select a layout method
-    layout_method <- match.arg(layout_method, choices = c("wpmds", "pmds", "fr", "kk", "drl"))
+    layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
 
     layout_function <- switch(
       layout_method,
@@ -174,7 +174,7 @@ ComputeLayout.tbl_graph <- function (
 #'
 ComputeLayout.CellGraph <- function (
   object,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -188,7 +188,7 @@ ComputeLayout.CellGraph <- function (
 ) {
 
   if (is.null(custom_layout_function) & is.null(layout_name)) {
-    layout_name <- match.arg(layout_method, choices = c("wpmds", "pmds", "fr", "kk", "drl"))
+    layout_name <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
   }
   if (!is.null(custom_layout_function) & is.null(layout_name)) {
     layout_name <- "custom"
@@ -245,7 +245,7 @@ ComputeLayout.CellGraph <- function (
 #'
 ComputeLayout.MPXAssay <- function (
   object,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -329,7 +329,7 @@ ComputeLayout.CellGraphAssay5 <- ComputeLayout.MPXAssay
 ComputeLayout.Seurat <- function (
   object,
   assay = NULL,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,

@@ -15,7 +15,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{tbl_graph}(
   object,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -29,7 +29,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraph}(
   object,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -44,7 +44,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{MPXAssay}(
   object,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -61,7 +61,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay}(
   object,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -78,7 +78,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay5}(
   object,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
@@ -96,7 +96,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{Seurat}(
   object,
   assay = NULL,
-  layout_method = c("wpmds", "pmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
   dim = 2,
   normalize_layout = FALSE,
