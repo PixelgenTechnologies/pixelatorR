@@ -28,7 +28,7 @@ paths, sample IDs, and component IDs}
 
 \item{verbose}{Print messages}
 
-\item{...}{Additional arguments passed to \code{\link{CreateAssay5Object}}}
+\item{...}{Additional arguments passed to \code{\link[SeuratObject]{CreateAssay5Object}}}
 }
 \value{
 A \code{CellGraphAssay5} object

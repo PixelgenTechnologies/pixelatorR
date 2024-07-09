@@ -199,7 +199,7 @@ prob_distance_weights <- function (
 
   P_steps <- Reduce("%*%", rep(list(P), k))
   P_steps <- P_steps * A
-  P_steps_bidirectional <- P_steps * t(P_steps)
+  P_steps_bidirectional <- P_steps * Matrix::t(P_steps)
 
   # Extract edge scores and place in graph edge table
   r_ids <- P_steps_bidirectional@i + 1
