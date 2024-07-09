@@ -29,7 +29,25 @@
 #'                         "five_cells.pxl",
 #'                         package = "pixelatorR")
 #' seur_obj <- ReadMPX_Seurat(pxl_file) %>%
-#'   LoadCellGraphs(cells = colnames(.)) %>%
+#'   LoadCellGraphs(cells = colnames(.)[1])
+#'
+#' # compute weighted pMDS layout
+#' g <- CellGraphs(seur_obj)[[1]] %>%
+#'   CellGraphData("cellgraph")
+#' layout <- layout_with_weighted_pmds(g, dim = 3) %>%
+#'   as_tibble(.name_repair = ~c("x", "y", "z"))
+#' plotly::plot_ly(
+#'   layout,
+#'   x = ~x,
+#'   y = ~y,
+#'   z = ~z,
+#'   size = 1,
+#'   type = "scatter3d",
+#'   mode = "markers"
+#' )
+#'
+#' # or using ComputeLayout and Plot3DGraph
+#' seur_obj <- seur_obj %>%
 #'   # Compute weighted pMDS layout
 #'   ComputeLayout(layout_method = "wpmds", dim = 3)
 #'
