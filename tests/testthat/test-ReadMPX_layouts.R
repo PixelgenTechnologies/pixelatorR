@@ -7,7 +7,7 @@ pxl_file_new <- fs::path_temp("test.pxl")
 # Load cell graphs and compute layouts
 seur_obj <- seur_obj %>%
   LoadCellGraphs(cells = colnames(.)[1:2]) %>%
-  ComputeLayout(dim = 3)
+  ComputeLayout(dim = 3, layout_method = "pmds")
 
 # Export layouts to a pxl file
 seur_obj_subset <- subset(seur_obj, cells = colnames(seur_obj)[1:2])

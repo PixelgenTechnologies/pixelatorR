@@ -5,7 +5,9 @@ globalVariables(
             'type', 'g', 'from', 'to', 'node_type', 'id', 'layout',
             'pearson_z', 'p', 'p.value', '.', 'original_id', 'current_id',
             'graph_projection', "label", "in_gate", "dens", "xmax",
-            "xmin", "ymax", "ymin"),
+            "xmin", "ymax", "ymin", "marker_x", "marker_y",
+            "value_x", "value_y", "bi_prob",
+            'graph_projection', "modality", "mixture_component"),
   package = 'pixelatorR',
   add = TRUE
 )
@@ -48,3 +50,10 @@ expect_MASS <- function(...) {
   rlang::check_installed('MASS', ...)
 }
 
+expect_mclust <- function(...) {
+  rlang::check_installed('mclust', ...)
+}
+
+expect_limma <- function(...) {
+  rlang::check_installed('limma', ...)
+}

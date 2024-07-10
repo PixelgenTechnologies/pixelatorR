@@ -99,7 +99,7 @@ setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
 #' @param colocalization A \code{tbl_df} with colocalization scores
 #' @param fs_map A \code{tbl_df} with information on source pxl file
 #' paths, sample IDs, and component IDs
-#' @param ... Additional arguments passed to \code{\link{CreateAssayObject}}
+#' @param ... Additional arguments passed to \code{\link[SeuratObject]{CreateAssayObject}}
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
 #' @import rlang
@@ -210,7 +210,7 @@ CreateCellGraphAssay <- function (
 #' @param colocalization A \code{tbl_df} with colocalization scores
 #' @param fs_map A \code{tbl_df} with information on source pxl file
 #' paths, sample IDs, and component IDs
-#' @param ... Additional arguments passed to \code{\link{CreateAssay5Object}}
+#' @param ... Additional arguments passed to \code{\link[SeuratObject]{CreateAssay5Object}}
 #' @inheritParams ReadMPX_arrow_edgelist
 #'
 #' @import rlang

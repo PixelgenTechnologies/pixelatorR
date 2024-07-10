@@ -5,6 +5,34 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased] - 2024-??-??
+
+## [0.10.0] - 2024-07-10
+
+### Added
+
+- `layout_with_weighted_pmds` : Compute a graph layout using weighted PMDS.
+- option to use `layout_with_weighted_pmds` in `ComputeLayout` by setting `layout_method = "wpmds"`
+
+### Fix
+
+- Updated documentation for `local_G`. The equations for the Z-scores have been corrected according to the original publication by Ord and Getis.
+
+### Added 
+
+- `AbundanceColocalizationPlot` : Plot a scatter plot of the abundance of two sets of markers, colored by the 
+colocalization score the marker pairs have in each component. 
+
+## [0.9.0] - 2024-07-03
+
+### Added 
+
+- `NormalizeMPX` : Normalize MPX data using either dsb or CLR transformations.
+
+### Updates 
+
+- `PseudoDensityPlot` has been renamed to `DensityScatterPlot` to better reflect the function's purpose and 
+documentation has been improved
 
 ## [0.8.1] - 2024-07-01
 

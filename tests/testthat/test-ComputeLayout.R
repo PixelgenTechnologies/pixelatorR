@@ -1,3 +1,5 @@
+library(dplyr)
+
 for (assay_version in c("v3", "v5")) {
 
   options(Seurat.object.assay.version = assay_version)
@@ -19,11 +21,11 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(c("x", "y"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method]]))
 
     # Test with three dimensions
-    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3))
+    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(layout_method = layout_method, dim = 3))
     expect_equal(c("x", "y", "z"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method]]))
 
     # Test with normalize_layout
-    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = "pmds", normalize_layout = TRUE))
+    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = layout_method, normalize_layout = TRUE))
     median_radius <- cg_assay@cellgraphs[[1]]@layout[[layout_method]] %>%
       mutate(across(x:z, ~.x^2)) %>%
       rowSums() %>%
@@ -32,13 +34,20 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(median_radius, 1)
 
     # Test with project_on_unit_sphere
-    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = "pmds", project_on_unit_sphere = TRUE))
+    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(dim = 3, layout_method = layout_method, project_on_unit_sphere = TRUE))
     radii <- cg_assay@cellgraphs[[1]]@layout[[layout_method]] %>%
       mutate(across(x:z, ~.x^2)) %>%
       rowSums() %>%
       sqrt() %>%
       max()
     expect_equal(unique(radii) %>% length(), 1)
+
+    # Weighted pmds
+    layout_method <- "wpmds"
+    expect_no_error(se <- se %>% ComputeLayout(layout_method = layout_method, dim = 3))
+    expect_true(layout_method %in% names(CellGraphs(se)[[1]]@layout))
+    expect_equal(c("x", "y", "z"), colnames(CellGraphs(se)[[1]]@layout[[layout_method]]))
+
   })
 
   test_that("ComputeLayout works as expected with a custom layout function", {
