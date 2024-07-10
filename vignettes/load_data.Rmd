@@ -1,0 +1,183 @@
+---
+title: "Load data"
+output: html_document
+date: "2023-12-18"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r message=FALSE, warning=FALSE}
+library(pixelatorR)
+library(SeuratObject)
+library(dplyr)
+library(ggplot2)
+```
+
+Tip: you can turn off the verbose messages in `pixelatorR` by setting:
+
+```{r}
+options(pixelatorR.verbose = FALSE)
+```
+
+>    In this tutorial, we will take a closer look at the functions that `pixelatorR` provides to load data. This is mainly intended for more advanced users. If you want to learn more about how to analyze MPX data, please visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction).
+
+## Load data
+
+To get started, we need a `pxl` file which we can download from https://software.pixelgen.com/. 
+
+```{r eval = FALSE}
+dir.create("PBMC_data")
+download.file(url = "https://pixelgen-technologies-datasets.s3.eu-north-1.amazonaws.com/mpx-datasets/pixelator/0.12.0/1k-human-pbmcs-v1.0-immunology-I/Sample01_human_pbmcs_unstimulated.dataset.pxl?download=1",
+              destfile = "PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
+```
+
+`pixelatorR` provides several functions to load data from a `pxl` file. 
+
+For instance, `ReadMPX_counts` allows us to load only the count matrix and nothing else:
+
+```{r}
+pxl_file <- "PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl"
+countMatrix <- ReadMPX_counts(pxl_file)
+countMatrix[1:5, 1:5]
+```
+
+With `ReadMPX_item`, we can chose a specific item to load from the `pxl` file, including: "polarization", "colocalization", "edgelist".
+
+```{r}
+polarization_scores <- ReadMPX_item(pxl_file, items = "polarization")
+polarization_scores
+```
+
+If we provide multiple items, `ReadMPX_item` returns a list instead:
+
+```{r}
+all_items <- ReadMPX_item(pxl_file, items = c("polarization", "colocalization", "edgelist"))
+names(all_items)
+```
+
+Alternatively, we can use the wrapper functions `ReadMPX_polarization`, `ReadMPX_colocaliztion` and `ReadMPX_edgelist` to do the same thing as `ReadMPX_item`:
+
+```{r}
+polarization_scores <- ReadMPX_polarization(pxl_file)
+```
+
+is equivalent to
+
+```{r}
+polarization_scores <- ReadMPX_item(pxl_file, items = "polarization")
+```
+
+### Seurat
+
+Perhaps the most useful function here is `ReadMPX_Seurat` which allows us to load MPX data into a `Seurat` object with some additional bells and whistles provided by `pixelatorR`.
+
+```{r}
+seur_obj <- ReadMPX_Seurat(pxl_file)
+```
+
+Here, you have a few options to modify how the `Seurat` should be created. First and foremost, we can set `return_cellgraphassay = FALSE` to return a `Seurat` object which only includes abundance measurements. 
+
+In this simpler data set, only the count matrix is stored as an `Assay` without any spatial data. This means that almost all information that is unique to MPX will be ignored so you will not be able to analyze or visualize graphs and there will be no way to explore the spatial statistics.
+
+However, this basic data set uses significantly less memory and is faster to process which can be useful if protein __abundance__ is the only interesting data type for the analysis.
+
+```{r}
+# Load simpler data set
+seur_obj <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = FALSE)
+seur_obj[["mpxCells"]]
+```
+
+By default, `ReadMPX_Seurat` returns the MPX data in an object called `CellGraphAssay`. This object class extends the `Assay` class from Seurat and is essentially an `Assay` object with additional data slots. The `CellGraphAssay` class will be covered in more detail later in this tutorial.
+
+Most additional parameters in `ReadMPX_Seurat` controls the behavior when `return_cellgraphassay = TRUE`. By default, the MPX polarization scores and colocalization scores are loaded and stored in a `CellGraphAssay` named "mpxCells".
+
+```{r}
+seur_obj <- ReadMPX_Seurat(pxl_file)
+seur_obj
+```
+
+### Spatial metrics
+
+We can fetch the polarization/colocalization score tables from the `Seurat` object with the `PolarizationScores` and `ColocalizationScores` methods:
+
+```{r}
+# Fetch polarization scores
+polarizaton_scores <- PolarizationScores(seur_obj)
+polarizaton_scores %>% head()
+
+# Fetch colocalization scores
+colocalization_scores <- ColocalizationScores(seur_obj)
+colocalization_scores %>% head()
+```
+
+An equivalent way to extract the polarization scores would be:
+
+```{r eval=FALSE}
+polarizaton_scores <- seur_obj[["mpxCells"]]@polarization
+```
+
+But it's good practice to use `PolarizationScores`/`ColocalizationScores` which is easier to read. One just have to make sure that the `DefaultAssay` is set to "mpxCells".
+
+### QC metrics
+
+Component-specific metrics are stored in the `@meta.data` slot of the `Seurat` object which can be accessed with double brackets (`[[]]`):
+
+```{r}
+colnames(seur_obj[[]])
+seur_obj[[]] %>% head()
+```
+
+We can for instance explore QC metrics visually for component filtering:
+
+```{r}
+ggplot(seur_obj[[]], aes(tau, umi_per_upia)) +
+  geom_point() +
+  scale_x_continuous(labels = scales::percent)
+```
+
+### Edge lists, graphs and PXL files
+
+The edge list represents the raw MPX data where each row corresponds to an edge formed between a UPIA and a UPIB pixel. This information is rarely needed for analysis, but is required if we want to load and explore component graphs. 
+
+`ReadMPX_Seurat` doesn't load the edge list in memory, instead it keeps track of the paths of the PXL file(s) associated with the data. We can get the path to the PXL file with the `FSMap` function:
+
+```{r eval=FALSE}
+FSMap(seur_obj[["mpxCells"]])
+```
+
+`FSMap` returns a tibble with the paths to the PXL files associated with the `Seurat` object. In this case, there is only one PXL file. The "id_map" column is a list, where each element consists of a tibble with component IDs that can be used as a look up table to map the "current" component IDs with the "original" component IDs. If we unnest the "id_map" column, we can see the current and original component IDs:
+
+```{r}
+FSMap(seur_obj[["mpxCells"]]) %>% 
+  tidyr::unnest(id_map)
+```
+
+If we were to rename the component IDs of the Seurat object, the "current_id" column will be updated, but the "original_id" column will remain unchanged:
+
+```{r}
+seur_obj_renamed <- RenameCells(seur_obj, new.names = paste0("A_", colnames(seur_obj)))
+
+FSMap(seur_obj_renamed[["mpxCells"]]) %>% 
+  tidyr::unnest(id_map)
+```
+
+The current IDs will always be unique, but the original IDs are often duplicated as components follow the same naming convention across data sets. The table above helps us to map the current IDs to the correct original IDs and PXL file(s).
+
+If we need to load MPX component graphs in memory, we can use the `LoadCellGraphs` function. Under the hood, `LoadCellGraphs` uses the table above to sort out where the edge list data is stored, reads the edge list data and converts it to a graph object per component. 
+
+For example, we can load the graphs for two selected components like this:
+
+```{r}
+seur_obj <- LoadCellGraphs(seur_obj, cells = c("RCVCMP0000228", "RCVCMP0000231"))
+```
+
+We can then fetch the loaded `CellGraph` objects for our two components using:
+
+```{r}
+CellGraphs(seur_obj)[c("RCVCMP0000228", "RCVCMP0000231")]
+```
+
+NOTE: If the PXL file path is invalid, e.g. if the file is missing or has been moved, `LoadCellGraphs` will throw an error.
+
