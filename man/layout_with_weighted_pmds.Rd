@@ -23,7 +23,8 @@ Can be either "prob_dist" or "cos_dist".}
 
 \item{pivots}{Number of pivots}
 
-\item{pow}{Power to raise the scores to. Default is 3.}
+\item{pow}{Power to raise the distance weights to. Increasing this value
+will amplify higher distance weights. Default is 3.}
 
 \item{seed}{Set seed for pivot sampling}
 }
