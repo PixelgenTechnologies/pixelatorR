@@ -28,6 +28,9 @@
     <loc>/pull_request_template.html</loc>
   </url>
   <url>
+    <loc>/reference/AbundanceColocalizationPlot.html</loc>
+  </url>
+  <url>
     <loc>/reference/CellCountPlot.html</loc>
   </url>
   <url>
@@ -73,6 +76,9 @@
     <loc>/reference/CreateCellGraphObject.html</loc>
   </url>
   <url>
+    <loc>/reference/DensityScatterPlot.html</loc>
+  </url>
+  <url>
     <loc>/reference/EdgeRankPlot.html</loc>
   </url>
   <url>
@@ -92,6 +98,9 @@
   </url>
   <url>
     <loc>/reference/MoleculeRankPlot.html</loc>
+  </url>
+  <url>
+    <loc>/reference/NormalizeMPX.html</loc>
   </url>
   <url>
     <loc>/reference/Plot2DGraph.html</loc>
@@ -154,6 +163,9 @@
     <loc>/reference/compute_transition_probabilities.html</loc>
   </url>
   <url>
+    <loc>/reference/edge-weights-pmds.html</loc>
+  </url>
+  <url>
     <loc>/reference/edgelist_to_simple_bipart_graph.html</loc>
   </url>
   <url>
@@ -167,6 +179,9 @@
   </url>
   <url>
     <loc>/reference/layout_coordinates_utils.html</loc>
+  </url>
+  <url>
+    <loc>/reference/layout_with_weighted_pmds.html</loc>
   </url>
   <url>
     <loc>/reference/local_G.html</loc>

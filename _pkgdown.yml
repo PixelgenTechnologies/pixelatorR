@@ -53,18 +53,21 @@ reference:
     - MoleculeRankPlot
     - EdgeRankPlot
     - TauPlot
-    - PseudocolorPlot
+    - DensityScatterPlot
+    - AbundanceColocalizationPlot
     - Plot2DGraph
     - Plot2DGraphM
     - Plot3DGraph
   - subtitle: Graph layouts
   - contents:
     - ComputeLayout
+    - layout_with_weighted_pmds
     - center_layout_coordinates
     - normalize_layout_coordinates
     - project_layout_coordinates_on_unit_sphere
   - subtitle: Data processing
   - contents:
+    - NormalizeMPX
     - KeepLargestComponent
     - RemoveCellGraphs
     - LoadCellGraphs
@@ -100,6 +103,7 @@ reference:
     - node_markers_counts
     - color_by_marker
     - compute_transition_probabilities
+    - edge_weights_for_pmds
     - local_G
   - subtitle: Export
   - contents:
