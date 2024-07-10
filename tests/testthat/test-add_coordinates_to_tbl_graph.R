@@ -7,7 +7,7 @@ seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1])
 
 set.seed(123)
-seur_obj <- ComputeLayout(seur_obj)
+seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds")
 cg <- CellGraphs(seur_obj)[[1]]
 
 test_that(".add_coordinates_to_tbl_graph works as expected", {

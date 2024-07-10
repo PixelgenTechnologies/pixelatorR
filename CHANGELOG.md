@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2024-??-??
 
+### Added
+
+- `layout_with_weighted_pmds` : Compute a graph layout using weighted PMDS.
+- option to use `layout_with_weighted_pmds` in `ComputeLayout` by setting `layout_method = "wpmds"`
+
 ### Fix
 
 - Updated documentation for `local_G`. The equations for the Z-scores have been corrected according to the original publication by Ord and Getis.
