@@ -9,7 +9,7 @@ layout_with_weighted_pmds(
   dim = 2,
   method = c("prob_dist", "cos_dist"),
   pivots = 200,
-  scores_power = 3,
+  pow = 3,
   seed = 123
 )
 }
@@ -23,7 +23,7 @@ Can be either "prob_dist" or "cos_dist".}
 
 \item{pivots}{Number of pivots}
 
-\item{scores_power}{Power to raise the scores to. Default is 3.}
+\item{pow}{Power to raise the scores to. Default is 3.}
 
 \item{seed}{Set seed for pivot sampling}
 }

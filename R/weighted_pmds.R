@@ -17,7 +17,7 @@
 #' @param dim Desired number of dimensions. Can be 2 or 3
 #' @param method Edge weighting method to use for computing the layout.
 #' Can be either "prob_dist" or "cos_dist".
-#' @param scores_power Power to raise the scores to. Default is 3.
+#' @param pow  Power to raise the scores to. Default is 3.
 #' @param seed Set seed for pivot sampling
 #'
 #' @return A matrix of 2D or 3D coordinates
@@ -65,7 +65,7 @@ layout_with_weighted_pmds <- function (
   dim = 2,
   method = c("prob_dist", "cos_dist"),
   pivots = 200,
-  scores_power = 3,
+  pow  = 3,
   seed = 123
 ) {
 
@@ -79,8 +79,8 @@ layout_with_weighted_pmds <- function (
       dim %in% c(2, 3),
     "'seed' must be an integer" =
       inherits(seed, what = "numeric"),
-    "'scores_power' must be a positive numeric value of length 1" =
-      inherits(scores_power, what = "numeric") && (length(scores_power) == 1) && (scores_power > 0)
+    "'pow ' must be a positive numeric value of length 1" =
+      inherits(pow , what = "numeric") && (length(pow ) == 1) && (pow  > 0)
   )
 
   method <- match.arg(method, choices = c("prob_dist", "cos_dist"))
@@ -94,8 +94,8 @@ layout_with_weighted_pmds <- function (
 
   scores <- g %E>% pull(scores)
 
-  if (scores_power != 1) {
-    scores <- scores^scores_power
+  if (pow  != 1) {
+    scores <- scores^pow
   }
 
   set.seed(seed)
