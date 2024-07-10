@@ -27,16 +27,23 @@ TauPlot.data.frame <- function (
 ) {
 
   # Validate object
-  if (!all(c("umi_per_upia", "tau", "tau_type") %in% colnames(object))) {
-    abort("'umi_per_upia', 'tau' and 'tau_type' must be available in the data.frame")
+  mol_per_upia <- intersect(c("umi_per_upia", "mean_molecules_per_a_pixel"), colnames(object))
+  if (length(mol_per_upia) == 0) {
+    abort(glue("Either 'umi_per_upia' or 'mean_molecules_per_a_pixel'",
+               " must be available in the data.frame"))
+  }
+  if (length(mol_per_upia) > 1) {
+    mol_per_upia <- mol_per_upia[1]
+  }
+  if (!is.numeric(object[, mol_per_upia, drop = TRUE])) {
+    abort(glue("'{mol_per_upia}' must be a numeric vector"))
+  }
+  if (!all(c("tau", "tau_type") %in% colnames(object))) {
+    abort("'tau' and 'tau_type' must be available in the data.frame")
   }
   stopifnot(
-    "'umi_per_upia' must be a numeric vector" =
-      is.numeric(object[, "umi_per_upia", drop = TRUE]),
-
     "'tau' must be a numeric vector" =
       is.numeric(object[, "tau", drop = TRUE]),
-
     "'tau_type' must be a factor or a character vector" =
       inherits(object[, "tau_type", drop = TRUE],
                what = c("character", "factor"))
@@ -50,9 +57,15 @@ TauPlot.data.frame <- function (
                          what = c("character", "factor")))
   }
 
+  y_lab <- switch(
+    mol_per_upia,
+    umi_per_upia = "Pixel content (UMI / UPIA)",
+    mean_molecules_per_a_pixel = "Pixel content (mean molecules / UPIA)"
+  )
+
   # Create plot
   object %>%
-    ggplot(aes(tau, umi_per_upia, color = tau_type)) +
+    ggplot(aes(tau, !! sym(mol_per_upia), color = tau_type)) +
     geom_point() +
     {
       if (!is.null(group_by)) {
@@ -62,7 +75,7 @@ TauPlot.data.frame <- function (
     scale_y_log10() +
     scale_color_manual(values = c("high" = "orangered2", "low" = "skyblue3", "normal" = "gray")) +
     theme_minimal() +
-    labs(x = "Marker specificity (Tau)", y = "Pixel content (UMI/UPIA)")
+    labs(x = "Marker specificity (Tau)", y = y_lab)
 }
 
 #' @rdname TauPlot
@@ -88,8 +101,13 @@ TauPlot.Seurat <- function (
 ) {
 
   # Validate object
-  if (!all(c("umi_per_upia", "tau", "tau_type") %in% colnames(object[[]]))) {
-    abort("'umi_per_upia' and 'tau' must be available from the meta.data slot")
+  mol_per_upia <- intersect(c("umi_per_upia", "mean_molecules_per_a_pixel"), colnames(object[[]]))
+  if (length(mol_per_upia) == 0) {
+    abort(glue("Either 'umi_per_upia' or 'mean_molecules_per_a_pixel'",
+               " must be available in the data.frame"))
+  }
+  if (!all(c("tau", "tau_type") %in% colnames(object[[]]))) {
+    abort("'tau' and 'tau_type' must be available in the data.frame")
   }
 
   # Extract meta.data
