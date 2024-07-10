@@ -17,7 +17,8 @@
 #' @param dim Desired number of dimensions. Can be 2 or 3
 #' @param method Edge weighting method to use for computing the layout.
 #' Can be either "prob_dist" or "cos_dist".
-#' @param pow  Power to raise the scores to. Default is 3.
+#' @param pow  Power to raise the distance weights to. Increasing this value
+#' will amplify higher distance weights. Default is 3.
 #' @param seed Set seed for pivot sampling
 #'
 #' @return A matrix of 2D or 3D coordinates
