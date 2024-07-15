@@ -14,6 +14,8 @@ CellCountPlot(object, ...)
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
+  as_frequency = TRUE,
+  stack = TRUE,
   ...
 )
 
@@ -23,6 +25,8 @@ CellCountPlot(object, ...)
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
+  as_frequency = TRUE,
+  stack = TRUE,
   ...
 )
 }
@@ -41,6 +45,11 @@ to color data by}
 \code{flip_axes = TRUE}}
 
 \item{flip_axes}{Flip the plot layout}
+
+\item{as_frequency}{Plots the counts as cell frequencies}
+
+\item{stack}{Stacks the bars on top of each other. When used with
+\code{as_frequency = TRUE}, the height of all bars is standardized}
 }
 \value{
 A \code{ggplot} object

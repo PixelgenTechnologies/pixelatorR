@@ -2,6 +2,7 @@
 % Please edit documentation in R/pixelatorR-package.R, R/zzz.R
 \docType{package}
 \name{pixelatorR-package}
+\alias{pixelatorR}
 \alias{pixelatorR-package}
 \title{pixelatorR: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data}
 \description{

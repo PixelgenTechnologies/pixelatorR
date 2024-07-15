@@ -170,6 +170,9 @@ MoleculeRankPlot <- function(
 #' @param show_count Place the count on top of the bar or next to the bar if
 #' \code{flip_axes = TRUE}
 #' @param flip_axes Flip the plot layout
+#' @param as_frequency Plots the counts as cell frequencies
+#' @param stack Stacks the bars on top of each other. When used with
+#' \code{as_frequency = TRUE}, the height of all bars is standardized
 #' @param ... Not yet implemented
 #'
 #' @rdname CellCountPlot
@@ -645,6 +648,7 @@ NormalizeMPX <- function(
 ) {
   UseMethod(generic = "NormalizeMPX", object = object)
 }
+
 
 #' Restore PXL file paths
 #'

@@ -30,6 +30,8 @@ CellCountPlot.data.frame <- function(
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
+  as_frequency = TRUE,
+  stack = TRUE,
   ...
 ) {
   # Validate object
@@ -61,47 +63,57 @@ CellCountPlot.data.frame <- function(
     gg <- object %>%
       group_by(.data[[group_by]], .data[[color_by]]) %>%
       count() %>%
+      ungroup() %>%
+      group_by(!!sym(group_by)) %>%
+      mutate(frequency = n / sum(n) * 100) %>%
       ungroup()
-    nudge_y <- max(gg$n) / 20
-    p <- gg %>%
-      ggplot(aes(.data[[group_by]], n, fill = .data[[color_by]])) +
-      geom_col(position = position_dodge(width = 0.95)) +
+
+    nudge_y <- if(as_frequency) max(gg$frequency) / 20 else max(gg$n) / 20
+
+    p <- ggplot(gg, aes(x = .data[[group_by]],
+                        y = if(as_frequency) frequency else n,
+                        fill = .data[[color_by]])) +
+      geom_col(position = if(stack) "stack" else position_dodge(width = 0.95)) +
       {
         if (show_count) {
-          geom_text(
-            aes(.data[[group_by]], n + nudge_y,
-              label = n,
-              group = .data[[color_by]]
-            ),
-            position = position_dodge(width = 1)
-          )
+          geom_text(aes(label = if(as_frequency) sprintf("%.1f%%", frequency) else n,
+                        group = .data[[color_by]]),
+                    position = if(stack) position_stack(vjust = 0.5) else position_dodge(width = 0.95),
+                    size = 3)
         }
       } +
-      labs(title = paste0(
-        "Cell counts for ", group_by,
-        " colored by ", color_by
-      ))
+      labs(title = ifelse(as_frequency,
+                       paste0("Cell frequencies for ", group_by, " colored by ", color_by),
+                       paste0("Cell counts for ", group_by, " colored by ", color_by)),
+        y = ifelse(as_frequency, "Frequency (%)", "Count"))
   } else {
     gg <- object %>%
       group_by(.data[[color_by]]) %>%
       count() %>%
-      ungroup()
-    nudge_y <- max(gg$n) / 20
-    p <- gg %>%
-      ggplot(aes(.data[[color_by]], n, fill = .data[[color_by]])) +
+      ungroup() %>%
+      mutate(frequency = n / sum(n) * 100)
+
+    nudge_y <- if(as_frequency) max(gg$frequency) / 20 else max(gg$n) / 20
+
+    p <- ggplot(gg, aes(x = .data[[color_by]],
+                        y = if(as_frequency) frequency else n,
+                        fill = .data[[color_by]])) +
       geom_col(position = position_dodge(width = 0.95)) +
       {
         if (show_count) {
-          geom_text(aes(.data[[color_by]], n + nudge_y, label = n))
+          geom_text(aes(label = if(as_frequency) sprintf("%.1f%%", frequency) else n),
+                    position = position_dodge(width = 0.95),
+                    vjust = -0.5,
+                    size = 3)
         }
       } +
-      labs(title = paste0(
-        "Cell counts for ", group_by,
-        " colored by ", group_by
-      ))
+      labs(title = ifelse(as_frequency,
+                          paste0("Cell frequencies for ", color_by),
+                          paste0("Cell counts for ", color_by)),
+           y = ifelse(as_frequency, "Frequency (%)", "Count"))
   }
 
-  # Modfy theme
+  # Modify theme
   p <- p +
     scale_y_continuous(expand = expansion(c(0, 0.05))) +
     theme_light() +
@@ -137,6 +149,8 @@ CellCountPlot.Seurat <- function(
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
+  as_frequency = TRUE,
+  stack = TRUE,
   ...
 ) {
   # Extract meta.data
@@ -144,9 +158,10 @@ CellCountPlot.Seurat <- function(
 
   # Create plot
   CellCountPlot(mData,
-    group_by = group_by,
-    color_by = color_by,
-    show_count = show_count,
-    flip_axes = flip_axes
-  )
+                group_by = group_by,
+                color_by = color_by,
+                show_count = show_count,
+                flip_axes = flip_axes,
+                as_frequency = as_frequency,
+                stack = stack)
 }
