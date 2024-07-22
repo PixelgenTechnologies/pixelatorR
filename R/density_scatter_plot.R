@@ -152,7 +152,7 @@ DensityScatterPlot <- function(
     "'alpha' must be a numeric of length 1" =
       is.numeric(alpha),
     "'layer' must be a character of length 1" =
-      is.character(layer),
+      is.character(layer) | is.null(layer),
     "'coord_fixed' must be either TRUE or FALSE" =
       is.logical(coord_fixed),
 
@@ -160,6 +160,8 @@ DensityScatterPlot <- function(
       is.null(plot_gate) | is.data.frame(plot_gate),
     "'plot_gate' must have columns 'xmin', 'xmax', 'ymin', 'ymax'" =
       is.null(plot_gate) | all(c("xmin", "xmax", "ymin", "ymax") %in% colnames(plot_gate)),
+    "'plot_gate' can't contain facetting variables that are not in 'facet_vars'" =
+      is.null(plot_gate) | all(names(plot_gate) %in% c("xmin", "xmax", "ymin", "ymax", facet_vars)),
 
     "'object' must be a Seurat object" =
       inherits(object, "Seurat"),
@@ -276,10 +278,20 @@ DensityScatterPlot <- function(
   if(!is.null(plot_gate)) {
 
     if(!is.null(facet_vars)) {
-      gate_label <-
-        plot_gate %>%
-        left_join(plot_data,
-                  by = facet_vars[facet_vars %in% names(plot_gate)])
+
+      join_vars <- intersect(facet_vars, colnames(plot_gate))
+
+      if(length(join_vars) > 0) {
+        gate_label <-
+          plot_gate %>%
+          left_join(plot_data,
+                    by = join_vars)
+      } else {
+        gate_label <-
+          plot_gate %>%
+          cross_join(plot_data)
+      }
+
     } else {
       gate_label <-
         plot_data %>%

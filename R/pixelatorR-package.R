@@ -37,6 +37,7 @@
 #' @importFrom dplyr compute
 #' @importFrom dplyr contains
 #' @importFrom dplyr count
+#' @importFrom dplyr cross_join
 #' @importFrom dplyr distinct
 #' @importFrom dplyr everything
 #' @importFrom dplyr filter
