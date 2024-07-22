@@ -146,7 +146,9 @@ The \code{dim} is automatically passed to \code{custom_layout_function} and shou
 included in \code{custom_layout_function_args}.}
 
 \item{layout_name}{The name of the computed layout. If this name is not given,
-the \code{layout_method} will be used as the name.}
+the \code{layout_method} will be used as the name. If \code{dim = 3}, a suffix
+of "_3d" will be added to the layout name. This behavior is ignored if \code{layout_name}
+is provided.}
 
 \item{verbose}{Print messages}
 

@@ -152,7 +152,7 @@ seur_obj <- ReadMPX_Seurat(pxl_file) \%>\%
 cg <- CellGraphs(seur_obj)[[1]]
 g <- CellGraphData(cg, "cellgraph")
 counts <- CellGraphData(cg, "counts")
-xyz <- CellGraphData(cg, "layout")[["pmds"]]
+xyz <- CellGraphData(cg, "layout")[["pmds_3d"]]
 
 # Compute local G scores
 gi_mat <- local_G(g, counts = counts)
