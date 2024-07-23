@@ -72,6 +72,6 @@ seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[5])
 seur <- ComputeLayout(seur, layout_method = "pmds", dim = 3)
 
-Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50")
+Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50", layout_method = "pmds_3d")
 
 }

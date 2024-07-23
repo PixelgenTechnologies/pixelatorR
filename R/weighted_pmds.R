@@ -54,7 +54,7 @@
 #'
 #' # Create 3D plot
 #' Plot3DGraph(seur_obj,
-#'             layout_method = "wpmds",
+#'             layout_method = "wpmds_3d",
 #'             cell_id = colnames(seur_obj)[1],
 #'             marker = "CD3E")
 #'

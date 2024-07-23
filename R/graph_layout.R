@@ -160,7 +160,9 @@ ComputeLayout.tbl_graph <- function (
 }
 
 #' @param layout_name The name of the computed layout. If this name is not given,
-#' the \code{layout_method} will be used as the name.
+#' the \code{layout_method} will be used as the name. If \code{dim = 3}, a suffix
+#' of "_3d" will be added to the layout name. This behavior is ignored if \code{layout_name}
+#' is provided.
 #'
 #' @rdname ComputeLayout
 #' @method ComputeLayout CellGraph
@@ -189,6 +191,10 @@ ComputeLayout.CellGraph <- function (
 
   if (is.null(custom_layout_function) & is.null(layout_name)) {
     layout_name <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
+    # Add suffix _3d if dim = 3
+    if (dim == 3) {
+      layout_name <- paste0(layout_name, "_3d")
+    }
   }
   if (!is.null(custom_layout_function) & is.null(layout_name)) {
     layout_name <- "custom"
