@@ -74,7 +74,7 @@ Main developers:
 
 - Ludvig Larsson ([@ludvigla](https://github.com/ludvigla))
 - Max Karlsson ([@maxkarlsson](https://github.com/maxkarlsson))
-- Vincent van Hoef ([@incent-van-hoef](https://github.com/vincent-van-hoef))
+- Vincent van Hoef ([@vincent-van-hoef](https://github.com/vincent-van-hoef))
 - Alvaro Martinez Barrio ([@ambarrio](https://github.com/ambarrio))
 - Johan Dahlberg ([@johandahlberg](https://github.com/johandahlberg))
 
