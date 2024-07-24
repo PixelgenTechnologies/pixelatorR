@@ -69,7 +69,7 @@ TauPlot.data.frame <- function (
     geom_point() +
     {
       if (!is.null(group_by)) {
-        facet_grid(~ sample)
+        facet_wrap(as.formula(paste("~", group_by)))
       }
     } +
     scale_y_log10() +

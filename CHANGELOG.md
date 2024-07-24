@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2024-??-??
 
+### [0.10.2] - 2024-07-24
+
+### Fixes
+
+- fixed bug in `TauPlot` where `group_by` was not properly evaluated
+
 ### [0.10.1] - 2024-07-23
 
 ### Fixes
