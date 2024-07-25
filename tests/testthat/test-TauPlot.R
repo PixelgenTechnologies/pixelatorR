@@ -4,8 +4,25 @@ pxl_file <- system.file("extdata/five_cells",
 seur_obj <- ReadMPX_Seurat(pxl_file)
 
 test_that("TauPlot works for Seurat objects", {
+
   expect_no_error({tau_plot <- TauPlot(seur_obj)})
   expect_s3_class(tau_plot, "ggplot")
+  expect_equal(
+    structure(list(x = ~tau, y = ~umi_per_upia, colour = ~tau_type), class = "uneval"),
+    tau_plot$mapping
+  )
+
+  # With group variable
+  seur_obj$sampleID <- sample(c("A", "B"), ncol(seur_obj), replace = TRUE)
+  expect_no_error({tau_plot <- TauPlot(seur_obj, group_by = "sampleID")})
+  expect_equal(
+    structure(list(x = ~tau, y = ~umi_per_upia, colour = ~tau_type), class = "uneval"),
+    tau_plot$mapping
+  )
+
+  # With group variable (factor)
+  seur_obj$sampleID <- sample(c("A", "B"), ncol(seur_obj), replace = TRUE) %>% as.factor()
+  expect_no_error({tau_plot <- TauPlot(seur_obj, group_by = "sampleID")})
   expect_equal(
     structure(list(x = ~tau, y = ~umi_per_upia, colour = ~tau_type), class = "uneval"),
     tau_plot$mapping

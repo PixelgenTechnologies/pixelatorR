@@ -3,7 +3,7 @@
 )](https://www.nature.com/articles/s41592-024-02268-9)
 [![codecov](https://codecov.io/gh/PixelgenTechnologies/pixelatorR/graph/badge.svg?token=ClGH1zHvuD)](https://codecov.io/gh/PixelgenTechnologies/pixelatorR)
 [![R-CMD-check](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/PixelgenTechnologies/pixelatorR/actions/workflows/R-CMD-check.yaml)
-![Static Badge](https://img.shields.io/badge/beta_release-v0.10.1-orange)
+![Static Badge](https://img.shields.io/badge/beta_release-v0.10.2-orange)
 <!-- badges: end -->
 
 [**Installation**](#installation) |
@@ -54,7 +54,11 @@ Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) f
 
 ## Notes
 
-pixelatorR is designed to work with objects types from the [SeuratObject](https://github.com/satijalab/seurat-object) R package. For the best user experience, we recommend installing [Seurat v5](https://satijalab.org/seurat/).
+pixelatorR is designed to work with objects types from the [SeuratObject](https://github.com/satijalab/seurat-object) R package. For many analytical tasks you will need to have [Seurat v5](https://satijalab.org/seurat/) installed:
+
+```r
+install.packages("Seurat")
+```
 
 ## Contact
 
