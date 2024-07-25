@@ -54,7 +54,7 @@ Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) f
 
 ## Notes
 
-pixelatorR is designed to work with objects types from the [SeuratObject](https://github.com/satijalab/seurat-object) R package. For the best user experience, we recommend installing [Seurat v5](https://satijalab.org/seurat/).
+pixelatorR is designed to work with objects types from the [SeuratObject](https://github.com/satijalab/seurat-object) R package. For many analytical tasks you will need to have [Seurat v5](https://satijalab.org/seurat/) installed. 
 
 ## Contact
 
