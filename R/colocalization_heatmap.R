@@ -51,7 +51,9 @@ ColocalizationHeatmap <- function (
     "'value_col' is not in 'data'" = value_col %in% names(data),
     "'colors' must be a character vector with at least 2 colors" =
       inherits(colors, what = "character") &&
-      (length(colors) > 1)
+      (length(colors) > 1),
+    "'return_plot_data' must be a logical" = inherits(return_plot_data, what = "logical"),
+    "'symmetrise' must be a logical" = inherits(symmetrise, what = "logical")
   )
 
 
