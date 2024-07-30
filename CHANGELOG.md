@@ -7,9 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2024-??-??
 
+### Updates 
+
+- `ColocalizationHeatmap` has been made more flexible, such that any column names in the indata can be used as long as the data has a data format suitable for a heatmap. 
+
 ### Fixes
 
-- Changed marker pair separator from "-" to "/", to avoid string operation issues due to "-" occuring in marker names. 
+- In `ColocalizationScoresToAssay`: Changed marker pair separator from "-" to "/", to avoid string operation issues due to "-" occuring in marker names. 
 
 ### [0.10.2] - 2024-07-24
 
