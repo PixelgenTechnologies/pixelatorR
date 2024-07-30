@@ -46,9 +46,9 @@ ColocalizationHeatmap <- function (
     abort(glue("'data' must be a 'tbl_df' object"))
   }
   stopifnot(
-    "'marker_1' is not in 'data'" = marker1_col %in% names(data),
-    "'marker_2' is not in 'data'" = marker2_col %in% names(data),
-    "'estimate' is not in 'data'" = value_col %in% names(data),
+    "'marker1_col' is not in 'data'" = marker1_col %in% names(data),
+    "'marker2_col' is not in 'data'" = marker2_col %in% names(data),
+    "'value_col' is not in 'data'" = value_col %in% names(data),
     "'colors' must be a character vector with at least 2 colors" =
       inherits(colors, what = "character") &&
       (length(colors) > 1)
