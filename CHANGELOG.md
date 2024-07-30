@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] - 2024-??-??
 
+### Fixes
+
+- Changed marker pair separator from "-" to "/", to avoid string operation issues due to "-" occuring in marker names. 
+
 ### [0.10.2] - 2024-07-24
 
 ### Fixes
