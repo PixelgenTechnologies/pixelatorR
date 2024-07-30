@@ -25,7 +25,7 @@ for (assay_version in c("v3", "v5")) {
         p = c(0L, 2L, 2L),
         Dim = c(2L, 2L),
         Dimnames = list(
-          c("ACTB-B2M", "ACTB-CD102"),
+          c("ACTB/B2M", "ACTB/CD102"),
           c("RCVCMP0000217",
             "RCVCMP0000118")
         ),
