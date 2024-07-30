@@ -1,9 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('estimate'),
-  package = 'pixelatorR',
-  add = TRUE
-)
 
 #' Plot DCA results
 #'
