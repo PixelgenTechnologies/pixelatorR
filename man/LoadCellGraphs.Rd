@@ -122,10 +122,10 @@ Loads a list of \code{\link{CellGraph}} objects.
 Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of
 these graph representations in the sections below.
 
-\code{LoadCellGraphs} will only work if the PXL file(s) stored in the object are valid.
+\code{LoadCellGraphs} will only work if the PXL file path(s) stored in the object are valid.
 You can check the PXL file paths stored in a \code{Seurat}, a \code{CellGraphAssay} or a
-\code{CellGraphAssay5} object with \code{\link{FSMap}}. If the PXL file(s) are invalid,
-an error will be thrown. Visit \code{\link{RestorePaths}} for more information on how
+\code{CellGraphAssay5} object with the \code{\link{FSMap}} method. If the PXL file(s) are
+invalid, an error will be thrown. Visit \code{\link{RestorePaths}} for more information on how
 to update the PXL file paths.
 }
 \section{Bi-partite graph}{
