@@ -13,7 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
-- In `ColocalizationScoresToAssay`: Changed marker pair separator from "-" to "/", to avoid string operation issues due to "-" occuring in marker names. 
+- In `ColocalizationScoresToAssay`: Changed marker pair separator from "-" to "/", to avoid string operation issues due to "-" occuring in marker names.
+
+### Added
+
+- `RestorePaths` : updates the PXL file paths in a `CellGraphAssay`, a `CellGraphAssay5` or a `Seurat` object created with pixelatorR. This function is useful when PXL files have been moved to a different location or when sharing Seurat objects with other users which would cause `LoadCellGraphs` to fail.
 
 ### [0.10.2] - 2024-07-24
 
