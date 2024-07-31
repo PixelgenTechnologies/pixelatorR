@@ -6,19 +6,32 @@
 \usage{
 ColocalizationHeatmap(
   data,
+  marker1_col = "marker_1",
+  marker2_col = "marker_2",
+  value_col = "estimate",
   colors = c("#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7", "#FDDBC7",
     "#F4A582", "#D6604D", "#B2182B", "#67001F"),
   return_plot_data = FALSE,
+  symmetrise = TRUE,
   ...
 )
 }
 \arguments{
 \item{data}{A \code{tbl_df} object generated with \code{\link{RunDCA}}}
 
+\item{marker1_col}{The name of the column with the first marker}
+
+\item{marker2_col}{The name of the column with the second marker}
+
+\item{value_col}{The name of the column with the value to plot, such as the estimate of a differential analysis test.}
+
 \item{colors}{A character vector with colors}
 
 \item{return_plot_data}{Return data formatted for plotting
 instead of drawing the heatmap}
+
+\item{symmetrise}{Set to \code{TRUE} if only the lower or upper triangle of marker combinations exist in \code{data},
+each row will then be mirrored to fill the missing triangle of the heatmap.}
 
 \item{...}{Parameters passed to \code{pheatmap}}
 }
