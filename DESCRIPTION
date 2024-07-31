@@ -87,6 +87,7 @@ Collate:
     'pixelatorR-package.R'
     'read_and_write_parquet.R'
     'remove_cell_graphs.R'
+    'restore_paths.R'
     'tau_plot.R'
     'utils.R'
     'weighted_pmds.R'

@@ -6,7 +6,7 @@ globalVariables(
             'pearson_z', 'p', 'p.value', '.', 'original_id', 'current_id',
             'graph_projection', "label", "in_gate", "dens", "xmax",
             "xmin", "ymax", "ymin", "marker_x", "marker_y",
-            "value_x", "value_y", "bi_prob", "value", "marker_1", "marker_1",
+            "value_x", "value_y", "bi_prob", "pxl_file", "value", "marker_1", "marker_1",
             'graph_projection', "modality", "mixture_component"),
   package = 'pixelatorR',
   add = TRUE

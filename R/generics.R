@@ -64,11 +64,16 @@ CellGraphs <- function (
 
 #' Load CellGraphs
 #'
-#' Loads a list of \code{\link{CellGraph}} objects. One can specify cells to load by
-#' their names using the \code{cells} parameter.
+#' Loads a list of \code{\link{CellGraph}} objects.
 #'
 #' Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of
 #' these graph representations in the sections below.
+#'
+#' \code{LoadCellGraphs} will only work if the PXL file path(s) stored in the object are valid.
+#' You can check the PXL file paths stored in a \code{Seurat}, a \code{CellGraphAssay} or a
+#' \code{CellGraphAssay5} object with the \code{\link{FSMap}} method. If the PXL file(s) are
+#' invalid, an error will be thrown. Visit \code{\link{RestorePaths}} for more information on how
+#' to update the PXL file paths.
 #'
 #' @section Bi-partite graph:
 #' In the bi-partite graph, edges can only go from a upia to a upib. The bi-partite graph
@@ -620,7 +625,7 @@ FSMap <- function (
 #' @param isotype_controls A vector of isotype controls to use for normalization.
 #' @param assay Name of assay to use; defaults to the default assay.
 #' @param ... Additional arguments. Currently not used.
-#' 
+#'
 #' @rdname NormalizeMPX
 #'
 #' @return An object with normalized MPX data.
@@ -628,11 +633,76 @@ FSMap <- function (
 #' @export
 #'
 NormalizeMPX <- function (
-    object,
-    method = c("dsb", "clr"),
-    isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
-    assay = NULL,
-    ...
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  assay = NULL,
+  ...
 ) {
   UseMethod(generic = "NormalizeMPX", object = object)
+}
+
+#' Restore PXL file paths
+#'
+#' Updates the PXL file paths in an object with the paths in the specified directory.
+#'
+#' @details
+#' Seurat objects created with \code{pixelatorR} store the MPX data
+#' in a \code{\link{CellGraphAssay}} or \code{\link{CellGraphAssay5}} object.
+#' For some analytical tasks, such as component visualization, you need
+#' to load the component graphs in memory with \code{\link{LoadCellGraphs}}.
+#'
+#' \code{\link{LoadCellGraphs}} reads data from the edgelist(s) stored in the PXL
+#' files(s) that the Seurat object was created from (see \code{\link{ReadMPX_Seurat}}).
+#' This means that the PXL files must be accessible in the \code{\link{CellGraphAssay}}
+#' or \code{\link{CellGraphAssay5}} when you load the component graphs.
+#' You can check the PXL file paths with \code{\link{FSMap}}.
+#'
+#' If the PXL files are moved or copied to a different directory, \code{\link{LoadCellGraphs}}
+#' will fail because the PXL file paths are invalid. \code{RestorePaths} can
+#' be useful in these situations to update the PXL file paths in the Seurat object.
+#' All you need is to provide the path to the directory where the PXL files are located.
+#'
+#' @section Exported Seurat objects:
+#' A typical situation when this function is useful is when you export a Seurat object
+#' created with \code{pixelatorR} to an RDS file, and share it with someone else. To ensure
+#' that all data is available for the recipient, you also need to share the raw PXL files
+#' and make sure that the recipient updates the PXL file paths in the Seurat object with
+#' \code{RestorePaths}.
+#'
+#' For instance, let's assume that we have a Seurat object \code{seurat_obj} created with
+#' \code{pixelatorR} and that the PXL files are stored in the directory \code{DATA_DIR}
+#' on your local system. You can export the Seurat object to an RDS file with:
+#' \preformatted{
+#' saveRDS(seurat_obj, file = file.path(DATA_DIR, "seurat_obj.rds"))
+#' }
+#' The content of DATA_DIR might look like this:
+#' \preformatted{
+#' DATA_DIR
+#' ├── seurat_obj.rds
+#' └── Sample01_pbmc.analysis.pxl
+#' }
+#' Now you can share the entire \code{DATA_DIR} folder with someone else. When the recipient
+#' loads the RDS file in R, the PXL file paths in the Seurat object need to be updated,
+#' because recipients \code{DATA_DIR} will be different from yours. Assuming that the recipient
+#' has stored the PXL file and the RDS object in the directory \code{RECIPIENT_DATA_DIR},
+#' the recipient can update the PXL file paths with:
+#' \preformatted{
+#' seurat_obj <- readRDS(file = file.path(RECIPIENT_DATA_DIR, "seurat_obj.rds"))
+#' seurat_obj <- RestorePaths(seurat_obj, pxl_files_dir = RECIPIENT_DATA_DIR)
+#' }
+#'
+#' @param object An object
+#'
+#' @rdname RestorePaths
+#'
+#' @return An object with updated PXL file paths
+#'
+#' @export
+#'
+RestorePaths <- function (
+  object,
+  ...
+) {
+  UseMethod(generic = "RestorePaths", object = object)
 }

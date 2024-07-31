@@ -149,6 +149,7 @@
 #' @importFrom SeuratObject Layers
 #' @importFrom SeuratObject RenameCells
 #' @importFrom SeuratObject VariableFeatures<-
+#' @importFrom stats as.formula
 #' @importFrom stats median
 #' @importFrom stats na.omit
 #' @importFrom stats p.adjust

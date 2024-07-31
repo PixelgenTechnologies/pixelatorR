@@ -244,6 +244,14 @@ LoadCellGraphs.MPXAssay <- function (
   cg_list_full <- lapply(seq_len(nrow(fs_map_nested_filtered)), function(i) {
     f <- fs_map_nested_filtered$pxl_file[i]
 
+    if (!fs::file_exists(f)) {
+      abort(glue(
+        "File '{col_br_blue(f)}' does not exist.\n",
+        "Run ?RestorePaths to get instructions on ",
+        "how to restore the PXL file paths."
+      ))
+    }
+
     # Unzip the edgelist parquet file to tmpdir
     unzip(f, exdir = tempdir(), files = "edgelist.parquet")
     unz_pq_file <- file.path(tempdir(), "edgelist.parquet")

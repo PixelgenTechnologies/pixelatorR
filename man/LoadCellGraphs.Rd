@@ -116,12 +116,17 @@ which means that no parallelization is used.}
 An object with a list of \code{\link{CellGraph}} objects
 }
 \description{
-Loads a list of \code{\link{CellGraph}} objects. One can specify cells to load by
-their names using the \code{cells} parameter.
+Loads a list of \code{\link{CellGraph}} objects.
 }
 \details{
 Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of
 these graph representations in the sections below.
+
+\code{LoadCellGraphs} will only work if the PXL file path(s) stored in the object are valid.
+You can check the PXL file paths stored in a \code{Seurat}, a \code{CellGraphAssay} or a
+\code{CellGraphAssay5} object with the \code{\link{FSMap}} method. If the PXL file(s) are
+invalid, an error will be thrown. Visit \code{\link{RestorePaths}} for more information on how
+to update the PXL file paths.
 }
 \section{Bi-partite graph}{
 
