@@ -34,7 +34,6 @@ Pixelator
 Pixelgen
 PolarizationScores
 RCVCMP
-RStudio
 Reingold
 SCSP
 SeuratObject
@@ -43,10 +42,8 @@ Tsang
 UMAP
 UMIs
 UPIA
-UPIB
 UPIa
 Uropod
-YAML
 adata
 al
 anndata
@@ -56,14 +53,12 @@ cellgraphs
 clr
 codecov
 colocalization
-conda
 denoised
 denoising
 drl
 dsb
 edgelist
 edgelists
-enviroment
 et
 fdr
 ggplot
@@ -72,7 +67,6 @@ gstari
 hochberg
 holm
 hommel
-igraph
 isotype
 json
 kde
@@ -82,7 +76,6 @@ linegraphs
 makeCluster
 morans
 mpx
-mpxCells
 multigraph
 origo
 pMDS
@@ -90,6 +83,7 @@ parallelization
 partite
 pearson
 pixelation
+pixelator
 pmds
 pre
 proteomics
@@ -100,7 +94,6 @@ reproducibility
 th
 tibble
 undirected
-unnest
 upia
 upias
 upib
