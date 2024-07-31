@@ -20,6 +20,7 @@ Print method for pixelator_metadata
 }
 \examples{
 library(pixelatorR)
+library(dplyr)
 
 # Load example data
 pxl_file <- system.file("extdata/five_cells",
