@@ -1,13 +1,6 @@
 #' @include generics.R
 NULL
 
-# Declarations used in package check
-globalVariables(
-  names = c('molecules'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
 #' @param group_by A character specifying a column to group by
 #'
 #' @rdname MoleculeRankPlot
@@ -47,7 +40,8 @@ MoleculeRankPlot.data.frame <- function (
   molecules_column <-
     ifelse("molecules" %in% colnames(object), "molecules", "edges")
 
-  if(!inherits(object[[molecules_column]], what = "integer")) glue("'{molecules_column}' must be an integer vector")
+  if (!inherits(object[[molecules_column]], what = "integer"))
+    glue("'{molecules_column}' must be an integer vector")
 
   if (!is.null(group_by)) {
     stopifnot(
@@ -74,19 +68,19 @@ MoleculeRankPlot.data.frame <- function (
   # Create edge rank plot
   cellrank_plot <-
     object %>%
-      {
-        if (!is.null(group_by)) {
-          ggplot(., aes(rank, molecules, color = !! sym(group_by)))
-        } else {
-          ggplot(., aes(rank, molecules))
-        }
-      } +
-      geom_point(size = 0.5) +
-      scale_x_log10() +
-      scale_y_log10() +
-      labs(x = "Component rank (by number of molecules)",
-           y = "Number of molecules") +
-      theme_minimal()
+    {
+      if (!is.null(group_by)) {
+        ggplot(., aes(rank, molecules, color = !! sym(group_by)))
+      } else {
+        ggplot(., aes(rank, molecules))
+      }
+    } +
+    geom_point(size = 0.5) +
+    scale_x_log10() +
+    scale_y_log10() +
+    labs(x = "Component rank (by number of molecules)",
+         y = "Number of molecules") +
+    theme_minimal()
 
   return(cellrank_plot)
 }

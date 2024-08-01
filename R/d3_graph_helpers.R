@@ -1,10 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('val', '.x'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
 #' Add node colors to a \code{CellGraph}
 #'
 #' Adds node colors based on the expression of a single or multiple
@@ -107,7 +100,7 @@ color_by_marker <- function (
   # Smooth counts if smooth_counts=TRUE
   if (smooth_counts) {
     adjMat <- g %>% igraph::as_adjacency_matrix()
-    counts <- adjMat%*%counts + counts
+    counts <- adjMat %*% counts + counts
   }
 
   g <- g %>%
@@ -136,7 +129,7 @@ color_by_marker <- function (
     {
       # Normalize values if normalize=TRUE
       if (normalize) {
-        mutate(., val = log1p(val/igraph::degree(g)))
+        mutate(., val = log1p(val / igraph::degree(g)))
       } else {
         .
       }
@@ -214,7 +207,7 @@ color_by_marker <- function (
   # Fetch node table and add IDs
   nodes <- data %N>%
     as_tibble() %>%
-    mutate(id = 1:n()) %>%
+    mutate(id = seq_len(n())) %>%
     mutate_if(is.factor, as.character)
 
   # Feth edge table and rename from/to
@@ -247,10 +240,18 @@ color_by_marker <- function (
 ) {
 
   # Validate input
-  stopifnot("'cg' must be a 'CellGraph' object" = inherits(cg, what = "CellGraph"),
-            "'layout_coordinates' must be a data.frame-like object" = inherits(layout_coordinates, what = "data.frame"),
-            "'scale' must be TRUE or FALSE" = is.logical(scale) & (length(scale) == 1),
-            "'keep_aspect_ratio' must be TRUE or FALSE" = is.logical(keep_aspect_ratio) & (length(keep_aspect_ratio) == 1))
+  stopifnot(
+    "'cg' must be a 'CellGraph' object" =
+      inherits(cg, what = "CellGraph"),
+    "'layout_coordinates' must be a data.frame-like object" =
+      inherits(layout_coordinates, what = "data.frame"),
+    "'scale' must be TRUE or FALSE" =
+      is.logical(scale) &&
+      (length(scale) == 1),
+    "'keep_aspect_ratio' must be TRUE or FALSE" =
+      is.logical(keep_aspect_ratio) &&
+      (length(keep_aspect_ratio) == 1)
+  )
   if (!all(c("x", "y") %in% colnames(layout_coordinates))) {
     abort("'x' and 'y' coordinates must be present in 'layout_coordinates'")
   } else {
@@ -283,16 +284,21 @@ color_by_marker <- function (
     }
 
   # Rescale
+  # nolint start
   if (scale) {
     if (keep_aspect_ratio) {
-      max_val <- cg@cellgraph %>% as_tibble() %>% select(any_of(c("x", "y", "z"))) %>% max()
+      max_val <- cg@cellgraph %>%
+        as_tibble() %>%
+        select(any_of(c("x", "y", "z"))) %>%
+        max()
       cg@cellgraph <- cg@cellgraph %>%
-        mutate(across(any_of(c("x", "y", "z")), ~.x/max_val))
+        mutate(across(any_of(c("x", "y", "z")), ~.x / max_val))
     } else {
       cg@cellgraph <- cg@cellgraph %>%
-        mutate(across(any_of(c("x", "y", "z")), ~.x/max(.x)))
+        mutate(across(any_of(c("x", "y", "z")), ~.x / max(.x)))
     }
   }
+  # nolint end
 
   return(cg)
 }

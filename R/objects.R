@@ -146,7 +146,7 @@ PolarizationScores.Seurat <- function (
     meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
     if (any(!meta_data_columns_valid)) {
       abort(glue("The following columns were not found in the meta.data slot: ",
-      "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"))
+                 "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"))
     }
 
     # Add additional meta.data slots

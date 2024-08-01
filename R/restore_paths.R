@@ -61,7 +61,7 @@ RestorePaths.MPXAssay <- function (
   fs_map <- FSMap(object)
 
   # Get PXL file names
-  pxl_files <- fs_map %>% pull(pxl_file) %>% basename()
+  pxl_files <- fs_map %>% pull(all_of("pxl_file")) %>% basename()
 
   # Update pxl_files
   pxl_files_updated <- fs::path(pxl_files_dir, pxl_files)
@@ -135,4 +135,3 @@ RestorePaths.Seurat <- function (
 
   return(object)
 }
-

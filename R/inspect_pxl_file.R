@@ -39,14 +39,12 @@ inspect_pxl_file <- function (
     start_marker <- "layout="
     end_marker <- "/component"
     layout_type <- stringr::str_extract(string = pxl_file_content$Name[layouts_dir],
-                         pattern = paste0("(?<=\\b", start_marker, "\\b).*?(?=\\b", end_marker, "\\b)"))
+                                        pattern = paste0("(?<=\\b", start_marker,
+                                                         "\\b).*?(?=\\b", end_marker, "\\b)"))
     start_marker <- "component="
     end_marker <- "/part"
     component <- stringr::str_extract(string = pxl_file_content$Name[layouts_dir],
                                       pattern = paste0("(?<=\\b", start_marker, "\\b).*?(?=\\b", end_marker, "\\b)"))
-    layout_info <- tibble(type = layout_type, component = component) %>%
-      group_by(type) %>%
-      summarize(n = n())
   }
 
   pxl_info <- tibble(

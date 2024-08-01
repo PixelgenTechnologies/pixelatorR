@@ -94,7 +94,8 @@ ReadMPX_layouts <- function (
     coords_component_split <- coords_component_grouped %>%
       group_split() %>%
       lapply(function(x) {
-        x %>% select(-component) %>%
+        x %>%
+          select(-component) %>%
           select(
             where(
               ~sum(!is.na(.x)) > 0

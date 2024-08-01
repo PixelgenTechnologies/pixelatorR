@@ -146,17 +146,17 @@
 #' @export
 #'
 local_G <- function (
-    g,
-    counts,
-    k = 1,
-    W = NULL,
-    use_weights = TRUE,
-    normalize_counts = FALSE,
-    type = c("gi", "gstari"),
-    return_p_vals = FALSE,
-    p_adjust_method = "BH",
-    alternative = c("two.sided", "less", "greater"),
-    ...
+  g,
+  counts,
+  k = 1,
+  W = NULL,
+  use_weights = TRUE,
+  normalize_counts = FALSE,
+  type = c("gi", "gstari"),
+  return_p_vals = FALSE,
+  p_adjust_method = "BH",
+  alternative = c("two.sided", "less", "greater"),
+  ...
 ) {
 
   # Check input parameters
@@ -195,7 +195,7 @@ local_G <- function (
       "Number of rows and columns in 'W' must match number of nodes in 'g'" =
         nrow(W) == length(g) && ncol(W) == length(g)
     )
-    if (type == "gstari" & any(diag(A) == 0)) {
+    if (type == "gstari" && any(diag(A) == 0)) {
       abort(glue("The 'gstari' type requires the diagonal of the adjacency matrix to be positive."))
     }
   } else {
@@ -235,8 +235,8 @@ local_G <- function (
       rep(mean(val), n_nodes)
     })
     # Compute si for each node and marker
-    s_mat <- do.call(cbind, lapply(1:ncol(counts), function(i) {
-      rep((sum(counts[, i]^2)/n_nodes) - (sum(counts[, i])/n_nodes)^2, n_nodes)
+    s_mat <- do.call(cbind, lapply(seq_len(ncol(counts)), function(i) {
+      rep((sum(counts[, i]^2) / n_nodes) - (sum(counts[, i]) / n_nodes)^2, n_nodes)
     }))
   } else if (type == "gi") {
     # Compute xibar for each node and marker, excluding i
@@ -244,7 +244,7 @@ local_G <- function (
       (rep(sum(val), n_nodes) - val) / (n_nodes - 1)
     })
     # Compute si for each node and marker, excluding i
-    s_mat <- do.call(cbind, lapply(1:ncol(counts), function(i) {
+    s_mat <- do.call(cbind, lapply(seq_len(ncol(counts)), function(i) {
       ((rep(sum(counts[, i]^2), n_nodes) - counts[, i]^2) / (n_nodes - 1)) - xibar_mat[, i]^2
     }))
   }
@@ -255,16 +255,16 @@ local_G <- function (
   square_weights_i <- rowSums(W^2)
 
   # Calculate expected value
-  E_G <- weights_i*xibar_mat
+  E_G <- weights_i * xibar_mat
 
   # Calculate numerator G - E(G)
   numerator_mat <- (lag_mat - E_G)
 
   # Calculate denomenator Var(G)
   if (type == "gstari") {
-    denomenator_mat <- sqrt(s_mat*((n_nodes*square_weights_i - weights_i^2)/(n_nodes - 1)))
+    denomenator_mat <- sqrt(s_mat * ((n_nodes * square_weights_i - weights_i^2) / (n_nodes - 1)))
   } else if (type == "gi") {
-    denomenator_mat <- sqrt(s_mat*(((n_nodes - 1)*square_weights_i - weights_i^2)/(n_nodes - 2)))
+    denomenator_mat <- sqrt(s_mat * (((n_nodes - 1) * square_weights_i - weights_i^2) / (n_nodes - 2)))
   }
 
   # Calculate Z-score
@@ -277,11 +277,11 @@ local_G <- function (
   if (return_p_vals) {
     if (alternative == "two.sided") {
       gi_p_mat <- apply(gi_mat, 2, function(x) {
-        2 * pnorm(abs(x), lower.tail=FALSE)
+        2 * pnorm(abs(x), lower.tail = FALSE)
       })
     } else if (alternative == "greater") {
       gi_p_mat <- apply(gi_mat, 2, function(x) {
-        pnorm(x, lower.tail=FALSE)
+        pnorm(x, lower.tail = FALSE)
       })
     } else if (alternative == "less") {
       gi_p_mat <- apply(gi_mat, 2, function(x) {
@@ -325,9 +325,9 @@ local_G <- function (
 #' @export
 #'
 compute_transition_probabilities <- function (
-    A,
-    k = 1,
-    remove_self_loops = FALSE
+  A,
+  k = 1,
+  remove_self_loops = FALSE
 ) {
 
   stopifnot(
@@ -337,13 +337,13 @@ compute_transition_probabilities <- function (
   )
 
   # Compute transition probabilities
-  W_out <- A * (1/Matrix::rowSums(A))
+  W_out <- A * (1 / Matrix::rowSums(A))
   # Compute matrix power determined by k
   W_out <- Reduce("%*%", rep(list(W_out), k))
   # When using gi, set diagonal to 0 and recompute probabilities
-  if (remove_self_loops & (k > 1)) {
+  if (remove_self_loops && (k > 1)) {
     diag(W_out) <- 0
-    W_out <- W_out * (1/Matrix::rowSums(W_out))
+    W_out <- W_out * (1 / Matrix::rowSums(W_out))
   }
 
   return(W_out)

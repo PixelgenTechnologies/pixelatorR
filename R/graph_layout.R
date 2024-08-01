@@ -117,17 +117,19 @@ ComputeLayout.tbl_graph <- function (
     # Check and select a layout method
     layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
 
-    layout_function <- switch(
-      layout_method,
-      "wpmds" = layout_with_weighted_pmds,
-      "fr" = layout_with_fr,
-      "kk" = layout_with_kk,
-      "drl" = layout_with_drl,
-      "pmds" = {
-        # Abort if pmds is selected and graphlayouts isn't installed
-        expect_graphlayouts()
-        graphlayouts::layout_with_pmds
-      })
+    layout_function <-
+      switch(
+        layout_method,
+        "wpmds" = layout_with_weighted_pmds,
+        "fr" = layout_with_fr,
+        "kk" = layout_with_kk,
+        "drl" = layout_with_drl,
+        "pmds" = {
+          # Abort if pmds is selected and graphlayouts isn't installed
+          expect_graphlayouts()
+          graphlayouts::layout_with_pmds
+        }
+      )
 
     layout <-
       object %>%
@@ -138,7 +140,7 @@ ComputeLayout.tbl_graph <- function (
           layout_function(., dim = dim, ...)
         }
       } %>%
-      as_tibble(.name_repair = function(x) c("x", "y", "z")[1:length(x)]) %>%
+      as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_along(x)]) %>%
       bind_cols(as_tibble(object)) %>%
       select(any_of(c("x", "y", "z")))
   }
@@ -189,14 +191,14 @@ ComputeLayout.CellGraph <- function (
   ...
 ) {
 
-  if (is.null(custom_layout_function) & is.null(layout_name)) {
+  if (is.null(custom_layout_function) && is.null(layout_name)) {
     layout_name <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
     # Add suffix _3d if dim = 3
     if (dim == 3) {
       layout_name <- paste0(layout_name, "_3d")
     }
   }
-  if (!is.null(custom_layout_function) & is.null(layout_name)) {
+  if (!is.null(custom_layout_function) && is.null(layout_name)) {
     layout_name <- "custom"
   }
 
@@ -279,7 +281,7 @@ ComputeLayout.MPXAssay <- function (
   # Only keep loaded graphs
   cellgraphs_loaded <- cellgraphs[loaded_graphs]
 
-  if (verbose & check_global_verbosity())
+  if (verbose && check_global_verbosity())
     cli_alert_info("Computing layouts for {length(cellgraphs_loaded)} graphs")
 
   # Calculate layout for each cell graph object sequentially
@@ -500,7 +502,7 @@ center_layout_coordinates <- function (
   )
 
   # Force rename columns to x, y, z
-  colnames(layout) <- c("x", "y", "z")[1:ncol(layout)]
+  colnames(layout) <- c("x", "y", "z")[seq_len(ncol(layout))]
   if (inherits(layout, what = "matrix")) {
     layout <- as_tibble(layout)
   }
@@ -542,9 +544,11 @@ normalize_layout_coordinates <- function (
     mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
     rowSums()
   radii <- sqrt(radii)
+  # nolint start
   median_radius <- median(radii)
   layout <- layout %>%
-    mutate(across(contains(c("x", "y", "z")), ~ .x/median_radius))
+    mutate(across(contains(c("x", "y", "z")), ~ .x / median_radius))
+  # nolint end
 
   return(layout)
 }
@@ -579,9 +583,8 @@ project_layout_coordinates_on_unit_sphere <- function (
     mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
     rowSums()
   radii <- sqrt(radii)
-  median_radius <- median(radii)
   layout <- layout %>%
-    mutate(across(contains(c("x", "y", "z")), ~ .x/radii))
+    mutate(across(contains(c("x", "y", "z")), ~ .x / radii))
 
   return(layout)
 }

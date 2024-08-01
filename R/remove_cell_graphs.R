@@ -6,7 +6,7 @@
 RemoveCellGraphs.MPXAssay <- function (
   object,
   ...
-){
+) {
   slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
   return(object)
 }
@@ -24,7 +24,7 @@ RemoveCellGraphs.Seurat <- function (
   object,
   assay = NULL,
   ...
-){
+) {
 
   if (!is.null(assay)) {
     stopifnot("'assay' must be a character of length 1" = is.character(assay) & (length(assay) == 1))
@@ -43,4 +43,3 @@ RemoveCellGraphs.Seurat <- function (
   object[[assay]] <- cg_assay
   return(object)
 }
-

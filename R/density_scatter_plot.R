@@ -22,10 +22,10 @@
 #' get_density(x, y, n = 100)
 #'
 .get2Ddensity <- function(
-    x,
-    y,
-    n = 500,
-    ...
+  x,
+  y,
+  n = 500,
+  ...
 ) {
   # Check that MASS is installed
   expect_MASS()
@@ -108,20 +108,20 @@
 #' @export
 #'
 DensityScatterPlot <- function(
-    object,
-    marker1,
-    marker2,
-    facet_vars = NULL,
-    plot_gate = NULL,
-    scale_density = TRUE,
-    margin_density = FALSE,
-    coord_fixed = TRUE,
-    pt_size = 1,
-    alpha = 1,
-    layer = NULL,
-    grid_n = 500,
-    colors = NULL,
-    ...
+  object,
+  marker1,
+  marker2,
+  facet_vars = NULL,
+  plot_gate = NULL,
+  scale_density = TRUE,
+  margin_density = FALSE,
+  coord_fixed = TRUE,
+  pt_size = 1,
+  alpha = 1,
+  layer = NULL,
+  grid_n = 500,
+  colors = NULL,
+  ...
 ) {
 
   # Validate input parameters
@@ -170,7 +170,7 @@ DensityScatterPlot <- function(
       is.null(facet_vars) | !isTRUE(margin_density)
   )
 
-  if(isTRUE(coord_fixed) && isTRUE(margin_density)) {
+  if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
     warn("Fixed coordinates ('coord_fixed' = TRUE) is not supported when 'margin_density' is TRUE")
   }
 
@@ -187,7 +187,7 @@ DensityScatterPlot <- function(
     mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
     ungroup()
 
-  if(isTRUE(scale_density)) {
+  if (isTRUE(scale_density)) {
     plot_data <-
       plot_data %>%
       group_by_at(facet_vars) %>%
@@ -196,7 +196,7 @@ DensityScatterPlot <- function(
   }
 
   # Set plot theme
-  if(is.null(facet_vars)) {
+  if (is.null(facet_vars)) {
 
     plot_theme <-
       theme_bw() +
@@ -215,7 +215,7 @@ DensityScatterPlot <- function(
   plot_range <-
     range(c(plot_data$marker1, plot_data$marker2))
 
-  if(!is.null(plot_gate)) {
+  if (!is.null(plot_gate)) {
     plot_range <-
       range(c(plot_data$marker1, plot_data$marker2,
               plot_gate$xmin, plot_gate$xmax,
@@ -237,11 +237,11 @@ DensityScatterPlot <- function(
     labs(x = marker1,
          y = marker2)
 
-  if(isTRUE(coord_fixed) && isFALSE(margin_density)) {
+  if (isTRUE(coord_fixed) && isFALSE(margin_density)) {
     plot <- plot + coord_fixed()
   }
 
-  if(!is.null(colors)) {
+  if (!is.null(colors)) {
 
     plot <-
       plot +
@@ -255,16 +255,16 @@ DensityScatterPlot <- function(
   }
 
   # Facet
-  if(!is.null(facet_vars)) {
+  if (!is.null(facet_vars)) {
 
-    if(length(facet_vars) == 1) {
+    if (length(facet_vars) == 1) {
 
       plot <-
         plot +
         facet_grid(rows = vars(!!!syms(facet_vars)))
     }
 
-    if(length(facet_vars) == 2) {
+    if (length(facet_vars) == 2) {
       plot <-
         plot +
         facet_grid(rows = vars(!!!syms(facet_vars[1])),
@@ -275,13 +275,13 @@ DensityScatterPlot <- function(
 
 
   # Add gates
-  if(!is.null(plot_gate)) {
+  if (!is.null(plot_gate)) {
 
-    if(!is.null(facet_vars)) {
+    if (!is.null(facet_vars)) {
 
       join_vars <- intersect(facet_vars, colnames(plot_gate))
 
-      if(length(join_vars) > 0) {
+      if (length(join_vars) > 0) {
         gate_label <-
           plot_gate %>%
           left_join(plot_data,
@@ -329,7 +329,7 @@ DensityScatterPlot <- function(
   }
 
   # Add marginal density
-  if(isTRUE(margin_density)) {
+  if (isTRUE(margin_density)) {
 
     density_plot_x <-
       plot_data %>%
@@ -368,7 +368,3 @@ DensityScatterPlot <- function(
 
   return(plot)
 }
-
-
-
-

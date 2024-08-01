@@ -27,13 +27,13 @@
 #'
 #' @noRd
 .normalize_method_dsb <- function(
-    counts,
-    isotype_controls,
-    ...
+  counts,
+  isotype_controls,
+  ...
 ) {
 
-expect_mclust()
-expect_limma()
+  expect_mclust()
+  expect_limma()
 
   stopifnot(
     "counts must be a matrix" =
@@ -45,8 +45,6 @@ expect_limma()
     "All isotype controls must be present in the rownames of the counts matrix" =
       all(isotype_controls %in% rownames(counts))
   )
-
-  markers <- rownames(counts)
 
   # Get protein negative population means
   counts_log <- log1p(counts)
@@ -66,9 +64,9 @@ expect_limma()
     failed_markers <- setdiff(rownames(counts_log), names(mu1))
 
     cli_alert_warning(
-    glue("Empirical background cound not be fit for ",
-        "{length(failed_markers)} proteins: ",
-        "{paste(failed_markers, collapse = ', ')}.")
+      glue("Empirical background cound not be fit for ",
+           "{length(failed_markers)} proteins: ",
+           "{paste(failed_markers, collapse = ', ')}.")
     )
     cli_alert_info(
       "Values returned will be log transformed without background correction."
@@ -77,7 +75,7 @@ expect_limma()
     ad        <- as.numeric(rep(x = 0, length(failed_markers)))
     names(ad) <- failed_markers
     mu1       <- c(mu1, ad)
-    mu1       <- mu1[match(rownames(counts_log) , names(mu1) )]
+    mu1       <- mu1[match(rownames(counts_log), names(mu1))]
   }
 
   # Center data to negative mean
@@ -90,8 +88,8 @@ expect_limma()
       return(mclust::summaryMclustBIC(BIC, x, G = 2)$parameters$mean[1])
     })
 
-  noise_matrix <- rbind(counts_norm[isotype_controls,],
-                       cellwise_background_mean)
+  noise_matrix <- rbind(counts_norm[isotype_controls, ],
+                        cellwise_background_mean)
 
   noise_vector <-
     prcomp(t(noise_matrix), scale = TRUE)$x[, 1]
@@ -124,8 +122,8 @@ expect_limma()
 #'
 #' @noRd
 .normalize_method_clr <- function(
-    counts,
-    ...
+  counts,
+  ...
 ) {
 
   stopifnot(
@@ -143,10 +141,10 @@ expect_limma()
 #' @export
 #'
 NormalizeMPX.Matrix <- function(
-    object,
-    method = c("dsb", "clr"),
-    isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
-    ...
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
 ) {
 
   # Validate inputs
@@ -175,14 +173,14 @@ NormalizeMPX.Matrix <- function(
 #' @export
 #'
 NormalizeMPX.MPXAssay <- function(
-    object,
-    method = c("dsb", "clr"),
-    isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
-    ...
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
 ) {
 
   # If object has been merged before, join layers
-  if(inherits(object, "CellGraphAssay5")) {
+  if (inherits(object, "CellGraphAssay5")) {
     object <- JoinLayers(object)
   }
 
@@ -219,11 +217,11 @@ NormalizeMPX.CellGraphAssay5 <- NormalizeMPX.MPXAssay
 #' @export
 #'
 NormalizeMPX.Seurat <- function(
-    object,
-    method = c("dsb", "clr"),
-    isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
-    assay = NULL,
-    ...
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  assay = NULL,
+  ...
 ) {
 
   assay <- assay %||% DefaultAssay(object = object)

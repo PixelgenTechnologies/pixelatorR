@@ -1,11 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('nodes', 'group'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
-
 #' @param verbose Print messages
 #'
 #' @rdname KeepLargestComponent

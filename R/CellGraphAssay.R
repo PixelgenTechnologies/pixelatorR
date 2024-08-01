@@ -2,13 +2,6 @@
 #' @importClassesFrom Matrix dgCMatrix
 NULL
 
-# Declarations used in package check
-globalVariables(
-  names = c('marker_1', 'marker_2'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Class definition
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -253,13 +246,13 @@ CreateCellGraphAssay <- function (
 #' @export
 #'
 CreateCellGraphAssay5 <- function (
-    counts,
-    cellgraphs,
-    polarization = NULL,
-    colocalization = NULL,
-    fs_map = NULL,
-    verbose = FALSE,
-    ...
+  counts,
+  cellgraphs,
+  polarization = NULL,
+  colocalization = NULL,
+  fs_map = NULL,
+  verbose = FALSE,
+  ...
 ) {
 
   # Check input parameters
@@ -430,8 +423,8 @@ RenameCells.MPXAssay <- function (
 ) {
 
   if (!inherits(new.names, what = "character") ||
-      !(length(new.names) == ncol(object)) ||
-      !sum(duplicated(new.names)) == 0) {
+        !(length(new.names) == ncol(object)) ||
+        !sum(duplicated(new.names)) == 0) {
     abort(glue("'new.names' must be a character vector where length(new.names) == ncol(object),",
                " and the names must be unique."))
   }
@@ -477,7 +470,8 @@ RenameCells.MPXAssay <- function (
   # Handle fs_map
   fs_map <- slot(object, name = "fs_map")
   if (nrow(fs_map) > 0) {
-    fs_map$id_map <- fs_map %>% pull(id_map) %>%
+    fs_map$id_map <- fs_map %>%
+      pull(id_map) %>%
       lapply(function(x) {
         x$current_id <- new.names[x$current_id]
         return(x)
@@ -573,7 +567,8 @@ as.CellGraphAssay.Assay <- function (
     stopifnot(
       "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay" =
         is.list(cellgraphs) &&
-        (length(cellgraphs) == ncol(x)))
+        (length(cellgraphs) == ncol(x))
+    )
     stopifnot(
       "'cellgraphs' names must match colnames of the Assay" =
         all(names(cellgraphs) == colnames(x))
@@ -686,12 +681,12 @@ setAs(
 #' @export
 #'
 as.CellGraphAssay5.Assay5 <- function (
-    x,
-    cellgraphs = NULL,
-    polarization = NULL,
-    colocalization = NULL,
-    fs_map = NULL,
-    ...
+  x,
+  cellgraphs = NULL,
+  polarization = NULL,
+  colocalization = NULL,
+  fs_map = NULL,
+  ...
 ) {
 
   # Check cellgraphs
@@ -699,7 +694,8 @@ as.CellGraphAssay5.Assay5 <- function (
     stopifnot(
       "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay5" =
         is.list(cellgraphs) &&
-        (length(cellgraphs) == ncol(x)))
+        (length(cellgraphs) == ncol(x))
+    )
     stopifnot(
       "'cellgraphs' names must match colnames of the Assay5" =
         all(names(cellgraphs) == colnames(x))
@@ -1181,7 +1177,8 @@ merge.MPXAssay <- function (
   cell.names <- unlist(lapply(objects, colnames))
   name_conversion <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
     tibble(component = colnames(objects[[i]]), sample = i)
-  })) %>% mutate(component_new = cell.names) %>%
+  })) %>%
+    mutate(component_new = cell.names) %>%
     group_by(sample) %>%
     group_split()
 
@@ -1200,7 +1197,7 @@ merge.MPXAssay <- function (
   # Check duplicate cell names
   unique_names <- table(cell.names)
   names_are_duplicated <- any(unique_names > 1)
-  if (names_are_duplicated & is.null(add.cell.ids)) {
+  if (names_are_duplicated && is.null(add.cell.ids)) {
     abort(glue("Found non-unique IDs across samples. A 'add.cell.ids' must be specified. ",
                "Alternatively, make sure that each separate object has unique cell names."))
   }
@@ -1217,12 +1214,12 @@ merge.MPXAssay <- function (
                      y = standardassays[-1],
                      merge.data = merge.data,
                      ...)
-  if (collapse & is(new_assay, "CellGraphAssay5")) {
+  if (collapse && is(new_assay, "CellGraphAssay5")) {
     new_assay <- JoinLayers(new_assay)
   }
 
   # Join layers
-  if (collapse & is(new_assay, "Assay5")) {
+  if (collapse && is(new_assay, "Assay5")) {
     new_assay <- JoinLayers(new_assay)
   }
 
@@ -1236,7 +1233,8 @@ merge.MPXAssay <- function (
   polarization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
     pl <- slot(objects[[i]], name = "polarization")
     if (length(pl) == 0) return(pl)
-    pl <- pl %>% left_join(name_conversion[[i]], by = "component") %>%
+    pl <- pl %>%
+      left_join(name_conversion[[i]], by = "component") %>%
       select(-component, -sample) %>%
       rename(component = component_new)
     return(pl)
@@ -1244,7 +1242,8 @@ merge.MPXAssay <- function (
   colocalization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
     cl <- slot(objects[[i]], name = "colocalization")
     if (length(cl) == 0) return(cl)
-    cl <- cl %>% left_join(name_conversion[[i]], by = "component") %>%
+    cl <- cl %>%
+      left_join(name_conversion[[i]], by = "component") %>%
       select(-component, -sample) %>%
       rename(component = component_new)
     return(cl)

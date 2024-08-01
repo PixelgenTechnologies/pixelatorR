@@ -32,17 +32,17 @@
 #' @export
 #'
 AbundanceColocalizationPlot <- function(
-    object,
-    markers_x,
-    markers_y,
-    shared_scales = TRUE,
-    coord_fixed = TRUE,
-    pt_size = c(1, 4),
-    draw_origo= TRUE,
-    layer = NULL,
-    coloc_score = "pearson_z",
-    colors = c("#1F395F", "#496389", "#728BB1", "#AABAD1", "gray90",
-               "#E9AABF", "#CD6F8D", "#A23F5E", "#781534")
+  object,
+  markers_x,
+  markers_y,
+  shared_scales = TRUE,
+  coord_fixed = TRUE,
+  pt_size = c(1, 4),
+  draw_origo = TRUE,
+  layer = NULL,
+  coloc_score = "pearson_z",
+  colors = c("#1F395F", "#496389", "#728BB1", "#AABAD1", "gray90",
+             "#E9AABF", "#CD6F8D", "#A23F5E", "#781534")
 ) {
 
   # Validate input parameters
@@ -97,12 +97,13 @@ AbundanceColocalizationPlot <- function(
   coloc_scores <-
     ColocalizationScores(object)
 
-  if(!coloc_score %in% colnames(coloc_scores)) {
+  if (!coloc_score %in% colnames(coloc_scores)) {
     abort(glue("'{coloc_score}' is not a valid colocalization score."))
   }
 
-  if(!is.numeric(coloc_scores[[coloc_score]])) {
-    abort(glue("'{coloc_score}' must reference a column with numeric values, got {class(coloc_scores[[coloc_score]])}."))
+  if (!is.numeric(coloc_scores[[coloc_score]])) {
+    abort(glue("'{coloc_score}' must reference a column with numeric values, ",
+               "got {class(coloc_scores[[coloc_score]])}."))
   }
 
   coloc_scores <-
@@ -123,7 +124,7 @@ AbundanceColocalizationPlot <- function(
            marker_y = factor(marker_y, levels = markers_y))
 
   # Make plot
-  if(length(pt_size) == 1) {
+  if (length(pt_size) == 1) {
     plot <-
       plot_data %>%
       ggplot(aes(value_x, value_y,
@@ -137,7 +138,7 @@ AbundanceColocalizationPlot <- function(
       scale_size_continuous(range = pt_size)
   }
 
-  if(draw_origo){
+  if (draw_origo) {
     plot <- plot +
       geom_vline(xintercept = 0, color = "gray") +
       geom_hline(yintercept = 0, color = "gray")
@@ -147,7 +148,7 @@ AbundanceColocalizationPlot <- function(
     plot +
     geom_point() +
     scale_color_gradientn(colors = colors,
-                          limits = max(abs(range(coloc_scores$coloc_score, na.rm = T))) * c(-1, 1)) +
+                          limits = max(abs(range(coloc_scores$coloc_score, na.rm = TRUE))) * c(-1, 1)) +
     theme_bw() +
     theme(panel.grid = element_blank()) +
     labs(x = "Abundance",
@@ -155,11 +156,11 @@ AbundanceColocalizationPlot <- function(
          color = "Colocalization Score",
          size = "|Colocalization Score|")
 
-  if(isTRUE(coord_fixed)) {
+  if (isTRUE(coord_fixed)) {
     plot <- plot + coord_fixed()
   }
 
-  if(isTRUE(shared_scales)) {
+  if (isTRUE(shared_scales)) {
     plot_range <-
       range(c(plot_data$value_x, plot_data$value_y))
 
@@ -176,7 +177,3 @@ AbundanceColocalizationPlot <- function(
 
   return(plot)
 }
-
-
-
-

@@ -42,7 +42,7 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
     "edgelist must be a non-empty object" =
       (nrow(object) > 0),
     "One or several of 'upia', 'upib' are missing from edgelist" =
-      all(c('upia', 'upib') %in% colnames(object))
+      all(c("upia", "upib") %in% colnames(object))
   )
   if (!is.null(components) && ("component" %in% colnames(object))) {
     stopifnot(
@@ -135,7 +135,7 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
     "edgelist must be a non-empty object" =
       (nrow(object) > 0),
     "One or several of 'upia', 'upib' are missing from edgelist" =
-      all(c('upia', 'upib') %in% names(object))
+      all(c("upia", "upib") %in% names(object))
   )
   if (!is.null(components) && ("component" %in% names(object))) {
     stopifnot(

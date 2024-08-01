@@ -1,11 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('upia', 'upib', 'marker', 'n'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
-
 #' Calculate antibody counts per A-node
 #'
 #' Computes and returns a data frame of antibody counts per node (vertex) of
@@ -37,7 +29,7 @@ node_markers_counts <- function (
       inherits(k, what = c("numeric", "integer")) &&
       (length(k) == 1),
     "One or several of 'upia', 'upib', 'marker' are missing from component_edge_list" =
-      all(c('upia', 'upib', 'marker') %in% colnames(component_edge_list))
+      all(c("upia", "upib", "marker") %in% colnames(component_edge_list))
   )
 
   component_counts <-

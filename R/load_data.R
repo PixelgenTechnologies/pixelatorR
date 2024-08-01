@@ -35,15 +35,14 @@ ReadMPX_counts <- function (
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
   # Reads anndata from a .pxl file by unzipping it into a temporary folder and reading the anndata object within.
-  if (verbose & check_global_verbosity())
+  if (verbose && check_global_verbosity())
     cli_alert_info("Loading count data from {filename}")
 
   # Unzip pxl file
-  original_filename <- filename
   if (endsWith(filename, ".pxl")) {
     res <- tryCatch(unzip(filename, exdir = fs::path_temp()),
-                         error = function(e) e,
-                         warning = function(w) w)
+                    error = function(e) e,
+                    warning = function(w) w)
     if (inherits(x = res, what = "simpleWarning"))
       abort("Failed to unzip 'adata.h5ad' data")
   } else {
@@ -162,14 +161,17 @@ ReadMPX_Seurat <- function (
           original_id = colnames(X)
         )),
         sample = 1L,
-        pxl_file = ifelse(.is_absolute_path(filename), normalizePath(filename), filename))
+        pxl_file = ifelse(.is_absolute_path(filename), normalizePath(filename), filename)
+      )
     )
     Key(cg_assay) <- paste0(assay, "_")
 
     if (load_cell_graphs) {
       if (verbose && check_global_verbosity())
-        cli_alert_warning(glue(col_br_red("Loading cell graphs into the Seurat object may take time and uses a lot of memory.",
-                                          " Consider using LoadCellGraphs to load selected cell graphs at a later stage.")))
+        cli_alert_warning(
+          glue(col_br_red("Loading cell graphs into the Seurat object may take time and uses a lot of memory.",
+                          " Consider using LoadCellGraphs to load selected cell graphs at a later stage."))
+        )
       cg_assay <- LoadCellGraphs(cg_assay, verbose = verbose)
     }
     # Load polarity scores
@@ -222,6 +224,7 @@ ReadMPX_Seurat <- function (
   feature_meta_data <-
     names(hd5_object[["var"]]) %>% lapply(function(nm) {
       col <- tibble(!!sym(nm) := hd5_object[["var"]][[nm]]$read())
+      return(col)
     }) %>%
     do.call(bind_cols, .) %>%
     as.data.frame()

@@ -81,7 +81,7 @@ layout_with_weighted_pmds <- function (
     "'seed' must be an integer" =
       inherits(seed, what = "numeric"),
     "'pow ' must be a positive numeric value of length 1" =
-      inherits(pow , what = "numeric") && (length(pow ) == 1) && (pow  > 0)
+      inherits(pow, what = "numeric") && (length(pow) == 1) && (pow  > 0)
   )
 
   method <- match.arg(method, choices = c("prob_dist", "cos_dist"))
@@ -110,7 +110,7 @@ layout_with_weighted_pmds <- function (
 #' @param A,B Matrices with identical dimensions
 #'
 #' @noRd
-cos_dist2 <- function(A, B){
+cos_dist2 <- function(A, B) {
   Matrix::rowSums(A * B) / sqrt(Matrix::rowSums(A * A) * Matrix::rowSums(B * B))
 }
 
@@ -235,4 +235,3 @@ prob_distance_weights <- function (
 
   return(g)
 }
-

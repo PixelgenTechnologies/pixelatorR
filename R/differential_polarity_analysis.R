@@ -1,9 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('morans_z', 'p', 'p.value'),
-  package = 'pixelatorR',
-  add = TRUE
-)
 #' @include generics.R
 NULL
 

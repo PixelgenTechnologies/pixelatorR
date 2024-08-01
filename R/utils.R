@@ -58,8 +58,8 @@
 .is_absolute_path <- function (
   x
 ) {
-  if (.Platform$OS.type == 'unix') {
-    str_detect(x, '^[/~]')
+  if (.Platform$OS.type == "unix") {
+    str_detect(x, "^[/~]")
   } else {
     str_detect(x, "^(~|.:)(/|\\\\)")
   }
@@ -217,4 +217,3 @@
 
   return(invisible(NULL))
 }
-

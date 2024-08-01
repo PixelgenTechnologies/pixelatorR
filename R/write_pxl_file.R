@@ -88,7 +88,7 @@ WriteMPX_pxl_file <- function (
   )
 
   # Check if file exists
-  if (fs::file_exists(file) & !overwrite) {
+  if (fs::file_exists(file) && !overwrite) {
     abort(glue("{col_br_blue(file)} already exists. \nPlease select a different ",
                "file name or set overwrite = TRUE if you are certain that the ",
                "existing file should be replaced."))
@@ -212,7 +212,7 @@ WriteMPX_pxl_file <- function (
     }, silent = TRUE)
     if (inherits(X, "try-error"))
       abort(glue("Failed to combine 'Assay5' layers due to invalid dimensions. \n",
-                  "Please ensure that all layers have the same number of rows."))
+                 "Please ensure that all layers have the same number of rows."))
   }
   return(X)
 }
@@ -413,7 +413,7 @@ WriteMPX_pxl_file <- function (
   x$create_attr(attr_name = "encoding-type",
                 dtype = hdf5r::H5T_STRING$new(size = Inf)$set_cset(cset = hdf5r::h5const$H5T_CSET_UTF8),
                 robj = type,
-                space = hdf5r::H5S$new(type = 'scalar'))
+                space = hdf5r::H5S$new(type = "scalar"))
   return(invisible(NULL))
 }
 #' Add "encoding-version" attribute to H5File object
@@ -424,7 +424,7 @@ WriteMPX_pxl_file <- function (
   x$create_attr(attr_name = "encoding-version",
                 dtype = hdf5r::H5T_STRING$new(size = Inf)$set_cset(cset = hdf5r::h5const$H5T_CSET_UTF8),
                 robj = version,
-                space = hdf5r::H5S$new(type = 'scalar'))
+                space = hdf5r::H5S$new(type = "scalar"))
   return(invisible(NULL))
 }
 #' Add any string attribute to H5File object
@@ -435,7 +435,7 @@ WriteMPX_pxl_file <- function (
   x$create_attr(attr_name = attr_name,
                 dtype = hdf5r::H5T_STRING$new(size = Inf)$set_cset(cset = hdf5r::h5const$H5T_CSET_UTF8),
                 robj = value,
-                space = hdf5r::H5S$new(type = 'scalar'))
+                space = hdf5r::H5S$new(type = "scalar"))
   return(invisible(NULL))
 }
 
@@ -601,7 +601,7 @@ WriteMPX_pxl_file <- function (
       select(-component) %>%
       rename(component = current_id) %>%
       # Filter out components that are not in the current_id
-      filter(component %in% (fs_map_unnest_filtered$current_id %>% levels())) %>%
+      filter(component %in% (levels(fs_map_unnest_filtered$current_id))) %>%
       # Force computation (this can be slow and requires the data to be loaded in memory)
       compute()
 
@@ -678,8 +678,9 @@ WriteMPX_pxl_file <- function (
       if (nrow(cg@counts) != nrow(layout))
         abort("Counts and layout must have the same number of rows")
       return(cg@counts %>% Matrix::t())
-    }) %>% do.call(cbind, .)
-    colnames(merged_counts) <- 1:ncol(merged_counts)
+    }) %>%
+      do.call(cbind, .)
+    colnames(merged_counts) <- seq_len(ncol(merged_counts))
 
     merged_layouts <- lapply(names(layouts), function(layout_type) {
       layout_tbl <- layouts[[layout_type]]
@@ -691,7 +692,8 @@ WriteMPX_pxl_file <- function (
       layout_tbl <- layout_tbl %>%
         mutate(layout = layout_type, component = nm, graph_projection = attr(cg@cellgraph, "type"))
       return(layout_tbl)
-    }) %>% do.call(bind_rows, .)
+    }) %>%
+      do.call(bind_rows, .)
 
     return(list(merged_counts = merged_counts, merged_layouts = merged_layouts))
 
@@ -702,7 +704,11 @@ WriteMPX_pxl_file <- function (
 
   # merge all count data
   all_count_data_merged <- lapply(all_data, function(data) data$merged_counts)
-  all_count_data_merged <- SeuratObject::RowMergeSparseMatrices(all_count_data_merged[[1]], all_count_data_merged[-1]) %>% Matrix::t()
+  all_count_data_merged <- SeuratObject::RowMergeSparseMatrices(
+    all_count_data_merged[[1]],
+    all_count_data_merged[-1]
+  ) %>%
+    Matrix::t()
 
   cli_status_update(id = sb,
                     "{symbol$arrow_right} Merging layouts")
@@ -721,7 +727,8 @@ WriteMPX_pxl_file <- function (
         arrow::string(),
         rep(list(double()), 3),
         rep(list(arrow::string()), 3))) %>%
-      set_names(nm = c(colnames(all_count_data_merged), colnames(all_layout_merged))))
+      set_names(nm = c(colnames(all_count_data_merged), colnames(all_layout_merged)))
+  )
 
   # Merge data
   all_layout_and_counts_merged <-
@@ -729,7 +736,7 @@ WriteMPX_pxl_file <- function (
 
   # Convert data to arrow table
   layout_and_counts_arr <- arrow::arrow_table(all_layout_and_counts_merged,
-                                             schema = arr_table_schema)
+                                              schema = arr_table_schema)
 
   # Group by graph_projection, layout and component
   layout_and_counts_arr <- layout_and_counts_arr %>%
@@ -742,4 +749,3 @@ WriteMPX_pxl_file <- function (
   cli_status_clear(id = sb)
   cli_alert_success("Exported layouts")
 }
-
