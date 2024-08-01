@@ -55,7 +55,8 @@ Suggests:
     MASS,
     limma,
     mclust,
-    lintr
+    lintr,
+    styler
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -86,6 +87,7 @@ Collate:
     'objects.R'
     'pivot_tables.R'
     'pixelatorR-package.R'
+    'pixelatorR_style.R'
     'read_and_write_parquet.R'
     'remove_cell_graphs.R'
     'restore_paths.R'
