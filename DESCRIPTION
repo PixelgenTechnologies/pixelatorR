@@ -54,7 +54,8 @@ Suggests:
     reticulate,
     MASS,
     limma,
-    mclust
+    mclust,
+    lintr
 Collate: 
     'generics.R'
     'CellGraph.R'

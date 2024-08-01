@@ -155,9 +155,6 @@ ComputeLayout.tbl_graph <- function (
     layout <- normalize_layout_coordinates(layout)
   }
 
-  # Restore old seed
-  rm(.Random.seed, envir = globalenv())
-
   return(layout)
 }
 
