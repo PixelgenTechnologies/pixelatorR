@@ -26,4 +26,4 @@ styler::style_pkg(transformers = pixelatorR::pixelatorR_style())
 styler::style_file("path/to/file.R", transformers = pixelatorR::pixelatorR_style())
 ```
 
-Alternatively, you can run the styler from RStudio. Here, you need to configure the styler to use the style guide provided in pixelatorR. Go to Addins -> Styler -> Set style and set `pixelatorR::pixelatorR_style()` as the style guide. Then you can use Addins -> Styler -> Style active file or Addins -> Styler -> Style active package.
+Alternatively, you can run the styler from RStudio. Here, you need to configure `styler` to use the style guide provided in pixelatorR. Go to Addins -> Styler -> Set style and set `pixelatorR::pixelatorR_style()` as the style guide. Then you can use Addins -> Styler -> Style active file or Addins -> Styler -> Style active package.
