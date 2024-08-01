@@ -18,10 +18,9 @@
 #'
 #' @export
 #'
-inspect_pxl_file <- function (
+inspect_pxl_file <- function(
   pxl_file
 ) {
-
   if (!fs::file_exists(pxl_file)) {
     abort(glue("File '{pxl_file}' does not exist."))
   }
@@ -38,13 +37,19 @@ inspect_pxl_file <- function (
   if (length(layouts_dir) > 0) {
     start_marker <- "layout="
     end_marker <- "/component"
-    layout_type <- stringr::str_extract(string = pxl_file_content$Name[layouts_dir],
-                                        pattern = paste0("(?<=\\b", start_marker,
-                                                         "\\b).*?(?=\\b", end_marker, "\\b)"))
+    layout_type <- stringr::str_extract(
+      string = pxl_file_content$Name[layouts_dir],
+      pattern = paste0(
+        "(?<=\\b", start_marker,
+        "\\b).*?(?=\\b", end_marker, "\\b)"
+      )
+    )
     start_marker <- "component="
     end_marker <- "/part"
-    component <- stringr::str_extract(string = pxl_file_content$Name[layouts_dir],
-                                      pattern = paste0("(?<=\\b", start_marker, "\\b).*?(?=\\b", end_marker, "\\b)"))
+    component <- stringr::str_extract(
+      string = pxl_file_content$Name[layouts_dir],
+      pattern = paste0("(?<=\\b", start_marker, "\\b).*?(?=\\b", end_marker, "\\b)")
+    )
   }
 
   pxl_info <- tibble(
@@ -62,11 +67,13 @@ inspect_pxl_file <- function (
       length(polarization_file),
       length(colocalization_file)
     ),
-    file = list(pxl_file_content$Name[adata_file],
-                pxl_file_content$Name[edgelist_file],
-                pxl_file_content$Name[metadata_file],
-                pxl_file_content$Name[polarization_file],
-                pxl_file_content$Name[colocalization_file])
+    file = list(
+      pxl_file_content$Name[adata_file],
+      pxl_file_content$Name[edgelist_file],
+      pxl_file_content$Name[metadata_file],
+      pxl_file_content$Name[polarization_file],
+      pxl_file_content$Name[colocalization_file]
+    )
   )
 
   if (length(layouts_dir) > 0) {
@@ -87,5 +94,4 @@ inspect_pxl_file <- function (
   }
 
   return(pxl_info)
-
 }

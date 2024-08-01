@@ -21,12 +21,11 @@ NULL
 #'
 #' @export
 #'
-PolarizationScoresToAssay.data.frame <- function (
+PolarizationScoresToAssay.data.frame <- function(
   object,
   values_from = c("morans_z", "morans_i"),
   ...
 ) {
-
   # Validate input
   values_from <- match.arg(values_from, choices = c("morans_z", "morans_i"))
   stopifnot(
@@ -37,10 +36,12 @@ PolarizationScoresToAssay.data.frame <- function (
 
   # Cast data.frame to wide format
   pol_scores_wide_format <- object %>%
-    pivot_wider(id_cols = "marker",
-                names_from = "component",
-                values_from = all_of(values_from),
-                values_fill = 0) %>%
+    pivot_wider(
+      id_cols = "marker",
+      names_from = "component",
+      values_from = all_of(values_from),
+      values_fill = 0
+    ) %>%
     data.frame(row.names = 1, check.names = FALSE) %>%
     as.matrix()
 
@@ -67,15 +68,15 @@ PolarizationScoresToAssay.data.frame <- function (
 #'
 #' @export
 #'
-PolarizationScoresToAssay.MPXAssay <- function (
+PolarizationScoresToAssay.MPXAssay <- function(
   object,
   values_from = c("morans_z", "morans_i"),
   ...
 ) {
-
   pol_matrix <- .create_spatial_metric_matrix(object,
-                                              values_from = values_from,
-                                              metric = "polarization")
+    values_from = values_from,
+    metric = "polarization"
+  )
   pol_matrix <- as(pol_matrix, "dgCMatrix")
 
   # Create Assay from filled matrix
@@ -122,20 +123,19 @@ PolarizationScoresToAssay.CellGraphAssay5 <- PolarizationScoresToAssay.MPXAssay
 #'
 #' @export
 #'
-PolarizationScoresToAssay.Seurat <- function (
+PolarizationScoresToAssay.Seurat <- function(
   object,
   assay = NULL,
   new_assay = NULL,
   values_from = c("morans_z", "morans_i"),
   ...
 ) {
-
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
     stopifnot(
       "'assay' must be a character of length 1" =
         is.character(assay) &&
-        (length(assay) == 1)
+          (length(assay) == 1)
     )
   } else {
     # Use default assay if assay = NULL
@@ -147,7 +147,7 @@ PolarizationScoresToAssay.Seurat <- function (
     stopifnot(
       "'new_assay' must be a character of length 1" =
         is.character(new_assay) &&
-        (length(new_assay) == 1)
+          (length(new_assay) == 1)
     )
   } else {
     # Use default assay if assay = NULL
@@ -191,15 +191,15 @@ PolarizationScoresToAssay.Seurat <- function (
 #'
 #' @export
 #'
-ColocalizationScoresToAssay.data.frame <- function (
+ColocalizationScoresToAssay.data.frame <- function(
   object,
   values_from = c("pearson_z", "pearson"),
   ...
 ) {
-
   # Validate input
   values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson"))
+    choices = c("pearson_z", "pearson")
+  )
   stopifnot(
     "'component' must be present in input table" =
       "component" %in% colnames(object),
@@ -213,10 +213,12 @@ ColocalizationScoresToAssay.data.frame <- function (
 
   # Cast data.frame to wide format
   col_scores_wide_format <- object %>%
-    pivot_wider(id_cols = c("marker_1", "marker_2"),
-                names_from = "component",
-                values_from = all_of(values_from),
-                values_fill = 0) %>%
+    pivot_wider(
+      id_cols = c("marker_1", "marker_2"),
+      names_from = "component",
+      values_from = all_of(values_from),
+      values_fill = 0
+    ) %>%
     dplyr::filter(marker_1 != marker_2) %>%
     unite(marker_1, marker_2, col = "pair", sep = "/") %>%
     data.frame(row.names = 1, check.names = FALSE) %>%
@@ -245,15 +247,15 @@ ColocalizationScoresToAssay.data.frame <- function (
 #'
 #' @export
 #'
-ColocalizationScoresToAssay.MPXAssay <- function (
+ColocalizationScoresToAssay.MPXAssay <- function(
   object,
   values_from = c("pearson_z", "pearson"),
   ...
 ) {
-
   coloc_matrix <- .create_spatial_metric_matrix(object,
-                                                values_from = values_from,
-                                                metric = "colocalization")
+    values_from = values_from,
+    metric = "colocalization"
+  )
   coloc_matrix <- as(coloc_matrix, "dgCMatrix")
 
   # Create Assay from filled matrix
@@ -301,20 +303,19 @@ ColocalizationScoresToAssay.CellGraphAssay5 <- ColocalizationScoresToAssay.MPXAs
 #'
 #' @export
 #'
-ColocalizationScoresToAssay.Seurat <- function (
+ColocalizationScoresToAssay.Seurat <- function(
   object,
   assay = NULL,
   new_assay = NULL,
   values_from = c("pearson_z", "pearson"),
   ...
 ) {
-
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
     stopifnot(
       "'assay' must be a character of length 1" =
         is.character(assay) &&
-        (length(assay) == 1)
+          (length(assay) == 1)
     )
   } else {
     # Use default assay if assay = NULL
@@ -326,7 +327,7 @@ ColocalizationScoresToAssay.Seurat <- function (
     stopifnot(
       "'new_assay' must be a character of length 1" =
         is.character(new_assay) &&
-        (length(new_assay) == 1)
+          (length(new_assay) == 1)
     )
   } else {
     # Use default assay if assay = NULL
@@ -338,7 +339,8 @@ ColocalizationScoresToAssay.Seurat <- function (
 
   # Validate input
   values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson"))
+    choices = c("pearson_z", "pearson")
+  )
 
   # Create new assay
   col_assay <- ColocalizationScoresToAssay(cg_assay, values_from, ...)
@@ -355,7 +357,7 @@ ColocalizationScoresToAssay.Seurat <- function (
 #'
 #' @noRd
 #'
-.create_spatial_metric_matrix <- function (
+.create_spatial_metric_matrix <- function(
   object,
   values_from,
   metric,
@@ -368,15 +370,13 @@ ColocalizationScoresToAssay.Seurat <- function (
   }
 
   # Validate input
-  values_from <- match.arg(values_from, choices = switch(
-    metric,
+  values_from <- match.arg(values_from, choices = switch(metric,
     "polarization" = c("morans_z", "morans_i"),
     "colocalization" = c("pearson_z", "pearson")
   ))
 
 
-  pivot_assay_func <- switch(
-    metric,
+  pivot_assay_func <- switch(metric,
     "polarization" = PolarizationScoresToAssay,
     "colocalization" = ColocalizationScoresToAssay
   )
@@ -384,10 +384,12 @@ ColocalizationScoresToAssay.Seurat <- function (
 
   # Make sure that the components match
   # Create an empty matrix (all 0's)
-  tofillMat <- matrix(data = 0,
-                      nrow = nrow(spatial_metric_wide_format),
-                      ncol = ncol(object),
-                      dimnames = list(rownames(spatial_metric_wide_format), colnames(object)))
+  tofillMat <- matrix(
+    data = 0,
+    nrow = nrow(spatial_metric_wide_format),
+    ncol = ncol(object),
+    dimnames = list(rownames(spatial_metric_wide_format), colnames(object))
+  )
 
   # Fill matrix where it overlaps
   # Any missing columns will be kept as 0's

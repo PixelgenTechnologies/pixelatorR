@@ -90,8 +90,9 @@ library(dplyr)
 
 # Load example data as a Seurat object
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 
 # Copy PXL file to tempdir
 tmp_pxl_file <- file.path(fs::path_temp(), "five_cells.pxl")
@@ -111,7 +112,8 @@ seur_obj <- LoadCellGraphs(seur_obj, force = TRUE)
 # We can restore paths to the PXL file using RestorePaths.
 # All we need is to provide the path to a directory where the PXL file is located.
 pxl_files_dir <- system.file("extdata/five_cells",
-                            package = "pixelatorR")
+  package = "pixelatorR"
+)
 seur_obj <- RestorePaths(seur_obj, pxl_files_dir = pxl_files_dir)
 
 # Now LoadCellGraphs should work as expected

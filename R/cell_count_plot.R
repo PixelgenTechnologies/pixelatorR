@@ -40,7 +40,8 @@ CellCountPlot.data.frame <- function(
     stopifnot(
       "'group_by' must be a character or factor" =
         inherits(object[, group_by, drop = TRUE],
-                 what = c("character", "factor")),
+          what = c("character", "factor")
+        ),
       "'group_by' and 'color_by' cannot be identical" =
         group_by != color_by
     )
@@ -51,7 +52,8 @@ CellCountPlot.data.frame <- function(
   stopifnot(
     "'color_by' must be a character or factor" =
       inherits(object[, color_by, drop = TRUE],
-               what = c("character", "factor"))
+        what = c("character", "factor")
+      )
   )
 
   # Create plot
@@ -66,15 +68,19 @@ CellCountPlot.data.frame <- function(
       geom_col(position = position_dodge(width = 0.95)) +
       {
         if (show_count) {
-          geom_text(aes(.data[[group_by]], n + nudge_y,
-                        label = n,
-                        group = .data[[color_by]]),
+          geom_text(
+            aes(.data[[group_by]], n + nudge_y,
+              label = n,
+              group = .data[[color_by]]
+            ),
             position = position_dodge(width = 1)
           )
         }
       } +
-      labs(title = paste0("Cell counts for ", group_by,
-                          " colored by ", color_by))
+      labs(title = paste0(
+        "Cell counts for ", group_by,
+        " colored by ", color_by
+      ))
   } else {
     gg <- object %>%
       group_by(.data[[color_by]]) %>%
@@ -89,8 +95,10 @@ CellCountPlot.data.frame <- function(
           geom_text(aes(.data[[color_by]], n + nudge_y, label = n))
         }
       } +
-      labs(title = paste0("Cell counts for ", group_by,
-                          " colored by ", group_by))
+      labs(title = paste0(
+        "Cell counts for ", group_by,
+        " colored by ", group_by
+      ))
   }
 
   # Modfy theme
@@ -123,7 +131,7 @@ CellCountPlot.data.frame <- function(
 #'
 #' @export
 #'
-CellCountPlot.Seurat <- function (
+CellCountPlot.Seurat <- function(
   object,
   group_by = NULL,
   color_by,
@@ -136,8 +144,9 @@ CellCountPlot.Seurat <- function (
 
   # Create plot
   CellCountPlot(mData,
-                group_by = group_by,
-                color_by = color_by,
-                show_count = show_count,
-                flip_axes = flip_axes)
+    group_by = group_by,
+    color_by = color_by,
+    show_count = show_count,
+    flip_axes = flip_axes
+  )
 }

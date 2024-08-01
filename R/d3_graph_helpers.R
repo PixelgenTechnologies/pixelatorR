@@ -33,7 +33,7 @@
 #'
 #' @export
 #'
-color_by_marker <- function (
+color_by_marker <- function(
   cg,
   markers,
   smooth_counts = TRUE,
@@ -44,7 +44,6 @@ color_by_marker <- function (
   trim_quantiles = c(0, 1),
   nNodes = NULL
 ) {
-
   # Set global variables to NULL (required by shinytest2)
   . <- val <- NULL
 
@@ -61,13 +60,13 @@ color_by_marker <- function (
       is.character(palette),
     "'smooth' must be TRUE or FALSE" =
       is.logical(smooth_counts) &&
-      (length(normalize) == 1),
+        (length(normalize) == 1),
     "'normalize' must be TRUE or FALSE" =
       is.logical(normalize) &&
-      (length(normalize) == 1),
+        (length(normalize) == 1),
     "'trim_quantiles' must be a numeric vector of length 2" =
       is.numeric(trim_quantiles) &&
-      (length(trim_quantiles) == 2)
+        (length(trim_quantiles) == 2)
   )
   if (!all(between(trim_quantiles, left = 0, right = 1))) {
     abort(glue("'trim_quantiles' must be betweeen 0 and 1"))
@@ -78,8 +77,10 @@ color_by_marker <- function (
   if (!is.null(nNodes)) {
     stopifnot("'nNodes' must be a positive value" = inherits(nNodes, what = "numeric"))
     if (!between(nNodes, left = 0, right = length(cg@cellgraph))) {
-      abort(glue("'nNodes' must be a positive value smaller than the number of nodes in the graph.\n",
-                 "nNodes = {nNodes} while the total number of nodes is {length(cg@cellgraph)}"))
+      abort(glue(
+        "'nNodes' must be a positive value smaller than the number of nodes in the graph.\n",
+        "nNodes = {nNodes} while the total number of nodes is {length(cg@cellgraph)}"
+      ))
     }
   }
 
@@ -94,7 +95,7 @@ color_by_marker <- function (
     abort(glue("{markers} missing from count matrix"))
   }
 
-  #Fetch tbl_graph
+  # Fetch tbl_graph
   g <- slot(cg, name = "cellgraph")
 
   # Smooth counts if smooth_counts=TRUE
@@ -120,8 +121,9 @@ color_by_marker <- function (
       # Apply trimming if non-default trim_quantiles are provided
       if ((trim_quantiles[1] > 0) || (trim_quantiles[2] < 1)) {
         mutate(., val = .trim_quantiles(val,
-                                        top_q = trim_quantiles[2],
-                                        bottom_q = trim_quantiles[1]))
+          top_q = trim_quantiles[2],
+          bottom_q = trim_quantiles[1]
+        ))
       } else {
         .
       }
@@ -167,12 +169,11 @@ color_by_marker <- function (
 #'
 #' @noRd
 #'
-.trim_quantiles <- function (
+.trim_quantiles <- function(
   x,
   bottom_q = 0,
   top_q = 0.99
 ) {
-
   # Validate x
   stopifnot("'x' must be a non-empty numeric vector" = is.numeric(x) & (length(x) > 0))
 
@@ -194,10 +195,9 @@ color_by_marker <- function (
 #'
 #' @noRd
 #'
-.convert_tbl_graph_to_json <- function (
+.convert_tbl_graph_to_json <- function(
   data
 ) {
-
   # Set global variables to NULL (required by shinytest2)
   from <- to <- NULL
 
@@ -232,13 +232,12 @@ color_by_marker <- function (
 #'
 #' @noRd
 #'
-.add_coordinates_to_tbl_graph <- function (
+.add_coordinates_to_tbl_graph <- function(
   cg,
   layout_coordinates,
   scale = TRUE,
   keep_aspect_ratio = TRUE
 ) {
-
   # Validate input
   stopifnot(
     "'cg' must be a 'CellGraph' object" =
@@ -247,10 +246,10 @@ color_by_marker <- function (
       inherits(layout_coordinates, what = "data.frame"),
     "'scale' must be TRUE or FALSE" =
       is.logical(scale) &&
-      (length(scale) == 1),
+        (length(scale) == 1),
     "'keep_aspect_ratio' must be TRUE or FALSE" =
       is.logical(keep_aspect_ratio) &&
-      (length(keep_aspect_ratio) == 1)
+        (length(keep_aspect_ratio) == 1)
   )
   if (!all(c("x", "y") %in% colnames(layout_coordinates))) {
     abort("'x' and 'y' coordinates must be present in 'layout_coordinates'")
@@ -273,8 +272,10 @@ color_by_marker <- function (
 
   # Add layout_coordinates to data@cellgraph
   cg@cellgraph <- cg@cellgraph %N>%
-    mutate(x = layout_coordinates$x,
-           y = layout_coordinates$y) %>%
+    mutate(
+      x = layout_coordinates$x,
+      y = layout_coordinates$y
+    ) %>%
     {
       if ("z" %in% colnames(layout_coordinates)) {
         mutate(., z = layout_coordinates$z)
@@ -292,10 +293,10 @@ color_by_marker <- function (
         select(any_of(c("x", "y", "z"))) %>%
         max()
       cg@cellgraph <- cg@cellgraph %>%
-        mutate(across(any_of(c("x", "y", "z")), ~.x / max_val))
+        mutate(across(any_of(c("x", "y", "z")), ~ .x / max_val))
     } else {
       cg@cellgraph <- cg@cellgraph %>%
-        mutate(across(any_of(c("x", "y", "z")), ~.x / max(.x)))
+        mutate(across(any_of(c("x", "y", "z")), ~ .x / max(.x)))
     }
   }
   # nolint end

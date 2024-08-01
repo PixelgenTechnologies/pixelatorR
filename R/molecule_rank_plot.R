@@ -13,8 +13,9 @@ NULL
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
@@ -23,12 +24,11 @@ NULL
 #'
 #' @export
 #'
-MoleculeRankPlot.data.frame <- function (
+MoleculeRankPlot.data.frame <- function(
   object,
   group_by = NULL,
   ...
 ) {
-
   # Check object
   stopifnot(
     "'object' must be a nonempty 'data.frame'-like object" =
@@ -40,18 +40,21 @@ MoleculeRankPlot.data.frame <- function (
   molecules_column <-
     ifelse("molecules" %in% colnames(object), "molecules", "edges")
 
-  if (!inherits(object[[molecules_column]], what = "integer"))
+  if (!inherits(object[[molecules_column]], what = "integer")) {
     glue("'{molecules_column}' must be an integer vector")
+  }
 
   if (!is.null(group_by)) {
     stopifnot(
       "'group_by' must be a character of length 1" =
         is.character(group_by) &&
-        (length(group_by) == 1)
+          (length(group_by) == 1)
     )
     if (!inherits(object[[group_by]], what = c("character", "factor"))) {
-      abort(glue("Invalid class '{class(object[[group_by]])}' for column ",
-                 "'{group_by}'. Expected a 'character' or 'factor'"))
+      abort(glue(
+        "Invalid class '{class(object[[group_by]])}' for column ",
+        "'{group_by}'. Expected a 'character' or 'factor'"
+      ))
     }
     if (!group_by %in% colnames(object)) {
       cli_alert_warning("'{group_by}' not found in 'object'")
@@ -70,7 +73,7 @@ MoleculeRankPlot.data.frame <- function (
     object %>%
     {
       if (!is.null(group_by)) {
-        ggplot(., aes(rank, molecules, color = !! sym(group_by)))
+        ggplot(., aes(rank, molecules, color = !!sym(group_by)))
       } else {
         ggplot(., aes(rank, molecules))
       }
@@ -78,8 +81,10 @@ MoleculeRankPlot.data.frame <- function (
     geom_point(size = 0.5) +
     scale_x_log10() +
     scale_y_log10() +
-    labs(x = "Component rank (by number of molecules)",
-         y = "Number of molecules") +
+    labs(
+      x = "Component rank (by number of molecules)",
+      y = "Number of molecules"
+    ) +
     theme_minimal()
 
   return(cellrank_plot)
@@ -97,12 +102,11 @@ MoleculeRankPlot.data.frame <- function (
 #'
 #' @export
 #'
-MoleculeRankPlot.Seurat <- function (
+MoleculeRankPlot.Seurat <- function(
   object,
   group_by = NULL,
   ...
 ) {
-
   cellrank_plot <- MoleculeRankPlot(object[[]], group_by = group_by)
   return(cellrank_plot)
 }
@@ -127,8 +131,9 @@ MoleculeRankPlot.Seurat <- function (
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
@@ -136,12 +141,11 @@ MoleculeRankPlot.Seurat <- function (
 #'
 #' @export
 #'
-EdgeRankPlot <- function (
+EdgeRankPlot <- function(
   object,
   group_by = NULL,
   ...
 ) {
-
   stopifnot(
     "'object' must be a 'Seurat' object" = inherits(object, "Seurat")
   )

@@ -102,8 +102,9 @@
 #' library(dplyr)
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file) %>%
 #'   LoadCellGraphs(cells = colnames(.)[1]) %>%
 #'   ComputeLayout(layout_method = "pmds", dim = 3)
@@ -132,8 +133,10 @@
 #'   z = ~z,
 #'   type = "scatter3d",
 #'   mode = "markers",
-#'   marker = list(size = 5,
-#'                 color = node_colors)
+#'   marker = list(
+#'     size = 5,
+#'     color = node_colors
+#'   )
 #' )
 #'
 #' @return A matrix with local G scores or a list with the following items:
@@ -145,7 +148,7 @@
 #'
 #' @export
 #'
-local_G <- function (
+local_G <- function(
   g,
   counts,
   k = 1,
@@ -158,7 +161,6 @@ local_G <- function (
   alternative = c("two.sided", "less", "greater"),
   ...
 ) {
-
   # Check input parameters
   stopifnot(
     "'g' must be an 'tbl_graph' or an 'igraph' object" =
@@ -316,7 +318,6 @@ local_G <- function (
 #' P_out <- compute_transition_probabilities(A)
 #' P_out
 #'
-#'
 #' @return A matrix of transition probabilities. The transition probability \eqn{P^k(u \rightarrow v)}
 #' for a k-step walk is found in row \eqn{u} and column \eqn{v} of the transition probability matrix.
 #' Row \eqn{v} and column \eqn{u} gives the reversed transition probability \eqn{P^k(v \rightarrow u)}
@@ -324,12 +325,11 @@ local_G <- function (
 #'
 #' @export
 #'
-compute_transition_probabilities <- function (
+compute_transition_probabilities <- function(
   A,
   k = 1,
   remove_self_loops = FALSE
 ) {
-
   stopifnot(
     "A must be a square matrix" = nrow(A) == ncol(A),
     "A must be symmetric" = Matrix::isSymmetric(A),

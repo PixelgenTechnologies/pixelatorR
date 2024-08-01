@@ -76,8 +76,9 @@ library(dplyr)
 library(tidygraph)
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 counts <- ReadMPX_counts(pxl_file)
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 components <- colnames(counts)
@@ -109,8 +110,9 @@ library(dplyr)
 options(Seurat.object.assay.version = "v3")
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur)
 cg_assay <- seur[["mpxCells"]]
@@ -128,8 +130,9 @@ seur_subset <- subset(seur, cells = colnames(seur)[1:3])
 
 # Merge 3 CellGraphAssay(5) objects
 cg_assay_merged <- merge(cg_assay,
-                         y = list(cg_assay, cg_assay),
-                         add.cell.ids = c("A", "B", "C"))
+  y = list(cg_assay, cg_assay),
+  add.cell.ids = c("A", "B", "C")
+)
 
 }
 \concept{assay}

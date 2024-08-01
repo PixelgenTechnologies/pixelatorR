@@ -16,8 +16,7 @@ NULL
 #' # Get cellgraphs from a Seurat object
 #' CellGraphs(se)
 #'
-#'
-CellGraphs.Seurat <- function (
+CellGraphs.Seurat <- function(
   object,
   ...
 ) {
@@ -31,8 +30,9 @@ CellGraphs.Seurat <- function (
 #'
 #' @examples
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Check PXL file paths in a Seurat object
@@ -40,7 +40,7 @@ CellGraphs.Seurat <- function (
 #'
 #' @export
 #'
-FSMap.Seurat <- function (
+FSMap.Seurat <- function(
   object,
   ...
 ) {
@@ -63,7 +63,7 @@ FSMap.Seurat <- function (
 #'
 #' @export
 #'
-"FSMap<-.Seurat" <- function (
+"FSMap<-.Seurat" <- function(
   object,
   ...,
   value
@@ -72,8 +72,9 @@ FSMap.Seurat <- function (
   .validate_fs_map(value)
   assay <- DefaultAssay(object = object)
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, "MPXAssay"))
+  if (!inherits(cg_assay, "MPXAssay")) {
     abort(glue("Assay '{assay}' must be a 'CellGraphAssay' or 'CellGraphAssay5' object."))
+  }
   slot(cg_assay, name = "fs_map") <- value
   object[[assay]] <- cg_assay
   return(object)
@@ -97,7 +98,7 @@ FSMap.Seurat <- function (
 #' # Set cellgraphs in a Seurat object
 #' CellGraphs(se) <- cg_assay@cellgraphs
 #'
-"CellGraphs<-.Seurat" <- function (
+"CellGraphs<-.Seurat" <- function(
   object,
   ...,
   value
@@ -119,13 +120,12 @@ FSMap.Seurat <- function (
 #'
 #' @export
 #'
-PolarizationScores.Seurat <- function (
+PolarizationScores.Seurat <- function(
   object,
   assay = NULL,
   meta_data_columns = NULL,
   ...
 ) {
-
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
@@ -141,20 +141,24 @@ PolarizationScores.Seurat <- function (
     stopifnot(
       "'meta_data_columns' must be a non-empty character vector" =
         is.character(meta_data_columns) &&
-        (length(meta_data_columns) > 0)
+          (length(meta_data_columns) > 0)
     )
     meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
     if (any(!meta_data_columns_valid)) {
-      abort(glue("The following columns were not found in the meta.data slot: ",
-                 "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"))
+      abort(glue(
+        "The following columns were not found in the meta.data slot: ",
+        "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"
+      ))
     }
 
     # Add additional meta.data slots
     pol_scores <- pol_scores %>%
-      left_join(y = object[[]] %>%
-                  as_tibble(rownames = "component") %>%
-                  select(component, all_of(meta_data_columns)),
-                by = "component")
+      left_join(
+        y = object[[]] %>%
+          as_tibble(rownames = "component") %>%
+          select(component, all_of(meta_data_columns)),
+        by = "component"
+      )
   }
 
   return(pol_scores)
@@ -167,13 +171,12 @@ PolarizationScores.Seurat <- function (
 #'
 #' @export
 #'
-"PolarizationScores<-.Seurat" <- function (
+"PolarizationScores<-.Seurat" <- function(
   object,
   assay = NULL,
   ...,
   value
 ) {
-
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
 
@@ -197,13 +200,12 @@ PolarizationScores.Seurat <- function (
 #'
 #' @export
 #'
-ColocalizationScores.Seurat <- function (
+ColocalizationScores.Seurat <- function(
   object,
   assay = NULL,
   meta_data_columns = NULL,
   ...
 ) {
-
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
@@ -219,20 +221,24 @@ ColocalizationScores.Seurat <- function (
     stopifnot(
       "'meta_data_columns' must be a non-empty character vector" =
         is.character(meta_data_columns) &&
-        (length(meta_data_columns) > 0)
+          (length(meta_data_columns) > 0)
     )
     meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
     if (any(!meta_data_columns_valid)) {
-      abort(glue("The following columns were not found in the meta.data slot: ",
-                 "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"))
+      abort(glue(
+        "The following columns were not found in the meta.data slot: ",
+        "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"
+      ))
     }
 
     # Add additional meta.data slots
     coloc_scores <- coloc_scores %>%
-      left_join(y = object[[]] %>%
-                  as_tibble(rownames = "component") %>%
-                  select(component, all_of(meta_data_columns)),
-                by = "component")
+      left_join(
+        y = object[[]] %>%
+          as_tibble(rownames = "component") %>%
+          select(component, all_of(meta_data_columns)),
+        by = "component"
+      )
   }
 
   return(coloc_scores)
@@ -245,13 +251,12 @@ ColocalizationScores.Seurat <- function (
 #'
 #' @export
 #'
-"ColocalizationScores<-.Seurat" <- function (
+"ColocalizationScores<-.Seurat" <- function(
   object,
   assay = NULL,
   ...,
   value
 ) {
-
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
 

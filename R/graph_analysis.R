@@ -15,19 +15,18 @@
 #'
 #' @export
 #'
-node_markers_counts <- function (
+node_markers_counts <- function(
   component_edge_list,
   k = 0
 ) {
-
   # Check input parameters
   stopifnot(
     "component_edge_list should be a non-empty tbl_df" =
       inherits(component_edge_list, what = "tbl_df") &&
-      (nrow(component_edge_list) > 0),
+        (nrow(component_edge_list) > 0),
     "k should be an integer vector of length 1" =
       inherits(k, what = c("numeric", "integer")) &&
-      (length(k) == 1),
+        (length(k) == 1),
     "One or several of 'upia', 'upib', 'marker' are missing from component_edge_list" =
       all(c("upia", "upib", "marker") %in% colnames(component_edge_list))
   )

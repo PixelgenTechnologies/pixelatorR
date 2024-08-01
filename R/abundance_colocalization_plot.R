@@ -1,4 +1,3 @@
-
 #' Create an abundance/colocalization scatterplot
 #'
 #' Create a scatter plot of the abundance values for two sets of markers from a Seurat object. The points
@@ -21,9 +20,11 @@
 #' library(pixelatorR)
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#' pxl_file <- system.file(
+#'   "extdata/five_cells",
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Plot with data.frame
@@ -41,10 +42,11 @@ AbundanceColocalizationPlot <- function(
   draw_origo = TRUE,
   layer = NULL,
   coloc_score = "pearson_z",
-  colors = c("#1F395F", "#496389", "#728BB1", "#AABAD1", "gray90",
-             "#E9AABF", "#CD6F8D", "#A23F5E", "#781534")
+  colors = c(
+    "#1F395F", "#496389", "#728BB1", "#AABAD1", "gray90",
+    "#E9AABF", "#CD6F8D", "#A23F5E", "#781534"
+  )
 ) {
-
   # Validate input parameters
   stopifnot(
     "'object' must be a Seurat object" =
@@ -53,25 +55,20 @@ AbundanceColocalizationPlot <- function(
       is.character(markers_x) & length(markers_x) > 0,
     "'markers_y' must be a character vector of length > 0" =
       is.character(markers_y) & length(markers_y) > 0,
-
     "All markers in 'markers_x' must be present in the Seurat object" =
       all(markers_x %in% rownames(object)),
     "All markers in 'markers_y' must be present in the Seurat object" =
       all(markers_y %in% rownames(object)),
-
     "'shared_scales' must be either TRUE or FALSE" =
       is.logical(shared_scales),
     "'coord_fixed' must be either TRUE or FALSE" =
       is.logical(coord_fixed),
-
-
     "'pt_size' must be a numeric of length 1 or 2" =
       is.numeric(pt_size) & length(pt_size) %in% c(1, 2),
     "'draw_origo' must be either TRUE or FALSE" =
       is.logical(draw_origo),
     "'colors' must be a vector of colors" =
       is.character(colors),
-
     "'coloc_score' must be a character of length 1" =
       is.character(coloc_score)
   )
@@ -79,20 +76,24 @@ AbundanceColocalizationPlot <- function(
 
   # Get data
   plot_data <-
-    FetchData(object, vars = c(markers_x, markers_y),
-              layer = layer) %>%
+    FetchData(object,
+      vars = c(markers_x, markers_y),
+      layer = layer
+    ) %>%
     as_tibble(rownames = "component")
 
   plot_data <-
     plot_data %>%
-    pivot_longer(cols = all_of(markers_x),
-                 names_to = "marker_x",
-                 values_to = "value_x") %>%
-    pivot_longer(cols = all_of(markers_y),
-                 names_to = "marker_y",
-                 values_to = "value_y")
-
-
+    pivot_longer(
+      cols = all_of(markers_x),
+      names_to = "marker_x",
+      values_to = "value_x"
+    ) %>%
+    pivot_longer(
+      cols = all_of(markers_y),
+      names_to = "marker_y",
+      values_to = "value_y"
+    )
 
   coloc_scores <-
     ColocalizationScores(object)
@@ -102,8 +103,10 @@ AbundanceColocalizationPlot <- function(
   }
 
   if (!is.numeric(coloc_scores[[coloc_score]])) {
-    abort(glue("'{coloc_score}' must reference a column with numeric values, ",
-               "got {class(coloc_scores[[coloc_score]])}."))
+    abort(glue(
+      "'{coloc_score}' must reference a column with numeric values, ",
+      "got {class(coloc_scores[[coloc_score]])}."
+    ))
   }
 
   coloc_scores <-
@@ -117,24 +120,30 @@ AbundanceColocalizationPlot <- function(
   plot_data <-
     plot_data %>%
     left_join(coloc_scores,
-              by = c("component",
-                     "marker_x" = "marker_1",
-                     "marker_y" = "marker_2")) %>%
-    mutate(marker_x = factor(marker_x, levels = markers_x),
-           marker_y = factor(marker_y, levels = markers_y))
+      by = c("component",
+        "marker_x" = "marker_1",
+        "marker_y" = "marker_2"
+      )
+    ) %>%
+    mutate(
+      marker_x = factor(marker_x, levels = markers_x),
+      marker_y = factor(marker_y, levels = markers_y)
+    )
 
   # Make plot
   if (length(pt_size) == 1) {
     plot <-
       plot_data %>%
       ggplot(aes(value_x, value_y,
-                 color = coloc_score))
+        color = coloc_score
+      ))
   } else {
     plot <-
       plot_data %>%
       ggplot(aes(value_x, value_y,
-                 color = coloc_score,
-                 size = abs(coloc_score))) +
+        color = coloc_score,
+        size = abs(coloc_score)
+      )) +
       scale_size_continuous(range = pt_size)
   }
 
@@ -147,14 +156,18 @@ AbundanceColocalizationPlot <- function(
   plot <-
     plot +
     geom_point() +
-    scale_color_gradientn(colors = colors,
-                          limits = max(abs(range(coloc_scores$coloc_score, na.rm = TRUE))) * c(-1, 1)) +
+    scale_color_gradientn(
+      colors = colors,
+      limits = max(abs(range(coloc_scores$coloc_score, na.rm = TRUE))) * c(-1, 1)
+    ) +
     theme_bw() +
     theme(panel.grid = element_blank()) +
-    labs(x = "Abundance",
-         y = "Abundance",
-         color = "Colocalization Score",
-         size = "|Colocalization Score|")
+    labs(
+      x = "Abundance",
+      y = "Abundance",
+      color = "Colocalization Score",
+      size = "|Colocalization Score|"
+    )
 
   if (isTRUE(coord_fixed)) {
     plot <- plot + coord_fixed()

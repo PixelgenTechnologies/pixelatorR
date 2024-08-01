@@ -28,12 +28,13 @@ library(dplyr)
 library(tidygraph)
 
 edge_list <-
-ReadMPX_item(
-  system.file("extdata/five_cells",
-              "five_cells.pxl",
-              package = "pixelatorR"),
-  items = "edgelist"
-)
+  ReadMPX_item(
+    system.file("extdata/five_cells",
+      "five_cells.pxl",
+      package = "pixelatorR"
+    ),
+    items = "edgelist"
+  )
 bipart_graph <-
   edge_list \%>\%
   select(upia, upib, marker) \%>\%

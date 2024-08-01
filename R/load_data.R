@@ -14,37 +14,40 @@
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                          package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' counts <- ReadMPX_counts(pxl_file)
 #' counts[1:5, 1:5]
 #'
 #' @export
 #'
-ReadMPX_counts <- function (
+ReadMPX_counts <- function(
   filename,
   return_list = FALSE,
   verbose = TRUE
 ) {
-
   stopifnot(
     "filename must be a character of length 1" =
       is.character(filename) &&
-      (length(filename) == 1)
+        (length(filename) == 1)
   )
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
   # Reads anndata from a .pxl file by unzipping it into a temporary folder and reading the anndata object within.
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Loading count data from {filename}")
+  }
 
   # Unzip pxl file
   if (endsWith(filename, ".pxl")) {
     res <- tryCatch(unzip(filename, exdir = fs::path_temp()),
-                    error = function(e) e,
-                    warning = function(w) w)
-    if (inherits(x = res, what = "simpleWarning"))
+      error = function(e) e,
+      warning = function(w) w
+    )
+    if (inherits(x = res, what = "simpleWarning")) {
       abort("Failed to unzip 'adata.h5ad' data")
+    }
   } else {
     abort(glue("Invalid file format .{.file_ext(filename)}. Expected a .pxl file."))
   }
@@ -109,14 +112,15 @@ ReadMPX_counts <- function (
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
 #' @export
 #'
-ReadMPX_Seurat <- function (
+ReadMPX_Seurat <- function(
   filename,
   assay = "mpxCells",
   return_cellgraphassay = TRUE,
@@ -129,11 +133,10 @@ ReadMPX_Seurat <- function (
   verbose = TRUE,
   ...
 ) {
-
   stopifnot(
     "assay must be a character of length 1" =
       is.character(assay) &&
-      (length(assay) == 1)
+        (length(assay) == 1)
   )
 
   # Load count matrix
@@ -145,10 +148,8 @@ ReadMPX_Seurat <- function (
   empty_graphs <- rep(list(NULL), ncol(X)) %>% set_names(nm = colnames(X))
 
   if (return_cellgraphassay) {
-
     # Create CellGraphAssay(5)
-    cg_assay_create_func <- switch(
-      getOption("Seurat.object.assay.version", "v3"),
+    cg_assay_create_func <- switch(getOption("Seurat.object.assay.version", "v3"),
       "v3" = CreateCellGraphAssay,
       "v5" = CreateCellGraphAssay5
     )
@@ -167,11 +168,14 @@ ReadMPX_Seurat <- function (
     Key(cg_assay) <- paste0(assay, "_")
 
     if (load_cell_graphs) {
-      if (verbose && check_global_verbosity())
+      if (verbose && check_global_verbosity()) {
         cli_alert_warning(
-          glue(col_br_red("Loading cell graphs into the Seurat object may take time and uses a lot of memory.",
-                          " Consider using LoadCellGraphs to load selected cell graphs at a later stage."))
+          glue(col_br_red(
+            "Loading cell graphs into the Seurat object may take time and uses a lot of memory.",
+            " Consider using LoadCellGraphs to load selected cell graphs at a later stage."
+          ))
         )
+      }
       cg_assay <- LoadCellGraphs(cg_assay, verbose = verbose)
     }
     # Load polarity scores
@@ -185,8 +189,7 @@ ReadMPX_Seurat <- function (
       cg_assay@colocalization <- colocalization
     }
   } else {
-    cg_assay <- switch(
-      getOption("Seurat.object.assay.version", "v3"),
+    cg_assay <- switch(getOption("Seurat.object.assay.version", "v3"),
       "v3" = CreateAssayObject(counts = X),
       "v5" = CreateAssay5Object(counts = X)
     )
@@ -195,13 +198,17 @@ ReadMPX_Seurat <- function (
 
   # Create Seurat object
   seur_obj <- CreateSeuratObject(counts = cg_assay, assay = assay, ...)
-  if (verbose && check_global_verbosity())
-    cli_alert_success(glue("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells ",
-                           "and {col_br_blue(nrow(X))} targeted surface proteins"))
+  if (verbose && check_global_verbosity()) {
+    cli_alert_success(glue(
+      "Created a 'Seurat' object with {col_br_blue(ncol(X))} cells ",
+      "and {col_br_blue(nrow(X))} targeted surface proteins"
+    ))
+  }
 
   # Extract meta data
   meta_data <-
-    names(hd5_object[["obs"]]) %>% lapply(function(nm) {
+    names(hd5_object[["obs"]]) %>%
+    lapply(function(nm) {
       if (length(names(hd5_object[["obs"]][[nm]])) == 2) {
         indices <- hd5_object[["obs"]][[nm]][["codes"]]$read() + 1
         categories <- hd5_object[["obs"]][[nm]][["categories"]]$read()
@@ -215,14 +222,18 @@ ReadMPX_Seurat <- function (
     as.data.frame() %>%
     column_to_rownames("component")
 
-  if (!all(rownames(meta_data) == colnames(seur_obj)))
-    abort(glue("The cell names in the Seurat object and the metadata do not match. ",
-               "\nFailed to create Seurat object."))
+  if (!all(rownames(meta_data) == colnames(seur_obj))) {
+    abort(glue(
+      "The cell names in the Seurat object and the metadata do not match. ",
+      "\nFailed to create Seurat object."
+    ))
+  }
   seur_obj@meta.data <- meta_data
 
   # Extract feature meta data (var)
   feature_meta_data <-
-    names(hd5_object[["var"]]) %>% lapply(function(nm) {
+    names(hd5_object[["var"]]) %>%
+    lapply(function(nm) {
       col <- tibble(!!sym(nm) := hd5_object[["var"]][[nm]]$read())
       return(col)
     }) %>%
@@ -275,8 +286,9 @@ ReadMPX_Seurat <- function (
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' polarization <- ReadMPX_item(pxl_file, items = "polarization")
 #' polarization
 #'
@@ -285,17 +297,16 @@ ReadMPX_Seurat <- function (
 #'
 #' @export
 #'
-ReadMPX_item <- function (
+ReadMPX_item <- function(
   filename,
   items = c("colocalization", "polarization", "edgelist"),
   verbose = TRUE
 ) {
-
   # Check input parameters
   stopifnot(
     "filename must be a character of length 1" =
       is.character(filename) &&
-      (length(filename) == 1),
+        (length(filename) == 1),
     "Invalid items" =
       all(items %in% c("colocalization", "polarization", "edgelist")),
     "Expected a .pxl file" =
@@ -303,17 +314,18 @@ ReadMPX_item <- function (
   )
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Loading item(s) from: {filename}")
+  }
 
   suppressWarnings(
     read_items <-
       items %>%
       set_names(., .) %>%
       lapply(function(item) {
-
-        if (verbose && check_global_verbosity())
+        if (verbose && check_global_verbosity()) {
           cli_alert("  Loading {col_br_magenta(item)} data")
+        }
 
         # generate a file name for a new temporary directory.
         # When running R CMD check on windows latest release, we
@@ -323,20 +335,26 @@ ReadMPX_item <- function (
         exdir_temp <- fs::file_temp()
 
         # Unzip item to temporary directory
-        unzipped_filename <- unzip(filename,  paste0(item, ".parquet"), exdir = exdir_temp)
+        unzipped_filename <- unzip(filename, paste0(item, ".parquet"), exdir = exdir_temp)
 
         # Read contents of parquet file
         outdata <- read_parquet(unzipped_filename)
 
         # Try to delete temporary directory or throw a warning if it fails.
-        check <- tryCatch({
-          fs::dir_delete(exdir_temp)
-        }, error = function(e)
-          e,
-        warning = function(w)
-          w)
-        if (inherits(check, what = "error"))
+        check <- tryCatch(
+          {
+            fs::dir_delete(exdir_temp)
+          },
+          error = function(e) {
+            e
+          },
+          warning = function(w) {
+            w
+          }
+        )
+        if (inherits(check, what = "error")) {
           cli_alert_warning("Failed to remove temporary directory {exdir_temp}")
+        }
 
         return(outdata)
       })
@@ -361,7 +379,7 @@ ReadMPX_item <- function (
 #'
 #' @export
 #'
-ReadMPX_polarization <- function (
+ReadMPX_polarization <- function(
   filename,
   verbose = TRUE
 ) {
@@ -372,7 +390,7 @@ ReadMPX_polarization <- function (
 #'
 #' @export
 #'
-ReadMPX_colocalization <- function (
+ReadMPX_colocalization <- function(
   filename,
   verbose = TRUE
 ) {
@@ -383,7 +401,7 @@ ReadMPX_colocalization <- function (
 #'
 #' @export
 #'
-ReadMPX_edgelist <- function (
+ReadMPX_edgelist <- function(
   filename,
   verbose = TRUE
 ) {

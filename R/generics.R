@@ -7,7 +7,7 @@ NULL
 #' @param ... Arguments passed to other methods
 #' @rdname as.CellGraphAssay5
 #' @export as.CellGraphAssay5
-as.CellGraphAssay5 <- function (
+as.CellGraphAssay5 <- function(
   x,
   ...
 ) {
@@ -20,7 +20,7 @@ as.CellGraphAssay5 <- function (
 #' @param ... Arguments passed to other methods
 #' @rdname as.CellGraphAssay
 #' @export as.CellGraphAssay
-as.CellGraphAssay <- function (
+as.CellGraphAssay <- function(
   x,
   ...
 ) {
@@ -42,7 +42,7 @@ as.CellGraphAssay <- function (
 #'
 #' @export CellGraphs
 #'
-CellGraphs <- function (
+CellGraphs <- function(
   object,
   ...
 ) {
@@ -54,7 +54,7 @@ CellGraphs <- function (
 #' @rdname CellGraphs
 #' @export CellGraphs<-
 #'
-"CellGraphs<-" <- function (
+"CellGraphs<-" <- function(
   object,
   ...,
   value
@@ -107,7 +107,7 @@ CellGraphs <- function (
 #'
 #' @export
 #'
-LoadCellGraphs <- function (
+LoadCellGraphs <- function(
   object,
   ...
 ) {
@@ -127,7 +127,7 @@ LoadCellGraphs <- function (
 #'
 #' @export
 #'
-RemoveCellGraphs <- function (
+RemoveCellGraphs <- function(
   object,
   ...
 ) {
@@ -147,7 +147,7 @@ RemoveCellGraphs <- function (
 #'
 #' @export MoleculeRankPlot
 #'
-MoleculeRankPlot <- function (
+MoleculeRankPlot <- function(
   object,
   ...
 ) {
@@ -178,7 +178,7 @@ MoleculeRankPlot <- function (
 #'
 #' @export CellCountPlot
 #'
-CellCountPlot <- function (
+CellCountPlot <- function(
   object,
   ...
 ) {
@@ -202,7 +202,7 @@ CellCountPlot <- function (
 #'
 #' @export TauPlot
 #'
-TauPlot <- function (
+TauPlot <- function(
   object,
   ...
 ) {
@@ -221,7 +221,7 @@ TauPlot <- function (
 #'
 #' @export
 #'
-ComputeLayout <- function (
+ComputeLayout <- function(
   object,
   ...
 ) {
@@ -239,7 +239,7 @@ ComputeLayout <- function (
 #'
 #' @export
 #'
-KeepLargestComponent <- function (
+KeepLargestComponent <- function(
   object,
   ...
 ) {
@@ -262,7 +262,7 @@ KeepLargestComponent <- function (
 #'
 #' @export
 #'
-edgelist_to_simple_Anode_graph <- function (
+edgelist_to_simple_Anode_graph <- function(
   object,
   ...
 ) {
@@ -313,7 +313,7 @@ edgelist_to_simple_Anode_graph <- function (
 #'
 #' @export
 #'
-RunDPA <- function (
+RunDPA <- function(
   object,
   ...
 ) {
@@ -364,7 +364,7 @@ RunDPA <- function (
 #'
 #' @export
 #'
-RunDCA <- function (
+RunDCA <- function(
   object,
   ...
 ) {
@@ -419,7 +419,7 @@ RunDCA <- function (
 #'
 #' @export
 #'
-PolarizationScoresToAssay <- function (
+PolarizationScoresToAssay <- function(
   object,
   ...
 ) {
@@ -474,7 +474,7 @@ PolarizationScoresToAssay <- function (
 #'
 #' @export
 #'
-ColocalizationScoresToAssay <- function (
+ColocalizationScoresToAssay <- function(
   object,
   ...
 ) {
@@ -496,7 +496,7 @@ ColocalizationScoresToAssay <- function (
 #'
 #' @export
 #'
-PolarizationScores <- function (
+PolarizationScores <- function(
   object,
   ...
 ) {
@@ -513,7 +513,7 @@ PolarizationScores <- function (
 #'
 #' @export
 #'
-"PolarizationScores<-" <- function (
+"PolarizationScores<-" <- function(
   object,
   ...,
   value
@@ -537,7 +537,7 @@ PolarizationScores <- function (
 #'
 #' @export
 #'
-ColocalizationScores <- function (
+ColocalizationScores <- function(
   object,
   ...
 ) {
@@ -554,7 +554,7 @@ ColocalizationScores <- function (
 #'
 #' @export
 #'
-"ColocalizationScores<-" <- function (
+"ColocalizationScores<-" <- function(
   object,
   ...,
   value
@@ -581,7 +581,7 @@ ColocalizationScores <- function (
 #'
 #' @export
 #'
-FSMap <- function (
+FSMap <- function(
   object,
   ...
 ) {
@@ -636,7 +636,7 @@ FSMap <- function (
 #'
 #' @export
 #'
-NormalizeMPX <- function (
+NormalizeMPX <- function(
   object,
   method = c("dsb", "clr"),
   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
@@ -704,7 +704,7 @@ NormalizeMPX <- function (
 #'
 #' @export
 #'
-RestorePaths <- function (
+RestorePaths <- function(
   object,
   ...
 ) {

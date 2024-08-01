@@ -1,17 +1,15 @@
 for (assay_version in c("v3", "v5")) {
-
   options(Seurat.object.assay.version = assay_version)
 
   expected_assay_class <- ifelse(assay_version == "v3", "Assay", "Assay5")
 
   pxl_file <- system.file("extdata/five_cells",
-                          "five_cells.pxl",
-                          package = "pixelatorR"
+    "five_cells.pxl",
+    package = "pixelatorR"
   )
   seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
 
   test_that("ColocalizationScoresToAssay works as expected", {
-
     # Default settings
     expect_no_error(seur_obj <- ColocalizationScoresToAssay(seur_obj))
     expect_equal(names(seur_obj@assays), c("mpxCells", "colocalization"))
@@ -26,8 +24,10 @@ for (assay_version in c("v3", "v5")) {
         Dim = c(2L, 2L),
         Dimnames = list(
           c("ACTB/B2M", "ACTB/CD102"),
-          c("RCVCMP0000217",
-            "RCVCMP0000118")
+          c(
+            "RCVCMP0000217",
+            "RCVCMP0000118"
+          )
         ),
         x = c(-0.940132075815013, 1.92413178598625),
         factors = list()
@@ -42,9 +42,10 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(nrow(seur_obj[["coloc"]]), 3160)
 
     # Use dashes in component IDs
-    expect_no_error({seur_obj <- SeuratObject::RenameCells(seur_obj, new.names = paste0("A-1_", colnames(seur_obj)))})
+    expect_no_error({
+      seur_obj <- SeuratObject::RenameCells(seur_obj, new.names = paste0("A-1_", colnames(seur_obj)))
+    })
     expect_no_error(seur_obj <- ColocalizationScoresToAssay(seur_obj))
-
   })
 
 
@@ -54,5 +55,4 @@ for (assay_version in c("v3", "v5")) {
     expect_error(seur_obj <- ColocalizationScoresToAssay(seur_obj, new_assay = 0), "'new_assay' must be a character of length 1")
     expect_error(seur_obj <- ColocalizationScoresToAssay(seur_obj, values_from = "invalid"), "'arg' should be one of")
   })
-
 }
