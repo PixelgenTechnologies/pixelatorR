@@ -75,10 +75,6 @@ RunDPA.data.frame <- function (
   )
 
   stopifnot(
-    "'target' must be present in 'contrast_column' column" =
-      inherits(target, what = "character") &&
-      (length(target) == 1) &&
-      (target %in% group_vector),
     "'reference' must be present in 'contrast_column' column" =
       inherits(reference, what = "character") &&
       (length(reference) == 1) &&
@@ -108,7 +104,9 @@ RunDPA.data.frame <- function (
       "'group_vars' must be valid column names" =
         inherits(group_vars, what = "character") &&
         (length(group_vars) >= 1) &&
-        all(group_vars %in% colnames(object))
+        all(group_vars %in% colnames(object)),
+      "'group_vars' and 'contrast_column' cannot be the same" =
+        group_vars != contrast_column
     )
     for (group_var in group_vars) {
       stopifnot(
