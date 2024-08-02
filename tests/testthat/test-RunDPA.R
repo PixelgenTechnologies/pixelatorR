@@ -18,46 +18,146 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 
 test_that("RunDPA works as expected on a data.frame", {
 
-  expect_no_error(suppressWarnings(dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample",
-                                                         target = "Sample1", reference = "Sample2")))
+  # morans_z
+  expect_no_error(suppressWarnings(dpa_markers <- RunDPA(polarization_table_merged,
+    contrast_column = "sample",
+    targets = "Sample1", reference = "Sample2"
+  )))
 
-  expect_true(all(dpa_markers$data_type == "morans_z"))
-  expect_true(all(dpa_markers$target == "Sample1"))
-  expect_true(all(dpa_markers$reference == "Sample2"))
-  expect_true(all(dpa_markers$n1[1:4] == c(4, 5, 5, 5)))
-  expect_true(all(dpa_markers$n2[1:4] == c(4, 5, 5, 5)))
-  expect_true(all(dpa_markers$statistic[1:4] == c(8, 12.5, 12.5, 12.5)))
-  expect_true(all(dpa_markers$method == "Wilcoxon"))
-  expect_true(all(dpa_markers$marker[1:4] == c("ACTB", "B2M", "CD102", "CD11a")))
+  expected_result <-
+    structure(
+      list(
+        estimate = c(
+          `difference in location` = 0,
+          `difference in location` = 0
+        ),
+        data_type = c("morans_z", "morans_z"),
+        target = c("Sample1",
+                   "Sample1"),
+        reference = c("Sample2", "Sample2"),
+        n1 = 4:5,
+        n2 = 4:5,
+        statistic = c(W = 8, W = 12.5),
+        p = c(1, 1),
+        conf.low = c(-0.159036147906079,-8.12133146083903),
+        conf.high = c(0.159036147906079, 8.12133146083903),
+        method = c("Wilcoxon", "Wilcoxon"),
+        alternative = c("two.sided",
+                        "two.sided"),
+        marker = c("ACTB", "B2M"),
+        p_adj = c(1, 1)
+      ),
+      row.names = c(NA,-2L),
+      class = c("tbl_df", "tbl", "data.frame")
+    )
+
+  expect_equal(dpa_markers[1:2, ], expected_result)
+
+  # morans_i
+  expect_no_error(suppressWarnings(
+    dpa_markers <- RunDPA(
+      polarization_table_merged,
+      contrast_column = "sample",
+      targets = "Sample1",
+      reference = "Sample2",
+      polarity_metric = "morans_i"
+    )
+  ))
+
+  expected_result <-
+    structure(
+      list(
+        estimate = c(
+          `difference in location` = 0,
+          `difference in location` = 0
+        ),
+        data_type = c("morans_i", "morans_i"),
+        target = c("Sample1",
+                   "Sample1"),
+        reference = c("Sample2", "Sample2"),
+        n1 = 4:5,
+        n2 = 4:5,
+        statistic = c(W = 8, W = 12.5),
+        p = c(1, 1),
+        conf.low = c(-0.00179887506379854,-0.052500600183388),
+        conf.high = c(0.00179887506379854, 0.052500600183388),
+        method = c("Wilcoxon", "Wilcoxon"),
+        alternative = c("two.sided",
+                        "two.sided"),
+        marker = c("ACTB", "B2M"),
+        p_adj = c(1, 1)
+      ),
+      row.names = c(NA,-2L),
+      class = c("tbl_df", "tbl", "data.frame")
+    )
+
+  expect_equal(dpa_markers[1:2, ], expected_result)
+
 })
 
 test_that("RunDPA works as expected on a Seurat object", {
 
-  expect_no_error(suppressWarnings(dpa_markers <- RunDPA(seur_merged, contrast_column = "sample",
-                                                         target = "Sample1", reference = "Sample2")))
+  expect_no_error(suppressWarnings(dpa_markers <- RunDPA(seur_merged,
+    contrast_column = "sample",
+    targets = "Sample1", reference = "Sample2"
+  )))
 
-  expect_true(all(dpa_markers$data_type == "morans_z"))
-  expect_true(all(dpa_markers$target == "Sample1"))
-  expect_true(all(dpa_markers$reference == "Sample2"))
-  expect_true(all(dpa_markers$n1[1:4] == c(4, 5, 5, 5)))
-  expect_true(all(dpa_markers$n2[1:4] == c(4, 5, 5, 5)))
-  expect_true(all(dpa_markers$statistic[1:4] == c(8, 12.5, 12.5, 12.5)))
-  expect_true(all(dpa_markers$method == "Wilcoxon"))
-  expect_true(all(dpa_markers$marker[1:4] == c("ACTB", "B2M", "CD102", "CD11a")))
+  expected_result <- structure(
+    list(
+      estimate = c(
+        `difference in location` = 0,
+        `difference in location` = 0
+      ),
+      data_type = c("morans_z", "morans_z"),
+      target = c("Sample1",
+                 "Sample1"),
+      reference = c("Sample2", "Sample2"),
+      n1 = 4:5,
+      n2 = 4:5,
+      statistic = c(W = 8, W = 12.5),
+      p = c(1, 1),
+      conf.low = c(-0.159036147906079,-8.12133146083903),
+      conf.high = c(0.159036147906079, 8.12133146083903),
+      method = c("Wilcoxon", "Wilcoxon"),
+      alternative = c("two.sided",
+                      "two.sided"),
+      marker = c("ACTB", "B2M"),
+      p_adj = c(1, 1)
+    ),
+    row.names = c(NA,-2L),
+    class = c("tbl_df", "tbl", "data.frame")
+  )
+
+  expect_equal(dpa_markers[1:2, ], expected_result)
+
 })
 
-test_that("RunDPA fails with invalid input",  {
-  expect_error(dpa_markers <- RunDPA(polarization_table_merged),
-               'argument "contrast_column" is missing, with no default')
-  expect_error(dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample"),
-               'argument "target" is missing, with no default')
-  expect_error(dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", target = "Sample1"),
-               'argument "reference" is missing, with no default')
-  expect_error(dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "Invalid", target = "Sample1", reference = "Sample2"),
-               "'contrast_column' must be a valid column name")
-  expect_error(dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", target = "Invalid", reference = "Sample2"),
-               "'target' must be present in 'contrast_column' column")
-  expect_error(dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", target = "Sample1", reference = "Invalid"),
-               "'reference' must be present in 'contrast_column' column")
+test_that("RunDPA fails with invalid input", {
+
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged),
+    'argument "contrast_column" is missing, with no default'
+  )
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample"),
+    'argument "reference" is missing, with no default'
+  )
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample1"),
+    'argument "reference" is missing, with no default'
+  )
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "Invalid", targets = "Sample1", reference = "Sample2"),
+    "'contrast_column' must be a valid column name"
+  )
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Invalid", reference = "Sample2"),
+    "'targets' must be present in 'contrast_column' column"
+  )
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample1", reference = "Invalid"),
+    "'reference' must be present in 'contrast_column' column"
+  )
+
 })
 

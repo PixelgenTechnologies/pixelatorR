@@ -218,3 +218,37 @@
   return(invisible(NULL))
 }
 
+#' Utility function to capture warnings and errors
+#'
+#' @param expr Expression to evaluate
+#'
+#' @noRd
+evaluate_with_catch <- function(expr) {
+  result <- NULL
+  warning_message <- NULL
+  error_message <- NULL
+
+  tryCatch(
+    {
+      # Capture warnings
+      withCallingHandlers(
+        {
+          result <- eval(expr)
+        },
+        warning = function(w) {
+          warning_message <<- w$message
+          invokeRestart("muffleWarning")
+        }
+      )
+    },
+    error = function(e) {
+      error_message <<- e$message
+    }
+  )
+
+  list(
+    result = result,
+    error = error_message,
+    warning = warning_message
+  )
+}

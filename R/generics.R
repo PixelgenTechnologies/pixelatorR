@@ -295,11 +295,17 @@ edgelist_to_simple_Anode_graph <- function (
 #' @family DA-methods
 #'
 #' @param object An object containing polarization scores
-#' @param target The name of the target group
+#' @param targets The name of the target groups. These groups will be compared to the reference group.
+#' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} will
+#' be compared to the reference group.
 #' @param reference The name of the reference group
 #' @param contrast_column The name of the column where the group labels are stored.
 #' This column must include \code{target} and \code{reference}.
 #' @param group_vars An optional character vector with column names to split the tests by.
+#' @param polarity_metric The polarity metric to use. Currently, you can select one of "morans_z" (default)
+#' or "morans_i".
+#' @param min_n_obs Minimum number of observations allowed in a group. Target groups with less
+#' observations than \code{min_n_obs} will be skipped.
 #' @param alternative One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)
 #' @param conf_int Should confidence intervals be computed? (see \code{?wilcox.test} for details)
 #' @param p_adjust_method One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
