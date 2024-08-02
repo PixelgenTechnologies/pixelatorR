@@ -11,7 +11,7 @@ globalVariables(
     "marker_1", "marker_2", "graph_projection", "modality",
     "mixture_component", "morans_z", "upia", "upib", "marker",
     "n", "norm_factor", "nodes", "group", "molecules", "ref_n",
-    "target_n"
+    "target_n", "p_adj"
   ),
   package = "pixelatorR",
   add = TRUE

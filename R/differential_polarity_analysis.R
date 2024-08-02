@@ -290,7 +290,8 @@ RunDPA.data.frame <- function (
 
   # Adjust p-values
   pol_test_bind <- pol_test_bind %>%
-    mutate(p_adj = p.adjust(p, p_adjust_method))
+    mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
+    relocate(p_adj, .after = "p")
 
   return(pol_test_bind)
 }

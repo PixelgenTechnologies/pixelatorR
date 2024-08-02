@@ -11,10 +11,12 @@ RunDCA(object, ...)
 
 \method{RunDCA}{data.frame}(
   object,
-  target,
-  reference,
   contrast_column,
+  reference,
+  targets = NULL,
   group_vars = NULL,
+  coloc_metric = c("pearson_z", "pearson"),
+  min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -25,11 +27,13 @@ RunDCA(object, ...)
 
 \method{RunDCA}{Seurat}(
   object,
-  target,
-  reference,
   contrast_column,
+  reference,
+  targets = NULL,
   assay = NULL,
   group_vars = NULL,
+  coloc_metric = c("pearson_z", "pearson"),
+  min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -43,14 +47,22 @@ RunDCA(object, ...)
 
 \item{...}{Not yet implemented}
 
-\item{target}{The name of the target group}
-
-\item{reference}{The name of the reference group}
-
 \item{contrast_column}{The name of the column where the group labels are stored.
 This column must include \code{target} and \code{reference}.}
 
+\item{reference}{The name of the reference group}
+
+\item{targets}{The name of the target groups. These groups will be compared to the reference group.
+If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} will
+be compared to the reference group.}
+
 \item{group_vars}{An optional character vector with column names to group the tests by.}
+
+\item{coloc_metric}{The colocalization metric to use. Currently, you can select one of "pearson_z" (default)
+or "pearson".}
+
+\item{min_n_obs}{Minimum number of observations allowed in a group. Target groups with less
+observations than \code{min_n_obs} will be skipped.}
 
 \item{alternative}{One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)}
 

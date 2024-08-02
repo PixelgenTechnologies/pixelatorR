@@ -22,7 +22,7 @@ seur_merged <- subset(seur_merged, features = c("ACTB", "HLA-ABC"))
 test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatmap works on the output", {
 
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample",
-                                                         target = "Sample1", reference = "Sample2")))
+                                                         targets = "Sample1", reference = "Sample2")))
 
   expect_true(all(dca_markers$data_type == "pearson_z"))
   expect_true(all(dca_markers$target == "Sample1"))
@@ -41,7 +41,7 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
   expect_s3_class(p_heatmap, "pheatmap")
   expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, value_col = "statistic"))
   expect_s3_class(p_heatmap, "pheatmap")
-  expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, symmetrise = F))
+  expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, symmetrise = FALSE))
   expect_s3_class(p_heatmap, "pheatmap")
   expect_no_error(p_data <- ColocalizationHeatmap(dca_markers, return_plot_data = TRUE))
   expect_s3_class(p_data, "data.frame")
@@ -51,7 +51,7 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
 test_that("RunDCA works as expected on a Seurat object", {
 
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(seur_merged, contrast_column = "sample",
-                                                         target = "Sample1", reference = "Sample2")))
+                                                         targets = "Sample1", reference = "Sample2")))
 
   expect_true(all(dca_markers$data_type == "pearson_z"))
   expect_true(all(dca_markers$target == "Sample1"))
@@ -69,13 +69,13 @@ test_that("RunDCA fails with invalid input",  {
   expect_error(dca_markers <- RunDCA(colocalization_table_merged),
                'argument "contrast_column" is missing, with no default')
   expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample"),
-               'argument "target" is missing, with no default')
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", target = "Sample1"),
                'argument "reference" is missing, with no default')
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "Invalid", target = "Sample1", reference = "Sample2"),
+  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample1"),
+               'argument "reference" is missing, with no default')
+  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "Invalid", targets = "Sample1", reference = "Sample2"),
                "'contrast_column' must be a valid column name")
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", target = "Invalid", reference = "Sample2"),
-               "'target' must be present in 'contrast_column' column")
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", target = "Sample1", reference = "Invalid"),
+  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Invalid", reference = "Sample2"),
+               "'targets' must be present in 'contrast_column' column")
+  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample1", reference = "Invalid"),
                "'reference' must be present in 'contrast_column' column")
 })
