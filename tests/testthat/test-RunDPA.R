@@ -39,16 +39,19 @@ test_that("RunDPA works as expected on a data.frame", {
         n2 = 4:5,
         statistic = c(W = 8, W = 12.5),
         p = c(1, 1),
+        p_adj = c(1,
+                  1),
         conf.low = c(-0.159036147906079,-8.12133146083903),
         conf.high = c(0.159036147906079, 8.12133146083903),
-        method = c("Wilcoxon", "Wilcoxon"),
-        alternative = c("two.sided",
-                        "two.sided"),
-        marker = c("ACTB", "B2M"),
-        p_adj = c(1, 1)
+        method = c("Wilcoxon",
+                   "Wilcoxon"),
+        alternative = c("two.sided", "two.sided"),
+        marker = c("ACTB",
+                   "B2M")
       ),
       row.names = c(NA,-2L),
-      class = c("tbl_df", "tbl", "data.frame")
+      class = c("tbl_df", "tbl",
+                "data.frame")
     )
 
   expect_equal(dpa_markers[1:2, ], expected_result)
@@ -79,13 +82,14 @@ test_that("RunDPA works as expected on a data.frame", {
         n2 = 4:5,
         statistic = c(W = 8, W = 12.5),
         p = c(1, 1),
+        p_adj = c(1,
+                  1),
         conf.low = c(-0.00179887506379854,-0.052500600183388),
         conf.high = c(0.00179887506379854, 0.052500600183388),
         method = c("Wilcoxon", "Wilcoxon"),
         alternative = c("two.sided",
                         "two.sided"),
-        marker = c("ACTB", "B2M"),
-        p_adj = c(1, 1)
+        marker = c("ACTB", "B2M")
       ),
       row.names = c(NA,-2L),
       class = c("tbl_df", "tbl", "data.frame")
@@ -102,31 +106,35 @@ test_that("RunDPA works as expected on a Seurat object", {
     targets = "Sample1", reference = "Sample2"
   )))
 
-  expected_result <- structure(
-    list(
-      estimate = c(
-        `difference in location` = 0,
-        `difference in location` = 0
+  expected_result <-
+    structure(
+      list(
+        estimate = c(
+          `difference in location` = 0,
+          `difference in location` = 0
+        ),
+        data_type = c("morans_z", "morans_z"),
+        target = c("Sample1",
+                   "Sample1"),
+        reference = c("Sample2", "Sample2"),
+        n1 = 4:5,
+        n2 = 4:5,
+        statistic = c(W = 8, W = 12.5),
+        p = c(1, 1),
+        p_adj = c(1,
+                  1),
+        conf.low = c(-0.159036147906079,-8.12133146083903),
+        conf.high = c(0.159036147906079, 8.12133146083903),
+        method = c("Wilcoxon",
+                   "Wilcoxon"),
+        alternative = c("two.sided", "two.sided"),
+        marker = c("ACTB",
+                   "B2M")
       ),
-      data_type = c("morans_z", "morans_z"),
-      target = c("Sample1",
-                 "Sample1"),
-      reference = c("Sample2", "Sample2"),
-      n1 = 4:5,
-      n2 = 4:5,
-      statistic = c(W = 8, W = 12.5),
-      p = c(1, 1),
-      conf.low = c(-0.159036147906079,-8.12133146083903),
-      conf.high = c(0.159036147906079, 8.12133146083903),
-      method = c("Wilcoxon", "Wilcoxon"),
-      alternative = c("two.sided",
-                      "two.sided"),
-      marker = c("ACTB", "B2M"),
-      p_adj = c(1, 1)
-    ),
-    row.names = c(NA,-2L),
-    class = c("tbl_df", "tbl", "data.frame")
-  )
+      row.names = c(NA,-2L),
+      class = c("tbl_df", "tbl",
+                "data.frame")
+    )
 
   expect_equal(dpa_markers[1:2, ], expected_result)
 
