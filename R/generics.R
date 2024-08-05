@@ -337,12 +337,12 @@ edgelist_to_simple_Anode_graph <- function (
 #' @family DA-methods
 #'
 #' @param object An object containing polarization scores
+#' @param contrast_column The name of the column where the group labels are stored.
+#' This column must include \code{target} and \code{reference}.
 #' @param targets The name of the target groups. These groups will be compared to the reference group.
 #' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} will
 #' be compared to the reference group.
 #' @param reference The name of the reference group
-#' @param contrast_column The name of the column where the group labels are stored.
-#' This column must include \code{target} and \code{reference}.
 #' @param group_vars An optional character vector with column names to split the tests by.
 #' @param polarity_metric The polarity metric to use. Currently, you can select one of "morans_z" (default)
 #' or "morans_i".
