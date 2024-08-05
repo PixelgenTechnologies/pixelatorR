@@ -3,7 +3,6 @@ NULL
 
 #' @rdname CellCountPlot
 #' @method CellCountPlot data.frame
-#'
 #' @examples
 #'
 #' library(pixelatorR)
