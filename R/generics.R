@@ -170,9 +170,8 @@ MoleculeRankPlot <- function(
 #' @param show_count Place the count on top of the bar or next to the bar if
 #' \code{flip_axes = TRUE}
 #' @param flip_axes Flip the plot layout
-#' @param as_frequency Plots the counts as cell frequencies
-#' @param stack Stacks the bars on top of each other. When used with
-#' \code{as_frequency = TRUE}, the height of all bars is standardized
+#' @param as_frequency Plot frequencies instead of counts
+#' @param stack Create a stacked bar plot
 #' @param ... Not yet implemented
 #'
 #' @rdname CellCountPlot
@@ -601,9 +600,9 @@ FSMap <- function(
 #' @export
 #'
 "FSMap<-" <- function(
-    object,
-    ...,
-    value) {
+  object,
+  ...,
+  value) {
   UseMethod(generic = "FSMap<-", object = object)
 }
 
@@ -708,7 +707,11 @@ NormalizeMPX <- function(
 #'
 #' @export
 #'
+<<<<<<< HEAD
 RestorePaths <- function(
+=======
+RestorePaths <- function (
+>>>>>>> 03c6361 (fix documentation)
   object,
   ...
 ) {

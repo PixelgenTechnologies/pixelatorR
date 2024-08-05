@@ -46,10 +46,9 @@ to color data by}
 
 \item{flip_axes}{Flip the plot layout}
 
-\item{as_frequency}{Plots the counts as cell frequencies}
+\item{as_frequency}{Plot frequencies instead of counts}
 
-\item{stack}{Stacks the bars on top of each other. When used with
-\code{as_frequency = TRUE}, the height of all bars is standardized}
+\item{stack}{Create a stacked bar plot}
 }
 \value{
 A \code{ggplot} object
