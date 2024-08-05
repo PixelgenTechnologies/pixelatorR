@@ -91,7 +91,7 @@ Runs differential analysis on colocalization scores generated with the
 \details{
 If you are working with a \code{Seurat} object created with pixelatorR that contains
 a \code{\link{CellGraphAssay}}, the colocalization scores are accessed directly from
-the \code{\link{CellGraphAssay}} (see \code{\link{ColocaliationScores}}).
+the \code{\link{CellGraphAssay}} (see \code{\link{ColocalizationScores}}).
 
 The input object should contain a \code{contrast_column} (character vector or factor)
 that includes information about the groups to compare. A typical example is a column
