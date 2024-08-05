@@ -326,7 +326,7 @@ edgelist_to_simple_Anode_graph <- function (
 #' 3. If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group, and split
 #' the tests by cell type:
 #' \preformatted{
-#' dpa_markers <- RunPCA(object = seurat_object,
+#' dpa_markers <- RunDPA(object = seurat_object,
 #'                      contrast_column = "sampleID",
 #'                      reference = "control",
 #'                      targets = c("stimulated1", "stimulated2"),
@@ -336,14 +336,14 @@ edgelist_to_simple_Anode_graph <- function (
 #' @concept DA
 #' @family DA-methods
 #'
-#' @param object An object containing polarization scores
+#' @param object An object containing polarity scores
 #' @param contrast_column The name of the column where the group labels are stored.
 #' This column must include \code{target} and \code{reference}.
 #' @param targets The name of the target groups. These groups will be compared to the reference group.
-#' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} will
-#' be compared to the reference group.
+#' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
+#' \code{reference} will be compared to the \code{reference} group.
 #' @param reference The name of the reference group
-#' @param group_vars An optional character vector with column names to split the tests by.
+#' @param group_vars An optional character vector with column names to group the tests by.
 #' @param polarity_metric The polarity metric to use. Currently, you can select one of "morans_z" (default)
 #' or "morans_i".
 #' @param min_n_obs Minimum number of observations allowed in a group. Target groups with less
