@@ -4,7 +4,7 @@
 \alias{RunDPA}
 \alias{RunDPA.data.frame}
 \alias{RunDPA.Seurat}
-\title{Differential analysis (polarization)}
+\title{Differential analysis (polarity)}
 \usage{
 RunDPA(object, ...)
 
@@ -84,26 +84,69 @@ which means that no parallelization is used.}
 A \code{tbl_df} object with test results
 }
 \description{
-Runs differential analysis on Moran's Z polarization scores generated with the
+Runs differential analysis on polarity scores generated with the
 \code{Pixelator} data processing pipeline.
 }
 \details{
-If you are working with a \code{Seurat} object containing a \code{\link{CellGraphAssay}},
-the polarization scores are accessed directly from the \code{\link{CellGraphAssay}}.
-A character vector or factor must be selected with \code{contrast_column} from the
-input data (or @meta.data slot from a \code{Seurat} object) which holds the groups
-to run the test for. The \code{target} and \code{reference} parameters should refer
-to the names of the two groups used for the comparison and these names should be present in
-the \code{contrast_column}.
+If you are working with a \code{Seurat} object created with pixelatorR that contains
+a \code{\link{CellGraphAssay}}, the polarity scores are accessed directly from
+the \code{\link{CellGraphAssay}} (see \code{\link{PolarizationScores}}).
+
+The input object should contain a \code{contrast_column} (character vector or factor)
+that includes information about the groups to compare. A typical example is a column
+with sample labels, for instance: "control", "stimulated1", "stimulated2". If th input
+object is a \code{Seurat} object, the \code{contrast_column} should be available in
+the \code{meta.data} slot. For those familiar with \code{FindMarkers} from Seurat,
+\code{contrast_column} is equivalent to the \code{group.by} parameter.
+
+The \code{targets} parameter specifies a character vector with the names of the groups
+to compare \code{reference}. \code{targets} can be a single group name or a vector of
+group names while \code{reference} can only refer to a single group. Both \code{targets}
+and \code{reference} should be present in the \code{contrast_column}. These parameters
+are similar to the \code{ident.1} and \code{ident.2} parameters in \code{FindMarkers}.
 }
 \section{Additional groups}{
 
-The test is always computed between \code{target} and \code{reference}, but it is possible
+The test is always computed between \code{targets} and \code{reference}, but it is possible
 to add additional grouping variables with \code{group_vars}. If \code{group_vars} is used,
-the test will be computed within each combination of groups. For instance, if we have annotated
-cells into cell type populations across two conditions defined by \code{target} and \code{reference},
-we can pass the name of a cell annotation column with \code{group_vars} to run the test
-for each cell type.
+each comparison is split into groups defined by the \code{group_vars}. For instance, if we
+have annotated cells into cell type populations and saved these annotations in a \code{meta.data}
+column called "cell_type", we can pass "cell_type" to \code{group_vars="cell_type"} to split
+tests across each cell type.
+}
+
+\section{Types of comparisons}{
+
+Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+\code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
+information about what samples the MPX components originated from. This column could have
+three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
+called "cell_type" that holds information about the cell type identity of each MPX component.
+\enumerate{
+\item If we want to compare the "stimulated1" group to the "control" group:
+\preformatted{
+dpa_markers <- RunDPA(object = seurat_object,
+                      contrast_column = "sampleID",
+                      reference = "control",
+                      targets = "stimulated1")
+}
+\item If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group:
+\preformatted{
+dpa_markers <- RunDPA(object = seurat_object,
+                      contrast_column = "sampleID",
+                      reference = "control",
+                      targets = c("stimulated1", "stimulated2"))
+}
+\item If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group, and split
+the tests by cell type:
+\preformatted{
+dpa_markers <- RunPCA(object = seurat_object,
+                     contrast_column = "sampleID",
+                     reference = "control",
+                     targets = c("stimulated1", "stimulated2"),
+                     group_vars = "cell_type")
+}
+}
 }
 
 \examples{
