@@ -274,7 +274,7 @@ RunDPA.data.frame <- function (
         # Add additional group columns
         if (!is.null(group_vars)) {
           for (group_var in group_vars) {
-            result[[group_var]] <- test_groups_keys[i, group_var, drop = TRUE]
+            result[[group_var]] <- test_groups_keys_chunk[i, group_var, drop = TRUE]
           }
         }
 
