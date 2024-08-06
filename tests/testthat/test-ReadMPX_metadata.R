@@ -1,10 +1,10 @@
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 meta_data <- ReadMPX_metadata(pxl_file)
 
 test_that("ReadMPX_metadata works as expected", {
-
   expected_data <-
     structure(
       list(
@@ -24,7 +24,7 @@ test_that("ReadMPX_metadata works as expected", {
           )
         )
       ),
-      row.names = c(NA,-1L),
+      row.names = c(NA, -1L),
       class = c("pixelator_metadata", "tbl_df", "tbl", "data.frame")
     )
   expect_equal(meta_data, expected_data)
@@ -51,5 +51,4 @@ test_that("ReadMPX_metadata works as expected", {
       "9 colocalization_min_region_count   5    "
     )
   )
-
 })
