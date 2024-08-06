@@ -419,8 +419,9 @@ ReadMPX_edgelist <- function(
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' meta_data <- ReadMPX_metadata(pxl_file)
 #'
 #' # Check pixelator version and sample ID
@@ -431,10 +432,9 @@ ReadMPX_edgelist <- function(
 #'
 #' @export
 #'
-ReadMPX_metadata <- function (
+ReadMPX_metadata <- function(
   filename
 ) {
-
   if (!fs::file_exists(filename)) {
     abort(glue("File {col_blue(filename)} doesn't exist"))
   }
@@ -486,8 +486,9 @@ ReadMPX_metadata <- function (
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' meta_data <- ReadMPX_metadata(pxl_file)
 #'
 #' # Check pixelator version and sample ID
@@ -501,7 +502,7 @@ ReadMPX_metadata <- function (
 #'
 #' @export
 #'
-print.pixelator_metadata <- function (
+print.pixelator_metadata <- function(
   x,
   detailed = TRUE,
   ...
@@ -510,20 +511,21 @@ print.pixelator_metadata <- function (
   pixelator_version <- x$version
 
   if ("params" %in% names(x$analysis)) {
-    analysis_params <- lapply(x$analysis, function(x) {x %>% unlist()})
+    analysis_params <- lapply(x$analysis, function(x) {
+      x %>% unlist()
+    })
   } else {
     analysis_params <- NULL
   }
 
   for (i in seq_len(nrow(x))) {
-
     glue(
       "Sample {i} name: \t\t{col_blue(sampleIDs[i])}\n",
       "Pixelator version: \t{col_br_magenta(pixelator_version[i])}\n",
       .trim = FALSE
     ) %>% print()
 
-    if (!is.null(analysis_params) & detailed) {
+    if (!is.null(analysis_params) && detailed) {
       cli_h2("Analysis parameters")
       analysis_params_cur <- tibble(
         parameter = names(analysis_params[[i]]),
@@ -532,7 +534,7 @@ print.pixelator_metadata <- function (
       analysis_params_cur %>% print()
     }
 
-    if (length(analysis_params) > 1 & i < length(analysis_params)) {
+    if (length(analysis_params) > 1 && i < length(analysis_params)) {
       if (detailed) {
         cat("\n")
       }
