@@ -29,8 +29,8 @@ CellCountPlot.data.frame <- function(
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
-  as_frequency = TRUE,
-  stack = TRUE,
+  as_frequency = FALSE,
+  stack = FALSE,
   ...
 ) {
   # Validate object
@@ -148,8 +148,8 @@ CellCountPlot.Seurat <- function(
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
-  as_frequency = TRUE,
-  stack = TRUE,
+  as_frequency = FALSE,
+  stack = FALSE,
   ...
 ) {
   # Extract meta.data
