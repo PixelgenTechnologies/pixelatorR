@@ -48,7 +48,8 @@ to color data by}
 
 \item{as_frequency}{Plot frequencies instead of counts}
 
-\item{stack}{Create a stacked bar plot}
+\item{stack}{Create a stacked bar plot. Only has an effect if a \code{group_by}
+variable is provided.}
 }
 \value{
 A \code{ggplot} object

@@ -171,7 +171,8 @@ MoleculeRankPlot <- function(
 #' \code{flip_axes = TRUE}
 #' @param flip_axes Flip the plot layout
 #' @param as_frequency Plot frequencies instead of counts
-#' @param stack Create a stacked bar plot
+#' @param stack Create a stacked bar plot. Only has an effect if a \code{group_by}
+#' variable is provided.
 #' @param ... Not yet implemented
 #'
 #' @rdname CellCountPlot
