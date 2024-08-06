@@ -707,11 +707,7 @@ NormalizeMPX <- function(
 #'
 #' @export
 #'
-<<<<<<< HEAD
 RestorePaths <- function(
-=======
-RestorePaths <- function (
->>>>>>> 03c6361 (fix documentation)
   object,
   ...
 ) {
