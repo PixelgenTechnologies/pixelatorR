@@ -24,8 +24,9 @@ library(dplyr)
 
 # Load example data
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 meta_data <- ReadMPX_metadata(pxl_file)
 
 # Check pixelator version and sample ID
