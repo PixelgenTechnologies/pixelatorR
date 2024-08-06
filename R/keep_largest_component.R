@@ -1,11 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('nodes', 'group'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
-
 #' @param verbose Print messages
 #'
 #' @rdname KeepLargestComponent
@@ -16,8 +8,9 @@ globalVariables(
 #' library(tidygraph)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                        "five_cells.pxl",
-#'                        package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #'
 #' # Read edgelist
 #' edgelist <- ReadMPX_arrow_edgelist(pxl_file)
@@ -33,7 +26,7 @@ globalVariables(
 #' # Break graph by removing random edges
 #' set.seed(132)
 #' g <- g %E>%
-#'  filter(from %in% sample(from, n() - 500))
+#'   filter(from %in% sample(from, n() - 500))
 #'
 #' # Fetch largest component from a tbl_graph
 #' g_largest <- KeepLargestComponent(g)
@@ -41,14 +34,15 @@ globalVariables(
 #'
 #' @export
 #'
-KeepLargestComponent.tbl_graph <- function (
+KeepLargestComponent.tbl_graph <- function(
   object,
   verbose = TRUE,
   ...
 ) {
   if (igraph::is_connected(object)) {
-    if (verbose && check_global_verbosity())
+    if (verbose && check_global_verbosity()) {
       cli_alert_info("Graph is already connected")
+    }
     return(object)
   } else {
     graph_type_attribute <- attr(object, "type")
@@ -57,8 +51,9 @@ KeepLargestComponent.tbl_graph <- function (
     largest_component <- which.max(sapply(split_components, length))
     object_largest <- split_components[[largest_component]]
     attr(object_largest, "type") <- graph_type_attribute
-    if (verbose && check_global_verbosity())
+    if (verbose && check_global_verbosity()) {
       cli_alert_info("Removed {length(object) - length(object_largest)} out of {length(object)} nodes")
+    }
   }
   return(object_largest)
 }
@@ -79,12 +74,11 @@ KeepLargestComponent.tbl_graph <- function (
 #'
 #' @export
 #'
-KeepLargestComponent.CellGraph <- function (
+KeepLargestComponent.CellGraph <- function(
   object,
   verbose = TRUE,
   ...
 ) {
-
   # Fetch node ids before filtering
   node_ids <- object@cellgraph %N>% pull(name)
 
@@ -121,27 +115,28 @@ KeepLargestComponent.CellGraph <- function (
 #'
 #' @export
 #'
-KeepLargestComponent.MPXAssay <- function (
+KeepLargestComponent.MPXAssay <- function(
   object,
   verbose = TRUE,
   ...
 ) {
-
   # Check cellgraphs
   cellgraphs <- slot(object, name = "cellgraphs")
   loaded_graphs <- !sapply(cellgraphs, is.null)
 
   if (sum(loaded_graphs) == 0) {
-    if (verbose && check_global_verbosity())
+    if (verbose && check_global_verbosity()) {
       cli_alert_info("No 'cellgraphs' loaded in object. Returning object unmodified.")
+    }
     return(object)
   }
 
   # Only keep loaded graphs
   cellgraphs_loaded <- cellgraphs[loaded_graphs]
 
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Keeping largest component for {length(cellgraphs_loaded)} graphs")
+  }
 
   cellgraphs_loaded <- lapply(cellgraphs_loaded, function(g) {
     KeepLargestComponent(g, verbose = verbose, ...)
@@ -160,13 +155,12 @@ KeepLargestComponent.MPXAssay <- function (
 #'
 #' @export
 #'
-KeepLargestComponent.Seurat <- function (
+KeepLargestComponent.Seurat <- function(
   object,
   assay = NULL,
   verbose = TRUE,
   ...
 ) {
-
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
 

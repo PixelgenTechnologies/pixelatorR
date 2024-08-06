@@ -19,25 +19,25 @@
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file)
 #' edgelist_arrow
 #'
 #' @export
 #'
-ReadMPX_arrow_edgelist <- function (
+ReadMPX_arrow_edgelist <- function(
   pxl_file,
   edge_list_file = NULL,
   verbose = TRUE,
   ...
 ) {
-
   # Check input parameters
   stopifnot(
     "'pxl_file' must be a non-empty character of length 1" =
       inherits(pxl_file, what = "character") &&
-      (length(pxl_file) == 1)
+        (length(pxl_file) == 1)
   )
 
   # Validate path
@@ -55,14 +55,15 @@ ReadMPX_arrow_edgelist <- function (
     stopifnot(
       "'edge_list_file' must be a non-empty character of length 1" =
         inherits(edge_list_file, what = "character") &&
-        (length(edge_list_file) == 1),
+          (length(edge_list_file) == 1),
       "'edge_list_file' must be a .parquet file" =
         .file_ext(edge_list_file) == "parquet"
     )
   } else {
     edge_list_dir <- fs::path_temp()
-    if (verbose && check_global_verbosity())
+    if (verbose && check_global_verbosity()) {
       cli_alert_info("Extracting edgelist.parquet file to {col_br_blue(file.path(edge_list_dir, 'edgelist.parquet'))}")
+    }
   }
 
   # Extract the edgelist.parquet file

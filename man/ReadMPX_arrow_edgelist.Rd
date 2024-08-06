@@ -29,8 +29,9 @@ library(pixelatorR)
 
 # Load example data
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file)
 edgelist_arrow
 

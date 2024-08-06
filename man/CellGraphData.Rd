@@ -33,8 +33,9 @@ library(tidygraph)
 edge_list <-
   ReadMPX_item(
     system.file("extdata/five_cells",
-                "five_cells.pxl",
-                package = "pixelatorR"),
+      "five_cells.pxl",
+      package = "pixelatorR"
+    ),
     items = "edgelist"
   )
 bipart_graph <-
@@ -52,6 +53,5 @@ CellGraphData(cg, slot = "cellgraph")
 
 # Set slot data
 CellGraphData(cg, slot = "cellgraph") <- CellGraphData(cg, slot = "cellgraph")
-
 
 }

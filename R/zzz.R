@@ -5,10 +5,8 @@
 "_PACKAGE"
 
 .onLoad <- function(libname, pkgname) {
-
   # set verbosity
   if (is.null(getOption("pixelatorR.verbose"))) {
     options(pixelatorR.verbose = TRUE)
   }
-
 }

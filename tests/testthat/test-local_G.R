@@ -1,5 +1,6 @@
 seur <- ReadMPX_Seurat(system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
-                       overwrite = TRUE, return_cellgraphassay = TRUE)
+  overwrite = TRUE, return_cellgraphassay = TRUE
+)
 
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
 seur <- seur %>% ComputeLayout(layout_method = "pmds", dim = 3, seed = 123)
@@ -8,7 +9,6 @@ g <- CellGraphData(cg, slot = "cellgraph")
 counts <- CellGraphData(cg, slot = "counts")
 
 test_that("local_G works as expected", {
-
   # Default settings
   expect_no_error(gi_mat <- local_G(g = g, counts = counts))
   expect_equal(dim(gi_mat), c(2470, 79))
@@ -25,17 +25,17 @@ test_that("local_G works as expected", {
       2.5315128050998,
       -0.118760619969203,
       -0.432928849830687,
-      1.37658159346162,-0.164310530224204,
+      1.37658159346162, -0.164310530224204,
       -0.151069745965333,
       -0.2136795237295,
       -0.107213005054555,
       0.231100106817231,
       -0.651389682760557,
       1.45560324900578,
-      0.0465557317169272,-0.335312458144784,
+      0.0465557317169272, -0.335312458144784,
       -0.139016875779849,
       0.425590570987706,
-      1.45472068367428,-0.325337007170695,
+      1.45472068367428, -0.325337007170695,
       -0.368374401123967
     ),
     dim = c(5L, 5L),
@@ -47,8 +47,10 @@ test_that("local_G works as expected", {
         "AGTGTAAGAGGTTGTTTCTTAGAAA-A",
         "GAGCAGACAATGGCGCTTAGCTAAA-A"
       ),
-      c("CD27", "HLA-ABC", "CD53",
-        "B2M", "CD18")
+      c(
+        "CD27", "HLA-ABC", "CD53",
+        "B2M", "CD18"
+      )
     )
   )
   expect_equal(gi_mat[1:5, 1:5], expected_values)
@@ -97,8 +99,10 @@ test_that("local_G works as expected", {
           "AGTGTAAGAGGTTGTTTCTTAGAAA-A",
           "GAGCAGACAATGGCGCTTAGCTAAA-A"
         ),
-        c("CD27", "HLA-ABC", "CD53",
-          "B2M", "CD18")
+        c(
+          "CD27", "HLA-ABC", "CD53",
+          "B2M", "CD18"
+        )
       )
     )
 
@@ -115,12 +119,10 @@ test_that("local_G works as expected", {
 
   # The two matrices should be different
   expect_true(!sum(gi_mat_use_weights_F == gi_mat_use_k3_weights_F))
-
 })
 
 
 test_that("local_G fails with invalid input expected", {
-
   # Invalid k
   expect_error(local_G(g = g, counts = counts, k = 0), "'k' must be and integer larger than 0")
 
@@ -131,5 +133,4 @@ test_that("local_G fails with invalid input expected", {
   expect_error(local_G(g = "Invalid", counts = counts), "'g' must be an 'tbl_graph' or an 'igraph' object")
 
   expect_error(local_G(g = g, counts = counts, type = "Invalid"))
-
 })

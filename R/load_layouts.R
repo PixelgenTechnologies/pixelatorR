@@ -19,15 +19,15 @@
 #'
 #' @export
 #'
-ReadMPX_layouts <- function (
+ReadMPX_layouts <- function(
   filename,
   cells = NULL,
   graph_projection = c("bipartite", "Anode", "linegraph"),
   verbose = TRUE
 ) {
-
   graph_projection <- match.arg(graph_projection,
-                                choices = c("bipartite", "Anode", "linegraph"))
+    choices = c("bipartite", "Anode", "linegraph")
+  )
 
   # Check file
   pxl_file_info <- inspect_pxl_file(filename)
@@ -94,10 +94,11 @@ ReadMPX_layouts <- function (
     coords_component_split <- coords_component_grouped %>%
       group_split() %>%
       lapply(function(x) {
-        x %>% select(-component) %>%
+        x %>%
+          select(-component) %>%
           select(
             where(
-              ~sum(!is.na(.x)) > 0
+              ~ sum(!is.na(.x)) > 0
             )
           )
       }) %>%
@@ -112,5 +113,4 @@ ReadMPX_layouts <- function (
   }
 
   return(coords_layout_split)
-
 }

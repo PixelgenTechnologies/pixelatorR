@@ -16,7 +16,7 @@ NULL
 #'
 #' @export
 #'
-LoadCellGraphs.FileSystemDataset <- function (
+LoadCellGraphs.FileSystemDataset <- function(
   object,
   cells,
   load_as = c("bipartite", "Anode", "linegraph"),
@@ -25,43 +25,50 @@ LoadCellGraphs.FileSystemDataset <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
   stopifnot(
     "'cells' must be a character vector with at least 1 element" =
       is.character(cells) &&
-      (length(cells) > 0),
+        (length(cells) > 0),
     "'chunk_size' must be a positive integer of length 1" =
       is.numeric(chunk_size) &&
-      (length(chunk_size) == 1) &&
-      (chunk_size > 0)
+        (length(chunk_size) == 1) &&
+        (chunk_size > 0)
   )
 
   # Validate load_as
   load_as <- match.arg(load_as, choices = c("bipartite", "Anode", "linegraph"))
 
   # Select load function
-  graph_load_fkn <- switch(load_as,
-                            "bipartite" = .load_as_bipartite,
-                            "Anode" = .load_as_anode,
-                            "linegraph" = .load_as_linegraph)
+  graph_load_fkn <-
+    switch(load_as,
+      "bipartite" = .load_as_bipartite,
+      "Anode" = .load_as_anode,
+      "linegraph" = .load_as_linegraph
+    )
 
   # Convert edgelist to list of Cell Graphs
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert("  Loading {length(cells)} edgelist(s) as {col_br_magenta(load_as)} graph(s)")
+  }
 
   # Group cells ids into chunks
   cells_split <- split(cells, ceiling(seq_along(cells) / chunk_size))
 
   # Process chunks
-  cellgraphs <- lapply(seq_along(cells_split), function (i) {
-
+  cellgraphs <- lapply(seq_along(cells_split), function(i) {
     cell_ids <- cells_split[[i]]
 
     # Load chunks for specific sample
-    g_list <- try({graph_load_fkn(object,
-                             cell_ids = cell_ids,
-                             add_markers = add_marker_counts)}, silent = TRUE)
+    g_list <- try(
+      {
+        graph_load_fkn(object,
+          cell_ids = cell_ids,
+          add_markers = add_marker_counts
+        )
+      },
+      silent = TRUE
+    )
 
     if (inherits(g_list, what = "try-error") || any(sapply(g_list, is.null))) {
       abort(glue("Failed to load edge list data. Most likely reason is that invalid cells were provided."))
@@ -89,7 +96,7 @@ LoadCellGraphs.FileSystemDataset <- function (
 #'
 #' @export
 #'
-LoadCellGraphs.tbl_df <- function (
+LoadCellGraphs.tbl_df <- function(
   object,
   cells,
   load_as = c("bipartite", "Anode", "linegraph"),
@@ -97,12 +104,11 @@ LoadCellGraphs.tbl_df <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
   stopifnot(
     "'cells' must be a character vector with at least 1 element" =
       is.character(cells) &&
-      (length(cells) > 0),
+        (length(cells) > 0),
     "'add_marker_counts' must be a logical" =
       is.logical(add_marker_counts)
   )
@@ -112,9 +118,10 @@ LoadCellGraphs.tbl_df <- function (
 
   # Select load function
   graph_load_fkn <- switch(load_as,
-                           "bipartite" = .load_as_bipartite,
-                           "Anode" = .load_as_anode,
-                           "linegraph" = .load_as_linegraph)
+    "bipartite" = .load_as_bipartite,
+    "Anode" = .load_as_anode,
+    "linegraph" = .load_as_linegraph
+  )
 
   # Load cell graphs
   cg_list <- graph_load_fkn(object, cell_ids = cells, add_markers = add_marker_counts)
@@ -146,7 +153,7 @@ LoadCellGraphs.tbl_df <- function (
 #'
 #' @export
 #'
-LoadCellGraphs.MPXAssay <- function (
+LoadCellGraphs.MPXAssay <- function(
   object,
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
@@ -158,12 +165,11 @@ LoadCellGraphs.MPXAssay <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
   stopifnot(
     "'cells' must be a non-empty character vector of cell names" =
       is.character(cells) &&
-      (length(cells) > 0)
+        (length(cells) > 0)
   )
   stopifnot(
     "'cells' must be present in 'object'" =
@@ -173,9 +179,10 @@ LoadCellGraphs.MPXAssay <- function (
 
   # Check if cells are already loaded
   loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
-  if ((sum(!loaded_graphs) == 0) & !force) {
-    if (verbose && check_global_verbosity())
+  if ((sum(!loaded_graphs) == 0) && !force) {
+    if (verbose && check_global_verbosity()) {
       cli_alert_info("All cells are already loaded. Returning object unmodified.")
+    }
     return(object)
   } else {
     if (force) {
@@ -183,9 +190,12 @@ LoadCellGraphs.MPXAssay <- function (
       loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
     }
     cells_to_load <- setdiff(cells, cells[loaded_graphs])
-    if (verbose && check_global_verbosity() & (length(cells_to_load) < length(cells)))
-      cli_alert_info(glue("{length(cells) - length(cells_to_load)} CellGraphs loaded.",
-                          " Loading remaining {length(cells_to_load)} CellGraphs."))
+    if (verbose && check_global_verbosity() && (length(cells_to_load) < length(cells))) {
+      cli_alert_info(glue(
+        "{length(cells) - length(cells_to_load)} CellGraphs loaded.",
+        " Loading remaining {length(cells_to_load)} CellGraphs."
+      ))
+    }
   }
 
   # Find where components are located
@@ -198,8 +208,10 @@ LoadCellGraphs.MPXAssay <- function (
   # Check for layouts
   if (load_layouts) {
     if (load_as != "bipartite") {
-      abort(glue("This function currently only supports ",
-            "bipartite graphs."))
+      abort(glue(
+        "This function currently only supports ",
+        "bipartite graphs."
+      ))
     }
     for (f in fs_map_nested_filtered$pxl_file) {
       pxl_file_info <- inspect_pxl_file(f)
@@ -237,7 +249,6 @@ LoadCellGraphs.MPXAssay <- function (
           x[[layout_type]]
         }))
     }
-
   }
 
   # Load cell graphs in chunks
@@ -262,24 +273,26 @@ LoadCellGraphs.MPXAssay <- function (
 
     # Read the edgelist in memory, but only the necessary columns
     ar <- arrow::read_parquet(pq_file,
-                              col_select = c("upia", "upib", "marker", "component"),
-                              as_data_frame = FALSE)
+      col_select = c("upia", "upib", "marker", "component"),
+      as_data_frame = FALSE
+    )
 
     if (verbose && check_global_verbosity()) {
-      cli_alert(glue("   Loading CellGraphs for {nrow(fs_map_nested_filtered$data[[i]])} cells ",
-                     "from sample {fs_map_nested_filtered$sample[i]}"))
+      cli_alert(glue(
+        "   Loading CellGraphs for {nrow(fs_map_nested_filtered$data[[i]])} cells ",
+        "from sample {fs_map_nested_filtered$sample[i]}"
+      ))
     }
 
     # Split data into chunks determined by chunk_size
     id_data_chunks <- fs_map_nested_filtered$data[[i]] %>%
-      mutate(group = ceiling(seq_len(n())/chunk_size)) %>%
+      mutate(group = ceiling(seq_len(n()) / chunk_size)) %>%
       rename(component = current_id) %>%
       group_by(group) %>%
       group_split()
 
     # Read cellgraphs
     cg_list <- pblapply(id_data_chunks, function(id_chunk) {
-
       # Filter edgelist data for the current chunk
       # Note that we use original_id which are the original
       # MPX component ids. current_id are the ids currenty used
@@ -289,17 +302,18 @@ LoadCellGraphs.MPXAssay <- function (
         collect()
 
       # Send to tbl_df method
-      cg_list <-
-        LoadCellGraphs(
-          edgelist_data,
-          cells = id_chunk$original_id,
-          load_as = load_as,
-          add_marker_counts = add_marker_counts,
-          verbose = verbose,
-          ... = ...)
+      cg_list <- LoadCellGraphs(
+        edgelist_data,
+        cells = id_chunk$original_id,
+        load_as = load_as,
+        add_marker_counts = add_marker_counts,
+        verbose = verbose,
+        ... = ...
+      )
 
       return(cg_list)
-    }, cl = cl) %>% unlist()
+    }, cl = cl) %>%
+      unlist()
 
     # Update names of the cellgraph list
     cg_list <- cg_list[fs_map_nested_filtered$data[[i]]$original_id]
@@ -307,11 +321,13 @@ LoadCellGraphs.MPXAssay <- function (
 
     # Remove temporary file
     try_delete <- try(fs::file_delete(pq_file), silent = TRUE)
-    if (inherits(try_delete, what = "try-error"))
+    if (inherits(try_delete, what = "try-error")) {
       cli_alert_warning("Failed to delete temporary edge list parquet file {pq}.")
+    }
 
     return(cg_list)
-  }) %>% unlist()
+  }) %>%
+    unlist()
 
   # Add layouts to the list of cellgraphs if layouts were loaded
   if (load_layouts) {
@@ -331,15 +347,17 @@ LoadCellGraphs.MPXAssay <- function (
         cg@layout[[layout_type]] <- coords %>% select(-all_of("name"))
       }
       return(cg)
-    }) %>% set_names(nm = names(cg_list_full))
+    }) %>%
+      set_names(nm = names(cg_list_full))
   }
 
   # Fill cellgraphs slot list with the loaded CellGraphs
   slot(object, name = "cellgraphs")[fs_map_unnested_filtered$current_id] <- cg_list_full
 
   # Return object
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_success("Successfully loaded {length(cells_to_load)} CellGraph object(s).")
+  }
   return(object)
 }
 
@@ -368,7 +386,7 @@ LoadCellGraphs.CellGraphAssay5 <- LoadCellGraphs.MPXAssay
 #'
 #' @export
 #'
-LoadCellGraphs.Seurat <- function (
+LoadCellGraphs.Seurat <- function(
   object,
   assay = NULL,
   cells = colnames(object),
@@ -381,14 +399,13 @@ LoadCellGraphs.Seurat <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
     stopifnot(
       "'assay' must be a character of length 1" =
         is.character(assay) &&
-        (length(assay) == 1)
-      )
+          (length(assay) == 1)
+    )
   } else {
     # Use default assay if assay = NULL
     assay <- DefaultAssay(object)
@@ -397,8 +414,10 @@ LoadCellGraphs.Seurat <- function (
   # Validate assay
   cg_assay <- object[[assay]]
   if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'",
-               " or a 'CellGraphAssay5'"))
+    abort(glue(
+      "Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'",
+      " or a 'CellGraphAssay5'"
+    ))
   }
 
   # Load cell graphs
@@ -428,7 +447,7 @@ LoadCellGraphs.Seurat <- function (
 #' @param cell_ids A character vector of cell IDs
 #'
 #' @noRd
-.load_as_bipartite <- function (
+.load_as_bipartite <- function(
   arrow_data,
   cell_ids,
   add_markers = TRUE
@@ -443,7 +462,6 @@ LoadCellGraphs.Seurat <- function (
     set_names(nm = edge_table %>% dplyr::group_data() %>% pull(component)) # Name list with component IDs
 
   edge_table_split <- lapply(names(edge_table_split), function(nm) {
-
     edge_table <- edge_table_split[[nm]]
 
     # Add a suffix to upia / upib and convert to a tbl_graph
@@ -456,17 +474,17 @@ LoadCellGraphs.Seurat <- function (
     # Add node type as node attribute
     g <- g %>%
       # Replace node attributes with name / node_type
-      mutate(!!! g %>%
-        as_tibble() %>%
-        mutate(id = name) %>%
-        tidyr::separate(col = name, into = c("name", "node_type"))
-        ) %>%
+      mutate(
+        !!!g %>%
+          as_tibble() %>%
+          mutate(id = name) %>%
+          tidyr::separate(col = name, into = c("name", "node_type"))
+      ) %>%
       select(-name) %>%
       rename(name = id) %>%
       select(name, node_type)
 
     if (add_markers) {
-
       # Aggregate counts per upia / upib combination
       markers_s <- g %E>%
         as_tibble() %>%
@@ -497,11 +515,11 @@ LoadCellGraphs.Seurat <- function (
         filter(FALSE) %>% # Remove all edges
         bind_edges(new_edges) %N>% # Add the distinct edges matching the count matrix and reactivate nodes
         select(name, node_type)
-
     } else {
-
       # Skip marker counts and return a simple undirected graph
-      new_edges <- g %E>% as_tibble() %>% select(from, to) %>% distinct()
+      new_edges <- g %E>% as_tibble() %>%
+        select(from, to) %>%
+        distinct()
 
       # Replace with collapsed edges and return a simple undirected graph
       g <- g %E>%
@@ -519,10 +537,10 @@ LoadCellGraphs.Seurat <- function (
     } else {
       return(g)
     }
-  }) %>% set_names(nm = names(edge_table_split))
+  }) %>%
+    set_names(nm = names(edge_table_split))
 
   return(edge_table_split[cell_ids])
-
 }
 
 
@@ -532,17 +550,15 @@ LoadCellGraphs.Seurat <- function (
 #' @param cell_id A character vector of cell IDs
 #'
 #' @noRd
-.load_as_linegraph <- function (
+.load_as_linegraph <- function(
   arrow_data,
   cell_ids,
   add_markers = TRUE
 ) {
-
   # Start by loading graph as bipartite
   g_list <- .load_as_bipartite(arrow_data, cell_ids = cell_ids, add_markers = add_markers)
 
   g_list <- lapply(names(g_list), function(nm) {
-
     g <- g_list[[nm]]
 
     # Unpack list elements if needed
@@ -567,10 +583,10 @@ LoadCellGraphs.Seurat <- function (
     } else {
       return(g_line)
     }
-  }) %>% set_names(nm = names(g_list))
+  }) %>%
+    set_names(nm = names(g_list))
 
   return(g_list)
-
 }
 
 
@@ -580,12 +596,11 @@ LoadCellGraphs.Seurat <- function (
 #' @param cell_id A cell ID
 #'
 #' @noRd
-.load_as_anode <- function (
+.load_as_anode <- function(
   arrow_data,
   cell_ids,
   add_markers = TRUE
 ) {
-
   # Fetch edgelist from parquet file and group by component
   edge_table <- arrow_data %>%
     filter(component %in% cell_ids) %>%
@@ -598,7 +613,6 @@ LoadCellGraphs.Seurat <- function (
     set_names(nm = edge_table %>% dplyr::group_data() %>% pull(component))
 
   edge_table_split <- lapply(names(edge_table_split), function(nm) {
-
     edge_table <- edge_table_split[[nm]] %>%
       select(upia, upib, marker) %>%
       mutate(across(where(is.factor), as.character))
@@ -606,9 +620,10 @@ LoadCellGraphs.Seurat <- function (
     # Anode projection
     g_anode <- edge_table %>%
       left_join(edge_table,
-                by = c("upib"),
-                relationship = "many-to-many",
-                suffix = c("1", "2")) %>%
+        by = c("upib"),
+        relationship = "many-to-many",
+        suffix = c("1", "2")
+      ) %>%
       select(upia1, upia2) %>%
       distinct() %>%
       filter(upia1 < upia2)
@@ -618,7 +633,6 @@ LoadCellGraphs.Seurat <- function (
       as_tbl_graph(directed = FALSE)
 
     if (add_markers) {
-
       # Group by upia and marker
       markers_s <- edge_table %>%
         as_tibble() %>%
@@ -646,10 +660,9 @@ LoadCellGraphs.Seurat <- function (
     } else {
       return(g)
     }
-  }) %>% set_names(nm = names(edge_table_split))
+  }) %>%
+    set_names(nm = names(edge_table_split))
 
   # Return list with the correct order of components
   return(edge_table_split[cell_ids])
-
 }
-

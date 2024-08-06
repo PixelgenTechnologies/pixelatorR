@@ -39,8 +39,9 @@ Get and set \code{fs_map} tibble for a \code{\link{CellGraphAssay}},
 }
 \examples{
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 seur_obj <- ReadMPX_Seurat(pxl_file)
 
 # Check PXL file paths in a Seurat object

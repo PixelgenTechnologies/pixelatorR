@@ -17,9 +17,13 @@ bipartite_graphs <- lapply(edgelist, function(x) {
 })
 
 test_that("CreateCellGraphAssay works as expected", {
-  expect_no_error({cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)})
+  expect_no_error({
+    cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)
+  })
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_no_error({cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)})
+  expect_no_error({
+    cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)
+  })
   expect_s4_class(cg_assay, "CellGraphAssay")
 })
 

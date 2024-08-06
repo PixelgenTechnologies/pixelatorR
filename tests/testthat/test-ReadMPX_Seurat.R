@@ -3,7 +3,8 @@ options(Seurat.object.assay.version = "v3")
 test_that("Data loading with ReadMPX_Seurat works", {
   pg_data <-
     ReadMPX_Seurat(
-      system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"), overwrite = TRUE
+      system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
+      overwrite = TRUE
     )
   expect_s4_class(pg_data, "Seurat")
   expect_equal(names(pg_data@assays), c("mpxCells"))
@@ -36,7 +37,6 @@ test_that("Data loading with ReadMPX_Seurat works", {
 
   expect_equal(nrow(pg_data@assays$mpxCells@polarization), 380)
   expect_equal(nrow(pg_data@assays$mpxCells@colocalization), 0)
-
 })
 
 test_that("Data loading fails when an invalid file format is provided", {

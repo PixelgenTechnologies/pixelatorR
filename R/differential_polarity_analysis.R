@@ -1,9 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('morans_z', 'p', 'p.value'),
-  package = 'pixelatorR',
-  add = TRUE
-)
 #' @include generics.R
 NULL
 
@@ -15,23 +9,26 @@ NULL
 #' library(dplyr)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #'
 #' # Load polarization scores
 #' polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
 #' polarization_table1$sample <- "Sample1"
 #' polarization_table2$sample <- "Sample2"
-#' polarization_table_merged <-  bind_rows(polarization_table1, polarization_table2)
+#' polarization_table_merged <- bind_rows(polarization_table1, polarization_table2)
 #'
 #' # Run DPA using table as input
-#' dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample",
-#'                       target = "Sample1", reference = "Sample2")
+#' dpa_markers <- RunDPA(polarization_table_merged,
+#'   contrast_column = "sample",
+#'   target = "Sample1", reference = "Sample2"
+#' )
 #' dpa_markers
 #'
 #' @export
 #'
-RunDPA.data.frame <- function (
+RunDPA.data.frame <- function(
   object,
   target,
   reference,
@@ -43,13 +40,12 @@ RunDPA.data.frame <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
   stopifnot(
     "'contrast_column' must be a valid column name" =
       inherits(contrast_column, what = "character") &&
-      (length(contrast_column) == 1) &&
-      (contrast_column %in% colnames(object))
+        (length(contrast_column) == 1) &&
+        (contrast_column %in% colnames(object))
   )
 
   group_vector <- object[, contrast_column, drop = TRUE]
@@ -62,19 +58,17 @@ RunDPA.data.frame <- function (
   stopifnot(
     "'target' must be present in 'contrast_column' column" =
       inherits(target, what = "character") &&
-      (length(target) == 1) &&
-      (target %in% group_vector),
-
+        (length(target) == 1) &&
+        (target %in% group_vector),
     "'reference' must be present in 'contrast_column' column" =
       inherits(reference, what = "character") &&
-      (length(reference) == 1) &&
-      (reference %in% group_vector)
+        (length(reference) == 1) &&
+        (reference %in% group_vector)
   )
 
   stopifnot(
     "'morans_z' and 'component' must be present in polarization score table" =
       all(c("marker", "morans_z", "component") %in% colnames(object)),
-
     "'conf_int' must be TRUE or FALSE" =
       inherits(conf_int, what = "logical") & (length(conf_int) == 1)
   )
@@ -83,14 +77,15 @@ RunDPA.data.frame <- function (
     stopifnot(
       "'group_vars' must be valid column names" =
         inherits(group_vars, what = "character") &&
-        (length(group_vars) >= 1) &&
-        all(group_vars %in% colnames(object))
+          (length(group_vars) >= 1) &&
+          all(group_vars %in% colnames(object))
     )
     for (group_var in group_vars) {
       stopifnot(
         "'group_vars' must be character vectors or factors" =
           inherits(object[, group_var, drop = TRUE],
-                   what = c("character", "factor"))
+            what = c("character", "factor")
+          )
       )
     }
   }
@@ -98,8 +93,11 @@ RunDPA.data.frame <- function (
   # Check multiple choice args
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
   p_adjust_method <- match.arg(p_adjust_method,
-                               choices = c("bonferroni", "holm", "hochberg",
-                                           "hommel", "BH", "BY", "fdr"))
+    choices = c(
+      "bonferroni", "holm", "hochberg",
+      "hommel", "BH", "BY", "fdr"
+    )
+  )
 
   # Group data and get contrasts
   if (verbose && check_global_verbosity()) {
@@ -125,10 +123,13 @@ RunDPA.data.frame <- function (
   test_groups <- test_groups %>% group_split()
 
   pol_test <- lapply(test_groups, function(polarity_contrast) {
-
     # Get numeric data values
-    x <- polarity_contrast %>% filter(.data[[contrast_column]] == target) %>% pull(morans_z)
-    y <- polarity_contrast %>% filter(.data[[contrast_column]] == reference) %>% pull(morans_z)
+    x <- polarity_contrast %>%
+      filter(.data[[contrast_column]] == target) %>%
+      pull(morans_z)
+    y <- polarity_contrast %>%
+      filter(.data[[contrast_column]] == reference) %>%
+      pull(morans_z)
 
     # Run wilcox.test
     result <- wilcox.test(
@@ -142,17 +143,20 @@ RunDPA.data.frame <- function (
     # Tidy up results
     result <- result %>%
       .tidy() %>%
-      mutate(n1 = length(x), n2 = length(y), method = "Wilcoxon",
-             alternative = alternative, data_type = "morans_z",
-             target = target, reference = reference, p = signif(p.value, 3)) %>%
-      select(c("estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
-               "p", "conf.low", "conf.high", "method", "alternative"))
+      mutate(
+        n1 = length(x), n2 = length(y), method = "Wilcoxon",
+        alternative = alternative, data_type = "morans_z",
+        target = target, reference = reference, p = signif(p.value, 3)
+      ) %>%
+      select(c(
+        "estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
+        "p", "conf.low", "conf.high", "method", "alternative"
+      ))
     return(result)
   })
 
   # Bind results from pol_test list
   pol_test_bind <- do.call(bind_rows, lapply(seq_along(pol_test), function(i) {
-
     # Add marker column
     pol_test_with_groups <- pol_test[[i]] %>% mutate(
       marker = test_groups_keys[i, 1, drop = TRUE]
@@ -188,13 +192,15 @@ RunDPA.data.frame <- function (
 #' seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
 #'
 #' # Run DPA
-#' dpa_markers <- RunDPA(seur_merged, contrast_column = "sample",
-#'                       target = "Sample1", reference = "Sample2")
+#' dpa_markers <- RunDPA(seur_merged,
+#'   contrast_column = "sample",
+#'   target = "Sample1", reference = "Sample2"
+#' )
 #' dpa_markers
 #'
 #' @export
 #'
-RunDPA.Seurat <- function (
+RunDPA.Seurat <- function(
   object,
   target,
   reference,
@@ -207,13 +213,12 @@ RunDPA.Seurat <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
   stopifnot(
     "'contrast_column' must be a valid meta data column name" =
       inherits(contrast_column, what = "character") &&
-      (length(contrast_column) == 1) &&
-      (contrast_column %in% colnames(object[[]]))
+        (length(contrast_column) == 1) &&
+        (contrast_column %in% colnames(object[[]]))
   )
   group_vector <- object[[]][, contrast_column, drop = TRUE]
   stopifnot(
@@ -223,41 +228,44 @@ RunDPA.Seurat <- function (
   stopifnot(
     "'target' must be present in 'contrast_column' column" =
       inherits(target, what = "character") &&
-      (length(target) == 1) &&
-      (target %in% group_vector),
-
+        (length(target) == 1) &&
+        (target %in% group_vector),
     "'reference' must be present in 'group_var' column" =
       inherits(reference, what = "character") &&
-      (length(reference) == 1) &&
-      (reference %in% group_vector)
+        (length(reference) == 1) &&
+        (reference %in% group_vector)
   )
 
   if (!is.null(group_vars)) {
     stopifnot(
       "'group_vars' must be valid meta data column names" =
         inherits(group_vars, what = "character") &&
-        (length(group_vars) >= 1) &&
-        all(group_vars %in% colnames(object[[]]))
+          (length(group_vars) >= 1) &&
+          all(group_vars %in% colnames(object[[]]))
     )
     for (group_var in group_vars) {
       stopifnot(
         "'group_vars' must be character vectors or factors" =
           inherits(object[[]][, group_var, drop = TRUE],
-                   what = c("character", "factor"))
+            what = c("character", "factor")
+          )
       )
     }
   }
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
   p_adjust_method <- match.arg(p_adjust_method,
-                               choices = c("bonferroni", "holm", "hochberg",
-                                           "hommel", "BH", "BY", "fdr"))
+    choices = c(
+      "bonferroni", "holm", "hochberg",
+      "hommel", "BH", "BY", "fdr"
+    )
+  )
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
     stopifnot(
       "'assay' must be a character of length 1" =
         is.character(assay) &&
-        (length(assay) == 1)
+          (length(assay) == 1)
     )
   } else {
     assay <- DefaultAssay(object)
@@ -287,14 +295,15 @@ RunDPA.Seurat <- function (
 
   # Run DPA
   pol_test_bind <- RunDPA(polarization_data,
-                          target = target,
-                          reference = reference,
-                          contrast_column = contrast_column,
-                          group_vars = group_vars,
-                          alternative = alternative,
-                          conf_int = conf_int,
-                          p_adjust_method = p_adjust_method,
-                          verbose = verbose)
+    target = target,
+    reference = reference,
+    contrast_column = contrast_column,
+    group_vars = group_vars,
+    alternative = alternative,
+    conf_int = conf_int,
+    p_adjust_method = p_adjust_method,
+    verbose = verbose
+  )
 
   return(pol_test_bind)
 }
