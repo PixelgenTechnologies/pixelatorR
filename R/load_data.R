@@ -386,3 +386,136 @@ ReadMPX_edgelist <- function (
 ) {
   ReadMPX_item(filename, items = "edgelist", verbose = verbose)
 }
+
+#' Read metadata from a PXL file
+#'
+#' @param filename Path to a PXL file
+#'
+#' @rdname ReadMPX_metadata
+#'
+#' @examples
+#' library(pixelatorR)
+#'
+#' # Load example data
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' meta_data <- ReadMPX_metadata(pxl_file)
+#'
+#' # Check pixelator version and sample ID
+#' meta_data
+#'
+#' # Check parameter settings for the pixelator run
+#' meta_data$analysis$params
+#'
+#' @export
+#'
+ReadMPX_metadata <- function (
+  filename
+) {
+
+  if (!fs::file_exists(filename)) {
+    abort(glue("File {col_blue(filename)} doesn't exist"))
+  }
+
+  if (fs::path_ext(filename) != "pxl") {
+    abort(glue("File {col_blue(filename)} is not a PXL file"))
+  }
+
+  temp_dir <- fs::path_temp()
+  temp_file <- fs::path(temp_dir, "metadata.json")
+  zip::unzip(
+    zipfile = filename,
+    files = "metadata.json",
+    exdir = temp_dir
+  )
+
+  # Read meta data from JSON file
+  meta_data <- jsonlite::read_json(temp_file, simplifyVector = TRUE) %>%
+    as_tibble() %>%
+    select(-contains("file_format_version"))
+  analysis <- meta_data$analysis[[1]]
+  if (any(c("polarization", "colocalization") %in% names(analysis))) {
+    analysis <- unlist(analysis %>% unname())
+    names(analysis) <- names(analysis) %>%
+      stringr::str_replace("\\.", "_")
+  } else {
+    analysis <- unlist(analysis)
+  }
+  meta_data$analysis <- list(params = analysis)
+  class(meta_data) <- c("pixelator_metadata", class(meta_data))
+
+  return(meta_data)
+}
+
+
+#' Print method for pixelator_metadata
+#'
+#' @param x An object of class \code{pixelator_metadata}
+#' @param detailed Logical. If \code{TRUE} print all metadata, if
+#' \code{FALSE} print only the pixelator version and sample ID.
+#' @param ... Additional arguments passed to \code{\link{print}}
+#'
+#' @rdname print.pixelator_metadata
+#' @docType methods
+#'
+#' @examples
+#' library(pixelatorR)
+#' library(dplyr)
+#'
+#' # Load example data
+#' pxl_file <- system.file("extdata/five_cells",
+#'                         "five_cells.pxl",
+#'                         package = "pixelatorR")
+#' meta_data <- ReadMPX_metadata(pxl_file)
+#'
+#' # Check pixelator version and sample ID
+#' meta_data
+#'
+#' # Multiple files with less detail
+#' pxl_files <- c(pxl_file, pxl_file)
+#' meta_data_merged <- lapply(pxl_files, ReadMPX_metadata) %>%
+#'   bind_rows()
+#' meta_data_merged %>% print(detailed = FALSE)
+#'
+#' @export
+#'
+print.pixelator_metadata <- function (
+  x,
+  detailed = TRUE,
+  ...
+) {
+  sampleIDs <- x$sample
+  pixelator_version <- x$version
+
+  if ("params" %in% names(x$analysis)) {
+    analysis_params <- lapply(x$analysis, function(x) {x %>% unlist()})
+  } else {
+    analysis_params <- NULL
+  }
+
+  for (i in seq_len(nrow(x))) {
+
+    glue(
+      "Sample {i} name: \t\t{col_blue(sampleIDs[i])}\n",
+      "Pixelator version: \t{col_br_magenta(pixelator_version[i])}\n",
+      .trim = FALSE
+    ) %>% print()
+
+    if (!is.null(analysis_params) & detailed) {
+      cli_h2("Analysis parameters")
+      analysis_params_cur <- tibble(
+        parameter = names(analysis_params[[i]]),
+        value = analysis_params[[i]], row.names = NULL
+      )
+      analysis_params_cur %>% print()
+    }
+
+    if (length(analysis_params) > 1 & i < length(analysis_params)) {
+      if (detailed) {
+        cat("\n")
+      }
+      cli::cat_rule()
+    }
+  }
+}
