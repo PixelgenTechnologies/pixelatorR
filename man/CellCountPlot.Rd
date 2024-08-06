@@ -14,8 +14,8 @@ CellCountPlot(object, ...)
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
-  as_frequency = TRUE,
-  stack = TRUE,
+  as_frequency = FALSE,
+  stack = FALSE,
   ...
 )
 
@@ -25,8 +25,8 @@ CellCountPlot(object, ...)
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
-  as_frequency = TRUE,
-  stack = TRUE,
+  as_frequency = FALSE,
+  stack = FALSE,
   ...
 )
 }
