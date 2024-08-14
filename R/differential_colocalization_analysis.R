@@ -84,6 +84,13 @@ RunDCA.data.frame <- function (
         )
     }
   }
+
+  stopifnot(
+    "'cl' must be a cluster object or an integer" =
+      inherits(cl, what = c("cluster", "numeric"))
+  )
+
+  # Check multiple choice args
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
   p_adjust_method <- match.arg(p_adjust_method,
                                choices = c("bonferroni", "holm", "hochberg",
@@ -101,9 +108,9 @@ RunDCA.data.frame <- function (
   test_groups <- object %>%
     {
       if (!is.null(group_vars)) {
-        group_by_at(., all_of(c("marker_1", "marker_2", group_vars)))
+        group_by(., pick(all_of(c("marker_1", "marker_2", group_vars))))
       } else {
-        group_by_at(., c("marker_1", "marker_2"))
+        group_by(., pick(all_of(c("marker_1", "marker_2"))))
       }
     }
 
@@ -151,37 +158,46 @@ RunDCA.data.frame <- function (
     # Load dplyr in each cluster
     clusterEvalQ(cl, {
       library(dplyr)
+      library(rlang)
+      library(glue)
+      library(cli)
     })
     # Export variables to each cluster
-    clusterExport(cl, c("test_groups", "test_groups_keys", "contrast_column",
-                        "targets", "reference", "alternative", "conf_int",
-                        ".tidy", "group_vars"),
+    clusterExport(cl, c("contrast_column", "targets", "reference",
+                        "coloc_metric", "evaluate_with_catch",
+                        "alternative", "conf_int", ".tidy", "group_vars"),
                   envir = current_env())
-    chunks <- split(seq_along(test_groups), cut(seq_along(test_groups), length(cl)))
+    # Parallel processing on cluster
+    if ((length(test_groups) * length(cl)) > (length(cl)*100)) {
+      # Cut into even chunks of 100 values in each chunk
+      chunks <- ceiling(seq_along(test_groups)/100)
+    } else {
+      chunks <- cut(seq_along(test_groups), length(cl))
+    }
   } else if (is.numeric(cl)) {
+    # Parallel processing when cl is the number of child processes
     if ((length(test_groups) * cl) > (cl*100)) {
       # Cut into even chunks of 100 values in each chunk
-      chunks <- split(seq_along(test_groups), ceiling(seq_along(test_groups)/50))
+      chunks <- ceiling(seq_along(test_groups)/100)
     } else {
-      chunks <- split(seq_along(test_groups), cut(seq_along(test_groups), cl))
+      chunks <- cut(seq_along(test_groups), cl)
     }
   } else {
-    chunks <- as.list(seq_along(test_groups))
+    # Sequential processing when cl is NULL
+    chunks <- seq_along(test_groups)
   }
 
+  # Split test_groups into chunks
+  test_groups_chunked <- split(test_groups, chunks)
+
   # Process chunks
-  coloc_test <- pblapply(chunks, function(chunk) {
+  coloc_test <- pblapply(test_groups_chunked, function(test_groups_chunk) {
 
-    test_groups_chunk <- test_groups[chunk]
-    test_groups_keys_chunk <- test_groups_keys[chunk, ]
-
-    coloc_test_chunk <- lapply(seq_along(test_groups_chunk), function(i) {
-
-      colocalization_contrast <- test_groups_chunk[[i]]
+    coloc_test_chunk <- lapply(test_groups_chunk, function(colocalization_contrast) {
 
       # Fetch marker for current comparison
-      marker_1 <- test_groups_keys_chunk[i, "marker_1", drop = TRUE]
-      marker_2 <- test_groups_keys_chunk[i, "marker_2", drop = TRUE]
+      marker_1 <- colocalization_contrast$marker_1 %>% unique()
+      marker_2 <- colocalization_contrast$marker_2 %>% unique()
 
       # Get numeric data values
       x_list <- lapply(targets, function(target) {
@@ -233,7 +249,7 @@ RunDCA.data.frame <- function (
         # Add additional group columns
         if (!is.null(group_vars)) {
           for (group_var in group_vars) {
-            result[[group_var]] <- test_groups_keys_chunk[i, group_var, drop = TRUE]
+            result[[group_var]] <- colocalization_contrast[, group_var, drop = TRUE] %>% unique()
           }
         }
 

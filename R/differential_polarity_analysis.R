@@ -31,7 +31,7 @@ NULL
 #'
 #' # Run DPA using table as input
 #' dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample",
-#'                       target = "Sample1", reference = "Sample2")
+#'                       targets = "Sample1", reference = "Sample2")
 #' dpa_markers
 #'
 #' @export
@@ -117,6 +117,11 @@ RunDPA.data.frame <- function (
     }
   }
 
+  stopifnot(
+    "'cl' must be a cluster object or an integer" =
+      inherits(cl, what = c("cluster", "numeric"))
+  )
+
   # Check multiple choice args
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
   p_adjust_method <- match.arg(p_adjust_method,
@@ -135,9 +140,9 @@ RunDPA.data.frame <- function (
   test_groups <- object %>%
     {
       if (!is.null(group_vars)) {
-        group_by_at(., all_of(c("marker", group_vars)))
+        group_by(., pick(all_of(c("marker", group_vars))))
       } else {
-        group_by(., .data[["marker"]])
+        group_by(., pick(all_of("marker")))
       }
     }
 
@@ -190,35 +195,33 @@ RunDPA.data.frame <- function (
     })
     # Export variables to each cluster
     clusterExport(cl, c(
-      "test_groups", "test_groups_keys", "contrast_column",
-      "target", "reference", "alternative", "conf_int",
-      ".tidy", "group_vars", "targets", "evaluate_with_catch"
+      "targets", "reference", "alternative", "conf_int", "polarity_metric",
+      "contrast_column",".tidy", "group_vars", "evaluate_with_catch"
     ),
     envir = current_env()
     )
-    chunks <- split(seq_along(test_groups), cut(seq_along(test_groups), length(cl)))
+    # Parallel processing on cluster
+    chunks <- cut(seq_along(test_groups), length(cl))
   } else if (is.numeric(cl)) {
-    # Parallel processing
-    chunks <- split(seq_along(test_groups), cut(seq_along(test_groups), cl))
+    # Parallel processing when cl is the number of child processes
+    chunks <- cut(seq_along(test_groups), cl)
   } else {
-    # Sequential processing
-    chunks <- as.list(seq_along(test_groups))
+    # Sequential processing when cl is NULL
+    chunks <- seq_along(test_groups)
     cl <- NULL
   }
 
-  # Process chunks
-  pol_test <- pbapply::pblapply(chunks, function(chunk) {
+  # Split test_groups into chunks
+  test_groups_chunked <- split(test_groups, chunks)
 
-    test_groups_chunk <- test_groups[chunk]
-    test_groups_keys_chunk <- test_groups_keys[chunk, ]
+  # Process chunks
+  pol_test <- pbapply::pblapply(test_groups_chunked, function(test_groups_chunk) {
 
     # Process current chunk
-    pol_test_chunk <- lapply(seq_along(test_groups_chunk), function(i) {
-
-      polarity_contrast <- test_groups_chunk[[i]]
+    pol_test_chunk <- lapply(test_groups_chunk, function(polarity_contrast) {
 
       # Fetch marker for current comparison
-      marker <- test_groups_keys_chunk[i, "marker", drop = TRUE]
+      marker <- polarity_contrast$marker %>% unique()
 
       # Get numeric data values for all targets
       x_list <- lapply(targets, function(target) {
@@ -274,7 +277,7 @@ RunDPA.data.frame <- function (
         # Add additional group columns
         if (!is.null(group_vars)) {
           for (group_var in group_vars) {
-            result[[group_var]] <- test_groups_keys_chunk[i, group_var, drop = TRUE]
+            result[[group_var]] <- polarity_contrast[, group_var, drop = TRUE] %>% unique()
           }
         }
 
@@ -311,7 +314,7 @@ RunDPA.data.frame <- function (
 #'
 #' # Run DPA
 #' dpa_markers <- RunDPA(seur_merged, contrast_column = "sample",
-#'                       target = "Sample1", reference = "Sample2")
+#'                       targets = "Sample1", reference = "Sample2")
 #' dpa_markers
 #'
 #' @export

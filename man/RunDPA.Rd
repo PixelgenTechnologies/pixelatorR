@@ -165,7 +165,7 @@ polarization_table_merged <-  bind_rows(polarization_table1, polarization_table2
 
 # Run DPA using table as input
 dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample",
-                      target = "Sample1", reference = "Sample2")
+                      targets = "Sample1", reference = "Sample2")
 dpa_markers
 
 # Seurat objects
@@ -176,7 +176,7 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
 
 # Run DPA
 dpa_markers <- RunDPA(seur_merged, contrast_column = "sample",
-                      target = "Sample1", reference = "Sample2")
+                      targets = "Sample1", reference = "Sample2")
 dpa_markers
 
 }
