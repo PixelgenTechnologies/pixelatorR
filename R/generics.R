@@ -380,7 +380,7 @@ RunDPA <- function (
 #'
 #' The input object should contain a \code{contrast_column} (character vector or factor)
 #' that includes information about the groups to compare. A typical example is a column
-#' with sample labels, for instance: "control", "stimulated1", "stimulated2". If th input
+#' with sample labels, for instance: "control", "stimulated1", "stimulated2". If the input
 #' object is a \code{Seurat} object, the \code{contrast_column} should be available in
 #' the \code{meta.data} slot. For those familiar with \code{FindMarkers} from Seurat,
 #' \code{contrast_column} is equivalent to the \code{group.by} parameter.
