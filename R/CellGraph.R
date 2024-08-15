@@ -53,12 +53,13 @@ CellGraph <- setClass(
 #' library(tidygraph)
 #'
 #' edge_list <-
-#' ReadMPX_item(
-#'   system.file("extdata/five_cells",
-#'               "five_cells.pxl",
-#'               package = "pixelatorR"),
-#'   items = "edgelist"
-#' )
+#'   ReadMPX_item(
+#'     system.file("extdata/five_cells",
+#'       "five_cells.pxl",
+#'       package = "pixelatorR"
+#'     ),
+#'     items = "edgelist"
+#'   )
 #' bipart_graph <-
 #'   edge_list %>%
 #'   select(upia, upib, marker) %>%
@@ -72,39 +73,39 @@ CellGraph <- setClass(
 #'
 #' @export
 #'
-CreateCellGraphObject <- function (
+CreateCellGraphObject <- function(
   cellgraph,
   counts = NULL,
   layout = NULL,
   verbose = FALSE
 ) {
-
   # Check input parameters
   stopifnot(
     "'cellgraph' must be a non-empty 'tbl_graph' object" =
       inherits(cellgraph, what = "tbl_graph") &&
-      (length(cellgraph) > 0)
+        (length(cellgraph) > 0)
   )
   if (!is.null(counts)) {
     stopifnot(
       "'counts' must be a non-empty 'dgCMatrix' object" =
         inherits(counts, what = "dgCMatrix") &&
-        (length(counts) > 0)
+          (length(counts) > 0)
     )
   }
   if (!is.null(layout)) {
     stopifnot(
       "'layout' must be a non-empty 'tbl_df' object" =
         inherits(layout, what = "tbl_df") &&
-        (length(layout) > 0)
+          (length(layout) > 0)
     )
   }
 
   if (!"type" %in% names(attributes(cellgraph))) {
     abort("Graph attribute 'type' is missing.")
   } else {
-    if (verbose && check_global_verbosity())
+    if (verbose && check_global_verbosity()) {
       cli_alert_info("Got a graph of type '{attr(cellgraph, 'type')}'")
+    }
   }
 
   # Add checks for graph types
@@ -116,7 +117,7 @@ CreateCellGraphObject <- function (
         "node_type" %in% vertex_attr_names(cellgraph)
     )
   }
-  #TODO: Add check for A-node-projection and linegraph
+  # TODO: Add check for A-node-projection and linegraph
 
   # create object
   cellgraph <- new(
@@ -154,8 +155,9 @@ CreateCellGraphObject <- function (
 #' edge_list <-
 #'   ReadMPX_item(
 #'     system.file("extdata/five_cells",
-#'                 "five_cells.pxl",
-#'                 package = "pixelatorR"),
+#'       "five_cells.pxl",
+#'       package = "pixelatorR"
+#'     ),
 #'     items = "edgelist"
 #'   )
 #' bipart_graph <-
@@ -173,7 +175,7 @@ CreateCellGraphObject <- function (
 #'
 #' @export
 #'
-CellGraphData <- function (
+CellGraphData <- function(
   object,
   slot = "cellgraph"
 ) {
@@ -195,10 +197,9 @@ CellGraphData <- function (
 #' # Set slot data
 #' CellGraphData(cg, slot = "cellgraph") <- CellGraphData(cg, slot = "cellgraph")
 #'
-#'
 #' @export
 #'
-"CellGraphData<-" <- function (
+"CellGraphData<-" <- function(
   object,
   slot = "cellgraph",
   value
@@ -228,8 +229,10 @@ CellGraphData <- function (
     if (length(layouts) > 0) {
       for (layout in names(layouts)) {
         if (length(value) != nrow(layouts[[layout]])) {
-          abort(glue("Number of nodes in 'value' does not match the ",
-                     "number of rows in the '{layout}' layout table"))
+          abort(glue(
+            "Number of nodes in 'value' does not match the ",
+            "number of rows in the '{layout}' layout table"
+          ))
         }
       }
     }
@@ -245,8 +248,10 @@ CellGraphData <- function (
     if (length(layouts) > 0) {
       for (layout in names(layouts)) {
         if (nrow(counts) != nrow(layouts[[layout]])) {
-          abort(glue("Number of rows in 'value' does not match the ",
-                     "number of rows in the '{layout}' layout table"))
+          abort(glue(
+            "Number of rows in 'value' does not match the ",
+            "number of rows in the '{layout}' layout table"
+          ))
         }
       }
     }
@@ -272,13 +277,17 @@ CellGraphData <- function (
         inherits(value[[layout]], what = "tbl_df")
       )
       if (length(cellgraph) != nrow(value[[layout]])) {
-        abort(glue("Number of nodes in 'cellgraph' does not match the ",
-                   "number of rows in the '{layout}' layout table provided in 'value'"))
+        abort(glue(
+          "Number of nodes in 'cellgraph' does not match the ",
+          "number of rows in the '{layout}' layout table provided in 'value'"
+        ))
       }
       if (length(counts) > 0) {
         if (nrow(counts) != nrow(value[[layout]])) {
-          abort(glue("Number of rows in 'counts' does not match ",
-                     "the number of rows in '{layout}' table provided in 'value'"))
+          abort(glue(
+            "Number of rows in 'counts' does not match ",
+            "the number of rows in '{layout}' table provided in 'value'"
+          ))
         }
       }
     }
@@ -304,12 +313,13 @@ CellGraphData <- function (
 #' library(tidygraph)
 #'
 #' edge_list <-
-#' ReadMPX_item(
-#'   system.file("extdata/five_cells",
-#'               "five_cells.pxl",
-#'               package = "pixelatorR"),
-#'   items = "edgelist"
-#' )
+#'   ReadMPX_item(
+#'     system.file("extdata/five_cells",
+#'       "five_cells.pxl",
+#'       package = "pixelatorR"
+#'     ),
+#'     items = "edgelist"
+#'   )
 #' bipart_graph <-
 #'   edge_list %>%
 #'   select(upia, upib, marker) %>%
@@ -323,7 +333,7 @@ CellGraphData <- function (
 #' # Show method
 #' cg
 #'
-setMethod (
+setMethod(
   f = "show",
   signature = "CellGraph",
   definition = function(object) {

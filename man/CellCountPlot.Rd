@@ -14,6 +14,8 @@ CellCountPlot(object, ...)
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
+  as_frequency = FALSE,
+  stack = FALSE,
   ...
 )
 
@@ -23,6 +25,8 @@ CellCountPlot(object, ...)
   color_by,
   show_count = TRUE,
   flip_axes = FALSE,
+  as_frequency = FALSE,
+  stack = FALSE,
   ...
 )
 }
@@ -41,6 +45,11 @@ to color data by}
 \code{flip_axes = TRUE}}
 
 \item{flip_axes}{Flip the plot layout}
+
+\item{as_frequency}{Plot frequencies instead of counts}
+
+\item{stack}{Create a stacked bar plot. Only has an effect if a \code{group_by}
+variable is provided.}
 }
 \value{
 A \code{ggplot} object

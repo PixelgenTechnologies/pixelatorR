@@ -14,8 +14,9 @@ NULL
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #'
 #' # Copy PXL file to tempdir
 #' tmp_pxl_file <- file.path(fs::path_temp(), "five_cells.pxl")
@@ -35,7 +36,8 @@ NULL
 #' # We can restore paths to the PXL file using RestorePaths.
 #' # All we need is to provide the path to a directory where the PXL file is located.
 #' pxl_files_dir <- system.file("extdata/five_cells",
-#'                             package = "pixelatorR")
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- RestorePaths(seur_obj, pxl_files_dir = pxl_files_dir)
 #'
 #' # Now LoadCellGraphs should work as expected
@@ -43,13 +45,12 @@ NULL
 #'
 #' @export
 #'
-RestorePaths.MPXAssay <- function (
+RestorePaths.MPXAssay <- function(
   object,
   pxl_files_dir,
   verbose = TRUE,
   ...
 ) {
-
   # Check that pxl_files_dir exists
   if (!fs::dir_exists(pxl_files_dir)) {
     abort(glue(
@@ -61,7 +62,9 @@ RestorePaths.MPXAssay <- function (
   fs_map <- FSMap(object)
 
   # Get PXL file names
-  pxl_files <- fs_map %>% pull(pxl_file) %>% basename()
+  pxl_files <- fs_map %>%
+    pull(all_of("pxl_file")) %>%
+    basename()
 
   # Update pxl_files
   pxl_files_updated <- fs::path(pxl_files_dir, pxl_files)
@@ -79,10 +82,11 @@ RestorePaths.MPXAssay <- function (
 
   FSMap(object) <- fs_map
 
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_success(glue(
       "Successfully updated PXL file paths."
     ))
+  }
 
   return(object)
 }
@@ -109,20 +113,19 @@ RestorePaths.CellGraphAssay5 <- RestorePaths.MPXAssay
 #'
 #' @export
 #'
-RestorePaths.Seurat <- function (
+RestorePaths.Seurat <- function(
   object,
   pxl_files_dir,
   assay = NULL,
   verbose = TRUE,
   ...
 ) {
-
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
     stopifnot(
       "'assay' must be a character of length 1" =
         is.character(assay) &&
-        (length(assay) == 1)
+          (length(assay) == 1)
     )
   } else {
     # Use default assay if assay = NULL
@@ -135,4 +138,3 @@ RestorePaths.Seurat <- function (
 
   return(object)
 }
-

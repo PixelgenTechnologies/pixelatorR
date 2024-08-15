@@ -156,8 +156,9 @@ library(pixelatorR)
 library(dplyr)
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 # Seurat objects
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
 seur1$sample <- "Sample1"
@@ -166,12 +167,17 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
 
 # Subset data to run test on a few markers
 seur_merged <- subset(seur_merged,
-                      features = c("CD3", "CD4", "CD8", "CD19",
-                                   "CD20", "CD45RA", "CD45RO"))
+  features = c(
+    "CD3", "CD4", "CD8", "CD19",
+    "CD20", "CD45RA", "CD45RO"
+  )
+)
 
 # Run DCA
-dca_markers <- RunDCA(seur_merged, contrast_column = "sample",
-                      target = "Sample1", reference = "Sample2")
+dca_markers <- RunDCA(seur_merged,
+  contrast_column = "sample",
+  target = "Sample1", reference = "Sample2"
+)
 dca_markers
 
 }

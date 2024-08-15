@@ -1,4 +1,3 @@
-
 #' Plot DCA results
 #'
 #' Draws a heatmap of estimates obtained from a differential analysis
@@ -19,19 +18,20 @@
 #'
 #' @export
 #'
-ColocalizationHeatmap <- function (
-    data,
-    marker1_col = "marker_1",
-    marker2_col = "marker_2",
-    value_col = "estimate",
-    colors = c("#053061", "#2166AC", "#4393C3", "#92C5DE",
-               "#D1E5F0", "#F7F7F7", "#FDDBC7", "#F4A582",
-               "#D6604D", "#B2182B", "#67001F"),
-    return_plot_data = FALSE,
-    symmetrise = TRUE,
-    ...
+ColocalizationHeatmap <- function(
+  data,
+  marker1_col = "marker_1",
+  marker2_col = "marker_2",
+  value_col = "estimate",
+  colors = c(
+    "#053061", "#2166AC", "#4393C3", "#92C5DE",
+    "#D1E5F0", "#F7F7F7", "#FDDBC7", "#F4A582",
+    "#D6604D", "#B2182B", "#67001F"
+  ),
+  return_plot_data = FALSE,
+  symmetrise = TRUE,
+  ...
 ) {
-
   # Check if pheatmap is installed
   expect_pheatmap()
 
@@ -45,7 +45,7 @@ ColocalizationHeatmap <- function (
     "'value_col' is not in 'data'" = value_col %in% names(data),
     "'colors' must be a character vector with at least 2 colors" =
       inherits(colors, what = "character") &&
-      (length(colors) > 1),
+        (length(colors) > 1),
     "'return_plot_data' must be a logical" = inherits(return_plot_data, what = "logical"),
     "'symmetrise' must be a logical" = inherits(symmetrise, what = "logical")
   )
@@ -53,21 +53,23 @@ ColocalizationHeatmap <- function (
 
   plot_data <-
     data %>%
-    select(marker_1 = !!marker1_col,
-           marker_2 = !!marker2_col,
-           value = !!value_col)
+    select(
+      marker_1 = !!marker1_col,
+      marker_2 = !!marker2_col,
+      value = !!value_col
+    )
 
   # Validate heatmap data
-  if(nrow(distinct(select(plot_data, marker_1, marker_2))) != nrow(plot_data)) {
+  if (nrow(distinct(select(plot_data, marker_1, marker_2))) != nrow(plot_data)) {
     abort("Invalid data format for a heatmap: There are multiple values for marker1 and marker2")
   }
 
-  if(symmetrise) {
+  if (symmetrise) {
     # Symmetrise data
     plot_data <-
       plot_data %>%
       bind_rows(plot_data %>%
-                  rename(marker_1 = marker_2, marker_2 = marker_1)) %>%
+        rename(marker_1 = marker_2, marker_2 = marker_1)) %>%
       distinct()
   }
 
@@ -77,7 +79,9 @@ ColocalizationHeatmap <- function (
     pivot_wider(names_from = "marker_2", values_from = "value", values_fill = 0) %>%
     column_to_rownames("marker_1")
 
-  if (return_plot_data) return(plot_data)
+  if (return_plot_data) {
+    return(plot_data)
+  }
 
   # Set range for heatmap legend
   legend_range <- max(abs(plot_data))

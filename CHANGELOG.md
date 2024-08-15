@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `RestorePaths` : updates the PXL file paths in a `CellGraphAssay`, a `CellGraphAssay5` or a `Seurat` object created with pixelatorR. This function is useful when PXL files have been moved to a different location or when sharing Seurat objects with other users which would cause `LoadCellGraphs` to fail.
+- `ReadMPX_metadata` : loads metadata from a PXL file. A `print` method for the output returned by `ReadMPX_metadata` is also included to provide a summary of the metadata.
 
 ### [0.10.2] - 2024-07-24
 

@@ -7,7 +7,7 @@ NULL
 #' @param ... Arguments passed to other methods
 #' @rdname as.CellGraphAssay5
 #' @export as.CellGraphAssay5
-as.CellGraphAssay5 <- function (
+as.CellGraphAssay5 <- function(
   x,
   ...
 ) {
@@ -20,7 +20,7 @@ as.CellGraphAssay5 <- function (
 #' @param ... Arguments passed to other methods
 #' @rdname as.CellGraphAssay
 #' @export as.CellGraphAssay
-as.CellGraphAssay <- function (
+as.CellGraphAssay <- function(
   x,
   ...
 ) {
@@ -42,7 +42,7 @@ as.CellGraphAssay <- function (
 #'
 #' @export CellGraphs
 #'
-CellGraphs <- function (
+CellGraphs <- function(
   object,
   ...
 ) {
@@ -54,12 +54,12 @@ CellGraphs <- function (
 #' @rdname CellGraphs
 #' @export CellGraphs<-
 #'
-"CellGraphs<-" <- function (
+"CellGraphs<-" <- function(
   object,
   ...,
   value
 ) {
-  UseMethod(generic = 'CellGraphs<-', object = object)
+  UseMethod(generic = "CellGraphs<-", object = object)
 }
 
 #' Load CellGraphs
@@ -107,11 +107,11 @@ CellGraphs <- function (
 #'
 #' @export
 #'
-LoadCellGraphs <- function (
+LoadCellGraphs <- function(
   object,
   ...
 ) {
-  UseMethod(generic = 'LoadCellGraphs', object = object)
+  UseMethod(generic = "LoadCellGraphs", object = object)
 }
 
 #' Remove CellGraphs
@@ -127,11 +127,11 @@ LoadCellGraphs <- function (
 #'
 #' @export
 #'
-RemoveCellGraphs <- function (
+RemoveCellGraphs <- function(
   object,
   ...
 ) {
-  UseMethod(generic = 'RemoveCellGraphs', object = object)
+  UseMethod(generic = "RemoveCellGraphs", object = object)
 }
 
 #' Edge Rank Plot
@@ -147,7 +147,7 @@ RemoveCellGraphs <- function (
 #'
 #' @export MoleculeRankPlot
 #'
-MoleculeRankPlot <- function (
+MoleculeRankPlot <- function(
   object,
   ...
 ) {
@@ -170,6 +170,9 @@ MoleculeRankPlot <- function (
 #' @param show_count Place the count on top of the bar or next to the bar if
 #' \code{flip_axes = TRUE}
 #' @param flip_axes Flip the plot layout
+#' @param as_frequency Plot frequencies instead of counts
+#' @param stack Create a stacked bar plot. Only has an effect if a \code{group_by}
+#' variable is provided.
 #' @param ... Not yet implemented
 #'
 #' @rdname CellCountPlot
@@ -178,7 +181,7 @@ MoleculeRankPlot <- function (
 #'
 #' @export CellCountPlot
 #'
-CellCountPlot <- function (
+CellCountPlot <- function(
   object,
   ...
 ) {
@@ -202,7 +205,7 @@ CellCountPlot <- function (
 #'
 #' @export TauPlot
 #'
-TauPlot <- function (
+TauPlot <- function(
   object,
   ...
 ) {
@@ -221,7 +224,7 @@ TauPlot <- function (
 #'
 #' @export
 #'
-ComputeLayout <- function (
+ComputeLayout <- function(
   object,
   ...
 ) {
@@ -239,7 +242,7 @@ ComputeLayout <- function (
 #'
 #' @export
 #'
-KeepLargestComponent <- function (
+KeepLargestComponent <- function(
   object,
   ...
 ) {
@@ -262,7 +265,7 @@ KeepLargestComponent <- function (
 #'
 #' @export
 #'
-edgelist_to_simple_Anode_graph <- function (
+edgelist_to_simple_Anode_graph <- function(
   object,
   ...
 ) {
@@ -361,7 +364,7 @@ edgelist_to_simple_Anode_graph <- function (
 #'
 #' @export
 #'
-RunDPA <- function (
+RunDPA <- function(
   object,
   ...
 ) {
@@ -460,7 +463,7 @@ RunDPA <- function (
 #'
 #' @export
 #'
-RunDCA <- function (
+RunDCA <- function(
   object,
   ...
 ) {
@@ -515,7 +518,7 @@ RunDCA <- function (
 #'
 #' @export
 #'
-PolarizationScoresToAssay <- function (
+PolarizationScoresToAssay <- function(
   object,
   ...
 ) {
@@ -570,7 +573,7 @@ PolarizationScoresToAssay <- function (
 #'
 #' @export
 #'
-ColocalizationScoresToAssay <- function (
+ColocalizationScoresToAssay <- function(
   object,
   ...
 ) {
@@ -592,7 +595,7 @@ ColocalizationScoresToAssay <- function (
 #'
 #' @export
 #'
-PolarizationScores <- function (
+PolarizationScores <- function(
   object,
   ...
 ) {
@@ -609,7 +612,7 @@ PolarizationScores <- function (
 #'
 #' @export
 #'
-"PolarizationScores<-" <- function (
+"PolarizationScores<-" <- function(
   object,
   ...,
   value
@@ -633,7 +636,7 @@ PolarizationScores <- function (
 #'
 #' @export
 #'
-ColocalizationScores <- function (
+ColocalizationScores <- function(
   object,
   ...
 ) {
@@ -650,7 +653,7 @@ ColocalizationScores <- function (
 #'
 #' @export
 #'
-"ColocalizationScores<-" <- function (
+"ColocalizationScores<-" <- function(
   object,
   ...,
   value
@@ -677,7 +680,7 @@ ColocalizationScores <- function (
 #'
 #' @export
 #'
-FSMap <- function (
+FSMap <- function(
   object,
   ...
 ) {
@@ -694,9 +697,9 @@ FSMap <- function (
 #' @export
 #'
 "FSMap<-" <- function(
-    object,
-    ...,
-    value) {
+  object,
+  ...,
+  value) {
   UseMethod(generic = "FSMap<-", object = object)
 }
 
@@ -705,16 +708,20 @@ FSMap <- function (
 #'
 #' Normalizes MPX data using the specified method. The normalization method can be one of "dsb" or "CLR".
 #'
-#' CLR can be used to normalize MPX data using the centered log-ratio transformation in which the assumption is that
-#' the geometric mean of the marker abundance is constant across cells (e.g cell lines). This assumption might not hold for datasets from
-#' samples from different sources or having a variable cell type composition. In addition, CLR does not take the noise from
-#' unspecific binding of antibodies into account.
+#' CLR can be used to normalize MPX data using the centered log-ratio transformation in which
+#' the assumption is that the geometric mean of the marker abundance is constant across cells
+#' (e.g cell lines). This assumption might not hold for datasets from samples from different
+#' sources or having a variable cell type composition. In addition, CLR does not take the noise
+#' from unspecific binding of antibodies into account.
 #'
-#' For these reasons, the dsb normalization method can be a useful alternative in mixed-population datasets. dsb normalizes marker counts
-#' based on their abundance in a negative population across all cells and regresses out a per-cell noise component based on isotype
-#' controls and non-specific marker abundance.
+#' For these reasons, the dsb normalization method can be a useful alternative in mixed-population
+#' datasets. dsb normalizes marker counts based on their abundance in a negative population across
+#' all cells and regresses out a per-cell noise component based on isotype controls and non-specific
+#' marker abundance.
 #'
-#' @references Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022). \url{https://doi.org/10.1038/s41467-022-29356-8}
+#' @references Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression
+#' data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022).
+#' \url{https://doi.org/10.1038/s41467-022-29356-8}
 #'
 #' @param object An object.
 #' @param method The normalization method to use. Can be "dsb" or "clr".
@@ -728,7 +735,7 @@ FSMap <- function (
 #'
 #' @export
 #'
-NormalizeMPX <- function (
+NormalizeMPX <- function(
   object,
   method = c("dsb", "clr"),
   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
@@ -737,6 +744,7 @@ NormalizeMPX <- function (
 ) {
   UseMethod(generic = "NormalizeMPX", object = object)
 }
+
 
 #' Restore PXL file paths
 #'
@@ -796,7 +804,7 @@ NormalizeMPX <- function (
 #'
 #' @export
 #'
-RestorePaths <- function (
+RestorePaths <- function(
   object,
   ...
 ) {

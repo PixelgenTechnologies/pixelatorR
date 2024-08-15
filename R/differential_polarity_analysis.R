@@ -1,9 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('morans_z', 'p', 'p.value'),
-  package = 'pixelatorR',
-  add = TRUE
-)
 #' @include generics.R
 #' @include utils.R
 NULL
@@ -22,23 +16,26 @@ NULL
 #' library(dplyr)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #'
 #' # Load polarization scores
 #' polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
 #' polarization_table1$sample <- "Sample1"
 #' polarization_table2$sample <- "Sample2"
-#' polarization_table_merged <-  bind_rows(polarization_table1, polarization_table2)
+#' polarization_table_merged <- bind_rows(polarization_table1, polarization_table2)
 #'
 #' # Run DPA using table as input
-#' dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample",
-#'                       targets = "Sample1", reference = "Sample2")
+#' dpa_markers <- RunDPA(polarization_table_merged,
+#'   contrast_column = "sample",
+#'   targets = "Sample1", reference = "Sample2"
+#' )
 #' dpa_markers
 #'
 #' @export
 #'
-RunDPA.data.frame <- function (
+RunDPA.data.frame <- function(
   object,
   contrast_column,
   reference,
@@ -53,13 +50,13 @@ RunDPA.data.frame <- function (
   verbose = TRUE,
   ...
 ) {
-
   polarity_metric <- match.arg(polarity_metric, choices = c("morans_z", "morans_i"))
 
   # Validate input parameters
   .validate_dpa_dca_input(
     object, contrast_column, reference, targets, group_vars,
-    polarity_metric, min_n_obs, conf_int, cl, data_type = "polarity"
+    polarity_metric, min_n_obs, conf_int, cl,
+    data_type = "polarity"
   )
 
   targets <- targets %||% setdiff(unique(object[, contrast_column, drop = TRUE]), reference)
@@ -67,8 +64,11 @@ RunDPA.data.frame <- function (
   # Check multiple choice args
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
   p_adjust_method <- match.arg(p_adjust_method,
-                               choices = c("bonferroni", "holm", "hochberg",
-                                           "hommel", "BH", "BY", "fdr"))
+    choices = c(
+      "bonferroni", "holm", "hochberg",
+      "hommel", "BH", "BY", "fdr"
+    )
+  )
 
   # Discard unused data columns
   object <- object %>%
@@ -91,12 +91,14 @@ RunDPA.data.frame <- function (
   if (min_n_obs > 0) {
     # Filter test groups by minimum number of observations allowed
     test_groups <- test_groups %>%
-      group_by(!! sym(contrast_column), .add = TRUE) %>%
+      group_by(!!sym(contrast_column), .add = TRUE) %>%
       mutate(n = n()) %>%
       filter(n > min_n_obs) %>%
-      ungroup(!! sym(contrast_column)) %>%
-      mutate(ref_n = sum(!! sym(contrast_column) == reference),
-             target_n = sum(!! sym(contrast_column) %in% targets)) %>%
+      ungroup(!!sym(contrast_column)) %>%
+      mutate(
+        ref_n = sum(!!sym(contrast_column) == reference),
+        target_n = sum(!!sym(contrast_column) %in% targets)
+      ) %>%
       filter(ref_n > 0, target_n > 0)
     if (nrow(test_groups) == 0) {
       abort(glue(
@@ -138,7 +140,7 @@ RunDPA.data.frame <- function (
     # Export variables to each cluster
     clusterExport(cl, c(
       "targets", "reference", "alternative", "conf_int", "polarity_metric",
-      "contrast_column",".tidy", "group_vars", "evaluate_with_catch"
+      "contrast_column", ".tidy", "group_vars", "evaluate_with_catch"
     ),
     envir = current_env()
     )
@@ -158,10 +160,8 @@ RunDPA.data.frame <- function (
 
   # Process chunks
   pol_test <- pbapply::pblapply(test_groups_chunked, function(test_groups_chunk) {
-
     # Process current chunk
     pol_test_chunk <- lapply(test_groups_chunk, function(polarity_contrast) {
-
       # Fetch marker for current comparison
       marker <- polarity_contrast$marker %>% unique()
 
@@ -170,7 +170,8 @@ RunDPA.data.frame <- function (
         polarity_contrast %>%
           filter(.data[[contrast_column]] == target) %>%
           pull(all_of(polarity_metric))
-      }) %>% set_names(nm = targets)
+      }) %>%
+        set_names(nm = targets)
       y <- polarity_contrast %>%
         filter(.data[[contrast_column]] == reference) %>%
         pull(all_of(polarity_metric))
@@ -190,15 +191,19 @@ RunDPA.data.frame <- function (
         })
         if (!is.null(result$error)) {
           warn(glue("Failed to compute Wilcoxon test for marker '{marker}': {target} vs {reference}\n",
-                    "  Got the following error message when running wilcox.test:\n",
-                    "  {col_red(result$error)}\n",
-                    "  This test will be skipped.", .trim = FALSE))
+            "  Got the following error message when running wilcox.test:\n",
+            "  {col_red(result$error)}\n",
+            "  This test will be skipped.",
+            .trim = FALSE
+          ))
           return(NULL)
         }
         if (!is.null(result$warning)) {
           warn(glue("Got the following message when running ",
-                    "wilcox.test test for marker '{marker}': {target} vs {reference}\n",
-                    "  {col_red(result$warning)}\n", .trim = FALSE))
+            "wilcox.test test for marker '{marker}': {target} vs {reference}\n",
+            "  {col_red(result$warning)}\n",
+            .trim = FALSE
+          ))
         }
         result <- result$result
 
@@ -224,8 +229,8 @@ RunDPA.data.frame <- function (
         }
 
         return(result)
-      }) %>% do.call(bind_rows, .)
-
+      }) %>%
+        do.call(bind_rows, .)
     })
 
     return(pol_test_chunk %>% do.call(bind_rows, .))
@@ -255,13 +260,15 @@ RunDPA.data.frame <- function (
 #' seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
 #'
 #' # Run DPA
-#' dpa_markers <- RunDPA(seur_merged, contrast_column = "sample",
-#'                       targets = "Sample1", reference = "Sample2")
+#' dpa_markers <- RunDPA(seur_merged,
+#'   contrast_column = "sample",
+#'   targets = "Sample1", reference = "Sample2"
+#' )
 #' dpa_markers
 #'
 #' @export
 #'
-RunDPA.Seurat <- function (
+RunDPA.Seurat <- function(
   object,
   contrast_column,
   reference,
@@ -277,7 +284,6 @@ RunDPA.Seurat <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
   stopifnot(
     "'contrast_column' must be available in Seurat object meta.data" =
@@ -290,7 +296,7 @@ RunDPA.Seurat <- function (
     stopifnot(
       "'assay' must be a character of length 1" =
         is.character(assay) &&
-        (length(assay) == 1)
+          (length(assay) == 1)
     )
   } else {
     assay <- DefaultAssay(object)
@@ -322,8 +328,10 @@ RunDPA.Seurat <- function (
 
   # Remove redundant columns
   polarization_data <- polarization_data %>%
-    select(-any_of(c("morans_p_value", "morans_p_adjusted",
-                     setdiff(c("morans_z", "morans_i"), polarity_metric))))
+    select(-any_of(c(
+      "morans_p_value", "morans_p_adjusted",
+      setdiff(c("morans_z", "morans_i"), polarity_metric)
+    )))
 
   # Run DPA
   pol_test_bind <- RunDPA(polarization_data,

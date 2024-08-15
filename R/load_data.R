@@ -14,38 +14,40 @@
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                          package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' counts <- ReadMPX_counts(pxl_file)
 #' counts[1:5, 1:5]
 #'
 #' @export
 #'
-ReadMPX_counts <- function (
+ReadMPX_counts <- function(
   filename,
   return_list = FALSE,
   verbose = TRUE
 ) {
-
   stopifnot(
     "filename must be a character of length 1" =
       is.character(filename) &&
-      (length(filename) == 1)
+        (length(filename) == 1)
   )
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
   # Reads anndata from a .pxl file by unzipping it into a temporary folder and reading the anndata object within.
-  if (verbose & check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Loading count data from {filename}")
+  }
 
   # Unzip pxl file
-  original_filename <- filename
   if (endsWith(filename, ".pxl")) {
     res <- tryCatch(unzip(filename, exdir = fs::path_temp()),
-                         error = function(e) e,
-                         warning = function(w) w)
-    if (inherits(x = res, what = "simpleWarning"))
+      error = function(e) e,
+      warning = function(w) w
+    )
+    if (inherits(x = res, what = "simpleWarning")) {
       abort("Failed to unzip 'adata.h5ad' data")
+    }
   } else {
     abort(glue("Invalid file format .{.file_ext(filename)}. Expected a .pxl file."))
   }
@@ -110,14 +112,15 @@ ReadMPX_counts <- function (
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
 #' @export
 #'
-ReadMPX_Seurat <- function (
+ReadMPX_Seurat <- function(
   filename,
   assay = "mpxCells",
   return_cellgraphassay = TRUE,
@@ -130,11 +133,10 @@ ReadMPX_Seurat <- function (
   verbose = TRUE,
   ...
 ) {
-
   stopifnot(
     "assay must be a character of length 1" =
       is.character(assay) &&
-      (length(assay) == 1)
+        (length(assay) == 1)
   )
 
   # Load count matrix
@@ -146,10 +148,8 @@ ReadMPX_Seurat <- function (
   empty_graphs <- rep(list(NULL), ncol(X)) %>% set_names(nm = colnames(X))
 
   if (return_cellgraphassay) {
-
     # Create CellGraphAssay(5)
-    cg_assay_create_func <- switch(
-      getOption("Seurat.object.assay.version", "v3"),
+    cg_assay_create_func <- switch(getOption("Seurat.object.assay.version", "v3"),
       "v3" = CreateCellGraphAssay,
       "v5" = CreateCellGraphAssay5
     )
@@ -162,14 +162,20 @@ ReadMPX_Seurat <- function (
           original_id = colnames(X)
         )),
         sample = 1L,
-        pxl_file = ifelse(.is_absolute_path(filename), normalizePath(filename), filename))
+        pxl_file = ifelse(.is_absolute_path(filename), normalizePath(filename), filename)
+      )
     )
     Key(cg_assay) <- paste0(assay, "_")
 
     if (load_cell_graphs) {
-      if (verbose && check_global_verbosity())
-        cli_alert_warning(glue(col_br_red("Loading cell graphs into the Seurat object may take time and uses a lot of memory.",
-                                          " Consider using LoadCellGraphs to load selected cell graphs at a later stage.")))
+      if (verbose && check_global_verbosity()) {
+        cli_alert_warning(
+          glue(col_br_red(
+            "Loading cell graphs into the Seurat object may take time and uses a lot of memory.",
+            " Consider using LoadCellGraphs to load selected cell graphs at a later stage."
+          ))
+        )
+      }
       cg_assay <- LoadCellGraphs(cg_assay, verbose = verbose)
     }
     # Load polarity scores
@@ -183,8 +189,7 @@ ReadMPX_Seurat <- function (
       cg_assay@colocalization <- colocalization
     }
   } else {
-    cg_assay <- switch(
-      getOption("Seurat.object.assay.version", "v3"),
+    cg_assay <- switch(getOption("Seurat.object.assay.version", "v3"),
       "v3" = CreateAssayObject(counts = X),
       "v5" = CreateAssay5Object(counts = X)
     )
@@ -193,13 +198,17 @@ ReadMPX_Seurat <- function (
 
   # Create Seurat object
   seur_obj <- CreateSeuratObject(counts = cg_assay, assay = assay, ...)
-  if (verbose && check_global_verbosity())
-    cli_alert_success(glue("Created a 'Seurat' object with {col_br_blue(ncol(X))} cells ",
-                           "and {col_br_blue(nrow(X))} targeted surface proteins"))
+  if (verbose && check_global_verbosity()) {
+    cli_alert_success(glue(
+      "Created a 'Seurat' object with {col_br_blue(ncol(X))} cells ",
+      "and {col_br_blue(nrow(X))} targeted surface proteins"
+    ))
+  }
 
   # Extract meta data
   meta_data <-
-    names(hd5_object[["obs"]]) %>% lapply(function(nm) {
+    names(hd5_object[["obs"]]) %>%
+    lapply(function(nm) {
       if (length(names(hd5_object[["obs"]][[nm]])) == 2) {
         indices <- hd5_object[["obs"]][[nm]][["codes"]]$read() + 1
         categories <- hd5_object[["obs"]][[nm]][["categories"]]$read()
@@ -213,15 +222,20 @@ ReadMPX_Seurat <- function (
     as.data.frame() %>%
     column_to_rownames("component")
 
-  if (!all(rownames(meta_data) == colnames(seur_obj)))
-    abort(glue("The cell names in the Seurat object and the metadata do not match. ",
-               "\nFailed to create Seurat object."))
+  if (!all(rownames(meta_data) == colnames(seur_obj))) {
+    abort(glue(
+      "The cell names in the Seurat object and the metadata do not match. ",
+      "\nFailed to create Seurat object."
+    ))
+  }
   seur_obj@meta.data <- meta_data
 
   # Extract feature meta data (var)
   feature_meta_data <-
-    names(hd5_object[["var"]]) %>% lapply(function(nm) {
+    names(hd5_object[["var"]]) %>%
+    lapply(function(nm) {
       col <- tibble(!!sym(nm) := hd5_object[["var"]][[nm]]$read())
+      return(col)
     }) %>%
     do.call(bind_cols, .) %>%
     as.data.frame()
@@ -272,8 +286,9 @@ ReadMPX_Seurat <- function (
 #'
 #' # Load example data
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' polarization <- ReadMPX_item(pxl_file, items = "polarization")
 #' polarization
 #'
@@ -282,17 +297,16 @@ ReadMPX_Seurat <- function (
 #'
 #' @export
 #'
-ReadMPX_item <- function (
+ReadMPX_item <- function(
   filename,
   items = c("colocalization", "polarization", "edgelist"),
   verbose = TRUE
 ) {
-
   # Check input parameters
   stopifnot(
     "filename must be a character of length 1" =
       is.character(filename) &&
-      (length(filename) == 1),
+        (length(filename) == 1),
     "Invalid items" =
       all(items %in% c("colocalization", "polarization", "edgelist")),
     "Expected a .pxl file" =
@@ -300,17 +314,18 @@ ReadMPX_item <- function (
   )
   if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
 
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Loading item(s) from: {filename}")
+  }
 
   suppressWarnings(
     read_items <-
       items %>%
       set_names(., .) %>%
       lapply(function(item) {
-
-        if (verbose && check_global_verbosity())
+        if (verbose && check_global_verbosity()) {
           cli_alert("  Loading {col_br_magenta(item)} data")
+        }
 
         # generate a file name for a new temporary directory.
         # When running R CMD check on windows latest release, we
@@ -320,20 +335,26 @@ ReadMPX_item <- function (
         exdir_temp <- fs::file_temp()
 
         # Unzip item to temporary directory
-        unzipped_filename <- unzip(filename,  paste0(item, ".parquet"), exdir = exdir_temp)
+        unzipped_filename <- unzip(filename, paste0(item, ".parquet"), exdir = exdir_temp)
 
         # Read contents of parquet file
         outdata <- read_parquet(unzipped_filename)
 
         # Try to delete temporary directory or throw a warning if it fails.
-        check <- tryCatch({
-          fs::dir_delete(exdir_temp)
-        }, error = function(e)
-          e,
-        warning = function(w)
-          w)
-        if (inherits(check, what = "error"))
+        check <- tryCatch(
+          {
+            fs::dir_delete(exdir_temp)
+          },
+          error = function(e) {
+            e
+          },
+          warning = function(w) {
+            w
+          }
+        )
+        if (inherits(check, what = "error")) {
           cli_alert_warning("Failed to remove temporary directory {exdir_temp}")
+        }
 
         return(outdata)
       })
@@ -358,7 +379,7 @@ ReadMPX_item <- function (
 #'
 #' @export
 #'
-ReadMPX_polarization <- function (
+ReadMPX_polarization <- function(
   filename,
   verbose = TRUE
 ) {
@@ -369,7 +390,7 @@ ReadMPX_polarization <- function (
 #'
 #' @export
 #'
-ReadMPX_colocalization <- function (
+ReadMPX_colocalization <- function(
   filename,
   verbose = TRUE
 ) {
@@ -380,9 +401,144 @@ ReadMPX_colocalization <- function (
 #'
 #' @export
 #'
-ReadMPX_edgelist <- function (
+ReadMPX_edgelist <- function(
   filename,
   verbose = TRUE
 ) {
   ReadMPX_item(filename, items = "edgelist", verbose = verbose)
+}
+
+#' Read metadata from a PXL file
+#'
+#' @param filename Path to a PXL file
+#'
+#' @rdname ReadMPX_metadata
+#'
+#' @examples
+#' library(pixelatorR)
+#'
+#' # Load example data
+#' pxl_file <- system.file("extdata/five_cells",
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
+#' meta_data <- ReadMPX_metadata(pxl_file)
+#'
+#' # Check pixelator version and sample ID
+#' meta_data
+#'
+#' # Check parameter settings for the pixelator run
+#' meta_data$analysis$params
+#'
+#' @export
+#'
+ReadMPX_metadata <- function(
+  filename
+) {
+  if (!fs::file_exists(filename)) {
+    abort(glue("File {col_blue(filename)} doesn't exist"))
+  }
+
+  if (fs::path_ext(filename) != "pxl") {
+    abort(glue("File {col_blue(filename)} is not a PXL file"))
+  }
+
+  temp_dir <- fs::path_temp()
+  temp_file <- fs::path(temp_dir, "metadata.json")
+  zip::unzip(
+    zipfile = filename,
+    files = "metadata.json",
+    exdir = temp_dir
+  )
+
+  # Read meta data from JSON file
+  meta_data <- jsonlite::read_json(temp_file, simplifyVector = TRUE) %>%
+    as_tibble() %>%
+    select(-contains("file_format_version"))
+  analysis <- meta_data$analysis[[1]]
+  if (any(c("polarization", "colocalization") %in% names(analysis))) {
+    analysis <- unlist(analysis %>% unname())
+    names(analysis) <- names(analysis) %>%
+      stringr::str_replace("\\.", "_")
+  } else {
+    analysis <- unlist(analysis)
+  }
+  meta_data$analysis <- list(params = analysis)
+  class(meta_data) <- c("pixelator_metadata", class(meta_data))
+
+  return(meta_data)
+}
+
+
+#' Print method for pixelator_metadata
+#'
+#' @param x An object of class \code{pixelator_metadata}
+#' @param detailed Logical. If \code{TRUE} print all metadata, if
+#' \code{FALSE} print only the pixelator version and sample ID.
+#' @param ... Additional arguments passed to \code{\link{print}}
+#'
+#' @rdname print.pixelator_metadata
+#' @docType methods
+#'
+#' @examples
+#' library(pixelatorR)
+#' library(dplyr)
+#'
+#' # Load example data
+#' pxl_file <- system.file("extdata/five_cells",
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
+#' meta_data <- ReadMPX_metadata(pxl_file)
+#'
+#' # Check pixelator version and sample ID
+#' meta_data
+#'
+#' # Multiple files with less detail
+#' pxl_files <- c(pxl_file, pxl_file)
+#' meta_data_merged <- lapply(pxl_files, ReadMPX_metadata) %>%
+#'   bind_rows()
+#' meta_data_merged %>% print(detailed = FALSE)
+#'
+#' @export
+#'
+print.pixelator_metadata <- function(
+  x,
+  detailed = TRUE,
+  ...
+) {
+  sampleIDs <- x$sample
+  pixelator_version <- x$version
+
+  if ("params" %in% names(x$analysis)) {
+    analysis_params <- lapply(x$analysis, function(x) {
+      x %>% unlist()
+    })
+  } else {
+    analysis_params <- NULL
+  }
+
+  for (i in seq_len(nrow(x))) {
+    glue(
+      "Sample {i} name: \t\t{col_blue(sampleIDs[i])}\n",
+      "Pixelator version: \t{col_br_magenta(pixelator_version[i])}\n",
+      .trim = FALSE
+    ) %>% print()
+
+    if (!is.null(analysis_params) && detailed) {
+      cli_h2("Analysis parameters")
+      analysis_params_cur <- tibble(
+        parameter = names(analysis_params[[i]]),
+        value = analysis_params[[i]], row.names = NULL
+      )
+      analysis_params_cur %>% print()
+    }
+
+    if (length(analysis_params) > 1 && i < length(analysis_params)) {
+      if (detailed) {
+        cat("\n")
+      }
+      cli::cat_rule()
+    }
+  }
 }

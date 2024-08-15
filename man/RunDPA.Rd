@@ -155,18 +155,21 @@ library(pixelatorR)
 library(dplyr)
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 
 # Load polarization scores
 polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
 polarization_table1$sample <- "Sample1"
 polarization_table2$sample <- "Sample2"
-polarization_table_merged <-  bind_rows(polarization_table1, polarization_table2)
+polarization_table_merged <- bind_rows(polarization_table1, polarization_table2)
 
 # Run DPA using table as input
-dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample",
-                      targets = "Sample1", reference = "Sample2")
+dpa_markers <- RunDPA(polarization_table_merged,
+  contrast_column = "sample",
+  targets = "Sample1", reference = "Sample2"
+)
 dpa_markers
 
 # Seurat objects
@@ -176,8 +179,10 @@ seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
 
 # Run DPA
-dpa_markers <- RunDPA(seur_merged, contrast_column = "sample",
-                      targets = "Sample1", reference = "Sample2")
+dpa_markers <- RunDPA(seur_merged,
+  contrast_column = "sample",
+  targets = "Sample1", reference = "Sample2"
+)
 dpa_markers
 
 }

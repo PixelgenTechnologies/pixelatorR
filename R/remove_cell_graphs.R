@@ -3,10 +3,10 @@
 #'
 #' @export
 #'
-RemoveCellGraphs.MPXAssay <- function (
+RemoveCellGraphs.MPXAssay <- function(
   object,
   ...
-){
+) {
   slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
   return(object)
 }
@@ -20,12 +20,11 @@ RemoveCellGraphs.MPXAssay <- function (
 #'
 #' @export
 #'
-RemoveCellGraphs.Seurat <- function (
+RemoveCellGraphs.Seurat <- function(
   object,
   assay = NULL,
   ...
-){
-
+) {
   if (!is.null(assay)) {
     stopifnot("'assay' must be a character of length 1" = is.character(assay) & (length(assay) == 1))
   } else {
@@ -35,12 +34,13 @@ RemoveCellGraphs.Seurat <- function (
 
   cg_assay <- object[[assay]]
   if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'",
-               " or a 'CellGraphAssay5' object."))
+    abort(glue(
+      "Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'",
+      " or a 'CellGraphAssay5' object."
+    ))
   }
   cg_assay <- RemoveCellGraphs(cg_assay)
 
   object[[assay]] <- cg_assay
   return(object)
 }
-

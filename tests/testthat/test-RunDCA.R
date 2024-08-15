@@ -2,14 +2,15 @@ library(dplyr)
 options(Seurat.object.assay.version = "v3")
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 
 # Load colocalization scores
 colocalization_table1 <- colocalization_table2 <- ReadMPX_colocalization(pxl_file)
 colocalization_table1$sample <- "Sample1"
 colocalization_table2$sample <- "Sample2"
-colocalization_table_merged <-  bind_rows(colocalization_table1, colocalization_table2) %>%
+colocalization_table_merged <- bind_rows(colocalization_table1, colocalization_table2) %>%
   filter(marker_1 %in% c("ACTB", "HLA-ABC"))
 
 # Seurat objects
@@ -20,9 +21,10 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 seur_merged <- subset(seur_merged, features = c("ACTB", "HLA-ABC"))
 
 test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatmap works on the output", {
-
-  expect_no_error(suppressWarnings(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample",
-                                                         targets = "Sample1", reference = "Sample2")))
+  expect_no_error(suppressWarnings(dca_markers <- RunDCA(colocalization_table_merged,
+    contrast_column = "sample",
+    targets = "Sample1", reference = "Sample2"
+  )))
 
   expected_result <-
     structure(
@@ -32,24 +34,30 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
           `difference in location` = -5.67168961880486e-05
         ),
         data_type = c("pearson_z", "pearson_z"),
-        target = c("Sample1",
-                   "Sample1"),
+        target = c(
+          "Sample1",
+          "Sample1"
+        ),
         reference = c("Sample2", "Sample2"),
         n1 = c(4L, 4L),
         n2 = c(4L, 4L),
         statistic = c(W = 8, W = 8),
         p = c(1, 1),
         p_adj = c(1, 1),
-        conf.low = c(-7.4540803815722,-3.64101112325344),
+        conf.low = c(-7.4540803815722, -3.64101112325344),
         conf.high = c(7.4540803815722, 3.6409494101764),
-        method = c("Wilcoxon",
-                   "Wilcoxon"),
+        method = c(
+          "Wilcoxon",
+          "Wilcoxon"
+        ),
         alternative = c("two.sided", "two.sided"),
-        marker_1 = c("ACTB",
-                     "ACTB"),
+        marker_1 = c(
+          "ACTB",
+          "ACTB"
+        ),
         marker_2 = c("B2M", "CD102")
       ),
-      row.names = c(NA,-2L),
+      row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     )
 
@@ -70,9 +78,10 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
 })
 
 test_that("RunDCA works as expected on a Seurat object", {
-
-  expect_no_error(suppressWarnings(dca_markers <- RunDCA(seur_merged, contrast_column = "sample",
-                                                         targets = "Sample1", reference = "Sample2")))
+  expect_no_error(suppressWarnings(dca_markers <- RunDCA(seur_merged,
+    contrast_column = "sample",
+    targets = "Sample1", reference = "Sample2"
+  )))
 
   expected_result <- structure(
     list(
@@ -92,7 +101,7 @@ test_that("RunDCA works as expected on a Seurat object", {
       marker_1 = "ACTB",
       marker_2 = "HLA-ABC"
     ),
-    row.names = c(NA,-1L),
+    row.names = c(NA, -1L),
     class = c("tbl_df", "tbl", "data.frame")
   )
 
@@ -100,11 +109,10 @@ test_that("RunDCA works as expected on a Seurat object", {
 
   # Automatic selection of targets
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(seur_merged, contrast_column = "sample", reference = "Sample2")))
-
 })
 
 
-test_that("RunDCA fails with invalid input",  {
+test_that("RunDCA fails with invalid input", {
   expect_error(
     dca_markers <- RunDCA(colocalization_table_merged),
     'argument "contrast_column" is missing, with no default'
@@ -145,7 +153,6 @@ test_that("RunDCA fails with invalid input",  {
 if (TRUE) skip("Skipping parallel processing tests")
 
 test_that("RunDCA can be parallelized", {
-
   # Sequential processing for reference
   expect_no_error(
     dca_markers_seq <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = 2)
@@ -164,5 +171,4 @@ test_that("RunDCA can be parallelized", {
     dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = cl)
   )
   parallel::stopCluster(cl)
-
 })

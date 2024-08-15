@@ -172,15 +172,18 @@ library(pixelatorR)
 library(dplyr)
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 
 # Load example data
 seur <- ReadMPX_Seurat(pxl_file)
 
 # Load 1 cellgraph
-seur <- LoadCellGraphs(seur, cells = colnames(seur)[1],
-                       load_as = "Anode", force = TRUE)
+seur <- LoadCellGraphs(seur,
+  cells = colnames(seur)[1],
+  load_as = "Anode", force = TRUE
+)
 
 # Get CellGraph
 cg <- CellGraphs(seur)[[colnames(seur)[1]]]

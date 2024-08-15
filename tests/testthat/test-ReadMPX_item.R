@@ -1,7 +1,6 @@
 testfile <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
 
 test_that("ReadMPX_item works as expected", {
-
   # Read polarization scores
   polarization <- ReadMPX_item(filename = testfile, items = "polarization")
   expect_s3_class(polarization, "tbl_df")

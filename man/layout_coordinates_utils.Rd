@@ -47,32 +47,42 @@ library(dplyr)
 library(tibble)
 
 # Generate random points that are offset to (100, 100, 100)
-xyz <- matrix(rnorm(600, mean = 100, sd = 20), ncol = 3,
-              dimnames = list(NULL, c("x", "y", "z"))) \%>\%
+xyz <- matrix(rnorm(600, mean = 100, sd = 20),
+  ncol = 3,
+  dimnames = list(NULL, c("x", "y", "z"))
+) \%>\%
   as_tibble()
 
 # Visualize random points
-plotly::plot_ly(data = xyz, x = ~x, y = ~y, z = ~z,
-                type = "scatter3d", mode = "markers")
+plotly::plot_ly(
+  data = xyz, x = ~x, y = ~y, z = ~z,
+  type = "scatter3d", mode = "markers"
+)
 
 # Center points at (0, 0, 0)
 xyz_centered <- center_layout_coordinates(xyz)
 apply(xyz_centered, 2, mean)
-plotly::plot_ly(data = xyz_centered, x = ~x, y = ~y,
-                z = ~z, type = "scatter3d", mode = "markers")
+plotly::plot_ly(
+  data = xyz_centered, x = ~x, y = ~y,
+  z = ~z, type = "scatter3d", mode = "markers"
+)
 
 # Normalize points to have a median radius of 1
 xyz_normalized <- normalize_layout_coordinates(xyz_centered)
 radii <- sqrt(rowSums(xyz_normalized^2))
 median(radii)
-plotly::plot_ly(data = xyz_normalized, x = ~x, y = ~y,
-                z = ~z, type = "scatter3d", mode = "markers")
+plotly::plot_ly(
+  data = xyz_normalized, x = ~x, y = ~y,
+  z = ~z, type = "scatter3d", mode = "markers"
+)
 
 # Project points on unit sphere
 xyz_projected <- project_layout_coordinates_on_unit_sphere(xyz_normalized)
 radii <- sqrt(rowSums(xyz_projected^2))
 all(near(radii, y = rep(1, length(radii)), tol = 1e-12))
-plotly::plot_ly(data = xyz_projected, x = ~x, y = ~y,
-                z = ~z, type = "scatter3d", mode = "markers")
+plotly::plot_ly(
+  data = xyz_projected, x = ~x, y = ~y,
+  z = ~z, type = "scatter3d", mode = "markers"
+)
 
 }

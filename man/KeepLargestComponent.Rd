@@ -36,8 +36,9 @@ library(pixelatorR)
 library(tidygraph)
 
 pxl_file <- system.file("extdata/five_cells",
-                       "five_cells.pxl",
-                       package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 
 # Read edgelist
 edgelist <- ReadMPX_arrow_edgelist(pxl_file)
@@ -53,7 +54,7 @@ g
 # Break graph by removing random edges
 set.seed(132)
 g <- g \%E>\%
- filter(from \%in\% sample(from, n() - 500))
+  filter(from \%in\% sample(from, n() - 500))
 
 # Fetch largest component from a tbl_graph
 g_largest <- KeepLargestComponent(g)

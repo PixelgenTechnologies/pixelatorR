@@ -34,5 +34,4 @@ A <- as_adjacency_matrix(g)
 P_out <- compute_transition_probabilities(A)
 P_out
 
-
 }

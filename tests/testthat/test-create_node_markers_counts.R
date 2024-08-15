@@ -6,7 +6,6 @@ edge_list <-
   filter(component == "RCVCMP0000217")
 
 test_that("node_markers_counts works as expected", {
-
   # Test default settings
   node_marker_counts <-
     edge_list %>%
