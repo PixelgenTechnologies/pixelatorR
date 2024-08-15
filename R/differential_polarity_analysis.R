@@ -150,9 +150,10 @@ RunDPA.data.frame <- function(
     # Use sequential processing when cl is 1
     if (cl == 1) {
       chunks <- seq_along(test_groups)
+    } else {
+      # Parallel processing when cl is the number of child processes
+      chunks <- cut(seq_along(test_groups), cl)
     }
-    # Parallel processing when cl is the number of child processes
-    chunks <- cut(seq_along(test_groups), cl)
   } else {
     # Sequential processing when cl is NULL
     chunks <- seq_along(test_groups)

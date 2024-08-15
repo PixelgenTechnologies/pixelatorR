@@ -21,6 +21,7 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 seur_merged <- subset(seur_merged, features = c("ACTB", "HLA-ABC"))
 
 test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatmap works on the output", {
+
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(colocalization_table_merged,
     contrast_column = "sample",
     targets = "Sample1", reference = "Sample2"
@@ -62,6 +63,13 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
     )
 
   expect_equal(dca_markers[1:2, ], expected_result)
+
+  # cl = 1 should witch to sequential processing
+  expect_no_error(suppressWarnings(dca_markers <- RunDCA(colocalization_table_merged,
+                                                         contrast_column = "sample",
+                                                         targets = "Sample1", reference = "Sample2",
+                                                         cl = 1
+  )))
 
   # Colocalization heatmap
   expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers))
