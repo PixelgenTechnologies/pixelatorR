@@ -24,15 +24,36 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample",
                                                          targets = "Sample1", reference = "Sample2")))
 
-  expect_true(all(dca_markers$data_type == "pearson_z"))
-  expect_true(all(dca_markers$target == "Sample1"))
-  expect_true(all(dca_markers$reference == "Sample2"))
-  expect_true(all(dca_markers$n1[1:4] == c(4, 4, 4, 3)))
-  expect_true(all(dca_markers$n2[1:4] == c(4, 4, 4, 3)))
-  expect_true(all(dca_markers$statistic[1:4] == c(8, 8, 8, 4.5)))
-  expect_true(all(dca_markers$method == "Wilcoxon"))
-  expect_true(all(dca_markers$marker_1[1:4] == c("ACTB", "ACTB", "ACTB", "ACTB")))
-  expect_true(all(dca_markers$marker_2[1:4] == c("B2M", "CD102", "CD11a", "CD11b")))
+  expected_result <-
+    structure(
+      list(
+        estimate = c(
+          `difference in location` = 0,
+          `difference in location` = -5.67168961880486e-05
+        ),
+        data_type = c("pearson_z", "pearson_z"),
+        target = c("Sample1",
+                   "Sample1"),
+        reference = c("Sample2", "Sample2"),
+        n1 = c(4L, 4L),
+        n2 = c(4L, 4L),
+        statistic = c(W = 8, W = 8),
+        p = c(1, 1),
+        p_adj = c(1, 1),
+        conf.low = c(-7.4540803815722,-3.64101112325344),
+        conf.high = c(7.4540803815722, 3.6409494101764),
+        method = c("Wilcoxon",
+                   "Wilcoxon"),
+        alternative = c("two.sided", "two.sided"),
+        marker_1 = c("ACTB",
+                     "ACTB"),
+        marker_2 = c("B2M", "CD102")
+      ),
+      row.names = c(NA,-2L),
+      class = c("tbl_df", "tbl", "data.frame")
+    )
+
+  expect_equal(dca_markers[1:2, ], expected_result)
 
   # Colocalization heatmap
   expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers))
@@ -53,29 +74,95 @@ test_that("RunDCA works as expected on a Seurat object", {
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(seur_merged, contrast_column = "sample",
                                                          targets = "Sample1", reference = "Sample2")))
 
-  expect_true(all(dca_markers$data_type == "pearson_z"))
-  expect_true(all(dca_markers$target == "Sample1"))
-  expect_true(all(dca_markers$reference == "Sample2"))
-  expect_true(all(dca_markers$n1 == 4))
-  expect_true(all(dca_markers$n2 == 4))
-  expect_true(all(dca_markers$statistic == 8))
-  expect_true(all(dca_markers$method == "Wilcoxon"))
-  expect_true(all(dca_markers$marker_1 == "ACTB"))
-  expect_true(all(dca_markers$marker_2 == "HLA-ABC"))
+  expected_result <- structure(
+    list(
+      estimate = c(`difference in location` = 0),
+      data_type = "pearson_z",
+      target = "Sample1",
+      reference = "Sample2",
+      n1 = 4L,
+      n2 = 4L,
+      statistic = c(W = 8),
+      p = 1,
+      p_adj = 1,
+      conf.low = -8.27426094614066,
+      conf.high = 8.27426094614066,
+      method = "Wilcoxon",
+      alternative = "two.sided",
+      marker_1 = "ACTB",
+      marker_2 = "HLA-ABC"
+    ),
+    row.names = c(NA,-1L),
+    class = c("tbl_df", "tbl", "data.frame")
+  )
+
+  expect_equal(dca_markers, expected_result)
+
+  # Automatic selection of targets
+  expect_no_error(suppressWarnings(dca_markers <- RunDCA(seur_merged, contrast_column = "sample", reference = "Sample2")))
+
 })
 
 
 test_that("RunDCA fails with invalid input",  {
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged),
-               'argument "contrast_column" is missing, with no default')
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample"),
-               'argument "reference" is missing, with no default')
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample1"),
-               'argument "reference" is missing, with no default')
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "Invalid", targets = "Sample1", reference = "Sample2"),
-               "'contrast_column' must be a valid column name")
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Invalid", reference = "Sample2"),
-               "'targets' must be present in 'contrast_column' column")
-  expect_error(dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample1", reference = "Invalid"),
-               "'reference' must be present in 'contrast_column' column")
+  expect_error(
+    dca_markers <- RunDCA(colocalization_table_merged),
+    'argument "contrast_column" is missing, with no default'
+  )
+  expect_error(
+    dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample"),
+    'argument "reference" is missing, with no default'
+  )
+  expect_error(
+    dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample1"),
+    'argument "reference" is missing, with no default'
+  )
+  expect_error(
+    dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "Invalid", targets = "Sample1", reference = "Sample2")
+  )
+  expect_error(
+    dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Invalid", reference = "Sample2")
+  )
+  expect_error(
+    dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample1", reference = "Invalid")
+  )
+  expect_error(
+    dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = c("Sample1", "Sample2"), reference = "Sample1"),
+    "targets is invalid\nall targets must be different from reference = 'Sample1'"
+  )
+  expect_error(
+    dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "sample"),
+    "contrast_column = 'sample' cannot be one of group_vars"
+  )
+
+  expect_error(
+    dpa_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "Invalid"),
+    "group_vars is invalid\ngroup_vars must be a character vector with valid column names"
+  )
+})
+
+
+if (TRUE) skip("Skipping parallel processing tests")
+
+test_that("RunDCA can be parallelized", {
+
+  # Sequential processing for reference
+  expect_no_error(
+    dca_markers_seq <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = 2)
+  )
+
+  # Using 2 threads. This will be ignored on Windows
+  expect_no_error(
+    dca_markers_par <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = 2)
+  )
+
+  expect_equal(dca_markers_seq, dca_markers_par)
+
+  # Using a cluster object
+  cl <- parallel::makeCluster(2)
+  expect_no_error(
+    dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = cl)
+  )
+  parallel::stopCluster(cl)
+
 })

@@ -71,11 +71,12 @@ observations than \code{min_n_obs} will be skipped.}
 \item{p_adjust_method}{One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 (see \code{?p.adjust} for details)}
 
-\item{cl}{A cluster object created by makeCluster, or an integer
-to indicate number of child-processes (integer values are ignored
-on Windows) for parallel evaluations. See Details on performance
+\item{cl}{A cluster object created by \code{\link[parallel]{makeCluster}},
+or an integer to indicate number of child-processes (integer values are
+ignored on Windows) for parallel evaluations. See Details on performance
 in the documentation for \code{pbapply}. The default is NULL,
-which means that no parallelization is used.}
+which means that no parallelization is used.
+Note that warnings are not caught when using parallel processing.}
 
 \item{verbose}{Print messages}
 

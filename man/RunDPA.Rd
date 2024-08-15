@@ -63,11 +63,12 @@ or "morans_i".}
 \item{min_n_obs}{Minimum number of observations allowed in a group. Target groups with less
 observations than \code{min_n_obs} will be skipped.}
 
-\item{cl}{A cluster object created by makeCluster, or an integer
-to indicate number of child-processes (integer values are ignored
-on Windows) for parallel evaluations. See Details on performance
+\item{cl}{A cluster object created by \code{\link[parallel]{makeCluster}},
+or an integer to indicate number of child-processes (integer values are
+ignored on Windows) for parallel evaluations. See Details on performance
 in the documentation for \code{pbapply}. The default is NULL,
-which means that no parallelization is used.}
+which means that no parallelization is used.
+Note that warnings are not caught when using parallel processing.}
 
 \item{alternative}{One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)}
 

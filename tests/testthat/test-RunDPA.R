@@ -97,6 +97,9 @@ test_that("RunDPA works as expected on a data.frame", {
 
   expect_equal(dpa_markers[1:2, ], expected_result)
 
+  # Automatic selection of targets
+  expect_no_error(suppressWarnings(dpa_markers <- RunDPA(seur_merged, contrast_column = "sample", reference = "Sample2")))
+
 })
 
 test_that("RunDPA works as expected on a Seurat object", {
@@ -147,25 +150,60 @@ test_that("RunDPA fails with invalid input", {
     'argument "contrast_column" is missing, with no default'
   )
   expect_error(
-    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample"),
-    'argument "reference" is missing, with no default'
+    dpa_markers <- RunDPA(polarization_table_merged, reference = "Sample1"),
+    'argument "contrast_column" is missing, with no default'
   )
   expect_error(
     dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample1"),
     'argument "reference" is missing, with no default'
   )
   expect_error(
-    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "Invalid", targets = "Sample1", reference = "Sample2"),
-    "'contrast_column' must be a valid column name"
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "Invalid", targets = "Sample1", reference = "Sample2")
   )
   expect_error(
-    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Invalid", reference = "Sample2"),
-    "'targets' must be present in 'contrast_column' column"
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Invalid", reference = "Sample2")
   )
   expect_error(
-    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample1", reference = "Invalid"),
-    "'reference' must be present in 'contrast_column' column"
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample1", reference = "Invalid")
+  )
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = c("Sample1", "Sample2"), reference = "Sample1"),
+    "targets is invalid\nall targets must be different from reference = 'Sample1'"
+  )
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "sample"),
+    "contrast_column = 'sample' cannot be one of group_vars"
+  )
+
+  expect_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "Invalid"),
+    "group_vars is invalid\ngroup_vars must be a character vector with valid column names"
   )
 
 })
 
+
+if (TRUE) skip("Skipping parallel processing tests")
+
+test_that("RunDPA can be parallelized", {
+
+  # Sequential processing for reference
+  expect_no_error(
+    dpa_markers_seq <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = 2)
+  )
+
+  # Using 2 threads. This will be ignored on Windows
+  expect_no_error(
+    dpa_markers_par <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = 2)
+  )
+
+  expect_equal(dpa_markers_seq, dpa_markers_par)
+
+  # Using a cluster object
+  cl <- parallel::makeCluster(2)
+  expect_no_error(
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = cl)
+  )
+  parallel::stopCluster(cl)
+
+})

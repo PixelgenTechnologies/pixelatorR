@@ -5,13 +5,15 @@ globalVariables(
   add = TRUE
 )
 #' @include generics.R
+#' @include utils.R
 NULL
 
-#' @param cl  A cluster object created by makeCluster, or an integer
-#' to indicate number of child-processes (integer values are ignored
-#' on Windows) for parallel evaluations. See Details on performance
+#' @param cl A cluster object created by \code{\link[parallel]{makeCluster}},
+#' or an integer to indicate number of child-processes (integer values are
+#' ignored on Windows) for parallel evaluations. See Details on performance
 #' in the documentation for \code{pbapply}. The default is NULL,
 #' which means that no parallelization is used.
+#' Note that warnings are not caught when using parallel processing.
 #' @rdname RunDPA
 #' @method RunDPA data.frame
 #'
@@ -52,75 +54,15 @@ RunDPA.data.frame <- function (
   ...
 ) {
 
-  # Validate input parameters
-  stopifnot(
-    "'contrast_column' must be a valid column name" =
-      inherits(contrast_column, what = "character") &&
-      (length(contrast_column) == 1) &&
-      (contrast_column %in% colnames(object))
-  )
   polarity_metric <- match.arg(polarity_metric, choices = c("morans_z", "morans_i"))
-  stopifnot(
-    "'polarity_metric' must be present in polarization score table" =
-      polarity_metric %in% colnames(object)
+
+  # Validate input parameters
+  .validate_dpa_dca_input(
+    object, contrast_column, reference, targets, group_vars,
+    polarity_metric, min_n_obs, conf_int, cl, data_type = "polarity"
   )
 
-  group_vector <- object[, contrast_column, drop = TRUE]
-
-  stopifnot(
-    "'contrast_column' must be a character vector or a factor" =
-      inherits(group_vector, what = c("character", "factor")),
-    "'contrast_column' must have at least 2 groups" =
-      length(unique(group_vector)) > 1
-  )
-
-  stopifnot(
-    "'reference' must be present in 'contrast_column' column" =
-      inherits(reference, what = "character") &&
-      (length(reference) == 1) &&
-      (reference %in% group_vector)
-  )
-
-  if (!is.null(targets)) {
-    stopifnot(
-      "'targets' must be present in 'contrast_column' column" =
-        inherits(targets, what = "character") &&
-        all(targets %in% group_vector)
-    )
-  }
-  targets <- targets %||% setdiff(unique(group_vector), reference)
-
-  stopifnot(
-    "'morans_z' and 'component' must be present in polarization score table" =
-      all(c("marker", "morans_z", "component") %in% colnames(object)),
-    "'polarity_metric' and 'component' must be present in polarization score table" =
-      all(c("marker", polarity_metric, "component") %in% colnames(object)),
-    "'conf_int' must be TRUE or FALSE" =
-      inherits(conf_int, what = "logical") & (length(conf_int) == 1)
-  )
-
-  if (!is.null(group_vars)) {
-    stopifnot(
-      "'group_vars' must be valid column names" =
-        inherits(group_vars, what = "character") &&
-        (length(group_vars) >= 1) &&
-        all(group_vars %in% colnames(object)),
-      "'group_vars' and 'contrast_column' cannot be the same" =
-        group_vars != contrast_column
-    )
-    for (group_var in group_vars) {
-      stopifnot(
-        "'group_vars' must be character vectors or factors" =
-          inherits(object[, group_var, drop = TRUE],
-                   what = c("character", "factor"))
-      )
-    }
-  }
-
-  stopifnot(
-    "'cl' must be a cluster object or an integer" =
-      inherits(cl, what = c("cluster", "numeric"))
-  )
+  targets <- targets %||% setdiff(unique(object[, contrast_column, drop = TRUE]), reference)
 
   # Check multiple choice args
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
