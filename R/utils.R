@@ -248,3 +248,228 @@
 
   return(invisible(NULL))
 }
+
+#' Utility function to capture warnings and errors
+#'
+#' @param expr Expression to evaluate
+#'
+#' @noRd
+evaluate_with_catch <- function(expr) {
+  result <- NULL
+  warning_message <- NULL
+  error_message <- NULL
+
+  tryCatch(
+    {
+      # Capture warnings
+      withCallingHandlers(
+        {
+          result <- eval(expr)
+        },
+        warning = function(w) {
+          warning_message <<- w$message
+          invokeRestart("muffleWarning")
+        }
+      )
+    },
+    error = function(e) {
+      error_message <<- e$message
+    }
+  )
+
+  list(
+    result = result,
+    error = error_message,
+    warning = warning_message
+  )
+}
+
+
+#' Utility function to capture warnings and errors
+#'
+#' @param ... Any number of R expressions, which should each evaluate
+#' to (a logical vector of all) TRUE
+#' @param message Message to display if the condition is not met
+#' @param class Class of the error to throw
+#' @param not Logical indicating whether to negate the condition
+#' @param call Environment to use for the error call
+#'
+#' @noRd
+abort_if_not <- function(
+  ...,
+  message = NULL,
+  class = NULL,
+  not = TRUE,
+  call = caller_env()
+) {
+  params <- list2(...)
+
+  if (length(params) > 1) {
+    for (x in seq(params)) {
+      abort_if_not(
+        params[[x]],
+        message = names(params)[[x]],
+        class = class,
+        call = call
+      )
+    }
+
+    invisible()
+  }
+
+  condition <- params[[1]]
+
+  if (is.logical(condition) && ((!condition && not) || (condition && !not))) {
+    if (is_named(params)) {
+      message <- message %||% names(params)
+    }
+
+    abort(
+      message = glue(message, .envir = call),
+      class = class,
+      call = call
+    )
+  }
+
+  invisible()
+}
+
+
+#' @param object A tibble
+#' @param contrast_column A character vector of length 1
+#' @param reference A character vector of length 1
+#' @param targets A character vector of length >= 1 or NULL
+#' @param group_vars A character vector of length >= 1 or NULL
+#' @param spatial_metric A character vector of length 1
+#' @param min_n_obs An integer of length 1
+#' @param conf_int Either TRUE or FALSE
+#' @param cl An integer, a cluster object or NULL
+#' @param data_type A character vector of length 1
+#'
+#' @noRd
+.validate_dpa_dca_input <- function(
+  object,
+  contrast_column,
+  reference,
+  targets,
+  group_vars,
+  spatial_metric,
+  min_n_obs,
+  conf_int,
+  cl,
+  data_type
+) {
+  metric_name <- paste0(data_type, "_metric")
+
+  # Validate contrast column
+  abort_if_not(
+    "contrast_column = '{contrast_column}' is invalid
+    contrast_column must be a valid column name" =
+      inherits(contrast_column, what = "character") &&
+        (length(contrast_column) == 1) &&
+        (contrast_column %in% colnames(object))
+  )
+  group_vector <- object[, contrast_column, drop = TRUE]
+  abort_if_not(
+    "contrast_column = '{contrast_column}' is invalid
+    contrast_column must be a character vector or a factor" =
+      inherits(group_vector, what = c("character", "factor")),
+    "contrast_column = '{contrast_column}' is invalid
+    contrast_column must have at least 2 groups" =
+      length(unique(group_vector)) > 1
+  )
+
+  # Validate reference
+  abort_if_not(
+    "reference = '{reference}' is invalid
+    reference must be present in the '{contrast_column}' column" =
+      inherits(reference, what = "character") &&
+        (length(reference) == 1) &&
+        (reference %in% group_vector)
+  )
+
+  # Validate targets
+  if (!is.null(targets)) {
+    abort_if_not(
+      "targets must be a character vector" =
+        inherits(targets, what = "character")
+    )
+
+    abort_if_not(
+      "targets is invalid
+      all targets must be different from reference = '{reference}'" =
+        !(reference %in% targets)
+    )
+    for (target in targets) {
+      abort_if_not(
+        "'{target}' in targets is invalid
+        '{target}' must be present in the '{contrast_column}' column" =
+          target %in% group_vector
+      )
+    }
+  }
+
+  # Check for component and marker or marker_1/marker_2 columns
+  if (data_type == "polarity") {
+    abort_if_not(
+      "'component' and 'marker' must be present in the {data_type} score table" =
+        all(c("marker", "component") %in% colnames(object))
+    )
+  }
+  if (data_type == "colocalization") {
+    abort_if_not(
+      "'component', 'marker_1' and 'marker_2' must be present in the {data_type} score table" =
+        all(c("marker_1", "marker_2", "component") %in% colnames(object))
+    )
+  }
+
+  # Validate spatial metric
+  abort_if_not(
+    "{metric_name} = '{spatial_metric}' is invalid
+    {metric_name} must be present in the {data_type} score table" =
+      spatial_metric %in% colnames(object),
+    "conf_int = '{conf_int}'
+    must be TRUE or FALSE" =
+      inherits(conf_int, what = "logical") & (length(conf_int) == 1)
+  )
+
+  # Validate group_vars
+  if (!is.null(group_vars)) {
+    abort_if_not(
+      "group_vars is invalid
+      group_vars must be a character vector with valid column names" =
+        inherits(group_vars, what = "character") &&
+          (length(group_vars) >= 1) &&
+          all(group_vars %in% colnames(object))
+    )
+    abort_if_not(
+      "contrast_column = '{contrast_column}' cannot be one of group_vars" =
+        !contrast_column %in% group_vars
+    )
+    for (group_var in group_vars) {
+      abort_if_not(
+        "group variable '{group_var}' must be a character vector or a factor" =
+          inherits(object[, group_var, drop = TRUE],
+            what = c("character", "factor")
+          )
+      )
+    }
+  }
+
+  # Validate min_n_obs
+  abort_if_not(
+    "min_n_obs = '{min_n_obs}' is invalid
+    min_n_obs must be an integer" =
+      inherits(min_n_obs, what = "numeric") &&
+        (length(min_n_obs) == 1) &&
+        (min_n_obs >= 0)
+  )
+
+  # Validate cl
+  if (!is.null(cl)) {
+    abort_if_not(
+      "'cl' must be a cluster object or an integer" =
+        inherits(cl, what = c("cluster", "numeric"))
+    )
+  }
+}

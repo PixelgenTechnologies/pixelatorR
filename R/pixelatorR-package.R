@@ -53,6 +53,7 @@
 #' @importFrom dplyr mutate
 #' @importFrom dplyr mutate_if
 #' @importFrom dplyr n
+#' @importFrom dplyr pick
 #' @importFrom dplyr pull
 #' @importFrom dplyr relocate
 #' @importFrom dplyr rename

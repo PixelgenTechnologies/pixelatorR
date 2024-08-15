@@ -1,6 +1,13 @@
 #' @include generics.R
+#' @include utils.R
 NULL
 
+#' @param cl A cluster object created by \code{\link[parallel]{makeCluster}},
+#' or an integer to indicate number of child-processes (integer values are
+#' ignored on Windows) for parallel evaluations. See Details on performance
+#' in the documentation for \code{pbapply}. The default is NULL,
+#' which means that no parallelization is used.
+#' Note that warnings are not caught when using parallel processing.
 #' @rdname RunDPA
 #' @method RunDPA data.frame
 #'
@@ -22,7 +29,7 @@ NULL
 #' # Run DPA using table as input
 #' dpa_markers <- RunDPA(polarization_table_merged,
 #'   contrast_column = "sample",
-#'   target = "Sample1", reference = "Sample2"
+#'   targets = "Sample1", reference = "Sample2"
 #' )
 #' dpa_markers
 #'
@@ -30,65 +37,29 @@ NULL
 #'
 RunDPA.data.frame <- function(
   object,
-  target,
-  reference,
   contrast_column,
+  reference,
+  targets = NULL,
   group_vars = NULL,
+  polarity_metric = c("morans_z", "morans_i"),
+  min_n_obs = 0,
+  cl = NULL,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
 ) {
+  polarity_metric <- match.arg(polarity_metric, choices = c("morans_z", "morans_i"))
+
   # Validate input parameters
-  stopifnot(
-    "'contrast_column' must be a valid column name" =
-      inherits(contrast_column, what = "character") &&
-        (length(contrast_column) == 1) &&
-        (contrast_column %in% colnames(object))
+  .validate_dpa_dca_input(
+    object, contrast_column, reference, targets, group_vars,
+    polarity_metric, min_n_obs, conf_int, cl,
+    data_type = "polarity"
   )
 
-  group_vector <- object[, contrast_column, drop = TRUE]
-
-  stopifnot(
-    "'contrast_column' must be a character vector or a factor" =
-      inherits(group_vector, what = c("character", "factor"))
-  )
-
-  stopifnot(
-    "'target' must be present in 'contrast_column' column" =
-      inherits(target, what = "character") &&
-        (length(target) == 1) &&
-        (target %in% group_vector),
-    "'reference' must be present in 'contrast_column' column" =
-      inherits(reference, what = "character") &&
-        (length(reference) == 1) &&
-        (reference %in% group_vector)
-  )
-
-  stopifnot(
-    "'morans_z' and 'component' must be present in polarization score table" =
-      all(c("marker", "morans_z", "component") %in% colnames(object)),
-    "'conf_int' must be TRUE or FALSE" =
-      inherits(conf_int, what = "logical") & (length(conf_int) == 1)
-  )
-
-  if (!is.null(group_vars)) {
-    stopifnot(
-      "'group_vars' must be valid column names" =
-        inherits(group_vars, what = "character") &&
-          (length(group_vars) >= 1) &&
-          all(group_vars %in% colnames(object))
-    )
-    for (group_var in group_vars) {
-      stopifnot(
-        "'group_vars' must be character vectors or factors" =
-          inherits(object[, group_var, drop = TRUE],
-            what = c("character", "factor")
-          )
-      )
-    }
-  }
+  targets <- targets %||% setdiff(unique(object[, contrast_column, drop = TRUE]), reference)
 
   # Check multiple choice args
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
@@ -99,81 +70,183 @@ RunDPA.data.frame <- function(
     )
   )
 
+  # Discard unused data columns
+  object <- object %>%
+    select(all_of(c("marker", polarity_metric, "component", contrast_column, group_vars)))
+
   # Group data and get contrasts
   if (verbose && check_global_verbosity()) {
     cli_alert_info("Splitting data by: {paste(c('marker', group_vars), collapse = ', ')}")
+    cli_alert_info("Polarity metric: '{polarity_metric}'")
   }
   test_groups <- object %>%
     {
       if (!is.null(group_vars)) {
-        group_by_at(., all_of(c("marker", group_vars)))
+        group_by(., pick(all_of(c("marker", group_vars))))
       } else {
-        group_by(., .data[["marker"]])
+        group_by(., pick(all_of("marker")))
       }
     }
+
+  if (min_n_obs > 0) {
+    # Filter test groups by minimum number of observations allowed
+    test_groups <- test_groups %>%
+      group_by(!!sym(contrast_column), .add = TRUE) %>%
+      mutate(n = n()) %>%
+      filter(n > min_n_obs) %>%
+      ungroup(!!sym(contrast_column)) %>%
+      mutate(
+        ref_n = sum(!!sym(contrast_column) == reference),
+        target_n = sum(!!sym(contrast_column) %in% targets)
+      ) %>%
+      filter(ref_n > 0, target_n > 0)
+    if (nrow(test_groups) == 0) {
+      abort(glue(
+        "Found no groups with at least {min_n_obs} observations."
+      ))
+    }
+  }
 
   # Get group keys
   test_groups_keys <- test_groups %>% group_keys()
 
   if (verbose && check_global_verbosity()) {
-    cli_alert_info("Running {nrow(test_groups_keys)} tests")
+    if (length(targets) > 1) {
+      cli_alert_info(glue(
+        "Running {nrow(test_groups_keys)} tests for each ",
+        "of the following comparisons:\n"
+      ))
+    } else {
+      cli_alert_info(glue(
+        "Running {nrow(test_groups_keys)} tests for the following comparison:\n"
+      ))
+    }
+    print(glue("  - {paste(targets, reference, sep = ' vs ')}"))
   }
 
   # Split table by group keys
   test_groups <- test_groups %>% group_split()
 
-  pol_test <- lapply(test_groups, function(polarity_contrast) {
-    # Get numeric data values
-    x <- polarity_contrast %>%
-      filter(.data[[contrast_column]] == target) %>%
-      pull(morans_z)
-    y <- polarity_contrast %>%
-      filter(.data[[contrast_column]] == reference) %>%
-      pull(morans_z)
-
-    # Run wilcox.test
-    result <- wilcox.test(
-      x = x,
-      y = y,
-      paired = FALSE,
-      alternative = alternative,
-      conf.int = conf_int
+  # Chunk the data to enable parallel processing
+  # Decide how to split the data depending on the cl
+  if (inherits(cl, "cluster")) {
+    # Load dplyr in each cluster
+    clusterEvalQ(cl, {
+      library(dplyr)
+      library(rlang)
+      library(glue)
+      library(cli)
+    })
+    # Export variables to each cluster
+    clusterExport(cl, c(
+      "targets", "reference", "alternative", "conf_int", "polarity_metric",
+      "contrast_column", ".tidy", "group_vars", "evaluate_with_catch"
+    ),
+    envir = current_env()
     )
-
-    # Tidy up results
-    result <- result %>%
-      .tidy() %>%
-      mutate(
-        n1 = length(x), n2 = length(y), method = "Wilcoxon",
-        alternative = alternative, data_type = "morans_z",
-        target = target, reference = reference, p = signif(p.value, 3)
-      ) %>%
-      select(c(
-        "estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
-        "p", "conf.low", "conf.high", "method", "alternative"
-      ))
-    return(result)
-  })
-
-  # Bind results from pol_test list
-  pol_test_bind <- do.call(bind_rows, lapply(seq_along(pol_test), function(i) {
-    # Add marker column
-    pol_test_with_groups <- pol_test[[i]] %>% mutate(
-      marker = test_groups_keys[i, 1, drop = TRUE]
-    )
-
-    # Add additional group columns
-    if (!is.null(group_vars)) {
-      for (group_var in group_vars) {
-        pol_test_with_groups[[group_var]] <- test_groups_keys[i, group_var, drop = TRUE]
-      }
+    # Parallel processing on cluster
+    chunks <- cut(seq_along(test_groups), length(cl))
+  } else if (is.numeric(cl)) {
+    # Use sequential processing when cl is 1
+    if (cl == 1) {
+      chunks <- seq_along(test_groups)
+    } else {
+      # Parallel processing when cl is the number of child processes
+      chunks <- cut(seq_along(test_groups), cl)
     }
-    return(pol_test_with_groups)
-  }))
+  } else {
+    # Sequential processing when cl is NULL
+    chunks <- seq_along(test_groups)
+    cl <- NULL
+  }
+
+  # Split test_groups into chunks
+  test_groups_chunked <- split(test_groups, chunks)
+
+  # Process chunks
+  pol_test <- pbapply::pblapply(test_groups_chunked, function(test_groups_chunk) {
+    # Process current chunk
+    pol_test_chunk <- lapply(test_groups_chunk, function(polarity_contrast) {
+      # Fetch marker for current comparison
+      marker <- polarity_contrast$marker %>% unique()
+
+      # Get numeric data values for all targets
+      x_list <- lapply(targets, function(target) {
+        polarity_contrast %>%
+          filter(.data[[contrast_column]] == target) %>%
+          pull(all_of(polarity_metric))
+      }) %>%
+        set_names(nm = targets)
+      y <- polarity_contrast %>%
+        filter(.data[[contrast_column]] == reference) %>%
+        pull(all_of(polarity_metric))
+
+      # Run wilcox.test for all targets vs reference
+      results <- lapply(names(x_list), function(target) {
+        x <- x_list[[target]]
+        # Run wilcox.test
+        result <- evaluate_with_catch({
+          wilcox_res <- wilcox.test(
+            x = x,
+            y = y,
+            paired = FALSE,
+            alternative = alternative,
+            conf.int = conf_int
+          )
+        })
+        if (!is.null(result$error)) {
+          warn(glue("Failed to compute Wilcoxon test for marker '{marker}': {target} vs {reference}\n",
+            "  Got the following error message when running wilcox.test:\n",
+            "  {col_red(result$error)}\n",
+            "  This test will be skipped.",
+            .trim = FALSE
+          ))
+          return(NULL)
+        }
+        if (!is.null(result$warning)) {
+          warn(glue("Got the following message when running ",
+            "wilcox.test test for marker '{marker}': {target} vs {reference}\n",
+            "  {col_red(result$warning)}\n",
+            .trim = FALSE
+          ))
+        }
+        result <- result$result
+
+        # Tidy up results
+        result <- result %>%
+          .tidy() %>%
+          mutate(
+            n1 = length(x), n2 = length(y), method = "Wilcoxon",
+            alternative = alternative, data_type = polarity_metric,
+            target = target, reference = reference, p = signif(p.value, 3)
+          ) %>%
+          select(c(
+            "estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
+            "p", "conf.low", "conf.high", "method", "alternative"
+          )) %>%
+          mutate(marker = marker)
+
+        # Add additional group columns
+        if (!is.null(group_vars)) {
+          for (group_var in group_vars) {
+            result[[group_var]] <- polarity_contrast[, group_var, drop = TRUE] %>% unique()
+          }
+        }
+
+        return(result)
+      }) %>%
+        do.call(bind_rows, .)
+    })
+
+    return(pol_test_chunk %>% do.call(bind_rows, .))
+  }, cl = cl)
+
+  pol_test_bind <- do.call(bind_rows, pol_test)
 
   # Adjust p-values
   pol_test_bind <- pol_test_bind %>%
-    mutate(p_adj = p.adjust(p, p_adjust_method))
+    mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
+    relocate(p_adj, .after = "p")
 
   return(pol_test_bind)
 }
@@ -194,7 +267,7 @@ RunDPA.data.frame <- function(
 #' # Run DPA
 #' dpa_markers <- RunDPA(seur_merged,
 #'   contrast_column = "sample",
-#'   target = "Sample1", reference = "Sample2"
+#'   targets = "Sample1", reference = "Sample2"
 #' )
 #' dpa_markers
 #'
@@ -202,11 +275,14 @@ RunDPA.data.frame <- function(
 #'
 RunDPA.Seurat <- function(
   object,
-  target,
-  reference,
   contrast_column,
+  reference,
+  targets = NULL,
   assay = NULL,
   group_vars = NULL,
+  polarity_metric = c("morans_z", "morans_i"),
+  min_n_obs = 0,
+  cl = NULL,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -215,50 +291,10 @@ RunDPA.Seurat <- function(
 ) {
   # Validate input parameters
   stopifnot(
-    "'contrast_column' must be a valid meta data column name" =
-      inherits(contrast_column, what = "character") &&
-        (length(contrast_column) == 1) &&
-        (contrast_column %in% colnames(object[[]]))
+    "'contrast_column' must be available in Seurat object meta.data" =
+      contrast_column %in% colnames(object[[]])
   )
-  group_vector <- object[[]][, contrast_column, drop = TRUE]
-  stopifnot(
-    "'contrast_column' must be a character vector or a factor" =
-      inherits(group_vector, what = c("character", "factor"))
-  )
-  stopifnot(
-    "'target' must be present in 'contrast_column' column" =
-      inherits(target, what = "character") &&
-        (length(target) == 1) &&
-        (target %in% group_vector),
-    "'reference' must be present in 'group_var' column" =
-      inherits(reference, what = "character") &&
-        (length(reference) == 1) &&
-        (reference %in% group_vector)
-  )
-
-  if (!is.null(group_vars)) {
-    stopifnot(
-      "'group_vars' must be valid meta data column names" =
-        inherits(group_vars, what = "character") &&
-          (length(group_vars) >= 1) &&
-          all(group_vars %in% colnames(object[[]]))
-    )
-    for (group_var in group_vars) {
-      stopifnot(
-        "'group_vars' must be character vectors or factors" =
-          inherits(object[[]][, group_var, drop = TRUE],
-            what = c("character", "factor")
-          )
-      )
-    }
-  }
-  alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
-  p_adjust_method <- match.arg(p_adjust_method,
-    choices = c(
-      "bonferroni", "holm", "hochberg",
-      "hommel", "BH", "BY", "fdr"
-    )
-  )
+  polarity_metric <- match.arg(polarity_metric, choices = c("morans_z", "morans_i"))
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
@@ -278,6 +314,12 @@ RunDPA.Seurat <- function(
   group_data <- object[[]] %>%
     {
       if (!is.null(group_vars)) {
+        stopifnot(
+          "'group_vars' must be valid meta data column names" =
+            inherits(group_vars, what = "character") &&
+              (length(group_vars) >= 1) &&
+              all(group_vars %in% colnames(.))
+        )
         select(., all_of(c(contrast_column, group_vars)))
       } else {
         select(., all_of(contrast_column))
@@ -291,14 +333,20 @@ RunDPA.Seurat <- function(
 
   # Remove redundant columns
   polarization_data <- polarization_data %>%
-    select(-any_of(c("morans_i", "morans_p_value", "morans_p_adjusted")))
+    select(-any_of(c(
+      "morans_p_value", "morans_p_adjusted",
+      setdiff(c("morans_z", "morans_i"), polarity_metric)
+    )))
 
   # Run DPA
   pol_test_bind <- RunDPA(polarization_data,
-    target = target,
+    targets = targets,
     reference = reference,
     contrast_column = contrast_column,
     group_vars = group_vars,
+    polarity_metric = polarity_metric,
+    min_n_obs = min_n_obs,
+    cl = cl,
     alternative = alternative,
     conf_int = conf_int,
     p_adjust_method = p_adjust_method,

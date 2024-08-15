@@ -4,8 +4,10 @@ Version: 0.10.2
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID")),
+           comment = c(ORCID = "0000-0003-4209-2911")),
     person("Max", "Karlsson", , "max.karlsson@pixelgen.com", role = c("aut"),
+           comment = c(ORCID = "0000-0002-7000-4416")),
+    person("Vincent", "Van Hoef", , "vincent.vanhoef@pixelgen.com", role = c("aut"),
            comment = c(ORCID = "YOUR-ORCID-ID"))
     )
 Description: Defines S4 classes for single-cell MPX data, extending the Seurat toolbox.
@@ -68,6 +70,7 @@ Collate:
     'colocalization_heatmap.R'
     'd3_graph_helpers.R'
     'density_scatter_plot.R'
+    'utils.R'
     'differential_colocalization_analysis.R'
     'differential_polarity_analysis.R'
     'extdata.R'
@@ -92,7 +95,6 @@ Collate:
     'remove_cell_graphs.R'
     'restore_paths.R'
     'tau_plot.R'
-    'utils.R'
     'weighted_pmds.R'
     'write_pxl_file.R'
     'zzz.R'
