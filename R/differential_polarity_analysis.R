@@ -147,6 +147,10 @@ RunDPA.data.frame <- function(
     # Parallel processing on cluster
     chunks <- cut(seq_along(test_groups), length(cl))
   } else if (is.numeric(cl)) {
+    # Use sequential processing when cl is 1
+    if (cl == 1) {
+      chunks <- seq_along(test_groups)
+    }
     # Parallel processing when cl is the number of child processes
     chunks <- cut(seq_along(test_groups), cl)
   } else {

@@ -131,6 +131,10 @@ RunDCA.data.frame <- function(
       chunks <- cut(seq_along(test_groups), length(cl))
     }
   } else if (is.numeric(cl)) {
+    # Use sequential processing when cl is 1
+    if (cl == 1) {
+      chunks <- seq_along(test_groups)
+    }
     # Parallel processing when cl is the number of child processes
     if ((length(test_groups) * cl) > (cl * 100)) {
       # Cut into even chunks of 100 values in each chunk
