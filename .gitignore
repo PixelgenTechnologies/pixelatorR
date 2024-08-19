@@ -5,3 +5,4 @@
 ^default.profraw
 ^pkgdown
 environment_arm.yml
+*.pdf

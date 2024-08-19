@@ -1,0 +1,241 @@
+version: '3'
+
+tasks:
+
+  setup-env:
+    desc: Create a micromamba environment for pixelatorR
+    summary: |-
+      Create a micromamba environment for pixelatorR
+      --------------------------------------------------------------
+
+      The environment name can be set using the ENV_NAME environment variable.
+
+      Example:
+      task setup-env ENV_NAME=my_env
+    cmds:
+      - |
+        set -euo pipefail
+
+        # Default environment name
+        ENV_NAME=${ENV_NAME:-r-pixelator}
+
+        # Check if micromamba is installed
+        if ! command -v micromamba &> /dev/null; then
+          echo "micromamba is not installed. Please install it first."
+          exit 1
+        fi
+
+        # Create the environment
+        if micromamba create -n '{{.ENV_NAME}}' -y -c conda-forge conda-forge::r-base; then
+          echo "Environment '{{.ENV_NAME}}' created successfully."
+        else
+          echo "Failed to create environment '{{.ENV_NAME}}'."
+          exit 1
+        fi
+    vars:
+      ENV_NAME: '{{.ENV_NAME | default "r-pixelator"}}'
+    silent: true
+
+  install:
+    desc: Install package dependencies
+    summary: |-
+      Install package dependencies
+      --------------------------------------------------------------
+
+      The ENV_NAME environment environment determines the micromamba
+      environment to use.
+
+      Example:
+      task install ENV_NAME=my_env
+    cmds:
+      - |
+        set -euo pipefail
+
+        # Check if micromamba is installed
+        if ! command -v micromamba &> /dev/null; then
+          echo "micromamba is not installed. Please install it first."
+          exit 1
+        fi
+
+        # Check if the environment exists
+        micromamba env list | grep -q "{{.ENV_NAME}}" || task setup-env ENV_NAME={{.ENV_NAME}}
+
+        echo "Installing R packages in environment '{{.ENV_NAME}}'."
+
+        # Run installation in the environment
+        micromamba run -n {{.ENV_NAME}} bash -c '
+          micromamba install -y conda-forge::hdf5 &&
+          Rscript inst/dev/install-deps.R
+        '
+    vars:
+      ENV_NAME: '{{.ENV_NAME | default "r-pixelator"}}'
+    silent: true
+
+  document:
+    desc: Generate documentation using roxygen2
+    summary: |-
+      Generate documentation using roxygen2
+      --------------------------------------------------------------
+
+      The ENV_NAME environment environment determines the micromamba
+      environment to use.
+
+      Example:
+      task document ENV_NAME=my_env
+    cmds:
+      - |
+        set -euo pipefail
+
+        # Determine the environment to use, handle unbound variable
+        ENV_TO_USE="{{.ENV_NAME}}"
+        if [ -z "$ENV_TO_USE" ]; then
+          ENV_TO_USE=$(basename $CONDA_DEFAULT_ENV)
+        fi
+
+        # Check if the environment exists
+        if ! micromamba env list | grep -q "$ENV_TO_USE"; then
+          echo "Environment '$ENV_TO_USE' does not exist"
+          exit 1
+        else
+          echo "Using environment '$ENV_TO_USE'."
+          micromamba run -n $ENV_TO_USE bash -c '
+            Rscript -e "devtools::document()"
+          '
+        fi
+    silent: true
+
+  style-staged-files:
+    desc: Style staged files using styler
+    summary: |-
+      Style staged files using styler
+      --------------------------------------------------------------
+
+      The ENV_NAME environment environment determines the micromamba
+      environment to use.
+
+      Example:
+      task style-staged-files ENV_NAME=my_env
+    cmds:
+      - |
+        set -euo pipefail
+
+        # Determine the environment to use, handle unbound variable
+        ENV_TO_USE="{{.ENV_NAME}}"
+        if [ -z "$ENV_TO_USE" ]; then
+          ENV_TO_USE=$(basename $CONDA_DEFAULT_ENV)
+        fi
+
+        # Check if the environment exists
+        if ! micromamba env list | grep -q "$ENV_TO_USE"; then
+          echo "Environment '$ENV_TO_USE' does not exist"
+          exit 1
+        else
+          echo "Using environment '$ENV_TO_USE'."
+          micromamba run -n $ENV_TO_USE bash -c '
+            Rscript inst/dev/style-staged.R
+          '
+        fi
+    silent: true
+
+  test-staged-files:
+    desc: Run tests on staged files using testthat
+    summary: |-
+      Run tests on staged files using testthat
+      --------------------------------------------------------------
+
+      The ENV_NAME environment environment determines the micromamba
+      environment to use.
+
+      Example:
+      task test-staged-files ENV_NAME=my_env
+    cmds:
+      - |
+        set -euo pipefail
+
+        # Determine the environment to use, handle unbound variable
+        ENV_TO_USE="{{.ENV_NAME}}"
+        if [ -z "$ENV_TO_USE" ]; then
+          ENV_TO_USE=$(basename $CONDA_DEFAULT_ENV)
+        fi
+
+        # Check if the environment exists
+        if ! micromamba env list | grep -q "$ENV_TO_USE"; then
+          echo "Environment '$ENV_TO_USE' does not exist"
+          exit 1
+        else
+          echo "Using environment '$ENV_TO_USE'."
+          micromamba run -n {{.ENV_NAME}} bash -c '
+            Rscript inst/dev/test-staged.R
+          '
+        fi
+    silent: true
+
+  test-all:
+    desc: Run all tests using testthat
+    summary: |-
+      Run all tests using testthat
+      --------------------------------------------------------------
+
+      The ENV_NAME environment environment determines the micromamba
+      environment to use.
+
+      Example:
+      task test-all ENV_NAME=my_env
+    cmds:
+      - |
+        set -euo pipefail
+
+        # Determine the environment to use, handle unbound variable
+        ENV_TO_USE="{{.ENV_NAME}}"
+        if [ -z "$ENV_TO_USE" ]; then
+          ENV_TO_USE=$(basename $CONDA_DEFAULT_ENV)
+        fi
+
+        # Check if the environment exists
+        if ! micromamba env list | grep -q "{{.ENV_NAME}}"; then
+          echo "Environment '$ENV_TO_USE' does not exist"
+          exit 1
+        else
+          echo "Using environment '$ENV_TO_USE'."
+          micromamba run -n $ENV_TO_USE bash -c '
+            Rscript -e "devtools::test()"
+          '
+        fi
+
+        find tests/testthat -maxdepth 1 -type f -name "*.pdf" -delete
+    silent: true
+
+  test-examples:
+    desc: Run examples in pixelatorR
+    summary: |-
+      Run examples in pixelatorR
+      --------------------------------------------------------------
+
+      The ENV_NAME environment environment determines the micromamba
+      environment to use.
+
+      Example:
+      task test-examples ENV_NAME=my_env
+    cmds:
+      - |
+        set -euo pipefail
+
+        # Determine the environment to use, handle unbound variable
+        ENV_TO_USE="{{.ENV_NAME}}"
+        if [ -z "$ENV_TO_USE" ]; then
+          ENV_TO_USE=$(basename $CONDA_DEFAULT_ENV)
+        fi
+
+        # Check if the environment exists
+        if ! micromamba env list | grep -q "$ENV_TO_USE"; then
+          echo "Environment '$ENV_TO_USE' does not exist"
+          exit 1
+        else
+          echo "Using environment '$ENV_TO_USE'."
+          micromamba run -n $ENV_TO_USE bash -c '
+            Rscript -e "devtools::run_examples()"
+          '
+        fi
+
+        find . -maxdepth 1 -type f -name "*.pdf" -delete
+    silent: true
