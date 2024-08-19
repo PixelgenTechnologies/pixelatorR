@@ -77,8 +77,8 @@ tasks:
       Generate documentation using roxygen2
       --------------------------------------------------------------
 
-      The ENV_NAME environment environment determines the micromamba
-      environment to use.
+      The ENV_NAME environment environment variable sets the
+      micromamba environment to use.
 
       Example:
       task document ENV_NAME=my_env
@@ -110,8 +110,8 @@ tasks:
       Style staged files using styler
       --------------------------------------------------------------
 
-      The ENV_NAME environment environment determines the micromamba
-      environment to use.
+      The ENV_NAME environment environment variable sets the
+      micromamba environment to use.
 
       Example:
       task style-staged-files ENV_NAME=my_env
@@ -143,8 +143,8 @@ tasks:
       Run tests on staged files using testthat
       --------------------------------------------------------------
 
-      The ENV_NAME environment environment determines the micromamba
-      environment to use.
+      The ENV_NAME environment environment variable sets the
+      micromamba environment to use.
 
       Example:
       task test-staged-files ENV_NAME=my_env
@@ -176,8 +176,8 @@ tasks:
       Run all tests using testthat
       --------------------------------------------------------------
 
-      The ENV_NAME environment environment determines the micromamba
-      environment to use.
+      The ENV_NAME environment environment variable sets the
+      micromamba environment to use.
 
       Example:
       task test-all ENV_NAME=my_env
@@ -211,8 +211,8 @@ tasks:
       Run examples in pixelatorR
       --------------------------------------------------------------
 
-      The ENV_NAME environment environment determines the micromamba
-      environment to use.
+      The ENV_NAME environment environment variable sets the
+      micromamba environment to use.
 
       Example:
       task test-examples ENV_NAME=my_env
