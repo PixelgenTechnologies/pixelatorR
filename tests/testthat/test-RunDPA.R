@@ -218,7 +218,7 @@ if (TRUE) skip("Skipping parallel processing tests")
 test_that("RunDPA can be parallelized", {
   # Sequential processing for reference
   expect_no_error(
-    dpa_markers_seq <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", cl = 2)
+    dpa_markers_seq <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1")
   )
 
   # Using 2 threads. This will be ignored on Windows
