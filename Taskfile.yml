@@ -135,6 +135,12 @@ tasks:
       - |
         set -euo pipefail
 
+        # Determine the environment to use, handle unbound variable
+        ENV_TO_USE="{{.ENV_NAME}}"
+        if [ -z "$ENV_TO_USE" ]; then
+          ENV_TO_USE=$(basename $CONDA_DEFAULT_ENV)
+        fi
+
         # Check if micromamba is installed
         if ! command -v micromamba &> /dev/null; then
           echo "micromamba is not installed. Please install it first."
@@ -142,17 +148,18 @@ tasks:
         fi
 
         # Check if the environment exists
-        micromamba env list | grep -q "{{.ENV_NAME}}" || task setup-env ENV_NAME={{.ENV_NAME}}
+        micromamba env list | grep -q "$ENV_TO_USE" || {
+            echo "Environment $ENV_TO_USE does not exist. Please create it first."
+            exit 1
+          }
 
-        echo "Installing R packages in environment '{{.ENV_NAME}}'."
+        echo "Installing R packages in environment '$ENV_TO_USE'."
 
         # Run installation in the environment
-        micromamba run -n {{.ENV_NAME}} bash -c '
+        micromamba run -n $ENV_TO_USE bash -c '
           micromamba install -y conda-forge::hdf5 &&
           Rscript inst/dev/install-deps.R
         '
-    vars:
-      ENV_NAME: '{{.ENV_NAME | default "r-pixelator"}}'
     silent: true
 
   document:
