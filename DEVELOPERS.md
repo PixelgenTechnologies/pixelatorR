@@ -1,13 +1,13 @@
 ## Installation
 
-pixelatorR has more than 20 dependencies and depending on the system you are working on, some of these dependencies can create problems. For most systems, the easiest way to install pixelatorR is to setup a conda environment with the necessary dependencies and install it within that environment. In our GitHub repo, we provide some tasks which can be used to setup such an environment and install pixelatorR.
+pixelatorR has more than 20 dependencies and depending on the system you are working on, some of these dependencies can create problems. For most systems, the easiest way to install pixelatorR is to set up a conda environment with the necessary dependencies and install it within that environment. In our GitHub repo, we provide some tasks which can be used to set up such an environment and install pixelatorR.
 
 Below is a list of requirements to use these tasks:
 
 - [micromamba](https://mamba.readthedocs.io/en/latest/installation/micromamba-installation.html)
 - [task](https://taskfile.dev/installation/)
 
-First you need to clone the repo and navidgate to pixelatorR:
+First you need to clone the repo and navigate to pixelatorR:
 
 ````
 git clone PixelgenTechnologies/pixelatorR
@@ -30,9 +30,9 @@ Activate the environment with:
 micromamba activate r-mpx
 ````
 
-### For Mac OS on arm
+### For Mac OS on Arm
 
-On machines with arm processors (e.g. M1 or M2), the solution provided above will not work. The reason is that at the time of writing, conda-forge doesn't provide all required pixelatorR dependencies for arm processors.
+On machines with Arm processors (e.g. M1 or M2), the solution provided above will not work. The reason is that at the time of writing, conda-forge doesn't provide all required pixelatorR dependencies for Arm processors.
 
 Instead we can setup an empty environment with the following task:
 
@@ -59,7 +59,7 @@ task setup-env-pixelatorR ENV_NAME=r-mpx MICROMAMBA_ARGS="--platform osx-64"
 
 Now micromamba should be able to install all dependencies as these are all available for intel processors. 
 
-This is not the recommended solution for arm processors for two reasons:
+This is not the recommended solution for Arm processors for two reasons:
 
 - performance penalty : the emulation will slow down the execution of the code
 - arrow : if R is running R under emulation, arrow might segfault without error. See [this](https://github.com/apache/arrow/pull/37777) issue on GitHub for more information. You can still use this configuration, but you will see a warnings message on package load when running under emulation on macOS (i.e., use of x86 installation of R on M1/aarch64).
