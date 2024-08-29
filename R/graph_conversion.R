@@ -141,21 +141,23 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function(
     "One or several of 'upia', 'upib' are missing from edgelist" =
       all(c("upia", "upib") %in% names(object))
   )
-  if (!is.null(components) && ("component" %in% names(object))) {
+  if (!"component" %in% names(object)) {
+    abort("Column 'component' is missing from edgelist")
+  }
+
+  object <- object %>% to_duckdb()
+
+  if (!is.null(components)) {
     stopifnot(
       "'components' must be a character vector" =
         is.character(components) && (length(components) > 0)
     )
-    if (!all(components %in% (object %>% pull(component, as_vector = TRUE)))) {
+    if (!all(components %in% (object %>% pull(component)))) {
       abort("Some 'component' IDs are missing from object")
     }
     # Filter components
     object <- object %>%
       filter(component %in% components)
-  }
-
-  if (!"component" %in% names(object)) {
-    abort("Function only implemented for edgelists with a component column")
   }
 
   object <- object %>%
@@ -171,7 +173,6 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function(
 
   # Add suffix
   object <- object %>%
-    to_duckdb() %>%
     mutate(rn = paste0("_", row_number())) %>%
     mutate(upia = str_c(upia, rn)) %>%
     select(-rn)

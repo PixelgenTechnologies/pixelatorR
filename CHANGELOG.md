@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Updates 
 
+- The R arrow version is no longer pinned to v14. This allows the package to be installed with the latest version of arrow.
+- Updated `LoadCellGraphs` methods to be compatible with R arrow v17
 - `RunDPA` and `RunDCA` now handles multiple `targets` for differential tests. Previously, only 1 `target` could be compared against `reference`. Now, if multiple `targets` are provided, the function will perform multiple differential tests, one for each `target` against `reference`. This is typically useful when comparing multiple conditions against a single control group.
 - `ColocalizationHeatmap` has been made more flexible, such that any column names in the input data can be used as long as the data has a data format suitable for a heat map. 
 

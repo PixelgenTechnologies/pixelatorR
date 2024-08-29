@@ -42,8 +42,6 @@ Imports:
     parallel,
     lifecycle,
     stats
-Remotes:
-    cran/arrow@14.0.2.1
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
