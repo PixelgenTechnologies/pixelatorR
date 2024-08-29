@@ -5,7 +5,7 @@ if (length(staged_files) > 0) {
     cli::cli_alert_info("Found no staged R scripts to style.")
     quit(status = 0, save = "no")
   }
-  res <- styler::style_file(path = staged_files)
+  res <- styler::style_file(path = staged_files, transformers = pixelatorR::pixelatorR_style())
   if (any(res$changed)) {
     cli::cat_rule()
     cat("\n")

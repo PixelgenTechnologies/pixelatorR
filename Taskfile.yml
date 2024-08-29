@@ -120,7 +120,7 @@ tasks:
 
     silent: true
 
-  install-with-pak:
+  install-pixelatorR-with-pak:
     desc: Install package dependencies
     summary: |-
       Install package dependencies
