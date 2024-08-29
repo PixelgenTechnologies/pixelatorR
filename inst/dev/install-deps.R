@@ -1,6 +1,6 @@
 options(repos = c(CRAN = "https://cloud.r-project.org"))
 if (getRversion() < "4.4.1") {
-  cli_alert_error("Please upgrade to R 4.4.1 or later.")
+  cli::cli_alert_error("Please upgrade to R 4.4.1 or later.")
   quit(status = 1)
 }
 
