@@ -40,7 +40,7 @@ Instead we can setup an empty environment with the following task:
 task setup-env-bare ENV_NAME=r-mpx
 ````
 
-Then we can install the dependencies using the [pak](https://pak.r-lib.org/) instead. `pak` is a package manager for R that can install packages from CRAN, Bioconductor, GitHub, and other sources. It can also also fetch pre-built binaries from Posit Package Manager (PPM) if these are available. This is useful for systems where conda-forge doesn't provide all required dependencies such. 
+Then we can install the dependencies using the [pak](https://pak.r-lib.org/) instead. `pak` is a package manager for R that can install packages from CRAN, Bioconductor, GitHub, and other sources. It can also also fetch pre-built binaries from Posit Package Manager (PPM) if these are available. This is useful for systems where conda-forge doesn't provide all required dependencies. 
 
 ````
 micromamba activate r-mpx
