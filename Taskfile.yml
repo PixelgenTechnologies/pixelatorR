@@ -53,6 +53,7 @@ tasks:
       --------------------------------------------------------------
 
       The environment name can be set using the ENV_NAME environment variable.
+      By default, the environment will be named r-pixelator.
 
       Example:
       task setup-env ENV_NAME=my_env
@@ -87,6 +88,7 @@ tasks:
       --------------------------------------------------------------
 
       The environment name can be set using the ENV_NAME environment variable.
+      By default, the environment will be named r-pixelator.
 
       Examples:
       task setup-env-pixelatorR ENV_NAME=my_env
