@@ -72,11 +72,15 @@ Create [roxygen2](https://roxygen2.r-lib.org/) documentation for the pacakge:
 task document
 ````
 
+***
+
 Run all package tests (`devtools::test()`):
 
 ````
 task test-all
 ````
+
+***
 
 Run all examples (`devtools::run_examples()`):
 
@@ -84,11 +88,15 @@ Run all examples (`devtools::run_examples()`):
 task test-examples
 ````
 
+***
+
 Test staged R test scripts. This task will look for any test R scripts that are staged for commit and run these. The test scripts are located in the `tests/testthat` directory.
 
 ````
 task test-staged-files
 ````
+
+***
 
 Style staged R scripts using [styler](https://styler.r-lib.org/). This task will look for any R scripts that are staged for commit and style these based on the pixelatorR style guide.
 
