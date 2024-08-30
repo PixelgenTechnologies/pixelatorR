@@ -30,9 +30,9 @@ Activate the environment with:
 micromamba activate r-mpx
 ````
 
-### For Mac OS on Arm
+### For Mac OS on ARM
 
-On machines with Arm processors (e.g. M1 or M2), the solution provided above will not work. The reason is that at the time of writing, conda-forge doesn't provide all required pixelatorR dependencies for Arm processors.
+On machines with ARM processors (e.g. M1 or M2), the solution provided above will not work. The reason is that at the time of writing, conda-forge doesn't provide all required pixelatorR dependencies for ARM processors.
 
 Instead we can setup an empty environment with the following task:
 
@@ -59,7 +59,7 @@ task setup-env-pixelatorR ENV_NAME=r-mpx MICROMAMBA_ARGS="--platform osx-64"
 
 Now micromamba should be able to install all dependencies as these are all available for intel processors. 
 
-This is not the recommended solution for Arm processors for two reasons:
+This is not the recommended solution for ARM processors for two reasons:
 
 - performance penalty : the emulation will slow down the execution of the code
 - arrow : if R is running R under emulation, arrow might segfault without error. See [this](https://github.com/apache/arrow/pull/37777) issue on GitHub for more information. You can still use this configuration, but you will see a warnings message on package load when running under emulation on macOS (i.e., use of x86 installation of R on M1/aarch64).
