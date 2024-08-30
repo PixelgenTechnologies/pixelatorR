@@ -11,3 +11,5 @@
 ^pkgdown
 ^environment_arm.yml
 ^DEVELOPERS.md
+^inst/dev
+^Taskfile.yml
