@@ -187,7 +187,7 @@ NormalizeMPX.MPXAssay <- function(
   ...
 ) {
   # If object has been merged before, join layers
-  if (inherits(object, "CellGraphAssay5")) {
+  if (inherits(object, c("CellGraphAssay5", "Assay5"))) {
     object <- JoinLayers(object)
   }
 
@@ -206,11 +206,25 @@ NormalizeMPX.MPXAssay <- function(
 }
 
 #' @rdname NormalizeMPX
+#' @method NormalizeMPX Assay
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.Assay <- NormalizeMPX.MPXAssay
+
+#' @rdname NormalizeMPX
 #' @method NormalizeMPX CellGraphAssay
 #' @docType methods
 #' @export
 #'
 NormalizeMPX.CellGraphAssay <- NormalizeMPX.MPXAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX Assay5
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.Assay5 <- NormalizeMPX.MPXAssay
 
 #' @rdname NormalizeMPX
 #' @method NormalizeMPX CellGraphAssay5
