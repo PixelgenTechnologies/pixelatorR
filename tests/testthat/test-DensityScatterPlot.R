@@ -123,6 +123,23 @@ for (assay_version in c("v3", "v5")) {
     ))
 
 
+    # Multiple gates
+    plot_gate <-
+      tibble(
+        xmin = c(-1, 21, -1),
+        xmax = c(20, 71, 18),
+        ymin = c(-1, 21, -1),
+        ymax = c(70, 60, 18))
+
+    expect_no_error(DensityScatterPlot(object,
+                                       marker1 = "Feature1",
+                                       marker2 = "Feature2",
+                                       facet_vars = c("sample", "sample_type"),
+                                       layer = "counts",
+                                       plot_gate = plot_gate
+    ))
+
+
 
     # Expected errors
 
