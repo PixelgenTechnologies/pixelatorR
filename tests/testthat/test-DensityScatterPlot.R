@@ -143,6 +143,15 @@ for (assay_version in c("v3", "v5")) {
 
     # Expected errors
 
+    plot_gate <-
+      tibble(
+        xmin = c(20, 25),
+        xmax = c(70, 70),
+        ymin = c(20, 25),
+        ymax = c(70, 50),
+        sample = c("A", "B")
+      )
+
     expect_error(
       DensityScatterPlot(object,
         marker1 = "Feature1",
