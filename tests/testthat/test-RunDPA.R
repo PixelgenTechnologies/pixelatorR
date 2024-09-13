@@ -18,7 +18,6 @@ seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 
 test_that("RunDPA works as expected on a data.frame", {
-
   # morans_z
   expect_no_error(suppressWarnings(dpa_markers <- RunDPA(polarization_table_merged,
     contrast_column = "sample",
@@ -119,11 +118,10 @@ test_that("RunDPA works as expected on a data.frame", {
 
   # cl = 1 should witch to sequential processing
   expect_no_error(suppressWarnings(dpa_markers <- RunDPA(seur_merged,
-                                                         contrast_column = "sample",
-                                                         targets = "Sample1", reference = "Sample2",
-                                                         cl = 1
+    contrast_column = "sample",
+    targets = "Sample1", reference = "Sample2",
+    cl = 1
   )))
-
 })
 
 test_that("RunDPA works as expected on a Seurat object", {
