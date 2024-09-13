@@ -5,7 +5,9 @@
 \alias{NormalizeMPX}
 \alias{NormalizeMPX.Matrix}
 \alias{NormalizeMPX.MPXAssay}
+\alias{NormalizeMPX.Assay}
 \alias{NormalizeMPX.CellGraphAssay}
+\alias{NormalizeMPX.Assay5}
 \alias{NormalizeMPX.CellGraphAssay5}
 \alias{NormalizeMPX.Seurat}
 \title{Normalize MPX data}
@@ -32,7 +34,21 @@ NormalizeMPX(
   ...
 )
 
+\method{NormalizeMPX}{Assay}(
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
+)
+
 \method{NormalizeMPX}{CellGraphAssay}(
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
+)
+
+\method{NormalizeMPX}{Assay5}(
   object,
   method = c("dsb", "clr"),
   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
