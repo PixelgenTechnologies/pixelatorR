@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 
 - In `ColocalizationScoresToAssay`: Changed marker pair separator from "-" to "/", to avoid string operation issues due to "-" occurring in marker names.
+- `NormalizeMPX` now also handles Assay and Assay5 objects.
 
 ### Added
 
