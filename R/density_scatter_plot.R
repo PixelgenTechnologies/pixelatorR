@@ -302,7 +302,7 @@ DensityScatterPlot <- function(
     } else {
       gate_label <-
         plot_data %>%
-        bind_cols(plot_gate)
+        cross_join(plot_gate)
     }
 
     gate_label <-
@@ -313,7 +313,7 @@ DensityScatterPlot <- function(
         n = n(),
         .groups = "drop"
       ) %>%
-      group_by_at(facet_vars) %>%
+      group_by_at(c(facet_vars, "xmin", "xmax", "ymin", "ymax")) %>%
       mutate(p = 100 * n / sum(n)) %>%
       ungroup() %>%
       filter(in_gate) %>%

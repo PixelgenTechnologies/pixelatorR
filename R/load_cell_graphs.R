@@ -325,8 +325,9 @@ LoadCellGraphs.MPXAssay <- function(
     if (inherits(try_delete, what = "try-error")) {
       cli_alert_warning("Failed to delete temporary edge list parquet file {pq_file}.")
     }
-    if (inherits(try_delete, what = "try-error"))
+    if (inherits(try_delete, what = "try-error")) {
       cli_alert_warning("Failed to delete temporary edge list parquet file {pq_file}.")
+    }
 
     return(cg_list)
   }) %>%
