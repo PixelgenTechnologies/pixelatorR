@@ -61,7 +61,11 @@ ReadMPX_counts <- function(
   # Extract contents
   X <- hd5_object[["X"]]$read()
   colnames(X) <- hd5_object[["obs"]][["component"]]$read()
-  rownames(X) <- hd5_object[["var"]][["marker"]]$read()
+  markers <- try({hd5_object[["var"]][["marker"]]$read()}, silent = TRUE)
+  if (inherits(markers, "try-error")) {
+    markers <- hd5_object[["var"]][["_index"]]$read()
+  }
+  rownames(X) <- markers
 
   X <- X[seq_len(nrow(X)), seq_len(ncol(X))]
 
@@ -181,11 +185,22 @@ ReadMPX_Seurat <- function(
     # Load polarity scores
     if (load_polarity_scores) {
       polarization <- ReadMPX_item(filename = filename, items = "polarization", verbose = FALSE)
+      if (inherits(polarization$component, "integer")) {
+        polarization$component <- as.character(polarization$component)
+      }
       cg_assay@polarization <- polarization
     }
     # Load colocalization scores
     if (load_colocalization_scores) {
       colocalization <- ReadMPX_item(filename = filename, items = "colocalization", verbose = FALSE)
+      if (inherits(colocalization$component, "integer")) {
+        colocalization$component <- as.character(colocalization$component)
+      }
+      # TODO: Remove this once the colocalization tables have been updated
+      if (all(c("marker1", "marker2") %in% names(colocalization))) {
+        colocalization <- colocalization %>%
+          rename(marker_1 = marker1, marker_2 = marker2)
+      }
       cg_assay@colocalization <- colocalization
     }
   } else {
@@ -455,6 +470,9 @@ ReadMPX_metadata <- function(
   meta_data <- jsonlite::read_json(temp_file, simplifyVector = TRUE) %>%
     as_tibble() %>%
     select(-contains("file_format_version"))
+  if (nrow(meta_data) == 0) {
+    abort("No metadata found in the PXL file")
+  }
   analysis <- meta_data$analysis[[1]]
   if (any(c("polarization", "colocalization") %in% names(analysis))) {
     analysis <- unlist(analysis %>% unname())

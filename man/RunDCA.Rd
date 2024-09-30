@@ -15,7 +15,7 @@ RunDCA(object, ...)
   reference,
   targets = NULL,
   group_vars = NULL,
-  coloc_metric = c("pearson_z", "pearson"),
+  coloc_metric = "pearson_z",
   min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -32,7 +32,7 @@ RunDCA(object, ...)
   targets = NULL,
   assay = NULL,
   group_vars = NULL,
-  coloc_metric = c("pearson_z", "pearson"),
+  coloc_metric = "pearson_z",
   min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -58,8 +58,8 @@ If the value is set to \code{NULL} (default), all groups available in \code{cont
 
 \item{group_vars}{An optional character vector with column names to group the tests by.}
 
-\item{coloc_metric}{The colocalization metric to use. Currently, you can select one of "pearson_z" (default)
-or "pearson".}
+\item{coloc_metric}{The polarity metric to use. Any numeric data column in the colocalization score table
+can be selected. The default is "pearson_z".}
 
 \item{min_n_obs}{Minimum number of observations allowed in a group. Target groups with less
 observations than \code{min_n_obs} will be skipped.}

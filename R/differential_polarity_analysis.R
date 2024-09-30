@@ -41,7 +41,7 @@ RunDPA.data.frame <- function(
   reference,
   targets = NULL,
   group_vars = NULL,
-  polarity_metric = c("morans_z", "morans_i"),
+  polarity_metric = "morans_z",
   min_n_obs = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
@@ -50,7 +50,6 @@ RunDPA.data.frame <- function(
   verbose = TRUE,
   ...
 ) {
-  polarity_metric <- match.arg(polarity_metric, choices = c("morans_z", "morans_i"))
 
   # Validate input parameters
   .validate_dpa_dca_input(
@@ -59,6 +58,11 @@ RunDPA.data.frame <- function(
     data_type = "polarity"
   )
 
+  # Remove redundant columns
+  object <- object %>%
+    select(all_of(c("marker", "component", contrast_column, group_vars, polarity_metric)))
+
+  # Define targets as all groups except the reference if not specified
   targets <- targets %||% setdiff(unique(object[, contrast_column, drop = TRUE]), reference)
 
   # Check multiple choice args
@@ -280,7 +284,7 @@ RunDPA.Seurat <- function(
   targets = NULL,
   assay = NULL,
   group_vars = NULL,
-  polarity_metric = c("morans_z", "morans_i"),
+  polarity_metric = "morans_z",
   min_n_obs = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
@@ -294,7 +298,6 @@ RunDPA.Seurat <- function(
     "'contrast_column' must be available in Seurat object meta.data" =
       contrast_column %in% colnames(object[[]])
   )
-  polarity_metric <- match.arg(polarity_metric, choices = c("morans_z", "morans_i"))
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
@@ -330,13 +333,6 @@ RunDPA.Seurat <- function(
   # Add group data to polarization table
   polarization_data <- polarization_data %>%
     left_join(y = group_data, by = "component")
-
-  # Remove redundant columns
-  polarization_data <- polarization_data %>%
-    select(-any_of(c(
-      "morans_p_value", "morans_p_adjusted",
-      setdiff(c("morans_z", "morans_i"), polarity_metric)
-    )))
 
   # Run DPA
   pol_test_bind <- RunDPA(polarization_data,

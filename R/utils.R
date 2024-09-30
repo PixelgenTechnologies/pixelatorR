@@ -93,14 +93,10 @@
   # Validate polarization and colocalization
   if (length(polarization) > 0) {
     # Check column names
-    stopifnot(
-      "'polarization' names are invalid" =
-        all(sort(names(polarization)) ==
-          sort(c(
-            "morans_i", "morans_p_value", "morans_p_adjusted",
-            "morans_z", "marker", "component"
-          )))
-    )
+    name_check <- all(c("marker", "component") %in% names(polarization))
+    if (!name_check) {
+      abort("Columns 'marker', and 'component' are required in the 'polarization' score table")
+    }
     # Check component names
     cells_in_polarization <- cell_ids %in% (polarization$component %>% unique())
     if (!all(cells_in_polarization)) {
@@ -148,17 +144,10 @@
 
   if (length(colocalization) > 0) {
     # Check column names
-    stopifnot(
-      "'colocalization' names are invalid" =
-        all(names(colocalization) ==
-          c(
-            "marker_1", "marker_2", "pearson", "pearson_mean",
-            "pearson_stdev", "pearson_z", "pearson_p_value",
-            "pearson_p_value_adjusted", "jaccard", "jaccard_mean",
-            "jaccard_stdev", "jaccard_z", "jaccard_p_value",
-            "jaccard_p_value_adjusted", "component"
-          ))
-    )
+    name_check <- all(c("marker_1", "marker_2", "component") %in% names(colocalization))
+    if (!name_check) {
+      abort("Columns 'marker_1', 'marker_2', and 'component' are required in the 'colocalization' score table")
+    }
     # Check component names
     cells_in_colocalization <- cell_ids %in% (colocalization$component %>% unique())
     if (!all(cells_in_colocalization)) {
@@ -425,13 +414,20 @@ abort_if_not <- function(
 
   # Validate spatial metric
   abort_if_not(
-    "{metric_name} = '{spatial_metric}' is invalid
-    {metric_name} must be present in the {data_type} score table" =
+    "{metric_name} = '{spatial_metric}' is missing from the {data_type} score table." =
       spatial_metric %in% colnames(object),
     "conf_int = '{conf_int}'
     must be TRUE or FALSE" =
       inherits(conf_int, what = "logical") & (length(conf_int) == 1)
   )
+  if (!inherits(object[, spatial_metric, drop = TRUE], what = "numeric")) {
+    abort(
+      glue(
+        "Column '{spatial_metric}' (polarity_metric) is a '{class(object[, spatial_metric, drop = TRUE])}' ",
+        "vector but must be a 'numeric' vector.\n"
+      )
+    )
+  }
 
   # Validate group_vars
   if (!is.null(group_vars)) {
