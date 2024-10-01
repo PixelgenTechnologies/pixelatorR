@@ -199,7 +199,7 @@ ReadMPX_Seurat <- function(
       # TODO: Remove this once the colocalization tables have been updated
       if (all(c("marker1", "marker2") %in% names(colocalization))) {
         colocalization <- colocalization %>%
-          rename(marker_1 = marker1, marker_2 = marker2)
+          rename(marker_1 = !! sym("marker1"), marker_2 = !! sym("marker2"))
       }
       cg_assay@colocalization <- colocalization
     }
