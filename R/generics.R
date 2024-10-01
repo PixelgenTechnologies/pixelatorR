@@ -446,7 +446,7 @@ RunDPA <- function(
 #' \code{reference} will be compared to the \code{reference} group.
 #' @param reference The name of the reference group
 #' @param group_vars An optional character vector with column names to group the tests by.
-#' @param coloc_metric The polarity metric to use. Any numeric data column in the colocalization score table
+#' @param coloc_metric The colocalization metric to use. Any numeric data column in the colocalization score table
 #' can be selected. The default is "pearson_z".
 #' @param min_n_obs Minimum number of observations allowed in a group. Target groups with less
 #' observations than \code{min_n_obs} will be skipped.

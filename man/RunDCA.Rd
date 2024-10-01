@@ -58,7 +58,7 @@ If the value is set to \code{NULL} (default), all groups available in \code{cont
 
 \item{group_vars}{An optional character vector with column names to group the tests by.}
 
-\item{coloc_metric}{The polarity metric to use. Any numeric data column in the colocalization score table
+\item{coloc_metric}{The colocalization metric to use. Any numeric data column in the colocalization score table
 can be selected. The default is "pearson_z".}
 
 \item{min_n_obs}{Minimum number of observations allowed in a group. Target groups with less
