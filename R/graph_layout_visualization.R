@@ -186,9 +186,9 @@ Plot2DGraph <- function(
 
     # Remove B nodes if show_Bnodes=FALSE
     if ((attr(graph, "type") == "bipartite") && !show_Bnodes) {
-      inds_keep <- (graph %>% pull(node_type)) == "A"
-      graph <- graph %>%
-        filter(node_type == "A")
+      inds_keep <- (graph %N>% pull(node_type)) %in% c("A", "UMI1")
+      graph <- graph %N>%
+        filter(node_type %in% c("A", "UMI1"))
       layout <- layout[inds_keep, ]
     }
 
@@ -659,26 +659,20 @@ Plot3DGraph <- function(
 
   # Remove B nodes if show_Bnodes=FALSE
   if ((attr(graph, "type") == "bipartite")) {
-    layout$node_type <- graph %>% pull(node_type)
+    layout$node_type <- graph %N>% pull(node_type)
     if (!show_Bnodes) {
       layout <- layout %>%
-        filter(node_type == "A")
+        filter(node_type %in% c("A", "UMI1"))
     }
   }
 
   # Project data to sphere if project=TRUE
   if (project) {
     # Normalize 3D coordinates to a sphere
-    layout <- layout %>%
-      mutate(
-        norm_factor = select(., x, y, z) %>%
-          apply(MARGIN = 1, function(x) {
-            as.matrix(x) %>% norm(type = "F")
-          }),
-        x = x / norm_factor,
-        y = y / norm_factor,
-        z = z / norm_factor
-      )
+    layout_sphere <- layout %>%
+      select(x, y, z) %>%
+      project_layout_coordinates_on_unit_sphere()
+    layout[, c("x", "y", "z")] <- layout_sphere
   }
 
   # Plot 3D graph using plotly

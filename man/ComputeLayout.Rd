@@ -19,7 +19,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   custom_layout_function = NULL,
@@ -34,7 +33,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   custom_layout_function = NULL,
@@ -49,7 +47,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -66,7 +63,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -83,7 +79,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -101,7 +96,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -127,9 +121,6 @@ length (euclidean norm) is 1.}
 
 \item{project_on_unit_sphere}{Should the resulting layout be projected onto
 a unit sphere?}
-
-\item{k}{The size of the neighborhood from which to pool counts from in
-the UPIA antibody count table. 0 is recommended.}
 
 \item{pivots}{Only used for "wpmds" and "pmds" layout algorithms.
 See \code{?layout_with_pmds} for details}

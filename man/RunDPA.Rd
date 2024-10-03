@@ -14,7 +14,7 @@ RunDPA(object, ...)
   reference,
   targets = NULL,
   group_vars = NULL,
-  polarity_metric = c("morans_z", "morans_i"),
+  polarity_metric = "morans_z",
   min_n_obs = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
@@ -31,7 +31,7 @@ RunDPA(object, ...)
   targets = NULL,
   assay = NULL,
   group_vars = NULL,
-  polarity_metric = c("morans_z", "morans_i"),
+  polarity_metric = "morans_z",
   min_n_obs = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
@@ -57,8 +57,8 @@ If the value is set to \code{NULL} (default), all groups available in \code{cont
 
 \item{group_vars}{An optional character vector with column names to group the tests by.}
 
-\item{polarity_metric}{The polarity metric to use. Currently, you can select one of "morans_z" (default)
-or "morans_i".}
+\item{polarity_metric}{The polarity metric to use. Any numeric data column in the polarity score table
+can be selected. The default is "morans_z".}
 
 \item{min_n_obs}{Minimum number of observations allowed in a group. Target groups with less
 observations than \code{min_n_obs} will be skipped.}

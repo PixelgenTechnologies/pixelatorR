@@ -1185,13 +1185,7 @@ merge.MPXAssay <- function(
   }
 
   objects <- c(x, y)
-  cell.names <- unlist(lapply(objects, colnames))
-  name_conversion <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
-    tibble(component = colnames(objects[[i]]), sample = i)
-  })) %>%
-    mutate(component_new = cell.names) %>%
-    group_by(sample) %>%
-    group_split()
+  cell_names <- unlist(lapply(objects, colnames))
 
   # Define add.cell.ids
   if (!is.null(add.cell.ids)) {
@@ -1207,7 +1201,7 @@ merge.MPXAssay <- function(
   }
 
   # Check duplicate cell names
-  unique_names <- table(cell.names)
+  unique_names <- table(cell_names)
   names_are_duplicated <- any(unique_names > 1)
   if (names_are_duplicated && is.null(add.cell.ids)) {
     abort(glue(
@@ -1230,44 +1224,27 @@ merge.MPXAssay <- function(
     merge.data = merge.data,
     ...
   )
+
+  # Join layers
   if (collapse && is(new_assay, "CellGraphAssay5")) {
     new_assay <- JoinLayers(new_assay)
   }
-
-  # Join layers
   if (collapse && is(new_assay, "Assay5")) {
     new_assay <- JoinLayers(new_assay)
   }
 
-  # Fetch cellgraphs
+  # Merge cellgraphs list
   cellgraphs_new <- Reduce(c, lapply(objects, function(cg_assay) {
     return(cg_assay@cellgraphs)
   })) %>% set_names(nm = colnames(new_assay))
 
-
-  # Merge polarization and colocalization scores
-  polarization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
-    pl <- slot(objects[[i]], name = "polarization")
-    if (length(pl) == 0) {
-      return(pl)
-    }
-    pl <- pl %>%
-      left_join(name_conversion[[i]], by = "component") %>%
-      select(-component, -sample) %>%
-      rename(component = component_new)
-    return(pl)
-  }))
-  colocalization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
-    cl <- slot(objects[[i]], name = "colocalization")
-    if (length(cl) == 0) {
-      return(cl)
-    }
-    cl <- cl %>%
-      left_join(name_conversion[[i]], by = "component") %>%
-      select(-component, -sample) %>%
-      rename(component = component_new)
-    return(cl)
-  }))
+  # Merge spatial metrics tables
+  polarization <- lapply(objects, function(object) {
+    slot(object, name = "polarization")
+  }) %>% bind_rows()
+  colocalization <- lapply(objects, function(object) {
+    slot(object, name = "colocalization")
+  }) %>% bind_rows()
 
   # Merge fs_map
   fs_map <- tibble()

@@ -13,8 +13,6 @@ NULL
 #' @param normalize_layout Logical specifying whether the coordinate system
 #' should be centered at origo and the coordinates scaled such that their median
 #' length (euclidean norm) is 1.
-#' @param k The size of the neighborhood from which to pool counts from in
-#' the UPIA antibody count table. 0 is recommended.
 #' @param pivots Only used for "wpmds" and "pmds" layout algorithms.
 #' See \code{?layout_with_pmds} for details
 #' @param project_on_unit_sphere Should the resulting layout be projected onto
@@ -71,7 +69,6 @@ ComputeLayout.tbl_graph <- function(
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   custom_layout_function = NULL,
@@ -85,9 +82,6 @@ ComputeLayout.tbl_graph <- function(
         (length(dim) == 1),
     "normalize_layout should be TRUE/FALSE" =
       is.logical(normalize_layout),
-    "k should set to 1 or 2" =
-      inherits(k, what = c("numeric", "integer")) &&
-        (length(dim) == 1) & (dim %in% c(2, 3)),
     "'seed' should be a numeric value" =
       inherits(seed, what = "numeric")
   )
@@ -143,8 +137,8 @@ ComputeLayout.tbl_graph <- function(
           layout_function(., dim = dim, ...)
         }
       } %>%
-      as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_along(x)]) %>%
-      bind_cols(as_tibble(object)) %>%
+      as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_len(dim)]) %>%
+      bind_cols(object %N>% as_tibble()) %>%
       select(any_of(c("x", "y", "z")))
   }
 
@@ -183,7 +177,6 @@ ComputeLayout.CellGraph <- function(
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   custom_layout_function = NULL,
@@ -216,7 +209,6 @@ ComputeLayout.CellGraph <- function(
       dim = dim,
       normalize_layout = normalize_layout,
       project_on_unit_sphere = project_on_unit_sphere,
-      k = k,
       pivots = pivots,
       seed = seed,
       custom_layout_function = custom_layout_function,
@@ -257,7 +249,6 @@ ComputeLayout.MPXAssay <- function(
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -293,7 +284,6 @@ ComputeLayout.MPXAssay <- function(
       dim = dim,
       normalize_layout = normalize_layout,
       project_on_unit_sphere = project_on_unit_sphere,
-      k = k,
       pivots = pivots,
       seed = seed,
       custom_layout_function = custom_layout_function,
@@ -342,7 +332,6 @@ ComputeLayout.Seurat <- function(
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -377,7 +366,6 @@ ComputeLayout.Seurat <- function(
       dim = dim,
       normalize_layout = normalize_layout,
       project_on_unit_sphere = project_on_unit_sphere,
-      k = k,
       pivots = pivots,
       seed = seed,
       verbose = verbose,

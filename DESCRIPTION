@@ -39,9 +39,7 @@ Imports:
     pbapply,
     zip,
     jsonlite,
-    parallel,
-    lifecycle,
-    stats
+    lifecycle
 Suggests:
     Seurat (>= 5.0.0),
     spelling,

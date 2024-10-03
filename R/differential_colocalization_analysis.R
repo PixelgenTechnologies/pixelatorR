@@ -19,7 +19,7 @@ RunDCA.data.frame <- function(
   reference,
   targets = NULL,
   group_vars = NULL,
-  coloc_metric = c("pearson_z", "pearson"),
+  coloc_metric = "pearson_z",
   min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -28,7 +28,6 @@ RunDCA.data.frame <- function(
   verbose = TRUE,
   ...
 ) {
-  coloc_metric <- match.arg(coloc_metric, choices = c("pearson_z", "pearson"))
 
   # Validate input parameters
   .validate_dpa_dca_input(
@@ -37,6 +36,7 @@ RunDCA.data.frame <- function(
     data_type = "colocalization"
   )
 
+  # Define targets as all groups except the reference if not specified
   targets <- targets %||% setdiff(unique(object[, contrast_column, drop = TRUE]), reference)
 
   # Check multiple choice args
@@ -286,7 +286,7 @@ RunDCA.Seurat <- function(
   targets = NULL,
   assay = NULL,
   group_vars = NULL,
-  coloc_metric = c("pearson_z", "pearson"),
+  coloc_metric = "pearson_z",
   min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -300,7 +300,6 @@ RunDCA.Seurat <- function(
     "'contrast_column' must be available in Seurat object meta.data" =
       contrast_column %in% colnames(object[[]])
   )
-  coloc_metric <- match.arg(coloc_metric, choices = c("pearson_z", "pearson"))
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
@@ -330,16 +329,6 @@ RunDCA.Seurat <- function(
   # Add group data to colocalization table
   colocalization_data <- colocalization_data %>%
     left_join(y = group_data, by = "component")
-
-  # Remove redundant columns
-  colocalization_data <- colocalization_data %>%
-    select(-any_of(c(
-      "pearson_mean", "pearson_stdev",
-      "pearson_p_value", "pearson_p_value_adjusted",
-      "jaccard", "jaccard_mean", "jaccard_stdev",
-      "jaccard_z", "jaccard_p_value", "jaccard_p_value_adjusted",
-      setdiff(c("pearson_z", "pearson"), coloc_metric)
-    )))
 
   # Run DCA
   coloc_test_bind <- RunDCA(colocalization_data,
