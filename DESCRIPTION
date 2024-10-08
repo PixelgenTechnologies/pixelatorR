@@ -47,6 +47,7 @@ Suggests:
     graphlayouts,
     scales,
     pheatmap,
+    ComplexHeatmap,
     duckdb,
     dbplyr,
     reticulate,
