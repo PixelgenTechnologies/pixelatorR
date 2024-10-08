@@ -116,14 +116,14 @@ test_that("NormalizeMPX works as expected", {
   )
 })
 
-  # Test Assay5 only
-  se5 <- se
-  se <- NormalizeMPX(se, method = "clr")
-  se5[["mpxCells"]] <- as(object = se[["mpxCells"]], Class = "Assay5")
-  se5 <- NormalizeMPX(se5, method = "clr")
-  test_that("CellGraphAssay5 and Assay5 are equal", {
-    expect_equal(
-      se[["mpxCells"]]$data,
-      se5[["mpxCells"]]$data
-    )
-  })
+# Test Assay5 only
+se5 <- se
+se <- NormalizeMPX(se, method = "clr")
+se5[["mpxCells"]] <- as(object = se[["mpxCells"]], Class = "Assay5")
+se5 <- NormalizeMPX(se5, method = "clr")
+test_that("CellGraphAssay5 and Assay5 are equal", {
+  expect_equal(
+    se[["mpxCells"]]$data,
+    se5[["mpxCells"]]$data
+  )
+})
