@@ -36,7 +36,8 @@ instead of drawing the heatmap}
 each row will then be mirrored to fill the missing triangle of the heatmap.}
 
 \item{legend_range}{A numeric vector of length 2 with the range of the legend. If NULL, the range is set to the
-maximum absolute value of the data}
+maximum absolute value of the data. If a value is outside this range, it is set to the closest
+legend range limit.}
 
 \item{legend_title}{The title of the legend}
 
