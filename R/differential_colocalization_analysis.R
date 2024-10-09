@@ -28,7 +28,6 @@ RunDCA.data.frame <- function(
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
   .validate_dpa_dca_input(
     object, contrast_column, reference, targets, group_vars,

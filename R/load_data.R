@@ -61,7 +61,12 @@ ReadMPX_counts <- function(
   # Extract contents
   X <- hd5_object[["X"]]$read()
   colnames(X) <- hd5_object[["obs"]][["component"]]$read()
-  markers <- try({hd5_object[["var"]][["marker"]]$read()}, silent = TRUE)
+  markers <- try(
+    {
+      hd5_object[["var"]][["marker"]]$read()
+    },
+    silent = TRUE
+  )
   if (inherits(markers, "try-error")) {
     markers <- hd5_object[["var"]][["_index"]]$read()
   }
@@ -199,7 +204,7 @@ ReadMPX_Seurat <- function(
       # TODO: Remove this once the colocalization tables have been updated
       if (all(c("marker1", "marker2") %in% names(colocalization))) {
         colocalization <- colocalization %>%
-          rename(marker_1 = !! sym("marker1"), marker_2 = !! sym("marker2"))
+          rename(marker_1 = !!sym("marker1"), marker_2 = !!sym("marker2"))
       }
       cg_assay@colocalization <- colocalization
     }

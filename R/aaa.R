@@ -68,3 +68,7 @@ expect_limma <- function(...) {
 expect_styler <- function(...) {
   rlang::check_installed("styler", ...)
 }
+
+expect_ComplexHeatmap <- function(...) {
+  rlang::check_installed("ComplexHeatmap", ...)
+}
