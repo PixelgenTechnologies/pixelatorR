@@ -256,7 +256,12 @@ ReadMPX_Seurat <- function(
     lapply(function(nm) {
       # If reading function is missing, don't read the column
       # This is likely due to the column being empty
-      col <- try({tibble(!!sym(nm) := hd5_object[["var"]][[nm]]$read())}, silent = TRUE)
+      col <- try(
+        {
+          tibble(!!sym(nm) := hd5_object[["var"]][[nm]]$read())
+        },
+        silent = TRUE
+      )
       if (inherits(col, "try-error")) {
         warn(glue("Column '{nm}' in var is empty. Skipping."))
         return(NULL)
