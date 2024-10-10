@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated `ReadMPX_Seurat` to have less stringent validation of the spatial metric tables (polarity and colocalization scores).
 - `ColocalizationHeatmap` now allows legend titles and the legend range to be manually set
 
+### Fixes
+
+- PXL files missing spatial scores can now be loaded with `ReadMPX_Seurat` without throwing an error. This is useful when the pixelator pipeline was run without computing spatial scores.
+
 ## [0.11.0] - 2024-09-18
 
 ### Updates 
