@@ -227,10 +227,16 @@
     }
     # Check .pxl file for content
     pxl_files <- unzip(f, list = TRUE)$Name
-    if (!all(c(
-      "adata.h5ad", "colocalization.parquet", "edgelist.parquet",
-      "metadata.json", "polarization.parquet"
-    ) %in% pxl_files)) {
+
+
+    required_files <- c("adata.h5ad", "edgelist.parquet", "metadata.json")
+    expected_files <- c("adata.h5ad", "colocalization.parquet", "edgelist.parquet",
+                        "metadata.json", "polarization.parquet")
+
+    if (!all(expected_files %in% pxl_files)) {
+      warn(glue("The pxl file '{col_br_blue(f)}' is missing: \n{paste(setdiff(expected_files, pxl_files), collapse = '\n')}"))
+    }
+    if (!all(required_files %in% pxl_files)) {
       abort(glue("The pxl file '{col_br_blue(f)}' is invalid. "))
     }
   }
