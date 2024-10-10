@@ -257,7 +257,7 @@ ReadMPX_Seurat <- function(
       # If reading function is missing, don't read the column
       # This is likely due to the column being empty
       hd5_read_func <- hd5_object[["var"]][[nm]]$read
-      if(is.null(hd5_read_func)) {
+      if (is.null(hd5_read_func)) {
         warn(glue("Column '{nm}' in var is empty. Skipping."))
         return(NULL)
       }
@@ -367,7 +367,7 @@ ReadMPX_item <- function(
         # Unzip item to temporary directory
         unzipped_filename <- unzip(filename, item_name, exdir = exdir_temp)
 
-        if(length(unzipped_filename) == 0) {
+        if (length(unzipped_filename) == 0) {
           abort(glue("Failed to extract {item_name} from {filename}"))
         }
 
