@@ -1,3 +1,7 @@
+#' @include generics.R
+#' @include utils.R
+NULL
+
 #' @param assay Name of assay to use
 #' @param mean_fxn Function to use for fold change or average difference calculation
 #' in \code{FindMarkers}. See documentation for the \code{mean.fxn} parameter in
@@ -61,7 +65,7 @@ RunDAA.Seurat <- function(
     stopifnot(
       "'assay' must be a character of length 1" =
         is.character(assay) &&
-        (length(assay) == 1)
+          (length(assay) == 1)
     )
   } else {
     assay <- DefaultAssay(object)
@@ -72,10 +76,10 @@ RunDAA.Seurat <- function(
 
   # Check multiple choice args
   p_adjust_method <- match.arg(p_adjust_method,
-                               choices = c(
-                                 "bonferroni", "holm", "hochberg",
-                                 "hommel", "BH", "BY", "fdr"
-                               )
+    choices = c(
+      "bonferroni", "holm", "hochberg",
+      "hommel", "BH", "BY", "fdr"
+    )
   )
 
   # Add group data
@@ -85,8 +89,8 @@ RunDAA.Seurat <- function(
         stopifnot(
           "'group_vars' must be valid meta data column names" =
             inherits(group_vars, what = "character") &&
-            (length(group_vars) >= 1) &&
-            all(group_vars %in% colnames(.))
+              (length(group_vars) >= 1) &&
+              all(group_vars %in% colnames(.))
         )
         select(., all_of(c(contrast_column, group_vars)))
       } else {
@@ -142,18 +146,20 @@ RunDAA.Seurat <- function(
   }
 
   de_results_all <- lapply(seq_along(group_data_split), function(i) {
-
     reference_cells <- group_data_split[[i]] %>%
-      filter(!! sym(contrast_column) == reference) %>% pull(component)
+      filter(!!sym(contrast_column) == reference) %>%
+      pull(component)
 
     # Iterate over targets
     de_results_targets <- lapply(targets, function(target) {
       target_cells <- group_data_split[[i]] %>%
-        filter(!! sym(contrast_column) == target) %>% pull(component)
+        filter(!!sym(contrast_column) == target) %>%
+        pull(component)
 
       cur_assay_subset <- subset(cg_assay, cells = group_data_split[[i]]$component)
       target_cells <- group_data_split[[i]] %>%
-        filter(!! sym(contrast_column) == target) %>% pull(component)
+        filter(!!sym(contrast_column) == target) %>%
+        pull(component)
       de_results_cur <- Seurat::FindMarkers(
         cur_assay_subset,
         cells.1 = target_cells,
