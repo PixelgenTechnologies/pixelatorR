@@ -188,6 +188,7 @@ dpa_markers
 }
 \seealso{
 Other DA-methods: 
+\code{\link{RunDAA}()},
 \code{\link{RunDCA}()}
 }
 \concept{DA}

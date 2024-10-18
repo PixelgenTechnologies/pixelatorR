@@ -11,7 +11,7 @@ globalVariables(
     "marker_1", "marker_2", "graph_projection", "modality",
     "mixture_component", "morans_z", "upia", "upib", "marker",
     "n", "norm_factor", "nodes", "group", "molecules", "frequency",
-    "ref_n", "target_n", "p_adj"
+    "ref_n", "target_n", "p_adj", "p_val", "p_val_adj", "pct.1", "pct.2"
   ),
   package = "pixelatorR",
   add = TRUE
@@ -71,4 +71,8 @@ expect_styler <- function(...) {
 
 expect_ComplexHeatmap <- function(...) {
   rlang::check_installed("ComplexHeatmap", ...)
+}
+
+expect_Seurat <- function(...) {
+  rlang::check_installed("Seurat", ...)
 }
