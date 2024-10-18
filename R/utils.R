@@ -478,3 +478,91 @@ abort_if_not <- function(
     )
   }
 }
+
+
+#' @param object A tibble
+#' @param contrast_column A character vector of length 1
+#' @param reference A character vector of length 1
+#' @param targets A character vector of length >= 1 or NULL
+#' @param group_vars A character vector of length >= 1 or NULL
+#'
+#' @noRd
+.validate_daa_input <- function(
+  object,
+  contrast_column,
+  reference,
+  targets,
+  group_vars
+) {
+
+  # Validate contrast column
+  abort_if_not(
+    "contrast_column = '{contrast_column}' is invalid
+    contrast_column must be a valid column name" =
+      inherits(contrast_column, what = "character") &&
+      (length(contrast_column) == 1) &&
+      (contrast_column %in% colnames(object))
+  )
+  group_vector <- object[, contrast_column, drop = TRUE]
+  abort_if_not(
+    "contrast_column = '{contrast_column}' is invalid
+    contrast_column must be a character vector or a factor" =
+      inherits(group_vector, what = c("character", "factor")),
+    "contrast_column = '{contrast_column}' is invalid
+    contrast_column must have at least 2 groups" =
+      length(unique(group_vector)) > 1
+  )
+
+  # Validate reference
+  abort_if_not(
+    "reference = '{reference}' is invalid
+    reference must be present in the '{contrast_column}' column" =
+      inherits(reference, what = "character") &&
+      (length(reference) == 1) &&
+      (reference %in% group_vector)
+  )
+
+  # Validate targets
+  if (!is.null(targets)) {
+    abort_if_not(
+      "targets must be a character vector" =
+        inherits(targets, what = "character")
+    )
+
+    abort_if_not(
+      "targets is invalid
+      all targets must be different from reference = '{reference}'" =
+        !(reference %in% targets)
+    )
+    for (target in targets) {
+      abort_if_not(
+        "'{target}' in targets is invalid
+        '{target}' must be present in the '{contrast_column}' column" =
+          target %in% group_vector
+      )
+    }
+  }
+
+  # Validate group_vars
+  if (!is.null(group_vars)) {
+    abort_if_not(
+      "group_vars is invalid
+      group_vars must be a character vector with valid column names" =
+        inherits(group_vars, what = "character") &&
+        (length(group_vars) >= 1) &&
+        all(group_vars %in% colnames(object))
+    )
+    abort_if_not(
+      "contrast_column = '{contrast_column}' cannot be one of group_vars" =
+        !contrast_column %in% group_vars
+    )
+    for (group_var in group_vars) {
+      abort_if_not(
+        "group variable '{group_var}' must be a character vector or a factor" =
+          inherits(object[, group_var, drop = TRUE],
+                   what = c("character", "factor")
+          )
+      )
+    }
+  }
+}
