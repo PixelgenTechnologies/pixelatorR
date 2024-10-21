@@ -54,6 +54,9 @@
   return(temp_layout_dir)
 }
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# VALIDATION FUNCTIONS
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' Check if a path is absolute
 #' @noRd
@@ -345,19 +348,19 @@ abort_if_not <- function(
 #' @param data_type A character vector of length 1
 #'
 #' @noRd
-.validate_dpa_dca_input <- function(
+.validate_da_input <- function(
   object,
   contrast_column,
   reference,
   targets,
   group_vars,
-  spatial_metric,
-  min_n_obs,
-  conf_int,
-  cl,
-  data_type
+  spatial_metric = NULL,
+  min_n_obs = 0,
+  conf_int = FALSE,
+  cl = NULL,
+  data_type = NULL
 ) {
-  metric_name <- paste0(data_type, "_metric")
+  metric_name <- data_type %||% paste0(data_type, "_metric")
 
   # Validate contrast column
   abort_if_not(
@@ -407,35 +410,38 @@ abort_if_not <- function(
     }
   }
 
-  # Check for component and marker or marker_1/marker_2 columns
-  if (data_type == "polarity") {
-    abort_if_not(
-      "'component' and 'marker' must be present in the {data_type} score table" =
-        all(c("marker", "component") %in% colnames(object))
-    )
-  }
-  if (data_type == "colocalization") {
-    abort_if_not(
-      "'component', 'marker_1' and 'marker_2' must be present in the {data_type} score table" =
-        all(c("marker_1", "marker_2", "component") %in% colnames(object))
-    )
-  }
-
-  # Validate spatial metric
-  abort_if_not(
-    "{metric_name} = '{spatial_metric}' is missing from the {data_type} score table." =
-      spatial_metric %in% colnames(object),
-    "conf_int = '{conf_int}'
-    must be TRUE or FALSE" =
-      inherits(conf_int, what = "logical") & (length(conf_int) == 1)
-  )
-  if (!inherits(object[, spatial_metric, drop = TRUE], what = "numeric")) {
-    abort(
-      glue(
-        "Column '{spatial_metric}' (polarity_metric) is a '{class(object[, spatial_metric, drop = TRUE])}' ",
-        "vector but must be a 'numeric' vector.\n"
+  # Validate spatial metrics if available
+  if (!is.null(data_type)) {
+    # Check for component and marker or marker_1/marker_2 columns
+    if (data_type == "polarity") {
+      abort_if_not(
+        "'component' and 'marker' must be present in the {data_type} score table" =
+          all(c("marker", "component") %in% colnames(object))
       )
+    }
+    if (data_type == "colocalization") {
+      abort_if_not(
+        "'component', 'marker_1' and 'marker_2' must be present in the {data_type} score table" =
+          all(c("marker_1", "marker_2", "component") %in% colnames(object))
+      )
+    }
+
+    # Validate spatial metric
+    abort_if_not(
+      "{metric_name} = '{spatial_metric}' is missing from the {data_type} score table." =
+        spatial_metric %in% colnames(object),
+      "conf_int = '{conf_int}'
+    must be TRUE or FALSE" =
+        inherits(conf_int, what = "logical") & (length(conf_int) == 1)
     )
+    if (!inherits(object[, spatial_metric, drop = TRUE], what = "numeric")) {
+      abort(
+        glue(
+          "Column '{spatial_metric}' (polarity_metric) is a '{class(object[, spatial_metric, drop = TRUE])}' ",
+          "vector but must be a 'numeric' vector.\n"
+        )
+      )
+    }
   }
 
   # Validate group_vars
@@ -480,89 +486,21 @@ abort_if_not <- function(
 }
 
 
-#' @param object A tibble
-#' @param contrast_column A character vector of length 1
-#' @param reference A character vector of length 1
-#' @param targets A character vector of length >= 1 or NULL
-#' @param group_vars A character vector of length >= 1 or NULL
+#' Validate assay argument
+#'
+#' @return assay
 #'
 #' @noRd
-.validate_daa_input <- function(
-  object,
-  contrast_column,
-  reference,
-  targets,
-  group_vars
-) {
-
-  # Validate contrast column
-  abort_if_not(
-    "contrast_column = '{contrast_column}' is invalid
-    contrast_column must be a valid column name" =
-      inherits(contrast_column, what = "character") &&
-      (length(contrast_column) == 1) &&
-      (contrast_column %in% colnames(object))
-  )
-  group_vector <- object[, contrast_column, drop = TRUE]
-  abort_if_not(
-    "contrast_column = '{contrast_column}' is invalid
-    contrast_column must be a character vector or a factor" =
-      inherits(group_vector, what = c("character", "factor")),
-    "contrast_column = '{contrast_column}' is invalid
-    contrast_column must have at least 2 groups" =
-      length(unique(group_vector)) > 1
-  )
-
-  # Validate reference
-  abort_if_not(
-    "reference = '{reference}' is invalid
-    reference must be present in the '{contrast_column}' column" =
-      inherits(reference, what = "character") &&
-      (length(reference) == 1) &&
-      (reference %in% group_vector)
-  )
-
-  # Validate targets
-  if (!is.null(targets)) {
+.validate_or_set_assay <- function(object, assay = NULL) {
+  # Use default assay if assay = NULL
+  if (!is.null(assay)) {
     abort_if_not(
-      "targets must be a character vector" =
-        inherits(targets, what = "character")
+      "Parameter 'assay' must be a character of length 1" =
+        is.character(assay) &&
+        (length(assay) == 1)
     )
-
-    abort_if_not(
-      "targets is invalid
-      all targets must be different from reference = '{reference}'" =
-        !(reference %in% targets)
-    )
-    for (target in targets) {
-      abort_if_not(
-        "'{target}' in targets is invalid
-        '{target}' must be present in the '{contrast_column}' column" =
-          target %in% group_vector
-      )
-    }
+  } else {
+    assay <- DefaultAssay(object)
   }
-
-  # Validate group_vars
-  if (!is.null(group_vars)) {
-    abort_if_not(
-      "group_vars is invalid
-      group_vars must be a character vector with valid column names" =
-        inherits(group_vars, what = "character") &&
-        (length(group_vars) >= 1) &&
-        all(group_vars %in% colnames(object))
-    )
-    abort_if_not(
-      "contrast_column = '{contrast_column}' cannot be one of group_vars" =
-        !contrast_column %in% group_vars
-    )
-    for (group_var in group_vars) {
-      abort_if_not(
-        "group variable '{group_var}' must be a character vector or a factor" =
-          inherits(object[, group_var, drop = TRUE],
-                   what = c("character", "factor")
-          )
-      )
-    }
-  }
+  return(assay)
 }

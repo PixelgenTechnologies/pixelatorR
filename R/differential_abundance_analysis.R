@@ -1,5 +1,6 @@
 #' @include generics.R
 #' @include utils.R
+#' @include differential_analysis_utils.R
 NULL
 
 #' @param assay Name of assay to use
@@ -58,18 +59,10 @@ RunDAA.Seurat <- function(
       contrast_column %in% colnames(object[[]])
   )
 
-  .validate_daa_input(object[[]], contrast_column, reference, targets, group_vars)
+  .validate_da_input(object[[]], contrast_column, reference, targets, group_vars)
 
   # Use default assay if assay = NULL
-  if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-          (length(assay) == 1)
-    )
-  } else {
-    assay <- DefaultAssay(object)
-  }
+  assay <- .validate_or_set_assay(object, assay)
 
   # Define targets as all groups except the reference if not specified
   targets <- targets %||% setdiff(unique(object[[]][, contrast_column, drop = TRUE]), reference)
@@ -83,21 +76,7 @@ RunDAA.Seurat <- function(
   )
 
   # Add group data
-  group_data <- object[[]] %>%
-    {
-      if (!is.null(group_vars)) {
-        stopifnot(
-          "'group_vars' must be valid meta data column names" =
-            inherits(group_vars, what = "character") &&
-              (length(group_vars) >= 1) &&
-              all(group_vars %in% colnames(.))
-        )
-        select(., all_of(c(contrast_column, group_vars)))
-      } else {
-        select(., all_of(contrast_column))
-      }
-    } %>%
-    as_tibble(rownames = "component")
+  group_data <- .select_group_data(object[[]], contrast_column, group_vars)
 
   # Group data and get contrasts
   if (verbose && check_global_verbosity() && !is.null(group_vars)) {
@@ -123,17 +102,7 @@ RunDAA.Seurat <- function(
   }
 
   if (verbose && check_global_verbosity() && !is.null(group_vars)) {
-    if (length(targets) > 1) {
-      cli_alert_info(glue(
-        "Running {nrow(test_groups_keys)} tests for each ",
-        "of the following comparisons:\n"
-      ))
-    } else {
-      cli_alert_info(glue(
-        "Running {nrow(test_groups_keys)} tests for the following comparison:\n"
-      ))
-    }
-    print(glue("  - {paste(targets, reference, sep = ' vs ')}"))
+    .print_da_group_strategy(test_groups_keys, targets, reference)
   }
 
   # Get assay and convert if necessary
