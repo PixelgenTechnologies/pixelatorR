@@ -154,10 +154,12 @@ RunDAA.Seurat <- function(
       }
 
       return(de_results_cur)
-    }) %>% bind_rows()
+    }) %>%
+      bind_rows()
 
     return(de_results_targets)
-  }) %>% bind_rows()
+  }) %>%
+    bind_rows()
 
   # Adjust p-values
   de_results_all <- de_results_all %>%
