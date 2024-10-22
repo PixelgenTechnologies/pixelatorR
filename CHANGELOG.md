@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
-- `RunDAA` : Differential abundance analysis function with a similar interface to `RunDPA` and `RunDCA`. `RunDAA` uses the `FindMarkers` function from Seurat to perform differential abundance analysis, but enables splitting of tests into multiple groups. By default, it report the difference in means instead of `avg_log2FC`.
+- `RunDAA` : Differential abundance analysis function with a similar interface to `RunDPA` and `RunDCA`. `RunDAA` uses the `FindMarkers` function from Seurat to perform differential abundance analysis, but enables splitting of tests into multiple groups. By default, it reports the difference in means instead of `avg_log2FC`.
 
 ## Updates
 
