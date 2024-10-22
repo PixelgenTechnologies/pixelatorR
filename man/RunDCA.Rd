@@ -52,7 +52,7 @@ This column must include \code{target} and \code{reference}.}
 
 \item{reference}{The name of the reference group}
 
-\item{targets}{The name of the target groups. These groups will be compared to the reference group.
+\item{targets}{The names of the target groups. These groups will be compared to the reference group.
 If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
 \code{reference} will be compared to the \code{reference} group.}
 
@@ -183,6 +183,7 @@ dca_markers
 }
 \seealso{
 Other DA-methods: 
+\code{\link{RunDAA}()},
 \code{\link{RunDPA}()}
 }
 \concept{DA}

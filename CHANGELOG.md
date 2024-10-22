@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Added
+
+- `RunDAA` : Differential abundance analysis function with a similar interface to `RunDPA` and `RunDCA`. `RunDAA` uses the `FindMarkers` function from Seurat to perform differential abundance analysis, but enables splitting of tests into multiple groups. By default, it reports the difference in means instead of `avg_log2FC`.
+
 ## Updates
 
 - `RunDPA` and `RunDCA` now accepts any numeric vector from the spatial metric table as input for differential testing. The metric is specified by `polarity_metric` (`RunDPA`) or `coloc_metric` (`RunDCA`).

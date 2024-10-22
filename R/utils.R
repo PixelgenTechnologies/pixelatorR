@@ -54,6 +54,9 @@
   return(temp_layout_dir)
 }
 
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# VALIDATION FUNCTIONS
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 #' Check if a path is absolute
 #' @noRd
@@ -345,19 +348,19 @@ abort_if_not <- function(
 #' @param data_type A character vector of length 1
 #'
 #' @noRd
-.validate_dpa_dca_input <- function(
+.validate_da_input <- function(
   object,
   contrast_column,
   reference,
   targets,
   group_vars,
-  spatial_metric,
-  min_n_obs,
-  conf_int,
-  cl,
-  data_type
+  spatial_metric = NULL,
+  min_n_obs = 0,
+  conf_int = FALSE,
+  cl = NULL,
+  data_type = NULL
 ) {
-  metric_name <- paste0(data_type, "_metric")
+  metric_name <- data_type %||% paste0(data_type, "_metric")
 
   # Validate contrast column
   abort_if_not(
@@ -407,35 +410,38 @@ abort_if_not <- function(
     }
   }
 
-  # Check for component and marker or marker_1/marker_2 columns
-  if (data_type == "polarity") {
-    abort_if_not(
-      "'component' and 'marker' must be present in the {data_type} score table" =
-        all(c("marker", "component") %in% colnames(object))
-    )
-  }
-  if (data_type == "colocalization") {
-    abort_if_not(
-      "'component', 'marker_1' and 'marker_2' must be present in the {data_type} score table" =
-        all(c("marker_1", "marker_2", "component") %in% colnames(object))
-    )
-  }
-
-  # Validate spatial metric
-  abort_if_not(
-    "{metric_name} = '{spatial_metric}' is missing from the {data_type} score table." =
-      spatial_metric %in% colnames(object),
-    "conf_int = '{conf_int}'
-    must be TRUE or FALSE" =
-      inherits(conf_int, what = "logical") & (length(conf_int) == 1)
-  )
-  if (!inherits(object[, spatial_metric, drop = TRUE], what = "numeric")) {
-    abort(
-      glue(
-        "Column '{spatial_metric}' (polarity_metric) is a '{class(object[, spatial_metric, drop = TRUE])}' ",
-        "vector but must be a 'numeric' vector.\n"
+  # Validate spatial metrics if available
+  if (!is.null(data_type)) {
+    # Check for component and marker or marker_1/marker_2 columns
+    if (data_type == "polarity") {
+      abort_if_not(
+        "'component' and 'marker' must be present in the {data_type} score table" =
+          all(c("marker", "component") %in% colnames(object))
       )
+    }
+    if (data_type == "colocalization") {
+      abort_if_not(
+        "'component', 'marker_1' and 'marker_2' must be present in the {data_type} score table" =
+          all(c("marker_1", "marker_2", "component") %in% colnames(object))
+      )
+    }
+
+    # Validate spatial metric
+    abort_if_not(
+      "{metric_name} = '{spatial_metric}' is missing from the {data_type} score table." =
+        spatial_metric %in% colnames(object),
+      "conf_int = '{conf_int}'
+    must be TRUE or FALSE" =
+        inherits(conf_int, what = "logical") & (length(conf_int) == 1)
     )
+    if (!inherits(object[, spatial_metric, drop = TRUE], what = "numeric")) {
+      abort(
+        glue(
+          "Column '{spatial_metric}' (polarity_metric) is a '{class(object[, spatial_metric, drop = TRUE])}' ",
+          "vector but must be a 'numeric' vector.\n"
+        )
+      )
+    }
   }
 
   # Validate group_vars
@@ -477,4 +483,24 @@ abort_if_not <- function(
         inherits(cl, what = c("cluster", "numeric"))
     )
   }
+}
+
+
+#' Validate assay argument
+#'
+#' @return assay
+#'
+#' @noRd
+.validate_or_set_assay <- function(object, assay = NULL) {
+  # Use default assay if assay = NULL
+  if (!is.null(assay)) {
+    abort_if_not(
+      "Parameter 'assay' must be a character of length 1" =
+        is.character(assay) &&
+        (length(assay) == 1)
+    )
+  } else {
+    assay <- DefaultAssay(object)
+  }
+  return(assay)
 }

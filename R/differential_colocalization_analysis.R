@@ -1,5 +1,6 @@
 #' @include generics.R
 #' @include utils.R
+#' @include differential_analysis_utils.R
 NULL
 
 #' @param cl A cluster object created by \code{\link[parallel]{makeCluster}},
@@ -29,7 +30,7 @@ RunDCA.data.frame <- function(
   ...
 ) {
   # Validate input parameters
-  .validate_dpa_dca_input(
+  .validate_da_input(
     object, contrast_column, reference, targets, group_vars,
     coloc_metric, min_n_obs, conf_int, cl,
     data_type = "colocalization"
@@ -88,17 +89,7 @@ RunDCA.data.frame <- function(
   test_groups_keys <- test_groups %>% group_keys()
 
   if (verbose && check_global_verbosity()) {
-    if (length(targets) > 1) {
-      cli_alert_info(glue(
-        "Running {nrow(test_groups_keys)} tests for each ",
-        "of the following comparisons:\n"
-      ))
-    } else {
-      cli_alert_info(glue(
-        "Running {nrow(test_groups_keys)} tests for the following comparison:\n"
-      ))
-    }
-    print(glue("  - {paste(targets, reference, sep = ' vs ')}"))
+    .print_da_group_strategy(test_groups_keys, targets, reference)
   }
 
   # Split table by group keys
@@ -301,29 +292,13 @@ RunDCA.Seurat <- function(
   )
 
   # Use default assay if assay = NULL
-  if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-          (length(assay) == 1)
-    )
-  } else {
-    assay <- DefaultAssay(object)
-  }
+  assay <- .validate_or_set_assay(object, assay)
 
   # Fetch colocalization scores
   colocalization_data <- object[[assay]]@colocalization
 
   # Add group data
-  group_data <- object[[]] %>%
-    {
-      if (!is.null(group_vars)) {
-        select(., all_of(c(contrast_column, group_vars)))
-      } else {
-        select(., all_of(contrast_column))
-      }
-    } %>%
-    as_tibble(rownames = "component")
+  group_data <- .select_group_data(object[[]], contrast_column, group_vars)
 
   # Add group data to colocalization table
   colocalization_data <- colocalization_data %>%
