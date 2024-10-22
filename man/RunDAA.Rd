@@ -22,16 +22,16 @@ RunDAA(object, ...)
 )
 }
 \arguments{
-\item{object}{An object containing polarity scores}
+\item{object}{A Seurat object containing abundance data, such as counts or normalized counts}
 
 \item{...}{Parameters passed to \code{FindMarkers}}
 
-\item{contrast_column}{The name of the column where the group labels are stored.
-This column must include \code{target} and \code{reference}.}
+\item{contrast_column}{The name of the meta data column where the group labels are stored.
+This column must include \code{targets} and \code{reference}.}
 
 \item{reference}{The name of the reference group}
 
-\item{targets}{The name of the target groups. These groups will be compared to the reference group.
+\item{targets}{The names of the target groups. These groups will be compared to the reference group.
 If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
 \code{reference} will be compared to the \code{reference} group.}
 

@@ -338,10 +338,10 @@ edgelist_to_simple_Anode_graph <- function(
 #' @concept DA
 #' @family DA-methods
 #'
-#' @param object An object containing polarity scores
-#' @param contrast_column The name of the column where the group labels are stored.
-#' This column must include \code{target} and \code{reference}.
-#' @param targets The name of the target groups. These groups will be compared to the reference group.
+#' @param object A Seurat object containing abundance data, such as counts or normalized counts
+#' @param contrast_column The name of the meta data column where the group labels are stored.
+#' This column must include \code{targets} and \code{reference}.
+#' @param targets The names of the target groups. These groups will be compared to the reference group.
 #' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
 #' \code{reference} will be compared to the \code{reference} group.
 #' @param reference The name of the reference group
@@ -435,7 +435,7 @@ RunDAA <- function(
 #' @param object An object containing polarity scores
 #' @param contrast_column The name of the column where the group labels are stored.
 #' This column must include \code{target} and \code{reference}.
-#' @param targets The name of the target groups. These groups will be compared to the reference group.
+#' @param targets The names of the target groups. These groups will be compared to the reference group.
 #' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
 #' \code{reference} will be compared to the \code{reference} group.
 #' @param reference The name of the reference group
@@ -534,7 +534,7 @@ RunDPA <- function(
 #' @param object An object containing colocalization scores
 #' @param contrast_column The name of the column where the group labels are stored.
 #' This column must include \code{target} and \code{reference}.
-#' @param targets The name of the target groups. These groups will be compared to the reference group.
+#' @param targets The names of the target groups. These groups will be compared to the reference group.
 #' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
 #' \code{reference} will be compared to the \code{reference} group.
 #' @param reference The name of the reference group

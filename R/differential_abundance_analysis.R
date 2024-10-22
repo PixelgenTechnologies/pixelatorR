@@ -114,13 +114,13 @@ RunDAA.Seurat <- function(
     cg_assay <- as(cg_assay, "Assay5")
   }
 
-  de_results_all <- lapply(seq_along(group_data_split), function(i) {
+  da_results_all <- lapply(seq_along(group_data_split), function(i) {
     reference_cells <- group_data_split[[i]] %>%
       filter(!!sym(contrast_column) == reference) %>%
       pull(component)
 
     # Iterate over targets
-    de_results_targets <- lapply(targets, function(target) {
+    da_results_targets <- lapply(targets, function(target) {
       target_cells <- group_data_split[[i]] %>%
         filter(!!sym(contrast_column) == target) %>%
         pull(component)
@@ -140,7 +140,7 @@ RunDAA.Seurat <- function(
       target_cells <- group_data_split[[i]] %>%
         filter(!!sym(contrast_column) == target) %>%
         pull(component)
-      de_results_cur <- Seurat::FindMarkers(
+      da_results_cur <- Seurat::FindMarkers(
         cur_assay_subset,
         cells.1 = target_cells,
         cells.2 = reference_cells,
@@ -151,7 +151,7 @@ RunDAA.Seurat <- function(
       )
 
       # Add marker columns
-      de_results_cur <- de_results_cur %>%
+      da_results_cur <- da_results_cur %>%
         mutate(marker = rownames(.)) %>%
         relocate(marker, .before = "p_val") %>%
         as_tibble() %>%
@@ -160,24 +160,24 @@ RunDAA.Seurat <- function(
       # Add additional group columns
       if (!is.null(group_vars)) {
         for (group_var in group_vars) {
-          de_results_cur[[group_var]] <- test_groups_keys[i, group_var, drop = TRUE]
+          da_results_cur[[group_var]] <- test_groups_keys[i, group_var, drop = TRUE]
         }
       }
 
-      return(de_results_cur)
+      return(da_results_cur)
     }) %>%
       bind_rows()
 
-    return(de_results_targets)
+    return(da_results_targets)
   }) %>%
     bind_rows()
 
   # Adjust p-values
-  de_results_all <- de_results_all %>%
+  da_results_all <- da_results_all %>%
     rename(p = p_val, pct_1 = pct.1, pct_2 = pct.2) %>%
     select(-p_val_adj) %>%
     mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
     relocate(p_adj, .after = "p")
 
-  return(de_results_all)
+  return(da_results_all)
 }
