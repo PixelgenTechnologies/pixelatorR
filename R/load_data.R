@@ -41,11 +41,11 @@ ReadMPX_counts <- function(
 
   # Unzip pxl file
   if (endsWith(filename, ".pxl")) {
-    res <- tryCatch(unzip(filename, exdir = fs::path_temp()),
+    check <- tryCatch(zip::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
       error = function(e) e,
       warning = function(w) w
     )
-    if (inherits(x = res, what = "simpleWarning")) {
+    if (inherits(x = check, what = "simpleWarning")) {
       abort("Failed to unzip 'adata.h5ad' data")
     }
   } else {
@@ -79,6 +79,8 @@ ReadMPX_counts <- function(
   if (return_list) {
     return(list(X = X, tmp_file = tmp_file))
   } else {
+    # Try to delete temporary file or throw a warning if it fails.
+    .delete_temp_resource(tmp_file)
     return(X)
   }
 }
@@ -274,6 +276,9 @@ ReadMPX_Seurat <- function(
   # Close hdf5 file
   hd5_object$close()
 
+  # Try to delete temporary file or throw a warning if it fails.
+  .delete_temp_resource(data$tmp_file)
+
   if (getOption("Seurat.object.assay.version", "v3") == "v3") {
     rownames(feature_meta_data) <- feature_meta_data$marker
     seur_obj[[assay]]@meta.features <- feature_meta_data
@@ -363,35 +368,24 @@ ReadMPX_item <- function(
         # do not have permissions to modify files in TEMPDIR.
         # For this reason, we create a new directory with a unique
         # name instead.
-        exdir_temp <- fs::file_temp()
+        exdir_temp <- fs::file_temp() %>% stringr::str_replace("file", "dir")
 
         item_name <- paste0(item, ".parquet")
 
         # Unzip item to temporary directory
-        unzipped_filename <- unzip(filename, item_name, exdir = exdir_temp)
+        check <- try({
+          zip::unzip(filename, files = item_name, exdir = exdir_temp)
+        }, silent = TRUE)
 
-        if (length(unzipped_filename) == 0) {
-          abort(glue("Failed to extract {item_name} from {filename}"))
+        if (inherits(check, "try-error")) {
+          abort(glue("Failed to extract '{item_name}' from '{filename}'"))
         }
 
         # Read contents of parquet file
-        outdata <- read_parquet(unzipped_filename)
+        outdata <- read_parquet(file.path(exdir_temp, item_name))
 
         # Try to delete temporary directory or throw a warning if it fails.
-        check <- tryCatch(
-          {
-            fs::dir_delete(exdir_temp)
-          },
-          error = function(e) {
-            e
-          },
-          warning = function(w) {
-            w
-          }
-        )
-        if (inherits(check, what = "error")) {
-          cli_alert_warning("Failed to remove temporary directory {exdir_temp}")
-        }
+        .delete_temp_resource(exdir_temp)
 
         return(outdata)
       })
@@ -580,5 +574,39 @@ print.pixelator_metadata <- function(
       }
       cli::cat_rule()
     }
+  }
+}
+
+
+#' Delete a temporary file or directory
+#'
+#' @param tmp_path Path to the temporary file or directory
+#'
+#' @noRd
+.delete_temp_resource <- function(tmp_path) {
+  if (fs::is_dir(tmp_path)) {
+    type <- "dir"
+  }
+  if (fs::is_file(tmp_path)) {
+    type <- "file"
+  }
+  check <- tryCatch(
+    {
+      if (type == "file") {
+        fs::file_delete(tmp_path)
+      }
+      if (type == "dir") {
+        fs::dir_delete(tmp_path)
+      }
+    },
+    error = function(e) {
+      e
+    },
+    warning = function(w) {
+      w
+    }
+  )
+  if (inherits(check, what = "error")) {
+    cli_alert_warning("Failed to remove temporary {type} {tmp_path}")
   }
 }

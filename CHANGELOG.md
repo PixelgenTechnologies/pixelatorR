@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Updates
 
+- Improved clean up of temporary files created by `ReadMPX_counts` and `ReadMPX_item`. 
 - `RunDPA` and `RunDCA` now accepts any numeric vector from the spatial metric table as input for differential testing. The metric is specified by `polarity_metric` (`RunDPA`) or `coloc_metric` (`RunDCA`).
 - Updated `subset` and `merge` methods for `MPXAssay` to have less stringent validation of the spatial metric tables (polarity and colocalization scores).  
 - Updated `ReadMPX_Seurat` to have less stringent validation of the spatial metric tables (polarity and colocalization scores).
