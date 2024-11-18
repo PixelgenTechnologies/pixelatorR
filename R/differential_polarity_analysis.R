@@ -189,15 +189,17 @@ RunDPA.data.frame <- function(
           )
         })
         if (!is.null(result$error)) {
-          warn(glue("Failed to compute Wilcoxon test for marker '{marker}': {target} vs {reference}\n",
-            "  Got the following error message when running wilcox.test:\n",
-            "  {col_red(result$error)}\n",
-            "  This test will be skipped.",
-            .trim = FALSE
-          ))
+          if (is.null(cl)) {
+            warn(glue("Failed to compute Wilcoxon test for marker '{marker}': {target} vs {reference}\n",
+                      "  Got the following error message when running wilcox.test:\n",
+                      "  {col_red(result$error)}\n",
+                      "  This test will be skipped.",
+                      .trim = FALSE
+            ))
+          }
           return(NULL)
         }
-        if (!is.null(result$warning)) {
+        if (!is.null(result$warning) && is.null(cl)) {
           warn(glue("Got the following message when running ",
             "wilcox.test test for marker '{marker}': {target} vs {reference}\n",
             "  {col_red(result$warning)}\n",
@@ -229,13 +231,13 @@ RunDPA.data.frame <- function(
 
         return(result)
       }) %>%
-        do.call(bind_rows, .)
+        bind_rows()
     })
 
-    return(pol_test_chunk %>% do.call(bind_rows, .))
+    return(pol_test_chunk %>% bind_rows())
   }, cl = cl)
 
-  pol_test_bind <- do.call(bind_rows, pol_test)
+  pol_test_bind <- bind_rows(pol_test)
 
   # Adjust p-values
   pol_test_bind <- pol_test_bind %>%

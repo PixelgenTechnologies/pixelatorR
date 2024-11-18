@@ -151,6 +151,15 @@ dca_markers <- RunDCA(object = seurat_object,
 }
 }
 
+\section{Error handling}{
+
+If the test fails for a certain comparison, a warning is raised
+and no results will be returned for that comparison. This can
+happen if one of the two groups being compared has too few observations.
+Note that when using parallel processing, these warnings are muted
+to reduce the overhead of communication between processes.
+}
+
 \examples{
 library(pixelatorR)
 library(dplyr)
