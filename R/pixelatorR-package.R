@@ -167,6 +167,7 @@
 #' @importFrom stringr str_sub
 #' @importFrom tibble as_tibble
 #' @importFrom tibble column_to_rownames
+#' @importFrom tibble rownames_to_column
 #' @importFrom tibble tibble
 #' @importFrom tidygraph %E>%
 #' @importFrom tidygraph %N>%
