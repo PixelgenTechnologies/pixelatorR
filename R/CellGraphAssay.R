@@ -765,9 +765,27 @@ setAs(
 #'
 PolarizationScores.MPXAssay <- function(
   object,
+  add_marker_counts = FALSE,
   ...
 ) {
-  slot(object, name = "polarization")
+
+  abort_if_not(
+    "add_marker_counts must be either TRUE or FALSE" =
+      is.logical(add_marker_counts) && length(add_marker_counts) == 1
+  )
+
+  pol_scores <- slot(object, name = "polarization")
+
+  # Add marker counts
+  if (add_marker_counts) {
+    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
+      rownames_to_column("component") %>%
+      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count")
+    pol_scores <- pol_scores %>%
+      left_join(all_counts, by = c("component", "marker"))
+  }
+
+  return(pol_scores)
 }
 
 
@@ -789,6 +807,9 @@ PolarizationScores.MPXAssay <- function(
 }
 
 
+#' @param add_marker_counts A logical value indicating whether to add marker
+#' counts to the colocalization score table.
+#'
 #' @method ColocalizationScores MPXAssay
 #'
 #' @rdname ColocalizationScores
@@ -797,9 +818,28 @@ PolarizationScores.MPXAssay <- function(
 #'
 ColocalizationScores.MPXAssay <- function(
   object,
+  add_marker_counts = FALSE,
   ...
 ) {
-  slot(object, name = "colocalization")
+
+  abort_if_not(
+    "add_marker_counts must be either TRUE or FALSE" =
+      is.logical(add_marker_counts) && length(add_marker_counts) == 1
+  )
+
+  coloc_scores <- slot(object, name = "colocalization")
+
+  # Add marker counts
+  if (add_marker_counts) {
+    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
+      rownames_to_column("component") %>%
+      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count")
+    coloc_scores <- coloc_scores %>%
+      left_join(all_counts %>% rename(count_1 = count), by = c("component", "marker_1" = "marker")) %>%
+      left_join(all_counts %>% rename(count_2 = count), by = c("component", "marker_2" = "marker"))
+  }
+
+  return(coloc_scores)
 }
 
 

@@ -113,6 +113,8 @@ FSMap.Seurat <- function(
 #' @param meta_data_columns A character vector with meta.data column names.
 #' This option can be useful to join meta.data columns with the polarization
 #' score table.
+#' @param add_marker_counts A logical value indicating whether to add marker
+#' counts to the polarization score table.
 #'
 #' @method PolarizationScores Seurat
 #'
@@ -124,6 +126,7 @@ PolarizationScores.Seurat <- function(
   object,
   assay = NULL,
   meta_data_columns = NULL,
+  add_marker_counts = FALSE,
   ...
 ) {
   # Use default assay if assay = NULL
@@ -134,7 +137,7 @@ PolarizationScores.Seurat <- function(
   }
 
   # Get polarizaation scores from CellGraphAssay
-  pol_scores <- PolarizationScores(object[[assay]])
+  pol_scores <- PolarizationScores(cg_assay, add_marker_counts)
 
   # Handle adding meta data columns
   if (!is.null(meta_data_columns)) {
@@ -191,7 +194,7 @@ PolarizationScores.Seurat <- function(
 
 #' @param assay Name of a \code{CellGraphAssay}
 #' @param meta_data_columns A character vector with meta.data column names.
-#' This option can be useful to join meta.data columns with the polarization
+#' This option can be useful to join meta.data columns with the colocalization
 #' score table.
 #'
 #' @method ColocalizationScores Seurat
@@ -204,6 +207,7 @@ ColocalizationScores.Seurat <- function(
   object,
   assay = NULL,
   meta_data_columns = NULL,
+  add_marker_counts = FALSE,
   ...
 ) {
   # Use default assay if assay = NULL
@@ -214,7 +218,7 @@ ColocalizationScores.Seurat <- function(
   }
 
   # Get colocalization scores
-  coloc_scores <- ColocalizationScores(cg_assay)
+  coloc_scores <- ColocalizationScores(cg_assay, add_marker_counts)
 
   # Handle adding meta data columns
   if (!is.null(meta_data_columns)) {

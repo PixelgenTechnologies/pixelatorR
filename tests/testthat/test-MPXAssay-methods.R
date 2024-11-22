@@ -113,6 +113,12 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(names(pol), c("morans_i", "morans_p_value", "morans_p_adjusted", "morans_z", "marker", "component"))
     expect_equal(dim(pol), c(380, 6))
 
+    # With marker counts
+    expect_no_error(pol <- PolarizationScores(cg_assay, add_marker_counts = TRUE))
+    expect_s3_class(pol, "tbl_df")
+    expect_equal(names(pol), c("morans_i", "morans_p_value", "morans_p_adjusted", "morans_z", "marker", "component", "count"))
+    expect_equal(dim(pol), c(380, 7))
+
     # Setter
     expect_no_error(PolarizationScores(cg_assay) <- PolarizationScores(cg_assay))
     expect_no_error(pol <- PolarizationScores(cg_assay))
@@ -147,6 +153,22 @@ for (assay_version in c("v3", "v5")) {
       )
     )
     expect_equal(dim(coloc), c(14649, 15))
+
+    # With marker counts
+    expect_no_error(coloc <- ColocalizationScores(cg_assay, add_marker_counts = TRUE))
+    expect_s3_class(coloc, "tbl_df")
+    expect_equal(
+      names(coloc),
+      c(
+        "marker_1", "marker_2", "pearson",
+        "pearson_mean", "pearson_stdev", "pearson_z",
+        "pearson_p_value", "pearson_p_value_adjusted",
+        "jaccard", "jaccard_mean", "jaccard_stdev",
+        "jaccard_z", "jaccard_p_value", "jaccard_p_value_adjusted",
+        "component", "count_1", "count_2"
+      )
+    )
+    expect_equal(dim(coloc), c(14649, 17))
 
     # Setter
     expect_no_error(ColocalizationScores(cg_assay) <- ColocalizationScores(cg_assay))

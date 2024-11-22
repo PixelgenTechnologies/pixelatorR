@@ -13,11 +13,17 @@ ColocalizationScores(object, ...)
 
 ColocalizationScores(object, ...) <- value
 
-\method{ColocalizationScores}{MPXAssay}(object, ...)
+\method{ColocalizationScores}{MPXAssay}(object, add_marker_counts = FALSE, ...)
 
 \method{ColocalizationScores}{MPXAssay}(object, ...) <- value
 
-\method{ColocalizationScores}{Seurat}(object, assay = NULL, meta_data_columns = NULL, ...)
+\method{ColocalizationScores}{Seurat}(
+  object,
+  assay = NULL,
+  meta_data_columns = NULL,
+  add_marker_counts = FALSE,
+  ...
+)
 
 \method{ColocalizationScores}{Seurat}(object, assay = NULL, ...) <- value
 }
@@ -28,10 +34,13 @@ ColocalizationScores(object, ...) <- value
 
 \item{value}{A \code{tbl_df} with colocalization scores}
 
+\item{add_marker_counts}{A logical value indicating whether to add marker
+counts to the colocalization score table.}
+
 \item{assay}{Name of a \code{CellGraphAssay}}
 
 \item{meta_data_columns}{A character vector with meta.data column names.
-This option can be useful to join meta.data columns with the polarization
+This option can be useful to join meta.data columns with the colocalization
 score table.}
 }
 \value{
