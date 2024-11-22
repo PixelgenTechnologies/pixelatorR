@@ -497,7 +497,7 @@ abort_if_not <- function(
     abort_if_not(
       "Parameter 'assay' must be a character of length 1" =
         is.character(assay) &&
-        (length(assay) == 1)
+          (length(assay) == 1)
     )
   } else {
     assay <- DefaultAssay(object)

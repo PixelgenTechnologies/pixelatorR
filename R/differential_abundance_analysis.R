@@ -125,11 +125,14 @@ RunDAA.Seurat <- function(
         filter(!!sym(contrast_column) == target) %>%
         pull(component)
 
-      cur_assay_subset <- try({
-        suppressWarnings({
-          subset(cg_assay, cells = group_data_split[[i]]$component)
-        })
-      }, silent = TRUE)
+      cur_assay_subset <- try(
+        {
+          suppressWarnings({
+            subset(cg_assay, cells = group_data_split[[i]]$component)
+          })
+        },
+        silent = TRUE
+      )
 
       if (inherits(cur_assay_subset, "try-error")) {
         abort(glue(

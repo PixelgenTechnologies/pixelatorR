@@ -191,10 +191,10 @@ RunDPA.data.frame <- function(
         if (!is.null(result$error)) {
           if (is.null(cl)) {
             warn(glue("Failed to compute Wilcoxon test for marker '{marker}': {target} vs {reference}\n",
-                      "  Got the following error message when running wilcox.test:\n",
-                      "  {col_red(result$error)}\n",
-                      "  This test will be skipped.",
-                      .trim = FALSE
+              "  Got the following error message when running wilcox.test:\n",
+              "  {col_red(result$error)}\n",
+              "  This test will be skipped.",
+              .trim = FALSE
             ))
           }
           return(NULL)

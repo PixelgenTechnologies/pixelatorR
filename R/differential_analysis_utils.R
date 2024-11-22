@@ -10,8 +10,8 @@
         stopifnot(
           "'group_vars' must be valid meta data column names" =
             inherits(group_vars, what = "character") &&
-            (length(group_vars) >= 1) &&
-            all(group_vars %in% colnames(.))
+              (length(group_vars) >= 1) &&
+              all(group_vars %in% colnames(.))
         )
         select(., all_of(c(contrast_column, group_vars)))
       } else {

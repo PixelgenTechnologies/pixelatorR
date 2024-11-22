@@ -768,7 +768,6 @@ PolarizationScores.MPXAssay <- function(
   add_marker_counts = FALSE,
   ...
 ) {
-
   abort_if_not(
     "add_marker_counts must be either TRUE or FALSE" =
       is.logical(add_marker_counts) && length(add_marker_counts) == 1
@@ -821,7 +820,6 @@ ColocalizationScores.MPXAssay <- function(
   add_marker_counts = FALSE,
   ...
 ) {
-
   abort_if_not(
     "add_marker_counts must be either TRUE or FALSE" =
       is.logical(add_marker_counts) && length(add_marker_counts) == 1
@@ -835,8 +833,10 @@ ColocalizationScores.MPXAssay <- function(
       rownames_to_column("component") %>%
       pivot_longer(where(is.numeric), names_to = "marker", values_to = "count")
     coloc_scores <- coloc_scores %>%
-      left_join(all_counts %>% rename(count_1 = count), by = c("component", "marker_1" = "marker")) %>%
-      left_join(all_counts %>% rename(count_2 = count), by = c("component", "marker_2" = "marker"))
+      left_join(all_counts %>%
+        rename(count_1 = count), by = c("component", "marker_1" = "marker")) %>%
+      left_join(all_counts %>%
+        rename(count_2 = count), by = c("component", "marker_2" = "marker"))
   }
 
   return(coloc_scores)
