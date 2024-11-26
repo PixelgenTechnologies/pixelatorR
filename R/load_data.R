@@ -373,9 +373,12 @@ ReadMPX_item <- function(
         item_name <- paste0(item, ".parquet")
 
         # Unzip item to temporary directory
-        check <- try({
-          zip::unzip(filename, files = item_name, exdir = exdir_temp)
-        }, silent = TRUE)
+        check <- try(
+          {
+            zip::unzip(filename, files = item_name, exdir = exdir_temp)
+          },
+          silent = TRUE
+        )
 
         if (inherits(check, "try-error")) {
           abort(glue("Failed to extract '{item_name}' from '{filename}'"))

@@ -13,11 +13,17 @@ PolarizationScores(object, ...)
 
 PolarizationScores(object, ...) <- value
 
-\method{PolarizationScores}{MPXAssay}(object, ...)
+\method{PolarizationScores}{MPXAssay}(object, add_marker_counts = FALSE, ...)
 
 \method{PolarizationScores}{MPXAssay}(object, ...) <- value
 
-\method{PolarizationScores}{Seurat}(object, assay = NULL, meta_data_columns = NULL, ...)
+\method{PolarizationScores}{Seurat}(
+  object,
+  assay = NULL,
+  meta_data_columns = NULL,
+  add_marker_counts = FALSE,
+  ...
+)
 
 \method{PolarizationScores}{Seurat}(object, assay = NULL, ...) <- value
 }
@@ -27,6 +33,9 @@ PolarizationScores(object, ...) <- value
 \item{...}{Not implemented}
 
 \item{value}{A \code{tbl_df} with polarization scores}
+
+\item{add_marker_counts}{A logical value indicating whether to add marker
+counts to the polarization score table.}
 
 \item{assay}{Name of a \code{CellGraphAssay}}
 

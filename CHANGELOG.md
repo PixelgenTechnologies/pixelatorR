@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Updates
 
+- Added option to fetch marker counts in `PolarizationScores` and `ColocalizationScores` methods. This is for example useful when filtering spatial metrics tables for markers with low counts.
 - Silenced warnings in `RunDPA`/`RunDCA` when running tests in parallel to avoid halting the R session.
 - Improved clean up of temporary files created by `ReadMPX_counts` and `ReadMPX_item`. 
 - `RunDPA` and `RunDCA` now accepts any numeric vector from the spatial metric table as input for differential testing. The metric is specified by `polarity_metric` (`RunDPA`) or `coloc_metric` (`RunDCA`).

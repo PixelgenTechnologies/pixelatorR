@@ -21,7 +21,6 @@ test_that("Data loading with ReadMPX_counts works as expected", {
   expect_type(pg_data$X, "integer")
   expect_equal(dim(pg_data$X), c(80, 5))
   expect_true(file.exists(pg_data$tmp_file))
-
 })
 
 
@@ -30,7 +29,6 @@ skip_on_os("windows")
 # This test will fail on the windows runner on GitHub
 # because TMP is not writable
 test_that("Data loading with ReadMPX_counts works as expected", {
-
   TEMP <- Sys.getenv("TMPDIR")
   session_tmp <- tempdir()
   # Temporarily change TMPDIR
@@ -51,5 +49,4 @@ test_that("Data loading with ReadMPX_counts works as expected", {
   Sys.setenv(TMPDIR = TEMP)
   unlink(temp_dir_use, recursive = TRUE)
   cur_temp_dir <- tempdir(check = TRUE)
-
 })

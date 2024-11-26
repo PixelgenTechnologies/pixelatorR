@@ -11,29 +11,34 @@ se$sample <- c("T", "R", "C", "C", "C") %>% rep(times = 10)
 se <- Seurat::NormalizeData(se, normalization.method = "CLR", margin = 2)
 
 test_that("RunDAA works as expected on a Seurat object", {
-
   # One target
   expect_no_error(suppressWarnings(daa_markers <- RunDAA(se,
-                                                         contrast_column = "sample",
-                                                         targets = "T", reference = "C"
+    contrast_column = "sample",
+    targets = "T", reference = "C"
   )))
 
   expected_result <-
     structure(
       list(
         marker = c("CD137", "CD62P"),
-        p = c(3.73436610215361e-07,
-              1.42675642066992e-06),
+        p = c(
+          3.73436610215361e-07,
+          1.42675642066992e-06
+        ),
         p_adj = c(2.98749288172289e-05, 0.000114140513653594),
-        difference = c(0.0672793901912557,-0.130339927355884),
-        pct_1 = c(1,
-                  0),
+        difference = c(0.0672793901912557, -0.130339927355884),
+        pct_1 = c(
+          1,
+          0
+        ),
         pct_2 = c(0.333, 1),
         target = c("T", "T"),
-        reference = c("C",
-                      "C")
+        reference = c(
+          "C",
+          "C"
+        )
       ),
-      row.names = c(NA,-2L),
+      row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     )
 
@@ -41,8 +46,8 @@ test_that("RunDAA works as expected on a Seurat object", {
 
   # Multiple targets
   expect_no_error(suppressWarnings(daa_markers <- RunDAA(se,
-                                                         contrast_column = "sample",
-                                                         targets = c("T", "R"), reference = "C"
+    contrast_column = "sample",
+    targets = c("T", "R"), reference = "C"
   )))
 
   expected_result <-
@@ -55,22 +60,28 @@ test_that("RunDAA works as expected on a Seurat object", {
           0.11041579736434,
           0.11041579736434
         ),
-        p_adj = c(5.97498576344578e-05, 0.000228281027307187,
-                  1, 1),
+        p_adj = c(
+          5.97498576344578e-05, 0.000228281027307187,
+          1, 1
+        ),
         difference = c(
           0.0672793901912557,
           -0.130339927355884,
           0.372004130942341,
           -0.345923096372618
         ),
-        pct_1 = c(1, 0, 1,
-                  1),
+        pct_1 = c(
+          1, 0, 1,
+          1
+        ),
         pct_2 = c(0.333, 1, 1, 1),
-        target = c("T", "T", "R",
-                   "R"),
+        target = c(
+          "T", "T", "R",
+          "R"
+        ),
         reference = c("C", "C", "C", "C")
       ),
-      row.names = c(NA,-4L),
+      row.names = c(NA, -4L),
       class = c("tbl_df", "tbl", "data.frame")
     )
 
