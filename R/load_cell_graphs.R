@@ -36,6 +36,11 @@ LoadCellGraphs.FileSystemDataset <- function(
         (chunk_size > 0)
   )
 
+  # Make sure that cells doesn't contain duplicated values
+  if (sum(duplicated(cells)) > 0) {
+    abort("'cells' cannot contain duplicated values.")
+  }
+
   # Validate load_as
   load_as <- match.arg(load_as, choices = c("bipartite", "Anode", "linegraph"))
 
@@ -113,6 +118,11 @@ LoadCellGraphs.tbl_df <- function(
       is.logical(add_marker_counts)
   )
 
+  # Make sure that cells doesn't contain duplicated values
+  if (sum(duplicated(cells)) > 0) {
+    abort("'cells' cannot contain duplicated values.")
+  }
+
   # Validate load_as
   load_as <- match.arg(load_as, choices = c("bipartite", "Anode", "linegraph"))
 
@@ -171,6 +181,10 @@ LoadCellGraphs.MPXAssay <- function(
       is.character(cells) &&
         (length(cells) > 0)
   )
+  # Make sure that cells doesn't contain duplicated values
+  if (sum(duplicated(cells)) > 0) {
+    abort("'cells' cannot contain duplicated values.")
+  }
   stopifnot(
     "'cells' must be present in 'object'" =
       all(cells %in% colnames(object))
