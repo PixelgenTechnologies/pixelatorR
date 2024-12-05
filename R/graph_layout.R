@@ -337,6 +337,7 @@ ComputeLayout.Seurat <- function(
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
+  cl = NULL,
   ...
 ) {
   # Use default assay if assay = NULL
@@ -371,6 +372,7 @@ ComputeLayout.Seurat <- function(
       verbose = verbose,
       custom_layout_function = custom_layout_function,
       custom_layout_function_args = custom_layout_function_args,
+      cl = cl,
       ...
     )
 
