@@ -265,7 +265,7 @@ ReadMPX_Seurat <- function(
         silent = TRUE
       )
       if (inherits(col, "try-error")) {
-        warn(glue("Column '{nm}' in var is empty. Skipping."))
+        warn(glue("Column '{nm}' in var is empty. Skipping.", .trim = FALSE))
         return(NULL)
       }
       return(col)
@@ -280,10 +280,23 @@ ReadMPX_Seurat <- function(
   .delete_temp_resource(data$tmp_file)
 
   if (getOption("Seurat.object.assay.version", "v3") == "v3") {
+    if (!"marker" %in% colnames(feature_meta_data)) {
+      feature_meta_data <- feature_meta_data %>%
+        rename(marker = !! sym("_index"))
+    }
     rownames(feature_meta_data) <- feature_meta_data$marker
-    seur_obj[[assay]]@meta.features <- feature_meta_data
+    check <- try({
+      seur_obj[[assay]]@meta.features <- feature_meta_data
+    })
   } else {
-    seur_obj[[assay]]@meta.data <- feature_meta_data
+    check <- try({
+      seur_obj[[assay]]@meta.data <- feature_meta_data
+    })
+  }
+  if (inherits(check, "try-error")) {
+    warn(glue(
+      "Failed to set feature meta data."
+    ))
   }
 
   # Set variable features to all features

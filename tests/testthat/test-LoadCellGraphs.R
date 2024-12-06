@@ -144,4 +144,16 @@ for (assay_version in c("v3", "v5")) {
       )
     }
   })
+
+  test_that("LoadCellGraphs fails with invalid input", {
+    expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], load_as = "invalid"))
+    expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], assay = "invalid"))
+    expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], add_marker_counts = "invalid"))
+    expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], load_layouts = "invalid"))
+    expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], force = "invalid"))
+    expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], chunk_size = "invalid"))
+
+    # LoadCellGraphs should fail with duplicated cell ids
+    expect_error(LoadCellGraphs(seur_obj, cells = rep(colnames(seur_obj)[1], 2)))
+  })
 }

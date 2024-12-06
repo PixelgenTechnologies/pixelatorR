@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- `LoadCellGraphs` now throws an error if duplicated cell ids (`cells`) are provided
 - PXL files missing spatial scores can now be loaded with `ReadMPX_Seurat` without throwing an error. This is useful when the pixelator pipeline was run without computing spatial scores.
 
 ## [0.11.0] - 2024-09-18
