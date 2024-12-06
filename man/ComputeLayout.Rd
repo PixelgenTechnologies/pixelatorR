@@ -101,6 +101,7 @@ ComputeLayout(object, ...)
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
+  cl = NULL,
   ...
 )
 }
