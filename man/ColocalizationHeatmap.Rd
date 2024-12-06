@@ -9,8 +9,17 @@ ColocalizationHeatmap(
   marker1_col = "marker_1",
   marker2_col = "marker_2",
   value_col = "estimate",
+  size_col = "p_adj",
+  size_col_transform = NULL,
+  size_range = c(0.1, 3),
   colors = c("#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7", "#FDDBC7",
     "#F4A582", "#D6604D", "#B2182B", "#67001F"),
+  cluster_rows = TRUE,
+  cluster_cols = TRUE,
+  clustering_distance_rows = "euclidean",
+  clustering_distance_cols = "euclidean",
+  clustering_method = "complete",
+  type = c("tiles", "dots"),
   return_plot_data = FALSE,
   symmetrise = TRUE,
   legend_range = NULL,
@@ -25,18 +34,50 @@ ColocalizationHeatmap(
 
 \item{marker2_col}{The name of the column with the second marker}
 
-\item{value_col}{The name of the column with the value to plot, such as the estimate of a differential analysis test.}
+\item{value_col}{The name of the column with numeric values to plot,
+such as the estimate of a differential analysis test.}
 
-\item{colors}{A character vector with colors}
+\item{size_col}{The name of a column with numeric values to scale the
+dots by. This is only used when \code{type = "dots"}.}
 
-\item{return_plot_data}{Return data formatted for plotting
-instead of drawing the heatmap}
+\item{size_col_transform}{A function to transform the values in \code{size_col}.
+For instance, if the size_col values are p-values, you can use \code{\(x) {-log10(x)}}
+to transform them to a more interpretative scale. Note that the size legend
+label will be the value for \code{size_col} with a "_transformed" suffix.
+The label can be changed manually after plotting. See examples below.}
 
-\item{symmetrise}{Set to \code{TRUE} if only the lower or upper triangle of marker combinations exist in \code{data},
-each row will then be mirrored to fill the missing triangle of the heatmap.}
+\item{size_range}{A numeric vector of length 2 with dot size range.}
 
-\item{legend_range}{A numeric vector of length 2 with the range of the legend. If NULL, the range is set to the
-maximum absolute value of the data. If a value is outside this range, it is set to the closest
+\item{colors}{A character vector with colors to create a color scale that
+the \code{value_col} are mapped to.}
+
+\item{cluster_rows, cluster_cols}{A logical value indicating whether to cluster
+the rows and/or columns.}
+
+\item{clustering_distance_rows, clustering_distance_cols}{The distance method
+to use for clustering rows and columns. Can be any method accepted by \code{dist}.}
+
+\item{clustering_method}{The clustering method to use. Can be any method
+accepted by \code{hclust}.}
+
+\item{type}{The type of plot to draw. Can be \code{"tiles"} for a typical
+heatmap where each marker pair corresponds to a filled tile or \code{"dots"}
+for a "dot plot". In the latter, the sizes of the dots are scaled by the
+\code{size_col} column. This representation has the added advantage that
+size differences can be used to highlight oter important information,
+such as significance. The dot plot is a \code{ggplot} object which can
+be easily modified to customize the style.}
+
+\item{return_plot_data}{Return data formatted for plotting instead of drawing
+the heatmap.}
+
+\item{symmetrise}{Set to \code{TRUE} if only the lower or upper triangle
+of marker combinations exist in \code{data}, each row will then be
+mirrored to fill the missing triangle of the heatmap.}
+
+\item{legend_range}{A numeric vector of length 2 with the range of the
+legend. If NULL, the range is set to the maximum absolute value of the
+data. If a value is outside this range, it is set to the closest
 legend range limit.}
 
 \item{legend_title}{The title of the legend}
@@ -44,9 +85,81 @@ legend range limit.}
 \item{...}{Parameters passed to \code{pheatmap}}
 }
 \value{
-A heatmap
+A \code{Heatmap} object/plot if \code{type = "tiles"} or a \code{ggplot}
+object/plot if \code{type = "dots"}.
 }
 \description{
-Draws a heatmap of estimates obtained from a differential analysis
-test computed with \code{\link{RunDCA}}.
+Draws a heatmap of estimates obtained from a \code{tbl_df} with
+differential analysis test results computed with \code{\link{RunDCA}}.
+}
+\section{Input}{
+
+Each marker pair can only appear once in the data. This means that if
+you ran the test across multiple groups, you need to subset the data first.
+}
+
+\examples{
+library(pixelatorR)
+library(dplyr)
+
+# Create a table with artificial DCA results
+# for the example
+set.seed(123)
+dca_markers <- tidyr::expand_grid(
+  marker_1 = paste0("M", 1:10),
+  marker_2 = paste0("M", 1:10)
+) \%>\%
+  filter(marker_1 > marker_2) \%>\%
+  mutate(estimate = rnorm(n(), 0, 1), p_adj = 10^(-rnorm(n(), 3, 2)))
+dca_markers
+
+# Typical heatmap
+ColocalizationHeatmap(dca_markers)
+
+# Skip symmetrisation
+ColocalizationHeatmap(dca_markers, symmetrise = FALSE)
+
+# Typical dot plot
+# Note that the size legend title needs to be set manually
+ColocalizationHeatmap(
+  dca_markers,
+  type = "dots",
+  size_range = c(1, 10),
+  size_col_transform = \(x) {-log10(x)}
+) &
+  labs(size = "-log10p(p_adj)")
+
+# We can specify the order of the markers with factor levels
+# but we need to turn off the clustering
+ColocalizationHeatmap(
+  dca_markers \%>\%
+    mutate(marker_1 = factor(marker_1, levels = paste0("M", 1:10)),
+           marker_2 = factor(marker_2, levels = paste0("M", 1:10))),
+  type = "dots",
+  size_range = c(1, 10),
+  size_col_transform = \(x) {-log10(x)},
+  cluster_rows = FALSE,
+  cluster_cols = FALSE
+) &
+  labs(size = "-log10p(p_adj)")
+
+# If there are multiple comparisons per marker pair, we need to subset
+# the data first
+dca_markers_two_tests <- bind_rows(
+  dca_markers \%>\% mutate(refrence = "ctrl", target = "stim1"),
+  dca_markers \%>\% mutate(refrence = "ctrl", target = "stim2")
+)
+dca_markers_two_tests
+
+# This will now fail
+\dontrun{
+  ColocalizationHeatmap(dca_markers_two_tests)
+}
+
+# We need to subset the data first
+ColocalizationHeatmap(
+  dca_markers_two_tests \%>\%
+    filter(target == "stim1")
+)
+
 }
