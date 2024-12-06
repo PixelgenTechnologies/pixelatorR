@@ -77,7 +77,9 @@
 #'   dca_markers,
 #'   type = "dots",
 #'   size_range = c(1, 10),
-#'   size_col_transform = \(x) {-log10(x)}
+#'   size_col_transform = \(x) {
+#'     -log10(x)
+#'   }
 #' ) &
 #'   labs(size = "-log10p(p_adj)")
 #'
@@ -85,11 +87,15 @@
 #' # but we need to turn off the clustering
 #' ColocalizationHeatmap(
 #'   dca_markers %>%
-#'     mutate(marker_1 = factor(marker_1, levels = paste0("M", 1:10)),
-#'            marker_2 = factor(marker_2, levels = paste0("M", 1:10))),
+#'     mutate(
+#'       marker_1 = factor(marker_1, levels = paste0("M", 1:10)),
+#'       marker_2 = factor(marker_2, levels = paste0("M", 1:10))
+#'     ),
 #'   type = "dots",
 #'   size_range = c(1, 10),
-#'   size_col_transform = \(x) {-log10(x)},
+#'   size_col_transform = \(x) {
+#'     -log10(x)
+#'   },
 #'   cluster_rows = FALSE,
 #'   cluster_cols = FALSE
 #' ) &
@@ -105,7 +111,7 @@
 #'
 #' # This will now fail
 #' \dontrun{
-#'   ColocalizationHeatmap(dca_markers_two_tests)
+#' ColocalizationHeatmap(dca_markers_two_tests)
 #' }
 #'
 #' # We need to subset the data first
@@ -160,8 +166,8 @@ ColocalizationHeatmap <- function(
       size_col %in% names(data),
     "'size_range' must be a numeric vector with positive values of length 2" =
       (inherits(size_range, what = "numeric") &&
-         length(size_range) == 2) &&
-      all(size_range > 0),
+        length(size_range) == 2) &&
+        all(size_range > 0),
     "size_col_transform must be a function" =
       is.null(size_col_transform) || is.function(size_col_transform),
     "'colors' must be a character vector with at least 2 colors" =
@@ -192,8 +198,10 @@ ColocalizationHeatmap <- function(
   # Validate data
   class_checks <- sapply(plot_data, class)
   if (!all(class_checks[1:2] %in% c("character", "factor"))) {
-    abort(glue("Invalid data format: {marker1_col} and ",
-    "{marker2_col} must be characters or factors"))
+    abort(glue(
+      "Invalid data format: {marker1_col} and ",
+      "{marker2_col} must be characters or factors"
+    ))
   }
 
   if (!all(class_checks[numeric_cols] %in% c("numeric"))) {
@@ -234,7 +242,7 @@ ColocalizationHeatmap <- function(
         is.function(size_col_transform)
     )
     plot_data <- plot_data %>%
-      mutate(!! sym(size_col) := size_col_transform(!! sym(size_col)))
+      mutate(!!sym(size_col) := size_col_transform(!!sym(size_col)))
     size_col_label <- paste0(size_col, "_transformed")
   } else {
     size_col_label <- size_col
@@ -286,11 +294,14 @@ ColocalizationHeatmap <- function(
 
   # Plot heatmap
   if (type == "dots") {
-    p <- ggplot(plot_data,
-                aes(!! sym(marker1_col),
-                    !! sym(marker2_col),
-                    fill = !! sym(value_col),
-                    size = !! sym(size_col))) +
+    p <- ggplot(
+      plot_data,
+      aes(!!sym(marker1_col),
+        !!sym(marker2_col),
+        fill = !!sym(value_col),
+        size = !!sym(size_col)
+      )
+    ) +
       geom_point(shape = 21) +
       scale_size(range = size_range) +
       scale_y_discrete(limits = rev) +
@@ -316,5 +327,4 @@ ColocalizationHeatmap <- function(
   }
 
   return(p)
-
 }
