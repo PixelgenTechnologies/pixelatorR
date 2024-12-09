@@ -53,6 +53,7 @@
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)
+#' library(ggplot2)
 #'
 #' # Create a table with artificial DCA results
 #' # for the example
