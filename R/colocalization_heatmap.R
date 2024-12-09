@@ -1,13 +1,21 @@
-#' Plot DCA results
+#' Plot a colocalization heatmap
 #'
-#' Draws a heatmap of estimates obtained from a \code{tbl_df} with
-#' differential analysis test results computed with \code{\link{RunDCA}}.
+#' Draws a heatmap of some summary statistic between marker pairs stored in a
+#' \code{tbl_df}. A typical use case is to show the estimates of a differential
+#' colocalization analysis test (\code{\link{RunDCA}}).
 #'
 #' @section Input:
+#' The input data should be a \code{tbl_df} object with at least these three columns:
+#'
+#' 1. A column with the first marker name.
+#' 2. A column with the second marker name.
+#' 3. A column with the numeric value to plot, such as the estimate of a differential
+#' analysis test or colocalization scores.
+#'
 #' Each marker pair can only appear once in the data. This means that if
 #' you ran the test across multiple groups, you need to subset the data first.
 #'
-#' @param data A \code{tbl_df} object generated with \code{\link{RunDCA}}
+#' @param data A \code{tbl_df}
 #' @param marker1_col The name of the column with the first marker
 #' @param marker2_col The name of the column with the second marker
 #' @param value_col The name of the column with numeric values to plot,
@@ -163,12 +171,10 @@ ColocalizationHeatmap <- function(
       marker2_col %in% names(data),
     "'value_col' is not in 'data'" =
       value_col %in% names(data),
-    "'size_col' is not in data" =
-      size_col %in% names(data),
-    "'size_range' must be a numeric vector with positive values of length 2" =
+    "'size_range' must be a numeric vector with non-negative values of length 2" =
       (inherits(size_range, what = "numeric") &&
         length(size_range) == 2) &&
-        all(size_range > 0),
+        (size_range[1] >= 0),
     "size_col_transform must be a function" =
       is.null(size_col_transform) || is.function(size_col_transform),
     "'colors' must be a character vector with at least 2 colors" =
@@ -187,6 +193,10 @@ ColocalizationHeatmap <- function(
   cols_keep <- c(marker1_col, marker2_col, value_col)
   numeric_cols <- value_col
   if (type == "dots") {
+    stopifnot(
+      "'size_col' is not in data" =
+        size_col %in% names(data)
+    )
     cols_keep <- c(cols_keep, size_col)
     numeric_cols <- c(numeric_cols, size_col)
   }
@@ -272,7 +282,7 @@ ColocalizationHeatmap <- function(
       rows_clust <- dist(plot_data_wide, method = clustering_distance_rows) %>%
         hclust(method = clustering_method)
       plot_data <- plot_data %>%
-        mutate(marker_1 = factor(marker_1, levels = rows_clust$labels))
+        mutate(marker_1 = factor(marker_1, levels = with(rows_clust, labels[order])))
     }
 
     # Cluster columns for the dots method
@@ -280,7 +290,7 @@ ColocalizationHeatmap <- function(
       cols_clust <- dist(plot_data_wide %>% t(), method = clustering_distance_cols) %>%
         hclust(method = clustering_method)
       plot_data <- plot_data %>%
-        mutate(marker_2 = factor(marker_2, levels = cols_clust$labels))
+        mutate(marker_2 = factor(marker_2, levels = with(cols_clust, labels[order])))
     }
   }
 

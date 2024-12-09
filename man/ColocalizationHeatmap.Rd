@@ -2,7 +2,7 @@
 % Please edit documentation in R/colocalization_heatmap.R
 \name{ColocalizationHeatmap}
 \alias{ColocalizationHeatmap}
-\title{Plot DCA results}
+\title{Plot a colocalization heatmap}
 \usage{
 ColocalizationHeatmap(
   data,
@@ -28,7 +28,7 @@ ColocalizationHeatmap(
 )
 }
 \arguments{
-\item{data}{A \code{tbl_df} object generated with \code{\link{RunDCA}}}
+\item{data}{A \code{tbl_df}}
 
 \item{marker1_col}{The name of the column with the first marker}
 
@@ -89,10 +89,19 @@ A \code{Heatmap} object/plot if \code{type = "tiles"} or a \code{ggplot}
 object/plot if \code{type = "dots"}.
 }
 \description{
-Draws a heatmap of estimates obtained from a \code{tbl_df} with
-differential analysis test results computed with \code{\link{RunDCA}}.
+Draws a heatmap of some summary statistic between marker pairs stored in a
+\code{tbl_df}. A typical use case is to show the estimates of a differential
+colocalization analysis test (\code{\link{RunDCA}}).
 }
 \section{Input}{
+
+The input data should be a \code{tbl_df} object with at least these three columns:
+\enumerate{
+\item A column with the first marker name.
+\item A column with the second marker name.
+\item A column with the numeric value to plot, such as the estimate of a differential
+analysis test or colocalization scores.
+}
 
 Each marker pair can only appear once in the data. This means that if
 you ran the test across multiple groups, you need to subset the data first.
@@ -101,6 +110,7 @@ you ran the test across multiple groups, you need to subset the data first.
 \examples{
 library(pixelatorR)
 library(dplyr)
+library(ggplot2)
 
 # Create a table with artificial DCA results
 # for the example
