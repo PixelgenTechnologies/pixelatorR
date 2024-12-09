@@ -64,7 +64,7 @@ accepted by \code{hclust}.}
 heatmap where each marker pair corresponds to a filled tile or \code{"dots"}
 for a "dot plot". In the latter, the sizes of the dots are scaled by the
 \code{size_col} column. This representation has the added advantage that
-size differences can be used to highlight oter important information,
+size differences can be used to highlight other important information,
 such as significance. The dot plot is a \code{ggplot} object which can
 be easily modified to customize the style.}
 
@@ -125,7 +125,9 @@ ColocalizationHeatmap(
   dca_markers,
   type = "dots",
   size_range = c(1, 10),
-  size_col_transform = \(x) {-log10(x)}
+  size_col_transform = \(x) {
+    -log10(x)
+  }
 ) &
   labs(size = "-log10p(p_adj)")
 
@@ -133,11 +135,15 @@ ColocalizationHeatmap(
 # but we need to turn off the clustering
 ColocalizationHeatmap(
   dca_markers \%>\%
-    mutate(marker_1 = factor(marker_1, levels = paste0("M", 1:10)),
-           marker_2 = factor(marker_2, levels = paste0("M", 1:10))),
+    mutate(
+      marker_1 = factor(marker_1, levels = paste0("M", 1:10)),
+      marker_2 = factor(marker_2, levels = paste0("M", 1:10))
+    ),
   type = "dots",
   size_range = c(1, 10),
-  size_col_transform = \(x) {-log10(x)},
+  size_col_transform = \(x) {
+    -log10(x)
+  },
   cluster_rows = FALSE,
   cluster_cols = FALSE
 ) &
@@ -153,7 +159,7 @@ dca_markers_two_tests
 
 # This will now fail
 \dontrun{
-  ColocalizationHeatmap(dca_markers_two_tests)
+ColocalizationHeatmap(dca_markers_two_tests)
 }
 
 # We need to subset the data first

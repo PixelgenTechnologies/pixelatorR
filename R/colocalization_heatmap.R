@@ -32,7 +32,7 @@
 #' heatmap where each marker pair corresponds to a filled tile or \code{"dots"}
 #' for a "dot plot". In the latter, the sizes of the dots are scaled by the
 #' \code{size_col} column. This representation has the added advantage that
-#' size differences can be used to highlight oter important information,
+#' size differences can be used to highlight other important information,
 #' such as significance. The dot plot is a \code{ggplot} object which can
 #' be easily modified to customize the style.
 #' @param return_plot_data Return data formatted for plotting instead of drawing
