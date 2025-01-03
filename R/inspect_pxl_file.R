@@ -25,7 +25,7 @@ inspect_pxl_file <- function(
     abort(glue("File '{pxl_file}' does not exist."))
   }
 
-  pxl_file_content <- unzip(pxl_file, list = TRUE)
+  pxl_file_content <- utils::unzip(pxl_file, list = TRUE)
 
   adata_file <- grep("adata.h5ad", pxl_file_content$Name)
   edgelist_file <- grep("edgelist.parquet", pxl_file_content$Name)

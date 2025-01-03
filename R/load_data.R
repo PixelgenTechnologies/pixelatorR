@@ -41,7 +41,7 @@ ReadMPX_counts <- function(
 
   # Unzip pxl file
   if (endsWith(filename, ".pxl")) {
-    check <- tryCatch(zip::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
+    check <- tryCatch(utils::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
       error = function(e) e,
       warning = function(w) w
     )
@@ -388,7 +388,7 @@ ReadMPX_item <- function(
         # Unzip item to temporary directory
         check <- try(
           {
-            zip::unzip(filename, files = item_name, exdir = exdir_temp)
+            utils::unzip(filename, files = item_name, exdir = exdir_temp)
           },
           silent = TRUE
         )
@@ -492,7 +492,7 @@ ReadMPX_metadata <- function(
 
   temp_dir <- fs::path_temp()
   temp_file <- fs::path(temp_dir, "metadata.json")
-  zip::unzip(
+  utils::unzip(
     zipfile = filename,
     files = "metadata.json",
     exdir = temp_dir
