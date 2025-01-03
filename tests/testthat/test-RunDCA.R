@@ -84,8 +84,23 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
   expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, legend_title = "Title"))
   expect_s4_class(p_heatmap, "Heatmap")
   expect_no_error(p_data <- ColocalizationHeatmap(dca_markers, return_plot_data = TRUE))
-  expect_s3_class(p_data, "data.frame")
+  expect_type(p_data, "double")
   expect_equal(dim(p_data), c(80, 80))
+
+  # Colocalization dot plot
+  expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, type = "dots"))
+  expect_s3_class(p_heatmap, "ggplot")
+  expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, type = "dots", colors = c("red", "blue")))
+  expect_s3_class(p_heatmap, "ggplot")
+  expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, type = "dots", value_col = "statistic"))
+  expect_s3_class(p_heatmap, "ggplot")
+  expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, type = "dots", symmetrise = FALSE))
+  expect_s3_class(p_heatmap, "ggplot")
+  expect_no_error(p_heatmap <- ColocalizationHeatmap(dca_markers, type = "dots", legend_range = c(-10, 10)))
+  expect_s3_class(p_heatmap, "ggplot")
+  expect_no_error(p_data <- ColocalizationHeatmap(dca_markers, type = "dots", return_plot_data = TRUE))
+  expect_s3_class(p_data, "tbl_df")
+  expect_equal(dim(p_data), c(168, 4))
 })
 
 test_that("RunDCA works as expected on a Seurat object", {
