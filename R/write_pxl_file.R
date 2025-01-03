@@ -86,6 +86,7 @@ WriteMPX_pxl_file <- function(
     "'overwrite' must be either TRUE or FALSE" =
       is.logical(overwrite)
   )
+  expect_zip()
 
   # Check if file exists
   if (fs::file_exists(file) && !overwrite) {
@@ -480,12 +481,12 @@ WriteMPX_pxl_file <- function(
   # If there is only one pixel file, we just copy the metadata.json file
   if (nrow(fs_map) == 1) {
     f <- fs_map$pxl_file
-    unzip(f, exdir = pxl_folder, files = "metadata.json")
+    utils::unzip(f, exdir = pxl_folder, files = "metadata.json")
   } else {
     # Read json files from multiple pixel files and merge them into a single json file
     json_files <- sapply(seq_len(nrow(fs_map)), function(i) {
       f <- fs_map$pxl_file[i]
-      unzip(f, exdir = pxl_folder, files = "metadata.json")
+      utils::unzip(f, exdir = pxl_folder, files = "metadata.json")
       sample_json <- file.path(pxl_folder, paste0("sample", i, ".json"))
       fs::file_move(file.path(pxl_folder, "metadata.json"), sample_json)
       return(sample_json)
@@ -580,7 +581,7 @@ WriteMPX_pxl_file <- function(
   sb <- cli_status("{symbol$arrow_right} Collecting edge lists from {nrow(fs_map)} files")
   parquet_files <- sapply(seq_len(nrow(fs_map)), function(i) {
     f <- fs_map$pxl_file[i]
-    unzip(f, exdir = pxl_folder, files = "edgelist.parquet")
+    utils::unzip(f, exdir = pxl_folder, files = "edgelist.parquet")
     sample_parquet <- file.path(pxl_folder, paste0("sample", i, ".parquet"))
     fs::file_move(file.path(pxl_folder, "edgelist.parquet"), sample_parquet)
     cli_status_update(

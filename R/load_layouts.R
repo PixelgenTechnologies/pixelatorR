@@ -54,7 +54,7 @@ ReadMPX_layouts <- function(
   }
   layout_files <- layout_files %>%
     filter(component %in% cells)
-  zip::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
+  utils::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
 
   # Load hive-styled parquet files
   coords <- arrow::open_dataset(temp_layout_dir)

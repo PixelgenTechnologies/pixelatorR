@@ -278,7 +278,7 @@ LoadCellGraphs.MPXAssay <- function(
     }
 
     # Unzip the edgelist parquet file to tmpdir
-    unzip(f, exdir = tempdir(), files = "edgelist.parquet")
+    utils::unzip(f, exdir = tempdir(), files = "edgelist.parquet")
     unz_pq_file <- file.path(tempdir(), "edgelist.parquet")
     pq_file <- fs::file_temp(ext = "parquet")
 
