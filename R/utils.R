@@ -229,7 +229,7 @@
       ))
     }
     # Check .pxl file for content
-    pxl_files <- unzip(f, list = TRUE)$Name
+    pxl_files <- utils::unzip(f, list = TRUE)$Name
 
 
     required_files <- c("adata.h5ad", "edgelist.parquet", "metadata.json")

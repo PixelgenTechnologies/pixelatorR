@@ -37,7 +37,6 @@ Imports:
     plotly,
     fs,
     pbapply,
-    zip,
     jsonlite,
     lifecycle
 Suggests:
@@ -55,7 +54,8 @@ Suggests:
     limma,
     mclust,
     lintr,
-    styler
+    styler,
+    zip
 Collate: 
     'generics.R'
     'CellGraph.R'

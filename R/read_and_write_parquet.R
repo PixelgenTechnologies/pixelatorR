@@ -45,7 +45,7 @@ ReadMPX_arrow_edgelist <- function(
     abort(glue("File '{pxl_file}' does not exist"))
   }
 
-  available_files <- unzip(pxl_file, list = TRUE)$Name
+  available_files <- utils::unzip(pxl_file, list = TRUE)$Name
   if (!"edgelist.parquet" %in% available_files) {
     abort(glue(".pxl file {filename} does not contain an 'edgelist.parquet' file"))
   }
@@ -67,7 +67,7 @@ ReadMPX_arrow_edgelist <- function(
   }
 
   # Extract the edgelist.parquet file
-  zip::unzip(pxl_file, files = "edgelist.parquet", exdir = edge_list_dir)
+  utils::unzip(pxl_file, files = "edgelist.parquet", exdir = edge_list_dir)
 
   # Read the parquet file
   ds <- arrow::open_dataset(fs::path(edge_list_dir, "edgelist.parquet"))

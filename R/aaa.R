@@ -76,3 +76,7 @@ expect_ComplexHeatmap <- function(...) {
 expect_Seurat <- function(...) {
   rlang::check_installed("Seurat", ...)
 }
+
+expect_zip <- function(...) {
+  rlang::check_installed("zip", ...)
+}
