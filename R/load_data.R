@@ -505,16 +505,19 @@ ReadMPX_metadata <- function(
   if (nrow(meta_data) == 0) {
     abort("No metadata found in the PXL file")
   }
-  analysis <- meta_data$analysis[[1]]
-  if (any(c("polarization", "colocalization") %in% names(analysis))) {
-    analysis <- unlist(analysis %>% unname())
-    names(analysis) <- names(analysis) %>%
-      stringr::str_replace("\\.", "_")
-  } else {
-    analysis <- unlist(analysis)
+
+  if ("analysis" %in% colnames(meta_data)) {
+    analysis <- meta_data$analysis[[1]]
+    if (any(c("polarization", "colocalization") %in% names(analysis))) {
+      analysis <- unlist(analysis %>% unname())
+      names(analysis) <- names(analysis) %>%
+        stringr::str_replace("\\.", "_")
+    } else {
+      analysis <- unlist(analysis)
+    }
+    meta_data$analysis <- list(params = analysis)
+    class(meta_data) <- c("pixelator_metadata", class(meta_data))
   }
-  meta_data$analysis <- list(params = analysis)
-  class(meta_data) <- c("pixelator_metadata", class(meta_data))
 
   return(meta_data)
 }
