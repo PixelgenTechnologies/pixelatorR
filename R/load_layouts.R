@@ -64,7 +64,7 @@ ReadMPX_layouts <- function(
   # If the name is int64, convert to character
   if (nm_dt == "int64") {
     coords <- coords %>%
-      mutate(name = arrow::cast(name, arrow::string()))
+      mutate(name = as.character(name))
   }
   coords <- coords %>%
     select(any_of(c("name", "x", "y", "z", "sample")), component, graph_projection, layout) %>%
