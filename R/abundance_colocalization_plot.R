@@ -48,31 +48,22 @@ AbundanceColocalizationPlot <- function(
   )
 ) {
   # Validate input parameters
-  stopifnot(
-    "'object' must be a Seurat object" =
-      inherits(object, "Seurat"),
-    "'markers_x' must be a character vector of length > 0" =
-      is.character(markers_x) & length(markers_x) > 0,
-    "'markers_y' must be a character vector of length > 0" =
-      is.character(markers_y) & length(markers_y) > 0,
-    "All markers in 'markers_x' must be present in the Seurat object" =
-      all(markers_x %in% rownames(object)),
-    "All markers in 'markers_y' must be present in the Seurat object" =
-      all(markers_y %in% rownames(object)),
-    "'shared_scales' must be either TRUE or FALSE" =
-      is.logical(shared_scales),
-    "'coord_fixed' must be either TRUE or FALSE" =
-      is.logical(coord_fixed),
-    "'pt_size' must be a numeric of length 1 or 2" =
-      is.numeric(pt_size) & length(pt_size) %in% c(1, 2),
-    "'draw_origo' must be either TRUE or FALSE" =
-      is.logical(draw_origo),
-    "'colors' must be a vector of colors" =
-      is.character(colors),
-    "'coloc_score' must be a character of length 1" =
-      is.character(coloc_score)
-  )
-
+  assert_class(object, "Seurat")
+  assert_vector(markers_x, type = "character", n = 1)
+  assert_vector(markers_y, type = "character", n = 1)
+  assert_x_in_y(markers_x, rownames(object))
+  assert_x_in_y(markers_y, rownames(object))
+  assert_single_value(shared_scales, type = "bool")
+  assert_single_value(coord_fixed, type = "bool")
+  if (!(is.numeric(pt_size) && length(pt_size) %in% c(1, 2))) {
+    cli::cli_abort(
+      c("i" = "'pt_size' must be a {.cls numeric} of length 1 or 2",
+        "x" = "You've provided a {.cls {class(pt_size)}} of length {length(pt_size)}")
+    )
+  }
+  assert_single_value(draw_origo, type = "bool")
+  assert_vector(colors, type = "character", n = 2)
+  assert_single_value(coloc_score, type = "string")
 
   # Get data
   plot_data <-

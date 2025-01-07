@@ -160,43 +160,33 @@ ColocalizationHeatmap <- function(
   expect_ComplexHeatmap()
 
   # Validate data
-  if (!inherits(data, what = "tbl_df")) {
-    abort(glue("'data' must be a 'tbl_df' object"))
-  }
+  assert_class(data, "tbl_df")
   type <- match.arg(type, choices = c("tiles", "dots"))
-  stopifnot(
-    "'marker1_col' is not in 'data'" =
-      marker1_col %in% names(data),
-    "'marker2_col' is not in 'data'" =
-      marker2_col %in% names(data),
-    "'value_col' is not in 'data'" =
-      value_col %in% names(data),
-    "'size_range' must be a numeric vector with non-negative values of length 2" =
-      (inherits(size_range, what = "numeric") &&
-        length(size_range) == 2) &&
-        (size_range[1] >= 0),
-    "size_col_transform must be a function" =
-      is.null(size_col_transform) || is.function(size_col_transform),
-    "'colors' must be a character vector with at least 2 colors" =
-      inherits(colors, what = "character") &&
-        (length(colors) > 1),
-    "'return_plot_data' must be a logical" =
-      inherits(return_plot_data, what = "logical"),
-    "'symmetrise' must be a logical" =
-      inherits(symmetrise, what = "logical"),
-    "'legend_range' must be a numeric vector of length 2" =
-      is.null(legend_range) || (inherits(legend_range, what = "numeric") && length(legend_range) == 2),
-    "'legend_title' must be a character" =
-      inherits(legend_title, what = "character") & length(legend_title) == 1
-  )
+  assert_col_in_data(marker1_col, data)
+  assert_col_in_data(marker2_col, data)
+  assert_col_in_data(value_col, data)
+  assert_function(size_col_transform, allow_null = TRUE)
+  assert_vector(colors, type = "character")
+  assert_single_value(return_plot_data, type = "bool")
+  assert_single_value(symmetrise, type = "bool")
+  assert_single_value(legend_title, "string")
+  assert_class(size_range, "numeric")
+  assert_length(size_range, 2)
+  if (any(size_range[1] < 0)) {
+    cli::cli_abort(
+      c("i" = "{.arg size_range} must have non-negative values",
+        "x" = "Found {.val {sum(size_range < 0)}} negative values")
+    )
+  }
+  if (!is.null(legend_range)) {
+    assert_class(legend_range, c("numeric", "integer"))
+    assert_length(legend_range, 2)
+  }
 
   cols_keep <- c(marker1_col, marker2_col, value_col)
   numeric_cols <- value_col
   if (type == "dots") {
-    stopifnot(
-      "'size_col' is not in data" =
-        size_col %in% names(data)
-    )
+    assert_col_in_data(size_col, data)
     cols_keep <- c(cols_keep, size_col)
     numeric_cols <- c(numeric_cols, size_col)
   }
@@ -207,21 +197,22 @@ ColocalizationHeatmap <- function(
     )
 
   # Validate data
-  class_checks <- sapply(plot_data, class)
-  if (!all(class_checks[1:2] %in% c("character", "factor"))) {
-    abort(glue(
-      "Invalid data format: {marker1_col} and ",
-      "{marker2_col} must be characters or factors"
-    ))
-  }
-
-  if (!all(class_checks[numeric_cols] %in% c("numeric"))) {
-    abort(glue("Invalid data format: '{paste(numeric_cols, collapse = 'and ')}' must be numeric"))
+  assert_col_class(marker1_col, plot_data, classes = c("character", "factor"))
+  assert_col_class(marker2_col, plot_data, classes = c("character", "factor"))
+  assert_col_class(value_col, plot_data, classes = "numeric")
+  if (size_col %in% cols_keep) {
+    assert_col_class(size_col, plot_data, classes = "numeric")
   }
 
   # Validate heatmap data
-  if (nrow(distinct(select(plot_data, all_of(c(marker1_col, marker2_col))))) != nrow(plot_data)) {
-    abort(glue("Invalid data format: There are multiple instances '{marker1_col}'/'{marker2_col}' pairs"))
+  dup_rows <- duplicated(select(plot_data, all_of(c(marker1_col, marker2_col))))
+  if (sum(dup_rows) > 0) {
+    dup_pairs <- select(plot_data, all_of(c(marker1_col, marker2_col))) %>%
+      apply(1, paste, collapse = "/")
+    cli::cli_abort(
+      c("i" = "Each row must represent a unique {.var {marker1_col}}/{.var {marker2_col}} pair",
+        "x" = "Found duplicated pairs: {.val {dup_pairs}}")
+    )
   }
 
   if (symmetrise) {
@@ -248,10 +239,6 @@ ColocalizationHeatmap <- function(
 
   # Transform size col
   if (!is.null(size_col_transform)) {
-    stopifnot(
-      "size_col_transform must be a function" =
-        is.function(size_col_transform)
-    )
     plot_data <- plot_data %>%
       mutate(!!sym(size_col) := size_col_transform(!!sym(size_col)))
     size_col_label <- paste0(size_col, "_transformed")

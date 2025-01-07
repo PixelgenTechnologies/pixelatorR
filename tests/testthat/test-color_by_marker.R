@@ -68,10 +68,10 @@ test_that("color_by_marker works as expected", {
 
 
 test_that("color_by_marker fails when invalid input is provided", {
-  expect_error(cg_colored <- color_by_marker(cg, markers = "Invalid"), "Invalid missing from count matrix")
-  expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", smooth_counts = "Invalid"), "'smooth' must be TRUE or FALSE")
+  expect_error(cg_colored <- color_by_marker(cg, markers = "Invalid"))
+  expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", smooth_counts = "Invalid"))
   expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", mode = "Invalid"))
-  expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", normalize = "Invalid"), "'normalize' must be TRUE or FALSE")
-  expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", trim_quantiles = c(-1, 1)), "'trim_quantiles' must be betweeen 0 and 1")
-  expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", nNodes = 1e6), "'nNodes' must be a positive value smaller than the number of nodes in the graph.")
+  expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", normalize = "Invalid"))
+  expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", trim_quantiles = c(-1, 1)))
+  expect_error(cg_colored <- color_by_marker(cg, markers = "CD9", nNodes = 1e6))
 })

@@ -28,6 +28,6 @@ test_that("CreateCellGraphAssay works as expected", {
 })
 
 test_that("CreateCellGraphAssay fails when invalid input is provided", {
-  expect_error(CreateCellGraphAssay(counts = "Invalid input", cellgraphs = bipartite_graphs), "'counts' must be a matrix-like object")
-  expect_error(CreateCellGraphAssay(counts = mat, cellgraphs = "Invalid input"), "'cellgraphs' must be a 'list'")
+  expect_error(CreateCellGraphAssay(counts = "Invalid input", cellgraphs = bipartite_graphs))
+  expect_error(CreateCellGraphAssay(counts = mat, cellgraphs = "Invalid input"))
 })

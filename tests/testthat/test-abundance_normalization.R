@@ -104,22 +104,21 @@ test_that("NormalizeMPX works as expected", {
         "isotype_control_that_could_exist_but_does_not"
       )
     ),
-    regexp = "All isotype controls must be present in the rownames of the counts matrix"
+    regexp = "All elements of `isotype_controls` must be present in"
   )
 
   expect_error(
     NormalizeMPX(se,
       method = "dsb",
       isotype_controls = NULL
-    ),
-    regexp = "isotype_controls must have at least one element"
+    )
   )
 })
 
 # Test Assay5 only
 se5 <- se
 se <- NormalizeMPX(se, method = "clr")
-se5[["mpxCells"]] <- as(object = se[["mpxCells"]], Class = "Assay5")
+suppressWarnings({se5[["mpxCells"]] <- as(object = se[["mpxCells"]], Class = "Assay5")})
 se5 <- NormalizeMPX(se5, method = "clr")
 test_that("CellGraphAssay5 and Assay5 are equal", {
   expect_equal(

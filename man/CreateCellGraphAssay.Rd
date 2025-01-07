@@ -38,7 +38,6 @@ Create a \code{\link{CellGraphAssay}} object from a count matrix. The expected
 format of the input matrix is features x cells.
 }
 \examples{
-
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)

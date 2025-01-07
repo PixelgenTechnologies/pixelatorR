@@ -136,6 +136,39 @@ DensityScatterPlot <- function(
   ...
 ) {
   # Validate input parameters
+  assert_vector(facet_vars, type = "character", n = 1, allow_null = TRUE)
+  assert_max_length(facet_vars, n = 2, allow_null = TRUE)
+  for (facet_var in facet_vars) {
+    assert_col_in_data(facet_var, object[[]], allow_null = TRUE)
+  }
+  assert_single_value(marker1, type = "string")
+  assert_single_value(marker2, type = "string")
+  assert_x_in_y(marker1, rownames(object))
+  assert_x_in_y(marker2, rownames(object))
+  assert_single_value(grid_n, type = "integer")
+  assert_single_value(scale_density, type = "bool")
+  assert_single_value(margin_density, type = "bool")
+  assert_single_value(pt_size, type = "numeric")
+  assert_single_value(alpha, type = "numeric")
+  assert_single_value(layer, type = "string", allow_null = TRUE)
+  assert_single_value(coord_fixed, type = "bool")
+  assert_class(plot_gate, "data.frame", allow_null = TRUE)
+  if (!is.null(plot_gate)) {
+    assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate))
+  }
+  assert_class(object, "Seurat")
+
+  if (!is.null(plot_gate)) {
+    check <- !names(plot_gate) %in% c("xmin", "xmax", "ymin", "ymax", facet_vars)
+    if (sum(check) > 0) {
+      cli::cli_abort(
+        c("i" = "'plot_gate' can't contain facetting variables that are not in {.var facet_vars}",
+          "x" = "The following variables are not in {.var facet_vars}: ",
+          " " = "{.val {names(plot_gate)[check]}}")
+      )
+    }
+  }
+
   stopifnot(
     "'facet_vars' must either be NULL or be a character vector with 1 or 2 elements" =
       is.null(facet_vars) | length(facet_vars) %in% 1:2,

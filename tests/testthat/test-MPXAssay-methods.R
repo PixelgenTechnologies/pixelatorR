@@ -37,10 +37,7 @@ for (assay_version in c("v3", "v5")) {
   })
 
   test_that("RenameCells.MPXAssay method fails when invalid input is provided", {
-    expect_error(
-      RenameCells(cg_assay, new.names = "Invalid"),
-      "'new.names' must be a character vector where "
-    )
+    expect_error(RenameCells(cg_assay, new.names = "Invalid"))
   })
 
   # subset method
@@ -80,18 +77,8 @@ for (assay_version in c("v3", "v5")) {
   })
 
   test_that("merge.MPXAssay fails when invalid input is provided", {
-    expect_error(
-      {
-        cg_assay_merged <- merge(cg_assay, y = "Invalid")
-      },
-      "'y' must be a 'CellGraphAssay"
-    )
-    expect_error(
-      {
-        cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))
-      },
-      "Element 2 in 'y' is not a"
-    )
+    expect_error({cg_assay_merged <- merge(cg_assay, y = "Invalid")})
+    expect_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))})
     expect_no_error({
       cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C"))
     })

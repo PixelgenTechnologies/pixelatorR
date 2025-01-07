@@ -80,28 +80,16 @@ CreateCellGraphObject <- function(
   verbose = FALSE
 ) {
   # Check input parameters
-  stopifnot(
-    "'cellgraph' must be a non-empty 'tbl_graph' object" =
-      inherits(cellgraph, what = "tbl_graph") &&
-        (length(cellgraph) > 0)
-  )
+  assert_non_empty_object(cellgraph, classes = "tbl_graph")
   if (!is.null(counts)) {
-    stopifnot(
-      "'counts' must be a non-empty 'dgCMatrix' object" =
-        inherits(counts, what = "dgCMatrix") &&
-          (length(counts) > 0)
-    )
+    assert_non_empty_object(counts, classes = "dgCMatrix")
   }
   if (!is.null(layout)) {
-    stopifnot(
-      "'layout' must be a non-empty 'tbl_df' object" =
-        inherits(layout, what = "tbl_df") &&
-          (length(layout) > 0)
-    )
+    assert_non_empty_object(counts, classes = "tbl_df")
   }
 
   if (!"type" %in% names(attributes(cellgraph))) {
-    abort("Graph attribute 'type' is missing.")
+    cli::cli_abort(c("x" = "Graph attribute 'type' is missing."))
   } else {
     if (verbose && check_global_verbosity()) {
       cli_alert_info("Got a graph of type '{attr(cellgraph, 'type')}'")
@@ -110,7 +98,7 @@ CreateCellGraphObject <- function(
 
   # Add checks for graph types
   if (attr(cellgraph, "type") == "bipartite") {
-    stopifnot(
+    abort_if_not(
       "Node attribute 'name' is missing" =
         "name" %in% vertex_attr_names(cellgraph),
       "Node attribute 'node_type' is missing" =
@@ -179,9 +167,12 @@ CellGraphData <- function(
   object,
   slot = "cellgraph"
 ) {
-  if (!inherits(object, what = "CellGraph")) abort(glue("Invalid class {class(object)}"))
+  assert_class(object, "CellGraph")
+  assert_single_value(slot, type = "string")
   if (!(slot %in% slotNames(x = object))) {
-    abort(glue("slot must be one of {paste(slotNames(x = object), collapse = ', ')}"))
+    cli::cli_abort(
+      c("x" = "{.arg slot} must be one of {.str {slotNames(x = object)}} but got {.str slot}")
+    )
   }
   return(slot(object = object, name = slot))
 }
@@ -204,7 +195,7 @@ CellGraphData <- function(
   slot = "cellgraph",
   value
 ) {
-  if (!inherits(object, what = "CellGraph")) abort(glue("Invalid class {class(object)}"))
+  assert_class(object, "CellGraph")
   if (!(slot %in% slotNames(x = object))) {
     abort(glue("slot must be one of {paste(slotNames(x = object), collapse = ', ')}"))
   }
@@ -216,23 +207,18 @@ CellGraphData <- function(
 
   # Validate cellgraph input
   if (slot == "cellgraph") {
-    stopifnot(
-      "'value' must be a 'tbl_graph' object" =
-        inherits(value, what = "tbl_graph")
-    )
+    assert_class(value, "tbl_graph")
     if (length(counts) > 0) {
-      stopifnot(
-        "names in 'value' do not match the row names of 'counts'" =
-          all(names(value) == rownames(counts))
-      )
+      assert_vectors_match(value %N>% pull(name), rownames(counts))
     }
     if (length(layouts) > 0) {
       for (layout in names(layouts)) {
         if (length(value) != nrow(layouts[[layout]])) {
-          abort(glue(
-            "Number of nodes in 'value' does not match the ",
-            "number of rows in the '{layout}' layout table"
-          ))
+          cli::cli_abort(
+            c("x" =
+                "Number of nodes in the provided {.cls {class(value)}} does not match ",
+              " " = "the number of rows in the 'layout' slot '{layout}' table")
+          )
         }
       }
     }
@@ -241,53 +227,49 @@ CellGraphData <- function(
 
   # Validate counts input
   if (slot == "counts") {
-    stopifnot(
-      "'value' must be a 'dgCMatrix' object" =
-        inherits(value, what = "dgCMatrix")
-    )
+    assert_class(value, "dgCMatrix")
+    assert_vectors_match(cellgraph %N>% pull(name), rownames(value))
     if (length(layouts) > 0) {
       for (layout in names(layouts)) {
         if (nrow(counts) != nrow(layouts[[layout]])) {
-          abort(glue(
-            "Number of rows in 'value' does not match the ",
-            "number of rows in the '{layout}' layout table"
-          ))
+          cli::cli_abort(
+            c("x" =
+                "Number of rows ({nrow(counts)}) in the provided {.cls {class(value)}} does not match ",
+              " " = "the number of rows ({nrow(layouts[[layout]])}) in the 'layout' slot '{layout}' table")
+          )
         }
       }
     }
-    stopifnot(
-      "Number of rows in 'value' do not match the number of nodes in 'cellgraph'" =
-        length(cellgraph) == nrow(value)
-    )
     slot(object, name = "counts") <- counts
   }
 
   # Validate layout input
   if (slot == "layout") {
-    stopifnot(
-      "'value' must be a 'list'" =
-        inherits(value, what = "list"),
-      "'value' is empty" =
-        length(value) > 0,
-      "'names' of 'value' cannot be NULL" =
-        !is.null(names(value))
-    )
+    assert_non_empty_object(value, "list")
+    if (is.null(names(value))) {
+      cli::cli_abort("The {.cls {class(value)}} must be named")
+    }
     for (layout in names(value)) {
-      stopifnot(
-        inherits(value[[layout]], what = "tbl_df")
-      )
+      if (!inherits(value[[layout]], what = "tbl_df")) {
+        cli::cli_abort(
+          c("x" =
+              "The '{layout}' layout table must be a {.cls tbl_df}")
+        )
+      }
       if (length(cellgraph) != nrow(value[[layout]])) {
-        abort(glue(
-          "Number of nodes in 'cellgraph' does not match the ",
-          "number of rows in the '{layout}' layout table provided in 'value'"
-        ))
+        cli::cli_abort(
+          c("x" =
+              "Number of nodes ({length(cellgraph)}) in the 'cellgraph' slot does not match ",
+            " " = "the number of rows ({nrow(value[[layout]])}) in the provided '{layout}' layout table")
+        )
       }
       if (length(counts) > 0) {
         if (nrow(counts) != nrow(value[[layout]])) {
-          abort(glue(
-            "Number of rows in 'counts' does not match ",
-            "the number of rows in '{layout}' table provided in 'value'"
-          ))
+          cli::cli_abort(
+            c("x" =
+                "Number of rows ({nrow(counts)}) in the 'counts' slot does not match the ",
+              " " = "number of rows ({nrow(value[[layout]])}) in the provided '{layout}' layout table")
+          )
         }
       }
     }

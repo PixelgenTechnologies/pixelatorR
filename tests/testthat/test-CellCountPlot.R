@@ -30,6 +30,6 @@ test_that("CellCountPlot works for data.frame-like objects", {
 
 test_that("CellCountPlot fails with invalid input", {
   expect_error(CellCountPlot(seur_obj), 'argument "color_by" is missing, with no default')
-  expect_error(CellCountPlot(seur_obj, color_by = "edges"), "'color_by' must be a character or factor")
-  expect_error(CellCountPlot(seur_obj, color_by = "leiden", group_by = "edges"), "'group_by' must be a character or factor")
+  expect_error(CellCountPlot(seur_obj, color_by = "edges"))
+  expect_error(CellCountPlot(seur_obj, color_by = "leiden", group_by = "edges"))
 })
