@@ -187,7 +187,7 @@ assert_x_in_y <- function(
 
     cli::cli_abort(
       c("i" = "All elements of {.arg {arg_x}} must be present in {.arg {arg_y}}.",
-        "x" = "Positions of missing elements: {.val {missing_elements}}"
+        "x" = "Positions of missing element(s) in {.arg {arg_x}}: {.val {missing_elements}}"
       ),
       call = call)
   }
@@ -197,10 +197,14 @@ assert_x_in_y <- function(
 assert_single_values_are_different <- function(
   x,
   y,
+  allow_null = FALSE,
   arg_x = caller_arg(x),
   arg_y = caller_arg(y),
   call = caller_env()
 ) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
   stopifnot(
     "`x` and `y` must be vectors" =
       is_vector(x) && is_vector(y),
@@ -335,10 +339,14 @@ assert_unique <- function(
 assert_col_class <- function(
   x,
   data,
-  arg_data = caller_arg(data),
   classes,
+  allow_null = FALSE,
+  arg_data = caller_arg(data),
   call = caller_env()
 ) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
   stopifnot(
     "`x` must be a string`" =
       is_string(x),
@@ -350,9 +358,9 @@ assert_col_class <- function(
     cli::cli_abort(
       c("i" = ifelse(
         length(classes) == 1,
-        "Column {.var x} in {.arg {arg_data}} must be a {classes}.",
-        "Column {.var x} in {.arg {arg_data}} must be one of {.cls {classes}}."),
-        "x" = "Column {.var x} is a {.cls {class(col_x)}}."),
+        "Column {.val {x}} in {.arg {arg_data}} must be a {.cls {classes}}.",
+        "Column {.val {x}} in {.arg {arg_data}} must be one of {.cls {classes}}."),
+        "x" = "Column {.val {x}} is a {.cls {class(col_x)}}."),
       call = call)
   }
 }
@@ -365,7 +373,7 @@ assert_col_in_data <- function(
   arg_data = caller_arg(data),
   call = caller_env()
 ) {
-  if (allow_null && is.null(data)) {
+  if (allow_null && is.null(x)) {
     return(invisible(NULL))
   }
   stopifnot(

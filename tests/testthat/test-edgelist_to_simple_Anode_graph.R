@@ -13,6 +13,6 @@ test_that("edgelist_to_simple_Anode_graph works as expected", {
 })
 
 test_that("edgelist_to_simple_Anode_graph fails when invalid input is provided", {
-  expect_error(edgelist_to_simple_Anode_graph(object = tibble()), "edgelist must be a non-empty object")
-  expect_error(edgelist_to_simple_Anode_graph(object = data.frame(x = seq(1, 10))), "One or several of 'upia', 'upib' are missing from edgelist")
+  expect_error(edgelist_to_simple_Anode_graph(object = tibble()))
+  expect_error(edgelist_to_simple_Anode_graph(object = data.frame(x = seq(1, 10))))
 })

@@ -197,7 +197,9 @@ CellGraphData <- function(
 ) {
   assert_class(object, "CellGraph")
   if (!(slot %in% slotNames(x = object))) {
-    abort(glue("slot must be one of {paste(slotNames(x = object), collapse = ', ')}"))
+    cli::cli_abort(
+      c("x" = "{.arg slot} must be one of {.str {slotNames(x = object)}} but got {.str {slot}}")
+    )
   }
 
   # Get counts and layouts

@@ -344,8 +344,11 @@ ComputeLayout.Seurat <- function(
   assay <- assay %||% DefaultAssay(object)
 
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
+  if (!inherits(cg_assay, "MPXAssay")) {
+    cli::cli_abort(
+      c("i" = "The selected assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
+        "x" = "The selected assay is a {.cls {class(cg_assay)}} object.")
+    )
   }
 
   # Check cellgraphs
@@ -393,17 +396,14 @@ ComputeLayout.Seurat <- function(
   dim
 ) {
   # Make sure that a function is provided
-  if (!inherits(custom_layout_function, what = "function")) {
-    abort(glue(
-      "Invalid class '{class(custom_layout_function)[1]}' for ",
-      "'custom_layout_function'. Expected a 'function'."
-    ))
-  }
+  assert_function(custom_layout_function)
 
   # Make sure that the custom_layout_function_args is a list
   if (!is.null(custom_layout_function_args)) {
     if (!inherits(custom_layout_function_args, what = "list")) {
-      abort(glue("'custom_layout_function_args' should be a list with function arguments"))
+      cli::cli_abort(
+        c("x" = "{.var custom_layout_function_args} should be a list with function arguments")
+      )
     }
   }
 }
@@ -419,17 +419,21 @@ ComputeLayout.Seurat <- function(
 ) {
   # Validate results
   if (!inherits(layout, what = "matrix")) {
-    abort(glue("Expected a 'matrix' from 'custom_layout_function', but got a '{class(layout)[1]}'"))
+    cli::cli_abort(
+      c("x" = "Expected a {.cls matrix} from 'custom_layout_function', but got a {.cls {class(layout)[1]}}")
+    )
   }
   if (ncol(layout) != dim) {
-    abort(glue("Expected dim={dim} from 'custom_layout_function' result, but got dim={ncol(layout)}"))
+    cli::cli_abort(
+      c("x" = "Expected {dim} columns in the output from 'custom_layout_function', but got {ncol(layout)}")
+    )
   }
   if (nrow(layout) != n_nodes) {
-    abort(glue(
-      "Invalid number of rows returned by 'custom_layout_function'. ",
-      "The number of rows in the layout should match the number of ",
-      "nodes in the graph"
-    ))
+    cli::cli_abort(
+      c("x" = "Invalid number of rows returned by 'custom_layout_function'. ",
+        " " = "The number of rows in the layout should match the number of ",
+        " " = "nodes in the graph ({.val {n_nodes}})")
+    )
   }
 }
 
@@ -497,13 +501,13 @@ ComputeLayout.Seurat <- function(
 center_layout_coordinates <- function(
   layout
 ) {
-  stopifnot(
-    "'layout' must be a non-empty, matrix-like object" =
-      inherits(layout, what = c("matrix", "data.frame")) &&
-        length(layout) > 0,
-    "'layout' can only have 2 or 3 columns" =
-      ncol(layout) %in% c(2, 3)
-  )
+  assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
+  if (!(ncol(layout) %in% c(2, 3))) {
+    cli::cli_abort(
+      c("i" = "The layout must have 2 or 3 columns",
+        "x" = "You've provided a layout with {.val {ncol(layout)}} columns")
+    )
+  }
 
   # Force rename columns to x, y, z
   colnames(layout) <- c("x", "y", "z")[seq_len(ncol(layout))]
@@ -533,13 +537,13 @@ center_layout_coordinates <- function(
 normalize_layout_coordinates <- function(
   layout
 ) {
-  stopifnot(
-    "'layout' must be a non-empty, matrix-like object" =
-      inherits(layout, what = c("matrix", "data.frame")) &&
-        length(layout) > 0,
-    "'layout' can only have 2 or 3 columns" =
-      ncol(layout) %in% c(2, 3)
-  )
+  assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
+  if (!(ncol(layout) %in% c(2, 3))) {
+    cli::cli_abort(
+      c("i" = "The layout must have 2 or 3 columns",
+        "x" = "You've provided a layout with {.val {ncol(layout)}} columns")
+    )
+  }
 
   layout <- center_layout_coordinates(layout)
 
@@ -571,13 +575,13 @@ normalize_layout_coordinates <- function(
 project_layout_coordinates_on_unit_sphere <- function(
   layout
 ) {
-  stopifnot(
-    "'layout' must be a non-empty, matrix-like object" =
-      inherits(layout, what = c("matrix", "data.frame")) &&
-        length(layout) > 0,
-    "'layout' can only have 3 columns" =
-      ncol(layout) == 3
-  )
+  assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
+  if (ncol(layout) != 3) {
+    cli::cli_abort(
+      c("i" = "The layout must have 3 columns",
+        "x" = "You've provided a layout with {.val {ncol(layout)}} columns")
+    )
+  }
 
   layout <- center_layout_coordinates(layout)
 

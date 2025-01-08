@@ -67,40 +67,19 @@ Plot2DGraph <- function(
   return_plot_list = FALSE,
   ...
 ) {
-  # Validate input parameters
-  stopifnot(
-    "'object' must be a Seurat object" =
-      inherits(object, what = "Seurat"),
-    "'colors' must be a character vector with at least 2 colors" =
-      is.character(colors) &&
-        (length(colors) > 1),
-    "'map_nodes' must be either TRUE or FALSE" =
-      is.logical(map_nodes) &&
-        (length(map_nodes) == 1),
-    "'map_edges' must be either TRUE or FALSE" =
-      is.logical(map_edges) &&
-        (length(map_edges) == 1),
-    "'map_nodes' and 'map_edges' cannot be deactivated at the same time" =
-      map_nodes ||
-        map_edges,
-    "'cells' must be a non-empty character vector with cell IDs" =
-      is.character(cells) &&
-        (length(cells) > 0),
-    "'node_size' must be a numeric value" =
-      is.numeric(node_size) &&
-        (length(node_size) == 1),
-    "'edge_width' must be a numeric value" =
-      is.numeric(edge_width) &&
-        (length(edge_width) == 1)
-  )
-
-  if (!is.null(marker)) {
-    stopifnot(
-      "'marker' must be a character of length 1" =
-        is.character(marker) &&
-          (length(marker) == 1)
+  assert_class(object, "Seurat")
+  assert_vector(colors)
+  assert_single_value(map_nodes, type = "bool")
+  assert_single_value(map_edges, type = "bool")
+  if ((map_nodes == FALSE) && (map_edges == FALSE)) {
+    cli::cli_abort(
+      c("x" = "One of {.var map_nodes} or {.var map_edges} must be TRUE")
     )
   }
+  assert_vector(cells, type = "character", n = 1)
+  assert_single_value(node_size, type = "numeric")
+  assert_single_value(edge_width, type = "numeric")
+  assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select a layout method
   layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
@@ -115,19 +94,18 @@ Plot2DGraph <- function(
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-          (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     assay <- DefaultAssay(object)
   }
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay' or a 'CellGraphAssay5' object."))
+  if (!inherits(cg_assay, "MPXAssay")) {
+    cli::cli_abort(
+      c("i" = "The selected assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
+        "x" = "The selected assay is a {.cls {class(cg_assay)}} object.")
+    )
   }
 
   # Fetch data
@@ -135,7 +113,11 @@ Plot2DGraph <- function(
     # Fetch component graph
     component_graph <- CellGraphs(cg_assay)[[cell_id]]
     if (is.null(component_graph)) {
-      abort(glue("Missing cellgraph for component '{cell_id}'"))
+      cli::cli_abort(
+        c("i" = "All selected cells must have a component graph loaded.",
+          " " = "Did you forget to run {.fn LoadCellGraphs}?",
+          "x" = "Missing {.cls CellGraph} for component {.str {cell_id}}")
+      )
     }
 
     # unpack values
@@ -144,10 +126,11 @@ Plot2DGraph <- function(
     # Validate marker
     if (!is.null(marker)) {
       if (marker == "node_type") {
-        stopifnot(
-          "marker = 'node_type' can only be used for bipartite graphs" =
-            attr(graph, "type") == "bipartite"
-        )
+        if (!attr(graph, "type") == "bipartite") {
+          cli::cli_abort(
+            c("x" = "{.var marker = 'node_type'} can only be used for bipartite graphs")
+          )
+        }
       } else {
         if (!marker %in% colnames(component_graph@counts)) {
           cli_alert_danger(
@@ -163,10 +146,14 @@ Plot2DGraph <- function(
 
     layout <- component_graph@layout[[layout_method]]
     if (length(graph) == 0) {
-      abort(glue("Missing cellgraph for component '{cell_id}'"))
+      cli::cli_abort(
+        c("x" = "Missing cellgraph for component '{.val {cell_id}}'")
+      )
     }
     if (length(layout) == 0) {
-      abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
+      cli::cli_abort(
+        c("x" = "Missing layout {.str {layout_method}} for component '{.val {cell_id}}'")
+      )
     }
 
     # Add node marker counts if needed
@@ -354,16 +341,10 @@ Plot2DGraphM <- function(
   titles_col = "black",
   ...
 ) {
-  stopifnot(
-    "'cells' must be a non-empty characted vector" =
-      is.character(cells) && (length(cells) > 0),
-    "'markers' must be a non-empty characted vector" =
-      is.character(cells) && (length(markers) > 0),
-    "'titles_size' must be a numeric of length 1" =
-      is.numeric(titles_size) && (length(titles_size) == 1),
-    "'titles_col' must be a character of length 1" =
-      is.character(titles_col) && (length(titles_col) == 1)
-  )
+  assert_vector(cells, type = "character", n = 1)
+  assert_vector(markers, type = "character", n = 1)
+  assert_single_value(titles_size, type = "numeric")
+  assert_single_value(titles_col, type = "string")
 
   # Set layout options
   ncols <- length(cells)
@@ -371,19 +352,10 @@ Plot2DGraphM <- function(
 
   # Validate titles and titles_theme
   if (!is.null(titles)) {
-    stopifnot(
-      "'titles' must be a named character vector with the same number of elements as 'cells'" =
-        is.character(titles) &&
-          (length(titles) == length(cells)) &&
-          all(names(titles) == cells)
-    )
+    assert_vector(titles, type = "character", n = 1)
+    assert_vectors_match(cells, names(titles))
     titles <- titles[cells]
-    if (!is.null(titles_theme)) {
-      stopifnot(
-        "'titles_theme' must have class 'theme'" =
-          inherits(titles_theme, what = "theme")
-      )
-    }
+    assert_class(titles_theme, "theme", allow_null = TRUE)
   } else {
     titles <- cells
   }
@@ -561,45 +533,35 @@ Plot3DGraph <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "'object' must be a Seurat object" =
-      inherits(object, what = "Seurat"),
-    "'colors' must be a character vector with at least 2 color names" =
-      is.character(colors) &&
-        (length(colors) >= 2),
-    "'cell_id' must be a non-empty character vector with a single cell ID" =
-      is.character(cell_id) &&
-        (length(cell_id) == 1),
-    "'cell_id' must be present in the object" =
-      cell_id %in% colnames(object)
-  )
-
-  if (!is.null(marker)) {
-    stopifnot(
-      "'marker' must be a character of length 1" =
-        is.character(marker) &&
-          (length(marker) == 1)
+  assert_class(object, "Seurat")
+  assert_vector(colors, type = "character")
+  assert_single_value(cell_id, type = "string")
+  if (!(cell_id %in% colnames(object))) {
+    cli::cli_abort(
+      c("i" = "Please provide a valid {.var cell_id}",
+        "x" = "Cell ID {.var {cell_id}} not found in the {.cls Seurat} object")
     )
   }
+
+  assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select an aspectmode
   aspectmode <- match.arg(aspectmode, choices = c("data", "cube"))
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-          (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     assay <- DefaultAssay(object)
   }
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay' or a 'CellGraphAssay5' object"))
+  if (!inherits(cg_assay, "MPXAssay")) {
+    cli::cli_abort(
+      c("i" = "The selected assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
+        "x" = "The selected assay is a {.cls {class(cg_assay)}} object.")
+    )
   }
 
   # Fetch component graph
@@ -612,34 +574,39 @@ Plot3DGraph <- function(
   # Validate marker
   if (!is.null(marker)) {
     if (marker == "node_type") {
-      stopifnot(
-        "marker = 'node_type' can only be used for bipartite graphs" =
-          attr(graph, "type") == "bipartite"
-      )
+      if (!attr(graph, "type") == "bipartite") {
+        cli::cli_abort(
+          c("x" = "{.var marker = 'node_type'} can only be used for bipartite graphs")
+        )
+      }
     } else {
       if (!marker %in% colnames(component_graph@counts)) {
-        abort(glue(
-          "'{marker}' is missing from node count matrix ",
-          "for component {cell_id}"
-        ))
+        cli::cli_abort(
+          "marker {.val {marker}} is missing from node count matrix for component {.val {cell_id}}"
+        )
       }
     }
   }
 
 
   if (!layout_method %in% names(component_graph@layout)) {
-    abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
+    cli::cli_abort(
+      c("x" = "Missing layout {.str {layout_method}} for component '{.val {cell_id}}'")
+    )
   }
   layout <- component_graph@layout[[layout_method]]
 
   if (length(graph) == 0) {
-    abort(glue("Missing cellgraph for component '{cell_id}'"))
+    cli::cli_abort(
+      c("x" = "Missing cellgraph for component '{.val {cell_id}}'")
+    )
   }
   if (ncol(layout) != 3) {
-    abort(glue(
-      "Expected 3 dimensions in '{layout_method}'",
-      " layout, found {ncol(layout)}'"
-    ))
+    cli::cli_abort(
+     c(
+       "x" = "Layout {.val layout_method} must have 3 columns but has {ncol(layout)} columns"
+     )
+    )
   }
 
   # Add node marker counts if needed

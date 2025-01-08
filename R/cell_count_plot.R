@@ -36,12 +36,10 @@ CellCountPlot.data.frame <- function(
   # Validate input
   assert_col_in_data(color_by, object)
   assert_col_class(color_by, object, classes = c("character", "factor"))
-  if (!is.null(group_by)) {
-    assert_single_value(group_by, type = "string")
-    assert_single_values_are_different(group_by, color_by)
-    assert_col_in_data(group_by, object)
-    assert_col_class(group_by, object, classes = c("character", "factor"))
-  }
+  assert_single_value(group_by, type = "string", allow_null = TRUE)
+  assert_single_values_are_different(group_by, color_by, allow_null = TRUE)
+  assert_col_in_data(group_by, object, allow_null = TRUE)
+  assert_col_class(group_by, object, classes = c("character", "factor"), allow_null = TRUE)
 
   # Create plot
   if (!is.null(group_by)) {

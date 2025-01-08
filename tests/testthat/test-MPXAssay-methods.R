@@ -20,7 +20,7 @@ for (assay_version in c("v3", "v5")) {
 
   test_that("CellGraphs.MPXAssay getter/setter fails when invalid input is provided", {
     expect_error(CellGraphs("Invalid input"))
-    expect_error(CellGraphs(cg_assay) <- "Invalid input", "Invalid class 'character'")
+    expect_error(CellGraphs(cg_assay) <- "Invalid input")
     expect_error(CellGraphs(cg_assay) <- setNames(cg_assay@cellgraphs, nm = paste0(names(cg_assay@cellgraphs), "invalid")))
     cgs <- cg_assay@cellgraphs
     cgs[[1]] <- "Invalid"

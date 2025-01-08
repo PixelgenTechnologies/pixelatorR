@@ -375,17 +375,23 @@ CellGraphs.MPXAssay <- function(
 
   # Validate list
   if (inherits(x = value, what = "list")) {
-    if (!all(names(value) == names(CellGraphs(object)))) {
-      abort("new list names must match the current cellgraphs list names")
-    }
+    assert_vectors_match(names(value), names(CellGraphs(object)))
     for (i in seq_along(value)) {
       if (!inherits(x = value[[i]], what = c("CellGraph", "NULL"))) {
-        abort(glue("Element {i} is not a CellGraph object or NULL"))
+        cli::cli_abort(
+          c(
+            "i" = "All elements of {.var value} must be of class {.cls CellGraph} or {.cls NULL}",
+            "x" = "Element {i} of {.var value} is a {.cls {class(value[[i]])}}"
+          )
+        )
       }
     }
     slot(object = object, name = "cellgraphs") <- value
   } else {
-    abort(glue("Invalid class '{class(value)}'"))
+   cli::cli_abort(
+     c("i" = "{.var value} must be a {.cls list}",
+       "x" = "You've provided a {.cls {class(value)}}")
+   )
   }
   return(object)
 }
@@ -550,10 +556,15 @@ as.CellGraphAssay.Assay <- function(
   # Check cellgraphs
   if (!is.null(cellgraphs)) {
     assert_non_empty_object(cellgraphs, classes = "list")
-    assert_single_x_y_equal(length(cellgraphs), ncol(x))
+    assert_singles_match(length(cellgraphs), ncol(x))
     for (i in seq_along(cellgraphs)) {
       if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
-        abort(glue("Element {i} is not a CellGraph object or NULL"))
+        cli::cli_abort(
+          c(
+            "i" = "All elements of {.var cellgraphs} must be of class {.cls CellGraph} or {.cls NULL}",
+            "x" = "Element {i} of {.var cellgraphs} is a {.cls {class(cellgraphs[[i]])}}"
+          )
+        )
       }
     }
   } else {
@@ -670,10 +681,15 @@ as.CellGraphAssay5.Assay5 <- function(
   # Check cellgraphs
   if (!is.null(cellgraphs)) {
     assert_non_empty_object(cellgraphs, classes = "list")
-    assert_single_x_y_equal(length(cellgraphs), ncol(x))
+    assert_singles_match(length(cellgraphs), ncol(x))
     for (i in seq_along(cellgraphs)) {
       if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
-        abort(glue("Element {i} is not a CellGraph object or NULL"))
+        cli::cli_abort(
+          c(
+            "i" = "All elements of {.var cellgraphs} must be of class {.cls CellGraph} or {.cls NULL}",
+            "x" = "Element {i} of {.var cellgraphs} is a {.cls {class(cellgraphs[[i]])}}"
+          )
+        )
       }
     }
   } else {
@@ -1177,7 +1193,12 @@ merge.MPXAssay <- function(
   if (is.list(y)) {
     for (i in seq_along(y)) {
       if (!inherits(y[[i]], what = "MPXAssay")) {
-        abort(glue("Element {i} in 'y' is not a 'CellGraphAssay(5)' object"))
+        cli::cli_abort(
+          c(
+            "i" = "All elements of {.var y} must be {.cls CellGraphAssay} or {.cls CellGraphAssay5} objects",
+            "x" = "Element {i} of {.var y} is a {.cls {class(y[[i]])}}"
+          )
+        )
       }
     }
   }
@@ -1187,10 +1208,13 @@ merge.MPXAssay <- function(
 
   # Define add.cell.ids
   if (!is.null(add.cell.ids)) {
-    abort_if_not(
-      "Length of 'add.cell.ids' must match the number of objects to merge" =
-        length(add.cell.ids) == length(objects)
-    )
+    if (!(length(add.cell.ids) == length(objects))) {
+      cli::cli_abort(
+        c("i" = "Length of 'add.cell.ids' must match the number of objects to merge",
+          "x" = "Length of 'add.cell.ids': {.val {length(add.cell.ids)}}",
+          "x" = "Number of objects to merge: {.val {length(objects)}}")
+      )
+    }
     objects <- lapply(seq_along(objects), function(i) {
       objects[[i]] %>%
         RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) %>%
@@ -1202,10 +1226,11 @@ merge.MPXAssay <- function(
   unique_names <- table(cell_names)
   names_are_duplicated <- any(unique_names > 1)
   if (names_are_duplicated && is.null(add.cell.ids)) {
-    abort(glue(
-      "Found non-unique IDs across samples. A 'add.cell.ids' must be specified. ",
-      "Alternatively, make sure that each separate object has unique cell names."
-    ))
+    cli::cli_abort(
+      c("i" =  "Found non-unique cell IDs across samples. {.var add.cell.ids} must be specified. ",
+        " " = "Alternatively, make sure that each separate object has unique cell IDs.",
+        "x" = "Duplicated IDs: {.val {names(unique_names)[unique_names > 1]}}")
+    )
   }
 
   # Fetch standard assays

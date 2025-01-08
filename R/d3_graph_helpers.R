@@ -58,7 +58,7 @@ color_by_marker <- function(
   assert_single_value(normalize, type = "bool")
   assert_class(trim_quantiles, "numeric")
   assert_length(trim_quantiles, 2)
-  assert_within_lmits(trim_quantiles, c(0, 1))
+  assert_within_limits(trim_quantiles, c(0, 1))
   if (trim_quantiles[2] <= trim_quantiles[1]) {
     cli::cli_abort(
       c("x" = "'trim_quantiles[2]' must be larger than 'trim_quantiles[1]'")

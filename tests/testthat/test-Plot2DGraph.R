@@ -42,8 +42,7 @@ for (assay_version in c("v3", "v5")) {
     expect_error(
       {
         layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", colors = "invalid")
-      },
-      "'colors' must be a character vector with at least 2 colors"
+      }
     )
     expect_error({
       layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", assay = "invalid")
@@ -51,26 +50,22 @@ for (assay_version in c("v3", "v5")) {
     expect_error(
       {
         layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", map_nodes = "invalid")
-      },
-      "'map_nodes' must be either TRUE or FALSE"
+      }
     )
     expect_error(
       {
         layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", map_edges = "invalid")
-      },
-      "'map_edges' must be either TRUE or FALSE"
+      }
     )
     expect_error(
       {
         layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", node_size = "invalid")
-      },
-      "'node_size' must be a numeric value"
+      }
     )
     expect_error(
       {
         layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", edge_width = "invalid")
-      },
-      "'edge_width' must be a numeric value"
+      }
     )
   })
 
@@ -89,8 +84,7 @@ for (assay_version in c("v3", "v5")) {
     expect_error(
       {
         layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), colors = "invalid")
-      },
-      "'colors' must be a character vector with at least 2 colors"
+      }
     )
     expect_error({
       layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), assay = "invalid")
@@ -98,26 +92,22 @@ for (assay_version in c("v3", "v5")) {
     expect_error(
       {
         layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), map_nodes = "invalid")
-      },
-      "'map_nodes' must be either TRUE or FALSE"
+      }
     )
     expect_error(
       {
         layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), map_edges = "invalid")
-      },
-      "'map_edges' must be either TRUE or FALSE"
+      }
     )
     expect_error(
       {
         layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), node_size = "invalid")
-      },
-      "'node_size' must be a numeric value"
+      }
     )
     expect_error(
       {
         layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), edge_width = "invalid")
-      },
-      "'edge_width' must be a numeric value"
+      }
     )
   })
 }

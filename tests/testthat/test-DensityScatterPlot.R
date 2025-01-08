@@ -160,8 +160,7 @@ for (assay_version in c("v3", "v5")) {
         layer = "counts",
         facet_vars = "sample",
         margin_density = T
-      ),
-      regexp = "Marginal density is not supported"
+      )
     )
     expect_error(
       DensityScatterPlot(object,

@@ -51,6 +51,14 @@ AbundanceColocalizationPlot <- function(
   assert_class(object, "Seurat")
   assert_vector(markers_x, type = "character", n = 1)
   assert_vector(markers_y, type = "character", n = 1)
+  if (length(intersect(markers_x, markers_y)) > 0) {
+    cli::cli_abort(
+      c("i" = "The markers in 'markers_x' and 'markers_y' must be different",
+        "x" = "You've provided the following marker(s) in both 'markers_x' and 'markers_y':",
+        "x" = "{.val {intersect(markers_x, markers_y)}}"
+      )
+    )
+  }
   assert_x_in_y(markers_x, rownames(object))
   assert_x_in_y(markers_y, rownames(object))
   assert_single_value(shared_scales, type = "bool")
@@ -89,16 +97,8 @@ AbundanceColocalizationPlot <- function(
   coloc_scores <-
     ColocalizationScores(object)
 
-  if (!coloc_score %in% colnames(coloc_scores)) {
-    abort(glue("'{coloc_score}' is not a valid colocalization score."))
-  }
-
-  if (!is.numeric(coloc_scores[[coloc_score]])) {
-    abort(glue(
-      "'{coloc_score}' must reference a column with numeric values, ",
-      "got {class(coloc_scores[[coloc_score]])}."
-    ))
-  }
+  assert_col_in_data(coloc_score, coloc_scores)
+  assert_col_class(coloc_score, coloc_scores, classes = "numeric")
 
   coloc_scores <-
     coloc_scores %>%

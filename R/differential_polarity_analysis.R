@@ -105,9 +105,9 @@ RunDPA.data.frame <- function(
       ) %>%
       filter(ref_n > 0, target_n > 0)
     if (nrow(test_groups) == 0) {
-      abort(glue(
-        "Found no groups with at least {min_n_obs} observations."
-      ))
+      cli::cli_abort(
+        c("x" = "Found no groups with at least {.val {min_n_obs}} observations.")
+      )
     }
   }
 
