@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- pixelatorR read functions now uses `utils::unzip` instead of `zip::unzip` to support PXL files larger than 2GB
 - `LoadCellGraphs` now throws an error if duplicated cell ids (`cells`) are provided
 - PXL files missing spatial scores can now be loaded with `ReadMPX_Seurat` without throwing an error. This is useful when the pixelator pipeline was run without computing spatial scores.
 
