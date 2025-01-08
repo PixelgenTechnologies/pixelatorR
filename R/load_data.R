@@ -41,7 +41,7 @@ ReadMPX_counts <- function(
 
   # Unzip pxl file
   if (endsWith(filename, ".pxl")) {
-    check <- tryCatch(zip::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
+    check <- tryCatch(utils::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
       error = function(e) e,
       warning = function(w) w
     )
@@ -388,7 +388,7 @@ ReadMPX_item <- function(
         # Unzip item to temporary directory
         check <- try(
           {
-            zip::unzip(filename, files = item_name, exdir = exdir_temp)
+            utils::unzip(filename, files = item_name, exdir = exdir_temp)
           },
           silent = TRUE
         )
@@ -492,7 +492,7 @@ ReadMPX_metadata <- function(
 
   temp_dir <- fs::path_temp()
   temp_file <- fs::path(temp_dir, "metadata.json")
-  zip::unzip(
+  utils::unzip(
     zipfile = filename,
     files = "metadata.json",
     exdir = temp_dir
@@ -505,16 +505,19 @@ ReadMPX_metadata <- function(
   if (nrow(meta_data) == 0) {
     abort("No metadata found in the PXL file")
   }
-  analysis <- meta_data$analysis[[1]]
-  if (any(c("polarization", "colocalization") %in% names(analysis))) {
-    analysis <- unlist(analysis %>% unname())
-    names(analysis) <- names(analysis) %>%
-      stringr::str_replace("\\.", "_")
-  } else {
-    analysis <- unlist(analysis)
+
+  if ("analysis" %in% colnames(meta_data)) {
+    analysis <- meta_data$analysis[[1]]
+    if (any(c("polarization", "colocalization") %in% names(analysis))) {
+      analysis <- unlist(analysis %>% unname())
+      names(analysis) <- names(analysis) %>%
+        stringr::str_replace("\\.", "_")
+    } else {
+      analysis <- unlist(analysis)
+    }
+    meta_data$analysis <- list(params = analysis)
+    class(meta_data) <- c("pixelator_metadata", class(meta_data))
   }
-  meta_data$analysis <- list(params = analysis)
-  class(meta_data) <- c("pixelator_metadata", class(meta_data))
 
   return(meta_data)
 }

@@ -22,11 +22,11 @@
 ReadMPX_layouts <- function(
   filename,
   cells = NULL,
-  graph_projection = c("bipartite", "Anode", "linegraph"),
+  graph_projection = c("bipartite", "Anode", "linegraph", "full"),
   verbose = TRUE
 ) {
   graph_projection <- match.arg(graph_projection,
-    choices = c("bipartite", "Anode", "linegraph")
+    choices = c("bipartite", "Anode", "linegraph", "full")
   )
 
   # Check file
@@ -54,10 +54,18 @@ ReadMPX_layouts <- function(
   }
   layout_files <- layout_files %>%
     filter(component %in% cells)
-  zip::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
+  utils::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
 
   # Load hive-styled parquet files
   coords <- arrow::open_dataset(temp_layout_dir)
+
+  # Check name data type
+  nm_dt <- (coords %>% schema())$GetFieldByName("name")$ToString() %>% stringr::str_remove("name: ")
+  # If the name is int64, convert to character
+  if (nm_dt == "int64") {
+    coords <- coords %>%
+      mutate(name = as.character(name))
+  }
   coords <- coords %>%
     select(any_of(c("name", "x", "y", "z", "sample")), component, graph_projection, layout) %>%
     collect()
