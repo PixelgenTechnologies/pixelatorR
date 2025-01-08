@@ -217,7 +217,7 @@ WriteMPX_pxl_file <- function(
     if (inherits(X, "try-error")) {
       cli::cli_abort(
         c("i" = "Please ensure that all layers have the same number of rows.",
-          "x" = "Failed to combine 'Assay5' layers due to invalid dimensions.",)
+          "x" = "Failed to combine 'Assay5' layers due to invalid dimensions.")
       )
     }
   }
@@ -249,7 +249,7 @@ WriteMPX_pxl_file <- function(
   .add_encoding_version_attribute(adata_new, version = "0.1.0")
 
   # Fetch raw counts from CellgraphAssay(5) object and
-  # add as dataset to to /X
+  # add as dataset to /X
   X <- .fetch_counts(cg_assay)
   adata_new$create_dataset("X",
     robj = as.matrix(X),

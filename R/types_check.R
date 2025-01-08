@@ -5,6 +5,10 @@
 #'
 #' @param x,y An object to check
 #' @param data A data-frame like object
+#' @param type A character string specifying the type or vector class to check against.
+#' @param allow_null Either \code{TRUE} or \code{FALSE}. If \code{TRUE}, \code{x}
+#' can be \code{NULL} and the check passes.
+#' @param n An integer
 #' @param arg,arg_x,arg_y,arg_data The name of an argument to check. Used for error messages.
 #' @param call An environment, typically the environment in which the function
 #' was called
@@ -457,7 +461,7 @@ assert_non_empty_object <- function(
   arg = caller_arg(x),
   call = caller_env()
 ) {
-  if (allow_null && is.null(data)) {
+  if (allow_null) {
     return(invisible(NULL))
   }
   if (!(inherits(x, what = classes) && length(x) > 0)) {
@@ -481,7 +485,7 @@ assert_vectors_match <- function(
   arg_y = caller_arg(y),
   call = caller_env()
 ) {
-  if (allow_null && is.null(data)) {
+  if (allow_null) {
     return(invisible(NULL))
   }
   stopifnot(

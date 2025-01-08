@@ -157,10 +157,17 @@ assert_vectors_match(
 \arguments{
 \item{x, y}{An object to check}
 
+\item{type}{A character string specifying the type or vector class to check against.}
+
+\item{allow_null}{Either \code{TRUE} or \code{FALSE}. If \code{TRUE}, \code{x}
+can be \code{NULL} and the check passes.}
+
 \item{arg, arg_x, arg_y, arg_data}{The name of an argument to check. Used for error messages.}
 
 \item{call}{An environment, typically the environment in which the function
 was called}
+
+\item{n}{An integer}
 
 \item{classes}{A character vector of classes to check against}
 
