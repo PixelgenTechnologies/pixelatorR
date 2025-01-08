@@ -165,9 +165,7 @@ KeepLargestComponent.Seurat <- function(
   assay <- assay %||% DefaultAssay(object)
 
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("assay '{assay}' is not a 'CellGraphAssay' or a 'CellGraphassay5' object.'"))
-  }
+  assert_mpx_assay(cg_assay)
 
   cg_assay <- KeepLargestComponent(cg_assay, verbose = verbose, ...)
   object[[assay]] <- cg_assay

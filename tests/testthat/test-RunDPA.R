@@ -196,17 +196,14 @@ test_that("RunDPA fails with invalid input", {
     dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample1", reference = "Invalid")
   )
   expect_error(
-    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = c("Sample1", "Sample2"), reference = "Sample1"),
-    "targets is invalid\nall targets must be different from reference = 'Sample1'"
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = c("Sample1", "Sample2"), reference = "Sample1")
   )
   expect_error(
-    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "sample"),
-    "contrast_column = 'sample' cannot be one of group_vars"
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "sample")
   )
 
   expect_error(
-    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "Invalid"),
-    "group_vars is invalid\ngroup_vars must be a character vector with valid column names"
+    dpa_markers <- RunDPA(polarization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "Invalid")
   )
 })
 

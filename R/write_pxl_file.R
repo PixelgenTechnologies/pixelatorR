@@ -78,31 +78,23 @@ WriteMPX_pxl_file <- function(
   export_layouts = FALSE,
   overwrite = FALSE
 ) {
-  stopifnot(
-    "'object' must be a Seurat object" =
-      inherits(object, what = "Seurat"),
-    "'file' must be a valid path ending with .pxl" =
-      is.character(file) && (fs::path_ext(file) == "pxl"),
-    "'overwrite' must be either TRUE or FALSE" =
-      is.logical(overwrite)
-  )
-  expect_zip()
+  assert_class(object, "Seurat")
+  assert_single_value(file, type = "string")
+  assert_file_ext(file, "pxl")
+  assert_single_value(overwrite, type = "bool")
 
   # Check if file exists
   if (fs::file_exists(file) && !overwrite) {
-    abort(glue(
-      "{col_br_blue(file)} already exists. \nPlease select a different ",
-      "file name or set overwrite = TRUE if you are certain that the ",
-      "existing file should be replaced."
-    ))
+    cli::cli_abort(
+      c("x" = "{.file {file}} already exists.",
+        " " = "Please select a different  file name or set overwrite = TRUE ",
+        " " = "if you are certain that the existing file should be replaced.")
+    )
   }
 
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  stopifnot(
-    "'assay' must be a 'CellGraphAssay' or a 'CellGraphAssay5' object" =
-      is(cg_assay, "MPXAssay")
-  )
+  assert_mpx_assay(cg_assay)
 
   # fetch and validate fs_map
   fs_map <- cg_assay@fs_map
@@ -112,10 +104,10 @@ WriteMPX_pxl_file <- function(
   # by the current object
   if (fs::file_exists(file)) {
     if (file %in% fs_map$pxl_file) {
-      abort(glue(
-        "The selected file name '{col_br_blue(file)}' is currently in use ",
-        "by the input object. You need to select a different file name."
-      ))
+      cli::cli_abort(
+        c("x" = "The selected file name {.file {file}}",
+          " " = "is currently in use by the input object. You need to select a different file name.")
+      )
     }
     fs::file_delete(file)
   }
@@ -146,21 +138,22 @@ WriteMPX_pxl_file <- function(
     cg_list <- CellGraphs(object)
     graphs_check <- sapply(cg_list, function(cg) !is.null(cg))
     if (!all(graphs_check)) {
-      abort(glue(
-        "CellGraphs must be available for all {length(cg_list)} components. ",
-        "Found CellGraphs for {sum(graphs_check)} components. \n",
-        "You can either run LoadCellGraphs and ComputeLayout to ",
-        "obtain layouts or set export_layouts = FALSE if you don't want to export the layouts."
-      ))
+      cli::cli_abort(
+        c("x" = "CellGraphs must be available for all {.val {length(cg_list)}} components. ",
+          "i" = "Found CellGraphs for {.val {sum(graphs_check)}} components.",
+          "i" = "You can either run {.fn LoadCellGraphs} and {.fn ComputeLayout} to ",
+          "i" = "obtain layouts or set {.var export_layouts = FALSE} if you don't want ",
+          "i" = "to export the layouts.")
+      )
     }
     layouts_check <- sapply(cg_list, function(cg) !is.null(cg@layout))
     if (all(layouts_check)) {
       .merge_layout_with_counts_and_write_to_parquet(cg_list = cg_list, pxl_folder = pxl_folder)
     } else {
-      abort(glue(
-        "Layouts must be available for all {length(cg_list)} components. ",
-        "Found layouts for {sum(layouts_check)} components. "
-      ))
+      cli::cli_abort(
+        c("x" = "Layouts must be available for all {.val {length(cg_list)}} components. ",
+          "i" = "Found layouts for {.val {sum(graphs_check)}} components. ")
+      )
     }
   }
 
@@ -222,10 +215,10 @@ WriteMPX_pxl_file <- function(
       silent = TRUE
     )
     if (inherits(X, "try-error")) {
-      abort(glue(
-        "Failed to combine 'Assay5' layers due to invalid dimensions. \n",
-        "Please ensure that all layers have the same number of rows."
-      ))
+      cli::cli_abort(
+        c("i" = "Please ensure that all layers have the same number of rows.",
+          "x" = "Failed to combine 'Assay5' layers due to invalid dimensions.",)
+      )
     }
   }
   return(X)
@@ -298,7 +291,9 @@ WriteMPX_pxl_file <- function(
     colnames(object[[]])
   )
   if (length(obs_cols_keep) == 0) {
-    abort("Found no meta data columns to export.")
+    cli::cli_alert(
+      c("x" = "Found no meta data columns to export.")
+    )
   }
 
   .add_any_string_attr(obs, "_index", "_index")
@@ -726,7 +721,11 @@ WriteMPX_pxl_file <- function(
     merged_counts <- lapply(layouts, function(layout) {
       # Combine counts with layout
       if (nrow(cg@counts) != nrow(layout)) {
-        abort("Counts and layout must have the same number of rows")
+        cli::cli_abort(
+          c("i" = "Each layout must have the same number of rows as the counts matrix",
+            "x" = "Numer of rows in count matrix: {.val {nrow(cg@counts)}}",
+            "x" = "Numer of rows in layout table: {.val {nrow(layout)}}")
+        )
       }
       return(cg@counts %>% Matrix::t())
     }) %>%

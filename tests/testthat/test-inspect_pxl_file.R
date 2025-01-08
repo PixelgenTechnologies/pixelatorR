@@ -40,7 +40,6 @@ test_that("inspect_pxl_file fails with invalid input", {
   expect_error(
     {
       pxl_file_info <- inspect_pxl_file("Invalid")
-    },
-    "File 'Invalid' does not exist."
+    }
   )
 })

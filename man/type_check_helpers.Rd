@@ -5,8 +5,11 @@
 \alias{assert_single_value}
 \alias{assert_vector}
 \alias{assert_class}
+\alias{assert_mpx_assay}
 \alias{assert_within_limits}
 \alias{assert_function}
+\alias{assert_file_exists}
+\alias{assert_file_ext}
 \alias{assert_x_in_y}
 \alias{assert_single_values_are_different}
 \alias{assert_singles_match}
@@ -45,6 +48,13 @@ assert_class(
   call = caller_env()
 )
 
+assert_mpx_assay(
+  x,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+)
+
 assert_within_limits(x, limits, arg = caller_arg(x), call = caller_env())
 
 assert_function(
@@ -53,6 +63,10 @@ assert_function(
   arg = caller_arg(x),
   call = caller_env()
 )
+
+assert_file_exists(x, allow_null = FALSE, call = caller_env())
+
+assert_file_ext(x, ext, allow_null = FALSE, call = caller_env())
 
 assert_x_in_y(
   x,
@@ -66,6 +80,7 @@ assert_x_in_y(
 assert_single_values_are_different(
   x,
   y,
+  allow_null = FALSE,
   arg_x = caller_arg(x),
   arg_y = caller_arg(y),
   call = caller_env()
@@ -108,8 +123,9 @@ assert_unique(x, arg = caller_arg(x), call = caller_env())
 assert_col_class(
   x,
   data,
-  arg_data = caller_arg(data),
   classes,
+  allow_null = FALSE,
+  arg_data = caller_arg(data),
   call = caller_env()
 )
 
@@ -150,6 +166,8 @@ was called}
 
 \item{limits}{A numeric vector of length 2 specifying a lower and upper limit}
 
+\item{ext}{A character string specifying a file extension}
+
 \item{data}{A data-frame like object}
 }
 \value{
@@ -165,6 +183,7 @@ throw informative error messages if the checks fail.
 \item \code{assert_vector} checks if \code{x} is a vector of a specified \code{type} and with at
 least \code{n} elements.
 \item \code{assert_class} checks if \code{x} is of a specific class.
+\item \code{assert_mpx_assay} checks if \code{x} is a \code{CellGraphAssay} or \code{CellGraphAssay5}.
 \item \code{assert_x_in_y} checks if all elements of \code{x} are in \code{y}.
 \item \code{assert_single_values_are_different} checks if \code{x} and \code{y} are not different strings.
 \item \code{assert_col_class} checks if column \code{x} in \code{data} is of a specific class.
@@ -172,6 +191,9 @@ least \code{n} elements.
 \item \code{assert_vectors_match} checks if vectors \code{x} and \code{y} are identical.
 \item \code{assert_length} checks if vector \code{x} has a specific length.
 \item \code{assert_within_limits} checks if values in \code{x} are within \code{limits}.
+\item \code{assert_function} checks \code{x} is a function.
+\item \code{assert_file_exists} checks is file \code{x} exists.
+\item \code{assert_file_ext} checks is file \code{x} has file extension \code{ext}.
 \item \code{assert_unique} checks if values in \code{x} are unique.
 }
 }

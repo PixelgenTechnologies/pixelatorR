@@ -119,7 +119,7 @@ for (assay_version in c("v3", "v5")) {
     expect_error(pol <- PolarizationScores("invalid"), "no applicable method for")
 
     # Setter
-    expect_error(PolarizationScores(cg_assay) <- "invalid", "'polarization' must be a non-empty 'tbl_df' object")
+    expect_error(PolarizationScores(cg_assay) <- "invalid")
   })
 
 
@@ -180,6 +180,6 @@ for (assay_version in c("v3", "v5")) {
     expect_error(coloc <- ColocalizationScores("invalid"), "no applicable method for")
 
     # Setter
-    expect_error(ColocalizationScores(cg_assay) <- "invalid", "'colocalization' must be a non-empty 'tbl_df' object")
+    expect_error(ColocalizationScores(cg_assay) <- "invalid")
   })
 }

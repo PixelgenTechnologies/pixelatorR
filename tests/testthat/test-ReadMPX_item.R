@@ -21,7 +21,7 @@ test_that("ReadMPX_item works as expected", {
 })
 
 test_that("ReadMPX_item fails when invalid input is provided", {
-  expect_error(ReadMPX_item(filename = "invalid_file.pixl"), "Expected a .pxl file")
+  expect_error(ReadMPX_item(filename = "invalid_file.pixl"))
   expect_error(ReadMPX_item(filename = "invalid_file.pxl"), "doesn't exist")
-  expect_error(ReadMPX_item(filename = testfile, items = "invalid_item"), "Invalid items")
+  expect_error(ReadMPX_item(filename = testfile, items = "invalid_item"))
 })

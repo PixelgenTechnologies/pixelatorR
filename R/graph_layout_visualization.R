@@ -101,12 +101,7 @@ Plot2DGraph <- function(
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, "MPXAssay")) {
-    cli::cli_abort(
-      c("i" = "The selected assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
-        "x" = "The selected assay is a {.cls {class(cg_assay)}} object.")
-    )
-  }
+  assert_mpx_assay(cg_assay)
 
   # Fetch data
   data_list <- lapply(cells, function(cell_id) {
@@ -557,12 +552,7 @@ Plot3DGraph <- function(
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, "MPXAssay")) {
-    cli::cli_abort(
-      c("i" = "The selected assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
-        "x" = "The selected assay is a {.cls {class(cg_assay)}} object.")
-    )
-  }
+  assert_mpx_assay(cg_assay)
 
   # Fetch component graph
   component_graph <- CellGraphs(cg_assay)[[cell_id]]

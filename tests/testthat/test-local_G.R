@@ -124,13 +124,13 @@ test_that("local_G works as expected", {
 
 test_that("local_G fails with invalid input expected", {
   # Invalid k
-  expect_error(local_G(g = g, counts = counts, k = 0), "'k' must be and integer larger than 0")
+  expect_error(local_G(g = g, counts = counts, k = 0))
 
   # Invalid counts
-  expect_error(local_G(g = g, counts = "invalid"), "'counts' must be a sparse matrix of class 'dgCMatrix' or a 'matrix'")
+  expect_error(local_G(g = g, counts = "invalid"))
 
   # Invalid g
-  expect_error(local_G(g = "Invalid", counts = counts), "'g' must be an 'tbl_graph' or an 'igraph' object")
+  expect_error(local_G(g = "Invalid", counts = counts))
 
   expect_error(local_G(g = g, counts = counts, type = "Invalid"))
 })

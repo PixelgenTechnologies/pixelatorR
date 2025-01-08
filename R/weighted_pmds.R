@@ -73,16 +73,15 @@ layout_with_weighted_pmds <- function(
   expect_graphlayouts()
 
   # Validate input
-  stopifnot(
-    "'g' must be an 'igraph' object" =
-      inherits(g, what = "igraph"),
-    "'dim' must be wither 2 or 3" =
-      dim %in% c(2, 3),
-    "'seed' must be an integer" =
-      inherits(seed, what = "numeric"),
-    "'pow ' must be a positive numeric value of length 1" =
-      inherits(pow, what = "numeric") && (length(pow) == 1) && (pow > 0)
-  )
+  assert_class(g, classes = c("igraph", "tbl_graph"))
+  if (!dim %in% c(2, 3)) {
+    cli::cli_abort(
+      c("i" = "{.var dim} must be either 1 or 2",
+        "x" = "dim={dim}")
+    )
+  }
+  assert_single_value(seed, type = "integer")
+  assert_single_value(seed, type = "numeric")
 
   method <- match.arg(method, choices = c("prob_dist", "cos_dist"))
 
@@ -146,13 +145,14 @@ cos_distance_weights <- function(
   g,
   pivots
 ) {
-  stopifnot(
-    "'g' must be a 'tbl_graph' object" =
-      inherits(g, what = "tbl_graph"),
-    "'pivots' must be a positive numeric value" =
-      inherits(pivots, what = "numeric") &&
-        (pivots > 0) & (length(pivots) == 1)
-  )
+  assert_class(g, classes = "tbl_graph")
+  assert_single_value(pivots, type = "numeric")
+  if (!(pivots > 0)) {
+    cli::cli_abort(
+      c("i" = "{.var pivots} must be a positive numeric value",
+        "x" = "pivots={pivots}")
+    )
+  }
 
   pivs <- sample(1:igraph::vcount(g), pivots)
 
@@ -205,10 +205,7 @@ prob_distance_weights <- function(
   g,
   k = 5
 ) {
-  stopifnot(
-    "'g' must be a 'tbl_graph' object" =
-      inherits(g, what = "tbl_graph")
-  )
+  assert_class(g, classes = "tbl_graph")
 
   A <- as_adjacency_matrix(g)
   diag(A) <- 1

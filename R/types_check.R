@@ -10,6 +10,7 @@
 #' was called
 #' @param classes A character vector of classes to check against
 #' @param limits A numeric vector of length 2 specifying a lower and upper limit
+#' @param ext A character string specifying a file extension
 #'
 #' @returns Nothing if the check passes, otherwise throws an error.
 #'
@@ -18,6 +19,7 @@
 #' - \code{assert_vector} checks if \code{x} is a vector of a specified \code{type} and with at
 #' least \code{n} elements.
 #' - \code{assert_class} checks if \code{x} is of a specific class.
+#' - \code{assert_mpx_assay} checks if \code{x} is a \code{CellGraphAssay} or \code{CellGraphAssay5}.
 #' - \code{assert_x_in_y} checks if all elements of \code{x} are in \code{y}.
 #' - \code{assert_single_values_are_different} checks if \code{x} and \code{y} are not different strings.
 #' - \code{assert_col_class} checks if column \code{x} in \code{data} is of a specific class.
@@ -25,6 +27,9 @@
 #' - \code{assert_vectors_match} checks if vectors \code{x} and \code{y} are identical.
 #' - \code{assert_length} checks if vector \code{x} has a specific length.
 #' - \code{assert_within_limits} checks if values in \code{x} are within \code{limits}.
+#' - \code{assert_function} checks \code{x} is a function.
+#' - \code{assert_file_exists} checks is file \code{x} exists.
+#' - \code{assert_file_ext} checks is file \code{x} has file extension \code{ext}.
 #' - \code{assert_unique} checks if values in \code{x} are unique.
 #'
 #' @name type-checks
@@ -126,6 +131,24 @@ assert_class <- function(
 }
 #' @rdname type_check_helpers
 #'
+assert_mpx_assay <- function(
+  x,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  if (!inherits(x, "MPXAssay")) {
+    cli::cli_abort(
+      c("i" = "The selected Assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
+        "x" = "Got a {.cls {class(x)}} object.")
+    )
+  }
+}
+#' @rdname type_check_helpers
+#'
 assert_within_limits <- function(
   x,
   limits,
@@ -161,6 +184,43 @@ assert_function <- function(
     cli::cli_abort(
       c("i" = "{.arg {arg}} must be a {.cls function}.",
         "x" = "You've supplied a {.cls {class(x)}}."),
+      call = call)
+  }
+}
+#' @rdname type_check_helpers
+#'
+assert_file_exists <- function(
+  x,
+  allow_null = FALSE,
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  if (!fs::file_exists(x)) {
+    cli::cli_abort(
+      c("x" = "File {.file {x}} doesn't exist."),
+      call = call)
+  }
+}
+#' @rdname type_check_helpers
+#'
+assert_file_ext <- function(
+  x,
+  ext,
+  allow_null = FALSE,
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  stopifnot(
+    "`ext` must be a string" =
+      rlang::is_string(ext)
+  )
+  if (fs::path_ext(x) != ext) {
+    cli::cli_abort(
+      c("x" = "File {.file {x}} is not a PXL file"),
       call = call)
   }
 }

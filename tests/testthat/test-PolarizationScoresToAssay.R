@@ -73,7 +73,7 @@ for (assay_version in c("v3", "v5")) {
   test_that("PolarizationScoresToAssay fails with invalid input", {
     expect_error(seur_obj <- PolarizationScoresToAssay("Invalid"), "no applicable method")
     expect_error(seur_obj <- PolarizationScoresToAssay(seur_obj, assay = "invalid"))
-    expect_error(seur_obj <- PolarizationScoresToAssay(seur_obj, new_assay = 0), "'new_assay' must be a character of length 1")
+    expect_error(seur_obj <- PolarizationScoresToAssay(seur_obj, new_assay = 0))
     expect_error(seur_obj <- PolarizationScoresToAssay(seur_obj, values_from = "invalid"), "'arg' should be one of")
   })
 }

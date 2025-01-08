@@ -21,10 +21,9 @@
 inspect_pxl_file <- function(
   pxl_file
 ) {
-  if (!fs::file_exists(pxl_file)) {
-    abort(glue("File '{pxl_file}' does not exist."))
-  }
+  assert_file_exists(pxl_file)
 
+  #List content of PXL file
   pxl_file_content <- utils::unzip(pxl_file, list = TRUE)
 
   adata_file <- grep("adata.h5ad", pxl_file_content$Name)

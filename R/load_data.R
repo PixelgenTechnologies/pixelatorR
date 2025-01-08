@@ -27,12 +27,9 @@ ReadMPX_counts <- function(
   return_list = FALSE,
   verbose = TRUE
 ) {
-  stopifnot(
-    "filename must be a character of length 1" =
-      is.character(filename) &&
-        (length(filename) == 1)
-  )
-  if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
+  assert_single_value(filename, type = "string")
+  assert_file_ext(filename, ext = "pxl")
+  assert_file_exists(filename)
 
   # Reads anndata from a .pxl file by unzipping it into a temporary folder and reading the anndata object within.
   if (verbose && check_global_verbosity()) {
@@ -40,16 +37,15 @@ ReadMPX_counts <- function(
   }
 
   # Unzip pxl file
-  if (endsWith(filename, ".pxl")) {
-    check <- tryCatch(utils::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
-      error = function(e) e,
-      warning = function(w) w
+  assert_file_ext(filename, ext = "pxl")
+  check <- tryCatch(zip::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
+                    error = function(e) e,
+                    warning = function(w) w
+  )
+  if (inherits(x = check, what = "simpleWarning")) {
+    cli::cli_abort(
+      c("x" = "Failed to unzip 'adata.h5ad' data")
     )
-    if (inherits(x = check, what = "simpleWarning")) {
-      abort("Failed to unzip 'adata.h5ad' data")
-    }
-  } else {
-    abort(glue("Invalid file format .{.file_ext(filename)}. Expected a .pxl file."))
   }
 
   # Read temporary file
@@ -144,11 +140,7 @@ ReadMPX_Seurat <- function(
   verbose = TRUE,
   ...
 ) {
-  stopifnot(
-    "assay must be a character of length 1" =
-      is.character(assay) &&
-        (length(assay) == 1)
-  )
+  assert_single_value(assay, type = "string")
 
   # Load count matrix
   data <- ReadMPX_counts(filename = filename, return_list = TRUE, verbose = FALSE)
@@ -245,10 +237,11 @@ ReadMPX_Seurat <- function(
     column_to_rownames("component")
 
   if (!all(rownames(meta_data) == colnames(seur_obj))) {
-    abort(glue(
-      "The cell names in the Seurat object and the metadata do not match. ",
-      "\nFailed to create Seurat object."
-    ))
+    cli::cli_abort(
+      c("i" = "The cell IDs in the {.cls Seurat} object and the metadata",
+        " " = "collected from the adata.h5ad file do not match. ",
+        "x" = "Failed to create {.cls Seurat} object. The PXL file appears to be corrupt.")
+    )
   }
   seur_obj@meta.data <- meta_data
 
@@ -352,16 +345,15 @@ ReadMPX_item <- function(
   verbose = TRUE
 ) {
   # Check input parameters
-  stopifnot(
-    "filename must be a character of length 1" =
-      is.character(filename) &&
-        (length(filename) == 1),
-    "Invalid items" =
-      all(items %in% c("colocalization", "polarization", "edgelist")),
-    "Expected a .pxl file" =
-      .file_ext(filename) == "pxl"
-  )
-  if (!file.exists(filename)) abort(glue("{filename} doesn't exist"))
+  assert_single_value(filename, type = "string")
+  assert_file_ext(filename, ext = "pxl")
+  assert_file_exists(filename)
+  if (!all(items %in% c("colocalization", "polarization", "edgelist"))) {
+    cli::cli_abort(
+      c("i" = "Invalid item(s) specified. ",
+        "x" = "Valid items are 'colocalization', 'polarization' and 'edgelist'.")
+    )
+  }
 
   if (verbose && check_global_verbosity()) {
     cli_alert_info("Loading item(s) from: {filename}")
@@ -405,6 +397,7 @@ ReadMPX_item <- function(
 
           # Try to delete temporary directory or throw a warning if it fails.
           .delete_temp_resource(exdir_temp)
+
         }
 
         return(outdata)
@@ -486,13 +479,8 @@ ReadMPX_edgelist <- function(
 ReadMPX_metadata <- function(
   filename
 ) {
-  if (!fs::file_exists(filename)) {
-    abort(glue("File {col_blue(filename)} doesn't exist"))
-  }
-
-  if (fs::path_ext(filename) != "pxl") {
-    abort(glue("File {col_blue(filename)} is not a PXL file"))
-  }
+  assert_file_exists(filename)
+  assert_file_ext(filename, ext = "pxl")
 
   temp_dir <- fs::path_temp()
   temp_file <- fs::path(temp_dir, "metadata.json")
@@ -507,7 +495,9 @@ ReadMPX_metadata <- function(
     as_tibble() %>%
     select(-contains("file_format_version"))
   if (nrow(meta_data) == 0) {
-    abort("No metadata found in the PXL file")
+    cli::cli_abort(
+      c("x" = "No metadata found in the PXL file")
+    )
   }
 
   if ("analysis" %in% colnames(meta_data)) {

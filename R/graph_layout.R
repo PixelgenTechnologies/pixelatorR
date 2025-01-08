@@ -76,21 +76,20 @@ ComputeLayout.tbl_graph <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "dim should be an integer vector of length 1" =
-      inherits(dim, what = c("numeric", "integer")) &&
-        (length(dim) == 1),
-    "normalize_layout should be TRUE/FALSE" =
-      is.logical(normalize_layout),
-    "'seed' should be a numeric value" =
-      inherits(seed, what = "numeric")
-  )
+  assert_single_value(dim, type = "numeric")
+  assert_single_value(normalize_layout, type = "bool")
+  assert_single_value(seed, type = "integer")
 
   if (project_on_unit_sphere && dim == 2) {
-    abort("Projecting onto a unit sphere is only possible for 3D layouts")
+    cli::cli_abort(
+      c("i" = "Projecting onto a unit sphere is only possible for 3D layouts",
+        "x" = "Change {.var dim} or set {.var project_on_unit_sphere=FALSE}")
+    )
   }
   if (project_on_unit_sphere && normalize_layout) {
-    abort("Only one of 'project_on_unit_sphere' or 'normalize_layout' can be set to TRUE")
+    cli::cli_abort(
+      c("x" = "Only one of {.var project_on_unit_sphere} or {.var normalize_layout} can be set to TRUE")
+    )
   }
 
   # Set seed
@@ -107,7 +106,9 @@ ComputeLayout.tbl_graph <- function(
       do.call(custom_layout_function, c(list(g = object), custom_layout_function_args))
     })
     if (inherits(layout, what = "try-error")) {
-      abort("'custom_layout_function' failed to compute layout")
+      cli::cli_abort(
+        c("x" = "{.var custom_layout_function} failed to compute layout")
+      )
     }
 
     .validate_custom_layout_function_results(layout, dim, n_nodes = length(object))
@@ -194,13 +195,7 @@ ComputeLayout.CellGraph <- function(
     layout_name <- "custom"
   }
 
-  if (!is.null(layout_name)) {
-    stopifnot(
-      "'layout_name' should be a character of length 1" =
-        is.character(layout_name) &&
-          (length(layout_name) == 1)
-    )
-  }
+  assert_single_value(layout_name, type = "string", allow_null = TRUE)
 
   layout <-
     ComputeLayout(
@@ -344,12 +339,7 @@ ComputeLayout.Seurat <- function(
   assay <- assay %||% DefaultAssay(object)
 
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, "MPXAssay")) {
-    cli::cli_abort(
-      c("i" = "The selected assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
-        "x" = "The selected assay is a {.cls {class(cg_assay)}} object.")
-    )
-  }
+  assert_mpx_assay(cg_assay)
 
   # Check cellgraphs
   cellgraphs <- slot(cg_assay, name = "cellgraphs")
