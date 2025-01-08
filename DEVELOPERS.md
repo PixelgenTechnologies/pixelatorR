@@ -134,3 +134,68 @@ styler::style_file("path/to/file.R", transformers = pixelatorR::pixelatorR_style
 ```
 
 Alternatively, you can run the styler from RStudio. Here, you need to configure `styler` to use the style guide provided in pixelatorR. Go to Addins -> Styler -> Set style and set `pixelatorR::pixelatorR_style()` as the style guide. Then you can use Addins -> Styler -> Style active file or Addins -> Styler -> Style active package.
+
+## Type assertions and error messages
+
+`pixelatorR` provides a set of type assertions functions to check function arguments. See ?`type-checks` for a full list.
+
+These functions are designed to cover the most common type checks that are needed in `pixelatorR` to ensure consistent error messages. They are also designed according to the tidyverse style guide (see [tidyverse style guide](https://style.tidyverse.org/errors.html) and [Including function calls in error messages](https://rlang.r-lib.org/reference/topic-error-call.html)).
+
+### Example
+
+Assert that the input is a single character string:
+
+````
+my_var <- 1
+assert_single_value(my_var, type = "string")
+````
+
+Output:
+````
+Error:
+ℹ `my_var` must be a single string.
+✖ You've supplied a <numeric>.
+````
+
+Note that the error message includes the name of the variable, i.e. we don't need to hard code the name in the error message. 
+
+Another useful feature is that the assertion function can pass the caller environment to the error message to signal where the error happened. This is useful when the assertion is used inside a function.
+
+````
+my_var <- 1
+my_func <- function(x) {
+  assert_single_value(x, type = "string")
+}
+my_func(my_var)
+````
+
+Output:
+````
+Error in `my_func()`:
+ℹ `x` must be a single string.
+✖ You've supplied a <numeric>.
+````
+
+
+### Writing error messages
+
+The assertion functions do not cover all possible type checks and are note necessarily useful for error messages that require more verbosity. If you need to write a custom error message, we suggest using `cli::cli_abort()`.
+
+````
+my_func <- function(x) {
+  if (!is.finite(x)) {
+    cli::cli_abort(
+      c("i" = "{.arg x} must be a finite number.",
+        "x" = "x = {.val {x}}")
+    )
+  }
+}
+my_func(Inf)
+````
+
+Output:
+````
+Error in `my_func()`:
+ℹ `x` must be a finite number.
+✖ x = Inf
+````
