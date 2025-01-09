@@ -72,7 +72,19 @@ ReadMPX_arrow_edgelist <- function(
   # Read the parquet file
   ds <- arrow::open_dataset(fs::path(edge_list_dir, "edgelist.parquet"))
 
-  if (verbose && check_global_verbosity()) cli_alert_success("Returning FileSystemDataset")
+  # Convert selected columns uint64 to string
+  sel_fields <- grep(pattern = "^umi", names(ds), value = TRUE)
+  sel_fields_type <- sapply(sel_fields, function(f) {
+    arrow::schema(ds)$GetFieldByName(f)$ToString() %>%
+      stringr::str_extract("(?<= ).*")
+  })
+  sel_fields <- sel_fields[sel_fields_type == "uint64"]
+  if (length(sel_fields) > 0) {
+    ds <- ds %>%
+      mutate(across(all_of(sel_fields), as.character))
+  }
+
+  if (verbose && check_global_verbosity()) cli_alert_success("Returning {class(ds)[1]}")
 
   # Return list with additional info if return_list = TRUE
   return(ds)

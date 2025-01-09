@@ -90,7 +90,7 @@ Collate:
     'pivot_tables.R'
     'pixelatorR-package.R'
     'pixelatorR_style.R'
-    'read_and_write_parquet.R'
+    'read_edgelist.R'
     'remove_cell_graphs.R'
     'restore_paths.R'
     'tau_plot.R'
