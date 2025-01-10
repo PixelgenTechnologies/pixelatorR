@@ -221,9 +221,11 @@ CellGraphData <- function(
       for (layout in names(layouts)) {
         if (length(value) != nrow(layouts[[layout]])) {
           cli::cli_abort(
-            c("x" =
+            c(
+              "x" =
                 "Number of nodes in the provided {.cls {class(value)}} does not match ",
-              " " = "the number of rows in the 'layout' slot '{layout}' table")
+              " " = "the number of rows in the 'layout' slot '{layout}' table"
+            )
           )
         }
       }
@@ -239,9 +241,11 @@ CellGraphData <- function(
       for (layout in names(layouts)) {
         if (nrow(counts) != nrow(layouts[[layout]])) {
           cli::cli_abort(
-            c("x" =
+            c(
+              "x" =
                 "Number of rows ({nrow(counts)}) in the provided {.cls {class(value)}} does not match ",
-              " " = "the number of rows ({nrow(layouts[[layout]])}) in the 'layout' slot '{layout}' table")
+              " " = "the number of rows ({nrow(layouts[[layout]])}) in the 'layout' slot '{layout}' table"
+            )
           )
         }
       }
@@ -258,23 +262,29 @@ CellGraphData <- function(
     for (layout in names(value)) {
       if (!inherits(value[[layout]], what = "tbl_df")) {
         cli::cli_abort(
-          c("x" =
-              "The '{layout}' layout table must be a {.cls tbl_df}")
+          c(
+            "x" =
+              "The '{layout}' layout table must be a {.cls tbl_df}"
+          )
         )
       }
       if (length(cellgraph) != nrow(value[[layout]])) {
         cli::cli_abort(
-          c("x" =
+          c(
+            "x" =
               "Number of nodes ({length(cellgraph)}) in the 'cellgraph' slot does not match ",
-            " " = "the number of rows ({nrow(value[[layout]])}) in the provided '{layout}' layout table")
+            " " = "the number of rows ({nrow(value[[layout]])}) in the provided '{layout}' layout table"
+          )
         )
       }
       if (length(counts) > 0) {
         if (nrow(counts) != nrow(value[[layout]])) {
           cli::cli_abort(
-            c("x" =
+            c(
+              "x" =
                 "Number of rows ({nrow(counts)}) in the 'counts' slot does not match the ",
-              " " = "number of rows ({nrow(value[[layout]])}) in the provided '{layout}' layout table")
+              " " = "number of rows ({nrow(value[[layout]])}) in the provided '{layout}' layout table"
+            )
           )
         }
       }

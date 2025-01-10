@@ -388,10 +388,12 @@ CellGraphs.MPXAssay <- function(
     }
     slot(object = object, name = "cellgraphs") <- value
   } else {
-   cli::cli_abort(
-     c("i" = "{.var value} must be a {.cls list}",
-       "x" = "You've provided a {.cls {class(value)}}")
-   )
+    cli::cli_abort(
+      c(
+        "i" = "{.var value} must be a {.cls list}",
+        "x" = "You've provided a {.cls {class(value)}}"
+      )
+    )
   }
   return(object)
 }
@@ -1210,9 +1212,11 @@ merge.MPXAssay <- function(
   if (!is.null(add.cell.ids)) {
     if (!(length(add.cell.ids) == length(objects))) {
       cli::cli_abort(
-        c("i" = "Length of 'add.cell.ids' must match the number of objects to merge",
+        c(
+          "i" = "Length of 'add.cell.ids' must match the number of objects to merge",
           "x" = "Length of 'add.cell.ids': {.val {length(add.cell.ids)}}",
-          "x" = "Number of objects to merge: {.val {length(objects)}}")
+          "x" = "Number of objects to merge: {.val {length(objects)}}"
+        )
       )
     }
     objects <- lapply(seq_along(objects), function(i) {
@@ -1227,9 +1231,11 @@ merge.MPXAssay <- function(
   names_are_duplicated <- any(unique_names > 1)
   if (names_are_duplicated && is.null(add.cell.ids)) {
     cli::cli_abort(
-      c("i" =  "Found non-unique cell IDs across samples. {.var add.cell.ids} must be specified. ",
+      c(
+        "i" = "Found non-unique cell IDs across samples. {.var add.cell.ids} must be specified. ",
         " " = "Alternatively, make sure that each separate object has unique cell IDs.",
-        "x" = "Duplicated IDs: {.val {names(unique_names)[unique_names > 1]}}")
+        "x" = "Duplicated IDs: {.val {names(unique_names)[unique_names > 1]}}"
+      )
     )
   }
 

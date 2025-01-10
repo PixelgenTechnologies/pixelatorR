@@ -141,8 +141,10 @@ PolarizationScores.Seurat <- function(
     meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
     if (any(!meta_data_columns_valid)) {
       cli::cli_abort(
-        c("x" = "The following meta data columns were not found in the meta.data slot: ",
-          " " = "{.val {meta_data_columns[!meta_data_columns_valid]}}")
+        c(
+          "x" = "The following meta data columns were not found in the meta.data slot: ",
+          " " = "{.val {meta_data_columns[!meta_data_columns_valid]}}"
+        )
       )
     }
 
@@ -216,8 +218,10 @@ ColocalizationScores.Seurat <- function(
     meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
     if (any(!meta_data_columns_valid)) {
       cli::cli_abort(
-        c("x" = "The following meta data columns were not found in the meta.data slot: ",
-          " " = "{.val {meta_data_columns[!meta_data_columns_valid]}}")
+        c(
+          "x" = "The following meta data columns were not found in the meta.data slot: ",
+          " " = "{.val {meta_data_columns[!meta_data_columns_valid]}}"
+        )
       )
     }
 

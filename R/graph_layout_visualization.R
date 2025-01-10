@@ -109,9 +109,11 @@ Plot2DGraph <- function(
     component_graph <- CellGraphs(cg_assay)[[cell_id]]
     if (is.null(component_graph)) {
       cli::cli_abort(
-        c("i" = "All selected cells must have a component graph loaded.",
+        c(
+          "i" = "All selected cells must have a component graph loaded.",
           " " = "Did you forget to run {.fn LoadCellGraphs}?",
-          "x" = "Missing {.cls CellGraph} for component {.str {cell_id}}")
+          "x" = "Missing {.cls CellGraph} for component {.str {cell_id}}"
+        )
       )
     }
 
@@ -533,8 +535,10 @@ Plot3DGraph <- function(
   assert_single_value(cell_id, type = "string")
   if (!(cell_id %in% colnames(object))) {
     cli::cli_abort(
-      c("i" = "Please provide a valid {.var cell_id}",
-        "x" = "Cell ID {.var {cell_id}} not found in the {.cls Seurat} object")
+      c(
+        "i" = "Please provide a valid {.var cell_id}",
+        "x" = "Cell ID {.var {cell_id}} not found in the {.cls Seurat} object"
+      )
     )
   }
 
@@ -593,9 +597,9 @@ Plot3DGraph <- function(
   }
   if (ncol(layout) != 3) {
     cli::cli_abort(
-     c(
-       "x" = "Layout {.val layout_method} must have 3 columns but has {ncol(layout)} columns"
-     )
+      c(
+        "x" = "Layout {.val layout_method} must have 3 columns but has {ncol(layout)} columns"
+      )
     )
   }
 

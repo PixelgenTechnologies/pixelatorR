@@ -219,8 +219,10 @@ edgelist_to_simple_bipart_graph <- function(
     no_components <- length(unique(edgelist %>% pull(component)))
     if (no_components > 1) {
       cli::cli_abort(
-        c("i" = "{.var edgelist} can only have one component",
-          "x" = "Found {.val {no_components}} components in {.var edgelist}")
+        c(
+          "i" = "{.var edgelist} can only have one component",
+          "x" = "Found {.val {no_components}} components in {.var edgelist}"
+        )
       )
     }
   }

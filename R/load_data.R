@@ -39,8 +39,8 @@ ReadMPX_counts <- function(
   # Unzip pxl file
   assert_file_ext(filename, ext = "pxl")
   check <- tryCatch(zip::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
-                    error = function(e) e,
-                    warning = function(w) w
+    error = function(e) e,
+    warning = function(w) w
   )
   if (inherits(x = check, what = "simpleWarning")) {
     cli::cli_abort(
@@ -238,9 +238,11 @@ ReadMPX_Seurat <- function(
 
   if (!all(rownames(meta_data) == colnames(seur_obj))) {
     cli::cli_abort(
-      c("i" = "The cell IDs in the {.cls Seurat} object and the metadata",
+      c(
+        "i" = "The cell IDs in the {.cls Seurat} object and the metadata",
         " " = "collected from the adata.h5ad file do not match. ",
-        "x" = "Failed to create {.cls Seurat} object. The PXL file appears to be corrupt.")
+        "x" = "Failed to create {.cls Seurat} object. The PXL file appears to be corrupt."
+      )
     )
   }
   seur_obj@meta.data <- meta_data
@@ -275,7 +277,7 @@ ReadMPX_Seurat <- function(
   if (getOption("Seurat.object.assay.version", "v3") == "v3") {
     if (!"marker" %in% colnames(feature_meta_data)) {
       feature_meta_data <- feature_meta_data %>%
-        rename(marker = !! sym("_index"))
+        rename(marker = !!sym("_index"))
     }
     rownames(feature_meta_data) <- feature_meta_data$marker
     check <- try({
@@ -350,8 +352,10 @@ ReadMPX_item <- function(
   assert_file_exists(filename)
   if (!all(items %in% c("colocalization", "polarization", "edgelist"))) {
     cli::cli_abort(
-      c("i" = "Invalid item(s) specified. ",
-        "x" = "Valid items are 'colocalization', 'polarization' and 'edgelist'.")
+      c(
+        "i" = "Invalid item(s) specified. ",
+        "x" = "Valid items are 'colocalization', 'polarization' and 'edgelist'."
+      )
     )
   }
 

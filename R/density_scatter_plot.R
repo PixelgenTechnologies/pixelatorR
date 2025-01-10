@@ -162,17 +162,21 @@ DensityScatterPlot <- function(
     check <- !names(plot_gate) %in% c("xmin", "xmax", "ymin", "ymax", facet_vars)
     if (sum(check) > 0) {
       cli::cli_abort(
-        c("i" = "'plot_gate' can't contain facetting variables that are not in {.var facet_vars}",
+        c(
+          "i" = "'plot_gate' can't contain facetting variables that are not in {.var facet_vars}",
           "x" = "The following variables are not in {.var facet_vars}: ",
-          " " = "{.val {names(plot_gate)[check]}}")
+          " " = "{.val {names(plot_gate)[check]}}"
+        )
       )
     }
   }
 
   if (!(is.null(facet_vars) | !isTRUE(margin_density))) {
     cli::cli_abort(
-      c("i" = "{.var margin_density=TRUE} is not supported when {.var facet_vars} is not {.cls NULL}",
-        "x" = "You've provided {.var margin_density={margin_density}} and {.var facet_vars=NULL}")
+      c(
+        "i" = "{.var margin_density=TRUE} is not supported when {.var facet_vars} is not {.cls NULL}",
+        "x" = "You've provided {.var margin_density={margin_density}} and {.var facet_vars=NULL}"
+      )
     )
   }
 

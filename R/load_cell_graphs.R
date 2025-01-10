@@ -111,8 +111,10 @@ LoadCellGraphs.tbl_df <- function(
   # Make sure that cells doesn't contain duplicated values
   if (sum(duplicated(cells)) > 0) {
     cli::cli_abort(
-      c("i" = "{.var cells} cannot contain duplicated values.",
-        "x" = "Cell IDs {.val {cells[duplicated(cells)]}} are duplicated")
+      c(
+        "i" = "{.var cells} cannot contain duplicated values.",
+        "x" = "Cell IDs {.val {cells[duplicated(cells)]}} are duplicated"
+      )
     )
   }
 
@@ -174,8 +176,10 @@ LoadCellGraphs.MPXAssay <- function(
   # Make sure that cells doesn't contain duplicated values
   if (sum(duplicated(cells)) > 0) {
     cli::cli_abort(
-      c("i" = "{.var cells} cannot contain duplicated values.",
-        "x" = "Cell IDs {.val {cells[duplicated(cells)]}} are duplicated")
+      c(
+        "i" = "{.var cells} cannot contain duplicated values.",
+        "x" = "Cell IDs {.val {cells[duplicated(cells)]}} are duplicated"
+      )
     )
   }
   assert_x_in_y(cells, colnames(object))
@@ -262,9 +266,11 @@ LoadCellGraphs.MPXAssay <- function(
 
     if (!fs::file_exists(f)) {
       cli::cli_abort(
-        c("x" = "File {.file {f}} does not exist.",
+        c(
+          "x" = "File {.file {f}} does not exist.",
           "i" = "Run {.var ?RestorePaths} to get instructions on ",
-          " " = "how to restore the PXL file paths.")
+          " " = "how to restore the PXL file paths."
+        )
       )
     }
 

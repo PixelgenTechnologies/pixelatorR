@@ -54,8 +54,10 @@ RestorePaths.MPXAssay <- function(
   # Check that pxl_files_dir exists
   if (!fs::dir_exists(pxl_files_dir)) {
     cli::cli_abort(
-      c("i" = "Please provide a valid directory path.",
-        "x" = "The directory {.file {pxl_files_dir}} does not exist.")
+      c(
+        "i" = "Please provide a valid directory path.",
+        "x" = "The directory {.file {pxl_files_dir}} does not exist."
+      )
     )
   }
 
@@ -71,8 +73,10 @@ RestorePaths.MPXAssay <- function(
   file_checks <- fs::file_exists(pxl_files_updated)
   if (!all(file_checks)) {
     cli::cli_abort(
-      c("x" = "The directory {.file {pxl_files_dir}} is missing the following files:\n",
-        " " = "{.file {pxl_files[!file_checks]}}")
+      c(
+        "x" = "The directory {.file {pxl_files_dir}} is missing the following files:\n",
+        " " = "{.file {pxl_files[!file_checks]}}"
+      )
     )
   }
 

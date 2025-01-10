@@ -167,8 +167,10 @@ local_G <- function(
   assert_single_value(k, type = "integer")
   if (!k > 0) {
     cli::cli_abort(
-      c("i" = "{.var k} must be a positive {.cls integer}",
-        "x" = "k = {k}")
+      c(
+        "i" = "{.var k} must be a positive {.cls integer}",
+        "x" = "k = {k}"
+      )
     )
   }
   assert_singles_match(nrow(counts), length(g))
@@ -329,8 +331,10 @@ compute_transition_probabilities <- function(
 ) {
   if (nrow(A) != ncol(A)) {
     cli::cli_abort(
-      c("i" = "{.var A} must be a square matrix",
-        "x" = "nrow(A) = {nrow(A)}, ncol(A) = {ncol(A)}")
+      c(
+        "i" = "{.var A} must be a square matrix",
+        "x" = "nrow(A) = {nrow(A)}, ncol(A) = {ncol(A)}"
+      )
     )
   }
   if (!Matrix::isSymmetric(A)) {
@@ -341,8 +345,10 @@ compute_transition_probabilities <- function(
   assert_single_value(k, type = "integer")
   if (!k > 0) {
     cli::cli_abort(
-      c("i" = "{.var k} must be a positive {.cls integer}",
-        "x" = "k = {k}")
+      c(
+        "i" = "{.var k} must be a positive {.cls integer}",
+        "x" = "k = {k}"
+      )
     )
   }
 

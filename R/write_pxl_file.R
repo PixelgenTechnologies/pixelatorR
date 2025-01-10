@@ -86,9 +86,11 @@ WriteMPX_pxl_file <- function(
   # Check if file exists
   if (fs::file_exists(file) && !overwrite) {
     cli::cli_abort(
-      c("x" = "{.file {file}} already exists.",
+      c(
+        "x" = "{.file {file}} already exists.",
         " " = "Please select a different  file name or set overwrite = TRUE ",
-        " " = "if you are certain that the existing file should be replaced.")
+        " " = "if you are certain that the existing file should be replaced."
+      )
     )
   }
 
@@ -105,8 +107,10 @@ WriteMPX_pxl_file <- function(
   if (fs::file_exists(file)) {
     if (file %in% fs_map$pxl_file) {
       cli::cli_abort(
-        c("x" = "The selected file name {.file {file}}",
-          " " = "is currently in use by the input object. You need to select a different file name.")
+        c(
+          "x" = "The selected file name {.file {file}}",
+          " " = "is currently in use by the input object. You need to select a different file name."
+        )
       )
     }
     fs::file_delete(file)
@@ -139,11 +143,13 @@ WriteMPX_pxl_file <- function(
     graphs_check <- sapply(cg_list, function(cg) !is.null(cg))
     if (!all(graphs_check)) {
       cli::cli_abort(
-        c("x" = "CellGraphs must be available for all {.val {length(cg_list)}} components. ",
+        c(
+          "x" = "CellGraphs must be available for all {.val {length(cg_list)}} components. ",
           "i" = "Found CellGraphs for {.val {sum(graphs_check)}} components.",
           "i" = "You can either run {.fn LoadCellGraphs} and {.fn ComputeLayout} to ",
           "i" = "obtain layouts or set {.var export_layouts = FALSE} if you don't want ",
-          "i" = "to export the layouts.")
+          "i" = "to export the layouts."
+        )
       )
     }
     layouts_check <- sapply(cg_list, function(cg) !is.null(cg@layout))
@@ -151,8 +157,10 @@ WriteMPX_pxl_file <- function(
       .merge_layout_with_counts_and_write_to_parquet(cg_list = cg_list, pxl_folder = pxl_folder)
     } else {
       cli::cli_abort(
-        c("x" = "Layouts must be available for all {.val {length(cg_list)}} components. ",
-          "i" = "Found layouts for {.val {sum(graphs_check)}} components. ")
+        c(
+          "x" = "Layouts must be available for all {.val {length(cg_list)}} components. ",
+          "i" = "Found layouts for {.val {sum(graphs_check)}} components. "
+        )
       )
     }
   }
@@ -216,8 +224,10 @@ WriteMPX_pxl_file <- function(
     )
     if (inherits(X, "try-error")) {
       cli::cli_abort(
-        c("i" = "Please ensure that all layers have the same number of rows.",
-          "x" = "Failed to combine 'Assay5' layers due to invalid dimensions.")
+        c(
+          "i" = "Please ensure that all layers have the same number of rows.",
+          "x" = "Failed to combine 'Assay5' layers due to invalid dimensions."
+        )
       )
     }
   }
@@ -722,9 +732,11 @@ WriteMPX_pxl_file <- function(
       # Combine counts with layout
       if (nrow(cg@counts) != nrow(layout)) {
         cli::cli_abort(
-          c("i" = "Each layout must have the same number of rows as the counts matrix",
+          c(
+            "i" = "Each layout must have the same number of rows as the counts matrix",
             "x" = "Numer of rows in count matrix: {.val {nrow(cg@counts)}}",
-            "x" = "Numer of rows in layout table: {.val {nrow(layout)}}")
+            "x" = "Numer of rows in layout table: {.val {nrow(layout)}}"
+          )
         )
       }
       return(cg@counts %>% Matrix::t())

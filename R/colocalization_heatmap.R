@@ -174,8 +174,10 @@ ColocalizationHeatmap <- function(
   assert_length(size_range, 2)
   if (any(size_range[1] < 0)) {
     cli::cli_abort(
-      c("i" = "{.arg size_range} must have non-negative values",
-        "x" = "Found {.val {sum(size_range < 0)}} negative values")
+      c(
+        "i" = "{.arg size_range} must have non-negative values",
+        "x" = "Found {.val {sum(size_range < 0)}} negative values"
+      )
     )
   }
   if (!is.null(legend_range)) {
@@ -210,8 +212,10 @@ ColocalizationHeatmap <- function(
     dup_pairs <- select(plot_data, all_of(c(marker1_col, marker2_col))) %>%
       apply(1, paste, collapse = "/")
     cli::cli_abort(
-      c("i" = "Each row must represent a unique {.var {marker1_col}}/{.var {marker2_col}} pair",
-        "x" = "Found duplicated pairs: {.val {dup_pairs}}")
+      c(
+        "i" = "Each row must represent a unique {.var {marker1_col}}/{.var {marker2_col}} pair",
+        "x" = "Found duplicated pairs: {.val {dup_pairs}}"
+      )
     )
   }
 

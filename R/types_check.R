@@ -50,15 +50,21 @@ assert_single_value <- function(
     return(invisible(NULL))
   }
   type <- match.arg(type, choices = c("string", "numeric", "integer", "bool"))
-  check <- switch(
-    type,
-    "string" = \(x) {rlang::is_string(x)},
-    "numeric" = \(x) {is.numeric(x) && length(x) == 1},
-    "integer" = \(x) {is_scalar_wholenumber(x)},
-    "bool" = \(x) {rlang::is_scalar_logical(x)}
+  check <- switch(type,
+    "string" = \(x) {
+      rlang::is_string(x)
+    },
+    "numeric" = \(x) {
+      is.numeric(x) && length(x) == 1
+    },
+    "integer" = \(x) {
+      is_scalar_wholenumber(x)
+    },
+    "bool" = \(x) {
+      rlang::is_scalar_logical(x)
+    }
   )
-  msg <- switch(
-    type,
+  msg <- switch(type,
     "string" = "a single string",
     "numeric" = "a single numeric value",
     "integer" = "a single whole number",
@@ -66,13 +72,16 @@ assert_single_value <- function(
   )
   if (!check(x)) {
     cli::cli_abort(
-      c("i" = "{.arg {arg}} must be {msg}.",
+      c(
+        "i" = "{.arg {arg}} must be {msg}.",
         "x" = ifelse(
           length(x) == 1,
           "You've supplied a {.cls {class(x)}}.",
           "You've supplied a {.cls {class(x)}} of length {length(x)}."
-        )),
-      call = call)
+        )
+      ),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -89,15 +98,21 @@ assert_vector <- function(
     return(invisible(NULL))
   }
   type <- match.arg(type, choices = c("character", "numeric", "integer", "logical"))
-  check <- switch(
-    type,
-    "character" = \(x) {is.character(x)},
-    "numeric" = \(x) {is.numeric(x)},
-    "integer" = \(x) {is_vector_wholenumber(x)},
-    "logical" = \(x) {is.logical(x)}
+  check <- switch(type,
+    "character" = \(x) {
+      is.character(x)
+    },
+    "numeric" = \(x) {
+      is.numeric(x)
+    },
+    "integer" = \(x) {
+      is_vector_wholenumber(x)
+    },
+    "logical" = \(x) {
+      is.logical(x)
+    }
   )
-  msg <- switch(
-    type,
+  msg <- switch(type,
     "character" = "a {.cls character} vector",
     "numeric" = "a {.cls numeric} vector",
     "integer" = "an {.cls integer} vector",
@@ -105,13 +120,16 @@ assert_vector <- function(
   )
   if (!check(x) || length(x) < n) {
     cli::cli_abort(
-      c("i" = "{.arg {arg}} must be a {.cls {type}} vector with at least {n} element(s)",
+      c(
+        "i" = "{.arg {arg}} must be a {.cls {type}} vector with at least {n} element(s)",
         "x" = ifelse(
           length(x) >= n,
           "You've supplied a {.cls {class(x)}}.",
           "You've supplied a {.cls {class(x)}} of length {length(x)}."
-        )),
-      call = call)
+        )
+      ),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -128,9 +146,12 @@ assert_class <- function(
   }
   if (!inherits(x, classes)) {
     cli::cli_abort(
-      c("i" = "{.arg {arg}} must be a {.cls {classes}} object.",
-        "x" = "You've supplied a {.cls {class(x)}} object."),
-      call = call)
+      c(
+        "i" = "{.arg {arg}} must be a {.cls {classes}} object.",
+        "x" = "You've supplied a {.cls {class(x)}} object."
+      ),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -146,8 +167,10 @@ assert_mpx_assay <- function(
   }
   if (!inherits(x, "MPXAssay")) {
     cli::cli_abort(
-      c("i" = "The selected Assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
-        "x" = "Got a {.cls {class(x)}} object.")
+      c(
+        "i" = "The selected Assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
+        "x" = "Got a {.cls {class(x)}} object."
+      )
     )
   }
 }
@@ -168,9 +191,12 @@ assert_within_limits <- function(
   values_in_range <- dplyr::between(x, limits[1], limits[2])
   if (!all(values_in_range)) {
     cli::cli_abort(
-      c("i" = "Values in {.arg {arg}} must lie between {.val {limits[1]}} and {.val {limits[2]}}.",
-        "x" = "{.val {x[!values_in_range]}} is outside of the range."),
-      call = call)
+      c(
+        "i" = "Values in {.arg {arg}} must lie between {.val {limits[1]}} and {.val {limits[2]}}.",
+        "x" = "{.val {x[!values_in_range]}} is outside of the range."
+      ),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -186,9 +212,12 @@ assert_function <- function(
   }
   if (!rlang::is_function(x)) {
     cli::cli_abort(
-      c("i" = "{.arg {arg}} must be a {.cls function}.",
-        "x" = "You've supplied a {.cls {class(x)}}."),
-      call = call)
+      c(
+        "i" = "{.arg {arg}} must be a {.cls function}.",
+        "x" = "You've supplied a {.cls {class(x)}}."
+      ),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -204,7 +233,8 @@ assert_file_exists <- function(
   if (!fs::file_exists(x)) {
     cli::cli_abort(
       c("x" = "File {.file {x}} doesn't exist."),
-      call = call)
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -225,7 +255,8 @@ assert_file_ext <- function(
   if (fs::path_ext(x) != ext) {
     cli::cli_abort(
       c("x" = "File {.file {x}} is not a PXL file"),
-      call = call)
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -250,10 +281,12 @@ assert_x_in_y <- function(
     missing_elements <- which(is.na(missing_elements))
 
     cli::cli_abort(
-      c("i" = "All elements of {.arg {arg_x}} must be present in {.arg {arg_y}}.",
+      c(
+        "i" = "All elements of {.arg {arg_x}} must be present in {.arg {arg_y}}.",
         "x" = "Positions of missing element(s) in {.arg {arg_x}}: {.val {missing_elements}}"
       ),
-      call = call)
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -277,10 +310,12 @@ assert_single_values_are_different <- function(
   )
   if (x == y) {
     cli::cli_abort(
-      c("i" = "{.arg {arg_x}} and {.arg {arg_y}} must be different.",
+      c(
+        "i" = "{.arg {arg_x}} and {.arg {arg_y}} must be different.",
         "x" = "{.arg {arg_x}={x}} and {.arg {arg_y}={y}}."
       ),
-      call = call)
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -299,11 +334,13 @@ assert_singles_match <- function(
   )
   if (x != y) {
     cli::cli_abort(
-      c("i" = "{.arg {arg_x}} and {.arg {arg_y}} must be identical.",
+      c(
+        "i" = "{.arg {arg_x}} and {.arg {arg_y}} must be identical.",
         "x" = "{.arg {arg_x}={x}}",
         "x" = "{.arg {arg_y}={y}}"
       ),
-      call = call)
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -326,9 +363,9 @@ assert_length <- function(
   )
   if (length(x) != n) {
     cli::cli_abort(
-      c("x" = "{.arg {arg_x}} must have exactly {.val {n}} element(s) but has {.val {length(x)}}."
-      ),
-      call = call)
+      c("x" = "{.arg {arg_x}} must have exactly {.val {n}} element(s) but has {.val {length(x)}}."),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -351,9 +388,12 @@ assert_max_length <- function(
   )
   if (length(x) > n) {
     cli::cli_abort(
-      c("i" = "{.arg x} cannot have more than {.val {n}} element(s)",
-        "x" = "You've provided a {.cls {class(x)}} with {.val {length(x)}} elements"),
-      call = call)
+      c(
+        "i" = "{.arg x} cannot have more than {.val {n}} element(s)",
+        "x" = "You've provided a {.cls {class(x)}} with {.val {length(x)}} elements"
+      ),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -371,11 +411,13 @@ assert_vectors_x_y_length_equal <- function(
   )
   if (length(x) != length(y)) {
     cli::cli_abort(
-      c("i" = "{.arg {arg_x}} and {.arg {arg_y}} must have the same lengths.",
+      c(
+        "i" = "{.arg {arg_x}} and {.arg {arg_y}} must have the same lengths.",
         "x" = "Length of {.arg {arg_x}}: {length(x)}",
         "x" = "Length of {.arg {arg_y}}: {length(y)}"
       ),
-      call = call)
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -392,10 +434,12 @@ assert_unique <- function(
   if (length(x) != length(unique(x))) {
     dup_elements <- which(duplicated(x))
     cli::cli_abort(
-      c("i" = "{.arg {arg}} must have unique elements.",
+      c(
+        "i" = "{.arg {arg}} must have unique elements.",
         "x" = "{.arg {arg}} has duplicated elements at positions: {.val {dup_elements}}."
       ),
-      call = call)
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -420,12 +464,16 @@ assert_col_class <- function(
   col_x <- data[, x, drop = TRUE]
   if (!inherits(col_x, classes)) {
     cli::cli_abort(
-      c("i" = ifelse(
-        length(classes) == 1,
-        "Column {.val {x}} in {.arg {arg_data}} must be a {.cls {classes}}.",
-        "Column {.val {x}} in {.arg {arg_data}} must be one of {.cls {classes}}."),
-        "x" = "Column {.val {x}} is a {.cls {class(col_x)}}."),
-      call = call)
+      c(
+        "i" = ifelse(
+          length(classes) == 1,
+          "Column {.val {x}} in {.arg {arg_data}} must be a {.cls {classes}}.",
+          "Column {.val {x}} in {.arg {arg_data}} must be one of {.cls {classes}}."
+        ),
+        "x" = "Column {.val {x}} is a {.cls {class(col_x)}}."
+      ),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -449,7 +497,8 @@ assert_col_in_data <- function(
   if (!(x %in% names(data))) {
     cli::cli_abort(
       c("x" = "Column {.str {x}} is missing from {.arg {arg_data}}."),
-      call = call)
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -466,13 +515,16 @@ assert_non_empty_object <- function(
   }
   if (!(inherits(x, what = classes) && length(x) > 0)) {
     cli::cli_abort(
-      c("i" = "{.arg {arg}} must be a non-empty {.cls {classes}} object.",
+      c(
+        "i" = "{.arg {arg}} must be a non-empty {.cls {classes}} object.",
         "x" = ifelse(
           length(x) == 0,
           "You've supplied an empty {.cls {class(x)}}.",
           "You've supplied a {.cls {class(x)}}."
-        )),
-      call = call)
+        )
+      ),
+      call = call
+    )
   }
 }
 #' @rdname type_check_helpers
@@ -496,19 +548,23 @@ assert_vectors_match <- function(
   )
   if (length(x) != length(y)) {
     cli::cli_abort(
-      c("i" = "{.arg {arg_x}} and {.arg {arg_y}} must have the same lengths.",
+      c(
+        "i" = "{.arg {arg_x}} and {.arg {arg_y}} must have the same lengths.",
         "x" = "Length of {.arg {arg_x}}: {length(x)}",
         "x" = "Length of {.arg {arg_y}}: {length(y)}"
       ),
-      call = call)
+      call = call
+    )
   }
   if (!all(x == y)) {
     unmatched_elements <- which(x != y)
     cli::cli_abort(
-      c("i" = "{.arg {arg_x}} and {.arg {arg_y}} must be identical.",
+      c(
+        "i" = "{.arg {arg_x}} and {.arg {arg_y}} must be identical.",
         "x" = "{.arg {arg_x}} and {.arg {arg_y}} differ at positions: {.val {unmatched_elements}}."
       ),
-      call = call)
+      call = call
+    )
   }
 }
 

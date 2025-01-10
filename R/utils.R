@@ -180,8 +180,10 @@
   assert_non_empty_object(fs_map, "tbl_df")
   if (!all(c("id_map", "sample", "pxl_file") == colnames(fs_map))) {
     cli::cli_abort(
-      c("i" = "'fs_map' must have columns {.str id_map}, {.str sample}, and {.str pxl_file}",
-        "x" = "Got columns {.val {colnames(fs_map)}}")
+      c(
+        "i" = "'fs_map' must have columns {.str id_map}, {.str sample}, and {.str pxl_file}",
+        "x" = "Got columns {.val {colnames(fs_map)}}"
+      )
     )
   }
 
@@ -216,8 +218,10 @@
     f <- fs_map$pxl_file[i]
     if (!fs::file_exists(f)) {
       cli::cli_abort(
-        c("x" = "The pxl file {.file {f}} linked to sample {.val {i}} does not exist. ",
-          "i" = "Make sure that the path is correct and that the file has not been moved/deleted.")
+        c(
+          "x" = "The pxl file {.file {f}} linked to sample {.val {i}} does not exist. ",
+          "i" = "Make sure that the path is correct and that the file has not been moved/deleted."
+        )
       )
     }
     # Check .pxl file for content
@@ -363,8 +367,10 @@ abort_if_not <- function(
   group_vector <- object[, contrast_column, drop = TRUE]
   if (!length(unique(group_vector)) > 1) {
     cli::cli_abort(
-      c("i" = "Group variable {.val {contrast_column}} must have at least 2 groups",
-        "x" = "Group variable {.val {contrast_column}} only has 1 unique group")
+      c(
+        "i" = "Group variable {.val {contrast_column}} must have at least 2 groups",
+        "x" = "Group variable {.val {contrast_column}} only has 1 unique group"
+      )
     )
   }
 

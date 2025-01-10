@@ -39,34 +39,24 @@ for (assay_version in c("v3", "v5")) {
     expect_error({
       layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "invalid")
     })
-    expect_error(
-      {
-        layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", colors = "invalid")
-      }
-    )
+    expect_error({
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", colors = "invalid")
+    })
     expect_error({
       layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", assay = "invalid")
     })
-    expect_error(
-      {
-        layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", map_nodes = "invalid")
-      }
-    )
-    expect_error(
-      {
-        layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", map_edges = "invalid")
-      }
-    )
-    expect_error(
-      {
-        layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", node_size = "invalid")
-      }
-    )
-    expect_error(
-      {
-        layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", edge_width = "invalid")
-      }
-    )
+    expect_error({
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", map_nodes = "invalid")
+    })
+    expect_error({
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", map_edges = "invalid")
+    })
+    expect_error({
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", node_size = "invalid")
+    })
+    expect_error({
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", edge_width = "invalid")
+    })
   })
 
   test_that("Plot2DGraphM works as expected", {
@@ -81,33 +71,23 @@ for (assay_version in c("v3", "v5")) {
     expect_error({
       layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "invalid")
     })
-    expect_error(
-      {
-        layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), colors = "invalid")
-      }
-    )
+    expect_error({
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), colors = "invalid")
+    })
     expect_error({
       layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), assay = "invalid")
     })
-    expect_error(
-      {
-        layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), map_nodes = "invalid")
-      }
-    )
-    expect_error(
-      {
-        layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), map_edges = "invalid")
-      }
-    )
-    expect_error(
-      {
-        layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), node_size = "invalid")
-      }
-    )
-    expect_error(
-      {
-        layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), edge_width = "invalid")
-      }
-    )
+    expect_error({
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), map_nodes = "invalid")
+    })
+    expect_error({
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), map_edges = "invalid")
+    })
+    expect_error({
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), node_size = "invalid")
+    })
+    expect_error({
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), edge_width = "invalid")
+    })
   })
 }

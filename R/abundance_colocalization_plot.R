@@ -53,7 +53,8 @@ AbundanceColocalizationPlot <- function(
   assert_vector(markers_y, type = "character", n = 1)
   if (length(intersect(markers_x, markers_y)) > 0) {
     cli::cli_abort(
-      c("i" = "The markers in 'markers_x' and 'markers_y' must be different",
+      c(
+        "i" = "The markers in 'markers_x' and 'markers_y' must be different",
         "x" = "You've provided the following marker(s) in both 'markers_x' and 'markers_y':",
         "x" = "{.val {intersect(markers_x, markers_y)}}"
       )
@@ -65,8 +66,10 @@ AbundanceColocalizationPlot <- function(
   assert_single_value(coord_fixed, type = "bool")
   if (!(is.numeric(pt_size) && length(pt_size) %in% c(1, 2))) {
     cli::cli_abort(
-      c("i" = "'pt_size' must be a {.cls numeric} of length 1 or 2",
-        "x" = "You've provided a {.cls {class(pt_size)}} of length {length(pt_size)}")
+      c(
+        "i" = "'pt_size' must be a {.cls numeric} of length 1 or 2",
+        "x" = "You've provided a {.cls {class(pt_size)}} of length {length(pt_size)}"
+      )
     )
   }
   assert_single_value(draw_origo, type = "bool")

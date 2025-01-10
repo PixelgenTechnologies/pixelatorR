@@ -82,8 +82,10 @@ ComputeLayout.tbl_graph <- function(
 
   if (project_on_unit_sphere && dim == 2) {
     cli::cli_abort(
-      c("i" = "Projecting onto a unit sphere is only possible for 3D layouts",
-        "x" = "Change {.var dim} or set {.var project_on_unit_sphere=FALSE}")
+      c(
+        "i" = "Projecting onto a unit sphere is only possible for 3D layouts",
+        "x" = "Change {.var dim} or set {.var project_on_unit_sphere=FALSE}"
+      )
     )
   }
   if (project_on_unit_sphere && normalize_layout) {
@@ -420,9 +422,11 @@ ComputeLayout.Seurat <- function(
   }
   if (nrow(layout) != n_nodes) {
     cli::cli_abort(
-      c("x" = "Invalid number of rows returned by 'custom_layout_function'. ",
+      c(
+        "x" = "Invalid number of rows returned by 'custom_layout_function'. ",
         " " = "The number of rows in the layout should match the number of ",
-        " " = "nodes in the graph ({.val {n_nodes}})")
+        " " = "nodes in the graph ({.val {n_nodes}})"
+      )
     )
   }
 }
@@ -494,8 +498,10 @@ center_layout_coordinates <- function(
   assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
   if (!(ncol(layout) %in% c(2, 3))) {
     cli::cli_abort(
-      c("i" = "The layout must have 2 or 3 columns",
-        "x" = "You've provided a layout with {.val {ncol(layout)}} columns")
+      c(
+        "i" = "The layout must have 2 or 3 columns",
+        "x" = "You've provided a layout with {.val {ncol(layout)}} columns"
+      )
     )
   }
 
@@ -530,8 +536,10 @@ normalize_layout_coordinates <- function(
   assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
   if (!(ncol(layout) %in% c(2, 3))) {
     cli::cli_abort(
-      c("i" = "The layout must have 2 or 3 columns",
-        "x" = "You've provided a layout with {.val {ncol(layout)}} columns")
+      c(
+        "i" = "The layout must have 2 or 3 columns",
+        "x" = "You've provided a layout with {.val {ncol(layout)}} columns"
+      )
     )
   }
 
@@ -568,8 +576,10 @@ project_layout_coordinates_on_unit_sphere <- function(
   assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
   if (ncol(layout) != 3) {
     cli::cli_abort(
-      c("i" = "The layout must have 3 columns",
-        "x" = "You've provided a layout with {.val {ncol(layout)}} columns")
+      c(
+        "i" = "The layout must have 3 columns",
+        "x" = "You've provided a layout with {.val {ncol(layout)}} columns"
+      )
     )
   }
 

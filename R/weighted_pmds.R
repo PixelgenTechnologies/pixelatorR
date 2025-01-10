@@ -76,8 +76,10 @@ layout_with_weighted_pmds <- function(
   assert_class(g, classes = c("igraph", "tbl_graph"))
   if (!dim %in% c(2, 3)) {
     cli::cli_abort(
-      c("i" = "{.var dim} must be either 1 or 2",
-        "x" = "dim={dim}")
+      c(
+        "i" = "{.var dim} must be either 1 or 2",
+        "x" = "dim={dim}"
+      )
     )
   }
   assert_single_value(seed, type = "integer")
@@ -149,8 +151,10 @@ cos_distance_weights <- function(
   assert_single_value(pivots, type = "numeric")
   if (!(pivots > 0)) {
     cli::cli_abort(
-      c("i" = "{.var pivots} must be a positive numeric value",
-        "x" = "pivots={pivots}")
+      c(
+        "i" = "{.var pivots} must be a positive numeric value",
+        "x" = "pivots={pivots}"
+      )
     )
   }
 

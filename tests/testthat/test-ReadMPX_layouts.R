@@ -69,11 +69,9 @@ test_that("ReadMPX_layouts works as expected", {
 
 test_that("ReadMPX_layouts fails with invalid input", {
   # Invalid file name
-  expect_error(
-    {
-      layouts <- ReadMPX_layouts(filename = "Invalid")
-    }
-  )
+  expect_error({
+    layouts <- ReadMPX_layouts(filename = "Invalid")
+  })
 
   # Read from pxl file without pre-computed layouts
   expect_error({

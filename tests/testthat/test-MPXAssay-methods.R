@@ -77,8 +77,12 @@ for (assay_version in c("v3", "v5")) {
   })
 
   test_that("merge.MPXAssay fails when invalid input is provided", {
-    expect_error({cg_assay_merged <- merge(cg_assay, y = "Invalid")})
-    expect_error({cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))})
+    expect_error({
+      cg_assay_merged <- merge(cg_assay, y = "Invalid")
+    })
+    expect_error({
+      cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))
+    })
     expect_no_error({
       cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C"))
     })
