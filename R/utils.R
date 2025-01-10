@@ -11,7 +11,7 @@
 .tidy <- function(
   test_result
 ) {
-  stopifnot(inherits(test_result, what = "htest"))
+  assert_class(test_result, "htest")
   tibble(
     estimate = test_result$estimate,
     statistic = test_result$statistic,

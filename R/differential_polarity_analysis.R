@@ -286,10 +286,7 @@ RunDPA.Seurat <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "'contrast_column' must be available in Seurat object meta.data" =
-      contrast_column %in% colnames(object[[]])
-  )
+  assert_col_in_data(contrast_column, object[[]])
 
   # Use default assay if assay = NULL
   assay <- .validate_or_set_assay(object, assay)

@@ -7,12 +7,12 @@
   group_data <- object %>%
     {
       if (!is.null(group_vars)) {
-        stopifnot(
-          "'group_vars' must be valid meta data column names" =
-            inherits(group_vars, what = "character") &&
-              (length(group_vars) >= 1) &&
-              all(group_vars %in% colnames(.))
-        )
+        assert_vector(group_vars, type = "character", n = 1)
+        if (!all(group_vars %in% colnames(.))) {
+          cli::cli_abort(
+            c("x" = "All {.var group_vars} must be valid column names")
+          )
+        }
         select(., all_of(c(contrast_column, group_vars)))
       } else {
         select(., all_of(contrast_column))
