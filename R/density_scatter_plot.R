@@ -153,9 +153,7 @@ DensityScatterPlot <- function(
   assert_single_value(layer, type = "string", allow_null = TRUE)
   assert_single_value(coord_fixed, type = "bool")
   assert_class(plot_gate, "data.frame", allow_null = TRUE)
-  if (!is.null(plot_gate)) {
-    assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate))
-  }
+  assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate), allow_null = TRUE)
   assert_class(object, "Seurat")
 
   if (!is.null(plot_gate)) {
