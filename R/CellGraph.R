@@ -98,12 +98,16 @@ CreateCellGraphObject <- function(
 
   # Add checks for graph types
   if (attr(cellgraph, "type") == "bipartite") {
-    abort_if_not(
-      "Node attribute 'name' is missing" =
-        "name" %in% vertex_attr_names(cellgraph),
-      "Node attribute 'node_type' is missing" =
-        "node_type" %in% vertex_attr_names(cellgraph)
-    )
+    if (!"name" %in% vertex_attr_names(cellgraph)) {
+      cli::cli_abort(
+        "x" = "Node attribute {.str name} is missing from the graph"
+      )
+    }
+    if (!"node_type" %in% vertex_attr_names(cellgraph)) {
+      cli::cli_abort(
+        "x" = "Node attribute {.str node_type} is missing from the graph"
+      )
+    }
   }
   # TODO: Add check for A-node-projection and linegraph
 
