@@ -66,6 +66,8 @@ can be faceted by one or two variables and a gate can be plotted.
 library(pixelatorR)
 library(Seurat)
 
+set.seed(123)
+
 # A mock-up Seurat Object
 object <-
   CreateSeuratObject(counts = matrix(
@@ -93,10 +95,10 @@ object <-
 
 plot_gate <-
   data.frame(
-    xmin = c(70, 75),
-    xmax = c(150, 155),
-    ymin = c(50, 50),
-    ymax = c(150, 150),
+    xmin = c(20, 20),
+    xmax = c(70, 70),
+    ymin = c(20, 20),
+    ymax = c(60, 60),
     sample = c("A", "B")
   )
 
