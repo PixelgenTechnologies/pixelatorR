@@ -142,7 +142,8 @@
     name_check <- all(c("marker_1", "marker_2", "component") %in% names(colocalization))
     if (!name_check) {
       cli::cli_abort(
-        "i" = "Columns {.str marker_1}, {.str marker_2} and {.str component} must be present in the 'colocalization' score table"
+        "i" = "Columns {.str marker_1}, {.str marker_2} and {.str component} must",
+        " " = "be present in the 'colocalization' score table"
       )
     }
     # Check component names
@@ -201,7 +202,8 @@
   id_map_check2 <- sapply(fs_map$id_map, function(x) all(colnames(x) == c("current_id", "original_id")))
   if (!all(id_map_check2)) {
     cli::cli_abort(
-      c("x" = "All elements of {.var id_map} must be {.cls tbl_df} objects with columns {.str current_id} and {.str original_id")
+      c("x" = "All elements of {.var id_map} must be {.cls tbl_df} objects with",
+        " " = "columns {.str current_id} and {.str original_id")
     )
   }
   id_map_check3 <- sapply(fs_map$id_map, function(x) {

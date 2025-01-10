@@ -171,7 +171,7 @@ DensityScatterPlot <- function(
     }
   }
 
-  if (!(is.null(facet_vars) | !isTRUE(margin_density))) {
+  if (!(is.null(facet_vars) || !isTRUE(margin_density))) {
     cli::cli_abort(
       c(
         "i" = "{.var margin_density=TRUE} is not supported when {.var facet_vars} is not {.cls NULL}",
