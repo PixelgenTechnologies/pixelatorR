@@ -56,7 +56,7 @@ AbundanceColocalizationPlot <- function(
   assert_x_in_y(markers_y, rownames(object))
   assert_single_value(shared_scales, type = "bool")
   assert_single_value(coord_fixed, type = "bool")
-  assert_single_value(pt_size, type = "numeric")
+  assert_vector(pt_size, type = "numeric")
   assert_max_length(pt_size, 2)
   assert_single_value(draw_origo, type = "bool")
   assert_vector(colors, type = "character", n = 2)
