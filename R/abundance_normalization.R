@@ -35,9 +35,11 @@
   isotype_controls,
   ...
 ) {
+  # Check packages
   expect_mclust()
   expect_limma()
 
+  # Validate input parameters
   assert_class(counts, c("Matrix", "matrix"))
   assert_vector(isotype_controls, type = "character", n = 1)
   assert_x_in_y(isotype_controls, rownames(counts))

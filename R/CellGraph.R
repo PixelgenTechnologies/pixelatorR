@@ -79,17 +79,13 @@ CreateCellGraphObject <- function(
   layout = NULL,
   verbose = FALSE
 ) {
-  # Check input parameters
+  # Validate input parameters
   assert_non_empty_object(cellgraph, classes = "tbl_graph")
-  if (!is.null(counts)) {
-    assert_non_empty_object(counts, classes = "dgCMatrix")
-  }
-  if (!is.null(layout)) {
-    assert_non_empty_object(counts, classes = "tbl_df")
-  }
+  assert_non_empty_object(counts, classes = "dgCMatrix", allow_null = TRUE)
+  assert_non_empty_object(counts, classes = "tbl_df", allow_null = TRUE)
 
   if (!"type" %in% names(attributes(cellgraph))) {
-    cli::cli_abort(c("x" = "Graph attribute 'type' is missing."))
+    cli::cli_abort(c("x" = "Graph attribute {.str type} is missing."))
   } else {
     if (verbose && check_global_verbosity()) {
       cli_alert_info("Got a graph of type '{attr(cellgraph, 'type')}'")
@@ -173,11 +169,7 @@ CellGraphData <- function(
 ) {
   assert_class(object, "CellGraph")
   assert_single_value(slot, type = "string")
-  if (!(slot %in% slotNames(x = object))) {
-    cli::cli_abort(
-      c("x" = "{.arg slot} must be one of {.str {slotNames(x = object)}} but got {.str slot}")
-    )
-  }
+  assert_is_one_of(slot, slotNames(x = object))
   return(slot(object = object, name = slot))
 }
 
@@ -200,11 +192,7 @@ CellGraphData <- function(
   value
 ) {
   assert_class(object, "CellGraph")
-  if (!(slot %in% slotNames(x = object))) {
-    cli::cli_abort(
-      c("x" = "{.arg slot} must be one of {.str {slotNames(x = object)}} but got {.str {slot}}")
-    )
-  }
+  assert_is_one_of(slot, slotNames(x = object))
 
   # Get counts and layouts
   cellgraph <- slot(object, name = "cellgraph")
@@ -242,8 +230,7 @@ CellGraphData <- function(
         if (nrow(counts) != nrow(layouts[[layout]])) {
           cli::cli_abort(
             c(
-              "x" =
-                "Number of rows ({nrow(counts)}) in the provided {.cls {class(value)}} does not match ",
+              "x" = "Number of rows ({nrow(counts)}) in the provided {.cls {class(value)}} does not match ",
               " " = "the number of rows ({nrow(layouts[[layout]])}) in the 'layout' slot '{layout}' table"
             )
           )
@@ -271,8 +258,7 @@ CellGraphData <- function(
       if (length(cellgraph) != nrow(value[[layout]])) {
         cli::cli_abort(
           c(
-            "x" =
-              "Number of nodes ({length(cellgraph)}) in the 'cellgraph' slot does not match ",
+            "x" = "Number of nodes ({length(cellgraph)}) in the 'cellgraph' slot does not match ",
             " " = "the number of rows ({nrow(value[[layout]])}) in the provided '{layout}' layout table"
           )
         )
@@ -281,8 +267,7 @@ CellGraphData <- function(
         if (nrow(counts) != nrow(value[[layout]])) {
           cli::cli_abort(
             c(
-              "x" =
-                "Number of rows ({nrow(counts)}) in the 'counts' slot does not match the ",
+              "x" = "Number of rows ({nrow(counts)}) in the 'counts' slot does not match the ",
               " " = "number of rows ({nrow(value[[layout]])}) in the provided '{layout}' layout table"
             )
           )

@@ -529,6 +529,66 @@ assert_non_empty_object <- function(
 }
 #' @rdname type_check_helpers
 #'
+assert_is_one_of <- function(
+  x,
+  choices,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+) {
+  if (allow_null) {
+    return(invisible(NULL))
+  }
+  stopifnot(
+    "`x` must be a single value" =
+      length(x) == 1,
+    "`choices` must have more than 1 element" =
+      length(choices) > 1,
+    "`x` and `choices` must have the same data type" =
+      identical(class(x), class(choices)),
+    "`x` and `choices` must be vectors" =
+      is_vector(x) && is_vector(choices)
+  )
+  if (!x %in% choices) {
+    cli::cli_abort(
+      c(
+        "x" = "{.arg {arg}} must be one of {.val {choices}} but got {.val {x}}."
+      ),
+      call = call
+    )
+  }
+}
+#' @rdname type_check_helpers
+#'
+assert_different <- function(
+  x,
+  y,
+  allow_null = FALSE,
+  arg_x = caller_arg(x),
+  arg_y = caller_arg(y),
+  call = caller_env()
+) {
+  if (allow_null) {
+    return(invisible(NULL))
+  }
+  stopifnot(
+    "`x` and `y` must have the same data type" =
+      identical(class(x), class(y)),
+    "`x` and `y` must be vectors" =
+      is_vector(x) && is_vector(y)
+  )
+  if (length(intersect(x, y)) > 0) {
+    cli::cli_abort(
+      c(
+        "i" = "The values in {.arg {arg_x}} and {.arg {arg_y}} must be different",
+        "x" = "The following value(s) were found in both {.arg {arg_x}} and {.arg {arg_y}}:",
+        " " = "{.val {intersect(x, y)}}"
+      )
+    )
+  }
+}
+#' @rdname type_check_helpers
+#'
 assert_vectors_match <- function(
   x,
   y,
