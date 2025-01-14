@@ -385,16 +385,18 @@ ComputeLayout.Seurat <- function(
 .validate_custom_layout_function <- function(
   custom_layout_function,
   custom_layout_function_args,
-  dim
+  dim,
+  call = caller_env()
 ) {
   # Make sure that a function is provided
-  assert_function(custom_layout_function)
+  assert_function(custom_layout_function, call = call)
 
   # Make sure that the custom_layout_function_args is a list
   if (!is.null(custom_layout_function_args)) {
     if (!inherits(custom_layout_function_args, what = "list")) {
       cli::cli_abort(
-        c("x" = "{.var custom_layout_function_args} should be a list with function arguments")
+        c("x" = "{.var custom_layout_function_args} should be a list with function arguments"),
+        call = call
       )
     }
   }
@@ -407,17 +409,20 @@ ComputeLayout.Seurat <- function(
 .validate_custom_layout_function_results <- function(
   layout,
   dim,
-  n_nodes
+  n_nodes,
+  call = caller_env()
 ) {
   # Validate results
   if (!inherits(layout, what = "matrix")) {
     cli::cli_abort(
-      c("x" = "Expected a {.cls matrix} from 'custom_layout_function', but got a {.cls {class(layout)[1]}}")
+      c("x" = "Expected a {.cls matrix} from 'custom_layout_function', but got a {.cls {class(layout)[1]}}"),
+      call = call
     )
   }
   if (ncol(layout) != dim) {
     cli::cli_abort(
-      c("x" = "Expected {dim} columns in the output from 'custom_layout_function', but got {ncol(layout)}")
+      c("x" = "Expected {dim} columns in the output from 'custom_layout_function', but got {ncol(layout)}"),
+      call = call
     )
   }
   if (nrow(layout) != n_nodes) {
@@ -426,7 +431,8 @@ ComputeLayout.Seurat <- function(
         "x" = "Invalid number of rows returned by 'custom_layout_function'. ",
         " " = "The number of rows in the layout should match the number of ",
         " " = "nodes in the graph ({.val {n_nodes}})"
-      )
+      ),
+      call = call
     )
   }
 }
