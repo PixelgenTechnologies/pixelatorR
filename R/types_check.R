@@ -15,6 +15,7 @@
 #' @param classes A character vector of classes to check against
 #' @param limits A numeric vector of length 2 specifying a lower and upper limit
 #' @param ext A character string specifying a file extension
+#' @param choices A vector of allowed values
 #'
 #' @returns Nothing if the check passes, otherwise throws an error.
 #'

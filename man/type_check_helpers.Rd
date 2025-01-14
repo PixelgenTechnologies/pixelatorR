@@ -195,6 +195,8 @@ was called}
 \item{ext}{A character string specifying a file extension}
 
 \item{data}{A data-frame like object}
+
+\item{choices}{A vector of allowed values}
 }
 \value{
 Nothing if the check passes, otherwise throws an error.
