@@ -20,6 +20,8 @@
 \alias{assert_col_class}
 \alias{assert_col_in_data}
 \alias{assert_non_empty_object}
+\alias{assert_is_one_of}
+\alias{assert_different}
 \alias{assert_vectors_match}
 \title{Type check helpers}
 \usage{
@@ -142,6 +144,23 @@ assert_non_empty_object(
   classes,
   allow_null = FALSE,
   arg = caller_arg(x),
+  call = caller_env()
+)
+
+assert_is_one_of(
+  x,
+  choices,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+)
+
+assert_different(
+  x,
+  y,
+  allow_null = FALSE,
+  arg_x = caller_arg(x),
+  arg_y = caller_arg(y),
   call = caller_env()
 )
 

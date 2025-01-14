@@ -82,7 +82,7 @@ CreateCellGraphObject <- function(
   # Validate input parameters
   assert_non_empty_object(cellgraph, classes = "tbl_graph")
   assert_non_empty_object(counts, classes = "dgCMatrix", allow_null = TRUE)
-  assert_non_empty_object(counts, classes = "tbl_df", allow_null = TRUE)
+  assert_non_empty_object(layout, classes = "tbl_df", allow_null = TRUE)
 
   if (!"type" %in% names(attributes(cellgraph))) {
     cli::cli_abort(c("x" = "Graph attribute {.str type} is missing."))

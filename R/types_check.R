@@ -510,7 +510,7 @@ assert_non_empty_object <- function(
   arg = caller_arg(x),
   call = caller_env()
 ) {
-  if (allow_null) {
+  if (allow_null && is.null(x)) {
     return(invisible(NULL))
   }
   if (!(inherits(x, what = classes) && length(x) > 0)) {
@@ -536,7 +536,7 @@ assert_is_one_of <- function(
   arg = caller_arg(x),
   call = caller_env()
 ) {
-  if (allow_null) {
+  if (allow_null && is.null(x)) {
     return(invisible(NULL))
   }
   stopifnot(
@@ -568,7 +568,7 @@ assert_different <- function(
   arg_y = caller_arg(y),
   call = caller_env()
 ) {
-  if (allow_null) {
+  if (allow_null && is.null(x)) {
     return(invisible(NULL))
   }
   stopifnot(
@@ -597,7 +597,7 @@ assert_vectors_match <- function(
   arg_y = caller_arg(y),
   call = caller_env()
 ) {
-  if (allow_null) {
+  if (allow_null && is.null(x)) {
     return(invisible(NULL))
   }
   stopifnot(
