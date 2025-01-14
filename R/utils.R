@@ -203,7 +203,7 @@
   # Validate columns
   assert_col_class("id_map", fs_map, classes = "list", call = call)
   assert_col_class("sample", fs_map, classes = "integer", call = call)
-  assert_col_class("pxl_file", fs_map, classes = "character, call = call")
+  assert_col_class("pxl_file", fs_map, classes = "character", call = call)
   id_map_check1 <- sapply(fs_map$id_map, function(x) inherits(x, what = "tbl_df"))
   if (!all(id_map_check1)) {
     cli::cli_abort(
