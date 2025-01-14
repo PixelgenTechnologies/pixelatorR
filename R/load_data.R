@@ -376,32 +376,36 @@ ReadMPX_item <- function(
           cli_alert("  Loading {col_br_magenta(item)} data")
         }
 
-        # generate a file name for a new temporary directory.
-        # When running R CMD check on windows latest release, we
-        # do not have permissions to modify files in TEMPDIR.
-        # For this reason, we create a new directory with a unique
-        # name instead.
-        exdir_temp <- fs::file_temp() %>% stringr::str_replace("file", "dir")
+        if (item == "edgelist") {
+          outdata <- ReadMPX_arrow_edgelist(filename, verbose = FALSE) %>% collect()
+        } else {
+          # generate a file name for a new temporary directory.
+          # When running R CMD check on windows latest release, we
+          # do not have permissions to modify files in TEMPDIR.
+          # For this reason, we create a new directory with a unique
+          # name instead.
+          exdir_temp <- fs::file_temp() %>% stringr::str_replace("file", "dir")
 
-        item_name <- paste0(item, ".parquet")
+          item_name <- paste0(item, ".parquet")
 
-        # Unzip item to temporary directory
-        check <- try(
-          {
-            utils::unzip(filename, files = item_name, exdir = exdir_temp)
-          },
-          silent = TRUE
-        )
+          # Unzip item to temporary directory
+          check <- try(
+            {
+              utils::unzip(filename, files = item_name, exdir = exdir_temp)
+            },
+            silent = TRUE
+          )
 
-        if (inherits(check, "try-error")) {
-          abort(glue("Failed to extract '{item_name}' from '{filename}'"))
+          if (inherits(check, "try-error")) {
+            abort(glue("Failed to extract '{item_name}' from '{filename}'"))
+          }
+
+          # Read contents of parquet file
+          outdata <- read_parquet(file.path(exdir_temp, item_name))
+
+          # Try to delete temporary directory or throw a warning if it fails.
+          .delete_temp_resource(exdir_temp)
         }
-
-        # Read contents of parquet file
-        outdata <- read_parquet(file.path(exdir_temp, item_name))
-
-        # Try to delete temporary directory or throw a warning if it fails.
-        .delete_temp_resource(exdir_temp)
 
         return(outdata)
       })
