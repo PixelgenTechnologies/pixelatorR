@@ -28,11 +28,9 @@ PolarizationScoresToAssay.data.frame <- function(
 ) {
   # Validate input
   values_from <- match.arg(values_from, choices = c("morans_z", "morans_i"))
-  stopifnot(
-    "'component' must be present in input table" = "component" %in% colnames(object),
-    "'marker' must be present in input table" = "marker" %in% colnames(object),
-    "'values_from' must be present in input table" = values_from %in% colnames(object)
-  )
+  assert_col_in_data("component", object)
+  assert_col_in_data("marker", object)
+  assert_col_in_data(values_from, object)
 
   # Cast data.frame to wide format
   pol_scores_wide_format <- object %>%
@@ -132,11 +130,7 @@ PolarizationScoresToAssay.Seurat <- function(
 ) {
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-          (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     assay <- DefaultAssay(object)
@@ -144,11 +138,7 @@ PolarizationScoresToAssay.Seurat <- function(
 
   # Use "polarization" if new_assay = NULL
   if (!is.null(new_assay)) {
-    stopifnot(
-      "'new_assay' must be a character of length 1" =
-        is.character(new_assay) &&
-          (length(new_assay) == 1)
-    )
+    assert_single_value(new_assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     new_assay <- "polarization"
@@ -200,16 +190,10 @@ ColocalizationScoresToAssay.data.frame <- function(
   values_from <- match.arg(values_from,
     choices = c("pearson_z", "pearson")
   )
-  stopifnot(
-    "'component' must be present in input table" =
-      "component" %in% colnames(object),
-    "'marker_1' must be present in input table" =
-      "marker_1" %in% colnames(object),
-    "'marker_2' must be present in input table" =
-      "marker_2" %in% colnames(object),
-    "'values_from' must be present in input table" =
-      values_from %in% colnames(object)
-  )
+  assert_col_in_data("component", object)
+  assert_col_in_data("marker_1", object)
+  assert_col_in_data("marker_2", object)
+  assert_col_in_data(values_from, object)
 
   # Cast data.frame to wide format
   col_scores_wide_format <- object %>%
@@ -312,11 +296,7 @@ ColocalizationScoresToAssay.Seurat <- function(
 ) {
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-          (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     assay <- DefaultAssay(object)
@@ -324,11 +304,7 @@ ColocalizationScoresToAssay.Seurat <- function(
 
   # Use "polarization" if new_assay = NULL
   if (!is.null(new_assay)) {
-    stopifnot(
-      "'new_assay' must be a character of length 1" =
-        is.character(new_assay) &&
-          (length(new_assay) == 1)
-    )
+    assert_single_value(new_assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     new_assay <- "colocalization"
@@ -366,7 +342,9 @@ ColocalizationScoresToAssay.Seurat <- function(
   # fetch polarization scores
   spatial_metric_table <- slot(object, name = metric)
   if (is.null(spatial_metric_table)) {
-    abort(glue("'{metric}' scores are missing from '{class(object)}'"))
+    cli::cli_abort(
+      c("x" = "{.str {metric}} scores are missing from {.cls {class(object)}}")
+    )
   }
 
   # Validate input

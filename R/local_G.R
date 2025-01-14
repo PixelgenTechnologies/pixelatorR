@@ -162,22 +162,21 @@ local_G <- function(
   ...
 ) {
   # Check input parameters
-  stopifnot(
-    "'g' must be an 'tbl_graph' or an 'igraph' object" =
-      inherits(g, what = c("igraph", "tbl_graph")),
-    "'counts' must be a sparse matrix of class 'dgCMatrix' or a 'matrix'" =
-      inherits(counts, what = c("matrix", "dgCMatrix")),
-    "'k' must be and integer larger than 0" =
-      inherits(k, what = c("numeric", "integer")) && (k > 0),
-    "Number of nodes on 'g' must match number of rows in 'counts'" =
-      nrow(counts) == length(g),
-    "'use_weights' must be either TRUE or FALSE" =
-      is.logical(use_weights) && (length(use_weights) == 1),
-    "'normalize_counts' must be either TRUE or FALSE" =
-      is.logical(normalize_counts) && (length(normalize_counts) == 1),
-    "'return_p_vals' must be either TRUE or FALSE" =
-      is.logical(return_p_vals) && (length(return_p_vals) == 1)
-  )
+  assert_class(g, c("tbl_graph", "igraph"))
+  assert_class(counts, c("Matrix", "matrix"))
+  assert_single_value(k, type = "integer")
+  if (!k > 0) {
+    cli::cli_abort(
+      c(
+        "i" = "{.var k} must be a positive {.cls integer}",
+        "x" = "k = {k}"
+      )
+    )
+  }
+  assert_singles_match(nrow(counts), length(g))
+  assert_single_value(use_weights, type = "bool")
+  assert_single_value(normalize_counts, type = "bool")
+  assert_single_value(return_p_vals, type = "bool")
 
   type <- match.arg(type, choices = c("gi", "gstari"))
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
@@ -192,13 +191,13 @@ local_G <- function(
 
   # Validate W
   if (!is.null(W)) {
-    stopifnot(
-      "'W' must be a sparse matrix of class 'dgCMatrix'" = inherits(W, what = "dgCMatrix"),
-      "Number of rows and columns in 'W' must match number of nodes in 'g'" =
-        nrow(W) == length(g) && ncol(W) == length(g)
-    )
+    assert_class(W, "dgCMatrix")
+    assert_singles_match(nrow(W), length(g))
+    assert_singles_match(ncol(W), length(g))
     if (type == "gstari" && any(diag(A) == 0)) {
-      abort(glue("The 'gstari' type requires the diagonal of the adjacency matrix to be positive."))
+      cli::cli_abort(
+        c("x" = "The 'gstari' type requires the diagonal of the {.var A} matrix to be positive.")
+      )
     }
   } else {
     if (use_weights) {
@@ -330,11 +329,28 @@ compute_transition_probabilities <- function(
   k = 1,
   remove_self_loops = FALSE
 ) {
-  stopifnot(
-    "A must be a square matrix" = nrow(A) == ncol(A),
-    "A must be symmetric" = Matrix::isSymmetric(A),
-    "k must be a positive integer" = is.numeric(k) && k > 0
-  )
+  if (nrow(A) != ncol(A)) {
+    cli::cli_abort(
+      c(
+        "i" = "{.var A} must be a square matrix",
+        "x" = "nrow(A) = {nrow(A)}, ncol(A) = {ncol(A)}"
+      )
+    )
+  }
+  if (!Matrix::isSymmetric(A)) {
+    cli::cli_abort(
+      c("x" = "{.var A} must be a symmetric matrix")
+    )
+  }
+  assert_single_value(k, type = "integer")
+  if (!k > 0) {
+    cli::cli_abort(
+      c(
+        "i" = "{.var k} must be a positive {.cls integer}",
+        "x" = "k = {k}"
+      )
+    )
+  }
 
   # Compute transition probabilities
   W_out <- A * (1 / Matrix::rowSums(A))

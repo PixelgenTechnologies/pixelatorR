@@ -74,6 +74,8 @@
 #' library(pixelatorR)
 #' library(Seurat)
 #'
+#' set.seed(123)
+#'
 #' # A mock-up Seurat Object
 #' object <-
 #'   CreateSeuratObject(counts = matrix(
@@ -101,10 +103,10 @@
 #'
 #' plot_gate <-
 #'   data.frame(
-#'     xmin = c(70, 75),
-#'     xmax = c(150, 155),
-#'     ymin = c(50, 50),
-#'     ymax = c(150, 150),
+#'     xmin = c(20, 20),
+#'     xmax = c(70, 70),
+#'     ymin = c(20, 20),
+#'     ymax = c(60, 60),
 #'     sample = c("A", "B")
 #'   )
 #'
@@ -136,44 +138,49 @@ DensityScatterPlot <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "'facet_vars' must either be NULL or be a character vector with 1 or 2 elements" =
-      is.null(facet_vars) | length(facet_vars) %in% 1:2,
-    "Variables in 'facet_vars' must be available in the objects 'meta.data' slot" =
-      is.null(facet_vars) | all(facet_vars %in% colnames(object[[]])),
-    "'marker1' must be a character of length 1" =
-      is.character(marker1),
-    "'marker2' must be a character of length 1" =
-      is.character(marker2),
-    "'marker1' must be available in the object" =
-      marker1 %in% rownames(object),
-    "'marker2' must be available in the object" =
-      marker2 %in% rownames(object),
-    "'grid_n' must be a numeric of length 1" =
-      is.numeric(grid_n),
-    "'scale_density' must be either TRUE or FALSE" =
-      is.logical(scale_density),
-    "'margin_density' must be either TRUE or FALSE" =
-      is.logical(margin_density),
-    "'pt_size' must be a numeric of length 1" =
-      is.numeric(pt_size),
-    "'alpha' must be a numeric of length 1" =
-      is.numeric(alpha),
-    "'layer' must be a character of length 1" =
-      is.character(layer) | is.null(layer),
-    "'coord_fixed' must be either TRUE or FALSE" =
-      is.logical(coord_fixed),
-    "'plot_gate' must be either NULL or a data.frame" =
-      is.null(plot_gate) | is.data.frame(plot_gate),
-    "'plot_gate' must have columns 'xmin', 'xmax', 'ymin', 'ymax'" =
-      is.null(plot_gate) | all(c("xmin", "xmax", "ymin", "ymax") %in% colnames(plot_gate)),
-    "'plot_gate' can't contain facetting variables that are not in 'facet_vars'" =
-      is.null(plot_gate) | all(names(plot_gate) %in% c("xmin", "xmax", "ymin", "ymax", facet_vars)),
-    "'object' must be a Seurat object" =
-      inherits(object, "Seurat"),
-    "Marginal density is not supported when 'facet_vars' is not NULL" =
-      is.null(facet_vars) | !isTRUE(margin_density)
-  )
+  assert_vector(facet_vars, type = "character", n = 1, allow_null = TRUE)
+  assert_max_length(facet_vars, n = 2, allow_null = TRUE)
+  for (facet_var in facet_vars) {
+    assert_col_in_data(facet_var, object[[]], allow_null = TRUE)
+  }
+  assert_single_value(marker1, type = "string")
+  assert_single_value(marker2, type = "string")
+  assert_x_in_y(marker1, rownames(object))
+  assert_x_in_y(marker2, rownames(object))
+  assert_single_value(grid_n, type = "integer")
+  assert_single_value(scale_density, type = "bool")
+  assert_single_value(margin_density, type = "bool")
+  assert_single_value(pt_size, type = "numeric")
+  assert_single_value(alpha, type = "numeric")
+  assert_single_value(layer, type = "string", allow_null = TRUE)
+  assert_single_value(coord_fixed, type = "bool")
+  assert_class(plot_gate, "data.frame", allow_null = TRUE)
+  if (!is.null(plot_gate)) {
+    assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate), allow_null = TRUE)
+  }
+  assert_class(object, "Seurat")
+
+  if (!is.null(plot_gate)) {
+    check <- !names(plot_gate) %in% c("xmin", "xmax", "ymin", "ymax", facet_vars)
+    if (sum(check) > 0) {
+      cli::cli_abort(
+        c(
+          "i" = "'plot_gate' can't contain facetting variables that are not in {.var facet_vars}",
+          "x" = "The following variables are not in {.var facet_vars}: ",
+          " " = "{.val {names(plot_gate)[check]}}"
+        )
+      )
+    }
+  }
+
+  if (!(is.null(facet_vars) || !isTRUE(margin_density))) {
+    cli::cli_abort(
+      c(
+        "i" = "{.var margin_density=TRUE} is not supported when {.var facet_vars} is not {.cls NULL}",
+        "x" = "You've provided {.var margin_density={margin_density}} and {.var facet_vars=NULL}"
+      )
+    )
+  }
 
   if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
     warn("Fixed coordinates ('coord_fixed' = TRUE) is not supported when 'margin_density' is TRUE")

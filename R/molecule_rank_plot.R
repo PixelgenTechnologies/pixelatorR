@@ -30,34 +30,24 @@ MoleculeRankPlot.data.frame <- function(
   ...
 ) {
   # Check object
-  stopifnot(
-    "'object' must be a nonempty 'data.frame'-like object" =
-      length(object) > 0,
-    "Either column 'edges' or 'molecules' must be present in 'object'" =
-      any(c("edges", "molecules") %in% colnames(object))
-  )
+  assert_non_empty_object(object, classes = "data.frame")
+  if (!any(c("edges", "molecules") %in% colnames(object))) {
+    cli::cli_abort(
+      c("x" = "Either {.str edges} or {.str molecules} must be present in {.var object}")
+    )
+  }
 
   molecules_column <-
     ifelse("molecules" %in% colnames(object), "molecules", "edges")
 
-  if (!inherits(object[[molecules_column]], what = "integer")) {
-    glue("'{molecules_column}' must be an integer vector")
-  }
+  assert_col_class(molecules_column, object, "integer")
 
   if (!is.null(group_by)) {
-    stopifnot(
-      "'group_by' must be a character of length 1" =
-        is.character(group_by) &&
-          (length(group_by) == 1)
-    )
-    if (!inherits(object[[group_by]], what = c("character", "factor"))) {
-      abort(glue(
-        "Invalid class '{class(object[[group_by]])}' for column ",
-        "'{group_by}'. Expected a 'character' or 'factor'"
-      ))
-    }
+    assert_single_value(group_by, type = "string")
+    assert_col_class(group_by, object, classes = c("character", "factor"))
+
     if (!group_by %in% colnames(object)) {
-      cli_alert_warning("'{group_by}' not found in 'object'")
+      cli_alert_warning("Column {.str {group_by}} not found in 'object'")
     } else {
       object <- object %>% group_by_at(group_by)
     }
@@ -146,9 +136,7 @@ EdgeRankPlot <- function(
   group_by = NULL,
   ...
 ) {
-  stopifnot(
-    "'object' must be a 'Seurat' object" = inherits(object, "Seurat")
-  )
+  assert_class(object, "Seurat")
 
   moleculerank_plot <- MoleculeRankPlot(object[[]], group_by = group_by, ...)
   return(moleculerank_plot)

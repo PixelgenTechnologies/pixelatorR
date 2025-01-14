@@ -94,6 +94,7 @@ Collate:
     'remove_cell_graphs.R'
     'restore_paths.R'
     'tau_plot.R'
+    'types_check.R'
     'weighted_pmds.R'
     'write_pxl_file.R'
     'zzz.R'

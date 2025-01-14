@@ -34,31 +34,21 @@ ReadMPX_arrow_edgelist <- function(
   ...
 ) {
   # Check input parameters
-  stopifnot(
-    "'pxl_file' must be a non-empty character of length 1" =
-      inherits(pxl_file, what = "character") &&
-        (length(pxl_file) == 1)
-  )
-
-  # Validate path
-  if (!fs::file_exists(pxl_file)) {
-    abort(glue("File '{pxl_file}' does not exist"))
-  }
+  assert_single_value(pxl_file, type = "string")
+  assert_file_ext(pxl_file, ext = "pxl")
+  assert_file_exists(pxl_file)
 
   available_files <- utils::unzip(pxl_file, list = TRUE)$Name
   if (!"edgelist.parquet" %in% available_files) {
-    abort(glue(".pxl file {filename} does not contain an 'edgelist.parquet' file"))
+    cli::cli_abort(
+      c("x" = "{.str edgelist.parquet} is missing from {.file pxl_file}")
+    )
   }
 
   # Extract the edgelist parquet file
   if (!is.null(edge_list_file)) {
-    stopifnot(
-      "'edge_list_file' must be a non-empty character of length 1" =
-        inherits(edge_list_file, what = "character") &&
-          (length(edge_list_file) == 1),
-      "'edge_list_file' must be a .parquet file" =
-        .file_ext(edge_list_file) == "parquet"
-    )
+    assert_single_value(edge_list_file, type = "string")
+    assert_file_ext(edge_list_file, ext = "parquet")
   } else {
     edge_list_dir <- fs::path_temp()
     if (verbose && check_global_verbosity()) {

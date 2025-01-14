@@ -37,20 +37,11 @@ edgelist_to_simple_Anode_graph.data.frame <- function(
   ...
 ) {
   # Check input parameters
-  stopifnot(
-    "edgelist must be a non-empty object" =
-      (nrow(object) > 0),
-    "One or several of 'upia', 'upib' are missing from edgelist" =
-      all(c("upia", "upib") %in% colnames(object))
-  )
+  assert_non_empty_object(object, "data.frame")
+  assert_x_in_y(c("upia", "upib"), colnames(object))
   if (!is.null(components) && ("component" %in% colnames(object))) {
-    stopifnot(
-      "'components' must be a character vector" =
-        is.character(components) && (length(components) > 0)
-    )
-    if (!all(components %in% (object %>% pull(component)))) {
-      abort("Some 'component' IDs are missing from object")
-    }
+    assert_vector(components, "character", n = 1)
+    assert_x_in_y(components, pull(object, component))
     # Filter components
     object <- object %>%
       filter(component %in% components)
@@ -135,26 +126,20 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function(
   expect_duckdb()
 
   # Check input parameters
-  stopifnot(
-    "edgelist must be a non-empty object" =
-      (nrow(object) > 0),
-    "One or several of 'upia', 'upib' are missing from edgelist" =
-      all(c("upia", "upib") %in% names(object))
-  )
+  assert_non_empty_object(object, "FileSystemDataset")
+  assert_x_in_y(c("upia", "upib"), names(object))
+
   if (!"component" %in% names(object)) {
-    abort("Column 'component' is missing from edgelist")
+    cli::cli_abort(
+      c("x" = "Column {.str component} is missing from {.var object} (edgelist)")
+    )
   }
 
   object <- object %>% to_duckdb()
 
   if (!is.null(components)) {
-    stopifnot(
-      "'components' must be a character vector" =
-        is.character(components) && (length(components) > 0)
-    )
-    if (!all(components %in% (object %>% pull(component)))) {
-      abort("Some 'component' IDs are missing from object")
-    }
+    assert_vector(components, "character", n = 1)
+    assert_x_in_y(components, pull(object, component))
     # Filter components
     object <- object %>%
       filter(component %in% components)
@@ -233,7 +218,12 @@ edgelist_to_simple_bipart_graph <- function(
   if ("component" %in% names(edgelist)) {
     no_components <- length(unique(edgelist %>% pull(component)))
     if (no_components > 1) {
-      abort(glue("Found {no_components} components in edgelist."))
+      cli::cli_abort(
+        c(
+          "i" = "{.var edgelist} can only have one component",
+          "x" = "Found {.val {no_components}} components in {.var edgelist}"
+        )
+      )
     }
   }
 

@@ -51,49 +51,36 @@ color_by_marker <- function(
   expect_scales()
 
   # Validate input parameters
-  stopifnot(
-    "'cg' must be a 'CellGraph' object" =
-      inherits(cg, what = "CellGraph"),
-    "'markers' must be a non-empty 'character vector'" =
-      is.character(markers) && (length(markers) > 0),
-    "'palette' must a  non-empty 'character vector' or a valid palette name" =
-      is.character(palette),
-    "'smooth' must be TRUE or FALSE" =
-      is.logical(smooth_counts) &&
-        (length(normalize) == 1),
-    "'normalize' must be TRUE or FALSE" =
-      is.logical(normalize) &&
-        (length(normalize) == 1),
-    "'trim_quantiles' must be a numeric vector of length 2" =
-      is.numeric(trim_quantiles) &&
-        (length(trim_quantiles) == 2)
-  )
-  if (!all(between(trim_quantiles, left = 0, right = 1))) {
-    abort(glue("'trim_quantiles' must be betweeen 0 and 1"))
-  }
+  assert_class(cg, "CellGraph")
+  assert_vector(markers, type = "character", n = 1)
+  assert_vector(palette, type = "character", n = 1)
+  assert_single_value(smooth_counts, type = "bool")
+  assert_single_value(normalize, type = "bool")
+  assert_class(trim_quantiles, "numeric")
+  assert_length(trim_quantiles, 2)
+  assert_within_limits(trim_quantiles, c(0, 1))
   if (trim_quantiles[2] <= trim_quantiles[1]) {
-    abort(glue("'trim_quantiles[2]' must be larger than 'trim_quantiles[1]'"))
+    cli::cli_abort(
+      c("x" = "'trim_quantiles[2]' must be larger than 'trim_quantiles[1]'")
+    )
   }
   if (!is.null(nNodes)) {
-    stopifnot("'nNodes' must be a positive value" = inherits(nNodes, what = "numeric"))
-    if (!between(nNodes, left = 0, right = length(cg@cellgraph))) {
-      abort(glue(
-        "'nNodes' must be a positive value smaller than the number of nodes in the graph.\n",
-        "nNodes = {nNodes} while the total number of nodes is {length(cg@cellgraph)}"
-      ))
-    }
+    assert_class(nNodes, "numeric")
+    assert_within_limits(nNodes, c(1, length(cg@cellgraph)))
   }
 
   mode <- match.arg(mode, choices = c("product", "sum"))
 
   # Fetch node counts and make sure its non-empty
   counts <- slot(cg, name = "counts")
-  stopifnot("counts are missing from 'CellGraph' object" = !is.null(counts))
+  if (is.null(counts)) {
+    cli::cli_abort(
+      c("x" = "counts are missing from the 'CellGraph' object")
+    )
+  }
 
   # Validate markers
-  if (!all(markers %in% colnames(counts))) {
-    abort(glue("{markers} missing from count matrix"))
-  }
+  assert_x_in_y(markers, colnames(counts))
 
   # Fetch tbl_graph
   g <- slot(cg, name = "cellgraph")
@@ -139,7 +126,6 @@ color_by_marker <- function(
 
   # Sample graph is desired
   if (!is.null(nNodes)) {
-    stopifnot("'nNodes' must be a positive value" = inherits(nNodes, what = "numeric"))
     nNodes <- round(nNodes)
     set.seed(123)
 
@@ -175,7 +161,7 @@ color_by_marker <- function(
   top_q = 0.99
 ) {
   # Validate x
-  stopifnot("'x' must be a non-empty numeric vector" = is.numeric(x) & (length(x) > 0))
+  assert_non_empty_object(x, classes = "numeric")
 
   # Calculate quantiles
   low_thr <- quantile(x, probs = bottom_q)
@@ -202,7 +188,7 @@ color_by_marker <- function(
   from <- to <- NULL
 
   # Validate data
-  stopifnot("'data' must be a 'tbl_graph' object" = inherits(data, what = "tbl_graph"))
+  assert_class(data, "tbl_graph")
 
   # Fetch node table and add IDs
   nodes <- data %N>%
@@ -239,36 +225,32 @@ color_by_marker <- function(
   keep_aspect_ratio = TRUE
 ) {
   # Validate input
-  stopifnot(
-    "'cg' must be a 'CellGraph' object" =
-      inherits(cg, what = "CellGraph"),
-    "'layout_coordinates' must be a data.frame-like object" =
-      inherits(layout_coordinates, what = "data.frame"),
-    "'scale' must be TRUE or FALSE" =
-      is.logical(scale) &&
-        (length(scale) == 1),
-    "'keep_aspect_ratio' must be TRUE or FALSE" =
-      is.logical(keep_aspect_ratio) &&
-        (length(keep_aspect_ratio) == 1)
-  )
+  assert_class(cg, "CellGraph")
+  assert_class(layout_coordinates, "data.frame")
+  assert_single_value(scale, type = "bool")
+  assert_single_value(keep_aspect_ratio, type = "bool")
   if (!all(c("x", "y") %in% colnames(layout_coordinates))) {
-    abort("'x' and 'y' coordinates must be present in 'layout_coordinates'")
+    cli::cli_abort(
+      c("x" = "Columns {.str x} and {.str y} must be present in {.var layout_coordinates}")
+    )
   } else {
     if ("z" %in% colnames(layout_coordinates)) {
       classes <- sapply(layout_coordinates[, c("x", "y", "z")], function(x) inherits(x, what = "numeric"))
       if (!all(classes)) {
-        abort("Coordinates x, y, z must be numeric")
+        cli::cli_abort(
+          c("x" = "Columns {.str x}, {.str y} and {.str z} must be numeric")
+        )
       }
     } else {
       classes <- sapply(layout_coordinates[, c("x", "y")], function(x) inherits(x, what = "numeric"))
       if (!all(classes)) {
-        abort("Coordinates x, y must be numeric")
+        cli::cli_abort(
+          c("x" = "Columns {.str x} and {.str y} must be numeric")
+        )
       }
     }
   }
-  if (nrow(layout_coordinates) != length(cg@cellgraph)) {
-    abort("'layout_coordinates' and 'cellgraph' do not match")
-  }
+  assert_singles_match(nrow(layout_coordinates), length(cg@cellgraph))
 
   # Add layout_coordinates to data@cellgraph
   cg@cellgraph <- cg@cellgraph %N>%

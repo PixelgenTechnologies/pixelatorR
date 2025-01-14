@@ -72,9 +72,7 @@ FSMap.Seurat <- function(
   .validate_fs_map(value)
   assay <- DefaultAssay(object = object)
   cg_assay <- object[[assay]]
-  if (!inherits(cg_assay, "MPXAssay")) {
-    abort(glue("Assay '{assay}' must be a 'CellGraphAssay' or 'CellGraphAssay5' object."))
-  }
+  assert_mpx_assay(cg_assay)
   slot(cg_assay, name = "fs_map") <- value
   object[[assay]] <- cg_assay
   return(object)
@@ -132,26 +130,22 @@ PolarizationScores.Seurat <- function(
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
-  }
+  assert_mpx_assay(cg_assay)
 
   # Get polarizaation scores from CellGraphAssay
   pol_scores <- PolarizationScores(cg_assay, add_marker_counts)
 
   # Handle adding meta data columns
   if (!is.null(meta_data_columns)) {
-    stopifnot(
-      "'meta_data_columns' must be a non-empty character vector" =
-        is.character(meta_data_columns) &&
-          (length(meta_data_columns) > 0)
-    )
+    assert_vector(meta_data_columns, type = "character", n = 1)
     meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
     if (any(!meta_data_columns_valid)) {
-      abort(glue(
-        "The following columns were not found in the meta.data slot: ",
-        "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"
-      ))
+      cli::cli_abort(
+        c(
+          "x" = "The following meta data columns were not found in the meta.data slot: ",
+          " " = "{.val {meta_data_columns[!meta_data_columns_valid]}}"
+        )
+      )
     }
 
     # Add additional meta.data slots
@@ -213,26 +207,22 @@ ColocalizationScores.Seurat <- function(
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("Assay '{assay}' is not a 'CellGraphAssay' or 'CellGraphAssay5' object."))
-  }
+  assert_mpx_assay(cg_assay)
 
   # Get colocalization scores
   coloc_scores <- ColocalizationScores(cg_assay, add_marker_counts)
 
   # Handle adding meta data columns
   if (!is.null(meta_data_columns)) {
-    stopifnot(
-      "'meta_data_columns' must be a non-empty character vector" =
-        is.character(meta_data_columns) &&
-          (length(meta_data_columns) > 0)
-    )
+    assert_vector(meta_data_columns, type = "character", n = 1)
     meta_data_columns_valid <- meta_data_columns %in% colnames(object[[]])
     if (any(!meta_data_columns_valid)) {
-      abort(glue(
-        "The following columns were not found in the meta.data slot: ",
-        "{paste(meta_data_columns[!meta_data_columns_valid], collapse=', ')}"
-      ))
+      cli::cli_abort(
+        c(
+          "x" = "The following meta data columns were not found in the meta.data slot: ",
+          " " = "{.val {meta_data_columns[!meta_data_columns_valid]}}"
+        )
+      )
     }
 
     # Add additional meta.data slots

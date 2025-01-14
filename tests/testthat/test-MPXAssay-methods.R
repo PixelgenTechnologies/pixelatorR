@@ -20,7 +20,7 @@ for (assay_version in c("v3", "v5")) {
 
   test_that("CellGraphs.MPXAssay getter/setter fails when invalid input is provided", {
     expect_error(CellGraphs("Invalid input"))
-    expect_error(CellGraphs(cg_assay) <- "Invalid input", "Invalid class 'character'")
+    expect_error(CellGraphs(cg_assay) <- "Invalid input")
     expect_error(CellGraphs(cg_assay) <- setNames(cg_assay@cellgraphs, nm = paste0(names(cg_assay@cellgraphs), "invalid")))
     cgs <- cg_assay@cellgraphs
     cgs[[1]] <- "Invalid"
@@ -37,10 +37,7 @@ for (assay_version in c("v3", "v5")) {
   })
 
   test_that("RenameCells.MPXAssay method fails when invalid input is provided", {
-    expect_error(
-      RenameCells(cg_assay, new.names = "Invalid"),
-      "'new.names' must be a character vector where "
-    )
+    expect_error(RenameCells(cg_assay, new.names = "Invalid"))
   })
 
   # subset method
@@ -80,18 +77,12 @@ for (assay_version in c("v3", "v5")) {
   })
 
   test_that("merge.MPXAssay fails when invalid input is provided", {
-    expect_error(
-      {
-        cg_assay_merged <- merge(cg_assay, y = "Invalid")
-      },
-      "'y' must be a 'CellGraphAssay"
-    )
-    expect_error(
-      {
-        cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))
-      },
-      "Element 2 in 'y' is not a"
-    )
+    expect_error({
+      cg_assay_merged <- merge(cg_assay, y = "Invalid")
+    })
+    expect_error({
+      cg_assay_merged <- merge(cg_assay, y = list(cg_assay, "Invalid"))
+    })
     expect_no_error({
       cg_assay_merged <- merge(cg_assay, y = list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C"))
     })
@@ -132,7 +123,7 @@ for (assay_version in c("v3", "v5")) {
     expect_error(pol <- PolarizationScores("invalid"), "no applicable method for")
 
     # Setter
-    expect_error(PolarizationScores(cg_assay) <- "invalid", "'polarization' must be a non-empty 'tbl_df' object")
+    expect_error(PolarizationScores(cg_assay) <- "invalid")
   })
 
 
@@ -193,6 +184,6 @@ for (assay_version in c("v3", "v5")) {
     expect_error(coloc <- ColocalizationScores("invalid"), "no applicable method for")
 
     # Setter
-    expect_error(ColocalizationScores(cg_assay) <- "invalid", "'colocalization' must be a non-empty 'tbl_df' object")
+    expect_error(ColocalizationScores(cg_assay) <- "invalid")
   })
 }

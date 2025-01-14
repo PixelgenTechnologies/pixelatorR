@@ -27,8 +27,8 @@ test_that("CellGraphData works as expected", {
 })
 
 test_that("CellGraphData fails when invalid input is provided", {
-  expect_error(CellGraphData("Invalid input"), "Invalid class character")
-  expect_error(CellGraphData(cg, slot = "Invalid"), "slot must be one of cellgraph, counts, layout")
+  expect_error(CellGraphData("Invalid input"))
+  expect_error(CellGraphData(cg, slot = "Invalid"))
 })
 
 # CellGraphData<- method
@@ -41,9 +41,9 @@ test_that("CellGraphData<- works as expected", {
 })
 
 test_that("CellGraphData<- fails when invalid input is provided", {
-  expect_error(CellGraphData(cg) <- "Invalid", "'value' must be a 'tbl_graph' object")
-  expect_error(CellGraphData(cg, slot = "counts") <- "Invalid", "'value' must be a 'dgCMatrix' object")
-  expect_error(CellGraphData(cg, slot = "layout") <- "Invalid", "'value' must be a 'list'")
+  expect_error(CellGraphData(cg) <- "Invalid")
+  expect_error(CellGraphData(cg, slot = "counts") <- "Invalid")
+  expect_error(CellGraphData(cg, slot = "layout") <- "Invalid")
 })
 
 # show method

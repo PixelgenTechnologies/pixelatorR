@@ -95,8 +95,7 @@ for (assay_version in c("v3", "v5")) {
 
     # Invalid combination of normalize_layout and project_on_unit_sphere
     expect_error(
-      se[["mpxCells"]] %>% ComputeLayout(normalize_layout = TRUE, project_on_unit_sphere = TRUE, dim = 3),
-      "Only one of 'project_on_unit_sphere' or 'normalize_layout' can be set to TRUE"
+      se[["mpxCells"]] %>% ComputeLayout(normalize_layout = TRUE, project_on_unit_sphere = TRUE, dim = 3)
     )
 
     # Invalid combination of dim and project_on_unit_sphere

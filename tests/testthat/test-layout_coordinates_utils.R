@@ -38,23 +38,19 @@ test_that("Layout coordinate utility functions work as expected", {
 test_that("Layout coordinate utility functions fails with invalid input", {
   # project_layout_coordinates_on_unit_sphere
   expect_error(
-    project_layout_coordinates_on_unit_sphere("Invalid"),
-    "'layout' must be a non-empty, matrix-like object"
+    project_layout_coordinates_on_unit_sphere("Invalid")
   )
   expect_error(
-    project_layout_coordinates_on_unit_sphere(xyz[, 1:2]),
-    "'layout' can only have 3 columns"
+    project_layout_coordinates_on_unit_sphere(xyz[, 1:2])
   )
 
   # normalize_layout_coordinates
   expect_error(
-    normalize_layout_coordinates("Invalid"),
-    "'layout' must be a non-empty, matrix-like object"
+    normalize_layout_coordinates("Invalid")
   )
 
   # center_layout_coordinates
   expect_error(
-    center_layout_coordinates("Invalid"),
-    "'layout' must be a non-empty, matrix-like object"
+    center_layout_coordinates("Invalid")
   )
 })

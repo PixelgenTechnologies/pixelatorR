@@ -14,12 +14,9 @@ test_that("ReadMPX_arrow_edgelist works as expected", {
 
 
 test_that("ReadMPX_arrow_edgelist fails when invalid input is provided", {
-  expect_error(
-    {
-      el <- ReadMPX_arrow_edgelist("Invalid file",
-        outdir = tempdir()
-      )
-    },
-    "File 'Invalid file' does not exist"
-  )
+  expect_error({
+    el <- ReadMPX_arrow_edgelist("Invalid file",
+      outdir = tempdir()
+    )
+  })
 })

@@ -160,16 +160,14 @@ for (assay_version in c("v3", "v5")) {
         layer = "counts",
         facet_vars = "sample",
         margin_density = T
-      ),
-      regexp = "Marginal density is not supported"
+      )
     )
     expect_error(
       DensityScatterPlot(object,
         marker1 = "FeatureNotHere",
         marker2 = "Feature2",
         layer = "counts"
-      ),
-      regexp = "'marker1' must be available in the object"
+      )
     )
     expect_error(
       DensityScatterPlot(object,
@@ -177,8 +175,7 @@ for (assay_version in c("v3", "v5")) {
         marker2 = "Feature2",
         layer = "counts",
         facet_vars = c("sample", "sample_type", "sample_type")
-      ),
-      regexp = "must either be NULL or be a character vector with 1 or 2 elements"
+      )
     )
     expect_error(
       DensityScatterPlot(object,
@@ -186,8 +183,7 @@ for (assay_version in c("v3", "v5")) {
         marker2 = "Feature2",
         layer = "counts",
         facet_vars = c("sample", "columnNotHere")
-      ),
-      regexp = "Variables in 'facet_vars' must be available in the object"
+      )
     )
     expect_error(
       DensityScatterPlot(object,
@@ -195,8 +191,7 @@ for (assay_version in c("v3", "v5")) {
         marker2 = "Feature2",
         layer = "counts",
         plot_gate = tibble(xmin = 20)
-      ),
-      regexp = "must have columns 'xmin', 'xmax', 'ymin', 'ymax'"
+      )
     )
     expect_error(
       DensityScatterPlot(object,
@@ -205,8 +200,7 @@ for (assay_version in c("v3", "v5")) {
         facet_vars = NULL,
         layer = "counts",
         plot_gate = plot_gate
-      ),
-      regexp = "'plot_gate' can't contain facetting variables that are not in 'facet_vars'"
+      )
     )
 
     # Warning

@@ -53,10 +53,12 @@ RestorePaths.MPXAssay <- function(
 ) {
   # Check that pxl_files_dir exists
   if (!fs::dir_exists(pxl_files_dir)) {
-    abort(glue(
-      "The directory '{cli::col_blue(pxl_files_dir)}' does not exist.",
-      " Please provide a valid directory path."
-    ))
+    cli::cli_abort(
+      c(
+        "i" = "Please provide a valid directory path.",
+        "x" = "The directory {.file {pxl_files_dir}} does not exist."
+      )
+    )
   }
 
   fs_map <- FSMap(object)
@@ -70,10 +72,12 @@ RestorePaths.MPXAssay <- function(
   pxl_files_updated <- fs::path(pxl_files_dir, pxl_files)
   file_checks <- fs::file_exists(pxl_files_updated)
   if (!all(file_checks)) {
-    abort(glue(
-      "The directory '{cli::col_blue(pxl_files_dir)}' is missing the following files:\n",
-      "{paste(pxl_files[!file_checks], collapse = '\n')}"
-    ))
+    cli::cli_abort(
+      c(
+        "x" = "The directory {.file {pxl_files_dir}} is missing the following files:\n",
+        " " = "{.file {pxl_files[!file_checks]}}"
+      )
+    )
   }
 
   # Update pxl_files
@@ -122,11 +126,7 @@ RestorePaths.Seurat <- function(
 ) {
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-          (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     assay <- DefaultAssay(object)

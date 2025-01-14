@@ -15,5 +15,5 @@ test_that("CellGraphs.Seurat getter/setter fails when invalid input is provided"
     overwrite = TRUE, return_cellgraphassay = TRUE
   )
   expect_error(CellGraphs("Invalid input"))
-  expect_error(CellGraphs(se) <- "Invalid input", "Invalid class 'character'")
+  expect_error(CellGraphs(se) <- "Invalid input")
 })

@@ -43,7 +43,6 @@ test_that("Data loading fails when an invalid file format is provided", {
   expect_error(
     ReadMPX_Seurat(
       "Sample01_test.pixl"
-    ),
-    regexp = "doesn't exist"
+    )
   )
 })

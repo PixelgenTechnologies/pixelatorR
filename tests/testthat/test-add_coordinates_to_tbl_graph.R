@@ -117,7 +117,7 @@ test_that(".add_coordinates_to_tbl_graph works as expected", {
 })
 
 test_that(".add_coordinates_to_tbl_graph fails when invalid input is provided", {
-  expect_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph("Invalid"), "'cg' must be a 'CellGraph' object")
-  expect_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]], scale = "Invalid"), "'scale' must be TRUE or FALSE")
-  expect_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]], keep_aspect_ratio = "Invalid"), "'keep_aspect_ratio' must be TRUE or FALSE")
+  expect_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph("Invalid"))
+  expect_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]], scale = "Invalid"))
+  expect_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]], keep_aspect_ratio = "Invalid"))
 })

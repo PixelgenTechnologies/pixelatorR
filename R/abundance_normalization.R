@@ -35,19 +35,14 @@
   isotype_controls,
   ...
 ) {
+  # Check packages
   expect_mclust()
   expect_limma()
 
-  stopifnot(
-    "counts must be a matrix" =
-      inherits(counts, c("Matrix", "matrix")),
-    "isotype_controls must have at least one element" =
-      length(isotype_controls) > 0,
-    "isotype_controls must be a character vector" =
-      is.character(isotype_controls),
-    "All isotype controls must be present in the rownames of the counts matrix" =
-      all(isotype_controls %in% rownames(counts))
-  )
+  # Validate input parameters
+  assert_class(counts, c("Matrix", "matrix"))
+  assert_vector(isotype_controls, type = "character", n = 1)
+  assert_x_in_y(isotype_controls, rownames(counts))
 
   # Get protein negative population means
   counts_log <- log1p(counts)
@@ -134,10 +129,7 @@
   counts,
   ...
 ) {
-  stopifnot(
-    "counts must be a matrix" =
-      inherits(counts, c("Matrix", "matrix"))
-  )
+  assert_class(counts, c("Matrix", "matrix"))
 
   sweep(log1p(counts), 2, Matrix::colMeans(log1p(counts)), "-")
 }
@@ -156,10 +148,7 @@ NormalizeMPX.Matrix <- function(
   # Validate inputs
   method <- match.arg(method, choices = c("dsb", "clr"))
 
-  stopifnot(
-    "object must be a matrix" =
-      inherits(object, c("Matrix", "matrix"))
-  )
+  assert_class(object, c("Matrix", "matrix"))
 
   normalization_function <- switch(
     EXPR = method,

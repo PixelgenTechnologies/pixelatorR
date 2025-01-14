@@ -26,15 +26,8 @@ LoadCellGraphs.FileSystemDataset <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "'cells' must be a character vector with at least 1 element" =
-      is.character(cells) &&
-        (length(cells) > 0),
-    "'chunk_size' must be a positive integer of length 1" =
-      is.numeric(chunk_size) &&
-        (length(chunk_size) == 1) &&
-        (chunk_size > 0)
-  )
+  assert_vector(cells, type = "character", n = 1)
+  assert_single_value(chunk_size, type = "integer")
 
   # Make sure that cells doesn't contain duplicated values
   if (sum(duplicated(cells)) > 0) {
@@ -76,7 +69,9 @@ LoadCellGraphs.FileSystemDataset <- function(
     )
 
     if (inherits(g_list, what = "try-error") || any(sapply(g_list, is.null))) {
-      abort(glue("Failed to load edge list data. Most likely reason is that invalid cells were provided."))
+      cli::cli_abort(
+        c("x" = "Failed to load edge list data. Most likely reason is that invalid cells were provided.")
+      )
     }
 
     # Add marker counts
@@ -110,17 +105,17 @@ LoadCellGraphs.tbl_df <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "'cells' must be a character vector with at least 1 element" =
-      is.character(cells) &&
-        (length(cells) > 0),
-    "'add_marker_counts' must be a logical" =
-      is.logical(add_marker_counts)
-  )
+  assert_vector(cells, type = "character", n = 1)
+  assert_single_value(add_marker_counts, type = "bool")
 
   # Make sure that cells doesn't contain duplicated values
   if (sum(duplicated(cells)) > 0) {
-    abort("'cells' cannot contain duplicated values.")
+    cli::cli_abort(
+      c(
+        "i" = "{.var cells} cannot contain duplicated values.",
+        "x" = "Cell IDs {.val {cells[duplicated(cells)]}} are duplicated"
+      )
+    )
   }
 
   # Validate load_as
@@ -176,19 +171,18 @@ LoadCellGraphs.MPXAssay <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "'cells' must be a non-empty character vector of cell names" =
-      is.character(cells) &&
-        (length(cells) > 0)
-  )
+  assert_vector(cells, type = "character", n = 1)
+
   # Make sure that cells doesn't contain duplicated values
   if (sum(duplicated(cells)) > 0) {
-    abort("'cells' cannot contain duplicated values.")
+    cli::cli_abort(
+      c(
+        "i" = "{.var cells} cannot contain duplicated values.",
+        "x" = "Cell IDs {.val {cells[duplicated(cells)]}} are duplicated"
+      )
+    )
   }
-  stopifnot(
-    "'cells' must be present in 'object'" =
-      all(cells %in% colnames(object))
-  )
+  assert_x_in_y(cells, colnames(object))
   load_as <- match.arg(load_as, choices = c("bipartite", "Anode", "linegraph"))
 
   # Check if cells are already loaded
@@ -222,16 +216,17 @@ LoadCellGraphs.MPXAssay <- function(
   # Check for layouts
   if (load_layouts) {
     if (load_as != "bipartite") {
-      abort(glue(
-        "This function currently only supports ",
-        "bipartite graphs."
-      ))
+      cli::cli_abort(
+        c("x" = "This function currently only supports bipartite graphs.")
+      )
     }
     for (f in fs_map_nested_filtered$pxl_file) {
       pxl_file_info <- inspect_pxl_file(f)
       # Check if the file contains layouts
       if (!"layouts.parquet" %in% pxl_file_info$file_type) {
-        abort(glue("File '{col_br_blue(f)}' does not contain any component layouts."))
+        cli::cli_abort(
+          c("x" = "File {.file {f}} does not contain any component layouts.")
+        )
       }
     }
 
@@ -270,11 +265,13 @@ LoadCellGraphs.MPXAssay <- function(
     f <- fs_map_nested_filtered$pxl_file[i]
 
     if (!fs::file_exists(f)) {
-      abort(glue(
-        "File '{col_br_blue(f)}' does not exist.\n",
-        "Run ?RestorePaths to get instructions on ",
-        "how to restore the PXL file paths."
-      ))
+      cli::cli_abort(
+        c(
+          "x" = "File {.file {f}} does not exist.",
+          "i" = "Run {.var ?RestorePaths} to get instructions on ",
+          " " = "how to restore the PXL file paths."
+        )
+      )
     }
 
     # Unzip the edgelist parquet file to tmpdir
@@ -419,11 +416,7 @@ LoadCellGraphs.Seurat <- function(
 ) {
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-          (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     assay <- DefaultAssay(object)
@@ -431,12 +424,7 @@ LoadCellGraphs.Seurat <- function(
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue(
-      "Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay'",
-      " or a 'CellGraphAssay5'"
-    ))
-  }
+  assert_mpx_assay(cg_assay)
 
   # Load cell graphs
   cg_assay <-

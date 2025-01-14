@@ -79,9 +79,9 @@ RunDCA.data.frame <- function(
       ) %>%
       filter(ref_n > 0, target_n > 0)
     if (nrow(test_groups) == 0) {
-      abort(glue(
-        "Found no groups with at least {min_n_obs} observations."
-      ))
+      cli::cli_abort(
+        c("x" = "Found no groups with at least {.val {min_n_obs}} observations.")
+      )
     }
   }
 
@@ -288,10 +288,7 @@ RunDCA.Seurat <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "'contrast_column' must be available in Seurat object meta.data" =
-      contrast_column %in% colnames(object[[]])
-  )
+  assert_col_in_data(contrast_column, object[[]])
 
   # Use default assay if assay = NULL
   assay <- .validate_or_set_assay(object, assay)

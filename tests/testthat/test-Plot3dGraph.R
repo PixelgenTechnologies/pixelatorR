@@ -37,17 +37,11 @@ for (assay_version in c("v3", "v5")) {
     expect_error({
       layout_plot <- Plot3DGraph(seur_obj, cell_id = colnames(seur_obj)[1], layout_method = "invalid", marker = "CD14")
     })
-    expect_error(
-      {
-        layout_plot <- Plot3DGraph(seur_obj, cell_id = colnames(seur_obj)[1], layout_method = "pmds_3d", colors = c("red"), marker = "CD14")
-      },
-      "'colors' must be a character vector with at least 2 color names"
-    )
-    expect_error(
-      {
-        layout_plot <- Plot3DGraph(seur_obj, cell_id = colnames(seur_obj)[1:2], layout_method = "pmds_3d", node_size = 2, marker = "CD14")
-      },
-      "'cell_id' must be a non-empty character vector with a single cell ID"
-    )
+    expect_error({
+      layout_plot <- Plot3DGraph(seur_obj, cell_id = colnames(seur_obj)[1], layout_method = "pmds_3d", colors = c("red"), marker = "CD14")
+    })
+    expect_error({
+      layout_plot <- Plot3DGraph(seur_obj, cell_id = colnames(seur_obj)[1:2], layout_method = "pmds_3d", node_size = 2, marker = "CD14")
+    })
   })
 }

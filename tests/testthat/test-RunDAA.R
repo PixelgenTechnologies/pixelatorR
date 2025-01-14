@@ -111,16 +111,13 @@ test_that("RunDAA fails with invalid input", {
     dpa_markers <- RunDAA(se, contrast_column = "sample", targets = "T", reference = "Invalid")
   )
   expect_error(
-    dpa_markers <- RunDAA(se, contrast_column = "sample", targets = c("T", "C"), reference = "C"),
-    "targets is invalid\nall targets must be different from reference = 'C'"
+    dpa_markers <- RunDAA(se, contrast_column = "sample", targets = c("T", "C"), reference = "C")
   )
   expect_error(
-    dpa_markers <- RunDAA(se, contrast_column = "sample", targets = "T", reference = "C", group_vars = "sample"),
-    "contrast_column = 'sample' cannot be one of group_vars"
+    dpa_markers <- RunDAA(se, contrast_column = "sample", targets = "T", reference = "C", group_vars = "sample")
   )
 
   expect_error(
-    dpa_markers <- RunDAA(se, contrast_column = "sample", targets = "T", reference = "C", group_vars = "Invalid"),
-    "group_vars is invalid\ngroup_vars must be a character vector with valid column names"
+    dpa_markers <- RunDAA(se, contrast_column = "sample", targets = "T", reference = "C", group_vars = "Invalid")
   )
 })

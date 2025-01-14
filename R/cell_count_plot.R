@@ -33,29 +33,13 @@ CellCountPlot.data.frame <- function(
   stack = FALSE,
   ...
 ) {
-  # Validate object
-  if (!is.null(group_by)) {
-    if (!group_by %in% colnames(object)) {
-      abort(glue("'{group_by}' is missing"))
-    }
-    stopifnot(
-      "'group_by' must be a character or factor" =
-        inherits(object[, group_by, drop = TRUE],
-          what = c("character", "factor")
-        ),
-      "'group_by' and 'color_by' cannot be identical" =
-        group_by != color_by
-    )
-  }
-  if (!color_by %in% colnames(object)) {
-    abort(glue("'{color_by}' is missing"))
-  }
-  stopifnot(
-    "'color_by' must be a character or factor" =
-      inherits(object[, color_by, drop = TRUE],
-        what = c("character", "factor")
-      )
-  )
+  # Validate input
+  assert_col_in_data(color_by, object)
+  assert_col_class(color_by, object, classes = c("character", "factor"))
+  assert_single_value(group_by, type = "string", allow_null = TRUE)
+  assert_single_values_are_different(group_by, color_by, allow_null = TRUE)
+  assert_col_in_data(group_by, object, allow_null = TRUE)
+  assert_col_class(group_by, object, classes = c("character", "factor"), allow_null = TRUE)
 
   # Create plot
   if (!is.null(group_by)) {
