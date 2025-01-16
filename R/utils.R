@@ -187,8 +187,12 @@
 #' @noRd
 .validate_fs_map <- function(
   fs_map,
+  allow_empty_df = FALSE,
   call = caller_env()
 ) {
+  if (inherits(fs_map, "data.frame") && length(fs_map) == 0 && allow_empty_df) {
+    return(invisible(NULL))
+  }
   assert_non_empty_object(fs_map, "tbl_df", call = call)
   if (!all(c("id_map", "sample", "pxl_file") == colnames(fs_map))) {
     cli::cli_abort(
@@ -215,7 +219,7 @@
   if (!all(id_map_check2)) {
     cli::cli_abort(
       c("x" = "All elements of {.var id_map} must be {.cls tbl_df} objects with",
-        " " = "columns {.str current_id} and {.str original_id"),
+        " " = "columns {.str current_id} and {.str original_id}"),
       call = call
     )
   }
