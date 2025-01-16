@@ -47,6 +47,7 @@ reference:
     - ReadMPX_colocalization
     - ReadMPX_arrow_edgelist
     - ReadMPX_layouts
+    - ReadMPX_metadata
   - subtitle: Visualization
   - contents:
     - CellCountPlot
@@ -73,6 +74,7 @@ reference:
     - LoadCellGraphs
   - subtitle: Differential analysis
   - contents:
+    - RunDAA
     - RunDPA
     - RunDCA
     - ColocalizationHeatmap
@@ -91,6 +93,7 @@ reference:
     - PolarizationScores
     - ColocalizationScores
     - FSMap
+    - RestorePaths
     - CellGraphData
     - as.CellGraphAssay
     - as.CellGraphAssay5
@@ -121,6 +124,9 @@ reference:
     - show,CellGraph-method
     - show,CellGraphAssay-method
     - inspect_pxl_file
+    - pixelatorR_style
+    - print.pixelator_metadata
+    - type-checks
 
 footer:
   structure:
