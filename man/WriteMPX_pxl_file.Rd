@@ -73,8 +73,9 @@ options(Seurat.object.assay.version = "v5")
 
 # Create Seurat object
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 se <- ReadMPX_Seurat(pxl_file)
 
 se_merged <- merge(se, list(se, se, se))

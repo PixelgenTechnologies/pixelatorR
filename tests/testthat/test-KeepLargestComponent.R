@@ -1,5 +1,4 @@
 for (assay_version in c("v3", "v5")) {
-
   options(Seurat.object.assay.version = assay_version)
 
   expected_class <- ifelse(assay_version == "v3", "CellGraphAssay", "CellGraphAssay5")
@@ -17,7 +16,6 @@ for (assay_version in c("v3", "v5")) {
   cg_assay <- seur[["mpxCells"]]
 
   test_that("KeepLargestComponent works as expected", {
-
     # Seurat
     expect_no_error(seur_large_component <- KeepLargestComponent(seur))
     expect_s4_class(seur_large_component, "Seurat")
@@ -45,5 +43,4 @@ for (assay_version in c("v3", "v5")) {
   test_that("KeepLargestComponent fails when invalid input is provided", {
     expect_error(KeepLargestComponent(object = "Invalid"))
   })
-
 }

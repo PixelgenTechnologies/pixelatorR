@@ -38,14 +38,14 @@ Create a \code{\link{CellGraphAssay}} object from a count matrix. The expected
 format of the input matrix is features x cells.
 }
 \examples{
-
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 counts <- ReadMPX_counts(pxl_file)
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 components <- colnames(counts)

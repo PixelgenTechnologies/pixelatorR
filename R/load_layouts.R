@@ -19,28 +19,27 @@
 #'
 #' @export
 #'
-ReadMPX_layouts <- function (
+ReadMPX_layouts <- function(
   filename,
   cells = NULL,
-  graph_projection = c("bipartite", "Anode", "linegraph"),
+  graph_projection = c("bipartite", "Anode", "linegraph", "full"),
   verbose = TRUE
 ) {
-
   graph_projection <- match.arg(graph_projection,
-                                choices = c("bipartite", "Anode", "linegraph"))
+    choices = c("bipartite", "Anode", "linegraph", "full")
+  )
 
   # Check file
   pxl_file_info <- inspect_pxl_file(filename)
 
   # Check cells
-  stopifnot(
-    "'cells' must be a non-empty character vector with component IDs" =
-      is.null(cells) || (is.character(cells) && length(cells) > 0)
-  )
+  assert_vector(cells, type = "character", n = 1, allow_null = TRUE)
 
   # Check if the file contains layouts
   if (!"layouts.parquet" %in% pxl_file_info$file_type) {
-    abort(glue("File '{col_br_blue(filename)}' does not contain any layouts."))
+    cli::cli_abort(
+      c("x" = "File {.file {filename}} does not contain any layouts.")
+    )
   }
 
   # Create temporary directory
@@ -50,14 +49,24 @@ ReadMPX_layouts <- function (
   layout_files <- pxl_file_info$file[[which(pxl_file_info$file_type == "layouts.parquet")]]
   cells <- cells %||% layout_files$component
   if (!all(cells %in% layout_files$component)) {
-    abort(glue("File '{col_br_blue(filename)}' does not contain layouts for all components."))
+    cli::cli_abort(
+      c("x" = "File {.file {filename}} does not contain any layouts for all selected {.var cells}.")
+    )
   }
   layout_files <- layout_files %>%
     filter(component %in% cells)
-  zip::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
+  utils::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
 
   # Load hive-styled parquet files
   coords <- arrow::open_dataset(temp_layout_dir)
+
+  # Check name data type
+  nm_dt <- (coords %>% schema())$GetFieldByName("name")$ToString() %>% stringr::str_remove("name: ")
+  # If the name is int64, convert to character
+  if (nm_dt == "int64") {
+    coords <- coords %>%
+      mutate(name = as.character(name))
+  }
   coords <- coords %>%
     select(any_of(c("name", "x", "y", "z", "sample")), component, graph_projection, layout) %>%
     collect()
@@ -70,7 +79,9 @@ ReadMPX_layouts <- function (
 
   # Keep selection graph_projection
   if (!graph_projection %in% coords_layout_grouped_keys$graph_projection) {
-    abort(glue("Graph projection '{col_br_blue(graph_projection)}' does not exist in the file."))
+    cli::cli_abort(
+      c("x" = "Graph projection {.str {graph_projection}} does not exist in {.file {filename}}")
+    )
   }
   if (!all(coords_layout_grouped_keys$graph_projection %in% graph_projection)) {
     coords <- coords %>%
@@ -94,10 +105,11 @@ ReadMPX_layouts <- function (
     coords_component_split <- coords_component_grouped %>%
       group_split() %>%
       lapply(function(x) {
-        x %>% select(-component) %>%
+        x %>%
+          select(-component) %>%
           select(
             where(
-              ~sum(!is.na(.x)) > 0
+              ~ sum(!is.na(.x)) > 0
             )
           )
       }) %>%
@@ -112,5 +124,4 @@ ReadMPX_layouts <- function (
   }
 
   return(coords_layout_split)
-
 }

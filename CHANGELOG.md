@@ -5,11 +5,69 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] - 2024-??-??
+### Added
 
-### Fix
+### Updates
+
+### Fixes
+
+## [0.12.0] - 2025-01-16
+
+### Added
+
+- `RunDAA` : Differential abundance analysis function with a similar interface to `RunDPA` and `RunDCA`. `RunDAA` uses the `FindMarkers` function from Seurat to perform differential abundance analysis, but enables splitting of tests into multiple groups. By default, it reports the difference in means instead of `avg_log2FC`.
+
+### Updates
+
+- Updated type assertions and improved error messaging (inspired by the tidyverse style guide).
+- The `ComputeLayout.Seurat` method now supports parallelized computation of layouts.
+- Added option to fetch marker counts in `PolarizationScores` and `ColocalizationScores` methods. This is for example useful when filtering spatial metrics tables for markers with low counts.
+- Silenced warnings in `RunDPA`/`RunDCA` when running tests in parallel to avoid halting the R session.
+- Improved clean up of temporary files created by `ReadMPX_counts` and `ReadMPX_item`. 
+- `RunDPA` and `RunDCA` now accepts any numeric vector from the spatial metric table as input for differential testing. The metric is specified by `polarity_metric` (`RunDPA`) or `coloc_metric` (`RunDCA`).
+- Updated `subset` and `merge` methods for `MPXAssay` to have less stringent validation of the spatial metric tables (polarity and colocalization scores).  
+- Updated `ReadMPX_Seurat` to have less stringent validation of the spatial metric tables (polarity and colocalization scores).
+- `ColocalizationHeatmap` now allows legend titles and the legend range to be manually set
+
+### Fixes
+
+- pixelatorR read functions now uses `utils::unzip` instead of `zip::unzip` to support PXL files larger than 2GB
+- `LoadCellGraphs` now throws an error if duplicated cell ids (`cells`) are provided
+- PXL files missing spatial scores can now be loaded with `ReadMPX_Seurat` without throwing an error. This is useful when the pixelator pipeline was run without computing spatial scores.
+
+## [0.11.0] - 2024-09-18
+
+### Updates 
+
+- The R arrow version is no longer pinned to v14. This allows the package to be installed with the latest version of arrow.
+- Updated `LoadCellGraphs` methods to be compatible with R arrow v17
+- `RunDPA` and `RunDCA` now handles multiple `targets` for differential tests. Previously, only 1 `target` could be compared against `reference`. Now, if multiple `targets` are provided, the function will perform multiple differential tests, one for each `target` against `reference`. This is typically useful when comparing multiple conditions against a single control group.
+- `ColocalizationHeatmap` has been made more flexible, such that any column names in the input data can be used as long as the data has a data format suitable for a heat map. 
+
+### Fixes
+
+- In `ColocalizationScoresToAssay`: Changed marker pair separator from "-" to "/", to avoid string operation issues due to "-" occurring in marker names.
+- In `DensityScatterPlot`: Fixed a bug where the reported percentage of cells in a gate was incorrect when using multiple gates. 
+- `NormalizeMPX` now also handles Assay and Assay5 objects.
+
+### Added
+
+- `RestorePaths` : updates the PXL file paths in a `CellGraphAssay`, a `CellGraphAssay5` or a `Seurat` object created with pixelatorR. This function is useful when PXL files have been moved to a different location or when sharing Seurat objects with other users which would cause `LoadCellGraphs` to fail.
+- `ReadMPX_metadata` : loads metadata from a PXL file. A `print` method for the output returned by `ReadMPX_metadata` is also included to provide a summary of the metadata.
+
+### [0.10.2] - 2024-07-24
+
+### Fixes
+
+- fixed bug in `TauPlot` where `group_by` was not properly evaluated
+
+### [0.10.1] - 2024-07-23
+
+### Fixes
 
 - updated `TauPlot` to handle new metric names introduced in pixelator v0.18. For data produced with pixelator v0.18, `TauPlot` now uses `mean_molecules_per_a_pixel` instead of `umi_per_upia`.
+- Updated `DensityScatterPlot` to not use deprecated `dplyr` functionality. 
+- Changed `ComputeLayout` to add a suffix ('_3d') to the layout name when `dim = 3`. This makes the naming of layouts consistent with the naming used in pixelator (Python).
 
 ## [0.10.0] - 2024-07-10
 

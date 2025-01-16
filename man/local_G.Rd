@@ -144,15 +144,16 @@ The weighting scheme is ignored if \code{W} is provided.
 library(dplyr)
 # Load example data as a Seurat object
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 seur_obj <- ReadMPX_Seurat(pxl_file) \%>\%
   LoadCellGraphs(cells = colnames(.)[1]) \%>\%
   ComputeLayout(layout_method = "pmds", dim = 3)
 cg <- CellGraphs(seur_obj)[[1]]
 g <- CellGraphData(cg, "cellgraph")
 counts <- CellGraphData(cg, "counts")
-xyz <- CellGraphData(cg, "layout")[["pmds"]]
+xyz <- CellGraphData(cg, "layout")[["pmds_3d"]]
 
 # Compute local G scores
 gi_mat <- local_G(g, counts = counts)
@@ -174,8 +175,10 @@ plotly::plot_ly(
   z = ~z,
   type = "scatter3d",
   mode = "markers",
-  marker = list(size = 5,
-                color = node_colors)
+  marker = list(
+    size = 5,
+    color = node_colors
+  )
 )
 
 }

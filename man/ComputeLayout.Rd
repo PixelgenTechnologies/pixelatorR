@@ -19,7 +19,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   custom_layout_function = NULL,
@@ -34,7 +33,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   custom_layout_function = NULL,
@@ -49,7 +47,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -66,7 +63,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -83,7 +79,6 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
@@ -101,12 +96,12 @@ ComputeLayout(object, ...)
   dim = 2,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
-  k = 0,
   pivots = 100,
   seed = 123,
   verbose = TRUE,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
+  cl = NULL,
   ...
 )
 }
@@ -128,9 +123,6 @@ length (euclidean norm) is 1.}
 \item{project_on_unit_sphere}{Should the resulting layout be projected onto
 a unit sphere?}
 
-\item{k}{The size of the neighborhood from which to pool counts from in
-the UPIA antibody count table. 0 is recommended.}
-
 \item{pivots}{Only used for "wpmds" and "pmds" layout algorithms.
 See \code{?layout_with_pmds} for details}
 
@@ -146,7 +138,9 @@ The \code{dim} is automatically passed to \code{custom_layout_function} and shou
 included in \code{custom_layout_function_args}.}
 
 \item{layout_name}{The name of the computed layout. If this name is not given,
-the \code{layout_method} will be used as the name.}
+the \code{layout_method} will be used as the name. If \code{dim = 3}, a suffix
+of "_3d" will be added to the layout name. This behavior is ignored if \code{layout_name}
+is provided.}
 
 \item{verbose}{Print messages}
 
@@ -170,15 +164,18 @@ library(pixelatorR)
 library(dplyr)
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 
 # Load example data
 seur <- ReadMPX_Seurat(pxl_file)
 
 # Load 1 cellgraph
-seur <- LoadCellGraphs(seur, cells = colnames(seur)[1],
-                       load_as = "Anode", force = TRUE)
+seur <- LoadCellGraphs(seur,
+  cells = colnames(seur)[1],
+  load_as = "Anode", force = TRUE
+)
 
 # Get CellGraph
 cg <- CellGraphs(seur)[[colnames(seur)[1]]]

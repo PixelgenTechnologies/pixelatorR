@@ -1,5 +1,4 @@
 for (assay_version in c("v3", "v5")) {
-
   options(Seurat.object.assay.version = assay_version)
 
   expected_assay_class <- ifelse(assay_version == "v3", "Assay", "Assay5")
@@ -11,7 +10,6 @@ for (assay_version in c("v3", "v5")) {
   seur_obj <- ReadMPX_Seurat(pxl_file)
 
   test_that("PolarizationScoresToAssay works as expected", {
-
     # Default settings
     expect_no_error(seur_obj <- PolarizationScoresToAssay(seur_obj))
     expect_equal(names(seur_obj@assays), c("mpxCells", "polarization"))
@@ -23,10 +21,12 @@ for (assay_version in c("v3", "v5")) {
         "dgCMatrix",
         i = c(0L, 1L, 1L),
         p = c(0L, 2L, 3L),
-        Dim = c(2L,
-                2L),
+        Dim = c(
+          2L,
+          2L
+        ),
         Dimnames = list(c("ACTB", "B2M"), c("RCVCMP0000217", "RCVCMP0000118")),
-        x = c(-0.133503001331984,-0.675947218565106, 4.55113839877331),
+        x = c(-0.133503001331984, -0.675947218565106, 4.55113839877331),
         factors = list()
       )
     )
@@ -48,8 +48,10 @@ for (assay_version in c("v3", "v5")) {
         "dgCMatrix",
         i = c(0L, 1L, 1L),
         p = c(0L, 2L, 3L),
-        Dim = c(2L,
-                2L),
+        Dim = c(
+          2L,
+          2L
+        ),
         Dimnames = list(c("ACTB", "B2M"), c("RCVCMP0000217", "RCVCMP0000118")),
         x = c(
           -0.00164610432425177,
@@ -61,17 +63,17 @@ for (assay_version in c("v3", "v5")) {
     )
 
     # Use dashes in component IDs
-    expect_no_error({seur_obj <- SeuratObject::RenameCells(seur_obj, new.names = paste0("A-1_", colnames(seur_obj)))})
+    expect_no_error({
+      seur_obj <- SeuratObject::RenameCells(seur_obj, new.names = paste0("A-1_", colnames(seur_obj)))
+    })
     expect_no_error(seur_obj <- PolarizationScoresToAssay(seur_obj))
-
   })
 
 
   test_that("PolarizationScoresToAssay fails with invalid input", {
     expect_error(seur_obj <- PolarizationScoresToAssay("Invalid"), "no applicable method")
     expect_error(seur_obj <- PolarizationScoresToAssay(seur_obj, assay = "invalid"))
-    expect_error(seur_obj <- PolarizationScoresToAssay(seur_obj, new_assay = 0), "'new_assay' must be a character of length 1")
+    expect_error(seur_obj <- PolarizationScoresToAssay(seur_obj, new_assay = 0))
     expect_error(seur_obj <- PolarizationScoresToAssay(seur_obj, values_from = "invalid"), "'arg' should be one of")
   })
-
 }

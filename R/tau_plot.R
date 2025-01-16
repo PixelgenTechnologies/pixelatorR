@@ -10,8 +10,9 @@ NULL
 #'
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
@@ -20,17 +21,21 @@ NULL
 #'
 #' @export
 #'
-TauPlot.data.frame <- function (
+TauPlot.data.frame <- function(
   object,
   group_by = NULL,
   ...
 ) {
-
   # Validate object
   mol_per_upia <- intersect(c("umi_per_upia", "mean_molecules_per_a_pixel"), colnames(object))
   if (length(mol_per_upia) == 0) {
-    abort(glue("Either 'umi_per_upia' or 'mean_molecules_per_a_pixel'",
-               " must be available in the data.frame"))
+    cli::cli_abort(
+      c(
+        "i" = "Either {.str umi_per_upia} or {.str mean_molecules_per_a_pixel}",
+        " " = "must be available in the {.cls {class(object)}}",
+        "x" = "Missing columns in the {.cls {class(object)}}"
+      )
+    )
   }
   if (length(mol_per_upia) > 1) {
     mol_per_upia <- mol_per_upia[1]
@@ -38,38 +43,27 @@ TauPlot.data.frame <- function (
   if (!is.numeric(object[, mol_per_upia, drop = TRUE])) {
     abort(glue("'{mol_per_upia}' must be a numeric vector"))
   }
-  if (!all(c("tau", "tau_type") %in% colnames(object))) {
-    abort("'tau' and 'tau_type' must be available in the data.frame")
-  }
-  stopifnot(
-    "'tau' must be a numeric vector" =
-      is.numeric(object[, "tau", drop = TRUE]),
-    "'tau_type' must be a factor or a character vector" =
-      inherits(object[, "tau_type", drop = TRUE],
-               what = c("character", "factor"))
-  )
+  assert_col_in_data("tau", object)
+  assert_col_in_data("tau_type", object)
+  assert_col_class("tau", object, classes = "numeric")
+  assert_col_class("tau_type", object, classes = c("character", "factor"))
   if (!is.null(group_by)) {
-    if (!group_by %in% colnames(object)) {
-      abort(glue("'{group_by}' is missing"))
-    }
-    stopifnot("'group_by' must be a character or factor" =
-                inherits(object[, group_by, drop = TRUE],
-                         what = c("character", "factor")))
+    assert_col_in_data(group_by, object)
+    assert_col_class(group_by, object, classes = c("character", "factor"))
   }
 
-  y_lab <- switch(
-    mol_per_upia,
+  y_lab <- switch(mol_per_upia,
     umi_per_upia = "Pixel content (UMI / UPIA)",
     mean_molecules_per_a_pixel = "Pixel content (mean molecules / UPIA)"
   )
 
   # Create plot
   object %>%
-    ggplot(aes(tau, !! sym(mol_per_upia), color = tau_type)) +
+    ggplot(aes(tau, !!sym(mol_per_upia), color = tau_type)) +
     geom_point() +
     {
       if (!is.null(group_by)) {
-        facet_grid(~ sample)
+        facet_wrap(as.formula(paste("~", group_by)))
       }
     } +
     scale_y_log10() +
@@ -94,21 +88,24 @@ TauPlot.data.frame <- function (
 #'
 #' @export
 #'
-TauPlot.Seurat <- function (
+TauPlot.Seurat <- function(
   object,
   group_by = NULL,
   ...
 ) {
-
   # Validate object
   mol_per_upia <- intersect(c("umi_per_upia", "mean_molecules_per_a_pixel"), colnames(object[[]]))
   if (length(mol_per_upia) == 0) {
-    abort(glue("Either 'umi_per_upia' or 'mean_molecules_per_a_pixel'",
-               " must be available in the data.frame"))
+    cli::cli_abort(
+      c(
+        "i" = "Either {.str umi_per_upia} or {.str mean_molecules_per_a_pixel}",
+        " " = "must be available in the {.cls {class(object)}}",
+        "x" = "Missing columns in the {.cls {class(object)}}"
+      )
+    )
   }
-  if (!all(c("tau", "tau_type") %in% colnames(object[[]]))) {
-    abort("'tau' and 'tau_type' must be available in the data.frame")
-  }
+  assert_col_in_data("tau", object[[]])
+  assert_col_in_data("tau_type", object[[]])
 
   # Extract meta.data
   mData <- object[[]]

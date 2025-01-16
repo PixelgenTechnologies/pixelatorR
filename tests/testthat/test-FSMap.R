@@ -1,10 +1,10 @@
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 seur_obj <- ReadMPX_Seurat(pxl_file)
 
 test_that("FSMap works as expected", {
-
   # Seurat object
   expect_no_error(fs_map <- FSMap(seur_obj))
   expect_equal(dim(fs_map), c(1, 3))
@@ -30,12 +30,9 @@ test_that("FSMap works as expected", {
     FSMap(seur_obj) <- FSMap(seur_obj) %>%
       mutate(pxl_file = tmp_path %>% as.character())
   })
-
 })
 
 test_that("FSMap fails when invalid input is provided", {
-
   expect_error(fs_map <- FSMap("Invalid"))
   expect_error(FSMap(seur_obj) <- "Invalid")
-
 })

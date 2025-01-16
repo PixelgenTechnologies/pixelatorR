@@ -102,15 +102,16 @@
 #' library(dplyr)
 #' # Load example data as a Seurat object
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur_obj <- ReadMPX_Seurat(pxl_file) %>%
 #'   LoadCellGraphs(cells = colnames(.)[1]) %>%
 #'   ComputeLayout(layout_method = "pmds", dim = 3)
 #' cg <- CellGraphs(seur_obj)[[1]]
 #' g <- CellGraphData(cg, "cellgraph")
 #' counts <- CellGraphData(cg, "counts")
-#' xyz <- CellGraphData(cg, "layout")[["pmds"]]
+#' xyz <- CellGraphData(cg, "layout")[["pmds_3d"]]
 #'
 #' # Compute local G scores
 #' gi_mat <- local_G(g, counts = counts)
@@ -132,8 +133,10 @@
 #'   z = ~z,
 #'   type = "scatter3d",
 #'   mode = "markers",
-#'   marker = list(size = 5,
-#'                 color = node_colors)
+#'   marker = list(
+#'     size = 5,
+#'     color = node_colors
+#'   )
 #' )
 #'
 #' @return A matrix with local G scores or a list with the following items:
@@ -145,37 +148,35 @@
 #'
 #' @export
 #'
-local_G <- function (
-    g,
-    counts,
-    k = 1,
-    W = NULL,
-    use_weights = TRUE,
-    normalize_counts = FALSE,
-    type = c("gi", "gstari"),
-    return_p_vals = FALSE,
-    p_adjust_method = "BH",
-    alternative = c("two.sided", "less", "greater"),
-    ...
+local_G <- function(
+  g,
+  counts,
+  k = 1,
+  W = NULL,
+  use_weights = TRUE,
+  normalize_counts = FALSE,
+  type = c("gi", "gstari"),
+  return_p_vals = FALSE,
+  p_adjust_method = "BH",
+  alternative = c("two.sided", "less", "greater"),
+  ...
 ) {
-
   # Check input parameters
-  stopifnot(
-    "'g' must be an 'tbl_graph' or an 'igraph' object" =
-      inherits(g, what = c("igraph", "tbl_graph")),
-    "'counts' must be a sparse matrix of class 'dgCMatrix' or a 'matrix'" =
-      inherits(counts, what = c("matrix", "dgCMatrix")),
-    "'k' must be and integer larger than 0" =
-      inherits(k, what = c("numeric", "integer")) && (k > 0),
-    "Number of nodes on 'g' must match number of rows in 'counts'" =
-      nrow(counts) == length(g),
-    "'use_weights' must be either TRUE or FALSE" =
-      is.logical(use_weights) && (length(use_weights) == 1),
-    "'normalize_counts' must be either TRUE or FALSE" =
-      is.logical(normalize_counts) && (length(normalize_counts) == 1),
-    "'return_p_vals' must be either TRUE or FALSE" =
-      is.logical(return_p_vals) && (length(return_p_vals) == 1)
-  )
+  assert_class(g, c("tbl_graph", "igraph"))
+  assert_class(counts, c("Matrix", "matrix"))
+  assert_single_value(k, type = "integer")
+  if (!k > 0) {
+    cli::cli_abort(
+      c(
+        "i" = "{.var k} must be a positive {.cls integer}",
+        "x" = "k = {k}"
+      )
+    )
+  }
+  assert_singles_match(nrow(counts), length(g))
+  assert_single_value(use_weights, type = "bool")
+  assert_single_value(normalize_counts, type = "bool")
+  assert_single_value(return_p_vals, type = "bool")
 
   type <- match.arg(type, choices = c("gi", "gstari"))
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
@@ -190,13 +191,13 @@ local_G <- function (
 
   # Validate W
   if (!is.null(W)) {
-    stopifnot(
-      "'W' must be a sparse matrix of class 'dgCMatrix'" = inherits(W, what = "dgCMatrix"),
-      "Number of rows and columns in 'W' must match number of nodes in 'g'" =
-        nrow(W) == length(g) && ncol(W) == length(g)
-    )
-    if (type == "gstari" & any(diag(A) == 0)) {
-      abort(glue("The 'gstari' type requires the diagonal of the adjacency matrix to be positive."))
+    assert_class(W, "dgCMatrix")
+    assert_singles_match(nrow(W), length(g))
+    assert_singles_match(ncol(W), length(g))
+    if (type == "gstari" && any(diag(A) == 0)) {
+      cli::cli_abort(
+        c("x" = "The 'gstari' type requires the diagonal of the {.var A} matrix to be positive.")
+      )
     }
   } else {
     if (use_weights) {
@@ -235,8 +236,8 @@ local_G <- function (
       rep(mean(val), n_nodes)
     })
     # Compute si for each node and marker
-    s_mat <- do.call(cbind, lapply(1:ncol(counts), function(i) {
-      rep((sum(counts[, i]^2)/n_nodes) - (sum(counts[, i])/n_nodes)^2, n_nodes)
+    s_mat <- do.call(cbind, lapply(seq_len(ncol(counts)), function(i) {
+      rep((sum(counts[, i]^2) / n_nodes) - (sum(counts[, i]) / n_nodes)^2, n_nodes)
     }))
   } else if (type == "gi") {
     # Compute xibar for each node and marker, excluding i
@@ -244,7 +245,7 @@ local_G <- function (
       (rep(sum(val), n_nodes) - val) / (n_nodes - 1)
     })
     # Compute si for each node and marker, excluding i
-    s_mat <- do.call(cbind, lapply(1:ncol(counts), function(i) {
+    s_mat <- do.call(cbind, lapply(seq_len(ncol(counts)), function(i) {
       ((rep(sum(counts[, i]^2), n_nodes) - counts[, i]^2) / (n_nodes - 1)) - xibar_mat[, i]^2
     }))
   }
@@ -255,16 +256,16 @@ local_G <- function (
   square_weights_i <- rowSums(W^2)
 
   # Calculate expected value
-  E_G <- weights_i*xibar_mat
+  E_G <- weights_i * xibar_mat
 
   # Calculate numerator G - E(G)
   numerator_mat <- (lag_mat - E_G)
 
   # Calculate denomenator Var(G)
   if (type == "gstari") {
-    denomenator_mat <- sqrt(s_mat*((n_nodes*square_weights_i - weights_i^2)/(n_nodes - 1)))
+    denomenator_mat <- sqrt(s_mat * ((n_nodes * square_weights_i - weights_i^2) / (n_nodes - 1)))
   } else if (type == "gi") {
-    denomenator_mat <- sqrt(s_mat*(((n_nodes - 1)*square_weights_i - weights_i^2)/(n_nodes - 2)))
+    denomenator_mat <- sqrt(s_mat * (((n_nodes - 1) * square_weights_i - weights_i^2) / (n_nodes - 2)))
   }
 
   # Calculate Z-score
@@ -277,11 +278,11 @@ local_G <- function (
   if (return_p_vals) {
     if (alternative == "two.sided") {
       gi_p_mat <- apply(gi_mat, 2, function(x) {
-        2 * pnorm(abs(x), lower.tail=FALSE)
+        2 * pnorm(abs(x), lower.tail = FALSE)
       })
     } else if (alternative == "greater") {
       gi_p_mat <- apply(gi_mat, 2, function(x) {
-        pnorm(x, lower.tail=FALSE)
+        pnorm(x, lower.tail = FALSE)
       })
     } else if (alternative == "less") {
       gi_p_mat <- apply(gi_mat, 2, function(x) {
@@ -316,7 +317,6 @@ local_G <- function (
 #' P_out <- compute_transition_probabilities(A)
 #' P_out
 #'
-#'
 #' @return A matrix of transition probabilities. The transition probability \eqn{P^k(u \rightarrow v)}
 #' for a k-step walk is found in row \eqn{u} and column \eqn{v} of the transition probability matrix.
 #' Row \eqn{v} and column \eqn{u} gives the reversed transition probability \eqn{P^k(v \rightarrow u)}
@@ -324,26 +324,42 @@ local_G <- function (
 #'
 #' @export
 #'
-compute_transition_probabilities <- function (
-    A,
-    k = 1,
-    remove_self_loops = FALSE
+compute_transition_probabilities <- function(
+  A,
+  k = 1,
+  remove_self_loops = FALSE
 ) {
-
-  stopifnot(
-    "A must be a square matrix" = nrow(A) == ncol(A),
-    "A must be symmetric" = Matrix::isSymmetric(A),
-    "k must be a positive integer" = is.numeric(k) && k > 0
-  )
+  if (nrow(A) != ncol(A)) {
+    cli::cli_abort(
+      c(
+        "i" = "{.var A} must be a square matrix",
+        "x" = "nrow(A) = {nrow(A)}, ncol(A) = {ncol(A)}"
+      )
+    )
+  }
+  if (!Matrix::isSymmetric(A)) {
+    cli::cli_abort(
+      c("x" = "{.var A} must be a symmetric matrix")
+    )
+  }
+  assert_single_value(k, type = "integer")
+  if (!k > 0) {
+    cli::cli_abort(
+      c(
+        "i" = "{.var k} must be a positive {.cls integer}",
+        "x" = "k = {k}"
+      )
+    )
+  }
 
   # Compute transition probabilities
-  W_out <- A * (1/Matrix::rowSums(A))
+  W_out <- A * (1 / Matrix::rowSums(A))
   # Compute matrix power determined by k
   W_out <- Reduce("%*%", rep(list(W_out), k))
   # When using gi, set diagonal to 0 and recompute probabilities
-  if (remove_self_loops & (k > 1)) {
+  if (remove_self_loops && (k > 1)) {
     diag(W_out) <- 0
-    W_out <- W_out * (1/Matrix::rowSums(W_out))
+    W_out <- W_out * (1 / Matrix::rowSums(W_out))
   }
 
   return(W_out)

@@ -11,10 +11,12 @@ RunDCA(object, ...)
 
 \method{RunDCA}{data.frame}(
   object,
-  target,
-  reference,
   contrast_column,
+  reference,
+  targets = NULL,
   group_vars = NULL,
+  coloc_metric = "pearson_z",
+  min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -25,11 +27,13 @@ RunDCA(object, ...)
 
 \method{RunDCA}{Seurat}(
   object,
-  target,
-  reference,
   contrast_column,
+  reference,
+  targets = NULL,
   assay = NULL,
   group_vars = NULL,
+  coloc_metric = "pearson_z",
+  min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -43,14 +47,22 @@ RunDCA(object, ...)
 
 \item{...}{Not yet implemented}
 
-\item{target}{The name of the target group}
-
-\item{reference}{The name of the reference group}
-
 \item{contrast_column}{The name of the column where the group labels are stored.
 This column must include \code{target} and \code{reference}.}
 
+\item{reference}{The name of the reference group}
+
+\item{targets}{The names of the target groups. These groups will be compared to the reference group.
+If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
+\code{reference} will be compared to the \code{reference} group.}
+
 \item{group_vars}{An optional character vector with column names to group the tests by.}
+
+\item{coloc_metric}{The colocalization metric to use. Any numeric data column in the colocalization score table
+can be selected. The default is "pearson_z".}
+
+\item{min_n_obs}{Minimum number of observations allowed in a group. Target groups with less
+observations than \code{min_n_obs} will be skipped.}
 
 \item{alternative}{One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)}
 
@@ -59,11 +71,12 @@ This column must include \code{target} and \code{reference}.}
 \item{p_adjust_method}{One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 (see \code{?p.adjust} for details)}
 
-\item{cl}{A cluster object created by makeCluster, or an integer
-to indicate number of child-processes (integer values are ignored
-on Windows) for parallel evaluations. See Details on performance
+\item{cl}{A cluster object created by \code{\link[parallel]{makeCluster}},
+or an integer to indicate number of child-processes (integer values are
+ignored on Windows) for parallel evaluations. See Details on performance
 in the documentation for \code{pbapply}. The default is NULL,
-which means that no parallelization is used.}
+which means that no parallelization is used.
+Note that warnings are not caught when using parallel processing.}
 
 \item{verbose}{Print messages}
 
@@ -73,26 +86,78 @@ which means that no parallelization is used.}
 A \code{tbl_df} object with test results
 }
 \description{
-Runs differential analysis on Moran's Z colocalization scores generated with the
+Runs differential analysis on colocalization scores generated with the
 \code{Pixelator} data processing pipeline.
 }
 \details{
-If you are working with a \code{Seurat} object containing a \code{\link{CellGraphAssay}},
-the polarization scores are accessed directly from the \code{\link{CellGraphAssay}}.
-A character vector or factor must be selected with \code{contrast_column} from the
-input data (or @meta.data slot from a \code{Seurat} object) which holds the groups
-to run the test for. The \code{target} and \code{reference} parameters should refer
-to the names of the two groups used for the comparison and these names should be present in
-the \code{contrast_column}.
+If you are working with a \code{Seurat} object created with pixelatorR that contains
+a \code{\link{CellGraphAssay}}, the colocalization scores are accessed directly from
+the \code{\link{CellGraphAssay}} (see \code{\link{ColocalizationScores}}).
+
+The input object should contain a \code{contrast_column} (character vector or factor)
+that includes information about the groups to compare. A typical example is a column
+with sample labels, for instance: "control", "stimulated1", "stimulated2". If the input
+object is a \code{Seurat} object, the \code{contrast_column} should be available in
+the \code{meta.data} slot. For those familiar with \code{FindMarkers} from Seurat,
+\code{contrast_column} is equivalent to the \code{group.by} parameter.
+
+The \code{targets} parameter specifies a character vector with the names of the groups
+to compare \code{reference}. \code{targets} can be a single group name or a vector of
+group names while \code{reference} can only refer to a single group. Both \code{targets}
+and \code{reference} should be present in the \code{contrast_column}. These parameters
+are similar to the \code{ident.1} and \code{ident.2} parameters in \code{FindMarkers}.
 }
 \section{Additional groups}{
 
-The test is always computed between \code{target} and \code{reference}, but it is possible
+The test is always computed between \code{targets} and \code{reference}, but it is possible
 to add additional grouping variables with \code{group_vars}. If \code{group_vars} is used,
-the test will be computed within each combination of groups. For instance, if we have annotated
-cells into cell type populations across two conditions defined by \code{target} and \code{reference},
-we can pass the name of a cell annotation column with \code{group_vars} to run the test
-for each cell type.
+each comparison is split into groups defined by the \code{group_vars}. For instance, if we
+have annotated cells into cell type populations and saved these annotations in a \code{meta.data}
+column called "cell_type", we can pass "cell_type" to \code{group_vars="cell_type"} to split
+tests across each cell type.
+}
+
+\section{Types of comparisons}{
+
+Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+\code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
+information about what samples the MPX components originated from. This column could have
+three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
+called "cell_type" that holds information about the cell type identity of each MPX component.
+\enumerate{
+\item If we want to compare the "stimulated1" group to the "control" group:
+\preformatted{
+dca_markers <- RunDCA(object = seurat_object,
+                      contrast_column = "sampleID",
+                      reference = "control",
+                      targets = "stimulated1")
+}
+\item If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group:
+\preformatted{
+dca_markers <- RunDCA(object = seurat_object,
+                      contrast_column = "sampleID",
+                      reference = "control",
+                      targets = c("stimulated1", "stimulated2"))
+}
+\item If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group, and split
+the tests by cell type:
+\preformatted{
+dca_markers <- RunDCA(object = seurat_object,
+                     contrast_column = "sampleID",
+                     reference = "control",
+                     targets = c("stimulated1", "stimulated2"),
+                     group_vars = "cell_type")
+}
+}
+}
+
+\section{Error handling}{
+
+If the test fails for a certain comparison, a warning is raised
+and no results will be returned for that comparison. This can
+happen if one of the two groups being compared has too few observations.
+Note that when using parallel processing, these warnings are muted
+to reduce the overhead of communication between processes.
 }
 
 \examples{
@@ -100,8 +165,9 @@ library(pixelatorR)
 library(dplyr)
 
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
 # Seurat objects
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
 seur1$sample <- "Sample1"
@@ -110,17 +176,23 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
 
 # Subset data to run test on a few markers
 seur_merged <- subset(seur_merged,
-                      features = c("CD3", "CD4", "CD8", "CD19",
-                                   "CD20", "CD45RA", "CD45RO"))
+  features = c(
+    "CD3", "CD4", "CD8", "CD19",
+    "CD20", "CD45RA", "CD45RO"
+  )
+)
 
 # Run DCA
-dca_markers <- RunDCA(seur_merged, contrast_column = "sample",
-                      target = "Sample1", reference = "Sample2")
+dca_markers <- RunDCA(seur_merged,
+  contrast_column = "sample",
+  target = "Sample1", reference = "Sample2"
+)
 dca_markers
 
 }
 \seealso{
 Other DA-methods: 
+\code{\link{RunDAA}()},
 \code{\link{RunDPA}()}
 }
 \concept{DA}

@@ -15,38 +15,34 @@
 #'
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'                        "five_cells.pxl",
-#'                        package = "pixelatorR")
+#' pxl_file <- system.file(
+#'   "extdata/five_cells",
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' se <- ReadMPX_Seurat(pxl_file)
-#' norm_data_dsb <- NormalizeMPX(se,
-#'                               method = "dsb",
-#'                               isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"))
+#' norm_data_dsb <- NormalizeMPX(
+#'   se,
+#'   method = "dsb",
+#'   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b")
+#' )
 #'
 #' @return A matrix of normalized MPX counts
 #'
 #' @noRd
 .normalize_method_dsb <- function(
-    counts,
-    isotype_controls,
-    ...
+  counts,
+  isotype_controls,
+  ...
 ) {
+  # Check packages
+  expect_mclust()
+  expect_limma()
 
-expect_mclust()
-expect_limma()
-
-  stopifnot(
-    "counts must be a matrix" =
-      inherits(counts, c("Matrix", "matrix")),
-    "isotype_controls must have at least one element" =
-      length(isotype_controls) > 0,
-    "isotype_controls must be a character vector" =
-      is.character(isotype_controls),
-    "All isotype controls must be present in the rownames of the counts matrix" =
-      all(isotype_controls %in% rownames(counts))
-  )
-
-  markers <- rownames(counts)
+  # Validate input parameters
+  assert_class(counts, c("Matrix", "matrix"))
+  assert_vector(isotype_controls, type = "character", n = 1)
+  assert_x_in_y(isotype_controls, rownames(counts))
 
   # Get protein negative population means
   counts_log <- log1p(counts)
@@ -58,26 +54,29 @@ expect_limma()
     })
 
   mu1 <-
-    unlist(lapply(protein_model,
-                  function(x) x$parameters$mean[[1]]))
+    unlist(lapply(
+      protein_model,
+      function(x) x$parameters$mean[[1]]
+    ))
 
   if (length(mu1) != length(rownames(counts_log))) {
-
     failed_markers <- setdiff(rownames(counts_log), names(mu1))
 
     cli_alert_warning(
-    glue("Empirical background cound not be fit for ",
+      glue(
+        "Empirical background cound not be fit for ",
         "{length(failed_markers)} proteins: ",
-        "{paste(failed_markers, collapse = ', ')}.")
+        "{paste(failed_markers, collapse = ', ')}."
+      )
     )
     cli_alert_info(
       "Values returned will be log transformed without background correction."
     )
 
-    ad        <- as.numeric(rep(x = 0, length(failed_markers)))
+    ad <- as.numeric(rep(x = 0, length(failed_markers)))
     names(ad) <- failed_markers
-    mu1       <- c(mu1, ad)
-    mu1       <- mu1[match(rownames(counts_log) , names(mu1) )]
+    mu1 <- c(mu1, ad)
+    mu1 <- mu1[match(rownames(counts_log), names(mu1))]
   }
 
   # Center data to negative mean
@@ -90,8 +89,10 @@ expect_limma()
       return(mclust::summaryMclustBIC(BIC, x, G = 2)$parameters$mean[1])
     })
 
-  noise_matrix <- rbind(counts_norm[isotype_controls,],
-                       cellwise_background_mean)
+  noise_matrix <- rbind(
+    counts_norm[isotype_controls, ],
+    cellwise_background_mean
+  )
 
   noise_vector <-
     prcomp(t(noise_matrix), scale = TRUE)$x[, 1]
@@ -100,7 +101,6 @@ expect_limma()
     limma::removeBatchEffect(counts_norm, covariates = noise_vector)
 
   return(counts_norm)
-
 }
 
 ##' CLR normalization
@@ -114,9 +114,11 @@ expect_limma()
 #'
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'                        "five_cells.pxl",
-#'                        package = "pixelatorR")
+#' pxl_file <- system.file(
+#'   "extdata/five_cells",
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' se <- ReadMPX_Seurat(pxl_file)
 #' norm_data_clr <- NormalizeMPX(se, method = "clr")
 #'
@@ -124,17 +126,12 @@ expect_limma()
 #'
 #' @noRd
 .normalize_method_clr <- function(
-    counts,
-    ...
+  counts,
+  ...
 ) {
-
-  stopifnot(
-    "counts must be a matrix" =
-      inherits(counts, c("Matrix", "matrix"))
-  )
+  assert_class(counts, c("Matrix", "matrix"))
 
   sweep(log1p(counts), 2, Matrix::colMeans(log1p(counts)), "-")
-
 }
 
 #' @rdname NormalizeMPX
@@ -143,23 +140,21 @@ expect_limma()
 #' @export
 #'
 NormalizeMPX.Matrix <- function(
-    object,
-    method = c("dsb", "clr"),
-    isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
-    ...
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
 ) {
-
   # Validate inputs
   method <- match.arg(method, choices = c("dsb", "clr"))
 
-  stopifnot(
-    "object must be a matrix" =
-      inherits(object, c("Matrix", "matrix"))
-  )
+  assert_class(object, c("Matrix", "matrix"))
 
-  normalization_function <- switch(method,
-                                   "dsb" = .normalize_method_dsb,
-                                   "clr" = .normalize_method_clr)
+  normalization_function <- switch(
+    EXPR = method,
+    "dsb" = .normalize_method_dsb,
+    "clr" = .normalize_method_clr
+  )
 
   # Normalize data
   norm_object <-
@@ -175,29 +170,36 @@ NormalizeMPX.Matrix <- function(
 #' @export
 #'
 NormalizeMPX.MPXAssay <- function(
-    object,
-    method = c("dsb", "clr"),
-    isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
-    ...
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
 ) {
-
   # If object has been merged before, join layers
-  if(inherits(object, "CellGraphAssay5")) {
+  if (inherits(object, c("CellGraphAssay5", "Assay5"))) {
     object <- JoinLayers(object)
   }
 
   newData <-
-    NormalizeMPX(object = LayerData(object, "counts"),
-                 method = method,
-                 isotype_controls = isotype_controls,
-                 ...)
+    NormalizeMPX(
+      object = LayerData(object, "counts"),
+      method = method,
+      isotype_controls = isotype_controls,
+      ...
+    )
 
   LayerData(object, "data") <-
     as(newData, "CsparseMatrix")
 
   return(object)
-
 }
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX Assay
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.Assay <- NormalizeMPX.MPXAssay
 
 #' @rdname NormalizeMPX
 #' @method NormalizeMPX CellGraphAssay
@@ -205,6 +207,13 @@ NormalizeMPX.MPXAssay <- function(
 #' @export
 #'
 NormalizeMPX.CellGraphAssay <- NormalizeMPX.MPXAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX Assay5
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.Assay5 <- NormalizeMPX.MPXAssay
 
 #' @rdname NormalizeMPX
 #' @method NormalizeMPX CellGraphAssay5
@@ -219,20 +228,20 @@ NormalizeMPX.CellGraphAssay5 <- NormalizeMPX.MPXAssay
 #' @export
 #'
 NormalizeMPX.Seurat <- function(
-    object,
-    method = c("dsb", "clr"),
-    isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
-    assay = NULL,
-    ...
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  assay = NULL,
+  ...
 ) {
-
   assay <- assay %||% DefaultAssay(object = object)
   object[[assay]] <-
-    NormalizeMPX(object = object[[assay]],
-                 method = method,
-                 isotype_controls = isotype_controls,
-                 ...)
+    NormalizeMPX(
+      object = object[[assay]],
+      method = method,
+      isotype_controls = isotype_controls,
+      ...
+    )
 
   return(object)
-
 }

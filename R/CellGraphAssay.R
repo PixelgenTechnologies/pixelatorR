@@ -2,13 +2,6 @@
 #' @importClassesFrom Matrix dgCMatrix
 NULL
 
-# Declarations used in package check
-globalVariables(
-  names = c('marker_1', 'marker_2'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Class definition
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -108,14 +101,14 @@ setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
 #' @return A \code{CellGraphAssay} object
 #'
 #' @examples
-#'
 #' library(pixelatorR)
 #' library(dplyr)
 #' library(tidygraph)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -141,7 +134,7 @@ setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
 #'
 #' @export
 #'
-CreateCellGraphAssay <- function (
+CreateCellGraphAssay <- function(
   counts,
   cellgraphs,
   polarization = NULL,
@@ -150,18 +143,11 @@ CreateCellGraphAssay <- function (
   verbose = FALSE,
   ...
 ) {
-
   # Check input parameters
-  stopifnot(
-    "'counts' must be a matrix-like object" =
-      inherits(counts, what =  c("matrix", "dgCMatrix")),
-    "'cellgraphs' must be a 'list'" =
-      inherits(cellgraphs, what = "list")
-  )
-  stopifnot(
-    "'cellgraphs' names must be match the colnames of the count matrix" =
-      all(names(cellgraphs) == colnames(counts))
-  )
+  assert_class(counts, c("matrix", "dgCMatrix"))
+  assert_class(cellgraphs, "list")
+  assert_vectors_match(names(cellgraphs), colnames(counts))
+
   cellgraphs <- cellgraphs[colnames(counts)]
 
   # Validate polarization and colocalization
@@ -225,8 +211,9 @@ CreateCellGraphAssay <- function (
 #' library(tidygraph)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -252,27 +239,20 @@ CreateCellGraphAssay <- function (
 #'
 #' @export
 #'
-CreateCellGraphAssay5 <- function (
-    counts,
-    cellgraphs,
-    polarization = NULL,
-    colocalization = NULL,
-    fs_map = NULL,
-    verbose = FALSE,
-    ...
+CreateCellGraphAssay5 <- function(
+  counts,
+  cellgraphs,
+  polarization = NULL,
+  colocalization = NULL,
+  fs_map = NULL,
+  verbose = FALSE,
+  ...
 ) {
-
   # Check input parameters
-  stopifnot(
-    "'counts' must be a matrix-like object" =
-      inherits(counts, what =  c("matrix", "dgCMatrix")),
-    "'cellgraphs' must be a 'list'" =
-      inherits(cellgraphs, what = "list")
-  )
-  stopifnot(
-    "'cellgraphs' names must be match the colnames of the count matrix" =
-      all(names(cellgraphs) == colnames(counts))
-  )
+  assert_class(counts, c("matrix", "dgCMatrix"))
+  assert_class(cellgraphs, "list")
+  assert_vectors_match(names(cellgraphs), colnames(counts))
+
   cellgraphs <- cellgraphs[colnames(counts)]
 
   # Validate polarization and colocalization
@@ -328,8 +308,9 @@ CreateCellGraphAssay5 <- function (
 #' library(tidygraph)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -359,7 +340,7 @@ CreateCellGraphAssay5 <- function (
 #' # Get cellgraphs from a CellGraphAssay object
 #' CellGraphs(cg_assay)
 #'
-CellGraphs.MPXAssay <- function (
+CellGraphs.MPXAssay <- function(
   object,
   ...
 ) {
@@ -381,12 +362,11 @@ CellGraphs.MPXAssay <- function (
 #' # Set cellgraphs in a CellGraphAssay object
 #' CellGraphs(cg_assay) <- cg_assay@cellgraphs
 #'
-"CellGraphs<-.MPXAssay" <- function (
+"CellGraphs<-.MPXAssay" <- function(
   object,
   ...,
   value
 ) {
-
   # Clean cellgraphs slot if value = NULL
   if (is.null(x = value)) {
     slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
@@ -395,16 +375,25 @@ CellGraphs.MPXAssay <- function (
 
   # Validate list
   if (inherits(x = value, what = "list")) {
-    if (!all(names(value) == names(CellGraphs(object))))
-      abort("new list names must match the current cellgraphs list names")
+    assert_vectors_match(names(value), names(CellGraphs(object)))
     for (i in seq_along(value)) {
       if (!inherits(x = value[[i]], what = c("CellGraph", "NULL"))) {
-        abort(glue("Element {i} is not a CellGraph object or NULL"))
+        cli::cli_abort(
+          c(
+            "i" = "All elements of {.var value} must be of class {.cls CellGraph} or {.cls NULL}",
+            "x" = "Element {i} of {.var value} is a {.cls {class(value[[i]])}}"
+          )
+        )
       }
     }
     slot(object = object, name = "cellgraphs") <- value
   } else {
-    abort(glue("Invalid class '{class(value)}'"))
+    cli::cli_abort(
+      c(
+        "i" = "{.var value} must be a {.cls list}",
+        "x" = "You've provided a {.cls {class(value)}}"
+      )
+    )
   }
   return(object)
 }
@@ -423,18 +412,15 @@ CellGraphs.MPXAssay <- function (
 #' @docType methods
 #'
 #' @export
-RenameCells.MPXAssay <- function (
+RenameCells.MPXAssay <- function(
   object,
   new.names = NULL,
   ...
 ) {
+  assert_vector(new.names, type = "character")
+  assert_vectors_x_y_length_equal(new.names, colnames(object))
+  assert_unique(new.names)
 
-  if (!inherits(new.names, what = "character") ||
-      !(length(new.names) == ncol(object)) ||
-      !sum(duplicated(new.names)) == 0) {
-    abort(glue("'new.names' must be a character vector where length(new.names) == ncol(object),",
-               " and the names must be unique."))
-  }
   if (is.null(names(new.names))) {
     new.names <- set_names(new.names, nm = colnames(object))
   }
@@ -477,7 +463,8 @@ RenameCells.MPXAssay <- function (
   # Handle fs_map
   fs_map <- slot(object, name = "fs_map")
   if (nrow(fs_map) > 0) {
-    fs_map$id_map <- fs_map %>% pull(id_map) %>%
+    fs_map$id_map <- fs_map %>%
+      pull(id_map) %>%
       lapply(function(x) {
         x$current_id <- new.names[x$current_id]
         return(x)
@@ -529,8 +516,9 @@ RenameCells.CellGraphAssay5 <- RenameCells.MPXAssay
 #' library(tidygraph)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -559,7 +547,7 @@ RenameCells.CellGraphAssay5 <- RenameCells.MPXAssay
 #'
 #' @export
 #'
-as.CellGraphAssay.Assay <- function (
+as.CellGraphAssay.Assay <- function(
   x,
   cellgraphs = NULL,
   polarization = NULL,
@@ -567,20 +555,18 @@ as.CellGraphAssay.Assay <- function (
   fs_map = NULL,
   ...
 ) {
-
   # Check cellgraphs
   if (!is.null(cellgraphs)) {
-    stopifnot(
-      "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay" =
-        is.list(cellgraphs) &&
-        (length(cellgraphs) == ncol(x)))
-    stopifnot(
-      "'cellgraphs' names must match colnames of the Assay" =
-        all(names(cellgraphs) == colnames(x))
-    )
+    assert_non_empty_object(cellgraphs, classes = "list")
+    assert_singles_match(length(cellgraphs), ncol(x))
     for (i in seq_along(cellgraphs)) {
       if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
-        abort(glue("Element {i} is not a CellGraph object or NULL"))
+        cli::cli_abort(
+          c(
+            "i" = "All elements of {.var cellgraphs} must be of class {.cls CellGraph} or {.cls NULL}",
+            "x" = "Element {i} of {.var cellgraphs} is a {.cls {class(cellgraphs[[i]])}}"
+          )
+        )
       }
     }
   } else {
@@ -655,8 +641,9 @@ setAs(
 #' library(tidygraph)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -685,28 +672,26 @@ setAs(
 #'
 #' @export
 #'
-as.CellGraphAssay5.Assay5 <- function (
-    x,
-    cellgraphs = NULL,
-    polarization = NULL,
-    colocalization = NULL,
-    fs_map = NULL,
-    ...
+as.CellGraphAssay5.Assay5 <- function(
+  x,
+  cellgraphs = NULL,
+  polarization = NULL,
+  colocalization = NULL,
+  fs_map = NULL,
+  ...
 ) {
-
   # Check cellgraphs
   if (!is.null(cellgraphs)) {
-    stopifnot(
-      "'cellgraphs' must be a non-empty list with the same number of elements as the number of columns in the Assay5" =
-        is.list(cellgraphs) &&
-        (length(cellgraphs) == ncol(x)))
-    stopifnot(
-      "'cellgraphs' names must match colnames of the Assay5" =
-        all(names(cellgraphs) == colnames(x))
-    )
+    assert_non_empty_object(cellgraphs, classes = "list")
+    assert_singles_match(length(cellgraphs), ncol(x))
     for (i in seq_along(cellgraphs)) {
       if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
-        abort(glue("Element {i} is not a CellGraph object or NULL"))
+        cli::cli_abort(
+          c(
+            "i" = "All elements of {.var cellgraphs} must be of class {.cls CellGraph} or {.cls NULL}",
+            "x" = "Element {i} of {.var cellgraphs} is a {.cls {class(cellgraphs[[i]])}}"
+          )
+        )
       }
     }
   } else {
@@ -765,11 +750,25 @@ setAs(
 #'
 #' @export
 #'
-PolarizationScores.MPXAssay <- function (
+PolarizationScores.MPXAssay <- function(
   object,
+  add_marker_counts = FALSE,
   ...
 ) {
-  slot(object, name = "polarization")
+  assert_single_value(add_marker_counts, type = "bool")
+
+  pol_scores <- slot(object, name = "polarization")
+
+  # Add marker counts
+  if (add_marker_counts) {
+    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
+      rownames_to_column("component") %>%
+      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count")
+    pol_scores <- pol_scores %>%
+      left_join(all_counts, by = c("component", "marker"))
+  }
+
+  return(pol_scores)
 }
 
 
@@ -779,7 +778,7 @@ PolarizationScores.MPXAssay <- function (
 #'
 #' @export
 #'
-"PolarizationScores<-.MPXAssay" <- function (
+"PolarizationScores<-.MPXAssay" <- function(
   object,
   ...,
   value
@@ -791,17 +790,37 @@ PolarizationScores.MPXAssay <- function (
 }
 
 
+#' @param add_marker_counts A logical value indicating whether to add marker
+#' counts to the colocalization score table.
+#'
 #' @method ColocalizationScores MPXAssay
 #'
 #' @rdname ColocalizationScores
 #'
 #' @export
 #'
-ColocalizationScores.MPXAssay <- function (
+ColocalizationScores.MPXAssay <- function(
   object,
+  add_marker_counts = FALSE,
   ...
 ) {
-  slot(object, name = "colocalization")
+  assert_single_value(add_marker_counts, type = "bool")
+
+  coloc_scores <- slot(object, name = "colocalization")
+
+  # Add marker counts
+  if (add_marker_counts) {
+    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
+      rownames_to_column("component") %>%
+      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count")
+    coloc_scores <- coloc_scores %>%
+      left_join(all_counts %>%
+        rename(count_1 = count), by = c("component", "marker_1" = "marker")) %>%
+      left_join(all_counts %>%
+        rename(count_2 = count), by = c("component", "marker_2" = "marker"))
+  }
+
+  return(coloc_scores)
 }
 
 
@@ -811,7 +830,7 @@ ColocalizationScores.MPXAssay <- function (
 #'
 #' @export
 #'
-"ColocalizationScores<-.MPXAssay" <- function (
+"ColocalizationScores<-.MPXAssay" <- function(
   object,
   ...,
   value
@@ -829,7 +848,7 @@ ColocalizationScores.MPXAssay <- function (
 #'
 #' @export
 #'
-FSMap.MPXAssay <- function (
+FSMap.MPXAssay <- function(
   object,
   ...
 ) {
@@ -843,7 +862,7 @@ FSMap.MPXAssay <- function (
 #'
 #' @export
 #'
-"FSMap<-.MPXAssay" <- function (
+"FSMap<-.MPXAssay" <- function(
   object,
   ...,
   value
@@ -855,9 +874,9 @@ FSMap.MPXAssay <- function (
 }
 
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Methods for R-defined generics
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
 #' MPXAssay Methods
@@ -937,8 +956,9 @@ NULL
 #' library(tidygraph)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -967,7 +987,7 @@ NULL
 #'
 #' @export
 #'
-setMethod (
+setMethod(
   f = "show",
   signature = "MPXAssay",
   definition = function(object) {
@@ -975,18 +995,23 @@ setMethod (
     loaded_graphs <- !sapply(cellgraphs, is.null)
     msg <-
       capture.output(show(as(
-        object, Class = ifelse(
+        object,
+        Class = ifelse(
           is(object, "CellGraphAssay5"),
           "Assay5",
           "Assay"
         )
       )))
-    msg[1] <- gsub(pattern = "^Assay",
-                   x = msg[1],
-                   replacement = "CellGraphAssay")
-    msg <- c(msg, paste0("Loaded CellGraph objects:\n ",
-                         sum(loaded_graphs),
-                         "\n"))
+    msg[1] <- gsub(
+      pattern = "^Assay",
+      x = msg[1],
+      replacement = "CellGraphAssay"
+    )
+    msg <- c(msg, paste0(
+      "Loaded CellGraph objects:\n ",
+      sum(loaded_graphs),
+      "\n"
+    ))
     cat(paste(msg, collapse = "\n"))
   }
 )
@@ -999,7 +1024,7 @@ setMethod (
 #'
 #' @export
 #'
-setMethod (
+setMethod(
   f = "show",
   signature = "CellGraphAssay",
   definition = function(object) as(getMethod("show", "MPXAssay"), "function")(object)
@@ -1013,7 +1038,7 @@ setMethod (
 #'
 #' @export
 #'
-setMethod (
+setMethod(
   f = "show",
   signature = "CellGraphAssay5",
   definition = function(object) as(getMethod("show", "MPXAssay"), "function")(object)
@@ -1034,8 +1059,9 @@ setMethod (
 #' options(Seurat.object.assay.version = "v3")
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur)
 #' cg_assay <- seur[["mpxCells"]]
@@ -1050,25 +1076,22 @@ setMethod (
 #'
 #' @export
 #'
-subset.MPXAssay <- function (
+subset.MPXAssay <- function(
   x,
   features = NULL,
   cells = NULL,
   ...
 ) {
-
-  stopifnot(
-    "All 'cells' must be present in x" =
-      all(cells %in% colnames(x))
-  )
+  assert_x_in_y(cells, colnames(x))
 
   # Get cellgraphs
   cellgraphs <- x@cellgraphs
 
   # subset elements in the standard assay
   assay <- as(object = x, Class = ifelse(is(x, "CellGraphAssay"),
-                                         "Assay",
-                                         "Assay5"))
+    "Assay",
+    "Assay5"
+  ))
   assay_subset <- subset(x = assay, features = features, cells = cells)
 
   # Filter cellgraphs
@@ -1108,8 +1131,9 @@ subset.MPXAssay <- function (
 
   # convert standard assay to CellGraphAssay or CellGraphAssay5
   as_assay_func <- ifelse(is(x, "CellGraphAssay"),
-                          as.CellGraphAssay,
-                          as.CellGraphAssay5)
+    as.CellGraphAssay,
+    as.CellGraphAssay5
+  )
   cg_assay <- as_assay_func(
     x = assay_subset,
     cellgraphs = cellgraphs_filtered,
@@ -1152,12 +1176,13 @@ subset.CellGraphAssay5 <- subset.MPXAssay
 #'
 #' # Merge 3 CellGraphAssay(5) objects
 #' cg_assay_merged <- merge(cg_assay,
-#'                          y = list(cg_assay, cg_assay),
-#'                          add.cell.ids = c("A", "B", "C"))
+#'   y = list(cg_assay, cg_assay),
+#'   add.cell.ids = c("A", "B", "C")
+#' )
 #'
 #' @export
 #'
-merge.MPXAssay <- function (
+merge.MPXAssay <- function(
   x = NULL,
   y = NULL,
   merge.data = TRUE,
@@ -1165,44 +1190,53 @@ merge.MPXAssay <- function (
   collapse = TRUE,
   ...
 ) {
-
   # Validate input parameters
-  if (!inherits(y, what = c("list", "MPXAssay")))
-    abort("'y' must be a 'CellGraphAssay(5)' object or a list of 'CellGraphAssay(5)' objects")
+  assert_class(y, c("list", "MPXAssay"))
   if (is.list(y)) {
     for (i in seq_along(y)) {
       if (!inherits(y[[i]], what = "MPXAssay")) {
-        abort(glue("Element {i} in 'y' is not a 'CellGraphAssay(5)' object"))
+        cli::cli_abort(
+          c(
+            "i" = "All elements of {.var y} must be {.cls CellGraphAssay} or {.cls CellGraphAssay5} objects",
+            "x" = "Element {i} of {.var y} is a {.cls {class(y[[i]])}}"
+          )
+        )
       }
     }
   }
 
   objects <- c(x, y)
-  cell.names <- unlist(lapply(objects, colnames))
-  name_conversion <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
-    tibble(component = colnames(objects[[i]]), sample = i)
-  })) %>% mutate(component_new = cell.names) %>%
-    group_by(sample) %>%
-    group_split()
+  cell_names <- unlist(lapply(objects, colnames))
 
   # Define add.cell.ids
   if (!is.null(add.cell.ids)) {
-    stopifnot(
-      "Length of 'add.cell.ids' must match the number of objects to merge" =
-        length(add.cell.ids) == length(objects)
-    )
+    if (!(length(add.cell.ids) == length(objects))) {
+      cli::cli_abort(
+        c(
+          "i" = "Length of 'add.cell.ids' must match the number of objects to merge",
+          "x" = "Length of 'add.cell.ids': {.val {length(add.cell.ids)}}",
+          "x" = "Number of objects to merge: {.val {length(objects)}}"
+        )
+      )
+    }
     objects <- lapply(seq_along(objects), function(i) {
-      objects[[i]] %>% RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) %>%
-                                     set_names(nm = colnames(objects[[i]])))
+      objects[[i]] %>%
+        RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) %>%
+          set_names(nm = colnames(objects[[i]])))
     })
   }
 
   # Check duplicate cell names
-  unique_names <- table(cell.names)
+  unique_names <- table(cell_names)
   names_are_duplicated <- any(unique_names > 1)
-  if (names_are_duplicated & is.null(add.cell.ids)) {
-    abort(glue("Found non-unique IDs across samples. A 'add.cell.ids' must be specified. ",
-               "Alternatively, make sure that each separate object has unique cell names."))
+  if (names_are_duplicated && is.null(add.cell.ids)) {
+    cli::cli_abort(
+      c(
+        "i" = "Found non-unique cell IDs across samples. {.var add.cell.ids} must be specified. ",
+        " " = "Alternatively, make sure that each separate object has unique cell IDs.",
+        "x" = "Duplicated IDs: {.val {names(unique_names)[unique_names > 1]}}"
+      )
+    )
   }
 
   # Fetch standard assays
@@ -1213,42 +1247,33 @@ merge.MPXAssay <- function (
   })
 
   # Merge Seurat assays
-  new_assay <- merge(x = standardassays[[1]],
-                     y = standardassays[-1],
-                     merge.data = merge.data,
-                     ...)
-  if (collapse & is(new_assay, "CellGraphAssay5")) {
-    new_assay <- JoinLayers(new_assay)
-  }
+  new_assay <- merge(
+    x = standardassays[[1]],
+    y = standardassays[-1],
+    merge.data = merge.data,
+    ...
+  )
 
   # Join layers
-  if (collapse & is(new_assay, "Assay5")) {
+  if (collapse && is(new_assay, "CellGraphAssay5")) {
+    new_assay <- JoinLayers(new_assay)
+  }
+  if (collapse && is(new_assay, "Assay5")) {
     new_assay <- JoinLayers(new_assay)
   }
 
-  # Fetch cellgraphs
+  # Merge cellgraphs list
   cellgraphs_new <- Reduce(c, lapply(objects, function(cg_assay) {
     return(cg_assay@cellgraphs)
   })) %>% set_names(nm = colnames(new_assay))
 
-
-  # Merge polarization and colocalization scores
-  polarization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
-    pl <- slot(objects[[i]], name = "polarization")
-    if (length(pl) == 0) return(pl)
-    pl <- pl %>% left_join(name_conversion[[i]], by = "component") %>%
-      select(-component, -sample) %>%
-      rename(component = component_new)
-    return(pl)
-  }))
-  colocalization <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
-    cl <- slot(objects[[i]], name = "colocalization")
-    if (length(cl) == 0) return(cl)
-    cl <- cl %>% left_join(name_conversion[[i]], by = "component") %>%
-      select(-component, -sample) %>%
-      rename(component = component_new)
-    return(cl)
-  }))
+  # Merge spatial metrics tables
+  polarization <- lapply(objects, function(object) {
+    slot(object, name = "polarization")
+  }) %>% bind_rows()
+  colocalization <- lapply(objects, function(object) {
+    slot(object, name = "colocalization")
+  }) %>% bind_rows()
 
   # Merge fs_map
   fs_map <- tibble()
@@ -1267,8 +1292,9 @@ merge.MPXAssay <- function (
   # Convert to CellGraphAssay and add cellgraphs
   as_assay_func <-
     ifelse(is(cg_assay, "CellGraphAssay"),
-           as.CellGraphAssay,
-           as.CellGraphAssay5)
+      as.CellGraphAssay,
+      as.CellGraphAssay5
+    )
   merged_cg_assay <- as_assay_func(
     x = new_assay,
     cellgraphs = cellgraphs_new,
@@ -1279,13 +1305,14 @@ merge.MPXAssay <- function (
 
   # Add meta.features for CellGraphAssay
   if (is(merged_cg_assay, "CellGraphAssay")) {
-
     can_merge_meta_features <- TRUE
     ob_features <- lapply(objects, function(x) rownames(x@meta.features))
     for (i in 2:length(ob_features)) {
       if (!all(ob_features[[i]] == ob_features[[1]])) {
-        cli_alert_danger("Meta features are not the same across objects. ",
-                         "Cannot merge meta.features slots.")
+        cli_alert_danger(
+          "Meta features are not the same across objects. ",
+          "Cannot merge meta.features slots."
+        )
         can_merge_meta_features <- FALSE
         break
       }
@@ -1297,7 +1324,6 @@ merge.MPXAssay <- function (
 
     # Place meta.features in CellGraphAssay
     merged_cg_assay@meta.features <- meta_features
-
   }
 
   return(merged_cg_assay)

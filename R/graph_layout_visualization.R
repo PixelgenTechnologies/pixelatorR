@@ -1,9 +1,3 @@
-globalVariables(
-  names = c('norm_factor'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
 #' Plot 2D graph layouts
 #'
 #' Plot 2D component graph layouts computed with \code{\link{ComputeLayout}} and
@@ -44,8 +38,9 @@ globalVariables(
 #' library(pixelatorR)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #'
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
@@ -55,7 +50,7 @@ globalVariables(
 #'
 #' @export
 #'
-Plot2DGraph <- function (
+Plot2DGraph <- function(
   object,
   cells,
   marker = NULL,
@@ -72,75 +67,55 @@ Plot2DGraph <- function (
   return_plot_list = FALSE,
   ...
 ) {
-
-  # Validate input parameters
-  stopifnot(
-    "'object' must be a Seurat object" =
-      inherits(object, what = "Seurat"),
-    "'colors' must be a character vector with at least 2 colors" =
-      is.character(colors) &&
-      (length(colors) > 1),
-    "'map_nodes' must be either TRUE or FALSE" =
-      is.logical(map_nodes) &&
-      (length(map_nodes) == 1),
-    "'map_edges' must be either TRUE or FALSE" =
-      is.logical(map_edges) &&
-      (length(map_edges) == 1),
-    "'map_nodes' and 'map_edges' cannot be deactivated at the same time" =
-      map_nodes ||
-      map_edges,
-    "'cells' must be a non-empty character vector with cell IDs" =
-      is.character(cells) &&
-      (length(cells) > 0),
-    "'node_size' must be a numeric value" =
-      is.numeric(node_size) &&
-      (length(node_size) == 1),
-    "'edge_width' must be a numeric value" =
-      is.numeric(edge_width) &&
-      (length(edge_width) == 1)
-  )
-
-  if (!is.null(marker)) {
-    stopifnot(
-      "'marker' must be a character of length 1" =
-        is.character(marker) &&
-        (length(marker) == 1)
+  assert_class(object, "Seurat")
+  assert_vector(colors)
+  assert_single_value(map_nodes, type = "bool")
+  assert_single_value(map_edges, type = "bool")
+  if ((map_nodes == FALSE) && (map_edges == FALSE)) {
+    cli::cli_abort(
+      c("x" = "One of {.var map_nodes} or {.var map_edges} must be TRUE")
     )
   }
+  assert_vector(cells, type = "character", n = 1)
+  assert_single_value(node_size, type = "numeric")
+  assert_single_value(edge_width, type = "numeric")
+  assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select a layout method
   layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
-  layout_method_ext <- switch (layout_method,
-                           "fr" = "Fruchterman Reingold (fr)",
-                           "kk" = "Kamada Kawai (kk)",
-                           "drl" = "DrL graph layout generator (drl)",
-                           "pmds" = "pivot MDS (pmds)"
-  )
+  layout_method_ext <-
+    switch(layout_method,
+      "fr" = "Fruchterman Reingold (fr)",
+      "kk" = "Kamada Kawai (kk)",
+      "drl" = "DrL graph layout generator (drl)",
+      "pmds" = "pivot MDS (pmds)",
+      "wpmds" = "weighted pivot MDS (wpmds)"
+    )
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-        (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     assay <- DefaultAssay(object)
   }
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay' or a 'CellGraphAssay5' object."))
-  }
+  assert_mpx_assay(cg_assay)
 
   # Fetch data
   data_list <- lapply(cells, function(cell_id) {
-
     # Fetch component graph
     component_graph <- CellGraphs(cg_assay)[[cell_id]]
-    if (is.null(component_graph))
-      abort(glue("Missing cellgraph for component '{cell_id}'"))
+    if (is.null(component_graph)) {
+      cli::cli_abort(
+        c(
+          "i" = "All selected cells must have a component graph loaded.",
+          " " = "Did you forget to run {.fn LoadCellGraphs}?",
+          "x" = "Missing {.cls CellGraph} for component {.str {cell_id}}"
+        )
+      )
+    }
 
     # unpack values
     graph <- component_graph@cellgraph
@@ -148,45 +123,56 @@ Plot2DGraph <- function (
     # Validate marker
     if (!is.null(marker)) {
       if (marker == "node_type") {
-        stopifnot(
-          "marker = 'node_type' can only be used for bipartite graphs" =
-            attr(graph, "type") == "bipartite"
-        )
+        if (!attr(graph, "type") == "bipartite") {
+          cli::cli_abort(
+            c("x" = "{.var marker = 'node_type'} can only be used for bipartite graphs")
+          )
+        }
       } else {
         if (!marker %in% colnames(component_graph@counts)) {
-          cli_alert_danger(glue("'{marker}' is missing from node count matrix ",
-                     "for component {cell_id}"))
+          cli_alert_danger(
+            glue(
+              "'{marker}' is missing from node count matrix ",
+              "for component {cell_id}"
+            )
+          )
           return(NULL)
         }
       }
     }
 
     layout <- component_graph@layout[[layout_method]]
-    if (length(graph) == 0)
-      abort(glue("Missing cellgraph for component '{cell_id}'"))
-    if (length(layout) == 0)
-      abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
+    if (length(graph) == 0) {
+      cli::cli_abort(
+        c("x" = "Missing cellgraph for component '{.val {cell_id}}'")
+      )
+    }
+    if (length(layout) == 0) {
+      cli::cli_abort(
+        c("x" = "Missing layout {.str {layout_method}} for component '{.val {cell_id}}'")
+      )
+    }
 
     # Add node marker counts if needed
     if (!is.null(marker)) {
       if (marker != "node_type") {
-          graph <- graph %N>%
-            mutate(marker = component_graph@counts[, marker]) %>%
-            {
-              if (log_scale) {
-                mutate(., marker = log1p(marker))
-              } else {
-                .
-              }
+        graph <- graph %N>%
+          mutate(marker = component_graph@counts[, marker]) %>%
+          {
+            if (log_scale) {
+              mutate(., marker = log1p(marker))
+            } else {
+              .
             }
+          }
       }
     }
 
     # Remove B nodes if show_Bnodes=FALSE
     if ((attr(graph, "type") == "bipartite") && !show_Bnodes) {
-      inds_keep <- (graph %>% pull(node_type)) == "A"
-      graph <- graph %>%
-        filter(node_type == "A")
+      inds_keep <- (graph %N>% pull(node_type)) %in% c("A", "UMI1")
+      graph <- graph %N>%
+        filter(node_type %in% c("A", "UMI1"))
       layout <- layout[inds_keep, ]
     }
 
@@ -204,19 +190,26 @@ Plot2DGraph <- function (
 
     data <- list(graph = graph, layout = layout, type = attr(graph, "type"), layout_type = layout_method)
     return(data)
-  }) %>% set_names(nm = cells)
+  }) %>%
+    set_names(nm = cells)
 
   # Set limits
   if (!is.null(marker)) {
     if (collect_scales) {
       max_val <- sapply(data_list, function(x) {
-        if (is.null(x)) return(NULL)
+        if (is.null(x)) {
+          return(NULL)
+        }
         x$graph %>% pull(marker)
-      }) %>% unlist() %>% max()
+      }) %>%
+        unlist() %>%
+        max()
       limits <- c(rep(list(c(0, max_val)), length(data_list))) %>% set_names(names(data_list))
     } else {
       limits <- lapply(data_list, function(x) {
-        if (is.null(x)) return(NULL)
+        if (is.null(x)) {
+          return(NULL)
+        }
         c(0, max(x$graph %>% pull(marker)))
       })
     }
@@ -224,7 +217,9 @@ Plot2DGraph <- function (
 
   # Create plots
   plots <- lapply(names(data_list), function(nm) {
-    if (is.null(data_list[[nm]])) return(patchwork::plot_spacer() + theme(plot.background = element_rect(fill = NA, colour = NA)))
+    if (is.null(data_list[[nm]])) {
+      return(patchwork::plot_spacer() + theme(plot.background = element_rect(fill = NA, colour = NA)))
+    }
     # Visualize the graph with ggraph
     p <- data_list[[nm]]$graph %>%
       ggraph(layout = data_list[[nm]]$layout) +
@@ -262,8 +257,7 @@ Plot2DGraph <- function (
           labs(title = glue("{nm}"))
         }
       } +
-      theme_void()# +
-      #theme(plot.title = element_text(size = 10), panel.border = element_rect(colour = "lightgrey", fill = NA))
+      theme_void()
 
     # Add color scale
     if (!is.null(marker)) {
@@ -280,8 +274,10 @@ Plot2DGraph <- function (
 
   # Wrap plots
   p <- wrap_plots(plots)
-  p <- p + plot_annotation(title = glue("Layout with {layout_method_ext}"),
-                           theme = theme(plot.title = element_text(size = 14, face = "bold")))
+  p <- p + plot_annotation(
+    title = glue("Layout with {layout_method_ext}"),
+    theme = theme(plot.title = element_text(size = 14, face = "bold"))
+  )
 
   return(p)
 }
@@ -311,8 +307,9 @@ Plot2DGraph <- function (
 #' library(pixelatorR)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #'
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
@@ -322,7 +319,7 @@ Plot2DGraph <- function (
 #'
 #' @export
 #'
-Plot2DGraphM <- function (
+Plot2DGraphM <- function(
   object,
   cells,
   markers,
@@ -341,17 +338,10 @@ Plot2DGraphM <- function (
   titles_col = "black",
   ...
 ) {
-
-  stopifnot(
-    "'cells' must be a non-empty characted vector" =
-      is.character(cells) && (length(cells) > 0),
-    "'markers' must be a non-empty characted vector" =
-      is.character(cells) && (length(markers) > 0),
-    "'titles_size' must be a numeric of length 1" =
-      is.numeric(titles_size) && (length(titles_size) == 1),
-    "'titles_col' must be a character of length 1" =
-      is.character(titles_col) && (length(titles_col) == 1)
-  )
+  assert_vector(cells, type = "character", n = 1)
+  assert_vector(markers, type = "character", n = 1)
+  assert_single_value(titles_size, type = "numeric")
+  assert_single_value(titles_col, type = "string")
 
   # Set layout options
   ncols <- length(cells)
@@ -359,26 +349,16 @@ Plot2DGraphM <- function (
 
   # Validate titles and titles_theme
   if (!is.null(titles)) {
-    stopifnot(
-      "'titles' must be a named character vector with the same number of elements as 'cells'" =
-        is.character(titles) &&
-        (length(titles) == length(cells)) &&
-        all(names(titles) == cells)
-    )
+    assert_vector(titles, type = "character", n = 1)
+    assert_vectors_match(cells, names(titles))
     titles <- titles[cells]
-    if (!is.null(titles_theme)) {
-      stopifnot(
-        "'titles_theme' must have class 'theme'" =
-          inherits(titles_theme, what = "theme")
-      )
-    }
+    assert_class(titles_theme, "theme", allow_null = TRUE)
   } else {
     titles <- cells
   }
 
   # Create columnn titles for patchwork
   title_plots <- lapply(titles, function(label) {
-
     # Here we create a title for each column
     # titles_size and titles_col controls the size and color of the text
     p_title <- wrap_elements(
@@ -404,7 +384,6 @@ Plot2DGraphM <- function (
   plots <- list()
   legends <- list()
   for (marker in markers) {
-
     # Create a list of plots for each component
     # and the selected marker. By setting collect_scales = TRUE
     # we make sure that the limits of the color scale are the same
@@ -449,7 +428,7 @@ Plot2DGraphM <- function (
 
   # Add legends to plots. Each element stored length(cells)
   # plots and after adding the legend, each row will be
-  # length(cells) + 1
+  # number of cells + 1
   plots <- lapply(seq_along(plots), function(i) {
     c(plots[[i]], list(legends[[i]]))
   })
@@ -459,9 +438,10 @@ Plot2DGraphM <- function (
 
   # Final plot
   p <- wrap_plots(c(title_plots, plots),
-                  ncol = ncols + 1, # Sets the number of columns to length(cells) + 1
-                  heights = c(1, rep(4, nrows)), # Adjust the heights to make the title row a bit smaller
-                  widths = c(rep(4, ncols), 2)) # Adjust the widths to make the legend column a bit smaller
+    ncol = ncols + 1, # Sets the number of columns to length(cells) + 1
+    heights = c(1, rep(4, nrows)), # Adjust the heights to make the title row a bit smaller
+    widths = c(rep(4, ncols), 2)
+  ) # Adjust the widths to make the legend column a bit smaller
   return(p)
 }
 
@@ -473,13 +453,16 @@ Plot2DGraphM <- function (
 #'
 #' @noRd
 #'
-.get_legend <- function (
+.get_legend <- function(
   p
-){
+) {
   tmp <- ggplot_gtable(ggplot_build(p))
   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  if (length(leg) > 0) leg <- tmp$grobs[[leg]]
-  else leg <- NULL
+  if (length(leg) > 0) {
+    leg <- tmp$grobs[[leg]]
+  } else {
+    leg <- NULL
+  }
   leg
 }
 
@@ -520,17 +503,18 @@ Plot2DGraphM <- function (
 #' library(pixelatorR)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #'
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[5])
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 3)
 #'
-#' Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50")
+#' Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50", layout_method = "pmds_3d")
 #'
 #' @export
-Plot3DGraph <- function (
+Plot3DGraph <- function(
   object,
   cell_id,
   marker = NULL,
@@ -538,55 +522,41 @@ Plot3DGraph <- function (
   layout_method = "pmds",
   project = FALSE,
   aspectmode = c("data", "cube"),
-  colors =  c("lightgrey", "mistyrose", "red", "darkred"),
+  colors = c("lightgrey", "mistyrose", "red", "darkred"),
   showgrid = TRUE,
   log_scale = TRUE,
   node_size = 2,
   show_Bnodes = FALSE,
   ...
 ) {
-
   # Validate input parameters
-  stopifnot(
-    "'object' must be a Seurat object" =
-      inherits(object, what = "Seurat"),
-    "'colors' must be a character vector with at least 2 color names" =
-      is.character(colors) &&
-      (length(colors) >= 2),
-    "'cell_id' must be a non-empty character vector with a single cell ID" =
-      is.character(cell_id) &&
-      (length(cell_id) == 1),
-    "'cell_id' must be present in the object" =
-      cell_id %in% colnames(object)
-  )
-
-  if (!is.null(marker)) {
-    stopifnot(
-      "'marker' must be a character of length 1" =
-        is.character(marker) &&
-        (length(marker) == 1)
+  assert_class(object, "Seurat")
+  assert_vector(colors, type = "character")
+  assert_single_value(cell_id, type = "string")
+  if (!(cell_id %in% colnames(object))) {
+    cli::cli_abort(
+      c(
+        "i" = "Please provide a valid {.var cell_id}",
+        "x" = "Cell ID {.var {cell_id}} not found in the {.cls Seurat} object"
+      )
     )
   }
+
+  assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select an aspectmode
   aspectmode <- match.arg(aspectmode, choices = c("data", "cube"))
 
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-        (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     assay <- DefaultAssay(object)
   }
 
   # Validate assay
   cg_assay <- object[[assay]]
-  if (!is(cg_assay, "MPXAssay")) {
-    abort(glue("Invalid assay type '{class(cg_assay)}'. Expected a 'CellGraphAssay' or a 'CellGraphAssay5' object"))
-  }
+  assert_mpx_assay(cg_assay)
 
   # Fetch component graph
   component_graph <- CellGraphs(cg_assay)[[cell_id]]
@@ -598,28 +568,40 @@ Plot3DGraph <- function (
   # Validate marker
   if (!is.null(marker)) {
     if (marker == "node_type") {
-      stopifnot(
-        "marker = 'node_type' can only be used for bipartite graphs" =
-          attr(graph, "type") == "bipartite"
-      )
+      if (!attr(graph, "type") == "bipartite") {
+        cli::cli_abort(
+          c("x" = "{.var marker = 'node_type'} can only be used for bipartite graphs")
+        )
+      }
     } else {
       if (!marker %in% colnames(component_graph@counts)) {
-        abort(glue("'{marker}' is missing from node count matrix ",
-                   "for component {cell_id}"))
+        cli::cli_abort(
+          "marker {.val {marker}} is missing from node count matrix for component {.val {cell_id}}"
+        )
       }
     }
   }
 
 
-  if (!layout_method %in% names(component_graph@layout))
-    abort(glue("Missing layout '{layout_method}' for component '{cell_id}'"))
+  if (!layout_method %in% names(component_graph@layout)) {
+    cli::cli_abort(
+      c("x" = "Missing layout {.str {layout_method}} for component '{.val {cell_id}}'")
+    )
+  }
   layout <- component_graph@layout[[layout_method]]
 
-  if (length(graph) == 0)
-      abort(glue("Missing cellgraph for component '{cell_id}'"))
-  if (ncol(layout) != 3)
-      abort(glue("Expected 3 dimensions in '{layout_method}'",
-                 " layout, found {ncol(layout)}'"))
+  if (length(graph) == 0) {
+    cli::cli_abort(
+      c("x" = "Missing cellgraph for component '{.val {cell_id}}'")
+    )
+  }
+  if (ncol(layout) != 3) {
+    cli::cli_abort(
+      c(
+        "x" = "Layout {.val layout_method} must have 3 columns but has {ncol(layout)} columns"
+      )
+    )
+  }
 
   # Add node marker counts if needed
   if (!is.null(marker)) {
@@ -638,35 +620,31 @@ Plot3DGraph <- function (
 
   # Remove B nodes if show_Bnodes=FALSE
   if ((attr(graph, "type") == "bipartite")) {
-    layout$node_type <- graph %>% pull(node_type)
+    layout$node_type <- graph %N>% pull(node_type)
     if (!show_Bnodes) {
       layout <- layout %>%
-        filter(node_type == "A")
+        filter(node_type %in% c("A", "UMI1"))
     }
   }
 
   # Project data to sphere if project=TRUE
   if (project) {
     # Normalize 3D coordinates to a sphere
-    layout <- layout %>%
-      mutate(norm_factor = select(., x, y, z) %>%
-             apply(MARGIN = 1, function(x) {
-               as.matrix(x) %>%
-                 norm(type = "F")
-             }),
-           x = x / norm_factor,
-           y = y / norm_factor,
-           z = z / norm_factor)
+    layout_sphere <- layout %>%
+      select(x, y, z) %>%
+      project_layout_coordinates_on_unit_sphere()
+    layout[, c("x", "y", "z")] <- layout_sphere
   }
 
   # Plot 3D graph using plotly
   fig <- plotly::plot_ly(layout,
-                         x = ~x,
-                         y = ~y,
-                         z = ~z,
-                         marker = list(size = node_size),
-                         mode = "scatter3d",
-                         ...)
+    x = ~x,
+    y = ~y,
+    z = ~z,
+    marker = list(size = node_size),
+    mode = "scatter3d",
+    ...
+  )
   if (!is.null(marker)) {
     if (marker == "node_type") {
       fig <- fig %>%
@@ -681,13 +659,19 @@ Plot3DGraph <- function (
   }
 
   fig <- fig %>%
-    plotly::layout(scene = list(aspectmode = aspectmode,
-                                xaxis = list(visible = showgrid),
-                                yaxis = list(visible = showgrid),
-                                zaxis = list(visible = showgrid)),
-                   annotations = list(x = 1,
-                                      y = 0.98,
-                                      text = ifelse(!is.null(marker), marker, ""),
-                                      showarrow = FALSE))
+    plotly::layout(
+      scene = list(
+        aspectmode = aspectmode,
+        xaxis = list(visible = showgrid),
+        yaxis = list(visible = showgrid),
+        zaxis = list(visible = showgrid)
+      ),
+      annotations = list(
+        x = 1,
+        y = 0.98,
+        text = ifelse(!is.null(marker), marker, ""),
+        showarrow = FALSE
+      )
+    )
   return(fig)
 }

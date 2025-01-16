@@ -1,22 +1,27 @@
 #' @include generics.R
+#' @include utils.R
+#' @include differential_analysis_utils.R
 NULL
 
-#' @param cl  A cluster object created by makeCluster, or an integer
-#' to indicate number of child-processes (integer values are ignored
-#' on Windows) for parallel evaluations. See Details on performance
+#' @param cl A cluster object created by \code{\link[parallel]{makeCluster}},
+#' or an integer to indicate number of child-processes (integer values are
+#' ignored on Windows) for parallel evaluations. See Details on performance
 #' in the documentation for \code{pbapply}. The default is NULL,
 #' which means that no parallelization is used.
+#' Note that warnings are not caught when using parallel processing.
 #' @rdname RunDCA
 #' @method RunDCA data.frame
 #'
 #' @export
 #'
-RunDCA.data.frame <- function (
+RunDCA.data.frame <- function(
   object,
-  target,
-  reference,
   contrast_column,
+  reference,
+  targets = NULL,
   group_vars = NULL,
+  coloc_metric = "pearson_z",
+  min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -24,58 +29,28 @@ RunDCA.data.frame <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
-  stopifnot(
-    "'contrast_column' must be a valid column name" =
-      inherits(contrast_column, what = "character") &&
-      (length(contrast_column) == 1) &&
-      (contrast_column %in% colnames(object))
+  .validate_da_input(
+    object, contrast_column, reference, targets, group_vars,
+    coloc_metric, min_n_obs, conf_int, cl,
+    data_type = "colocalization"
   )
-  group_vector <- object[, contrast_column, drop = TRUE]
-  stopifnot(
-    "'contrast_column' must be a character vector or a factor" =
-      inherits(group_vector, what = c("character", "factor"))
-  )
-  stopifnot(
-    "'target' must be present in 'contrast_column' column" =
-      inherits(target, what = "character") &&
-      (length(target) == 1) &&
-      (target %in% group_vector),
-    "'reference' must be present in 'contrast_column' column" =
-      inherits(reference, what = "character") &&
-      (length(reference) == 1) &&
-      (reference %in% group_vector)
-  )
-  stopifnot(
-    "'morans_z' and 'component' must be present in colocalization score table" =
-      all(c("marker_1", "marker_2", "pearson_z", "component") %in% colnames(object)),
-    "'conf_int' must be TRUE or FALSE" =
-      inherits(conf_int, what = "logical") &&
-      (length(conf_int) == 1)
-  )
-  if (!is.null(group_vars)) {
-    stopifnot(
-      "'group_vars' must be valid column names" =
-        inherits(group_vars, what = "character") &&
-        (length(group_vars) >= 1) &&
-        all(group_vars %in% colnames(object))
-    )
-    for (group_var in group_vars) {
-      stopifnot(
-        "'group_vars' must be character vectors or factors" =
-          inherits(object[, group_var, drop = TRUE], what = c("character", "factor"))
-        )
-    }
-  }
+
+  # Define targets as all groups except the reference if not specified
+  targets <- targets %||% setdiff(unique(object[, contrast_column, drop = TRUE]), reference)
+
+  # Check multiple choice args
   alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
   p_adjust_method <- match.arg(p_adjust_method,
-                               choices = c("bonferroni", "holm", "hochberg",
-                                           "hommel", "BH", "BY", "fdr"))
+    choices = c(
+      "bonferroni", "holm", "hochberg",
+      "hommel", "BH", "BY", "fdr"
+    )
+  )
 
   # Keep relevant columns and filter self matches
   object <- object %>%
-    select(any_of(c("marker_1", "marker_2", "pearson_z", "component", contrast_column, group_vars))) %>%
+    select(any_of(c("marker_1", "marker_2", coloc_metric, "component", contrast_column, group_vars))) %>%
     filter(marker_1 != marker_2)
 
   # Group data and get contrasts
@@ -85,17 +60,36 @@ RunDCA.data.frame <- function (
   test_groups <- object %>%
     {
       if (!is.null(group_vars)) {
-        group_by_at(., all_of(c("marker_1", "marker_2", group_vars)))
+        group_by(., pick(all_of(c("marker_1", "marker_2", group_vars))))
       } else {
-        group_by_at(., c("marker_1", "marker_2"))
+        group_by(., pick(all_of(c("marker_1", "marker_2"))))
       }
     }
+
+  if (min_n_obs > 0) {
+    # Filter test groups by minimum number of observations allowed
+    test_groups <- test_groups %>%
+      group_by(!!sym(contrast_column), .add = TRUE) %>%
+      mutate(n = n()) %>%
+      filter(n > min_n_obs) %>%
+      ungroup(!!sym(contrast_column)) %>%
+      mutate(
+        ref_n = sum(!!sym(contrast_column) == reference),
+        target_n = sum(!!sym(contrast_column) %in% targets)
+      ) %>%
+      filter(ref_n > 0, target_n > 0)
+    if (nrow(test_groups) == 0) {
+      cli::cli_abort(
+        c("x" = "Found no groups with at least {.val {min_n_obs}} observations.")
+      )
+    }
+  }
 
   # Get group keys
   test_groups_keys <- test_groups %>% group_keys()
 
   if (verbose && check_global_verbosity()) {
-    cli_alert_info("Running {nrow(test_groups_keys)} tests")
+    .print_da_group_strategy(test_groups_keys, targets, reference)
   }
 
   # Split table by group keys
@@ -104,91 +98,138 @@ RunDCA.data.frame <- function (
   # Chunk the data to enable parallel processing
   # Decide how to split the data depending on the cl
   if (inherits(cl, "cluster")) {
-    chunk_size <- length(cl)
     # Load dplyr in each cluster
     clusterEvalQ(cl, {
       library(dplyr)
+      library(rlang)
+      library(glue)
+      library(cli)
     })
     # Export variables to each cluster
-    clusterExport(cl, c("test_groups", "test_groups_keys", "contrast_column",
-                        "target", "reference", "alternative", "conf_int",
-                        ".tidy", "group_vars"),
-                  envir = current_env())
-    chunks <- split(seq_along(test_groups), cut(seq_along(test_groups), length(cl)))
+    clusterExport(cl, c(
+      "contrast_column", "targets", "reference",
+      "coloc_metric", "evaluate_with_catch",
+      "alternative", "conf_int", ".tidy", "group_vars"
+    ),
+    envir = current_env()
+    )
+    # Parallel processing on cluster
+    if ((length(test_groups) * length(cl)) > (length(cl) * 100)) {
+      # Cut into even chunks of 100 values in each chunk
+      chunks <- ceiling(seq_along(test_groups) / 100)
+    } else {
+      chunks <- cut(seq_along(test_groups), length(cl))
+    }
   } else if (is.numeric(cl)) {
-    chunks <- split(seq_along(test_groups), cut(seq_along(test_groups), cl))
+    # Use sequential processing when cl is 1
+    if (cl == 1) {
+      chunks <- seq_along(test_groups)
+    } else {
+      # Parallel processing when cl is the number of child processes
+      if ((length(test_groups) * cl) > (cl * 100)) {
+        # Cut into even chunks of 100 values in each chunk
+        chunks <- ceiling(seq_along(test_groups) / 100)
+      } else {
+        chunks <- cut(seq_along(test_groups), cl)
+      }
+    }
   } else {
-    chunks <- as.list(seq_along(test_groups))
+    # Sequential processing when cl is NULL
+    chunks <- seq_along(test_groups)
   }
 
+  # Split test_groups into chunks
+  test_groups_chunked <- split(test_groups, chunks)
+
   # Process chunks
-  coloc_test <- pblapply(chunks, function(chunk) {
-
-    test_groups_chunk <- test_groups[chunk]
-    test_groups_keys_chunk <- test_groups_keys[chunk, ]
-
+  coloc_test <- pblapply(test_groups_chunked, function(test_groups_chunk) {
     coloc_test_chunk <- lapply(test_groups_chunk, function(colocalization_contrast) {
+      # Fetch marker for current comparison
+      marker_1 <- colocalization_contrast$marker_1 %>% unique()
+      marker_2 <- colocalization_contrast$marker_2 %>% unique()
 
       # Get numeric data values
-      x <- colocalization_contrast %>% filter(.data[[contrast_column]] == target) %>% pull(pearson_z)
-      y <- colocalization_contrast %>% filter(.data[[contrast_column]] == reference) %>% pull(pearson_z)
+      x_list <- lapply(targets, function(target) {
+        colocalization_contrast %>%
+          filter(.data[[contrast_column]] == target) %>%
+          pull(all_of(coloc_metric))
+      }) %>%
+        set_names(nm = targets)
+      y <- colocalization_contrast %>%
+        filter(.data[[contrast_column]] == reference) %>%
+        pull(all_of(coloc_metric))
 
-      # Run wilcox.test
-      result <- try({
-        wilcox.test(
-          x = x,
-          y = y,
-          paired = FALSE,
-          alternative = alternative,
-          conf.int = conf_int
-        )
-      }, silent = TRUE)
+      # Run wilcox.test for all targets vs reference
+      results <- lapply(names(x_list), function(target) {
+        x <- x_list[[target]]
+        # Run wilcox.test
+        result <- evaluate_with_catch({
+          wilcox_res <- wilcox.test(
+            x = x,
+            y = y,
+            paired = FALSE,
+            alternative = alternative,
+            conf.int = conf_int
+          )
+        })
 
-      if (inherits(result, "try-error")) {
-        return(NULL)
-      }
+        if (!is.null(result$error)) {
+          if (is.null(cl)) {
+            warn(glue("Failed to compute Wilcoxon test for marker '{marker_1}/{marker_2}': {target} vs {reference}\n",
+              "  Got the following error message when running wilcox.test:\n",
+              "  {col_red(result$error)}\n",
+              "  This test will be skipped.",
+              .trim = FALSE
+            ))
+          }
+          return(NULL)
+        }
+        if (!is.null(result$warning) && is.null(cl)) {
+          warn(glue("Got the following message when running ",
+            "wilcox.test test for marker '{marker_1}/{marker_2}': {target} vs {reference}\n",
+            "  {col_red(result$warning)}\n",
+            .trim = FALSE
+          ))
+        }
+        result <- result$result
 
-      # Tidy up results
-      result <- result %>% .tidy() %>%
-        mutate(n1 = length(x), n2 = length(y), method = "Wilcoxon", alternative = alternative, data_type = "pearson_z",
-               target = target, reference = reference, p = signif(p.value, 3)) %>%
-        select(c("estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
-                 "p", "conf.low", "conf.high", "method", "alternative"))
-      return(result)
+        # Tidy up results
+        result <- result %>%
+          .tidy() %>%
+          mutate(
+            n1 = length(x), n2 = length(y), method = "Wilcoxon",
+            alternative = alternative, data_type = "pearson_z",
+            target = target, reference = reference, p = signif(p.value, 3)
+          ) %>%
+          select(c(
+            "estimate", "data_type", "target", "reference",
+            "n1", "n2", "statistic", "p", "conf.low", "conf.high",
+            "method", "alternative"
+          )) %>%
+          mutate(marker_1 = marker_1, marker_2 = marker_2)
+
+        # Add additional group columns
+        if (!is.null(group_vars)) {
+          for (group_var in group_vars) {
+            result[[group_var]] <- colocalization_contrast[, group_var, drop = TRUE] %>% unique()
+          }
+        }
+
+        return(result)
+      }) %>%
+        bind_rows()
     })
 
-    # Bind results from pol_test list
-    coloc_test_chunk_merged <- do.call(bind_rows, lapply(seq_along(coloc_test_chunk), function(i) {
-
-      if (is.null(coloc_test_chunk[[i]])) {
-        return(NULL)
-      }
-
-      # Add marker column
-      coloc_test_with_groups <- coloc_test_chunk[[i]] %>% mutate(
-        marker_1 = test_groups_keys_chunk[i, 1, drop = TRUE],
-        marker_2 = test_groups_keys_chunk[i, 2, drop = TRUE]
-      )
-
-      # Add additional group columns
-      if (!is.null(group_vars)) {
-        for (group_var in group_vars) {
-          coloc_test_with_groups[[group_var]] = test_groups_keys_chunk[i, group_var, drop = TRUE]
-        }
-      }
-      return(coloc_test_with_groups)
-    }))
-
-    return(coloc_test_chunk_merged)
-
+    return(coloc_test_chunk %>% bind_rows())
   }, cl = cl)
 
   # Bind results from coloc_test list
-  coloc_test_bind <- do.call(bind_rows, coloc_test)
+  coloc_test_bind <- bind_rows(coloc_test)
 
   # Adjust p-values
   coloc_test_bind <- coloc_test_bind %>%
-    mutate(p_adj = p.adjust(p, p_adjust_method))
+    mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
+    relocate(p_adj, .after = "p")
 
   return(coloc_test_bind)
 }
@@ -204,8 +245,9 @@ RunDCA.data.frame <- function (
 #' library(dplyr)
 #'
 #' pxl_file <- system.file("extdata/five_cells",
-#'                         "five_cells.pxl",
-#'                         package = "pixelatorR")
+#'   "five_cells.pxl",
+#'   package = "pixelatorR"
+#' )
 #' # Seurat objects
 #' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
 #' seur1$sample <- "Sample1"
@@ -214,23 +256,30 @@ RunDCA.data.frame <- function (
 #'
 #' # Subset data to run test on a few markers
 #' seur_merged <- subset(seur_merged,
-#'                       features = c("CD3", "CD4", "CD8", "CD19",
-#'                                    "CD20", "CD45RA", "CD45RO"))
+#'   features = c(
+#'     "CD3", "CD4", "CD8", "CD19",
+#'     "CD20", "CD45RA", "CD45RO"
+#'   )
+#' )
 #'
 #' # Run DCA
-#' dca_markers <- RunDCA(seur_merged, contrast_column = "sample",
-#'                       target = "Sample1", reference = "Sample2")
+#' dca_markers <- RunDCA(seur_merged,
+#'   contrast_column = "sample",
+#'   target = "Sample1", reference = "Sample2"
+#' )
 #' dca_markers
 #'
 #' @export
 #'
-RunDCA.Seurat <- function (
+RunDCA.Seurat <- function(
   object,
-  target,
-  reference,
   contrast_column,
+  reference,
+  targets = NULL,
   assay = NULL,
   group_vars = NULL,
+  coloc_metric = "pearson_z",
+  min_n_obs = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -238,95 +287,36 @@ RunDCA.Seurat <- function (
   verbose = TRUE,
   ...
 ) {
-
   # Validate input parameters
-  stopifnot(
-    "'contrast_column' must be a valid meta data column name" =
-      inherits(contrast_column, what = "character") &&
-      (length(contrast_column) == 1) &&
-      (contrast_column %in% colnames(object[[]]))
-  )
-  group_vector <- object[[]][, contrast_column, drop = TRUE]
-  stopifnot(
-    "'contrast_column' must be a character vector or a factor" =
-      inherits(group_vector, what = c("character", "factor"))
-  )
-  stopifnot(
-    "'target' must be present in 'contrast_column' column" =
-      inherits(target, what = "character") &&
-      (length(target) == 1) &&
-      (target %in% group_vector),
-    "'reference' must be present in 'group_var' column" =
-      inherits(reference, what = "character") &&
-      (length(reference) == 1) &&
-      (reference %in% group_vector)
-  )
-  if (!is.null(group_vars)) {
-    stopifnot(
-      "'group_vars' must be valid meta data column names" =
-        inherits(group_vars, what = "character") &&
-        (length(group_vars) >= 1) &&
-        all(group_vars %in% colnames(object[[]]))
-    )
-    for (group_var in group_vars) {
-      stopifnot(
-        "'group_vars' must be character vectors or factors" =
-          inherits(object[[]][, group_var, drop = TRUE], what = c("character", "factor"))
-      )
-    }
-  }
-  alternative <- match.arg(alternative, choices = c("two.sided", "less", "greater"))
-  p_adjust_method <- match.arg(p_adjust_method,
-                               choices = c("bonferroni", "holm", "hochberg",
-                                           "hommel", "BH", "BY", "fdr"))
+  assert_col_in_data(contrast_column, object[[]])
 
   # Use default assay if assay = NULL
-  if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-        (length(assay) == 1)
-    )
-  } else {
-    assay <- DefaultAssay(object)
-  }
+  assay <- .validate_or_set_assay(object, assay)
 
   # Fetch colocalization scores
   colocalization_data <- object[[assay]]@colocalization
 
   # Add group data
-  group_data <- object[[]] %>%
-    {
-      if (!is.null(group_vars)) {
-        select(., all_of(c(contrast_column, group_vars)))
-      } else {
-        select(., all_of(contrast_column))
-      }
-    } %>%
-    as_tibble(rownames = "component")
+  group_data <- .select_group_data(object[[]], contrast_column, group_vars)
 
   # Add group data to colocalization table
   colocalization_data <- colocalization_data %>%
     left_join(y = group_data, by = "component")
 
-  # Remove redundant columns
-  colocalization_data <- colocalization_data %>%
-    select(-any_of(c("pearson", "pearson_mean", "pearson_stdev",
-                     "pearson_p_value", "pearson_p_value_adjusted",
-                     "jaccard", "jaccard_mean", "jaccard_stdev",
-                     "jaccard_z", "jaccard_p_value", "jaccard_p_value_adjusted")))
-
   # Run DCA
   coloc_test_bind <- RunDCA(colocalization_data,
-                            target = target,
-                            reference = reference,
-                            contrast_column = contrast_column,
-                            group_vars = group_vars,
-                            alternative = alternative,
-                            conf_int = conf_int,
-                            p_adjust_method = p_adjust_method,
-                            cl = cl,
-                            verbose = verbose)
+    targets = targets,
+    reference = reference,
+    contrast_column = contrast_column,
+    group_vars = group_vars,
+    coloc_metric = coloc_metric,
+    min_n_obs = min_n_obs,
+    alternative = alternative,
+    conf_int = conf_int,
+    p_adjust_method = p_adjust_method,
+    cl = cl,
+    verbose = verbose
+  )
 
   return(coloc_test_bind)
 }

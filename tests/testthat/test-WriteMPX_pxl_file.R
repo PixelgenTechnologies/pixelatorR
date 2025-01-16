@@ -1,25 +1,28 @@
 for (assay_version in c("v3", "v5")) {
-
   options(Seurat.object.assay.version = assay_version)
 
   pxl_file <- system.file("extdata/five_cells",
-                          "five_cells.pxl",
-                          package = "pixelatorR")
+    "five_cells.pxl",
+    package = "pixelatorR"
+  )
   seur_obj <- ReadMPX_Seurat(pxl_file) %>% LoadCellGraphs()
 
   seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("A", "B")) %>% LoadCellGraphs()
 
   test_that("WriteMPX_pxl_file works as expected", {
-
     ## Single sample
     temp_pxl_file <- fs::file_temp(ext = ".pxl")
-    expect_no_error({WriteMPX_pxl_file(seur_obj, temp_pxl_file)})
+    expect_no_error({
+      WriteMPX_pxl_file(seur_obj, temp_pxl_file)
+    })
     expect_true(fs::file_exists(temp_pxl_file))
 
     # Check content for single sample pxl file
     pxl_files <- unzip(temp_pxl_file, list = TRUE)$Name
-    expect_true(all(c("adata.h5ad", "colocalization.parquet", "edgelist.parquet",
-                     "metadata.json", "polarization.parquet") %in% pxl_files))
+    expect_true(all(c(
+      "adata.h5ad", "colocalization.parquet", "edgelist.parquet",
+      "metadata.json", "polarization.parquet"
+    ) %in% pxl_files))
 
     # Try reloading data
     seur_obj_reloaded <- ReadMPX_Seurat(temp_pxl_file) %>% LoadCellGraphs()
@@ -42,13 +45,17 @@ for (assay_version in c("v3", "v5")) {
 
     ## Merged sample
     temp_pxl_file <- fs::file_temp(ext = ".pxl")
-    expect_no_error({WriteMPX_pxl_file(seur_obj_merged, temp_pxl_file)})
+    expect_no_error({
+      WriteMPX_pxl_file(seur_obj_merged, temp_pxl_file)
+    })
     expect_true(fs::file_exists(temp_pxl_file))
 
     # Check content for single sample pxl file
     pxl_files <- unzip(temp_pxl_file, list = TRUE)$Name
-    expect_true(all(c("adata.h5ad", "colocalization.parquet", "edgelist.parquet",
-                      "metadata.json", "polarization.parquet") %in% pxl_files))
+    expect_true(all(c(
+      "adata.h5ad", "colocalization.parquet", "edgelist.parquet",
+      "metadata.json", "polarization.parquet"
+    ) %in% pxl_files))
 
     # Try reloading data
     seur_obj_reloaded <- ReadMPX_Seurat(temp_pxl_file) %>% LoadCellGraphs()
@@ -68,18 +75,19 @@ for (assay_version in c("v3", "v5")) {
     })
     expect_identical(cg_list, cg_list_reloaded)
     expect_equal(names(cg_list), names(cg_list_reloaded))
-
   })
-
 }
 
 if (TRUE) skip("Skipping anndata tests")
 
 ## Test anndata
 pxl_file <- system.file("extdata/five_cells",
-                        "five_cells.pxl",
-                        package = "pixelatorR")
-seur_obj <- ReadMPX_Seurat(pxl_file) %>% LoadCellGraphs() %>% ComputeLayout(dim = 3)
+  "five_cells.pxl",
+  package = "pixelatorR"
+)
+seur_obj <- ReadMPX_Seurat(pxl_file) %>%
+  LoadCellGraphs() %>%
+  ComputeLayout(dim = 3)
 temp_pxl_file <- fs::file_temp(ext = ".pxl")
 WriteMPX_pxl_file(seur_obj, temp_pxl_file)
 
@@ -90,8 +98,7 @@ unzip(temp_pxl_file, files = "adata.h5ad", exdir = fs::path_temp())
 anndata <- reticulate::import("anndata")
 
 test_that("anndata file can be loaded with the anndata python library", {
-
-  adata = anndata$read_h5ad(file.path(fs::path_temp(), "adata.h5ad"))
+  adata <- anndata$read_h5ad(file.path(fs::path_temp(), "adata.h5ad"))
   expect_equal(rownames(adata$obs), colnames(seur_obj))
   X <- t(adata$X)
   rownames(X) <- rownames(adata$var)

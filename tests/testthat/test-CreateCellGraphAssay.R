@@ -17,13 +17,17 @@ bipartite_graphs <- lapply(edgelist, function(x) {
 })
 
 test_that("CreateCellGraphAssay works as expected", {
-  expect_no_error({cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)})
+  expect_no_error({
+    cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)
+  })
   expect_s4_class(cg_assay, "CellGraphAssay")
-  expect_no_error({cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)})
+  expect_no_error({
+    cg_assay <- CreateCellGraphAssay(counts = mat, cellgraphs = bipartite_graphs)
+  })
   expect_s4_class(cg_assay, "CellGraphAssay")
 })
 
 test_that("CreateCellGraphAssay fails when invalid input is provided", {
-  expect_error(CreateCellGraphAssay(counts = "Invalid input", cellgraphs = bipartite_graphs), "'counts' must be a matrix-like object")
-  expect_error(CreateCellGraphAssay(counts = mat, cellgraphs = "Invalid input"), "'cellgraphs' must be a 'list'")
+  expect_error(CreateCellGraphAssay(counts = "Invalid input", cellgraphs = bipartite_graphs))
+  expect_error(CreateCellGraphAssay(counts = mat, cellgraphs = "Invalid input"))
 })

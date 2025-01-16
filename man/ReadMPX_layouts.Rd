@@ -7,7 +7,7 @@
 ReadMPX_layouts(
   filename,
   cells = NULL,
-  graph_projection = c("bipartite", "Anode", "linegraph"),
+  graph_projection = c("bipartite", "Anode", "linegraph", "full"),
   verbose = TRUE
 )
 }

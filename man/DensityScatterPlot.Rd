@@ -66,34 +66,49 @@ can be faceted by one or two variables and a gate can be plotted.
 library(pixelatorR)
 library(Seurat)
 
+set.seed(123)
+
 # A mock-up Seurat Object
 object <-
- CreateSeuratObject(counts = matrix(c(rpois(100000, 40),
-                                      rpois(100000, 5))[sample(1:200000, 200000)],
-                                    nrow = 100, ncol = 2000,
-                                    dimnames = list(paste0("Feature", 1:100),
-                                                    paste0("Cell", 1:2000))))
+  CreateSeuratObject(counts = matrix(
+    c(
+      rpois(100000, 40),
+      rpois(100000, 5)
+    )[sample(1:200000, 200000)],
+    nrow = 100, ncol = 2000,
+    dimnames = list(
+      paste0("Feature", 1:100),
+      paste0("Cell", 1:2000)
+    )
+  ))
 
 object <-
   AddMetaData(object,
-              metadata = data.frame(sample = rep(c("A", "B"), each = 1000),
-                                    sample_type = rep(c("Unstimulated", "Stimulated"),
-                                                      each = 500, times = 2),
-                                    row.names = paste0("Cell", 1:2000)))
+    metadata = data.frame(
+      sample = rep(c("A", "B"), each = 1000),
+      sample_type = rep(c("Unstimulated", "Stimulated"),
+        each = 500, times = 2
+      ),
+      row.names = paste0("Cell", 1:2000)
+    )
+  )
 
 plot_gate <-
-  data.frame(xmin = c(70, 75),
-             xmax = c(150, 155),
-             ymin = c(50, 50),
-             ymax = c(150, 150),
-             sample = c("A", "B"))
+  data.frame(
+    xmin = c(20, 20),
+    xmax = c(70, 70),
+    ymin = c(20, 20),
+    ymax = c(60, 60),
+    sample = c("A", "B")
+  )
 
 
 DensityScatterPlot(object,
-                   marker1 = "Feature1",
-                   marker2 = "Feature2",
-                   facet_vars = "sample",
-                   plot_gate = plot_gate,
-                   layer = "counts")
+  marker1 = "Feature1",
+  marker2 = "Feature2",
+  facet_vars = "sample",
+  plot_gate = plot_gate,
+  layer = "counts"
+)
 
 }

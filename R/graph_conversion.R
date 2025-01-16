@@ -29,29 +29,19 @@ NULL
 #'
 #' @export
 #'
-edgelist_to_simple_Anode_graph.data.frame <- function (
+edgelist_to_simple_Anode_graph.data.frame <- function(
   object,
   components = NULL,
   cl = NULL,
   verbose = TRUE,
   ...
 ) {
-
   # Check input parameters
-  stopifnot(
-    "edgelist must be a non-empty object" =
-      (nrow(object) > 0),
-    "One or several of 'upia', 'upib' are missing from edgelist" =
-      all(c('upia', 'upib') %in% colnames(object))
-  )
+  assert_non_empty_object(object, "data.frame")
+  assert_x_in_y(c("upia", "upib"), colnames(object))
   if (!is.null(components) && ("component" %in% colnames(object))) {
-    stopifnot(
-      "'components' must be a character vector" =
-        is.character(components) && (length(components) > 0)
-    )
-    if (!all(components %in% (object %>% pull(component)))) {
-      abort("Some 'component' IDs are missing from object")
-    }
+    assert_vector(components, "character", n = 1)
+    assert_x_in_y(components, pull(object, component))
     # Filter components
     object <- object %>%
       filter(component %in% components)
@@ -61,7 +51,9 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
   if ("component" %in% colnames(object)) {
     edgelist_split <- object %>%
       group_by(component)
-    components <- edgelist_split %>% group_data() %>% pull(component)
+    components <- edgelist_split %>%
+      group_data() %>%
+      pull(component)
     edgelist_split <- edgelist_split %>%
       group_split()
   } else {
@@ -69,8 +61,9 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
   }
 
   # Simplify edgelist
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Simplifying edge list")
+  }
   edgelist_split <- lapply(edgelist_split, function(edgelist) {
     edgelist <-
       edgelist %>%
@@ -79,16 +72,18 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
   })
 
   # Create Anode graph
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Creating A-node projected graphs")
+  }
 
   edgelist_split <- pblapply(edgelist_split, function(edgelist) {
     anode_graph <-
       edgelist %>%
       left_join(edgelist,
-                by = c("upib"),
-                relationship = "many-to-many",
-                suffix = c("1", "2")) %>%
+        by = c("upib"),
+        relationship = "many-to-many",
+        suffix = c("1", "2")
+      ) %>%
       select(upia1, upia2) %>%
       distinct() %>%
       filter(upia1 < upia2)
@@ -103,8 +98,9 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
   }) %>%
     set_names(nm = components)
 
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_success("Returning an A-node projected graphs")
+  }
   return(anode_graphs)
 }
 
@@ -121,37 +117,32 @@ edgelist_to_simple_Anode_graph.data.frame <- function (
 #'
 #' @export
 #'
-edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
+edgelist_to_simple_Anode_graph.FileSystemDataset <- function(
   object,
   components = NULL,
   verbose = TRUE,
   ...
 ) {
-
   expect_duckdb()
 
   # Check input parameters
-  stopifnot(
-    "edgelist must be a non-empty object" =
-      (nrow(object) > 0),
-    "One or several of 'upia', 'upib' are missing from edgelist" =
-      all(c('upia', 'upib') %in% names(object))
-  )
-  if (!is.null(components) && ("component" %in% names(object))) {
-    stopifnot(
-      "'components' must be a character vector" =
-        is.character(components) && (length(components) > 0)
+  assert_non_empty_object(object, "FileSystemDataset")
+  assert_x_in_y(c("upia", "upib"), names(object))
+
+  if (!"component" %in% names(object)) {
+    cli::cli_abort(
+      c("x" = "Column {.str component} is missing from {.var object} (edgelist)")
     )
-    if (!all(components %in% (object %>% pull(component, as_vector = TRUE)))) {
-      abort("Some 'component' IDs are missing from object")
-    }
+  }
+
+  object <- object %>% to_duckdb()
+
+  if (!is.null(components)) {
+    assert_vector(components, "character", n = 1)
+    assert_x_in_y(components, pull(object, component))
     # Filter components
     object <- object %>%
       filter(component %in% components)
-  }
-
-  if (!"component" %in% names(object)) {
-    abort("Function only implemented for edgelists with a component column")
   }
 
   object <- object %>%
@@ -159,34 +150,41 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
     group_by(component)
 
   # Simplify edgelist
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Simplifying edge list")
+  }
   object <- object %>%
     distinct()
 
   # Add suffix
   object <- object %>%
-    to_duckdb() %>%
     mutate(rn = paste0("_", row_number())) %>%
     mutate(upia = str_c(upia, rn)) %>%
     select(-rn)
 
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_info("Creating A-node projected graphs")
+  }
   anode_graph <- object %>%
-    left_join(y = object,
-              by = c("upib", "component"),
-              suffix = c("1", "2")) %>%
+    left_join(
+      y = object,
+      by = c("upib", "component"),
+      suffix = c("1", "2")
+    ) %>%
     select(upia1, upia2, component) %>%
     group_by(component) %>%
-    mutate(upia1 = str_sub(upia1, start = 1, end = 25),
-           upia2 = str_sub(upia2, start = 1, end = 25)) %>%
+    mutate(
+      upia1 = str_sub(upia1, start = 1, end = 25),
+      upia2 = str_sub(upia2, start = 1, end = 25)
+    ) %>%
     distinct() %>%
     filter(upia1 < upia2) %>%
     collect()
 
   # Split into multiple graphs
-  components <- anode_graph %>% group_data() %>% pull(component)
+  components <- anode_graph %>%
+    group_data() %>%
+    pull(component)
   anode_graphs <- anode_graph %>%
     group_split()
 
@@ -198,8 +196,9 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
   }) %>%
     set_names(nm = components)
 
-  if (verbose && check_global_verbosity())
+  if (verbose && check_global_verbosity()) {
     cli_alert_success("Returning an A-node projected graphs")
+  }
   return(anode_graphs)
 }
 
@@ -212,15 +211,19 @@ edgelist_to_simple_Anode_graph.FileSystemDataset <- function (
 #'
 #' @export
 #'
-edgelist_to_simple_bipart_graph <- function (
+edgelist_to_simple_bipart_graph <- function(
   edgelist
 ) {
-
   # Check component column
   if ("component" %in% names(edgelist)) {
     no_components <- length(unique(edgelist %>% pull(component)))
     if (no_components > 1) {
-      abort(glue("Found {no_components} components in edgelist."))
+      cli::cli_abort(
+        c(
+          "i" = "{.var edgelist} can only have one component",
+          "x" = "Found {.val {no_components}} components in {.var edgelist}"
+        )
+      )
     }
   }
 

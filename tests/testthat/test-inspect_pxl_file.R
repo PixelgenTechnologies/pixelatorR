@@ -4,8 +4,9 @@ pxl_file <- system.file("extdata/five_cells",
 )
 
 test_that("inspect_pxl_file works as expected", {
-
-  expect_no_error({pxl_file_info <- inspect_pxl_file(pxl_file)})
+  expect_no_error({
+    pxl_file_info <- inspect_pxl_file(pxl_file)
+  })
 
   expect_identical(
     pxl_file_info,
@@ -27,12 +28,16 @@ test_that("inspect_pxl_file works as expected", {
           "colocalization.parquet"
         )
       ),
-      class = c("tbl_df",
-                "tbl", "data.frame"), row.names = c(NA, -5L)))
+      class = c(
+        "tbl_df",
+        "tbl", "data.frame"
+      ), row.names = c(NA, -5L)
+    )
+  )
 })
 
 test_that("inspect_pxl_file fails with invalid input", {
-
-  expect_error({pxl_file_info <- inspect_pxl_file("Invalid")}, "File 'Invalid' does not exist.")
-
+  expect_error({
+    pxl_file_info <- inspect_pxl_file("Invalid")
+  })
 })

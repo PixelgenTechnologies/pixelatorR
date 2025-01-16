@@ -1,11 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c('upia', 'upib', 'marker', 'n'),
-  package = 'pixelatorR',
-  add = TRUE
-)
-
-
 #' Calculate antibody counts per A-node
 #'
 #' Computes and returns a data frame of antibody counts per node (vertex) of
@@ -23,22 +15,14 @@ globalVariables(
 #'
 #' @export
 #'
-node_markers_counts <- function (
+node_markers_counts <- function(
   component_edge_list,
   k = 0
 ) {
-
   # Check input parameters
-  stopifnot(
-    "component_edge_list should be a non-empty tbl_df" =
-      inherits(component_edge_list, what = "tbl_df") &&
-      (nrow(component_edge_list) > 0),
-    "k should be an integer vector of length 1" =
-      inherits(k, what = c("numeric", "integer")) &&
-      (length(k) == 1),
-    "One or several of 'upia', 'upib', 'marker' are missing from component_edge_list" =
-      all(c('upia', 'upib', 'marker') %in% colnames(component_edge_list))
-  )
+  assert_non_empty_object(component_edge_list, "tbl_df")
+  assert_single_value(k, "integer")
+  assert_x_in_y(c("upia", "upib", "marker"), colnames(component_edge_list))
 
   component_counts <-
     component_edge_list %>%

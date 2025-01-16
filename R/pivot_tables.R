@@ -21,26 +21,25 @@ NULL
 #'
 #' @export
 #'
-PolarizationScoresToAssay.data.frame <- function (
+PolarizationScoresToAssay.data.frame <- function(
   object,
   values_from = c("morans_z", "morans_i"),
   ...
 ) {
-
   # Validate input
   values_from <- match.arg(values_from, choices = c("morans_z", "morans_i"))
-  stopifnot(
-    "'component' must be present in input table" = "component" %in% colnames(object),
-    "'marker' must be present in input table" = "marker" %in% colnames(object),
-    "'values_from' must be present in input table" = values_from %in% colnames(object)
-  )
+  assert_col_in_data("component", object)
+  assert_col_in_data("marker", object)
+  assert_col_in_data(values_from, object)
 
   # Cast data.frame to wide format
   pol_scores_wide_format <- object %>%
-    pivot_wider(id_cols = "marker",
-                names_from = "component",
-                values_from = all_of(values_from),
-                values_fill = 0) %>%
+    pivot_wider(
+      id_cols = "marker",
+      names_from = "component",
+      values_from = all_of(values_from),
+      values_fill = 0
+    ) %>%
     data.frame(row.names = 1, check.names = FALSE) %>%
     as.matrix()
 
@@ -67,15 +66,15 @@ PolarizationScoresToAssay.data.frame <- function (
 #'
 #' @export
 #'
-PolarizationScoresToAssay.MPXAssay <- function (
+PolarizationScoresToAssay.MPXAssay <- function(
   object,
   values_from = c("morans_z", "morans_i"),
   ...
 ) {
-
   pol_matrix <- .create_spatial_metric_matrix(object,
-                                              values_from = values_from,
-                                              metric = "polarization")
+    values_from = values_from,
+    metric = "polarization"
+  )
   pol_matrix <- as(pol_matrix, "dgCMatrix")
 
   # Create Assay from filled matrix
@@ -122,21 +121,16 @@ PolarizationScoresToAssay.CellGraphAssay5 <- PolarizationScoresToAssay.MPXAssay
 #'
 #' @export
 #'
-PolarizationScoresToAssay.Seurat <- function (
+PolarizationScoresToAssay.Seurat <- function(
   object,
   assay = NULL,
   new_assay = NULL,
   values_from = c("morans_z", "morans_i"),
   ...
 ) {
-
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-        (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     assay <- DefaultAssay(object)
@@ -144,11 +138,7 @@ PolarizationScoresToAssay.Seurat <- function (
 
   # Use "polarization" if new_assay = NULL
   if (!is.null(new_assay)) {
-    stopifnot(
-      "'new_assay' must be a character of length 1" =
-        is.character(new_assay) &&
-        (length(new_assay) == 1)
-    )
+    assert_single_value(new_assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     new_assay <- "polarization"
@@ -191,34 +181,30 @@ PolarizationScoresToAssay.Seurat <- function (
 #'
 #' @export
 #'
-ColocalizationScoresToAssay.data.frame <- function (
+ColocalizationScoresToAssay.data.frame <- function(
   object,
   values_from = c("pearson_z", "pearson"),
   ...
 ) {
-
   # Validate input
   values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson"))
-  stopifnot(
-    "'component' must be present in input table" =
-      "component" %in% colnames(object),
-    "'marker_1' must be present in input table" =
-      "marker_1" %in% colnames(object),
-    "'marker_2' must be present in input table" =
-      "marker_2" %in% colnames(object),
-    "'values_from' must be present in input table" =
-      values_from %in% colnames(object)
+    choices = c("pearson_z", "pearson")
   )
+  assert_col_in_data("component", object)
+  assert_col_in_data("marker_1", object)
+  assert_col_in_data("marker_2", object)
+  assert_col_in_data(values_from, object)
 
   # Cast data.frame to wide format
   col_scores_wide_format <- object %>%
-    pivot_wider(id_cols = c("marker_1", "marker_2"),
-                names_from = "component",
-                values_from = all_of(values_from),
-                values_fill = 0) %>%
+    pivot_wider(
+      id_cols = c("marker_1", "marker_2"),
+      names_from = "component",
+      values_from = all_of(values_from),
+      values_fill = 0
+    ) %>%
     dplyr::filter(marker_1 != marker_2) %>%
-    unite(marker_1, marker_2, col = "pair", sep = "-") %>%
+    unite(marker_1, marker_2, col = "pair", sep = "/") %>%
     data.frame(row.names = 1, check.names = FALSE) %>%
     as.matrix()
 
@@ -245,15 +231,15 @@ ColocalizationScoresToAssay.data.frame <- function (
 #'
 #' @export
 #'
-ColocalizationScoresToAssay.MPXAssay <- function (
+ColocalizationScoresToAssay.MPXAssay <- function(
   object,
   values_from = c("pearson_z", "pearson"),
   ...
 ) {
-
   coloc_matrix <- .create_spatial_metric_matrix(object,
-                                                values_from = values_from,
-                                                metric = "colocalization")
+    values_from = values_from,
+    metric = "colocalization"
+  )
   coloc_matrix <- as(coloc_matrix, "dgCMatrix")
 
   # Create Assay from filled matrix
@@ -301,21 +287,16 @@ ColocalizationScoresToAssay.CellGraphAssay5 <- ColocalizationScoresToAssay.MPXAs
 #'
 #' @export
 #'
-ColocalizationScoresToAssay.Seurat <- function (
+ColocalizationScoresToAssay.Seurat <- function(
   object,
   assay = NULL,
   new_assay = NULL,
   values_from = c("pearson_z", "pearson"),
   ...
 ) {
-
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    stopifnot(
-      "'assay' must be a character of length 1" =
-        is.character(assay) &&
-        (length(assay) == 1)
-    )
+    assert_single_value(assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     assay <- DefaultAssay(object)
@@ -323,11 +304,7 @@ ColocalizationScoresToAssay.Seurat <- function (
 
   # Use "polarization" if new_assay = NULL
   if (!is.null(new_assay)) {
-    stopifnot(
-      "'new_assay' must be a character of length 1" =
-        is.character(new_assay) &&
-        (length(new_assay) == 1)
-    )
+    assert_single_value(new_assay, type = "string")
   } else {
     # Use default assay if assay = NULL
     new_assay <- "colocalization"
@@ -338,7 +315,8 @@ ColocalizationScoresToAssay.Seurat <- function (
 
   # Validate input
   values_from <- match.arg(values_from,
-                           choices = c("pearson_z", "pearson"))
+    choices = c("pearson_z", "pearson")
+  )
 
   # Create new assay
   col_assay <- ColocalizationScoresToAssay(cg_assay, values_from, ...)
@@ -355,7 +333,7 @@ ColocalizationScoresToAssay.Seurat <- function (
 #'
 #' @noRd
 #'
-.create_spatial_metric_matrix <- function (
+.create_spatial_metric_matrix <- function(
   object,
   values_from,
   metric,
@@ -364,19 +342,19 @@ ColocalizationScoresToAssay.Seurat <- function (
   # fetch polarization scores
   spatial_metric_table <- slot(object, name = metric)
   if (is.null(spatial_metric_table)) {
-    abort(glue("'{metric}' scores are missing from '{class(object)}'"))
+    cli::cli_abort(
+      c("x" = "{.str {metric}} scores are missing from {.cls {class(object)}}")
+    )
   }
 
   # Validate input
-  values_from <- match.arg(values_from, choices = switch(
-    metric,
+  values_from <- match.arg(values_from, choices = switch(metric,
     "polarization" = c("morans_z", "morans_i"),
     "colocalization" = c("pearson_z", "pearson")
   ))
 
 
-  pivot_assay_func <- switch(
-    metric,
+  pivot_assay_func <- switch(metric,
     "polarization" = PolarizationScoresToAssay,
     "colocalization" = ColocalizationScoresToAssay
   )
@@ -384,10 +362,12 @@ ColocalizationScoresToAssay.Seurat <- function (
 
   # Make sure that the components match
   # Create an empty matrix (all 0's)
-  tofillMat <- matrix(data = 0,
-                      nrow = nrow(spatial_metric_wide_format),
-                      ncol = ncol(object),
-                      dimnames = list(rownames(spatial_metric_wide_format), colnames(object)))
+  tofillMat <- matrix(
+    data = 0,
+    nrow = nrow(spatial_metric_wide_format),
+    ncol = ncol(object),
+    dimnames = list(rownames(spatial_metric_wide_format), colnames(object))
+  )
 
   # Fill matrix where it overlaps
   # Any missing columns will be kept as 0's

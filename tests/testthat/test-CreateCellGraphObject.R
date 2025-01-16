@@ -20,7 +20,7 @@ test_that("CreateCellGraphObject works as expected", {
 })
 
 test_that("CreateCellGraphObject fails when invalid input is provided", {
-  expect_error(CreateCellGraphObject(cellgraph = "Invalid input"), "'cellgraph' must be a non-empty")
-  expect_error(CreateCellGraphObject(cellgraph = bipart_graph, counts = "Invalid input"), "'counts' must be a non-empty 'dgCMatrix' object")
-  expect_error(CreateCellGraphObject(cellgraph = bipart_graph, layout = "Invalid input"), "'layout' must be a non-empty 'tbl_df' object")
+  expect_error(CreateCellGraphObject(cellgraph = "Invalid input"))
+  expect_error(CreateCellGraphObject(cellgraph = bipart_graph, counts = "Invalid input"))
+  expect_error(CreateCellGraphObject(cellgraph = bipart_graph, layout = "Invalid input"))
 })
