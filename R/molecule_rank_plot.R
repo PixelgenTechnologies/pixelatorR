@@ -40,7 +40,7 @@ MoleculeRankPlot.data.frame <- function(
   molecules_column <-
     ifelse("molecules" %in% colnames(object), "molecules", "edges")
 
-  assert_col_class(molecules_column, object, "integer")
+  assert_col_class(molecules_column, object, c("numeric", "integer"))
 
   if (!is.null(group_by)) {
     assert_single_value(group_by, type = "string")
