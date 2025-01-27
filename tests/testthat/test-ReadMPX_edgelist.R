@@ -23,6 +23,7 @@ test_that("ReadMPX_arrow_edgelist works as expected", {
       )
   })
   expect_true(fs::file_exists(tmp_f))
+  expect_true(basename(tmp_f) == "test.parquet")
 })
 
 
