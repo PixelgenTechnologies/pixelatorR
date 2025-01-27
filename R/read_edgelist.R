@@ -49,8 +49,11 @@ ReadMPX_arrow_edgelist <- function(
   if (!is.null(edge_list_file)) {
     assert_single_value(edge_list_file, type = "string")
     assert_file_ext(edge_list_file, ext = "parquet")
+    edge_list_dir <- dirname(edge_list_file)
+    fname <- basename(edge_list_file)
   } else {
     edge_list_dir <- fs::path_temp()
+    fname <- "edgelist.parquet"
     if (verbose && check_global_verbosity()) {
       cli_alert_info("Extracting edgelist.parquet file to {col_br_blue(file.path(edge_list_dir, 'edgelist.parquet'))}")
     }
@@ -58,9 +61,12 @@ ReadMPX_arrow_edgelist <- function(
 
   # Extract the edgelist.parquet file
   utils::unzip(pxl_file, files = "edgelist.parquet", exdir = edge_list_dir)
+  if (!is.null(edge_list_file)) {
+    fs::file_move(fs::path(edge_list_dir, "edgelist.parquet"), fs::path(edge_list_dir, fname))
+  }
 
   # Read the parquet file
-  ds <- arrow::open_dataset(fs::path(edge_list_dir, "edgelist.parquet"))
+  ds <- arrow::open_dataset(fs::path(edge_list_dir, fname))
 
   # Convert selected columns uint64 to string
   sel_fields <- grep(pattern = "^umi", names(ds), value = TRUE)
