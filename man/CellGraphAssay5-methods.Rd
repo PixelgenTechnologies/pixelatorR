@@ -28,7 +28,7 @@
 \method{JoinLayers}{CellGraphAssay5}(object, layers = NULL, new = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{CelLGraphAssay5} object.}
+\item{object}{A \code{CellGraphAssay5} object.}
 
 \item{new.names}{A character vector with new cell IDs. The length of the vector
 must be equal to the number of cells in the object and the names must be unique.}
@@ -55,7 +55,7 @@ this is recommended if the same normalization approach was applied to all object
 \item{new}{Name of new layers}
 }
 \value{
-A \code{CelLGraphAssay5} object with layers joined
+A \code{CellGraphAssay5} object with layers joined
 }
 \description{
 Methods for \code{\link{CellGraphAssay5}} objects for generics defined in other

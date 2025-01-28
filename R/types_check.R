@@ -255,7 +255,7 @@ assert_file_ext <- function(
   )
   if (fs::path_ext(x) != ext) {
     cli::cli_abort(
-      c("x" = "File {.file {x}} is not a PXL file"),
+      c("x" = "File {.file {x}} is not a {ext} file"),
       call = call
     )
   }

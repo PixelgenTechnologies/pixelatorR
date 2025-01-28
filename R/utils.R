@@ -484,7 +484,7 @@ abort_if_not <- function(
 .validate_or_set_assay <- function(object, assay = NULL, call = caller_env()) {
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    assert_single_value(assay, type = "character", call = call)
+    assert_single_value(assay, type = "string", call = call)
   } else {
     assay <- DefaultAssay(object)
   }
