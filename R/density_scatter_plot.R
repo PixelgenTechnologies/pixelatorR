@@ -32,10 +32,12 @@
     MASS::kde2d(x, y, n = n, ...)
 
   dens <-
-    dens_grid$z[cbind(
-      findInterval(x, dens_grid$x),
-      findInterval(y, dens_grid$y)
-    )]
+    dens_grid$z[
+      cbind(
+        findInterval(x, dens_grid$x),
+        findInterval(y, dens_grid$y)
+      )
+    ]
 
   return(dens)
 }
@@ -48,22 +50,22 @@
 #'
 #'
 #' @param object A Seurat object.
-#' @param marker1 Marker to plot along the x-axis.
-#' @param marker2 Marker to plot along the y-axis.
-#' @param facet_vars Variables to facet the plot by. If NULL, no faceting is done. If a character vector with 1 element,
-#'                   the plot is faceted by rows. If a character vector with 2 elements, the plot is faceted by rows and
-#'                   columns.
-#' @param plot_gate A data.frame with columns 'xmin', 'xmax', 'ymin', 'ymax' to plot a gate. This data.frame can also
-#'                  contain the variables in 'facet_vars' to plot different gates in different facets.
-#' @param scale_density Scale the density to the maximum density per facet.
-#' @param margin_density Add marginal density plots. Only supported when 'facet_vars' is NULL.
-#' @param coord_fixed Fix the aspect ratio of the plot. Only supported when 'margin_density' is FALSE.
-#' @param pt_size Size of the points.
-#' @param alpha Transparency of the points.
-#' @param layer Name of layer to plot. If NULL, the default layer is used.
-#' @param grid_n Number of grid points to calculate the density.
-#' @param colors Colors to use for the density plot. If NULL, the 'viridis' "turbo" palette is used.
-#' @param ... Additional arguments to pass to 'MASS::kde2d'.
+#' @param marker1 Name of first marker to plot.
+#' @param marker2 Name of second marker to plot.
+#' @param facet_vars Optional character vector of length 1 or 2 specifying variables to facet by.
+#' @param plot_gate Optional list containing gate parameters. Must be a list of length 2 where the first element is a
+#'   data frame containing gate parameters and the second element is a string specifying the gate type ("rectangle" or
+#'   "quadrant").
+#' @param grid_n Number of grid points in each direction to compute density.
+#' @param scale_density Whether to scale the density within each facet.
+#' @param margin_density Whether to plot density plots in the margins.
+#' @param pt_size Point size.
+#' @param alpha Point transparency.
+#' @param layer Optional string specifying a layer to plot.
+#' @param coord_fixed Whether to use fixed coordinate ratio.
+#' @param annotation_params Optional list of parameters to pass to geom_text for gate annotations. Common parameters include
+#'   color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).
+#' @param colors Optional character vector of colors to use for the color scale.
 #'
 #' @return A ggplot object.
 #'
@@ -119,6 +121,41 @@
 #'   layer = "counts"
 #' )
 #'
+#' library(pixelatorR)
+#'
+#' # Create a Seurat object with random data
+#' counts <- matrix(rpois(200, 5), nrow = 10)
+#' rownames(counts) <- paste0("Feature", 1:10)
+#' colnames(counts) <- paste0("Cell", 1:20)
+#' object <- CreateSeuratObject(counts = counts)
+#'
+#' # Create a basic density scatter plot
+#' DensityScatterPlot(
+#'   object,
+#'   marker1 = "Feature1",
+#'   marker2 = "Feature2"
+#' )
+#'
+#' # Create a density scatter plot with a quadrant gate
+#' # Define quadrant gate parameters
+#' quad_gate <- data.frame(
+#'   x = 2,  # x-coordinate for vertical line
+#'   y = 3   # y-coordinate for horizontal line
+#' )
+#'
+#' # Plot with quadrant gate and custom annotations
+#' DensityScatterPlot(
+#'   object,
+#'   marker1 = "Feature1",
+#'   marker2 = "Feature2",
+#'   plot_gate = list(quad_gate, "quadrant"),
+#'   annotation_params = list(
+#'     color = "darkblue",
+#'     size = 4,
+#'     fontface = "bold"
+#'   )
+#' )
+#'
 #' @export
 #'
 DensityScatterPlot <- function(
@@ -127,13 +164,14 @@ DensityScatterPlot <- function(
   marker2,
   facet_vars = NULL,
   plot_gate = NULL,
+  grid_n = 100,
   scale_density = TRUE,
-  margin_density = FALSE,
-  coord_fixed = TRUE,
+  margin_density = TRUE,
   pt_size = 1,
   alpha = 1,
   layer = NULL,
-  grid_n = 500,
+  coord_fixed = TRUE,
+  annotation_params = NULL,
   colors = NULL,
   ...
 ) {
@@ -154,121 +192,168 @@ DensityScatterPlot <- function(
   assert_single_value(alpha, type = "numeric")
   assert_single_value(layer, type = "string", allow_null = TRUE)
   assert_single_value(coord_fixed, type = "bool")
-  assert_class(plot_gate, "data.frame", allow_null = TRUE)
+  if (!is.null(annotation_params)) {
+    assert_class(annotation_params, "list")
+  }
   if (!is.null(plot_gate)) {
-    assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate), allow_null = TRUE)
+    assert_class(plot_gate, "list")
+    assert_length(plot_gate, 2)
+    assert_class(plot_gate[[1]], "data.frame")
+    assert_single_value(plot_gate[[2]], type = "string")
+    gate_type <- plot_gate[[2]]
+    if (gate_type == "rectangle") {
+      assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate[[1]]))
+    } else if (gate_type == "quadrant") {
+      assert_x_in_y(c("x", "y"), colnames(plot_gate[[1]]))
+    } else {
+      cli::cli_abort("Gate type must be either 'rectangle' or 'quadrant'")
+    }
   }
   assert_class(object, "Seurat")
 
   if (!is.null(plot_gate)) {
-    check <- !names(plot_gate) %in% c("xmin", "xmax", "ymin", "ymax", facet_vars)
+    gate_type <- plot_gate[[2]]
+    allowed_cols <- if (gate_type == "rectangle") {
+      c("xmin", "xmax", "ymin", "ymax")
+    } else {
+      c("x", "y")
+    }
+
+    check <- !names(plot_gate[[1]]) %in% c(allowed_cols, facet_vars)
     if (sum(check) > 0) {
       cli::cli_abort(
         c(
-          "i" = "'plot_gate' can't contain facetting variables that are not in {.var facet_vars}",
-          "x" = "The following variables are not in {.var facet_vars}: ",
-          " " = "{.val {names(plot_gate)[check]}}"
+          "i" = "'plot_gate' can only contain gate-specific columns and faceting variables",
+          "x" = "The following columns are not allowed: ",
+          " " = "{.val {names(plot_gate[[1]])[check]}}"
         )
       )
     }
   }
 
-  if (!(is.null(facet_vars) || !isTRUE(margin_density))) {
-    cli::cli_abort(
-      c(
-        "i" = "{.var margin_density=TRUE} is not supported when {.var facet_vars} is not {.cls NULL}",
-        "x" = "You've provided {.var margin_density={margin_density}} and {.var facet_vars=NULL}"
-      )
+  if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
+    warn(
+      "Fixed coordinates ('coord_fixed' = TRUE) is not supported when 'margin_density' is TRUE"
     )
   }
 
+  # Set margin_density to FALSE if facet_vars is provided
+  if (!is.null(facet_vars)) {
+    if (isTRUE(margin_density)) {
+      warning(
+        "Marginal density ('margin_density' = TRUE) is not supported with faceting. Setting 'margin_density' to FALSE"
+      )
+      margin_density <- FALSE
+    }
+  }
+
+  # Warn if coord_fixed and margin_density are both TRUE
   if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
-    warn("Fixed coordinates ('coord_fixed' = TRUE) is not supported when 'margin_density' is TRUE")
+    coord_fixed <- FALSE
+    warning(
+      "Setting 'coord_fixed' to FALSE as it is not compatible with 'margin_density = TRUE'"
+    )
   }
 
   # Get data
   plot_data <-
-    FetchData(object,
-      vars = c(facet_vars, marker1, marker2),
-      layer = layer
-    )
+    FetchData(object, vars = c(facet_vars, marker1, marker2), layer = layer)
 
   plot_data <-
     plot_data %>%
-    rename(
-      marker1 = !!marker1,
-      marker2 = !!marker2
-    ) %>%
-    group_by_at(facet_vars) %>%
-    mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
-    ungroup()
+      rename(
+        marker1 = !!marker1,
+        marker2 = !!marker2
+      ) %>%
+      group_by_at(facet_vars) %>%
+      mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
+      ungroup()
 
   if (isTRUE(scale_density)) {
     plot_data <-
       plot_data %>%
-      group_by_at(facet_vars) %>%
-      mutate(dens = dens / max(dens)) %>%
-      ungroup()
+        group_by_at(facet_vars) %>%
+        mutate(dens = dens / max(dens)) %>%
+        ungroup()
   }
 
   # Set plot theme
   if (is.null(facet_vars)) {
     plot_theme <-
       theme_bw() +
-      theme(
-        panel.grid = element_blank(),
-        panel.spacing = unit(0, "lines"),
-        plot.margin = unit(c(0, 0, 0, 0), "lines")
-      )
+        theme(
+          panel.grid = element_blank(),
+          panel.spacing = unit(0, "lines"),
+          plot.margin = unit(c(0, 0, 0, 0), "lines")
+        )
   } else {
     plot_theme <-
       theme_bw() +
-      theme(panel.grid = element_blank())
+        theme(panel.grid = element_blank())
   }
 
   plot_range <-
     range(c(plot_data$marker1, plot_data$marker2))
 
   if (!is.null(plot_gate)) {
-    plot_range <-
-      range(c(
-        plot_data$marker1, plot_data$marker2,
-        plot_gate$xmin, plot_gate$xmax,
-        plot_gate$ymin, plot_gate$ymax
-      ))
+    gate_params <- plot_gate[[1]]
+    gate_type <- plot_gate[[2]]
+
+    if (gate_type == "rectangle") {
+      plot_range <- range(
+        c(
+          plot_data$marker1,
+          plot_data$marker2,
+          gate_params$xmin,
+          gate_params$xmax,
+          gate_params$ymin,
+          gate_params$ymax
+        )
+      )
+    } else if (gate_type == "quadrant") {
+      plot_range <- range(
+        c(
+          plot_data$marker1,
+          plot_data$marker2,
+          gate_params$x,
+          gate_params$y
+        )
+      )
+    }
   }
 
   # Make plot
   plot <-
     plot_data %>%
-    ggplot(aes(marker1, marker2, color = dens)) +
-    geom_hline(yintercept = 0, color = "gray") +
-    geom_vline(xintercept = 0, color = "gray") +
-    geom_point(
-      size = pt_size,
-      alpha = alpha,
-      show.legend = FALSE
-    ) +
-    scale_x_continuous(limits = plot_range) +
-    scale_y_continuous(limits = plot_range) +
-    plot_theme +
-    labs(
-      x = marker1,
-      y = marker2
-    )
+      ggplot(aes(marker1, marker2, color = dens)) +
+      geom_hline(yintercept = 0, color = "gray") +
+      geom_vline(xintercept = 0, color = "gray") +
+      geom_point(
+        size = pt_size,
+        alpha = alpha,
+        show.legend = FALSE
+      ) +
+      scale_x_continuous(limits = plot_range) +
+      scale_y_continuous(limits = plot_range) +
+      plot_theme +
+      labs(
+        x = marker1,
+        y = marker2
+      )
 
   if (isTRUE(coord_fixed) && isFALSE(margin_density)) {
     plot <- plot + coord_fixed()
   }
 
+  # Add colors
   if (!is.null(colors)) {
     plot <-
       plot +
-      scale_color_gradientn(colors = colors)
+        scale_color_gradientn(colors = colors)
   } else {
     plot <-
       plot +
-      scale_color_viridis_c(option = "H")
+        scale_color_viridis_c(option = "turbo")
   }
 
   # Facet
@@ -276,124 +361,212 @@ DensityScatterPlot <- function(
     if (length(facet_vars) == 1) {
       plot <-
         plot +
-        facet_grid(rows = vars(!!!syms(facet_vars)))
+          facet_grid(rows = vars(!!!syms(facet_vars)))
     }
 
     if (length(facet_vars) == 2) {
       plot <-
         plot +
-        facet_grid(
-          rows = vars(!!!syms(facet_vars[1])),
-          cols = vars(!!!syms(facet_vars[2]))
-        )
+          facet_grid(
+            rows = vars(!!!syms(facet_vars[1])),
+            cols = vars(!!!syms(facet_vars[2]))
+          )
     }
   }
 
-
   # Add gates
   if (!is.null(plot_gate)) {
-    if (!is.null(facet_vars)) {
-      join_vars <- intersect(facet_vars, colnames(plot_gate))
+    gate_params <- plot_gate[[1]]
+    gate_type <- plot_gate[[2]]
 
-      if (length(join_vars) > 0) {
-        gate_label <-
-          plot_gate %>%
-          left_join(plot_data,
-            by = join_vars
-          )
+    if (gate_type == "rectangle") {
+      if (!is.null(facet_vars)) {
+        join_vars <- intersect(facet_vars, colnames(gate_params))
+        if (length(join_vars) > 0) {
+          gate_label <- gate_params %>% left_join(plot_data, by = join_vars)
+        } else {
+          gate_label <- gate_params %>% cross_join(plot_data)
+        }
       } else {
-        gate_label <-
-          plot_gate %>%
-          cross_join(plot_data)
+        gate_label <- plot_data %>% cross_join(gate_params)
       }
+
+      gate_label <- gate_label %>%
+        mutate(
+          in_gate = marker1 > xmin &
+            marker1 < xmax &
+            marker2 > ymin &
+            marker2 < ymax
+        ) %>%
+        group_by_at(
+          c(facet_vars, "in_gate", "xmin", "xmax", "ymin", "ymax")
+        ) %>%
+        summarise(n = n(), .groups = "drop") %>%
+        group_by_at(c(facet_vars, "xmin", "xmax", "ymin", "ymax")) %>%
+        mutate(p = 100 * n / sum(n)) %>%
+        ungroup() %>%
+        filter(in_gate) %>%
+        mutate(
+          label = paste(round(p, 1), "%"),
+          x = (xmin + xmax) / 2,
+          y = ymax
+        )
+
+      plot <- plot +
+        geom_rect(
+          data = gate_params,
+          aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+          inherit.aes = FALSE,
+          fill = "transparent",
+          color = "black",
+          linetype = "dashed"
+        ) +
+        do.call(
+          geom_text,
+          c(
+            list(
+              data = gate_label,
+              mapping = aes(x = x, y = y, label = label),
+              inherit.aes = FALSE
+            ),
+            if (is.null(annotation_params))
+              list(color = "black", vjust = 1, size = 3) else annotation_params
+          )
+        )
+    } else if (gate_type == "quadrant") {
+      # For quadrant gate, gate_params must have columns 'x' and 'y'
+      assert_x_in_y(c("x", "y"), colnames(gate_params))
+
+      if (!is.null(facet_vars)) {
+        join_vars <- intersect(facet_vars, colnames(gate_params))
+        if (length(join_vars) > 0) {
+          gate_label <- gate_params %>% left_join(plot_data, by = join_vars)
+        } else {
+          gate_label <- gate_params %>% cross_join(plot_data)
+        }
+      } else {
+        gate_label <- plot_data %>% cross_join(gate_params)
+      }
+
+      gate_label <- gate_label %>%
+        mutate(
+          quadrant = case_when(
+            marker1 < x & marker2 > y ~ "top_left",
+            marker1 >= x & marker2 > y ~ "top_right",
+            marker1 < x & marker2 <= y ~ "bottom_left",
+            marker1 >= x & marker2 <= y ~ "bottom_right"
+          )
+        ) %>%
+        group_by_at(c(facet_vars, "x", "y", "quadrant")) %>%
+        summarise(n = n(), .groups = "drop") %>%
+        group_by_at(c(facet_vars, "x", "y")) %>%
+        mutate(p = 100 * n / sum(n)) %>%
+        ungroup() %>%
+        mutate(
+          label = paste(round(p, 1), "%"),
+          # Position labels in inner corners
+          x_label = case_when(
+            quadrant == "top_left" ~ x - 0.5, # Q2: inner right
+            quadrant == "bottom_left" ~ x - 0.5, # Q3: inner right
+            quadrant == "top_right" ~ x + 0.5, # Q1: inner left
+            quadrant == "bottom_right" ~ x + 0.5 # Q4: inner left
+          ),
+          y_label = case_when(
+            quadrant == "top_left" ~ y - 0.5, # Q2: inner bottom
+            quadrant == "top_right" ~ y - 0.5, # Q1: inner bottom
+            quadrant == "bottom_left" ~ y + 0.5, # Q3: inner top
+            quadrant == "bottom_right" ~ y + 0.5 # Q4: inner top
+          ),
+          # Set text alignment based on quadrant
+          hjust = case_when(
+            quadrant %in% c("top_left", "bottom_left") ~ 1, # Right-align for left quadrants
+            quadrant %in% c("top_right", "bottom_right") ~ 0 # Left-align for right quadrants
+          ),
+          vjust = case_when(
+            quadrant %in% c("top_left", "top_right") ~ 1, # Bottom-align for top quadrants
+            quadrant %in% c("bottom_left", "bottom_right") ~ 0 # Top-align for bottom quadrants
+          )
+        )
+
+      # Add cross lines at the gate center
+      plot <- plot +
+        geom_vline(
+          xintercept = unique(gate_params$x),
+          linetype = "dashed",
+          color = "black"
+        ) +
+        geom_hline(
+          yintercept = unique(gate_params$y),
+          linetype = "dashed",
+          color = "black"
+        ) +
+        do.call(
+          geom_text,
+          c(
+            list(
+              data = gate_label,
+              mapping = aes(
+                x = x_label,
+                y = y_label,
+                label = label,
+                hjust = hjust,
+                vjust = vjust
+              ),
+              inherit.aes = FALSE,
+              check_overlap = TRUE
+            ),
+            if (is.null(annotation_params)) list(color = "black", size = 4) else
+              annotation_params
+          )
+        )
     } else {
-      gate_label <-
-        plot_data %>%
-        cross_join(plot_gate)
+      cli::cli_abort("Unknown gate type provided to plot_gate")
     }
-
-    gate_label <-
-      gate_label %>%
-      mutate(in_gate = marker1 > xmin & marker1 < xmax & marker2 > ymin & marker2 < ymax) %>%
-      group_by_at(c(facet_vars, "in_gate", "xmin", "xmax", "ymin", "ymax")) %>%
-      summarise(
-        n = n(),
-        .groups = "drop"
-      ) %>%
-      group_by_at(c(facet_vars, "xmin", "xmax", "ymin", "ymax")) %>%
-      mutate(p = 100 * n / sum(n)) %>%
-      ungroup() %>%
-      filter(in_gate) %>%
-      mutate(
-        label = paste(round(p, 1), "%"),
-        x = (xmax + xmin) / 2,
-        y = ymax
-      )
-
-    plot <-
-      plot +
-      geom_rect(
-        data = plot_gate,
-        aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
-        inherit.aes = FALSE,
-        fill = "transparent",
-        color = "black",
-        linetype = "dashed"
-      ) +
-      geom_text(
-        data = gate_label,
-        aes(x = x, y = y, label = label),
-        inherit.aes = FALSE,
-        color = "black",
-        vjust = 1,
-        size = 3
-      )
   }
 
   # Add marginal density
   if (isTRUE(margin_density)) {
     density_plot_x <-
       plot_data %>%
-      ggplot(aes(marker1)) +
-      geom_density(
-        fill = "lightgray",
-        color = NA
-      ) +
-      scale_x_continuous(limits = plot_range) +
-      scale_y_continuous(expand = expansion(0)) +
-      theme_void() +
-      theme(
-        panel.spacing = unit(0, "lines"),
-        plot.margin = unit(c(0, 0, 0, 0), "lines")
-      )
+        ggplot(aes(marker1)) +
+        geom_density(
+          fill = "lightgray",
+          color = NA
+        ) +
+        scale_x_continuous(limits = plot_range) +
+        scale_y_continuous(expand = expansion(0)) +
+        theme_void() +
+        theme(
+          panel.spacing = unit(0, "lines"),
+          plot.margin = unit(c(0, 0, 0, 0), "lines")
+        )
 
     density_plot_y <-
       plot_data %>%
-      ggplot(aes(marker2)) +
-      geom_density(
-        fill = "lightgray",
-        color = NA
-      ) +
-      scale_x_continuous(limits = plot_range) +
-      scale_y_continuous(expand = expansion(0)) +
-      theme_void() +
-      theme(
-        panel.spacing = unit(0, "lines"),
-        plot.margin = unit(c(0, 0, 0, 0), "lines")
-      ) +
-      coord_flip()
+        ggplot(aes(marker2)) +
+        geom_density(
+          fill = "lightgray",
+          color = NA
+        ) +
+        scale_x_continuous(limits = plot_range) +
+        scale_y_continuous(expand = expansion(0)) +
+        theme_void() +
+        theme(
+          panel.spacing = unit(0, "lines"),
+          plot.margin = unit(c(0, 0, 0, 0), "lines")
+        ) +
+        coord_flip()
 
     plot <-
       density_plot_x +
-      plot_spacer() +
-      plot +
-      density_plot_y +
-      plot_layout(
-        widths = c(5, 1),
-        heights = c(1, 5)
-      )
+        plot_spacer() +
+        plot +
+        density_plot_y +
+        plot_layout(
+          widths = c(5, 1),
+          heights = c(1, 5)
+        )
   }
-
 
   return(plot)
 }
