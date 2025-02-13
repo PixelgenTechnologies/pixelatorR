@@ -66,16 +66,6 @@ for (assay_version in c("v3", "v5")) {
         coord_fixed = F
       )
     )
-    expect_warning(
-      DensityScatterPlot(
-        object,
-        marker1 = "Feature1",
-        marker2 = "Feature2",
-        layer = "counts",
-        margin_density = T,
-        coord_fixed = T
-      )
-    )
 
     # Facetting by two variables
     expect_no_error(
@@ -351,18 +341,6 @@ for (assay_version in c("v3", "v5")) {
         layer = "counts",
         plot_gate = plot_gate
       )
-    )
-
-    # Warning
-    expect_warning(
-      DensityScatterPlot(
-        object,
-        marker1 = "Feature1",
-        marker2 = "Feature2",
-        layer = "counts",
-        margin_density = T
-      ),
-      regexp = "Fixed coordinates .* is not supported when 'margin_density' is TRUE"
     )
   })
 }

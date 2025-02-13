@@ -231,27 +231,20 @@ DensityScatterPlot <- function(
     }
   }
 
-  if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
-    warn(
-      "Fixed coordinates ('coord_fixed' = TRUE) is not supported when 'margin_density' is TRUE"
-    )
-  }
-
   # Set margin_density to FALSE if facet_vars is provided
   if (!is.null(facet_vars)) {
     if (isTRUE(margin_density)) {
-      warning(
+      cli::cli_alert_warning(
         "Marginal density ('margin_density' = TRUE) is not supported with faceting. Setting 'margin_density' to FALSE"
       )
       margin_density <- FALSE
     }
   }
 
-  # Warn if coord_fixed and margin_density are both TRUE
   if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
     coord_fixed <- FALSE
-    warning(
-      "Setting 'coord_fixed' to FALSE as it is not compatible with 'margin_density = TRUE'"
+    cli::cli_alert_warning(
+      "Setting {.var coord_fixed} to FALSE as it is not compatible with {.var margin_density} = TRUE"
     )
   }
 
@@ -434,7 +427,6 @@ DensityScatterPlot <- function(
           )
         )
     } else if (gate_type == "quadrant") {
-      # For quadrant gate, gate_params must have columns 'x' and 'y'
       assert_x_in_y(c("x", "y"), colnames(gate_params))
 
       if (!is.null(facet_vars)) {
@@ -447,6 +439,10 @@ DensityScatterPlot <- function(
       } else {
         gate_label <- plot_data %>% cross_join(gate_params)
       }
+
+      x_plot_range <- range(plot_data$marker1)
+      y_plot_range <- range(plot_data$marker2)
+      y_offset <- diff(y_plot_range) * 0.05
 
       gate_label <- gate_label %>%
         mutate(
@@ -466,29 +462,29 @@ DensityScatterPlot <- function(
           label = paste(round(p, 1), "%"),
           # Position labels in inner corners
           x_label = case_when(
-            quadrant == "top_left" ~ x - 0.5, # Q2: inner right
-            quadrant == "bottom_left" ~ x - 0.5, # Q3: inner right
-            quadrant == "top_right" ~ x + 0.5, # Q1: inner left
-            quadrant == "bottom_right" ~ x + 0.5 # Q4: inner left
+            quadrant == "bottom_left" ~ x_plot_range[1],
+            quadrant == "top_left" ~ x_plot_range[1],
+            quadrant == "bottom_right" ~ x_plot_range[2],
+            quadrant == "top_right" ~ x_plot_range[2]
           ),
           y_label = case_when(
-            quadrant == "top_left" ~ y - 0.5, # Q2: inner bottom
-            quadrant == "top_right" ~ y - 0.5, # Q1: inner bottom
-            quadrant == "bottom_left" ~ y + 0.5, # Q3: inner top
-            quadrant == "bottom_right" ~ y + 0.5 # Q4: inner top
+            quadrant == "bottom_left" ~ y - y_offset,
+            quadrant == "top_left" ~ y_plot_range[2],
+            quadrant == "bottom_right" ~ y - y_offset,
+            quadrant == "top_right" ~ y_plot_range[2]
           ),
           # Set text alignment based on quadrant
           hjust = case_when(
-            quadrant %in% c("top_left", "bottom_left") ~ 1, # Right-align for left quadrants
-            quadrant %in% c("top_right", "bottom_right") ~ 0 # Left-align for right quadrants
+            quadrant %in% c("top_left", "bottom_left") ~ 0,
+            quadrant %in% c("top_right", "bottom_right") ~ 1
           ),
           vjust = case_when(
-            quadrant %in% c("top_left", "top_right") ~ 1, # Bottom-align for top quadrants
-            quadrant %in% c("bottom_left", "bottom_right") ~ 0 # Top-align for bottom quadrants
+            quadrant %in% c("top_left", "top_right") ~ 0,
+            quadrant %in% c("bottom_left", "bottom_right") ~ 1
           )
         )
 
-      # Add cross lines at the gate center
+      # Add quadrant lines
       plot <- plot +
         geom_vline(
           xintercept = unique(gate_params$x),
