@@ -278,8 +278,12 @@ ColocalizationHeatmap <- function(
 
     # Cluster columns for the dots method
     if (cluster_cols && (type == "dots")) {
-      cols_clust <- dist(t(plot_data_wide), method = clustering_distance_cols) %>%
-        hclust(method = clustering_method)
+      if (symmetrise && cluster_rows) {
+        cols_clust <- rows_clust
+      } else {
+        cols_clust <- dist(t(plot_data_wide), method = clustering_distance_cols) %>%
+          hclust(method = clustering_method)
+      }
       plot_data <- plot_data %>%
         mutate(marker_2 = factor(marker_2, levels = with(cols_clust, labels[order])))
     }
