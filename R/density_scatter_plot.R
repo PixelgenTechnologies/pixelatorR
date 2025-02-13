@@ -116,7 +116,7 @@
 #'   marker1 = "Feature1",
 #'   marker2 = "Feature2",
 #'   facet_vars = "sample",
-#'   plot_gate = plot_gate,
+#'   plot_gate = list(plot_gate, "rectangle"),
 #'   layer = "counts"
 #' )
 #'
