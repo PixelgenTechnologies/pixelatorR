@@ -20,10 +20,11 @@
 #' get_density(x, y, n = 100)
 #'
 .get2Ddensity <- function(
-    x,
-    y,
-    n = 500,
-    ...) {
+  x,
+  y,
+  n = 500,
+  ...
+) {
   # Check that MASS is installed
   expect_MASS()
 
@@ -65,6 +66,7 @@
 #' @param annotation_params Optional list of parameters to pass to geom_text for gate annotations. Common parameters
 #' include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).
 #' @param colors Optional character vector of colors to use for the color scale.
+#' @param ... Additional arguments to pass to `MASS::kde2d`.
 #'
 #' @return A ggplot object.
 #'
@@ -158,21 +160,22 @@
 #' @export
 #'
 DensityScatterPlot <- function(
-    object,
-    marker1,
-    marker2,
-    facet_vars = NULL,
-    plot_gate = NULL,
-    grid_n = 100,
-    scale_density = TRUE,
-    margin_density = TRUE,
-    pt_size = 1,
-    alpha = 1,
-    layer = NULL,
-    coord_fixed = TRUE,
-    annotation_params = NULL,
-    colors = NULL,
-    ...) {
+  object,
+  marker1,
+  marker2,
+  facet_vars = NULL,
+  plot_gate = NULL,
+  grid_n = 500,
+  scale_density = TRUE,
+  margin_density = TRUE,
+  pt_size = 1,
+  alpha = 1,
+  layer = NULL,
+  coord_fixed = TRUE,
+  annotation_params = NULL,
+  colors = NULL,
+  ...
+) {
   # Validate input parameters
   assert_vector(facet_vars, type = "character", n = 1, allow_null = TRUE)
   assert_max_length(facet_vars, n = 2, allow_null = TRUE)
@@ -252,35 +255,35 @@ DensityScatterPlot <- function(
 
   plot_data <-
     plot_data %>%
-    rename(
-      marker1 = !!marker1,
-      marker2 = !!marker2
-    ) %>%
-    group_by_at(facet_vars) %>%
-    mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
-    ungroup()
+      rename(
+        marker1 = !!marker1,
+        marker2 = !!marker2
+      ) %>%
+      group_by_at(facet_vars) %>%
+      mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
+      ungroup()
 
   if (isTRUE(scale_density)) {
     plot_data <-
       plot_data %>%
-      group_by_at(facet_vars) %>%
-      mutate(dens = dens / max(dens)) %>%
-      ungroup()
+        group_by_at(facet_vars) %>%
+        mutate(dens = dens / max(dens)) %>%
+        ungroup()
   }
 
   # Set plot theme
   if (is.null(facet_vars)) {
     plot_theme <-
       theme_bw() +
-      theme(
-        panel.grid = element_blank(),
-        panel.spacing = unit(0, "lines"),
-        plot.margin = unit(c(0, 0, 0, 0), "lines")
-      )
+        theme(
+          panel.grid = element_blank(),
+          panel.spacing = unit(0, "lines"),
+          plot.margin = unit(c(0, 0, 0, 0), "lines")
+        )
   } else {
     plot_theme <-
       theme_bw() +
-      theme(panel.grid = element_blank())
+        theme(panel.grid = element_blank())
   }
 
   plot_range <-
@@ -316,21 +319,21 @@ DensityScatterPlot <- function(
   # Make plot
   plot <-
     plot_data %>%
-    ggplot(aes(marker1, marker2, color = dens)) +
-    geom_hline(yintercept = 0, color = "gray") +
-    geom_vline(xintercept = 0, color = "gray") +
-    geom_point(
-      size = pt_size,
-      alpha = alpha,
-      show.legend = FALSE
-    ) +
-    scale_x_continuous(limits = plot_range) +
-    scale_y_continuous(limits = plot_range) +
-    plot_theme +
-    labs(
-      x = marker1,
-      y = marker2
-    )
+      ggplot(aes(marker1, marker2, color = dens)) +
+      geom_hline(yintercept = 0, color = "gray") +
+      geom_vline(xintercept = 0, color = "gray") +
+      geom_point(
+        size = pt_size,
+        alpha = alpha,
+        show.legend = FALSE
+      ) +
+      scale_x_continuous(limits = plot_range) +
+      scale_y_continuous(limits = plot_range) +
+      plot_theme +
+      labs(
+        x = marker1,
+        y = marker2
+      )
 
   if (isTRUE(coord_fixed) && isFALSE(margin_density)) {
     plot <- plot + coord_fixed()
@@ -340,11 +343,11 @@ DensityScatterPlot <- function(
   if (!is.null(colors)) {
     plot <-
       plot +
-      scale_color_gradientn(colors = colors)
+        scale_color_gradientn(colors = colors)
   } else {
     plot <-
       plot +
-      scale_color_viridis_c(option = "turbo")
+        scale_color_viridis_c(option = "turbo")
   }
 
   # Facet
@@ -352,16 +355,16 @@ DensityScatterPlot <- function(
     if (length(facet_vars) == 1) {
       plot <-
         plot +
-        facet_grid(rows = vars(!!!syms(facet_vars)))
+          facet_grid(rows = vars(!!!syms(facet_vars)))
     }
 
     if (length(facet_vars) == 2) {
       plot <-
         plot +
-        facet_grid(
-          rows = vars(!!!syms(facet_vars[1])),
-          cols = vars(!!!syms(facet_vars[2]))
-        )
+          facet_grid(
+            rows = vars(!!!syms(facet_vars[1])),
+            cols = vars(!!!syms(facet_vars[2]))
+          )
     }
   }
 
@@ -528,44 +531,44 @@ DensityScatterPlot <- function(
   if (isTRUE(margin_density)) {
     density_plot_x <-
       plot_data %>%
-      ggplot(aes(marker1)) +
-      geom_density(
-        fill = "lightgray",
-        color = NA
-      ) +
-      scale_x_continuous(limits = plot_range) +
-      scale_y_continuous(expand = expansion(0)) +
-      theme_void() +
-      theme(
-        panel.spacing = unit(0, "lines"),
-        plot.margin = unit(c(0, 0, 0, 0), "lines")
-      )
+        ggplot(aes(marker1)) +
+        geom_density(
+          fill = "lightgray",
+          color = NA
+        ) +
+        scale_x_continuous(limits = plot_range) +
+        scale_y_continuous(expand = expansion(0)) +
+        theme_void() +
+        theme(
+          panel.spacing = unit(0, "lines"),
+          plot.margin = unit(c(0, 0, 0, 0), "lines")
+        )
 
     density_plot_y <-
       plot_data %>%
-      ggplot(aes(marker2)) +
-      geom_density(
-        fill = "lightgray",
-        color = NA
-      ) +
-      scale_x_continuous(limits = plot_range) +
-      scale_y_continuous(expand = expansion(0)) +
-      theme_void() +
-      theme(
-        panel.spacing = unit(0, "lines"),
-        plot.margin = unit(c(0, 0, 0, 0), "lines")
-      ) +
-      coord_flip()
+        ggplot(aes(marker2)) +
+        geom_density(
+          fill = "lightgray",
+          color = NA
+        ) +
+        scale_x_continuous(limits = plot_range) +
+        scale_y_continuous(expand = expansion(0)) +
+        theme_void() +
+        theme(
+          panel.spacing = unit(0, "lines"),
+          plot.margin = unit(c(0, 0, 0, 0), "lines")
+        ) +
+        coord_flip()
 
     plot <-
       density_plot_x +
-      plot_spacer() +
-      plot +
-      density_plot_y +
-      plot_layout(
-        widths = c(5, 1),
-        heights = c(1, 5)
-      )
+        plot_spacer() +
+        plot +
+        density_plot_y +
+        plot_layout(
+          widths = c(5, 1),
+          heights = c(1, 5)
+        )
   }
 
   return(plot)
