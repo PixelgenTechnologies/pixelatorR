@@ -10,7 +10,7 @@ DensityScatterPlot(
   marker2,
   facet_vars = NULL,
   plot_gate = NULL,
-  grid_n = 100,
+  grid_n = 500,
   scale_density = TRUE,
   margin_density = TRUE,
   pt_size = 1,
@@ -49,10 +49,12 @@ data frame containing gate parameters and the second element is a string specify
 
 \item{coord_fixed}{Whether to use fixed coordinate ratio.}
 
-\item{annotation_params}{Optional list of parameters to pass to geom_text for gate annotations. Common parameters include
-color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).}
+\item{annotation_params}{Optional list of parameters to pass to geom_text for gate annotations. Common parameters
+include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).}
 
 \item{colors}{Optional character vector of colors to use for the color scale.}
+
+\item{...}{Additional arguments to pass to \code{MASS::kde2d}.}
 }
 \value{
 A ggplot object.
@@ -108,7 +110,7 @@ DensityScatterPlot(object,
   marker1 = "Feature1",
   marker2 = "Feature2",
   facet_vars = "sample",
-  plot_gate = plot_gate,
+  plot_gate = list(plot_gate, "rectangle"),
   layer = "counts"
 )
 
@@ -130,8 +132,8 @@ DensityScatterPlot(
 # Create a density scatter plot with a quadrant gate
 # Define quadrant gate parameters
 quad_gate <- data.frame(
-  x = 2,  # x-coordinate for vertical line
-  y = 3   # y-coordinate for horizontal line
+  x = 2, # x-coordinate for vertical line
+  y = 3 # y-coordinate for horizontal line
 )
 
 # Plot with quadrant gate and custom annotations
