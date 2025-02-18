@@ -53,9 +53,9 @@
 #' @param marker1 Name of first marker to plot.
 #' @param marker2 Name of second marker to plot.
 #' @param facet_vars Optional character vector of length 1 or 2 specifying variables to facet by.
-#' @param plot_gate Optional list containing gate parameters. Must be a list of length 2 where the first element is a
-#'   data frame containing gate parameters and the second element is a string specifying the gate type ("rectangle" or
-#'   "quadrant").
+#' @param plot_gate Optional data frame containing gate parameters. If provided, `gate_type` must also be specified.
+#' @param gate_type Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
+#' Required if `plot_gate` is provided.
 #' @param grid_n Number of grid points in each direction to compute density.
 #' @param scale_density Whether to scale the density within each facet.
 #' @param margin_density Whether to plot density plots in the margins.
@@ -63,14 +63,13 @@
 #' @param alpha Point transparency.
 #' @param layer Optional string specifying a layer to plot.
 #' @param coord_fixed Whether to use fixed coordinate ratio.
-#' @param annotation_params Optional list of parameters to pass to geom_text for gate annotations. Common parameters
+#' @param annotation_params Optional list of parameters to pass to `geom_text` for gate annotations. Common parameters
 #' include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).
 #' @param colors Optional character vector of colors to use for the color scale.
 #' @param ... Additional arguments to pass to `MASS::kde2d`.
 #'
 #' @return A ggplot object.
 #'
-#' @import rlang
 #'
 #' @examples
 #'
@@ -118,11 +117,11 @@
 #'   marker1 = "Feature1",
 #'   marker2 = "Feature2",
 #'   facet_vars = "sample",
-#'   plot_gate = list(plot_gate, "rectangle"),
+#'   plot_gate = plot_gate,
+#'   gate_type = "rectangle",
 #'   layer = "counts"
 #' )
 #'
-#' library(pixelatorR)
 #'
 #' # Create a Seurat object with random data
 #' counts <- matrix(rpois(200, 5), nrow = 10)
@@ -149,7 +148,8 @@
 #'   object,
 #'   marker1 = "Feature1",
 #'   marker2 = "Feature2",
-#'   plot_gate = list(quad_gate, "quadrant"),
+#'   plot_gate = quad_gate,
+#'   gate_type = "quadrant",
 #'   annotation_params = list(
 #'     color = "darkblue",
 #'     size = 4,
@@ -165,6 +165,7 @@ DensityScatterPlot <- function(
   marker2,
   facet_vars = NULL,
   plot_gate = NULL,
+  gate_type = c("rectangle", "quadrant"),
   grid_n = 500,
   scale_density = TRUE,
   margin_density = TRUE,
@@ -177,6 +178,7 @@ DensityScatterPlot <- function(
   ...
 ) {
   # Validate input parameters
+  assert_class(object, "Seurat")
   assert_vector(facet_vars, type = "character", n = 1, allow_null = TRUE)
   assert_max_length(facet_vars, n = 2, allow_null = TRUE)
   for (facet_var in facet_vars) {
@@ -197,36 +199,30 @@ DensityScatterPlot <- function(
     assert_class(annotation_params, "list")
   }
   if (!is.null(plot_gate)) {
-    assert_class(plot_gate, "list")
-    assert_length(plot_gate, 2)
-    assert_class(plot_gate[[1]], "data.frame")
-    assert_single_value(plot_gate[[2]], type = "string")
-    gate_type <- plot_gate[[2]]
-    if (gate_type == "rectangle") {
-      assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate[[1]]))
-    } else if (gate_type == "quadrant") {
-      assert_x_in_y(c("x", "y"), colnames(plot_gate[[1]]))
-    } else {
-      cli::cli_abort("Gate type must be either 'rectangle' or 'quadrant'")
+    assert_class(plot_gate, "data.frame")
+    if (is.null(gate_type)) {
+      cli::cli_abort(
+        "{.code gate_type} must be specified when {.code plot_gate} is provided"
+      )
     }
-  }
-  assert_class(object, "Seurat")
-
-  if (!is.null(plot_gate)) {
-    gate_type <- plot_gate[[2]]
+    gate_type <- match.arg(gate_type)
+    if (gate_type == "rectangle") {
+      assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate))
+    } else {
+      assert_x_in_y(c("x", "y"), colnames(plot_gate))
+    }
     allowed_cols <- if (gate_type == "rectangle") {
       c("xmin", "xmax", "ymin", "ymax")
     } else {
       c("x", "y")
     }
-
-    check <- !names(plot_gate[[1]]) %in% c(allowed_cols, facet_vars)
+    check <- !names(plot_gate) %in% c(allowed_cols, facet_vars)
     if (sum(check) > 0) {
       cli::cli_abort(
         c(
-          "i" = "'plot_gate' can only contain gate-specific columns and faceting variables",
+          "i" = "{.code plot_gate} can only contain gate-specific columns and faceting variables",
           "x" = "The following columns are not allowed: ",
-          " " = "{.val {names(plot_gate[[1]])[check]}}"
+          " " = "{.val {names(plot_gate)[check]}}"
         )
       )
     }
@@ -236,7 +232,7 @@ DensityScatterPlot <- function(
   if (!is.null(facet_vars)) {
     if (isTRUE(margin_density)) {
       cli::cli_alert_warning(
-        "Marginal density ('margin_density' = TRUE) is not supported with faceting. Setting 'margin_density' to FALSE"
+        "Marginal density ({.codemargin_density = TRUE}) is not supported with faceting. Setting {.code margin_density = FALSE}"
       )
       margin_density <- FALSE
     }
@@ -245,11 +241,10 @@ DensityScatterPlot <- function(
   if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
     coord_fixed <- FALSE
     cli::cli_alert_warning(
-      "Setting {.var coord_fixed} to FALSE as it is not compatible with {.var margin_density} = TRUE"
+      "Setting {.code coord_fixed = FALSE} as it is not compatible with {.code margin_density = TRUE}"
     )
   }
 
-  # Get data
   plot_data <-
     FetchData(object, vars = c(facet_vars, marker1, marker2), layer = layer)
 
@@ -259,14 +254,14 @@ DensityScatterPlot <- function(
         marker1 = !!marker1,
         marker2 = !!marker2
       ) %>%
-      group_by_at(facet_vars) %>%
+      group_by_at(if (is.null(facet_vars)) character(0) else facet_vars) %>%
       mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
       ungroup()
 
   if (isTRUE(scale_density)) {
     plot_data <-
       plot_data %>%
-        group_by_at(facet_vars) %>%
+        group_by_at(if (is.null(facet_vars)) character(0) else facet_vars) %>%
         mutate(dens = dens / max(dens)) %>%
         ungroup()
   }
@@ -290,18 +285,15 @@ DensityScatterPlot <- function(
     range(c(plot_data$marker1, plot_data$marker2))
 
   if (!is.null(plot_gate)) {
-    gate_params <- plot_gate[[1]]
-    gate_type <- plot_gate[[2]]
-
     if (gate_type == "rectangle") {
       plot_range <- range(
         c(
           plot_data$marker1,
           plot_data$marker2,
-          gate_params$xmin,
-          gate_params$xmax,
-          gate_params$ymin,
-          gate_params$ymax
+          plot_gate$xmin,
+          plot_gate$xmax,
+          plot_gate$ymin,
+          plot_gate$ymax
         )
       )
     } else if (gate_type == "quadrant") {
@@ -309,8 +301,8 @@ DensityScatterPlot <- function(
         c(
           plot_data$marker1,
           plot_data$marker2,
-          gate_params$x,
-          gate_params$y
+          plot_gate$x,
+          plot_gate$y
         )
       )
     }
@@ -370,19 +362,16 @@ DensityScatterPlot <- function(
 
   # Add gates
   if (!is.null(plot_gate)) {
-    gate_params <- plot_gate[[1]]
-    gate_type <- plot_gate[[2]]
-
     if (gate_type == "rectangle") {
       if (!is.null(facet_vars)) {
-        join_vars <- intersect(facet_vars, colnames(gate_params))
+        join_vars <- intersect(facet_vars, colnames(plot_gate))
         if (length(join_vars) > 0) {
-          gate_label <- gate_params %>% left_join(plot_data, by = join_vars)
+          gate_label <- plot_gate %>% left_join(plot_data, by = join_vars)
         } else {
-          gate_label <- gate_params %>% cross_join(plot_data)
+          gate_label <- plot_gate %>% cross_join(plot_data)
         }
       } else {
-        gate_label <- plot_data %>% cross_join(gate_params)
+        gate_label <- plot_data %>% cross_join(plot_gate)
       }
 
       gate_label <- gate_label %>%
@@ -408,7 +397,7 @@ DensityScatterPlot <- function(
 
       plot <- plot +
         geom_rect(
-          data = gate_params,
+          data = plot_gate,
           aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
           inherit.aes = FALSE,
           fill = "transparent",
@@ -431,17 +420,17 @@ DensityScatterPlot <- function(
           )
         )
     } else if (gate_type == "quadrant") {
-      assert_x_in_y(c("x", "y"), colnames(gate_params))
+      assert_x_in_y(c("x", "y"), colnames(plot_gate))
 
       if (!is.null(facet_vars)) {
-        join_vars <- intersect(facet_vars, colnames(gate_params))
+        join_vars <- intersect(facet_vars, colnames(plot_gate))
         if (length(join_vars) > 0) {
-          gate_label <- gate_params %>% left_join(plot_data, by = join_vars)
+          gate_label <- plot_gate %>% left_join(plot_data, by = join_vars)
         } else {
-          gate_label <- gate_params %>% cross_join(plot_data)
+          gate_label <- plot_gate %>% cross_join(plot_data)
         }
       } else {
-        gate_label <- plot_data %>% cross_join(gate_params)
+        gate_label <- plot_data %>% cross_join(plot_gate)
       }
 
       x_plot_range <- range(plot_data$marker1)
@@ -491,12 +480,12 @@ DensityScatterPlot <- function(
       # Add quadrant lines
       plot <- plot +
         geom_vline(
-          xintercept = unique(gate_params$x),
+          xintercept = unique(plot_gate$x),
           linetype = "dashed",
           color = "black"
         ) +
         geom_hline(
-          yintercept = unique(gate_params$y),
+          yintercept = unique(plot_gate$y),
           linetype = "dashed",
           color = "black"
         ) +

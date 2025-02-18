@@ -10,6 +10,7 @@ DensityScatterPlot(
   marker2,
   facet_vars = NULL,
   plot_gate = NULL,
+  gate_type = c("rectangle", "quadrant"),
   grid_n = 500,
   scale_density = TRUE,
   margin_density = TRUE,
@@ -31,9 +32,10 @@ DensityScatterPlot(
 
 \item{facet_vars}{Optional character vector of length 1 or 2 specifying variables to facet by.}
 
-\item{plot_gate}{Optional list containing gate parameters. Must be a list of length 2 where the first element is a
-data frame containing gate parameters and the second element is a string specifying the gate type ("rectangle" or
-"quadrant").}
+\item{plot_gate}{Optional data frame containing gate parameters. If provided, \code{gate_type} must also be specified.}
+
+\item{gate_type}{Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
+Required if \code{plot_gate} is provided.}
 
 \item{grid_n}{Number of grid points in each direction to compute density.}
 
@@ -49,7 +51,7 @@ data frame containing gate parameters and the second element is a string specify
 
 \item{coord_fixed}{Whether to use fixed coordinate ratio.}
 
-\item{annotation_params}{Optional list of parameters to pass to geom_text for gate annotations. Common parameters
+\item{annotation_params}{Optional list of parameters to pass to \code{geom_text} for gate annotations. Common parameters
 include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).}
 
 \item{colors}{Optional character vector of colors to use for the color scale.}
@@ -110,11 +112,11 @@ DensityScatterPlot(object,
   marker1 = "Feature1",
   marker2 = "Feature2",
   facet_vars = "sample",
-  plot_gate = list(plot_gate, "rectangle"),
+  plot_gate = plot_gate,
+  gate_type = "rectangle",
   layer = "counts"
 )
 
-library(pixelatorR)
 
 # Create a Seurat object with random data
 counts <- matrix(rpois(200, 5), nrow = 10)
@@ -141,7 +143,8 @@ DensityScatterPlot(
   object,
   marker1 = "Feature1",
   marker2 = "Feature2",
-  plot_gate = list(quad_gate, "quadrant"),
+  plot_gate = quad_gate,
+  gate_type = "quadrant",
   annotation_params = list(
     color = "darkblue",
     size = 4,
