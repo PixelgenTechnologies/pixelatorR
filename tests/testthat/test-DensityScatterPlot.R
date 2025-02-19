@@ -95,7 +95,8 @@ for (assay_version in c("v3", "v5")) {
         marker1 = "Feature1",
         marker2 = "Feature2",
         layer = "counts",
-        plot_gate = list(plot_gate, "rectangle")
+        plot_gate = plot_gate,
+        gate_type = "rectangle"
       )
     )
 
@@ -107,7 +108,8 @@ for (assay_version in c("v3", "v5")) {
         marker2 = "Feature2",
         facet_vars = "sample",
         layer = "counts",
-        plot_gate = list(plot_gate, "rectangle")
+        plot_gate = plot_gate,
+        gate_type = "rectangle"
       )
     )
 
@@ -129,7 +131,8 @@ for (assay_version in c("v3", "v5")) {
         marker2 = "Feature2",
         facet_vars = "sample",
         layer = "counts",
-        plot_gate = list(plot_gate, "rectangle")
+        plot_gate = plot_gate,
+        gate_type = "rectangle"
       )
     )
 
@@ -141,7 +144,8 @@ for (assay_version in c("v3", "v5")) {
         marker2 = "Feature2",
         facet_vars = c("sample", "sample_type"),
         layer = "counts",
-        plot_gate = list(plot_gate, "rectangle")
+        plot_gate = plot_gate,
+        gate_type = "rectangle"
       )
     )
 
@@ -161,7 +165,8 @@ for (assay_version in c("v3", "v5")) {
         marker2 = "Feature2",
         facet_vars = c("sample", "sample_type"),
         layer = "counts",
-        plot_gate = list(plot_gate, "rectangle")
+        plot_gate = plot_gate,
+        gate_type = "rectangle"
       )
     )
 
@@ -179,7 +184,8 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
-          plot_gate = list(rect_gate, "rectangle")
+          plot_gate = rect_gate,
+          gate_type = "rectangle"
         )
       )
 
@@ -194,7 +200,8 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
-          plot_gate = list(quad_gate, "quadrant")
+          plot_gate = quad_gate,
+          gate_type = "quadrant"
         )
       )
 
@@ -211,7 +218,8 @@ for (assay_version in c("v3", "v5")) {
           marker1 = "Feature1",
           marker2 = "Feature2",
           facet_vars = "sample",
-          plot_gate = list(quad_gate_faceted, "quadrant")
+          plot_gate = quad_gate_faceted,
+          gate_type = "quadrant"
         )
       )
 
@@ -221,7 +229,8 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
-          plot_gate = list(quad_gate, "quadrant"),
+          plot_gate = quad_gate,
+          gate_type = "quadrant",
           annotation_params = list(
             color = "red",
             size = 4,
@@ -231,7 +240,6 @@ for (assay_version in c("v3", "v5")) {
       )
     })
 
-    # Test error cases for new functionality
     test_that("DensityScatterPlot errors correctly for invalid inputs", {
       # Invalid gate type
       expect_error(
@@ -239,12 +247,12 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
-          plot_gate = list(tibble(x = 30, y = 40), "invalid_type")
-        ),
-        "Gate type must be either 'rectangle' or 'quadrant'"
+          plot_gate = tibble(x = 30, y = 40),
+          gate_type = "invalid_type"
+        )
       )
 
-      # Wrong format for plot_gate (not a list)
+      # Missing gate_type argument
       expect_error(
         DensityScatterPlot(
           object,
@@ -260,7 +268,8 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
-          plot_gate = list(tibble(x = 30), "quadrant")
+          plot_gate = tibble(x = 30),
+          gate_type = "quadrant"
         )
       )
 
@@ -270,7 +279,8 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
-          plot_gate = list(tibble(xmin = 20, xmax = 70), "rectangle")
+          plot_gate = tibble(xmin = 20, xmax = 70),
+          gate_type = "rectangle"
         )
       )
 
@@ -280,7 +290,8 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
-          plot_gate = list(quad_gate, "quadrant"),
+          plot_gate = quad_gate,
+          gate_type = "quadrant",
           annotation_params = "invalid"
         )
       )
@@ -329,7 +340,8 @@ for (assay_version in c("v3", "v5")) {
         marker1 = "Feature1",
         marker2 = "Feature2",
         layer = "counts",
-        plot_gate = list(tibble(xmin = 20), "rectangle")
+        plot_gate = tibble(xmin = 20),
+        gate_type = "rectangle"
       )
     )
     expect_error(
