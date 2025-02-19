@@ -20,10 +20,10 @@
 #' get_density(x, y, n = 100)
 #'
 .get2Ddensity <- function(
-    x,
-    y,
-    n = 500,
-    ...) {
+  x,
+  y,
+  n = 500,
+  ...) {
   # Check that MASS is installed
   expect_MASS()
 
@@ -159,22 +159,23 @@
 #' @export
 #'
 DensityScatterPlot <- function(
-    object,
-    marker1,
-    marker2,
-    facet_vars = NULL,
-    plot_gate = NULL,
-    gate_type = c("rectangle", "quadrant"),
-    grid_n = 500,
-    scale_density = TRUE,
-    margin_density = TRUE,
-    pt_size = 1,
-    alpha = 1,
-    layer = NULL,
-    coord_fixed = TRUE,
-    annotation_params = NULL,
-    colors = NULL,
-    ...) {
+  object,
+  marker1,
+  marker2,
+  facet_vars = NULL,
+  plot_gate = NULL,
+  gate_type = c("rectangle", "quadrant"),
+  grid_n = 500,
+  scale_density = TRUE,
+  margin_density = TRUE,
+  pt_size = 1,
+  alpha = 1,
+  layer = NULL,
+  coord_fixed = TRUE,
+  annotation_params = NULL,
+  colors = NULL,
+  ...
+) {
   # Validate input parameters
   assert_class(object, "Seurat")
   assert_vector(facet_vars, type = "character", n = 1, allow_null = TRUE)
@@ -197,7 +198,7 @@ DensityScatterPlot <- function(
     assert_class(annotation_params, "list")
   }
   if (!is.null(plot_gate)) {
-    assert_class(plot_gate, "data.frame")
+    assert_class(plot_gate, c("data.frame", "tbl_df"))
     if (is.null(gate_type)) {
       cli::cli_abort(
         "{.code gate_type} must be specified when {.code plot_gate} is provided"
@@ -210,17 +211,20 @@ DensityScatterPlot <- function(
         "x" = "You provided: {.val {gate_type[1]}}"
       ))
     }
-    gate_type <- match.arg(gate_type)
+    gate_type <- match.arg(gate_type, choices = c("rectangle", "quadrant"))
     if (gate_type == "rectangle") {
-      assert_x_in_y(c("xmin", "xmax", "ymin", "ymax"), colnames(plot_gate))
+      assert_col_in_data("xmin", plot_gate)
+      assert_col_in_data("xmax", plot_gate)
+      assert_col_in_data("ymin", plot_gate)
+      assert_col_in_data("ymax", plot_gate)
     } else {
-      assert_x_in_y(c("x", "y"), colnames(plot_gate))
+      assert_col_in_data("x", plot_gate)
+      assert_col_in_data("y", plot_gate)
     }
-    allowed_cols <- if (gate_type == "rectangle") {
-      c("xmin", "xmax", "ymin", "ymax")
-    } else {
-      c("x", "y")
-    }
+    allowed_cols <- switch(gate_type,
+      "rectangle" = c("xmin", "xmax", "ymin", "ymax"),
+      "quadrant" = c("x", "y")
+    )
     check <- !names(plot_gate) %in% c(allowed_cols, facet_vars)
     if (sum(check) > 0) {
       cli::cli_abort(
@@ -247,12 +251,11 @@ DensityScatterPlot <- function(
   if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
     coord_fixed <- FALSE
     cli::cli_alert_warning(
-      "Setting {.code coord_fixed = FALSE} as it is not compatible with {.code margin_density = TRUE}"
+      "Setting {.code coord_fixed = FALSE} for compatibility with {.code margin_density = TRUE}"
     )
   }
 
-  plot_data <-
-    FetchData(object, vars = c(facet_vars, marker1, marker2), layer = layer)
+  plot_data <- FetchData(object, vars = c(facet_vars, marker1, marker2), layer = layer)
 
   plot_data <-
     plot_data %>%
@@ -328,10 +331,7 @@ DensityScatterPlot <- function(
     scale_x_continuous(limits = plot_range) +
     scale_y_continuous(limits = plot_range) +
     plot_theme +
-    labs(
-      x = marker1,
-      y = marker2
-    )
+    labs(x = marker1, y = marker2)
 
   if (isTRUE(coord_fixed) && isFALSE(margin_density)) {
     plot <- plot + coord_fixed()
@@ -426,7 +426,8 @@ DensityScatterPlot <- function(
           )
         )
     } else if (gate_type == "quadrant") {
-      assert_x_in_y(c("x", "y"), colnames(plot_gate))
+      assert_col_in_data("x", plot_gate)
+      assert_col_in_data("y", plot_gate)
 
       if (!is.null(facet_vars)) {
         join_vars <- intersect(facet_vars, colnames(plot_gate))
@@ -518,7 +519,7 @@ DensityScatterPlot <- function(
           )
         )
     } else {
-      cli::cli_abort("Unknown gate type provided to plot_gate")
+      cli::cli_abort(c("x" = "Unknown gate type provided to plot_gate"))
     }
   }
 
