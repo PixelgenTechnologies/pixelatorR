@@ -38,7 +38,7 @@ ReadMPX_counts <- function(
 
   # Unzip pxl file
   assert_file_ext(filename, ext = "pxl")
-  check <- tryCatch(zip::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
+  check <- tryCatch(utils::unzip(filename, files = "adata.h5ad", exdir = fs::path_temp()),
     error = function(e) e,
     warning = function(w) w
   )
