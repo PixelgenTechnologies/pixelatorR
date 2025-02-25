@@ -118,23 +118,22 @@
 #' @export
 #'
 DensityScatterPlot <- function(
-  object,
-  marker1,
-  marker2,
-  facet_vars = NULL,
-  plot_gate = NULL,
-  gate_type = c("rectangle", "quadrant"),
-  grid_n = 500,
-  scale_density = TRUE,
-  margin_density = TRUE,
-  pt_size = 1,
-  alpha = 1,
-  layer = NULL,
-  coord_fixed = TRUE,
-  annotation_params = NULL,
-  colors = NULL,
-  ...
-) {
+    object,
+    marker1,
+    marker2,
+    facet_vars = NULL,
+    plot_gate = NULL,
+    gate_type = c("rectangle", "quadrant"),
+    grid_n = 500,
+    scale_density = TRUE,
+    margin_density = TRUE,
+    pt_size = 1,
+    alpha = 1,
+    layer = NULL,
+    coord_fixed = TRUE,
+    annotation_params = NULL,
+    colors = NULL,
+    ...) {
   # Validate inputs
   validated_inputs <- .validateDensityInputs(
     object,
@@ -229,21 +228,20 @@ DensityScatterPlot <- function(
 #' @keywords internal
 #'
 .validateDensityInputs <- function(
-  object,
-  marker1,
-  marker2,
-  facet_vars,
-  plot_gate,
-  gate_type = NULL,
-  margin_density,
-  coord_fixed,
-  grid_n,
-  scale_density,
-  pt_size,
-  alpha,
-  layer = NULL,
-  annotation_params = NULL
-) {
+    object,
+    marker1,
+    marker2,
+    facet_vars,
+    plot_gate,
+    gate_type = NULL,
+    margin_density,
+    coord_fixed,
+    grid_n,
+    scale_density,
+    pt_size,
+    alpha,
+    layer = NULL,
+    annotation_params = NULL) {
   # Basic object validation
   assert_class(object, "Seurat")
 
@@ -313,8 +311,7 @@ DensityScatterPlot <- function(
     }
 
     # Check for invalid columns in plot_gate
-    allowed_cols <- switch(
-      gate_type,
+    allowed_cols <- switch(gate_type,
       "rectangle" = c("xmin", "xmax", "ymin", "ymax"),
       "quadrant" = c("x", "y")
     )
@@ -391,15 +388,14 @@ DensityScatterPlot <- function(
 #' @noRd
 #' @keywords internal
 .prepareDensityData <- function(
-  object,
-  marker1,
-  marker2,
-  facet_vars,
-  grid_n,
-  scale_density,
-  layer,
-  ...
-) {
+    object,
+    marker1,
+    marker2,
+    facet_vars,
+    grid_n,
+    scale_density,
+    layer,
+    ...) {
   plot_data <- FetchData(
     object,
     vars = c(facet_vars, marker1, marker2),
@@ -828,23 +824,22 @@ DensityScatterPlot <- function(
 #' @export
 #'
 DensityScatterPlot <- function(
-  object,
-  marker1,
-  marker2,
-  facet_vars = NULL,
-  plot_gate = NULL,
-  gate_type = c("rectangle", "quadrant"),
-  grid_n = 500,
-  scale_density = TRUE,
-  margin_density = TRUE,
-  pt_size = 1,
-  alpha = 1,
-  layer = NULL,
-  coord_fixed = TRUE,
-  annotation_params = NULL,
-  colors = NULL,
-  ...
-) {
+    object,
+    marker1,
+    marker2,
+    facet_vars = NULL,
+    plot_gate = NULL,
+    gate_type = c("rectangle", "quadrant"),
+    grid_n = 500,
+    scale_density = TRUE,
+    margin_density = TRUE,
+    pt_size = 1,
+    alpha = 1,
+    layer = NULL,
+    coord_fixed = TRUE,
+    annotation_params = NULL,
+    colors = NULL,
+    ...) {
   # Validate inputs
   validated_inputs <- .validateDensityInputs(
     object,
