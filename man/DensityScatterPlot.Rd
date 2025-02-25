@@ -22,25 +22,6 @@ DensityScatterPlot(
   colors = NULL,
   ...
 )
-
-DensityScatterPlot(
-  object,
-  marker1,
-  marker2,
-  facet_vars = NULL,
-  plot_gate = NULL,
-  gate_type = c("rectangle", "quadrant"),
-  grid_n = 500,
-  scale_density = TRUE,
-  margin_density = TRUE,
-  pt_size = 1,
-  alpha = 1,
-  layer = NULL,
-  coord_fixed = TRUE,
-  annotation_params = NULL,
-  colors = NULL,
-  ...
-)
 }
 \arguments{
 \item{object}{A Seurat object.}
@@ -51,7 +32,10 @@ DensityScatterPlot(
 
 \item{facet_vars}{Optional character vector of length 1 or 2 specifying variables to facet by.}
 
-\item{plot_gate}{Optional data frame containing gate parameters. If provided, \code{gate_type} must also be specified.}
+\item{plot_gate}{Optional data frame containing gate parameters. For \code{gate_type = "rectangle"}, must contain columns
+'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. For gate_type = "quadrant", must contain
+columns 'x' and 'y' defining the position of the quadrant lines. The data frame can also contain the variables
+specified in 'facet_vars' to plot different gates in different facets.}
 
 \item{gate_type}{Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
 Required if \code{plot_gate} is provided.}
@@ -79,104 +63,13 @@ include color (text color), vjust (vertical justification), hjust (horizontal ju
 }
 \value{
 A ggplot object.
-
-A ggplot object.
 }
 \description{
 Create a density scatter plot, also known as a pseudocolor plot, of two markers from a Seurat object. The points in
 the scatter plot are colored by the point density, determined by 2D kernel density estimation. Optionally, the plot
 can be faceted by one or two variables and a gate can be plotted.
-
-Create a density scatter plot, also known as a pseudocolor plot, of two markers from a Seurat object. The points in
-the scatter plot are colored by the point density, determined by 2D kernel density estimation. Optionally, the plot
-can be faceted by one or two variables and a gate can be plotted.
 }
 \examples{
-library(pixelatorR)
-library(Seurat)
-
-set.seed(123)
-
-# A mock-up Seurat Object
-object <-
-  CreateSeuratObject(counts = matrix(
-    c(
-      rpois(100000, 40),
-      rpois(100000, 5)
-    )[sample(1:200000, 200000)],
-    nrow = 100, ncol = 2000,
-    dimnames = list(
-      paste0("Feature", 1:100),
-      paste0("Cell", 1:2000)
-    )
-  ))
-
-object <-
-  AddMetaData(object,
-    metadata = data.frame(
-      sample = rep(c("A", "B"), each = 1000),
-      sample_type = rep(c("Unstimulated", "Stimulated"),
-        each = 500, times = 2
-      ),
-      row.names = paste0("Cell", 1:2000)
-    )
-  )
-
-plot_gate <-
-  data.frame(
-    xmin = c(20, 20),
-    xmax = c(70, 70),
-    ymin = c(20, 20),
-    ymax = c(60, 60),
-    sample = c("A", "B")
-  )
-
-
-DensityScatterPlot(object,
-  marker1 = "Feature1",
-  marker2 = "Feature2",
-  facet_vars = "sample",
-  plot_gate = plot_gate,
-  gate_type = "rectangle",
-  layer = "counts"
-)
-
-
-# Create a Seurat object with random data
-counts <- matrix(rpois(200, 5), nrow = 10)
-rownames(counts) <- paste0("Feature", 1:10)
-colnames(counts) <- paste0("Cell", 1:20)
-object <- CreateSeuratObject(counts = counts)
-
-# Create a basic density scatter plot
-DensityScatterPlot(
-  object,
-  marker1 = "Feature1",
-  marker2 = "Feature2"
-)
-
-# Create a density scatter plot with a quadrant gate
-# Define quadrant gate parameters
-quad_gate <- data.frame(
-  x = 2, # x-coordinate for vertical line
-  y = 3 # y-coordinate for horizontal line
-)
-
-# Plot with quadrant gate and custom annotations
-DensityScatterPlot(
-  object,
-  marker1 = "Feature1",
-  marker2 = "Feature2",
-  plot_gate = quad_gate,
-  gate_type = "quadrant",
-  annotation_params = list(
-    color = "darkblue",
-    size = 4,
-    fontface = "bold"
-  )
-)
-
-
 library(pixelatorR)
 library(Seurat)
 
