@@ -1,5 +1,25 @@
 #' Get density of points in 2 dimensions.
+#'
+#' Calculate the kernel density of points in 2 dimensions.
+#'
+#' @param x A numeric vector.
+#' @param y A numeric vector.
+#' @param n Create a square n by n grid to compute density.
+#' @param ... Additional arguments to pass to 'MASS::kde2d'.
+#' @return The density within each square.
+#'
 #' @noRd
+#' @keywords internal
+#'
+#' @examples
+#'
+#' library(pixelatorR)
+#'
+#' x <- rnorm(1000)
+#' y <- rnorm(1000)
+#'
+#' get_density(x, y, n = 100)
+#'
 .get2Ddensity <- function(x, y, n = 500, ...) {
   if (!requireNamespace("MASS", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg MASS} must be installed to use this function")
@@ -11,10 +31,30 @@
   return(dens_grid$z[cbind(x_idx, y_idx)])
 }
 
+#' Validate inputs for density scatter plot
+#'
+#' @param object A Seurat object
+#' @param marker1 Name of first marker
+#' @param marker2 Name of second marker
+#' @param facet_vars Variables to use for faceting
+#' @param plot_gate Gate information for plotting
+#' @param gate_type Type of gate ("rectangle" or "quadrant")
+#' @param margin_density Whether to add marginal density plots
+#' @param coord_fixed Whether to use fixed coordinate ratio
+#' @return List with validated margin_density and coord_fixed values
+#'
 #' @noRd
-.validateDensityInputs <- function(object, marker1, marker2, facet_vars,
-                                   plot_gate, gate_type = NULL,
-                                   margin_density, coord_fixed) {
+#' @keywords internal
+.validateDensityInputs <- function(
+  object,
+  marker1,
+  marker2,
+  facet_vars,
+  plot_gate,
+  gate_type = NULL,
+  margin_density,
+  coord_fixed
+) {
   # Basic object validation
   if (!inherits(object, "Seurat")) {
     cli::cli_abort("{.code object} must be a Seurat object")
@@ -54,9 +94,10 @@
     # Validate gate type with proper default handling
     gate_type <- match.arg(gate_type, choices = c("rectangle", "quadrant"))
 
-    required_cols <- switch(gate_type,
-                            "rectangle" = c("xmin", "xmax", "ymin", "ymax"),
-                            "quadrant" = c("x", "y")
+    required_cols <- switch(
+      gate_type,
+      "rectangle" = c("xmin", "xmax", "ymin", "ymax"),
+      "quadrant" = c("x", "y")
     )
 
     missing_cols <- setdiff(required_cols, colnames(plot_gate))
@@ -89,15 +130,36 @@
   ))
 }
 
+#' Prepare data for density scatter plot
+#'
+#' @param object A Seurat object
+#' @param marker1 Name of first marker
+#' @param marker2 Name of second marker
+#' @param facet_vars Variables to use for faceting
+#' @param grid_n Size of density estimation grid
+#' @param scale_density Whether to scale density values
+#' @param layer Which layer to fetch data from
+#' @param ... Additional arguments passed to .get2Ddensity
+#' @return A data frame with density values
+#'
 #' @noRd
-.prepareDensityData <- function(object, marker1, marker2, facet_vars,
-                                grid_n, scale_density, layer, ...) {
+#' @keywords internal
+.prepareDensityData <- function(
+  object,
+  marker1,
+  marker2,
+  facet_vars,
+  grid_n,
+  scale_density,
+  layer,
+  ...
+) {
   plot_data <- Seurat::FetchData(
     object,
     vars = c(facet_vars, marker1, marker2),
     layer = layer
   ) %>%
-    dplyr::rename(
+    rename(
       marker1 = !!marker1,
       marker2 = !!marker2
     )
@@ -105,48 +167,69 @@
   group_vars <- if (!is.null(facet_vars)) facet_vars else character(0)
 
   plot_data <- plot_data %>%
-    dplyr::group_by(dplyr::across(dplyr::all_of(group_vars))) %>%
-    dplyr::mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
-    dplyr::ungroup()
+    group_by(across(all_of(group_vars))) %>%
+    mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
+    ungroup()
 
   if (scale_density) {
     plot_data <- plot_data %>%
-      dplyr::group_by(dplyr::across(dplyr::all_of(group_vars))) %>%
-      dplyr::mutate(dens = dens / max(dens, na.rm = TRUE)) %>%
-      dplyr::ungroup()
+      group_by(across(all_of(group_vars))) %>%
+      mutate(dens = dens / max(dens, na.rm = TRUE)) %>%
+      ungroup()
   }
 
   return(plot_data)
 }
 
+#' Create base ggplot for density scatter plot
+#'
+#' @param plot_data Data frame with plot data
+#' @param pt_size Point size for scatter plot
+#' @param alpha Alpha transparency for points
+#' @param colors Vector of colors for density gradient
+#' @param coord_fixed Whether to use fixed coordinate ratio
+#' @return A ggplot object
+#'
 #' @noRd
+#' @keywords internal
+#'
 .createBasePlot <- function(plot_data, pt_size, alpha, colors, coord_fixed) {
-  gg <- ggplot2::ggplot(
+  gg <- ggplot(
     plot_data,
-    ggplot2::aes(x = marker1, y = marker2, color = dens)
+    aes(x = marker1, y = marker2, color = dens)
   ) +
-    ggplot2::geom_point(size = pt_size, alpha = alpha, show.legend = FALSE) +
-    ggplot2::geom_hline(yintercept = 0, color = "gray50") +
-    ggplot2::geom_vline(xintercept = 0, color = "gray50") +
-    ggplot2::labs(x = "Marker1", y = "Marker2") +
-    ggplot2::theme_bw() +
-    ggplot2::theme(panel.grid = ggplot2::element_blank())
+    geom_point(size = pt_size, alpha = alpha, show.legend = FALSE) +
+    geom_hline(yintercept = 0, color = "gray50") +
+    geom_vline(xintercept = 0, color = "gray50") +
+    labs(x = "Marker1", y = "Marker2") +
+    theme_bw() +
+    theme(panel.grid = element_blank())
 
   if (!is.null(colors)) {
-    gg <- gg + ggplot2::scale_color_gradientn(colors = colors)
+    gg <- gg + scale_color_gradientn(colors = colors)
   } else {
-    gg <- gg + ggplot2::scale_color_viridis_c(option = "turbo")
+    gg <- gg + scale_color_viridis_c(option = "turbo")
   }
 
   if (coord_fixed) {
-    gg <- gg + ggplot2::coord_fixed()
+    gg <- gg + coord_fixed()
   }
 
   return(gg)
 }
 
-
+#' Add gate annotation to density scatter plot
+#'
+#' @param gg Base ggplot object
+#' @param plot_gate Gate information for plotting
+#' @param gate_type Type of gate ("rectangle" or "quadrant")
+#' @param facet_vars Variables used for faceting
+#' @param annotation_params Parameters for gate annotation
+#' @return A ggplot object with gate annotation
+#'
 #' @noRd
+#' @keywords internal
+#'
 .addGate <- function(gg, plot_gate, gate_type, facet_vars, annotation_params) {
   # Validate gate type
   gate_type <- match.arg(gate_type, c("rectangle", "quadrant"))
@@ -156,13 +239,13 @@
     join_vars <- intersect(facet_vars, names(plot_gate))
     if (length(join_vars) > 0) {
       gate_data <- plot_gate %>%
-        dplyr::inner_join(
+        inner_join(
           unique(gg$data[, facet_vars, drop = FALSE]),
           by = join_vars
         )
     } else {
       gate_data <- plot_gate %>%
-        dplyr::cross_join(unique(gg$data[, facet_vars, drop = FALSE]))
+        cross_join(unique(gg$data[, facet_vars, drop = FALSE]))
     }
   } else {
     gate_data <- plot_gate
@@ -177,13 +260,13 @@
   plot_data <- gg$data
   if (!is.null(facet_vars)) {
     plot_data <- plot_data %>%
-      dplyr::group_by(!!!rlang::syms(facet_vars))
+      group_by(!!!rlang::syms(facet_vars))
   }
 
   # Calculate points inside gates for each facet group
   gate_data <- gate_data %>%
-    dplyr::group_by(!!!rlang::syms(facet_vars)) %>%
-    dplyr::group_modify(function(.x, .y) {
+    group_by(!!!rlang::syms(facet_vars)) %>%
+    group_modify(function(.x, .y) {
       # Get the current facet's data by filtering based on group keys
       current_data <- if (!is.null(facet_vars)) {
         filter_conds <- lapply(facet_vars, function(var) {
@@ -191,18 +274,20 @@
           rlang::quo(!!quo == .y[[var]])
         })
         plot_data %>%
-          dplyr::filter(!!!filter_conds)
+          filter(!!!filter_conds)
       } else {
         plot_data
       }
 
       if (gate_type == "rectangle") {
         .x %>%
-          dplyr::rowwise() %>%
-          dplyr::mutate(
+          rowwise() %>%
+          mutate(
             n_inside = sum(
-              current_data$marker1 >= xmin & current_data$marker1 <= xmax &
-                current_data$marker2 >= ymin & current_data$marker2 <= ymax
+              current_data$marker1 >= xmin &
+                current_data$marker1 <= xmax &
+                current_data$marker2 >= ymin &
+                current_data$marker2 <= ymax
             ),
             total = nrow(current_data)
           )
@@ -211,8 +296,8 @@
           tidyr::crossing(
             quadrant = c("top_left", "top_right", "bottom_left", "bottom_right")
           ) %>%
-          dplyr::rowwise() %>%
-          dplyr::mutate(
+          rowwise() %>%
+          mutate(
             total = nrow(current_data),
             n_inside = sum(
               if (quadrant == "top_left") {
@@ -228,7 +313,7 @@
           )
       }
     }) %>%
-    dplyr::ungroup()
+    ungroup()
 
   # Gate-type specific processing
   if (gate_type == "rectangle") {
@@ -244,7 +329,7 @@
 
     # Calculate annotation positions
     gate_labels <- gate_data %>%
-      dplyr::mutate(
+      mutate(
         x = (xmin + xmax) / 2,
         y = ymax,
         label = sprintf("%.1f%%", 100 * (n_inside / total))
@@ -252,16 +337,16 @@
 
     # Create gate layers
     gg <- gg +
-      ggplot2::geom_rect(
+      geom_rect(
         data = gate_data,
-        ggplot2::aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+        aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
         inherit.aes = FALSE,
         color = "black",
         fill = NA,
         linetype = "dashed"
       )
-
-  } else { # quadrant gate
+  } else {
+    # quadrant gate
     # Quadrant gate validation
     req_cols <- c("x", "y")
     missing_cols <- setdiff(req_cols, colnames(gate_data))
@@ -273,38 +358,40 @@
     }
 
     # Calculate plot ranges
-    x_range <- ggplot2::layer_scales(gg)$x$range$range
-    y_range <- ggplot2::layer_scales(gg)$y$range$range
+    x_range <- layer_scales(gg)$x$range$range
+    y_range <- layer_scales(gg)$y$range$range
 
     # Create gate labels with positions
     gate_labels <- gate_data %>%
-      dplyr::mutate(
-        x_label = dplyr::case_when(
-          quadrant %in% c("top_left", "bottom_left") ~ x_range[1] + 0.05 * diff(x_range),
-          quadrant %in% c("top_right", "bottom_right") ~ x_range[2] - 0.05 * diff(x_range)
+      mutate(
+        x_label = case_when(
+          quadrant %in% c("top_left", "bottom_left") ~
+            x_range[1] + 0.05 * diff(x_range),
+          quadrant %in% c("top_right", "bottom_right") ~
+            x_range[2] - 0.05 * diff(x_range)
         ),
         # Calculate consistent spacing based on plot range
         label_spacing = 0.05 * diff(y_range),
-        y_label = dplyr::case_when(
+        y_label = case_when(
           quadrant %in% c("top_left", "top_right") ~ y_range[2] - label_spacing,
           quadrant %in% c("bottom_left", "bottom_right") ~ y - label_spacing
         ),
         hjust = ifelse(quadrant %in% c("top_left", "bottom_left"), 0, 1),
-        vjust = dplyr::case_when(quadrant %in% c("top_left", "top_right") ~ 0),
+        vjust = case_when(quadrant %in% c("top_left", "top_right") ~ 0),
         label = sprintf("%.1f%%", 100 * (n_inside / total))
       )
 
     # Create gate layers
     gg <- gg +
-      ggplot2::geom_vline(
+      geom_vline(
         data = unique(gate_data[, c("x", facet_vars)]),
-        ggplot2::aes(xintercept = x),
+        aes(xintercept = x),
         linetype = "dashed",
         color = "black"
       ) +
-      ggplot2::geom_hline(
+      geom_hline(
         data = unique(gate_data[, c("y", facet_vars)]),
-        ggplot2::aes(yintercept = y),
+        aes(yintercept = y),
         linetype = "dashed",
         color = "black"
       )
@@ -319,12 +406,15 @@
 
   # Gate-specific aesthetic mappings
   if (gate_type == "rectangle") {
-    annotation_args$mapping <- ggplot2::aes(x = x, y = y, label = label)
+    annotation_args$mapping <- aes(x = x, y = y, label = label)
     default_params <- list(color = "black", size = 3, vjust = 1)
   } else {
-    annotation_args$mapping <- ggplot2::aes(
-      x = x_label, y = y_label,
-      label = label, hjust = hjust, vjust = vjust
+    annotation_args$mapping <- aes(
+      x = x_label,
+      y = y_label,
+      label = label,
+      hjust = hjust,
+      vjust = vjust
     )
     default_params <- list(color = "black", size = 3.5)
   }
@@ -337,79 +427,221 @@
 
   # Add annotations to plot
   gg <- gg +
-    do.call(ggplot2::geom_text, c(annotation_args, final_params))
+    do.call(geom_text, c(annotation_args, final_params))
 
   return(gg)
 }
 
-
+#' Add marginal density plots
+#'
+#' @param gg Base ggplot object
+#' @param plot_data Data frame with plot data
+#' @return A ggplot object with marginal density plots
+#'
 #' @noRd
+#' @keywords internal
+#'
 .addMarginalDensity <- function(gg, plot_data) {
-  x_dens <- ggplot2::ggplot(plot_data, ggplot2::aes(x = marker1)) +
-    ggplot2::geom_density(fill = "grey70", color = NA) +
-    ggplot2::theme_void() +
-    ggplot2::scale_x_continuous(limits = range(plot_data$marker1))
+  x_dens <- ggplot(plot_data, aes(x = marker1)) +
+    geom_density(fill = "grey70", color = NA) +
+    theme_void() +
+    scale_x_continuous(limits = range(plot_data$marker1))
 
-  y_dens <- ggplot2::ggplot(plot_data, ggplot2::aes(x = marker2)) +
-    ggplot2::geom_density(fill = "grey70", color = NA) +
-    ggplot2::theme_void() +
-    ggplot2::coord_flip() +
-    ggplot2::scale_x_continuous(limits = range(plot_data$marker2))
+  y_dens <- ggplot(plot_data, aes(x = marker2)) +
+    geom_density(fill = "grey70", color = NA) +
+    theme_void() +
+    coord_flip() +
+    scale_x_continuous(limits = range(plot_data$marker2))
 
-  patchwork::wrap_plots(
-    x_dens, patchwork::plot_spacer(), gg, y_dens,
-    ncol = 2, widths = c(4, 1), heights = c(1, 4)
+  wrap_plots(
+    x_dens,
+    plot_spacer(),
+    gg,
+    y_dens,
+    ncol = 2,
+    widths = c(4, 1),
+    heights = c(1, 4)
   )
 }
 
-#' Updated main function
+#' Create a density scatter / pseudocolor plot.
+#'
+#' Create a density scatter plot, also known as a pseudocolor plot, of two markers from a Seurat object. The points in
+#' the scatter plot are colored by the point density, determined by 2D kernel density estimation. Optionally, the plot
+#' can be faceted by one or two variables and a gate can be plotted.
+#'
+#'
+#' @param object A Seurat object.
+#' @param marker1 Name of first marker to plot.
+#' @param marker2 Name of second marker to plot.
+#' @param facet_vars Optional character vector of length 1 or 2 specifying variables to facet by.
+#' @param plot_gate Optional data frame containing gate parameters. If provided, `gate_type` must also be specified.
+#' @param gate_type Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
+#' Required if `plot_gate` is provided.
+#' @param grid_n Number of grid points in each direction to compute density.
+#' @param scale_density Whether to scale the density within each facet.
+#' @param margin_density Whether to plot density plots in the margins.
+#' @param pt_size Point size.
+#' @param alpha Point transparency.
+#' @param layer Optional string specifying a layer to plot.
+#' @param coord_fixed Whether to use fixed coordinate ratio.
+#' @param annotation_params Optional list of parameters to pass to `geom_text` for gate annotations. Common parameters
+#' include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).
+#' @param colors Optional character vector of colors to use for the color scale.
+#' @param ... Additional arguments to pass to `MASS::kde2d`.
+#'
+#' @return A ggplot object.
+#'
+#'
+#' @examples
+#'
+#' library(pixelatorR)
+#' library(Seurat)
+#'
+#' set.seed(123)
+#'
+#' # A mock-up Seurat Object
+#' object <-
+#'   CreateSeuratObject(counts = matrix(
+#'     c(
+#'       rpois(100000, 40),
+#'       rpois(100000, 5)
+#'     )[sample(1:200000, 200000)],
+#'     nrow = 100, ncol = 2000,
+#'     dimnames = list(
+#'       paste0("Feature", 1:100),
+#'       paste0("Cell", 1:2000)
+#'     )
+#'   ))
+#'
+#' object <-
+#'   AddMetaData(object,
+#'     metadata = data.frame(
+#'       sample = rep(c("A", "B"), each = 1000),
+#'       sample_type = rep(c("Unstimulated", "Stimulated"),
+#'         each = 500, times = 2
+#'       ),
+#'       row.names = paste0("Cell", 1:2000)
+#'     )
+#'   )
+#'
+#' plot_gate <-
+#'   data.frame(
+#'     xmin = c(20, 20),
+#'     xmax = c(70, 70),
+#'     ymin = c(20, 20),
+#'     ymax = c(60, 60),
+#'     sample = c("A", "B")
+#'   )
+#'
+#'
+#' DensityScatterPlot(object,
+#'   marker1 = "Feature1",
+#'   marker2 = "Feature2",
+#'   facet_vars = "sample",
+#'   plot_gate = plot_gate,
+#'   gate_type = "rectangle",
+#'   layer = "counts"
+#' )
+#'
+#'
+#' # Create a Seurat object with random data
+#' counts <- matrix(rpois(200, 5), nrow = 10)
+#' rownames(counts) <- paste0("Feature", 1:10)
+#' colnames(counts) <- paste0("Cell", 1:20)
+#' object <- CreateSeuratObject(counts = counts)
+#'
+#' # Create a basic density scatter plot
+#' DensityScatterPlot(
+#'   object,
+#'   marker1 = "Feature1",
+#'   marker2 = "Feature2"
+#' )
+#'
+#' # Create a density scatter plot with a quadrant gate
+#' # Define quadrant gate parameters
+#' quad_gate <- data.frame(
+#'   x = 2, # x-coordinate for vertical line
+#'   y = 3 # y-coordinate for horizontal line
+#' )
+#'
+#' # Plot with quadrant gate and custom annotations
+#' DensityScatterPlot(
+#'   object,
+#'   marker1 = "Feature1",
+#'   marker2 = "Feature2",
+#'   plot_gate = quad_gate,
+#'   gate_type = "quadrant",
+#'   annotation_params = list(
+#'     color = "darkblue",
+#'     size = 4,
+#'     fontface = "bold"
+#'   )
+#' )
+#'
 #' @export
+#'
 DensityScatterPlot <- function(
+  object,
+  marker1,
+  marker2,
+  facet_vars = NULL,
+  plot_gate = NULL,
+  gate_type = c("rectangle", "quadrant"),
+  grid_n = 500,
+  scale_density = TRUE,
+  margin_density = TRUE,
+  pt_size = 1,
+  alpha = 1,
+  layer = NULL,
+  coord_fixed = TRUE,
+  annotation_params = NULL,
+  colors = NULL,
+  ...
+) {
+  # Validate inputs
+  validated_inputs <- .validateDensityInputs(
     object,
     marker1,
     marker2,
-    facet_vars = NULL,
-    plot_gate = NULL,
-    gate_type = c("rectangle", "quadrant"),
-    grid_n = 500,
-    scale_density = TRUE,
-    margin_density = TRUE,
-    pt_size = 1,
-    alpha = 1,
-    layer = NULL,
-    coord_fixed = TRUE,
-    annotation_params = NULL,
-    colors = NULL,
-    ...) {
-
-  # Validate inputs
-  validated <- .validateDensityInputs(
-    object, marker1, marker2, facet_vars,
-    plot_gate, gate_type, margin_density,
+    facet_vars,
+    plot_gate,
+    gate_type,
+    margin_density,
     coord_fixed
   )
 
   # Prepare data
   plot_data <- .prepareDensityData(
-    object, marker1, marker2, facet_vars,
-    grid_n, scale_density, layer, ...
+    object,
+    marker1,
+    marker2,
+    facet_vars,
+    grid_n,
+    scale_density,
+    layer,
+    ...
   )
 
   # Create base plot
   gg <- .createBasePlot(
-    plot_data, pt_size, alpha, colors,
-    validated$coord_fixed
+    plot_data,
+    pt_size,
+    alpha,
+    colors,
+    validated_inputs$coord_fixed
   )
 
   # Add faceting
   if (!is.null(facet_vars)) {
     if (length(facet_vars) == 1) {
-      gg <- gg + ggplot2::facet_grid(rows = vars(!!rlang::sym(facet_vars)))
+      gg <- gg + facet_grid(rows = vars(!!rlang::sym(facet_vars)))
     } else {
-      gg <- gg + ggplot2::facet_grid(
-        rows = vars(!!rlang::sym(facet_vars[1])),
-        cols = vars(!!rlang::sym(facet_vars[2]))
-      )
+      gg <- gg +
+        facet_grid(
+          rows = vars(!!rlang::sym(facet_vars[1])),
+          cols = vars(!!rlang::sym(facet_vars[2]))
+        )
     }
   }
 
@@ -426,9 +658,9 @@ DensityScatterPlot <- function(
   }
 
   # Add marginal density
-  if (validated$margin_density) {
+  if (validated_inputs$margin_density) {
     gg <- .addMarginalDensity(gg, plot_data)
   }
 
-return(gg)
+  return(gg)
 }
