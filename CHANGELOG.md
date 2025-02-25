@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Updates
-- `DensityScatterPlot` can now create quadrant gates by passing "quadrant" as a gate type in `plot_gate`.
+- `DensityScatterPlot` can now draw `rectangle` or `quadrant` gates by selecting the appropriate `gate_type` argument.
 
 ## [0.12.1] - 2025-01-21
 
