@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 ### Updates
-- `DensityScatterPlot` can now draw `rectangle` or `quadrant` gates by selecting the appropriate `gate_type` argument.
+- `DensityScatterPlot` can now draw `rectangle` or `quadrant` gates by selecting the appropriate `gate_type` argument. Additionally, gate annotation aesthetics can now be customized using `annotation_params`.
 
 ## [0.12.1] - 2025-01-21
 
@@ -18,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Updated ".lintr" rules to handle return rule added in lintr 3.2.0.
 - Updated deprecated v3 of GitHub Action `upload-artifact` to v4.
 - Swapped `zip::unzip` with `utils::unzip` in `ReadMPX_counts`
-- `DensityScatterPlot` now accepts an additional argument `annotation_param` to specify gate annotation aesthetics.
 
 ## [0.12.0] - 2025-01-16
 
