@@ -1,3 +1,148 @@
+#' Validate inputs for density scatter plot
+#'
+#' @param object A Seurat object
+#' @param marker1 Name of first marker
+#' @param marker2 Name of second marker
+#' @param facet_vars Variables to use for faceting
+#' @param plot_gate Gate information for plotting
+#' @param gate_type Type of gate ("rectangle" or "quadrant")
+#' @param margin_density Whether to add marginal density plots
+#' @param coord_fixed Whether to use fixed coordinate ratio
+#' @param grid_n Number of grid points for density estimation
+#' @param scale_density Whether to scale density values
+#' @param pt_size Point size for plotting
+#' @param alpha Point transparency
+#' @param layer Layer to fetch data from
+#' @param annotation_params Parameters for gate annotations
+#' @return List with validated margin_density and coord_fixed values
+#'
+#' @noRd
+#' @keywords internal
+#'
+.validateDensityInputs <- function(
+  object,
+  marker1,
+  marker2,
+  facet_vars,
+  plot_gate,
+  gate_type = NULL,
+  margin_density,
+  coord_fixed,
+  grid_n,
+  scale_density,
+  pt_size,
+  alpha,
+  layer = NULL,
+  annotation_params = NULL
+) {
+  # Basic object validation
+  assert_class(object, "Seurat")
+
+  # Marker validation
+  assert_single_value(marker1, type = "string")
+  assert_single_value(marker2, type = "string")
+  assert_x_in_y(marker1, rownames(object))
+  assert_x_in_y(marker2, rownames(object))
+
+  # Numeric parameter validation
+  assert_single_value(grid_n, type = "integer")
+  assert_single_value(pt_size, type = "numeric")
+  assert_single_value(alpha, type = "numeric")
+
+  # Boolean parameter validation
+  assert_single_value(scale_density, type = "bool")
+  assert_single_value(margin_density, type = "bool")
+  assert_single_value(coord_fixed, type = "bool")
+
+  # Layer validation
+  assert_single_value(layer, type = "string", allow_null = TRUE)
+
+  # Facet variable checks
+  if (!is.null(facet_vars)) {
+    assert_vector(facet_vars, type = "character", n = 1, allow_null = TRUE)
+    assert_max_length(facet_vars, n = 2, allow_null = TRUE)
+
+    # Check each facet variable exists in the data
+    for (facet_var in facet_vars) {
+      assert_col_in_data(facet_var, object[[]], allow_null = TRUE)
+    }
+  }
+
+  # Gate and annotation validation
+  if (!is.null(annotation_params)) {
+    assert_class(annotation_params, "list")
+  }
+
+  if (!is.null(plot_gate)) {
+    assert_class(plot_gate, c("data.frame", "tbl_df"))
+
+    if (is.null(gate_type)) {
+      cli::cli_abort(
+        "{.code gate_type} must be specified when {.code plot_gate} is provided"
+      )
+    }
+
+    if (!gate_type[1] %in% c("rectangle", "quadrant")) {
+      cli::cli_abort(c(
+        "Invalid gate type provided.",
+        "i" = "'gate_type' must be one of: {.code rectangle}, {.code quadrant}",
+        "x" = "You provided: {.val {gate_type[1]}}"
+      ))
+    }
+
+    gate_type <- match.arg(gate_type, choices = c("rectangle", "quadrant"))
+
+    # Validate required columns based on gate type
+    if (gate_type == "rectangle") {
+      assert_col_in_data("xmin", plot_gate)
+      assert_col_in_data("xmax", plot_gate)
+      assert_col_in_data("ymin", plot_gate)
+      assert_col_in_data("ymax", plot_gate)
+    } else {
+      assert_col_in_data("x", plot_gate)
+      assert_col_in_data("y", plot_gate)
+    }
+
+    # Check for invalid columns in plot_gate
+    allowed_cols <- switch(
+      gate_type,
+      "rectangle" = c("xmin", "xmax", "ymin", "ymax"),
+      "quadrant" = c("x", "y")
+    )
+    check <- !names(plot_gate) %in% c(allowed_cols, facet_vars)
+    if (sum(check) > 0) {
+      cli::cli_abort(
+        c(
+          "i" = "{.code plot_gate} can only contain gate-specific columns and faceting variables",
+          "x" = "The following columns are not allowed: ",
+          " " = "{.val {names(plot_gate)[check]}}"
+        )
+      )
+    }
+  }
+
+  # Compatibility checks
+  if (!is.null(facet_vars) && isTRUE(margin_density)) {
+    cli::cli_alert_warning(
+      "Marginal density ({.code margin_density = TRUE}) is not supported with faceting.
+      Setting {.code margin_density = FALSE}"
+    )
+    margin_density <- FALSE
+  }
+
+  if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
+    cli::cli_alert_warning(
+      "Setting {.code coord_fixed = FALSE} for compatibility with {.code margin_density = TRUE}"
+    )
+    coord_fixed <- FALSE
+  }
+
+  return(list(
+    margin_density = margin_density,
+    coord_fixed = coord_fixed
+  ))
+}
+
 #' Get density of points in 2 dimensions.
 #'
 #' Calculate the kernel density of points in 2 dimensions.
@@ -11,15 +156,6 @@
 #' @noRd
 #' @keywords internal
 #'
-#' @examples
-#'
-#' library(pixelatorR)
-#'
-#' x <- rnorm(1000)
-#' y <- rnorm(1000)
-#'
-#' get_density(x, y, n = 100)
-#'
 .get2Ddensity <- function(x, y, n = 500, ...) {
   if (!requireNamespace("MASS", quietly = TRUE)) {
     cli::cli_abort("Package {.pkg MASS} must be installed to use this function")
@@ -29,105 +165,6 @@
   x_idx <- findInterval(x, dens_grid$x)
   y_idx <- findInterval(y, dens_grid$y)
   return(dens_grid$z[cbind(x_idx, y_idx)])
-}
-
-#' Validate inputs for density scatter plot
-#'
-#' @param object A Seurat object
-#' @param marker1 Name of first marker
-#' @param marker2 Name of second marker
-#' @param facet_vars Variables to use for faceting
-#' @param plot_gate Gate information for plotting
-#' @param gate_type Type of gate ("rectangle" or "quadrant")
-#' @param margin_density Whether to add marginal density plots
-#' @param coord_fixed Whether to use fixed coordinate ratio
-#' @return List with validated margin_density and coord_fixed values
-#'
-#' @noRd
-#' @keywords internal
-.validateDensityInputs <- function(
-  object,
-  marker1,
-  marker2,
-  facet_vars,
-  plot_gate,
-  gate_type = NULL,
-  margin_density,
-  coord_fixed
-) {
-  # Basic object validation
-  if (!inherits(object, "Seurat")) {
-    cli::cli_abort("{.code object} must be a Seurat object")
-  }
-
-  # Marker validation
-  if (!marker1 %in% rownames(object)) {
-    cli::cli_abort("{.val {marker1}} not found in Seurat object")
-  }
-  if (!marker2 %in% rownames(object)) {
-    cli::cli_abort("{.val {marker2}} not found in Seurat object")
-  }
-
-  # Facet variable checks
-  if (!is.null(facet_vars)) {
-    missing_facets <- facet_vars[!facet_vars %in% colnames(object[[]])]
-    if (length(missing_facets) > 0) {
-      cli::cli_abort(c(
-        "Missing facet variables in Seurat object:",
-        "x" = "{.val {missing_facets}}"
-      ))
-    }
-
-    if (length(facet_vars) > 2) {
-      cli::cli_abort("Maximum 2 facet variables supported")
-    }
-  }
-
-  # Gate validation
-  if (!is.null(plot_gate)) {
-    if (is.null(gate_type)) {
-      cli::cli_abort(
-        "{.code gate_type} must be specified when using {.code plot_gate}"
-      )
-    }
-
-    # Validate gate type with proper default handling
-    gate_type <- match.arg(gate_type, choices = c("rectangle", "quadrant"))
-
-    required_cols <- switch(
-      gate_type,
-      "rectangle" = c("xmin", "xmax", "ymin", "ymax"),
-      "quadrant" = c("x", "y")
-    )
-
-    missing_cols <- setdiff(required_cols, colnames(plot_gate))
-    if (length(missing_cols) > 0) {
-      cli::cli_abort(c(
-        "Missing required columns in {.code plot_gate}:",
-        "x" = "{.val {missing_cols}}"
-      ))
-    }
-  }
-
-  # Compatibility checks
-  if (!is.null(facet_vars) && isTRUE(margin_density)) {
-    cli::cli_alert_warning(
-      "Marginal density plots disabled when using faceting"
-    )
-    margin_density <- FALSE
-  }
-
-  if (isTRUE(coord_fixed) && isTRUE(margin_density)) {
-    cli::cli_alert_warning(
-      "Disabling fixed coordinates for marginal density compatibility"
-    )
-    coord_fixed <- FALSE
-  }
-
-  return(list(
-    margin_density = margin_density,
-    coord_fixed = coord_fixed
-  ))
 }
 
 #' Prepare data for density scatter plot
@@ -154,7 +191,7 @@
   layer,
   ...
 ) {
-  plot_data <- Seurat::FetchData(
+  plot_data <- FetchData(
     object,
     vars = c(facet_vars, marker1, marker2),
     layer = layer
@@ -225,6 +262,9 @@
 #' @param gate_type Type of gate ("rectangle" or "quadrant")
 #' @param facet_vars Variables used for faceting
 #' @param annotation_params Parameters for gate annotation
+#' @importFrom dplyr inner_join group_modify rowwise
+#' @importFrom tidyr crossing
+#' @importFrom ggplot2 layer_scales
 #' @return A ggplot object with gate annotation
 #'
 #' @noRd
@@ -260,18 +300,18 @@
   plot_data <- gg$data
   if (!is.null(facet_vars)) {
     plot_data <- plot_data %>%
-      group_by(!!!rlang::syms(facet_vars))
+      group_by(!!!syms(facet_vars))
   }
 
   # Calculate points inside gates for each facet group
   gate_data <- gate_data %>%
-    group_by(!!!rlang::syms(facet_vars)) %>%
+    group_by(!!!syms(facet_vars)) %>%
     group_modify(function(.x, .y) {
       # Get the current facet's data by filtering based on group keys
       current_data <- if (!is.null(facet_vars)) {
         filter_conds <- lapply(facet_vars, function(var) {
-          quo <- rlang::sym(var)
-          rlang::quo(!!quo == .y[[var]])
+          facet_var <- sym(var)
+          quo(!!facet_var == .y[[var]])
         })
         plot_data %>%
           filter(!!!filter_conds)
@@ -293,7 +333,7 @@
           )
       } else {
         .x %>%
-          tidyr::crossing(
+          crossing(
             quadrant = c("top_left", "top_right", "bottom_left", "bottom_right")
           ) %>%
           rowwise() %>%
@@ -608,7 +648,13 @@ DensityScatterPlot <- function(
     plot_gate,
     gate_type,
     margin_density,
-    coord_fixed
+    coord_fixed,
+    grid_n,
+    scale_density,
+    pt_size,
+    alpha,
+    layer,
+    annotation_params
   )
 
   # Prepare data
@@ -635,12 +681,12 @@ DensityScatterPlot <- function(
   # Add faceting
   if (!is.null(facet_vars)) {
     if (length(facet_vars) == 1) {
-      gg <- gg + facet_grid(rows = vars(!!rlang::sym(facet_vars)))
+      gg <- gg + facet_grid(rows = vars(!!sym(facet_vars)))
     } else {
       gg <- gg +
         facet_grid(
-          rows = vars(!!rlang::sym(facet_vars[1])),
-          cols = vars(!!rlang::sym(facet_vars[2]))
+          rows = vars(!!sym(facet_vars[1])),
+          cols = vars(!!sym(facet_vars[2]))
         )
     }
   }
