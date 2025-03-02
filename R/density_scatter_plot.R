@@ -222,10 +222,10 @@ DensityScatterPlot <- function(
 #' @param alpha Point transparency
 #' @param layer Layer to fetch data from
 #' @param annotation_params Parameters for gate annotations
+#' @param call Environment to use for the error call
 #' @return List with validated margin_density and coord_fixed values
 #'
 #' @noRd
-#' @keywords internal
 #'
 .validateDensityInputs <- function(
   object,
@@ -241,48 +241,55 @@ DensityScatterPlot <- function(
   pt_size,
   alpha,
   layer = NULL,
-  annotation_params = NULL
+  annotation_params = NULL,
+  call = caller_env()
 ) {
   # Basic object validation
-  assert_class(object, "Seurat")
+  assert_class(object, "Seurat", call = call)
 
   # Marker validation
-  assert_single_value(marker1, type = "string")
-  assert_single_value(marker2, type = "string")
-  assert_x_in_y(marker1, rownames(object))
-  assert_x_in_y(marker2, rownames(object))
+  assert_single_value(marker1, type = "string", call = call)
+  assert_single_value(marker2, type = "string", call = call)
+  assert_x_in_y(marker1, rownames(object), call = call)
+  assert_x_in_y(marker2, rownames(object), call = call)
 
   # Numeric parameter validation
-  assert_single_value(grid_n, type = "integer")
-  assert_single_value(pt_size, type = "numeric")
-  assert_single_value(alpha, type = "numeric")
+  assert_single_value(grid_n, type = "integer", call = call)
+  assert_single_value(pt_size, type = "numeric", call = call)
+  assert_single_value(alpha, type = "numeric", call = call)
 
   # Boolean parameter validation
-  assert_single_value(scale_density, type = "bool")
-  assert_single_value(margin_density, type = "bool")
-  assert_single_value(coord_fixed, type = "bool")
+  assert_single_value(scale_density, type = "bool", call = call)
+  assert_single_value(margin_density, type = "bool", call = call)
+  assert_single_value(coord_fixed, type = "bool", call = call)
 
   # Layer validation
-  assert_single_value(layer, type = "string", allow_null = TRUE)
+  assert_single_value(layer, type = "string", allow_null = TRUE, call = call)
 
   # Facet variable checks
   if (!is.null(facet_vars)) {
-    assert_vector(facet_vars, type = "character", n = 1, allow_null = TRUE)
-    assert_max_length(facet_vars, n = 2, allow_null = TRUE)
+    assert_vector(
+      facet_vars,
+      type = "character",
+      n = 1,
+      allow_null = TRUE,
+      call = call
+    )
+    assert_max_length(facet_vars, n = 2, allow_null = TRUE, call = call)
 
     # Check each facet variable exists in the data
     for (facet_var in facet_vars) {
-      assert_col_in_data(facet_var, object[[]], allow_null = TRUE)
+      assert_col_in_data(facet_var, object[[]], allow_null = TRUE, call = call)
     }
   }
 
   # Gate and annotation validation
   if (!is.null(annotation_params)) {
-    assert_class(annotation_params, "list")
+    assert_class(annotation_params, "list", call = call)
   }
 
   if (!is.null(plot_gate)) {
-    assert_class(plot_gate, c("data.frame", "tbl_df"))
+    assert_class(plot_gate, c("data.frame", "tbl_df"), call = call)
 
     if (is.null(gate_type)) {
       cli::cli_abort(
@@ -302,13 +309,13 @@ DensityScatterPlot <- function(
 
     # Validate required columns based on gate type
     if (gate_type == "rectangle") {
-      assert_col_in_data("xmin", plot_gate)
-      assert_col_in_data("xmax", plot_gate)
-      assert_col_in_data("ymin", plot_gate)
-      assert_col_in_data("ymax", plot_gate)
+      assert_col_in_data("xmin", plot_gate, call = call)
+      assert_col_in_data("xmax", plot_gate, call = call)
+      assert_col_in_data("ymin", plot_gate, call = call)
+      assert_col_in_data("ymax", plot_gate, call = call)
     } else {
-      assert_col_in_data("x", plot_gate)
-      assert_col_in_data("y", plot_gate)
+      assert_col_in_data("x", plot_gate, call = call)
+      assert_col_in_data("y", plot_gate, call = call)
     }
 
     # Check for invalid columns in plot_gate
@@ -362,7 +369,6 @@ DensityScatterPlot <- function(
 #' @return The density within each square.
 #'
 #' @noRd
-#' @keywords internal
 #'
 .get2Ddensity <- function(x, y, n = 500, ...) {
   if (!requireNamespace("MASS", quietly = TRUE)) {
@@ -388,7 +394,7 @@ DensityScatterPlot <- function(
 #' @return A data frame with density values
 #'
 #' @noRd
-#' @keywords internal
+#'
 .prepareDensityData <- function(
   object,
   marker1,
@@ -436,7 +442,6 @@ DensityScatterPlot <- function(
 #' @return A ggplot object
 #'
 #' @noRd
-#' @keywords internal
 #'
 .createBasePlot <- function(plot_data, pt_size, alpha, colors, coord_fixed) {
   gg <- ggplot(
@@ -473,7 +478,6 @@ DensityScatterPlot <- function(
 #' @return A ggplot object with gate annotation
 #'
 #' @noRd
-#' @keywords internal
 #'
 .addGate <- function(gg, plot_gate, gate_type, facet_vars, annotation_params) {
   # Join gate data with facet metadata
@@ -660,7 +664,6 @@ DensityScatterPlot <- function(
 #' @return A ggplot object with marginal density plots
 #'
 #' @noRd
-#' @keywords internal
 #'
 .addMarginalDensity <- function(gg, plot_data) {
   x_dens <- ggplot(plot_data, aes(x = marker1)) +
