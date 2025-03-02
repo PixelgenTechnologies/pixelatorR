@@ -371,9 +371,7 @@ DensityScatterPlot <- function(
 #' @noRd
 #'
 .get2Ddensity <- function(x, y, n = 500, ...) {
-  if (!requireNamespace("MASS", quietly = TRUE)) {
-    cli::cli_abort("Package {.pkg MASS} must be installed to use this function")
-  }
+  expect_MASS()
 
   dens_grid <- MASS::kde2d(x, y, n = n, ...)
   x_idx <- findInterval(x, dens_grid$x)
