@@ -510,48 +510,36 @@ DensityScatterPlot <- function(
   # Calculate points inside gates for each facet group
   gate_data <- gate_data %>%
     group_by(!!!syms(facet_vars)) %>%
-    group_modify(function(.x, .y) {
-      # Get the current facet's data by filtering based on group keys
-      current_data <- if (!is.null(facet_vars)) {
-        filter_conds <- lapply(facet_vars, function(var) {
-          facet_var <- sym(var)
-          quo(!!facet_var == .y[[var]])
-        })
-        plot_data %>%
-          filter(!!!filter_conds)
-      } else {
-        plot_data
-      }
-
+    group_modify(function(group_data, group_keys) {
       if (gate_type == "rectangle") {
-        .x %>%
+        group_data %>%
           rowwise() %>%
           mutate(
             n_inside = sum(
-              current_data$marker1 >= xmin &
-                current_data$marker1 <= xmax &
-                current_data$marker2 >= ymin &
-                current_data$marker2 <= ymax
+              plot_data$marker1 >= xmin &
+                plot_data$marker1 <= xmax &
+                plot_data$marker2 >= ymin &
+                plot_data$marker2 <= ymax
             ),
-            total = nrow(current_data)
+            total = nrow(plot_data)
           )
       } else {
-        .x %>%
+        group_data %>%
           crossing(
             quadrant = c("top_left", "top_right", "bottom_left", "bottom_right")
           ) %>%
           rowwise() %>%
           mutate(
-            total = nrow(current_data),
+            total = nrow(plot_data),
             n_inside = sum(
               if (quadrant == "top_left") {
-                current_data$marker1 < x & current_data$marker2 > y
+                plot_data$marker1 < x & plot_data$marker2 > y
               } else if (quadrant == "top_right") {
-                current_data$marker1 >= x & current_data$marker2 > y
+                plot_data$marker1 >= x & plot_data$marker2 > y
               } else if (quadrant == "bottom_left") {
-                current_data$marker1 < x & current_data$marker2 <= y
+                plot_data$marker1 < x & plot_data$marker2 <= y
               } else {
-                current_data$marker1 >= x & current_data$marker2 <= y
+                plot_data$marker1 >= x & plot_data$marker2 <= y
               }
             )
           )
