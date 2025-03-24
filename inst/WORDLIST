@@ -7,7 +7,6 @@ CellGraphs
 Colocalization
 ColocalizationScores
 Commun
-DCA
 DGraph
 DOI
 Dahlberg
@@ -29,6 +28,7 @@ ORCID
 Ord
 PBMCs
 PMDS
+PNA
 PXL
 Pixelator
 Pixelgen
@@ -39,9 +39,9 @@ SCSP
 SeuratObject
 Thiagarajan
 Tsang
+UEIs
 UMAP
 UMIs
-UPIA
 UPIa
 Uropod
 adata
@@ -57,6 +57,7 @@ denoised
 denoising
 drl
 dsb
+duckdb
 edgelist
 edgelists
 et
@@ -64,12 +65,12 @@ fdr
 ggplot
 gi
 gstari
+hjust
 hochberg
 holm
 hommel
 isotype
 json
-kde
 kk
 linegraph
 linegraphs
@@ -95,14 +96,17 @@ sampleID
 th
 tibble
 tidyverse
+uei
+umi
 undirected
 upia
 upias
 upib
 uropod
-viridis
+vjust
 wpmds
 xmax
 xmin
 ymax
 ymin
+zstd

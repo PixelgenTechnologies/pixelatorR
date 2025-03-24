@@ -121,6 +121,7 @@ DefaultAssay(seur) <- "polarization"
 }
 \seealso{
 Other Spatial metrics conversion methods: 
-\code{\link{ColocalizationScoresToAssay}()}
+\code{\link{ColocalizationScoresToAssay}()},
+\code{\link{ProximityScoresToAssay}()}
 }
 \concept{Spatial metrics conversion methods}

@@ -38,7 +38,9 @@ Imports:
     fs,
     pbapply,
     jsonlite,
-    lifecycle
+    lifecycle,
+    R6,
+    DBI
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -55,11 +57,15 @@ Suggests:
     mclust,
     lintr,
     styler,
-    zip
+    zip,
+    dtplyr,
+    data.table
 Collate: 
     'generics.R'
     'CellGraph.R'
     'CellGraphAssay.R'
+    'lazy_load_tables.R'
+    'PNAAssay.R'
     'aaa.R'
     'abundance_colocalization_plot.R'
     'abundance_normalization.R'
@@ -72,6 +78,8 @@ Collate:
     'differential_abundance_analysis.R'
     'differential_colocalization_analysis.R'
     'differential_polarity_analysis.R'
+    'differential_proximity_analysis.R'
+    'duckdb_methods.R'
     'extdata.R'
     'global_options.R'
     'graph_analysis.R'
@@ -82,7 +90,8 @@ Collate:
     'join_layers.R'
     'keep_largest_component.R'
     'load_cell_graphs.R'
-    'load_data.R'
+    'load_data_mpx.R'
+    'load_data_pna.R'
     'load_layouts.R'
     'local_G.R'
     'molecule_rank_plot.R'

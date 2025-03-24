@@ -192,6 +192,7 @@ dca_markers
 }
 \seealso{
 Other DA-methods: 
+\code{\link{DifferentialProximityAnalysis}()},
 \code{\link{RunDAA}()},
 \code{\link{RunDPA}()}
 }

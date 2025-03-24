@@ -1,17 +1,20 @@
 # Declarations used in package check
 globalVariables(
   names = c(
-    "id_map", "component_new", "tau", "tau_type", "umi_per_upia",
-    "upia1", "upia2", "component", "rn", "x", "y", "z", "name", "type",
-    "g", "from", "to", "node_type", "id", "layout", "pearson_z",
-    "p", "p.value", ".", "original_id", "current_id", "graph_projection",
-    "label", "in_gate", "dens", "xmax", "xmin", "ymax", "ymin", "marker_x",
-    "marker_y", "val", ".x", "value_x", "value_y", "bi_prob", "pxl_file",
-    "value", "marker_1", "marker_2", "modality", "mixture_component",
-    "morans_z", "upia", "upib", "marker", "n", "norm_factor", "nodes",
-    "group", "molecules", "frequency", "ref_n", "target_n", "p_adj",
-    "p_val", "p_val_adj", "pct.1", "pct.2", "quadrant", "n_inside",
-    "total", "x_label", "y_label", "hjust", "vjust", "marker1", "marker2"
+    ".", ".x", "bi_prob", "component", "component_new", "current_id",
+    "dens", "frequency", "from", "g", "graph_projection", "group",
+    "hjust", "id", "id_map", "in_gate", "join_count", "join_count_expected_mean",
+    "label", "layout", "marker", "marker_1", "marker_2", "marker_x",
+    "marker_y", "marker1", "marker2", "med_ref", "med_tgt", "mixture_component",
+    "modality", "molecules", "morans_z", "n", "n_inside", "n_ref",
+    "n_tgt", "name", "node_type", "nodes", "norm_factor", "nties",
+    "nties_const", "original_id", "p", "p_adj", "p_val", "p_val_adj",
+    "p.value", "pct.1", "pct.2", "pearson_z", "pxl_file", "quadrant",
+    "r", "ref_n", "rn", "rs_ref", "rs_tgt", "sigma", "target_n",
+    "tau", "tau_type", "to", "total", "type", "u", "umi_per_upia",
+    "upia", "upia1", "upia2", "upib", "val", "value", "value_x",
+    "value_y", "vjust", "x", "x_label", "xmax", "xmin", "y", "y_label",
+    "ymax", "ymin", "z"
   ),
   package = "pixelatorR",
   add = TRUE
@@ -79,4 +82,8 @@ expect_Seurat <- function(...) {
 
 expect_zip <- function(...) {
   rlang::check_installed("zip", ...)
+}
+
+expect_dtplyr <- function(...) {
+  rlang::check_installed("dtplyr", ...)
 }

@@ -917,3 +917,266 @@ RestorePaths <- function(
 ) {
   UseMethod(generic = "RestorePaths", object = object)
 }
+
+#' Differential analysis of proximity scores
+#'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Runs differential analysis (Running Wilcoxon rank-sum test) on proximity scores
+#' generated with the \code{Pixelator} data processing pipeline.
+#'
+#' If you are working with a \code{Seurat} object created with pixelatorR that contains
+#' a \code{\link{CellGraphAssay}}, the proximity scores are accessed directly from
+#' the \code{\link{CellGraphAssay}} (see \code{ProximityScores}).
+#'
+#' The input object should contain a \code{contrast_column} (character vector or factor)
+#' that includes information about the groups to compare. A typical example is a column
+#' with sample labels, for instance: "control", "stimulated1", "stimulated2". If the input
+#' object is a \code{Seurat} object, the \code{contrast_column} should be available in
+#' the \code{meta.data} slot. For those familiar with \code{FindMarkers} from Seurat,
+#' \code{contrast_column} is equivalent to the \code{group.by} parameter.
+#'
+#' The \code{targets} parameter specifies a character vector with the names of the groups
+#' to compare \code{reference}. \code{targets} can be a single group name or a vector of
+#' group names while \code{reference} can only refer to a single group. Both \code{targets}
+#' and \code{reference} should be present in the \code{contrast_column}. These parameters
+#' are similar to the \code{ident.1} and \code{ident.2} parameters in \code{FindMarkers}.
+#'
+#' @section Additional groups:
+#' The test is always computed between \code{targets} and \code{reference}, but it is possible
+#' to add additional grouping variables with \code{group_vars}. If \code{group_vars} is used,
+#' each comparison is split into groups defined by the \code{group_vars}. For instance, if we
+#' have annotated cells into cell type populations and saved these annotations in a \code{meta.data}
+#' column called "cell_type", we can pass "cell_type" to \code{group_vars="cell_type"} to split
+#' tests across each cell type.
+#'
+#' @section Types of comparisons:
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with molecular
+#' pixelation data. \code{seurat_object} contains a \code{meta.data} column called "sampleID"
+#' that holds information about what samples the components originated from. This column could have
+#' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
+#' called "cell_type" that holds information about the cell type identity of each component.
+#'
+#' 1. If we want to compare the "stimulated1" group to the "control" group:
+#' \preformatted{
+#' dp_markers <- DifferentialProximityAnalysis(
+#'    object = seurat_object,
+#'    contrast_column = "sampleID",
+#'    reference = "control",
+#'    targets = "stimulated1"
+#' )
+#' }
+#'
+#' 2. If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group:
+#' \preformatted{
+#' dp_markers <- DifferentialProximityAnalysis(
+#'   object = seurat_object,
+#'   contrast_column = "sampleID",
+#'   reference = "control",
+#'   targets = c("stimulated1", "stimulated2")
+#' )
+#' }
+#'
+#' 3. If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group, and split
+#' the tests by cell type:
+#' \preformatted{
+#' dp_markers <- DifferentialProximityAnalysis(
+#'    object = seurat_object,
+#'    contrast_column = "sampleID",
+#'    reference = "control",
+#'    targets = c("stimulated1", "stimulated2"),
+#'    group_vars = "cell_type"
+#' )
+#' }
+#'
+#' @concept DA
+#' @family DA-methods
+#'
+#' @param object An object containing proximity scores
+#' @param contrast_column The name of the column where the group labels are stored.
+#' This column must include \code{target} and \code{reference}.
+#' @param targets The names of the target groups. These groups will be compared to the reference group.
+#' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
+#' \code{reference} will be compared to the \code{reference} group.
+#' @param reference The name of the reference group
+#' @param group_vars An optional character vector with column names to group the tests by.
+#' @param proximity_metric The proximity metric to use. Any numeric data column in the proximity score table
+#' can be selected. The default is "pearson_z".
+#' @param metric_type One of "all", "self" or "cross". If "all", all pairwise comparisons are considered.
+#' If "self", only protein pairs of the same type are considered. If "cross", protein pairs of different
+#' type are considered.
+#' @param backend One of "dplyr" or "data.table". The latter requires the \code{dtplyr} package to be installed.
+#' @param min_n_obs Minimum number of observations allowed in a group. Target groups with less
+#' observations than \code{min_n_obs} will be skipped.
+#' @param p_adjust_method One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
+#' (see \code{?p.adjust} for details)
+#' @param verbose Print messages
+#' @param ... Not yet implemented
+#'
+#' @rdname DifferentialProximityAnalysis
+#'
+#' @return A \code{tbl_df} object with test results
+#'
+#' @export
+#'
+DifferentialProximityAnalysis <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "DifferentialProximityAnalysis", object = object)
+}
+
+#' Convert objects to a \code{\link{PNAAssay5}}
+#'
+#' @param x An object to convert to class \code{\link{PNAAssay5}}
+#' @param ... Arguments passed to other methods
+#' @rdname as.PNAAssay5
+#' @export as.PNAAssay5
+as.PNAAssay5 <- function(
+  x,
+  ...
+) {
+  UseMethod(generic = "as.PNAAssay5", object = x)
+}
+
+#' Convert objects to a \code{\link{PNAAssay}}
+#'
+#' @param x An object to convert to class \code{\link{PNAAssay}}
+#' @param ... Arguments passed to other methods
+#' @rdname as.PNAAssay
+#' @export as.PNAAssay
+as.PNAAssay <- function(
+  x,
+  ...
+) {
+  UseMethod(generic = "as.PNAAssay", object = x)
+}
+
+#' ProximityScores
+#'
+#' Get and set proximity scores for a \code{\link{PNAAssay}},
+#' \code{\link{PNAAssay5}} or a \code{Seurat} object
+#'
+#' @param object An object with polarization scores
+#' @param ... Not implemented
+#'
+#' @rdname ProximityScores
+#' @family spatial metrics
+#'
+#' @return \code{ProximityScores}: Proximity scores
+#'
+#' @export
+#'
+ProximityScores <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ProximityScores", object = object)
+}
+
+#' @param value A \code{tbl_df} with proximity scores
+#'
+#' @rdname ProximityScores
+#'
+#' @return \code{ProximityScores<-}: An object with proximity scores
+#' updated
+#'
+#' @export
+#'
+"ProximityScores<-" <- function(
+  object,
+  ...,
+  value
+) {
+  UseMethod(generic = "ProximityScores<-", object = object)
+}
+
+#' Convert proximity score table to an Assay or Assay5
+#'
+#' @section Behavior:
+#'
+#' Takes an object with proximity scores in long format and returns an
+#' object with proximity scores in a wide format. The proximity score
+#' table contains various spatial metrics along with p-values for each pair of
+#' markers and component.
+#'
+#' The wide format is an array-like object with dimensions (markers_1 * marker_2) x components,
+#' where each cell is filled with a value for a selected spatial metric.
+#'
+#' Note that that observations that are missing from the proximity score table
+#' can be replaced with 0's in the wide array by setting \code{missing_obs_val = 0},
+#' which might be required by various functions in Seurat. However, this may not be
+#' the desired behavior as a value of 0 usually doesn't mean that the observation
+#' is missing.
+#'
+#' Different outputs are returned depending on the input object type:
+#'
+#' \itemize{
+#'    \item{
+#'      \code{tibble/data.frame}: returns a \code{matrix} with marker pairs in rows
+#'      and components in columns
+#'    }
+#'    \item{
+#'      \code{CelGraphAssay}: returns an \code{Assay} or \code{Assay5} with marker
+#'      pairs in rows and  components in columns
+#'    }
+#'    \item{
+#'      \code{Seurat} object: returns the \code{Seurat} object with a new \code{Assay}
+#'      or \code{Assay5} with marker pairs in rows and components in columns
+#'    }
+#' }
+#'
+#' As many methods provided in Seurat operates on \code{Assay}/\code{Assay5}
+#' objects, it can sometimes be convenient to make this conversion if you
+#' wish to use these methods on spatial metrics in the proximity score table.
+#' For instance, if we want to compute a UMAP on the proximity scores with
+#' \code{RunUMAP}, we need the values to be formatted in an \code{Assay}/\code{Assay5}.
+#' This also makes it possible to use various visualization functions such as
+#' \code{VlnPlot} or \code{FeaturePlot} to show the distribution of proximity scores.
+#'
+#' @param object An object with proximity scores
+#' @param values_from A single string defining what column in the proximity score table
+#' to pick values from.
+#' @param missing_obs A numeric value or NA to replace missing observations with. Default
+#' is \code{NA_real_}.
+#' @param return_sparse A logical specifying whether to return a sparse matrix (\code{dgCMatrix}).
+#' @param ... Not yet implemented
+#'
+#' @rdname ProximityScoresToAssay
+#' @family Spatial metrics conversion methods
+#'
+#' @export
+#'
+ProximityScoresToAssay <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ProximityScoresToAssay", object = object)
+}
+
+
+#' Load edgelists
+#'
+#' Get the edgelist(s) from a \code{\link{PNAAssay}},
+#' \code{\link{PNAAssay5}} or a \code{Seurat} object.
+#' The edgelist(s) are stored on disk in the PXL files,
+#' so the method only works if the paths are set correctly
+#' (see \code{?FSMap}).
+#'
+#' @param object An object with polarization scores
+#' @param ... Not implemented
+#'
+#' @rdname Edgelists
+#' @family spatial metrics
+#'
+#' @return \code{Edgelists}: Edgelist(s)
+#'
+#' @export
+#'
+Edgelists <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "Edgelists", object = object)
+}
