@@ -240,22 +240,22 @@ DensityScatterPlot <- function(
 #' @noRd
 #'
 .validateDensityInputs <- function(
-    object,
-    marker1,
-    marker2,
-    facet_vars,
-    plot_gate,
-    gate_type,
-    grid_n,
-    scale_density,
-    margin_density,
-    pt_size,
-    alpha,
-    layer,
-    coord_fixed,
-    annotation_params,
-    colors,
-    call = caller_env()
+  object,
+  marker1,
+  marker2,
+  facet_vars,
+  plot_gate,
+  gate_type,
+  grid_n,
+  scale_density,
+  margin_density,
+  pt_size,
+  alpha,
+  layer,
+  coord_fixed,
+  annotation_params,
+  colors,
+  call = caller_env()
 ) {
   # Basic object validation
   assert_class(object, "Seurat", call = call)
@@ -335,8 +335,7 @@ DensityScatterPlot <- function(
     }
 
     # Check for invalid columns in plot_gate
-    allowed_cols <- switch(
-      gate_type,
+    allowed_cols <- switch(gate_type,
       "rectangle" = c("xmin", "xmax", "ymin", "ymax"),
       "quadrant" = c("x", "y")
     )

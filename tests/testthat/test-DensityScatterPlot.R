@@ -21,17 +21,17 @@ for (assay_version in c("v3", "v5")) {
       ) %>%
         as("dgCMatrix")
     ) %>%
-      AddMetaData(
-        metadata = data.frame(
-          sample = rep(c("A", "B"), each = 1000),
-          sample_type = rep(
-            c("Unstimulated", "Stimulated"),
-            each = 500,
-            times = 2
-          ),
-          row.names = paste0("Cell", 1:2000)
-        )
+    AddMetaData(
+      metadata = data.frame(
+        sample = rep(c("A", "B"), each = 1000),
+        sample_type = rep(
+          c("Unstimulated", "Stimulated"),
+          each = 500,
+          times = 2
+        ),
+        row.names = paste0("Cell", 1:2000)
       )
+    )
 
   test_that("DensityScatterPlot works as expected", {
     # No facetting, no gating
