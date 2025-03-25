@@ -184,6 +184,17 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
+          layer = "counts",
+          plot_gate = rect_gate
+        )
+      )
+
+      expect_no_error(
+        DensityScatterPlot(
+          object,
+          marker1 = "Feature1",
+          marker2 = "Feature2",
+          layer = "counts",
           plot_gate = rect_gate,
           gate_type = "rectangle"
         )
@@ -200,6 +211,7 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
+          layer = "counts",
           plot_gate = quad_gate,
           gate_type = "quadrant"
         )
@@ -218,6 +230,7 @@ for (assay_version in c("v3", "v5")) {
           marker1 = "Feature1",
           marker2 = "Feature2",
           facet_vars = "sample",
+          layer = "counts",
           plot_gate = quad_gate_faceted,
           gate_type = "quadrant"
         )
@@ -229,6 +242,7 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
+          layer = "counts",
           plot_gate = quad_gate,
           gate_type = "quadrant",
           annotation_params = list(
@@ -247,6 +261,7 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
+          layer = "counts",
           plot_gate = tibble(x = 30, y = 40),
           gate_type = "invalid_type"
         )
@@ -258,6 +273,7 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
+          layer = "counts",
           plot_gate = tibble(x = 30, y = 40)
         )
       )
@@ -268,6 +284,7 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
+          layer = "counts",
           plot_gate = tibble(x = 30),
           gate_type = "quadrant"
         )
@@ -279,6 +296,7 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
+          layer = "counts",
           plot_gate = tibble(xmin = 20, xmax = 70),
           gate_type = "rectangle"
         )
@@ -290,6 +308,7 @@ for (assay_version in c("v3", "v5")) {
           object,
           marker1 = "Feature1",
           marker2 = "Feature2",
+          layer = "counts",
           plot_gate = quad_gate,
           gate_type = "quadrant",
           annotation_params = "invalid"
@@ -314,6 +333,24 @@ for (assay_version in c("v3", "v5")) {
         marker1 = "FeatureNotHere",
         marker2 = "Feature2",
         layer = "counts"
+      )
+    )
+    expect_error(
+      DensityScatterPlot(
+        object,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        colors = c("#Not a hex code", "#Not a color name")
+      )
+    )
+    expect_error(
+      DensityScatterPlot(
+        object,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        colors = c("brown")
       )
     )
     expect_error(

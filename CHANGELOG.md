@@ -6,9 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
+- Utility function for asserting valid colors; `assert_valid_color`.
 
 ### Updates
 - `DensityScatterPlot` can now draw `rectangle` or `quadrant` gates by selecting the appropriate `gate_type` argument. Additionally, gate annotation aesthetics can now be customized using `annotation_params`.
+
+### Fixes
+- Fixed bug in `DensityScatterPlot` where the `gate_type` default would lead to an error.
 
 ## [0.12.1] - 2025-01-21
 
