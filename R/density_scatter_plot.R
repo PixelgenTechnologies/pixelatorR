@@ -1,3 +1,12 @@
+# Declarations used in package check
+globalVariables(
+  names = c(
+    "quadrant", "n_inside", "total", "x_label", "y_label", "hjust", "vjust", "marker1", "marker2"
+  ),
+  package = "pixelatorR",
+  add = TRUE
+)
+
 #' Create a density scatter / pseudocolor plot.
 #'
 #' Create a density scatter plot, also known as a pseudocolor plot, of two markers from a Seurat object. The points in
