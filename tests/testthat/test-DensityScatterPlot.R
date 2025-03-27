@@ -196,7 +196,8 @@ for (assay_version in c("v3", "v5")) {
           marker2 = "Feature2",
           layer = "counts",
           plot_gate = rect_gate,
-          gate_type = "rectangle"
+          gate_type = "rectangle",
+          layer = "counts"
         )
       )
 
@@ -213,7 +214,8 @@ for (assay_version in c("v3", "v5")) {
           marker2 = "Feature2",
           layer = "counts",
           plot_gate = quad_gate,
-          gate_type = "quadrant"
+          gate_type = "quadrant",
+          layer = "counts"
         )
       )
 
@@ -232,7 +234,8 @@ for (assay_version in c("v3", "v5")) {
           facet_vars = "sample",
           layer = "counts",
           plot_gate = quad_gate_faceted,
-          gate_type = "quadrant"
+          gate_type = "quadrant",
+          layer = "counts"
         )
       )
 
@@ -245,6 +248,7 @@ for (assay_version in c("v3", "v5")) {
           layer = "counts",
           plot_gate = quad_gate,
           gate_type = "quadrant",
+          layer = "counts",
           annotation_params = list(
             color = "red",
             size = 4,

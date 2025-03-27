@@ -4,10 +4,12 @@
 \name{LoadCellGraphs}
 \alias{LoadCellGraphs}
 \alias{LoadCellGraphs.FileSystemDataset}
-\alias{LoadCellGraphs.tbl_df}
+\alias{LoadCellGraphs.data.frame}
 \alias{LoadCellGraphs.MPXAssay}
 \alias{LoadCellGraphs.CellGraphAssay}
 \alias{LoadCellGraphs.CellGraphAssay5}
+\alias{LoadCellGraphs.PNAAssay}
+\alias{LoadCellGraphs.PNAAssay5}
 \alias{LoadCellGraphs.Seurat}
 \title{Load CellGraphs}
 \usage{
@@ -18,16 +20,18 @@ LoadCellGraphs(object, ...)
   cells,
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
+  data_type = c("PNA", "MPX"),
   chunk_size = 10,
   verbose = TRUE,
   ...
 )
 
-\method{LoadCellGraphs}{tbl_df}(
+\method{LoadCellGraphs}{data.frame}(
   object,
   cells,
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
+  data_type = c("PNA", "MPX"),
   verbose = TRUE,
   ...
 )
@@ -37,7 +41,7 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_layouts = FALSE,
+  add_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -50,7 +54,7 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_layouts = FALSE,
+  add_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -63,9 +67,33 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_layouts = FALSE,
+  add_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
+  cl = NULL,
+  verbose = TRUE,
+  ...
+)
+
+\method{LoadCellGraphs}{PNAAssay}(
+  object,
+  cells = colnames(object),
+  add_marker_counts = TRUE,
+  add_layouts = FALSE,
+  force = FALSE,
+  chunk_size = 1,
+  cl = NULL,
+  verbose = TRUE,
+  ...
+)
+
+\method{LoadCellGraphs}{PNAAssay5}(
+  object,
+  cells = colnames(object),
+  add_marker_counts = TRUE,
+  add_layouts = FALSE,
+  force = FALSE,
+  chunk_size = 1,
   cl = NULL,
   verbose = TRUE,
   ...
@@ -77,7 +105,7 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  load_layouts = FALSE,
+  add_layouts = FALSE,
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -92,15 +120,18 @@ LoadCellGraphs(object, ...)
 
 \item{cells}{A character vector of cell names to load CellGraphs for}
 
-\item{load_as}{Choose how the cell graph should be represented (see details below)}
+\item{load_as}{Choose how the cell graph should be represented. This option has no
+effect when \code{data_type = "PNA"} (see details below)}
 
 \item{add_marker_counts}{Should marker counts be added to the CellGraph objects?}
+
+\item{data_type}{One of "PNA" or "MPX"}
 
 \item{chunk_size}{Length of chunks used to load CellGraphs from edge list.}
 
 \item{verbose}{Print messages}
 
-\item{load_layouts}{Load layouts from the PXL file if available.}
+\item{add_layouts}{Load layouts from the PXL file if available.}
 
 \item{force}{Force load graph(s) if they are already loaded}
 
@@ -157,3 +188,10 @@ down side, linegraphs are much larger and tends to slow down layout computations
 visualizations.
 }
 
+\examples{
+# Read from PNAAssay
+seur_obj <- LoadCellGraphs(pxl_file)
+pna_assay <- LoadCellGraphs(seur_obj[["PNA"]], cells = "3898b03349c6e28d")
+CellGraphs(pna_assay)[["3898b03349c6e28d"]]
+
+}

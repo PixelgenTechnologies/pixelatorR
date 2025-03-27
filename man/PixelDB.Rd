@@ -714,13 +714,19 @@ are stored in the \code{name} column. If \code{components} is \code{NULL}, all
 component marker counts are returned with an additional \code{components} column in
 the resulting table.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_marker_counts(components, verbose = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_marker_counts(
+  components,
+  as_sparse = FALSE,
+  verbose = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{components}}{A vector of component IDs or NULL for all components}
+
+\item{\code{as_sparse}}{Return the marker counts as a sparse matrix}
 
 \item{\code{verbose}}{Print messages}
 }

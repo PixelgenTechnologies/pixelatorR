@@ -122,6 +122,7 @@
 #' @importFrom ggraph geom_node_point
 #' @importFrom ggraph ggraph
 #' @importFrom glue glue
+#' @importFrom glue glue_sql
 #' @importFrom grDevices colorRampPalette
 #' @importFrom grid gpar
 #' @importFrom grid textGrob
