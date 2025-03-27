@@ -428,9 +428,9 @@ PixelDB <- R6Class(
     #'  - uei_count: The number of unique event identifiers (UEIs) supporting the edge
     #'
     components_edgelist = function(
-                                     components,
-                                     umi_data_type = c("int64", "string", "suffixed_string"),
-                                     include_all_columns = FALSE
+      components,
+      umi_data_type = c("int64", "string", "suffixed_string"),
+      include_all_columns = FALSE
     ) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
@@ -545,6 +545,7 @@ PixelDB <- R6Class(
     #' the resulting table.
     #'
     #' @param components A vector of component IDs or NULL for all components
+    #' @param as_sparse Return the marker counts as a sparse matrix
     #' @param verbose Print messages
     #'
     #' @examples
@@ -553,7 +554,7 @@ PixelDB <- R6Class(
     #'
     #' @return A list with \code{tbl_df}'s with the marker counts
     #'
-    components_marker_counts = function(components, verbose = FALSE) {
+    components_marker_counts = function(components, as_sparse = FALSE, verbose = FALSE) {
       self$check_connection()
       assert_vector(components, "character", allow_null = TRUE, n = 1)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
@@ -570,11 +571,7 @@ PixelDB <- R6Class(
           "FROM edgelist ",
           component_filter_sql
         )
-        one_hot_encoding_sql_query <- glue::glue(
-          # Pivot markers to 'one-hot encoding'
-          "WITH marker_counts AS ({sql_query}) PIVOT marker_counts ON marker"
-        )
-        return(one_hot_encoding_sql_query)
+        return(sql_query)
       }
 
       components <- components %||% (self$counts() %>% colnames())
@@ -585,9 +582,20 @@ PixelDB <- R6Class(
         component_query(x) %>%
           DBI::dbGetQuery(private$con, .) %>%
           as_tibble() %>%
-          mutate(across(where(bit64::is.integer64), ~ as.integer(.x)))
+          mutate(across(where(bit64::is.integer64), ~ as.integer(.x))) %>%
+          mutate(n = 1) %>%
+          pivot_wider(names_from = marker, values_from = n, values_fill = 0)
       }) %>%
         set_names(nm = components)
+
+      if (as_sparse) {
+        component_list <- lapply(component_list, function(x) {
+          x %>%
+            data.frame(row.names = 1, check.names = FALSE) %>%
+            as.matrix() %>%
+            as("dgCMatrix")
+        })
+      }
 
       return(component_list)
     },
@@ -610,10 +618,10 @@ PixelDB <- R6Class(
     #' @return Nothing
     #'
     export_parquet = function(
-                                parquet_file,
-                                table_name = c("proximity", "edgelist", "layouts"),
-                                compression = c("snappy", "zstd"),
-                                compression_level = 1L
+      parquet_file,
+      table_name = c("proximity", "edgelist", "layouts"),
+      compression = c("snappy", "zstd"),
+      compression_level = 1L
     ) {
       self$check_connection()
       assert_single_value(parquet_file, "string")
