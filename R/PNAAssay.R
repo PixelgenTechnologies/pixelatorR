@@ -693,8 +693,8 @@ ProximityScores.PNAAssay <- function(
 
     if (lazy) {
       # Copy to federated database to enable join operation
-      copy_to(proximity_scores[[1]]$con, all_counts)
-      all_counts <- tbl(proximity_scores[[1]]$con, "all_counts")
+      copy_to(proximity_scores$src$con, all_counts)
+      all_counts <- tbl(proximity_scores$src$con, "all_counts")
     }
 
     proximity_scores <- proximity_scores %>%
