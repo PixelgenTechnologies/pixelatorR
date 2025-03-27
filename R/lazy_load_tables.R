@@ -78,7 +78,7 @@ globalVariables(
   # Attach the source databases
   for (i in seq_len(nrow(fs_map))) {
     # Attach each PXL file database
-    DBI::dbExecute(con_federated, glue::glue("ATTACH '{fs_map$pxl_file[i]}' AS db{i} (TYPE duckdb)"))
+    DBI::dbExecute(con_federated, glue::glue("ATTACH '{fs_map$pxl_file[i]}' AS db{i} (TYPE duckdb, READ_ONLY)"))
     # Copy the ID map to the federated database
     copy_to(con_federated, fs_map$id_map[[i]] %>% rename(component = original_id), glue::glue("id_map{i}"))
   }

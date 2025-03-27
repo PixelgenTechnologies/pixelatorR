@@ -84,7 +84,8 @@ PixelDB <- R6Class(
       if (inherits(code, "try-error")) {
         cli::cli_abort(
           c(
-            "i" = "The PXL file must be created with Pixelator vx.x.x or later.",
+            "i" = "The PXL file must have been created with Pixelator version x.x.x or later.",
+            "i" = "The PXL file might be blocked by another connection",
             "x" = "Failed to connect to the database."
           )
         )
@@ -180,7 +181,8 @@ PixelDB <- R6Class(
       if (inherits(code, "try-error")) {
         cli::cli_abort(
           c(
-            "i" = "The PXL file appears to be corrupt.",
+            "i" = "The PXL file must have been created with Pixelator version x.x.x or later.",
+            "i" = "The PXL file might be blocked by another connection",
             "x" = "Failed to connect to the database."
           )
         )
