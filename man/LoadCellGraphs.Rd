@@ -190,6 +190,7 @@ visualizations.
 
 \examples{
 # Read from PNAAssay
+pxl_file <- minimal_pna_pxl_file()
 seur_obj <- LoadCellGraphs(pxl_file)
 pna_assay <- LoadCellGraphs(seur_obj[["PNA"]], cells = "3898b03349c6e28d")
 CellGraphs(pna_assay)[["3898b03349c6e28d"]]

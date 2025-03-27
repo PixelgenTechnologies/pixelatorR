@@ -11,9 +11,32 @@ RemoveCellGraphs.MPXAssay <- function(
   return(object)
 }
 
-#' @param assay The name of the target assay
+#' Remove cell graphs from a \code{PNAssay} or \code{PNAssay5} object
 #'
-#' @import rlang
+#' @param object An object with cell graphs
+#' @param ... Additional arguments (not used)
+#'
+#' @rdname RemoveCellGraphs
+#' @method RemoveCellGraphs PNAAssay
+#'
+#' @export
+#'
+RemoveCellGraphs.PNAAssay <- function(
+    object,
+    ...
+) {
+  slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
+  return(object)
+}
+
+#' @rdname RemoveCellGraphs
+#' @method RemoveCellGraphs PNAAssay5
+#'
+#' @export
+#'
+RemoveCellGraphs.PNAAssay5 <- RemoveCellGraphs.PNAAssay
+
+#' @param assay The name of the target assay
 #'
 #' @rdname RemoveCellGraphs
 #' @method RemoveCellGraphs Seurat
@@ -32,10 +55,13 @@ RemoveCellGraphs.Seurat <- function(
     assay <- DefaultAssay(object)
   }
 
-  cg_assay <- object[[assay]]
-  assert_mpx_assay(cg_assay)
-  cg_assay <- RemoveCellGraphs(cg_assay)
+  pixel_assay <- object[[assay]]
+  assert_class(
+    pixel_assay,
+    classes = c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5")
+  )
+  pixel_assay <- RemoveCellGraphs(pixel_assay)
 
-  object[[assay]] <- cg_assay
+  object[[assay]] <- pixel_assay
   return(object)
 }

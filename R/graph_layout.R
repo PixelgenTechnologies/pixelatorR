@@ -309,15 +309,78 @@ ComputeLayout.CellGraphAssay <- ComputeLayout.MPXAssay
 #'
 ComputeLayout.CellGraphAssay5 <- ComputeLayout.MPXAssay
 
+#' @rdname ComputeLayout
+#' @method ComputeLayout PNAAssay
+#'
+#' @export
+#'
+ComputeLayout.PNAAssay <- function(
+  object,
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_name = NULL,
+  dim = 2,
+  normalize_layout = FALSE,
+  project_on_unit_sphere = FALSE,
+  pivots = 100,
+  seed = 123,
+  verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  cl = NULL,
+  ...
+) {
+  # Check cellgraphs
+  cellgraphs <- slot(object, name = "cellgraphs")
+  loaded_graphs <- !sapply(cellgraphs, is.null)
+
+  if (sum(loaded_graphs) == 0) {
+    if (verbose && check_global_verbosity()) {
+      cli_alert_info("No 'cellgraphs' loaded. Returning unmodified object.")
+    }
+    return(object)
+  }
+
+  # Only keep loaded graphs
+  cellgraphs_loaded <- cellgraphs[loaded_graphs]
+
+  if (verbose && check_global_verbosity()) {
+    cli_alert_info("Computing layouts for {length(cellgraphs_loaded)} graphs")
+  }
+
+  # Calculate layout for each cell graph object sequentially
+  cellgraphs_loaded <- pblapply(cellgraphs_loaded, function(g) {
+    g <- ComputeLayout(
+      g,
+      layout_method = layout_method,
+      layout_name = layout_name,
+      dim = dim,
+      normalize_layout = normalize_layout,
+      project_on_unit_sphere = project_on_unit_sphere,
+      pivots = pivots,
+      seed = seed,
+      custom_layout_function = custom_layout_function,
+      custom_layout_function_args = custom_layout_function_args,
+      ...
+    )
+    return(g)
+  }, cl = cl)
+
+  slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- cellgraphs_loaded
+
+  return(object)
+}
+
+#' @rdname ComputeLayout
+#' @method ComputeLayout PNAAssay5
+#' @docType methods
+#' @export
+#'
+ComputeLayout.PNAAssay5 <- ComputeLayout.PNAAssay
+
 
 #' @param assay Name of assay to compute layouts for
 #' @rdname ComputeLayout
 #' @method ComputeLayout Seurat
-#'
-#' @examples
-#'
-#' # Compute layout for a Seurat object
-#' seur <- ComputeLayout(seur, layout_method = "fr")
 #'
 #' @export
 #'
@@ -340,11 +403,14 @@ ComputeLayout.Seurat <- function(
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
 
-  cg_assay <- object[[assay]]
-  assert_mpx_assay(cg_assay)
+  pixel_assay <- object[[assay]]
+  assert_class(
+    pixel_assay,
+    classes = c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5")
+  )
 
   # Check cellgraphs
-  cellgraphs <- slot(cg_assay, name = "cellgraphs")
+  cellgraphs <- slot(pixel_assay, name = "cellgraphs")
   loaded_graphs <- !sapply(cellgraphs, is.null)
 
   if (sum(loaded_graphs) == 0) {
@@ -354,9 +420,9 @@ ComputeLayout.Seurat <- function(
     return(object)
   }
 
-  cg_assay <-
+  pixel_assay <-
     ComputeLayout(
-      cg_assay,
+      pixel_assay,
       layout_method = layout_method,
       layout_name = layout_name,
       dim = dim,
@@ -371,10 +437,9 @@ ComputeLayout.Seurat <- function(
       ...
     )
 
-  object[[assay]] <- cg_assay
+  object[[assay]] <- pixel_assay
   return(object)
 }
-
 
 #' Validate a custom layout function
 #'

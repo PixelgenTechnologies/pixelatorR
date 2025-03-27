@@ -15,6 +15,7 @@
 #' @importFrom cli cli_alert_success
 #' @importFrom cli cli_alert_warning
 #' @importFrom cli cli_div
+#' @importFrom cli cli_end
 #' @importFrom cli cli_h2
 #' @importFrom cli cli_progress_bar
 #' @importFrom cli cli_progress_done

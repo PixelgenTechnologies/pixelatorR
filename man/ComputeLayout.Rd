@@ -8,6 +8,8 @@
 \alias{ComputeLayout.MPXAssay}
 \alias{ComputeLayout.CellGraphAssay}
 \alias{ComputeLayout.CellGraphAssay5}
+\alias{ComputeLayout.PNAAssay}
+\alias{ComputeLayout.PNAAssay5}
 \alias{ComputeLayout.Seurat}
 \title{Compute a graph layout}
 \usage{
@@ -73,6 +75,38 @@ ComputeLayout(object, ...)
 )
 
 \method{ComputeLayout}{CellGraphAssay5}(
+  object,
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_name = NULL,
+  dim = 2,
+  normalize_layout = FALSE,
+  project_on_unit_sphere = FALSE,
+  pivots = 100,
+  seed = 123,
+  verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  cl = NULL,
+  ...
+)
+
+\method{ComputeLayout}{PNAAssay}(
+  object,
+  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_name = NULL,
+  dim = 2,
+  normalize_layout = FALSE,
+  project_on_unit_sphere = FALSE,
+  pivots = 100,
+  seed = 123,
+  verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  cl = NULL,
+  ...
+)
+
+\method{ComputeLayout}{PNAAssay5}(
   object,
   layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
   layout_name = NULL,
@@ -194,10 +228,6 @@ cg <- ComputeLayout(cg, layout_method = "fr")
 
 # Compute layout for a CellGraphAssay
 cg_assay <- ComputeLayout(seur[["mpxCells"]], layout_method = "fr")
-
-
-# Compute layout for a Seurat object
-seur <- ComputeLayout(seur, layout_method = "fr")
 
 }
 \seealso{

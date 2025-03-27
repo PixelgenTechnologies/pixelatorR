@@ -12,9 +12,9 @@ globalVariables(
     "p.value", "pct.1", "pct.2", "pearson_z", "pxl_file", "quadrant",
     "r", "ref_n", "rn", "rs_ref", "rs_tgt", "sigma", "target_n",
     "tau", "tau_type", "to", "total", "type", "u", "umi_per_upia",
-    "upia", "upia1", "upia2", "upib", "val", "value", "value_x",
-    "value_y", "vjust", "x", "x_label", "xmax", "xmin", "y", "y_label",
-    "ymax", "ymin", "z"
+    "umi1", "umi2", "upia", "upia1", "upia2", "upib", "val", "value",
+    "value_x", "value_y", "vjust", "x", "x_label", "xmax", "xmin",
+    "y", "y_label", "ymax", "ymin", "z"
   ),
   package = "pixelatorR",
   add = TRUE

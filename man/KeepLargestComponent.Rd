@@ -35,16 +35,13 @@ Finds connected components of a graph and returns the largest component
 library(pixelatorR)
 library(tidygraph)
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 
 # Read edgelist
 edgelist <- ReadMPX_arrow_edgelist(pxl_file)
 
 # Load graph from edge list and store in a CellGraph object
-cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000217")[[1]]
+cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000217", data_type = "MPX")[[1]]
 cg
 
 # Fetch tbl_graph from CellGraph object
