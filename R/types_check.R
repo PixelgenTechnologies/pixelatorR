@@ -212,7 +212,10 @@ assert_pixel_assay <- function(
   if (!inherits(x, c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))) {
     cli::cli_abort(
       c(
-        "i" = "The selected Assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5', 'PNAAssay', 'PNAAssay5')}} object",
+        "i" = glue::glue(
+          "The selected Assay must be a {.cls {c('CellGraphAssay', ",
+          "'CellGraphAssay5', 'PNAAssay', 'PNAAssay5')}} object"
+        ),
         "x" = "Got a {.cls {class(x)}} object."
       )
     )
