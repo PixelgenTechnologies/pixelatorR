@@ -1,26 +1,38 @@
+mpx_pxl_file <- minimal_mpx_pxl_file()
+pna_pxl_file <- minimal_pna_pxl_file()
+
 for (assay_version in c("v3", "v5")) {
   options(Seurat.object.assay.version = assay_version)
 
-  pxl_file <- system.file("extdata/five_cells",
-    "five_cells.pxl",
-    package = "pixelatorR"
-  )
-  seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
-  seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1])
+  seur_obj_mpx <- ReadMPX_Seurat(mpx_pxl_file, overwrite = TRUE)
+  seur_obj_mpx <- LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1])
+
+  seur_obj_pna <- ReadPNA_Seurat(pna_pxl_file, overwrite = TRUE)
+  seur_obj_pna <- LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1])
 
   test_that("RemoveCellGraphs works for MPXAssay objects", {
     expect_no_error({
-      cg_assay <- RemoveCellGraphs(seur_obj[["mpxCells"]])
+      cg_assay <- RemoveCellGraphs(seur_obj_mpx[["mpxCells"]])
     })
-    classes <- sapply(cg_assay@cellgraphs, class)
-    expect_true(all(classes %in% "NULL"))
+    expect_no_error({
+      pna_assay <- RemoveCellGraphs(seur_obj_pna[["PNA"]])
+    })
+    classes_mpx <- sapply(cg_assay@cellgraphs, class)
+    classes_pna <- sapply(pna_assay@cellgraphs, class)
+    expect_true(all(classes_mpx %in% "NULL"))
+    expect_true(all(classes_pna %in% "NULL"))
   })
 
   test_that("RemoveCellGraphs works for Seurat objects", {
     expect_no_error({
-      seur_cleaned <- RemoveCellGraphs(seur_obj)
+      seur_mpx_cleaned <- RemoveCellGraphs(seur_obj_mpx)
     })
-    classes <- sapply(seur_cleaned@assays[["mpxCells"]]@cellgraphs, class)
-    expect_true(all(classes %in% "NULL"))
+    expect_no_error({
+      seur_pna_cleaned <- RemoveCellGraphs(seur_obj_pna)
+    })
+    classes_mpx <- sapply(seur_mpx_cleaned@assays[["mpxCells"]]@cellgraphs, class)
+    expect_true(all(classes_mpx %in% "NULL"))
+    classes_pna <- sapply(seur_pna_cleaned@assays[["PNA"]]@cellgraphs, class)
+    expect_true(all(classes_pna %in% "NULL"))
   })
 }

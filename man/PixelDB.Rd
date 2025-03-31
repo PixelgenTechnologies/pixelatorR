@@ -109,7 +109,7 @@ db$fetch_table("proximity") \%>\% head()
 # Fetch any table from the database and filter on the fly
 db$fetch_table_subset(
   "proximity",
-  columns_filter = list("component" = c("3898b03349c6e28d", "406b9e5d80941ca0"))
+  columns_filter = list("component" = c("0a45497c6bfbfb22", "2708240b908e2eba"))
 ) \%>\% head()
 
 
@@ -160,7 +160,7 @@ db$run_meta()
 ## ------------------------------------------------
 
 # Fetch edgelists
-db$components_edgelist("3898b03349c6e28d") \%>\% head()
+db$components_edgelist("0a45497c6bfbfb22") \%>\% head()
 
 
 ## ------------------------------------------------
@@ -169,7 +169,7 @@ db$components_edgelist("3898b03349c6e28d") \%>\% head()
 
 # Fetch layouts (NOTE: This will only work if the layouts exist in the database)
 \dontrun{
-db$components_layout("3898b03349c6e28d")[[1]] \%>\% head()
+db$components_layout("0a45497c6bfbfb22")[[1]] \%>\% head()
 }
 
 
@@ -178,7 +178,7 @@ db$components_layout("3898b03349c6e28d")[[1]] \%>\% head()
 ## ------------------------------------------------
 
 # Fetch marker counts
-db$components_marker_counts("3898b03349c6e28d")[[1]][1:3, 1:4]
+db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 
 
 ## ------------------------------------------------
@@ -472,7 +472,7 @@ A \code{data.frame} with the table contents
 \preformatted{# Fetch any table from the database and filter on the fly
 db$fetch_table_subset(
   "proximity",
-  columns_filter = list("component" = c("3898b03349c6e28d", "406b9e5d80941ca0"))
+  columns_filter = list("component" = c("0a45497c6bfbfb22", "2708240b908e2eba"))
 ) \%>\% head()
 
 }
@@ -653,7 +653,7 @@ A \code{data.frame} with the component edgelist:
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch edgelists
-db$components_edgelist("3898b03349c6e28d") \%>\% head()
+db$components_edgelist("0a45497c6bfbfb22") \%>\% head()
 
 }
 \if{html}{\out{</div>}}
@@ -694,7 +694,7 @@ A list with \code{tbl_df}'s with the layout coordinates and optionally marker co
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch layouts (NOTE: This will only work if the layouts exist in the database)
 \dontrun{
-db$components_layout("3898b03349c6e28d")[[1]] \%>\% head()
+db$components_layout("0a45497c6bfbfb22")[[1]] \%>\% head()
 }
 
 }
@@ -738,7 +738,7 @@ A list with \code{tbl_df}'s with the marker counts
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch marker counts
-db$components_marker_counts("3898b03349c6e28d")[[1]][1:3, 1:4]
+db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 
 }
 \if{html}{\out{</div>}}

@@ -268,7 +268,7 @@ PixelDB <- R6Class(
     #' # Fetch any table from the database and filter on the fly
     #' db$fetch_table_subset(
     #'   "proximity",
-    #'   columns_filter = list("component" = c("3898b03349c6e28d", "406b9e5d80941ca0"))
+    #'   columns_filter = list("component" = c("0a45497c6bfbfb22", "2708240b908e2eba"))
     #' ) %>% head()
     #'
     #' @return A \code{data.frame} with the table contents
@@ -416,7 +416,7 @@ PixelDB <- R6Class(
     #'
     #' @examples
     #' # Fetch edgelists
-    #' db$components_edgelist("3898b03349c6e28d") %>% head()
+    #' db$components_edgelist("0a45497c6bfbfb22") %>% head()
     #'
     #' @return A \code{data.frame} with the component edgelist:
     #'  - umi1: A unique ID of the first RCA product
@@ -487,7 +487,7 @@ PixelDB <- R6Class(
     #' @examples
     #' # Fetch layouts (NOTE: This will only work if the layouts exist in the database)
     #' \dontrun{
-    #' db$components_layout("3898b03349c6e28d")[[1]] %>% head()
+    #' db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
     #' }
     #'
     #' @return A list with \code{tbl_df}'s with the layout coordinates and optionally marker counts
@@ -550,7 +550,7 @@ PixelDB <- R6Class(
     #'
     #' @examples
     #' # Fetch marker counts
-    #' db$components_marker_counts("3898b03349c6e28d")[[1]][1:3, 1:4]
+    #' db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
     #'
     #' @return A list with \code{tbl_df}'s with the marker counts
     #'

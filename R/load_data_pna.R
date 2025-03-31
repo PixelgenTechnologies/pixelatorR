@@ -323,7 +323,7 @@ ReadPNA_layouts <- function(
       )
     )
   }
-  layouts <- db$components_layout(cells, add_marker_counts)
+  layouts <- db$components_layout(cells, add_marker_counts, verbose)
 
   return(layouts)
 }
@@ -352,9 +352,9 @@ ReadPNA_layouts <- function(
 #' @export
 #'
 ReadPNA_proximity <- function(
-    pxl_file,
-    calc_log2_ratio = TRUE,
-    verbose = TRUE
+  pxl_file,
+  calc_log2_ratio = TRUE,
+  verbose = TRUE
 ) {
   # Check input parameters
   assert_single_value(pxl_file, type = "string")

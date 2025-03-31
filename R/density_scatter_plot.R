@@ -91,7 +91,8 @@
 #' DensityScatterPlot(
 #'   object,
 #'   marker1 = "Feature1",
-#'   marker2 = "Feature2"
+#'   marker2 = "Feature2",
+#'   layer = "counts"
 #' )
 #'
 #' # Create a density scatter plot with a quadrant gate
@@ -112,7 +113,8 @@
 #'     color = "darkblue",
 #'     size = 4,
 #'     fontface = "bold"
-#'   )
+#'   ),
+#'   layer = "counts"
 #' )
 #'
 #' @export

@@ -52,7 +52,7 @@ Plot2DGraph <- function(
   cells,
   marker = NULL,
   assay = NULL,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
@@ -79,12 +79,9 @@ Plot2DGraph <- function(
   assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select a layout method
-  layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
+  layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds"))
   layout_method_ext <-
     switch(layout_method,
-      "fr" = "Fruchterman Reingold (fr)",
-      "kk" = "Kamada Kawai (kk)",
-      "drl" = "DrL graph layout generator (drl)",
       "pmds" = "pivot MDS (pmds)",
       "wpmds" = "weighted pivot MDS (wpmds)"
     )
@@ -318,7 +315,7 @@ Plot2DGraphM <- function(
   cells,
   markers,
   assay = NULL,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,

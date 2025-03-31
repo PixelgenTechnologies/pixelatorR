@@ -77,6 +77,9 @@ se <- ReadMPX_Seurat(pxl_file)
 
 se_merged <- merge(se, list(se, se, se))
 pxl_file <- fs::path_temp("small.pxl")
+if (fs::file_exists(pxl_file)) {
+  fs::file_delete(pxl_file)
+}
 
 # Export data to a new PXL file
 WriteMPX_pxl_file(se_merged, pxl_file)

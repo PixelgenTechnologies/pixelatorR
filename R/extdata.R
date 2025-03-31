@@ -20,12 +20,9 @@ NULL
 #'
 #' PNA data set of 5 PBMC immune cells
 #'
-#' - 1x CD8 T cell (439026e80f97716f)
-#' - 1x CD4 T cell (406b9e5d80941ca0)
-#' - 1x NK cell (aae9e02d1dd14db5)
-#' - 1x Monocyte (6add95ba33143eca)
-#' - 1x B cell (3898b03349c6e28d)
-#'
+#' - 1x CD16+ Mono cell (0a45497c6bfbfb22)
+#' - 1x pDC cell (2708240b908e2eba)
+#' - 3x CD4 T cell (c3c393e9a17c1981, d4074c845bb62800, efe0ed189cb499fc)
 #'
 #' @name pna_dataset
 #' @family datasets
