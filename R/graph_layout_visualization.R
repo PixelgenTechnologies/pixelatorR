@@ -37,10 +37,7 @@
 #' @examples
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #'
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
@@ -306,10 +303,7 @@ Plot2DGraph <- function(
 #' @examples
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #'
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
@@ -496,16 +490,12 @@ Plot2DGraphM <- function(
 #'
 #' @rdname Plot3DGraph
 #'
-#'
 #' @return A interactive 3D plot of a component graph layout as a \code{plotly} object
 #'
 #' @examples
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #'
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[5])

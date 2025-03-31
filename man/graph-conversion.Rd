@@ -37,6 +37,8 @@ which means that no parallelization is used.}
 An A-node-projected graph
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 A function to create an A node projection graph from an edgelist
 representing a bipartite graph.
 }
@@ -45,7 +47,7 @@ representing a bipartite graph.
 library(pixelatorR)
 library(tibble)
 
-pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
+pxl_file <- minimal_mpx_pxl_file()
 
 # Load edgelist
 el <- ReadMPX_arrow_edgelist(pxl_file)

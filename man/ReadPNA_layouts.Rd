@@ -2,7 +2,7 @@
 % Please edit documentation in R/load_data_pna.R
 \name{ReadPNA_layouts}
 \alias{ReadPNA_layouts}
-\title{Load layouts from a PNA data set PXL file}
+\title{Load layouts from a PNA PXL file}
 \usage{
 ReadPNA_layouts(
   pxl_file,
@@ -12,7 +12,7 @@ ReadPNA_layouts(
 )
 }
 \arguments{
-\item{pxl_file}{Path to a PXL file with a PNA data set}
+\item{pxl_file}{Path to a PXL file containing PNA data}
 
 \item{cells}{A character vector with component IDs. If NULL, all components are loaded.}
 
@@ -26,5 +26,5 @@ A list with one \code{tbl_df} object for each component. Each object contains th
 node IDs and their x, y, and z coordinates.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Load layouts from a PNA PXL file
 }

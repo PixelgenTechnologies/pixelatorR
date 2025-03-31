@@ -1,10 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c("original_id"),
-  package = "pixelatorR",
-  add = TRUE
-)
-
 #' Lazy load merged tables from multiple databases (PXL files)
 #'
 #' @param fs_map A \code{tbl_df} with information about the PXL file paths,

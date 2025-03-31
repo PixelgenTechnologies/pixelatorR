@@ -1,14 +1,4 @@
-# Declarations used in package check
-globalVariables(
-  names = c("read_count", "uei_count"),
-  package = "pixelatorR",
-  add = TRUE
-)
-
-#' Read a count matrix from a PXL file
-#'
-#' @description
-#' `r lifecycle::badge("experimental")`
+#' Read a count matrix from a PXL file with PNA data
 #'
 #' @param pxl_file Path to a PXL file
 #'
@@ -43,9 +33,6 @@ ReadPNA_counts <- function(
 
 
 #' Load data from PNA PXL file into a \code{Seurat} object
-#'
-#' @description
-#' `r lifecycle::badge("experimental")`
 #'
 #' This function can be used to load data from a PXL file, and returns
 #' a \code{Seurat} object.
@@ -209,10 +196,7 @@ ReadPNA_Seurat <- function(
 }
 
 
-#' Read metadata from a PXL file
-#'
-#' @description
-#' `r lifecycle::badge("experimental")`
+#' Read metadata from a PNA PXL file
 #'
 #' @param pxl_file Path to a PXL file
 #'
@@ -248,16 +232,13 @@ ReadPNA_metadata <- function(
   return(meta_data)
 }
 
-#' Load the edge list from a PNA data set PXL file
+#' Load the edge list from a PNA PXL file
 #'
 #' Note that the umi1 and umi2 sequences are encoded as \code{integer64} which
 #' is not natively supported by R. The \code{bit64} package is required to
 #' read these IDs and conversion to \code{integer} or \code{numeric} should
 #' be avoided. It is safer to convert these to character vectors if needed
 #' for downstream processing.
-#'
-#' @description
-#' `r lifecycle::badge("experimental")`
 #'
 #' @param pxl_file Path to a PXL file with a PNA data set
 #' @param cells A character vector with component IDs. If NULL, all components are loaded.
@@ -298,12 +279,9 @@ ReadPNA_edgelist <- function(
   return(el)
 }
 
-#' Load layouts from a PNA data set PXL file
+#' Load layouts from a PNA PXL file
 #'
-#' @description
-#' `r lifecycle::badge("experimental")`
-#'
-#' @param pxl_file Path to a PXL file with a PNA data set
+#' @param pxl_file Path to a PXL file containing PNA data
 #' @param cells A character vector with component IDs. If NULL, all components are loaded.
 #' @param add_marker_counts Logical specifying if marker counts should be added to the
 #' layout table(s).
@@ -351,12 +329,9 @@ ReadPNA_layouts <- function(
 }
 
 
-#' Load the Proximity scores table from a PNA data set PXL file
+#' Load the Proximity scores table from a PNA PXL file
 #'
-#' @description
-#' `r lifecycle::badge("experimental")`
-#'
-#' @param pxl_file Path to a PXL file with a PNA data set
+#' @param pxl_file Path to a PXL file containing PNA data
 #' @param calc_log2_ratio A logical specifying whether to calculate and add
 #' a log2ratio column to the output table. Default is \code{TRUE}
 #' @param verbose Print messages

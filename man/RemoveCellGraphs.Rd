@@ -26,7 +26,7 @@ RemoveCellGraphs(object, ...)
 \item{assay}{The name of the target assay}
 }
 \value{
-An object without CellGraphs
+An object where the elements of the cellgraphs list are set to \code{NULL}
 }
 \description{
 Clears the \code{\link{CellGraph}} objects from the "cellgraphs" slot.

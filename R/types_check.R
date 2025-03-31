@@ -25,6 +25,9 @@
 #' least \code{n} elements.
 #' - \code{assert_class} checks if \code{x} is of a specific class.
 #' - \code{assert_mpx_assay} checks if \code{x} is a \code{CellGraphAssay} or \code{CellGraphAssay5}.
+#' - \code{assert_pna_assay} checks if \code{x} is a \code{PNAAssay} or \code{PNAAssay5}.
+#' - \code{assert_pixel_assay} checks if \code{x} is a \code{CellGraphAssay}, \code{CellGraphAssay5},
+#' \code{PNAAssay} or \code{PNAAssay5}.
 #' - \code{assert_x_in_y} checks if all elements of \code{x} are in \code{y}.
 #' - \code{assert_single_values_are_different} checks if \code{x} and \code{y} are not different strings.
 #' - \code{assert_col_class} checks if column \code{x} in \code{data} is of a specific class.
@@ -170,6 +173,46 @@ assert_mpx_assay <- function(
     cli::cli_abort(
       c(
         "i" = "The selected Assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5')}} object",
+        "x" = "Got a {.cls {class(x)}} object."
+      )
+    )
+  }
+}
+#' @rdname type_check_helpers
+#'
+assert_pna_assay <- function(
+  x,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  if (!inherits(x, c("PNAAssay", "PNAAssay5"))) {
+    cli::cli_abort(
+      c(
+        "i" = "The selected Assay must be a {.cls {c('PNAAssay', 'PNAAssay5')}} object",
+        "x" = "Got a {.cls {class(x)}} object."
+      )
+    )
+  }
+}
+#' @rdname type_check_helpers
+#'
+assert_pixel_assay <- function(
+  x,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  if (!inherits(x, c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))) {
+    cli::cli_abort(
+      c(
+        "i" = "The selected Assay must be a {.cls {c('CellGraphAssay', 'CellGraphAssay5', 'PNAAssay', 'PNAAssay5')}} object",
         "x" = "Got a {.cls {class(x)}} object."
       )
     )

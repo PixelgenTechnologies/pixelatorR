@@ -20,7 +20,7 @@ ReadMPX_colocalization(filename, verbose = TRUE)
 ReadMPX_edgelist(filename, verbose = TRUE)
 }
 \arguments{
-\item{filename}{Path to a .pxl file}
+\item{filename}{Path to a PXL file}
 
 \item{items}{One or several of "colocalization", "polarization", "edgelist"}
 
@@ -31,7 +31,7 @@ Either an object of class \code{tbl_df} or a list of \code{tbl_df}
 objects if multiple \code{items} are selected
 }
 \description{
-\code{ReadMPX_item} reads any number of items from a .pxl file. If multiple
+\code{ReadMPX_item} reads any number of items from a PXL file. If multiple
 items are specified, the output is a list of  \code{tbl_df} objects.
 Otherwise the output is a single \code{tbl_df}. \code{ReadMPX_polarization},
 \code{ReadMPX_colocalization} and \code{ReadMPX_edgelist} are wrappers for
@@ -42,10 +42,7 @@ Otherwise the output is a single \code{tbl_df}. \code{ReadMPX_polarization},
 library(pixelatorR)
 
 # Load example data
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 polarization <- ReadMPX_item(pxl_file, items = "polarization")
 polarization
 

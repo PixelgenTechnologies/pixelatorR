@@ -1,6 +1,6 @@
 #' Read a count matrix from a pxl file
 #'
-#' @param filename Path to a .pxl file
+#' @param filename Path to a PXL file
 #' @param return_list If TRUE, returns a list with the expression matrix and
 #' the output from \code{h5read}
 #' @param verbose Print messages
@@ -13,10 +13,7 @@
 #' library(pixelatorR)
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' counts <- ReadMPX_counts(pxl_file)
 #' counts[1:5, 1:5]
 #'
@@ -31,7 +28,7 @@ ReadMPX_counts <- function(
   assert_file_ext(filename, ext = "pxl")
   assert_file_exists(filename)
 
-  # Reads anndata from a .pxl file by unzipping it into a temporary folder and reading the anndata object within.
+  # Reads anndata from a PXL file by unzipping it into a temporary folder and reading the anndata object within.
   if (verbose && check_global_verbosity()) {
     cli_alert_info("Loading count data from {filename}")
   }
@@ -118,10 +115,7 @@ ReadMPX_counts <- function(
 #' library(pixelatorR)
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #' seur_obj
 #'
@@ -305,13 +299,13 @@ ReadMPX_Seurat <- function(
 
 #' Read an MPX data item
 #'
-#' \code{ReadMPX_item} reads any number of items from a .pxl file. If multiple
+#' \code{ReadMPX_item} reads any number of items from a PXL file. If multiple
 #' items are specified, the output is a list of  \code{tbl_df} objects.
 #' Otherwise the output is a single \code{tbl_df}. \code{ReadMPX_polarization},
 #' \code{ReadMPX_colocalization} and \code{ReadMPX_edgelist} are wrappers for
 #' \code{ReadMPX_item} to read specific items.
 #'
-#' @param filename Path to a .pxl file
+#' @param filename Path to a PXL file
 #' @param items One or several of "colocalization", "polarization", "edgelist"
 #' @param verbose Print messages
 #'
@@ -329,10 +323,7 @@ ReadMPX_Seurat <- function(
 #' library(pixelatorR)
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' polarization <- ReadMPX_item(pxl_file, items = "polarization")
 #' polarization
 #'
@@ -466,10 +457,7 @@ ReadMPX_edgelist <- function(
 #' library(pixelatorR)
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' meta_data <- ReadMPX_metadata(pxl_file)
 #'
 #' # Check pixelator version and sample ID
@@ -536,10 +524,7 @@ ReadMPX_metadata <- function(
 #' library(dplyr)
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' meta_data <- ReadMPX_metadata(pxl_file)
 #'
 #' # Check pixelator version and sample ID
@@ -626,4 +611,131 @@ print.pixelator_metadata <- function(
   if (inherits(check, what = "error")) {
     cli_alert_warning("Failed to remove temporary {type} {tmp_path}")
   }
+}
+
+
+#' Load layouts from an PXL file containing MPX data
+#'
+#' Layouts can be pre-computed with the Pixelator data processing pipeline and
+#' are stored in a hive-styled partitioning in the PXL file. This function reads
+#' the layouts from the PXL file and returns them as a list. Use
+#' \code{\link{inspect_pxl_file}} to check the contents of a PXL file.
+#'
+#' @param filename Path to a PXL file
+#' @param cells A character vector with component IDs. If NULL, all components are loaded.
+#' @param graph_projection The graph projection to load. Default is 'bipartite'. If multiple
+#'  projections are present in the file, only the selected one is loaded.
+#' @param verbose Print messages
+#'
+#' @return A list of lists with the layouts. At the top level, the list is split by
+#' layout. At the second level, the list is split by component. The components are sorted in
+#' the order they appear in the PXL file.
+#'
+#' @export
+#'
+ReadMPX_layouts <- function(
+    filename,
+    cells = NULL,
+    graph_projection = c("bipartite", "Anode", "linegraph", "full"),
+    verbose = TRUE
+) {
+  graph_projection <- match.arg(graph_projection,
+                                choices = c("bipartite", "Anode", "linegraph", "full")
+  )
+
+  # Check file
+  pxl_file_info <- inspect_pxl_file(filename)
+
+  # Check cells
+  assert_vector(cells, type = "character", n = 1, allow_null = TRUE)
+
+  # Check if the file contains layouts
+  if (!"layouts.parquet" %in% pxl_file_info$file_type) {
+    cli::cli_abort(
+      c("x" = "File {.file {filename}} does not contain any layouts.")
+    )
+  }
+
+  # Create temporary directory
+  temp_layout_dir <- .create_unique_temp_dir("temp_layouts")
+
+  # Unzip layout parquet files
+  layout_files <- pxl_file_info$file[[which(pxl_file_info$file_type == "layouts.parquet")]]
+  cells <- cells %||% layout_files$component
+  if (!all(cells %in% layout_files$component)) {
+    cli::cli_abort(
+      c("x" = "File {.file {filename}} does not contain any layouts for all selected {.var cells}.")
+    )
+  }
+  layout_files <- layout_files %>%
+    filter(component %in% cells)
+  utils::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
+
+  # Load hive-styled parquet files
+  coords <- arrow::open_dataset(temp_layout_dir)
+
+  # Check name data type
+  nm_dt <- (coords %>% schema())$GetFieldByName("name")$ToString() %>% stringr::str_remove("name: ")
+  # If the name is int64, convert to character
+  if (nm_dt == "int64") {
+    coords <- coords %>%
+      mutate(name = as.character(name))
+  }
+  coords <- coords %>%
+    select(any_of(c("name", "x", "y", "z", "sample")), component, graph_projection, layout) %>%
+    collect()
+
+  # Handle graph_projections
+  coords_layout_grouped <- coords %>%
+    group_by(graph_projection)
+  coords_layout_grouped_keys <- coords_layout_grouped %>%
+    group_keys()
+
+  # Keep selection graph_projection
+  if (!graph_projection %in% coords_layout_grouped_keys$graph_projection) {
+    cli::cli_abort(
+      c("x" = "Graph projection {.str {graph_projection}} does not exist in {.file {filename}}")
+    )
+  }
+  if (!all(coords_layout_grouped_keys$graph_projection %in% graph_projection)) {
+    coords <- coords %>%
+      filter(graph_projection %in% graph_projection)
+  }
+  coords <- coords %>%
+    select(-graph_projection)
+
+  # Split coordinates by layout
+  coords_layout_grouped <- coords %>%
+    group_by(layout)
+  coords_layout_split <- coords_layout_grouped %>%
+    group_split() %>%
+    set_names(nm = group_keys(coords_layout_grouped)$layout)
+
+  # Split coordinates by component
+  coords_layout_split <- lapply(coords_layout_split, function(coords_layout) {
+    coords_component_grouped <- coords_layout %>%
+      select(-layout) %>%
+      group_by(component)
+    coords_component_split <- coords_component_grouped %>%
+      group_split() %>%
+      lapply(function(x) {
+        x %>%
+          select(-component) %>%
+          select(
+            where(
+              ~ sum(!is.na(.x)) > 0
+            )
+          )
+      }) %>%
+      set_names(nm = group_keys(coords_component_grouped)$component)
+    return(coords_component_split[cells])
+  })
+
+  # Remove temporary directory
+  err <- try(fs::dir_delete(temp_layout_dir))
+  if (inherits(err, "try-error")) {
+    warn(glue("Failed to remove temporary directory '{col_br_blue(temp_layout_dir)}'."))
+  }
+
+  return(coords_layout_split)
 }

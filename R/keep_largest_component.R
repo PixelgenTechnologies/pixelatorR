@@ -143,8 +143,26 @@ KeepLargestComponent.MPXAssay <- function(
   return(object)
 }
 
+#' @param verbose Print messages
+#'
+#' @rdname KeepLargestComponent
+#' @method KeepLargestComponent PNAAssay
+#'
+#' @export
+#'
+KeepLargestComponent.PNAAssay <- KeepLargestComponent.MPXAssay
 
-#' @param assay Name of a \code{CellGraphAssay} or \code{CellGraphAssay5}
+#' @param verbose Print messages
+#'
+#' @rdname KeepLargestComponent
+#' @method KeepLargestComponent PNAAssay5
+#'
+#' @export
+#'
+KeepLargestComponent.PNAAssay5 <- KeepLargestComponent.MPXAssay
+
+#' @param assay Name of a \code{CellGraphAssay}, \code{CellGraphAssay5},
+#' \code{PNAAssay} or\code{PNAAssay5}
 #' assay stored on the \code{Seurat} object
 #'
 #' @rdname KeepLargestComponent
@@ -162,7 +180,7 @@ KeepLargestComponent.Seurat <- function(
   assay <- assay %||% DefaultAssay(object)
 
   cg_assay <- object[[assay]]
-  assert_mpx_assay(cg_assay)
+  assert_pixel_assay(cg_assay)
 
   cg_assay <- KeepLargestComponent(cg_assay, verbose = verbose, ...)
   object[[assay]] <- cg_assay

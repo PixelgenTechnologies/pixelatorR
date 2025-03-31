@@ -44,7 +44,8 @@ replace the current cellgraphs}
 }
 \value{
 Returns a list of \code{\link{CellGraph}} objects. If there are
-no \code{\link{CellGraph}} objects present, returns an empty named list.
+no \code{\link{CellGraph}} objects present, returns a named list where each element
+is \code{NULL}.
 }
 \description{
 Get and set \code{\link{CellGraph}} lists for different objects.
@@ -55,10 +56,7 @@ library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 components <- colnames(counts)

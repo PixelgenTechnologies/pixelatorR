@@ -30,10 +30,7 @@ CellGraphs.Seurat <- function(
 #' @rdname FSMap
 #'
 #' @examples
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' seur_obj <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Check PXL file paths in a Seurat object

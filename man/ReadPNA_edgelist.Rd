@@ -2,7 +2,7 @@
 % Please edit documentation in R/load_data_pna.R
 \name{ReadPNA_edgelist}
 \alias{ReadPNA_edgelist}
-\title{Load the edge list from a PNA data set PXL file}
+\title{Load the edge list from a PNA PXL file}
 \usage{
 ReadPNA_edgelist(
   pxl_file,
@@ -23,9 +23,6 @@ ReadPNA_edgelist(
 }}
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Note that the umi1 and umi2 sequences are encoded as \code{integer64} which
 is not natively supported by R. The \code{bit64} package is required to
 read these IDs and conversion to \code{integer} or \code{numeric} should

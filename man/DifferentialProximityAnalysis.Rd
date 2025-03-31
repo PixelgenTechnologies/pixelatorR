@@ -39,7 +39,7 @@ DifferentialProximityAnalysis(object, ...)
 )
 }
 \arguments{
-\item{object}{An object containing proximity scores}
+\item{object}{An object containing PNA proximity scores}
 
 \item{...}{Not yet implemented}
 
@@ -77,14 +77,13 @@ observations than \code{min_n_obs} will be skipped.}
 A \code{tbl_df} object with test results
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-
-Runs differential analysis (Running Wilcoxon rank-sum test) on proximity scores
-generated with the \code{Pixelator} data processing pipeline.
-
-If you are working with a \code{Seurat} object created with pixelatorR that contains
-a \code{\link{CellGraphAssay}}, the proximity scores are accessed directly from
-the \code{\link{CellGraphAssay}} (see \code{ProximityScores}).
+Runs differential analysis (Running Wilcoxon rank-sum test) on proximity scores calculated
+from Proximity Network Assay (PNA) data generated with the \code{Pixelator} data processing
+pipeline.
+}
+\details{
+If you are working with a \code{Seurat} object created with pixelatorR, the proximity scores
+can be accessed with \code{\link{ProximityScores}}.
 
 The input object should contain a \code{contrast_column} (character vector or factor)
 that includes information about the groups to compare. A typical example is a column
@@ -111,8 +110,8 @@ tests across each cell type.
 
 \section{Types of comparisons}{
 
-Consider a scenario where we have a Seurat object (\code{seurat_object}) with molecular
-pixelation data. \code{seurat_object} contains a \code{meta.data} column called "sampleID"
+Consider a scenario where we have a Seurat object (\code{seurat_object}) with Proximity Network Assay
+(PNA) data. \code{seurat_object} contains a \code{meta.data} column called "sampleID"
 that holds information about what samples the components originated from. This column could have
 three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
 called "cell_type" that holds information about the cell type identity of each component.

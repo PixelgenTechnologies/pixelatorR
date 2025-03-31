@@ -2,7 +2,7 @@
 % Please edit documentation in R/write_pxl_file.R
 \name{WriteMPX_pxl_file}
 \alias{WriteMPX_pxl_file}
-\title{Export Seurat object data to a .pxl file}
+\title{Export Seurat object MPX data to a PXL file}
 \usage{
 WriteMPX_pxl_file(
   object,
@@ -16,7 +16,7 @@ WriteMPX_pxl_file(
 \item{object}{A \code{Seurat} object with a \code{CellGraphAssay5}
 assay object created with pixelatorR.}
 
-\item{file}{A character string specifying the path to the .pxl
+\item{file}{A character string specifying the path to the PXL
 file to be created.}
 
 \item{assay}{A character string specifying the name of the \code{CellGraphAssay5}.
@@ -31,13 +31,13 @@ how to load graphs and compute layouts.}
 if it already exists.}
 }
 \value{
-Nothing. The function writes the .pxl file to the specified location.
+Nothing. The function writes the PXL file to the specified location.
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 
 The function only exports the essential data required to create a functional
-.pxl file. See details below for a description of what data is exported.
+PXL file. See details below for a description of what data is exported.
 }
 \section{Exported data}{
 
@@ -46,15 +46,15 @@ The function only exports the essential data required to create a functional
 are exported into a .h5ad file that can be read with the anndata Python library.
 \item Polarization scores : The polarization scores are exported to a .parquet file.
 \item Colocalization scores : The colocalization scores are exported to a .parquet file.
-\item Edgelist data : The edgelist data is first collected from the original .pxl file(s),
+\item Edgelist data : The edgelist data is first collected from the original PXL file(s),
 filtered to include the components currently available in the \code{Seurat} object,
 and then the component IDs are updated. The resulting merged edgelist data is exported
 to a .parquet file.
-\item Sample meta data : The sample meta data is extracted from the original .pxl file(s),
+\item Sample meta data : The sample meta data is extracted from the original PXL file(s),
 then merged and exported to a .json file.
 }
 
-The structure of the .pxl file is detailed below:
+The structure of the PXL file is detailed below:
 
 |-- adata.h5ad\cr
 |-- polarization.parquet\cr
@@ -62,7 +62,7 @@ The structure of the .pxl file is detailed below:
 |-- metadata.json\cr
 |-- edgelist.parquet
 
-The merged files are converted into a zip archive and saved to the target .pxl file.
+The merged files are converted into a zip archive and saved to the target PXL file.
 
 NOTE: Factors are currently not supported. These will be converted to string arrays.
 }
@@ -72,19 +72,16 @@ NOTE: Factors are currently not supported. These will be converted to string arr
 options(Seurat.object.assay.version = "v5")
 
 # Create Seurat object
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 se <- ReadMPX_Seurat(pxl_file)
 
 se_merged <- merge(se, list(se, se, se))
 pxl_file <- fs::path_temp("small.pxl")
 
-# Export data to a new .pxl file
+# Export data to a new PXL file
 WriteMPX_pxl_file(se_merged, pxl_file)
 
-# Read the new .pxl file
+# Read the new PXL file
 se_merged <- ReadMPX_Seurat(pxl_file)
 
 # Reset global option

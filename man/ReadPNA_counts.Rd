@@ -2,7 +2,7 @@
 % Please edit documentation in R/load_data_pna.R
 \name{ReadPNA_counts}
 \alias{ReadPNA_counts}
-\title{Read a count matrix from a PXL file}
+\title{Read a count matrix from a PXL file with PNA data}
 \usage{
 ReadPNA_counts(pxl_file)
 }
@@ -13,7 +13,7 @@ ReadPNA_counts(pxl_file)
 A count matrix or a list if \code{return_list = TRUE}
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Read a count matrix from a PXL file with PNA data
 }
 \examples{
 library(pixelatorR)

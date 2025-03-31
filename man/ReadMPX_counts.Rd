@@ -7,7 +7,7 @@
 ReadMPX_counts(filename, return_list = FALSE, verbose = TRUE)
 }
 \arguments{
-\item{filename}{Path to a .pxl file}
+\item{filename}{Path to a PXL file}
 
 \item{return_list}{If TRUE, returns a list with the expression matrix and
 the output from \code{h5read}}
@@ -24,10 +24,7 @@ Read a count matrix from a pxl file
 library(pixelatorR)
 
 # Load example data
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
 counts[1:5, 1:5]
 

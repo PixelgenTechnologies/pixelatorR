@@ -9,8 +9,9 @@
 \alias{NormalizeMPX.CellGraphAssay}
 \alias{NormalizeMPX.Assay5}
 \alias{NormalizeMPX.CellGraphAssay5}
+\alias{NormalizeMPX.PNAAssay}
 \alias{NormalizeMPX.Seurat}
-\title{Normalize MPX data}
+\title{Normalize MPX or PNA data}
 \usage{
 NormalizeMPX(
   object,
@@ -62,6 +63,20 @@ NormalizeMPX(
   ...
 )
 
+\method{NormalizeMPX}{PNAAssay}(
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
+)
+
+\method{NormalizeMPX}{PNAAssay}(
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
+)
+
 \method{NormalizeMPX}{Seurat}(
   object,
   method = c("dsb", "clr"),
@@ -82,13 +97,13 @@ NormalizeMPX(
 \item{...}{Additional arguments. Currently not used.}
 }
 \value{
-An object with normalized MPX data.
+An object with normalized MPX or PNA data.
 }
 \description{
-Normalizes MPX data using the specified method. The normalization method can be one of "dsb" or "CLR".
+Normalizes MPX or PNA data using the specified method. The normalization method can be one of "dsb" or "CLR".
 }
 \details{
-CLR can be used to normalize MPX data using the centered log-ratio transformation in which
+CLR can be used to normalize MPX or PNA data using the centered log-ratio transformation in which
 the assumption is that the geometric mean of the marker abundance is constant across cells
 (e.g cell lines). This assumption might not hold for datasets from samples from different
 sources or having a variable cell type composition. In addition, CLR does not take the noise

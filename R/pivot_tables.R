@@ -9,10 +9,7 @@ NULL
 #' library(SeuratObject)
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' pol_scores <- ReadMPX_polarization(pxl_file)
 #'
 #' # PolarizationScoresToAssay returns a matrix for a tbl_df
@@ -169,10 +166,7 @@ PolarizationScoresToAssay.Seurat <- function(
 #' library(SeuratObject)
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' col_scores <- ReadMPX_colocalization(pxl_file)
 #'
 #' # ColocalizationScoresToAssay returns a matrix for a tbl_df

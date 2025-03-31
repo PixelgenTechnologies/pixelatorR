@@ -35,7 +35,8 @@ as.CellGraphAssay <- function(
 #' @param ... Arguments passed to other methods
 #'
 #' @return Returns a list of \code{\link{CellGraph}} objects. If there are
-#' no \code{\link{CellGraph}} objects present, returns an empty named list.
+#' no \code{\link{CellGraph}} objects present, returns a named list where each element
+#' is \code{NULL}.
 #'
 #' @rdname CellGraphs
 #' @seealso [PolarizationScores()] and [ColocalizationScores()] for getting/setting spatial metrics
@@ -66,35 +67,35 @@ CellGraphs <- function(
 #'
 #' Loads a list of \code{\link{CellGraph}} objects.
 #'
-#' Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of
-#' these graph representations in the sections below.
-#'
 #' \code{LoadCellGraphs} will only work if the PXL file path(s) stored in the object are valid.
-#' You can check the PXL file paths stored in a \code{Seurat}, a \code{CellGraphAssay} or a
-#' \code{CellGraphAssay5} object with the \code{\link{FSMap}} method. If the PXL file(s) are
-#' invalid, an error will be thrown. Visit \code{\link{RestorePaths}} for more information on how
-#' to update the PXL file paths.
+#' You can check the PXL file paths stored in the object with the \code{\link{FSMap}} method.
+#' If the PXL file(s) are invalid, an error will be thrown. Visit \code{\link{RestorePaths}}
+#' for more information on how to update the PXL file paths.
 #'
-#' @section Bi-partite graph:
-#' In the bi-partite graph, edges can only go from a upia to a upib. The bi-partite graph
+#' @section Graph representations:
+#'
+#' Note that PNA component graphs are always loaded as bipartite graphs.
+#'
+#' For MPX data, one of the following graph representations can be used by specifying the
+#' \code{load_as} parameter:
+#'
+#' In the bipartite graph, edges can only go from a upia to a upib. The bipartite graph
 #' is first collapsed from a multigraph to a simple graph by aggregating marker counts
 #' for each upia/upib combination. For visualization of marker counts on the graph, it is
 #' often convenient to project values on the nodes; however, the marker counts are not available
-#' in the nodes in the bi-partite graph. To circumvent this issue, node counts are calculated
+#' in the nodes in the bipartite graph. To circumvent this issue, node counts are calculated
 #' by aggregating its edge counts. This means that the total marker count will be inflated.
 #'
-#' @section A node projected-graph:
 #' In the A node projected-graph, pairs of upias that share a upib are connected with an edge.
 #' The (upia) node counts are calculated by aggregating counts across all edges associated
 #' with the A nodes. The number of nodes in the A node projected-graph is substantially
-#' lower than the bi-partite graph.
+#' lower than the bipartite graph.
 #'
-#' @section Line graph:
-#' Starting with a bi-partite graph, a node is placed on each edge. Then, an edge is drawn
+#' Starting with a bipartite graph, a node is placed on each edge. Then, an edge is drawn
 #' between each pair of adjacent nodes. The number of nodes in the linegraph is equivalent
-#' to the number of edges in the bi-partite graph. However, the number of edges is substantially
+#' to the number of edges in the bipartite graph. However, the number of edges is substantially
 #' larger. One major advantage with the linegraph is that the node counts represent the actual
-#' raw data, which is not the case for the bi-partite graph and the A node projected-graph. On the
+#' raw data, which is not the case for the bipartite graph and the A node projected-graph. On the
 #' down side, linegraphs are much larger and tends to slow down layout computations and
 #' visualizations.
 #'
@@ -123,7 +124,7 @@ LoadCellGraphs <- function(
 #'
 #' @rdname RemoveCellGraphs
 #'
-#' @return An object without CellGraphs
+#' @return An object where the elements of the cellgraphs list are set to \code{NULL}
 #'
 #' @export
 #'
@@ -156,8 +157,8 @@ MoleculeRankPlot <- function(
 
 #' Plot cell counts per group
 #'
-#' QC plot function used to get a quick overview of called cells in an
-#' MPX data set.
+#' QC plot function used to get a quick overview of called cells in a
+#' Molecular Pixelation (MPX) or Proximity Network Assay (PNA) data set.
 #'
 #' @concept plots
 #' @family QC-plots
@@ -251,6 +252,9 @@ KeepLargestComponent <- function(
 
 #' A-node projection
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' A function to create an A node projection graph from an edgelist
 #' representing a bipartite graph.
 #'
@@ -275,7 +279,7 @@ edgelist_to_simple_Anode_graph <- function(
 
 #' Differential analysis (abundance)
 #'
-#' Runs differential analysis on abundance scores generated with the
+#' Runs differential analysis on abundance values generated with the
 #' \code{Pixelator} data processing pipeline. The function is a wrapper around
 #' the \code{FindMarkers} function from \code{Seurat} but provides a similar
 #' interface as \code{\link{RunDPA}} and \code{\link{RunDCA}} from \code{pixelatorR}.
@@ -303,11 +307,11 @@ edgelist_to_simple_Anode_graph <- function(
 #' tests across each cell type.
 #'
 #' @section Types of comparisons:
-#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with PNA data.
 #' \code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
-#' information about what samples the MPX components originated from. This column could have
+#' information about what samples the PNA components originated from. This column could have
 #' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
-#' called "cell_type" that holds information about the cell type identity of each MPX component.
+#' called "cell_type" that holds information about the cell type identity of each PNA component.
 #'
 #' 1. If we want to compare the "stimulated1" group to the "control" group:
 #' \preformatted{
@@ -397,11 +401,11 @@ RunDAA <- function(
 #' tests across each cell type.
 #'
 #' @section Types of comparisons:
-#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with PNA data.
 #' \code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
-#' information about what samples the MPX components originated from. This column could have
+#' information about what samples the PNA components originated from. This column could have
 #' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
-#' called "cell_type" that holds information about the cell type identity of each MPX component.
+#' called "cell_type" that holds information about the cell type identity of each PNA component.
 #'
 #' 1. If we want to compare the "stimulated1" group to the "control" group:
 #' \preformatted{
@@ -503,11 +507,11 @@ RunDPA <- function(
 #' tests across each cell type.
 #'
 #' @section Types of comparisons:
-#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with PNA data.
 #' \code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
-#' information about what samples the MPX components originated from. This column could have
+#' information about what samples the PNA components originated from. This column could have
 #' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
-#' called "cell_type" that holds information about the cell type identity of each MPX component.
+#' called "cell_type" that holds information about the cell type identity of each PNA component.
 #'
 #' 1. If we want to compare the "stimulated1" group to the "control" group:
 #' \preformatted{
@@ -811,11 +815,11 @@ FSMap <- function(
 }
 
 
-#' Normalize MPX data
+#' Normalize MPX or PNA data
 #'
-#' Normalizes MPX data using the specified method. The normalization method can be one of "dsb" or "CLR".
+#' Normalizes MPX or PNA data using the specified method. The normalization method can be one of "dsb" or "CLR".
 #'
-#' CLR can be used to normalize MPX data using the centered log-ratio transformation in which
+#' CLR can be used to normalize MPX or PNA data using the centered log-ratio transformation in which
 #' the assumption is that the geometric mean of the marker abundance is constant across cells
 #' (e.g cell lines). This assumption might not hold for datasets from samples from different
 #' sources or having a variable cell type composition. In addition, CLR does not take the noise
@@ -838,7 +842,7 @@ FSMap <- function(
 #'
 #' @rdname NormalizeMPX
 #'
-#' @return An object with normalized MPX data.
+#' @return An object with normalized MPX or PNA data.
 #'
 #' @export
 #'
@@ -858,16 +862,17 @@ NormalizeMPX <- function(
 #' Updates the PXL file paths in an object with the paths in the specified directory.
 #'
 #' @details
-#' Seurat objects created with \code{pixelatorR} store the MPX data
-#' in a \code{\link{CellGraphAssay}} or \code{\link{CellGraphAssay5}} object.
-#' For some analytical tasks, such as component visualization, you need
-#' to load the component graphs in memory with \code{\link{LoadCellGraphs}}.
+#' Seurat objects created with \code{pixelatorR} store the MPX/PNA data
+#' in a \code{\link{CellGraphAssay}}, \code{\link{CellGraphAssay5}}, \code{\link{PNAAssay}}
+#' or \code{\link{PNAAssay5}} object. For some analytic tasks, such as component
+#' visualization, you need to load the component graphs in memory with \code{\link{LoadCellGraphs}}.
 #'
 #' \code{\link{LoadCellGraphs}} reads data from the edgelist(s) stored in the PXL
-#' files(s) that the Seurat object was created from (see \code{\link{ReadMPX_Seurat}}).
-#' This means that the PXL files must be accessible in the \code{\link{CellGraphAssay}}
-#' or \code{\link{CellGraphAssay5}} when you load the component graphs.
-#' You can check the PXL file paths with \code{\link{FSMap}}.
+#' files(s) that the Seurat object was created from (see \code{\link{ReadMPX_Seurat}}
+#' and \code{\link{ReadPNA_Seurat}}). This means that the PXL files must be accessible
+#' in the \code{\link{CellGraphAssay}}, \code{\link{CellGraphAssay5}}, \code{\link{PNAAssay}}
+#' or \code{\link{PNAAssay5}} when you load the component graphs. You can check the PXL file paths
+#' with \code{\link{FSMap}}.
 #'
 #' If the PXL files are moved or copied to a different directory, \code{\link{LoadCellGraphs}}
 #' will fail because the PXL file paths are invalid. \code{RestorePaths} can
@@ -920,15 +925,12 @@ RestorePaths <- function(
 
 #' Differential analysis of proximity scores
 #'
-#' @description
-#' `r lifecycle::badge("experimental")`
+#' Runs differential analysis (Running Wilcoxon rank-sum test) on proximity scores calculated
+#' from Proximity Network Assay (PNA) data generated with the \code{Pixelator} data processing
+#' pipeline.
 #'
-#' Runs differential analysis (Running Wilcoxon rank-sum test) on proximity scores
-#' generated with the \code{Pixelator} data processing pipeline.
-#'
-#' If you are working with a \code{Seurat} object created with pixelatorR that contains
-#' a \code{\link{CellGraphAssay}}, the proximity scores are accessed directly from
-#' the \code{\link{CellGraphAssay}} (see \code{ProximityScores}).
+#' If you are working with a \code{Seurat} object created with pixelatorR, the proximity scores
+#' can be accessed with \code{\link{ProximityScores}}.
 #'
 #' The input object should contain a \code{contrast_column} (character vector or factor)
 #' that includes information about the groups to compare. A typical example is a column
@@ -952,8 +954,8 @@ RestorePaths <- function(
 #' tests across each cell type.
 #'
 #' @section Types of comparisons:
-#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with molecular
-#' pixelation data. \code{seurat_object} contains a \code{meta.data} column called "sampleID"
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with Proximity Network Assay
+#' (PNA) data. \code{seurat_object} contains a \code{meta.data} column called "sampleID"
 #' that holds information about what samples the components originated from. This column could have
 #' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
 #' called "cell_type" that holds information about the cell type identity of each component.
@@ -993,7 +995,7 @@ RestorePaths <- function(
 #' @concept DA
 #' @family DA-methods
 #'
-#' @param object An object containing proximity scores
+#' @param object An object containing PNA proximity scores
 #' @param contrast_column The name of the column where the group labels are stored.
 #' This column must include \code{target} and \code{reference}.
 #' @param targets The names of the target groups. These groups will be compared to the reference group.
@@ -1075,12 +1077,11 @@ ProximityScores <- function(
   UseMethod(generic = "ProximityScores", object = object)
 }
 
-#' @param value A \code{tbl_df} with proximity scores
+#' @param value A \code{tbl_df} or \code{tbl_lazy} with proximity scores
 #'
 #' @rdname ProximityScores
 #'
-#' @return \code{ProximityScores<-}: An object with proximity scores
-#' updated
+#' @return \code{ProximityScores<-}: An object with updated proximity scores
 #'
 #' @export
 #'
@@ -1096,18 +1097,18 @@ ProximityScores <- function(
 #'
 #' @section Behavior:
 #'
-#' Takes an object with proximity scores in long format and returns an
+#' Takes an object with PNA proximity scores in long format and returns an
 #' object with proximity scores in a wide format. The proximity score
-#' table contains various spatial metrics along with p-values for each pair of
-#' markers and component.
+#' table contains various spatial metrics along with p-values for each
+#' protein pair and component.
 #'
 #' The wide format is an array-like object with dimensions (markers_1 * marker_2) x components,
 #' where each cell is filled with a value for a selected spatial metric.
 #'
 #' Note that that observations that are missing from the proximity score table
 #' can be replaced with 0's in the wide array by setting \code{missing_obs_val = 0},
-#' which might be required by various functions in Seurat. However, this may not be
-#' the desired behavior as a value of 0 usually doesn't mean that the observation
+#' which might be required by various functions in \code{Seurat}. However, this may
+#' not be the desired behavior as a value of 0 usually doesn't mean that the observation
 #' is missing.
 #'
 #' Different outputs are returned depending on the input object type:
@@ -1118,7 +1119,7 @@ ProximityScores <- function(
 #'      and components in columns
 #'    }
 #'    \item{
-#'      \code{CelGraphAssay}: returns an \code{Assay} or \code{Assay5} with marker
+#'      \code{PNAAssay/PNAAssay5}: returns an \code{Assay} or \code{Assay5} with marker
 #'      pairs in rows and  components in columns
 #'    }
 #'    \item{
@@ -1158,11 +1159,9 @@ ProximityScoresToAssay <- function(
 
 #' Load edgelists
 #'
-#' Get the edgelist(s) from a \code{\link{PNAAssay}},
-#' \code{\link{PNAAssay5}} or a \code{Seurat} object.
-#' The edgelist(s) are stored on disk in the PXL files,
-#' so the method only works if the paths are set correctly
-#' (see \code{?FSMap}).
+#' Get the edgelist(s) from a \code{\link{PNAAssay}}, \code{\link{PNAAssay5}} or
+#' a \code{Seurat} object. The edgelist(s) are stored on disk in the PXL files,
+#' so the method only works if the paths are set correctly (see \code{?FSMap}).
 #'
 #' @param object An object with polarization scores
 #' @param ... Not implemented

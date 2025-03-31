@@ -1,10 +1,10 @@
-#' Export Seurat object data to a .pxl file
+#' Export Seurat object MPX data to a PXL file
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
 #' The function only exports the essential data required to create a functional
-#' .pxl file. See details below for a description of what data is exported.
+#' PXL file. See details below for a description of what data is exported.
 #'
 #' @section Exported data:
 #'
@@ -12,14 +12,14 @@
 #'  are exported into a .h5ad file that can be read with the anndata Python library.
 #'  - Polarization scores : The polarization scores are exported to a .parquet file.
 #'  - Colocalization scores : The colocalization scores are exported to a .parquet file.
-#'  - Edgelist data : The edgelist data is first collected from the original .pxl file(s),
+#'  - Edgelist data : The edgelist data is first collected from the original PXL file(s),
 #'  filtered to include the components currently available in the \code{Seurat} object,
 #'  and then the component IDs are updated. The resulting merged edgelist data is exported
 #'  to a .parquet file.
-#'  - Sample meta data : The sample meta data is extracted from the original .pxl file(s),
+#'  - Sample meta data : The sample meta data is extracted from the original PXL file(s),
 #'  then merged and exported to a .json file.
 #'
-#' The structure of the .pxl file is detailed below:
+#' The structure of the PXL file is detailed below:
 #'
 #' |-- adata.h5ad\cr
 #' |-- polarization.parquet\cr
@@ -27,13 +27,13 @@
 #' |-- metadata.json\cr
 #' |-- edgelist.parquet
 #'
-#' The merged files are converted into a zip archive and saved to the target .pxl file.
+#' The merged files are converted into a zip archive and saved to the target PXL file.
 #'
 #' NOTE: Factors are currently not supported. These will be converted to string arrays.
 #'
 #' @param object A \code{Seurat} object with a \code{CellGraphAssay5}
 #' assay object created with pixelatorR.
-#' @param file A character string specifying the path to the .pxl
+#' @param file A character string specifying the path to the PXL
 #' file to be created.
 #' @param assay A character string specifying the name of the \code{CellGraphAssay5}.
 #' If set to \code{NULL} the default assay will be used.
@@ -44,26 +44,23 @@
 #' @param overwrite A logical value specifying whether to overwrite the \code{file}
 #' if it already exists.
 #'
-#' @return Nothing. The function writes the .pxl file to the specified location.
+#' @return Nothing. The function writes the PXL file to the specified location.
 #'
 #' @examples
 #' # Use Assay5 as the default assay version
 #' options(Seurat.object.assay.version = "v5")
 #'
 #' # Create Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' se <- ReadMPX_Seurat(pxl_file)
 #'
 #' se_merged <- merge(se, list(se, se, se))
 #' pxl_file <- fs::path_temp("small.pxl")
 #'
-#' # Export data to a new .pxl file
+#' # Export data to a new PXL file
 #' WriteMPX_pxl_file(se_merged, pxl_file)
 #'
-#' # Read the new .pxl file
+#' # Read the new PXL file
 #' se_merged <- ReadMPX_Seurat(pxl_file)
 #'
 #' # Reset global option
@@ -119,7 +116,7 @@ WriteMPX_pxl_file <- function(
   # Create a temporary directory
   pxl_folder <- .create_unique_temp_dir(paste0("pxl_files_", .generate_random_string()))
 
-  cli_rule(left = "Creating .pxl file")
+  cli_rule(left = "Creating PXL file")
 
   # Export spatial metrics
   .write_spatial_metrics_to_parquet(object = object, pxl_folder = pxl_folder)
@@ -165,10 +162,10 @@ WriteMPX_pxl_file <- function(
     }
   }
 
-  # Zip the pxl folder and move to the target file
+  # Zip the PXL folder and move to the target file
   # We use the simplest compression here since the
   # files are already compressed
-  cli_alert_info("Saving .pxl file to {file}")
+  cli_alert_info("Saving PXL file to {file}")
 
   zip::zip(
     zipfile = file,

@@ -5,6 +5,8 @@
 \alias{KeepLargestComponent.tbl_graph}
 \alias{KeepLargestComponent.CellGraph}
 \alias{KeepLargestComponent.MPXAssay}
+\alias{KeepLargestComponent.PNAAssay}
+\alias{KeepLargestComponent.PNAAssay5}
 \alias{KeepLargestComponent.Seurat}
 \title{Keep largest component}
 \usage{
@@ -16,6 +18,10 @@ KeepLargestComponent(object, ...)
 
 \method{KeepLargestComponent}{MPXAssay}(object, verbose = TRUE, ...)
 
+\method{KeepLargestComponent}{PNAAssay}(object, verbose = TRUE, ...)
+
+\method{KeepLargestComponent}{PNAAssay5}(object, verbose = TRUE, ...)
+
 \method{KeepLargestComponent}{Seurat}(object, assay = NULL, verbose = TRUE, ...)
 }
 \arguments{
@@ -25,7 +31,8 @@ KeepLargestComponent(object, ...)
 
 \item{verbose}{Print messages}
 
-\item{assay}{Name of a \code{CellGraphAssay} or \code{CellGraphAssay5}
+\item{assay}{Name of a \code{CellGraphAssay}, \code{CellGraphAssay5},
+\code{PNAAssay} or\code{PNAAssay5}
 assay stored on the \code{Seurat} object}
 }
 \description{

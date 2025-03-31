@@ -56,10 +56,7 @@ RemoveCellGraphs.Seurat <- function(
   }
 
   pixel_assay <- object[[assay]]
-  assert_class(
-    pixel_assay,
-    classes = c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5")
-  )
+  assert_pixel_assay(pixel_assay)
   pixel_assay <- RemoveCellGraphs(pixel_assay)
 
   object[[assay]] <- pixel_assay

@@ -2,7 +2,7 @@
 % Please edit documentation in R/load_data_pna.R
 \name{ReadPNA_metadata}
 \alias{ReadPNA_metadata}
-\title{Read metadata from a PXL file}
+\title{Read metadata from a PNA PXL file}
 \usage{
 ReadPNA_metadata(pxl_file)
 }
@@ -13,7 +13,7 @@ ReadPNA_metadata(pxl_file)
 A \code{tbl_df} with sample meta data
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Read metadata from a PNA PXL file
 }
 \examples{
 library(pixelatorR)

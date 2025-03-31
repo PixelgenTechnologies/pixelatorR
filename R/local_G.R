@@ -1,8 +1,5 @@
 #' Calculate Local G
 #'
-#' @description
-#' `r lifecycle::badge("experimental")`
-#'
 #' Local G is a local spatial statistic that measures the degree of clustering protein marker counts.
 #'
 #' @section Details:
@@ -73,7 +70,7 @@
 #'
 #' The weighting scheme is ignored if \code{W} is provided.
 #'
-#' @param g A \code{tbl_graph} object representing an MPX component
+#' @param g A \code{tbl_graph} object representing an MPX/PNA component graph
 #' @param counts A \code{dgCMatrix} (sparse matrix) with node marker counts. Raw counts
 #' are recommended.
 #' @param W A \code{dgCMatrix} (sparse matrix) with edge weights. If not provided,
@@ -101,10 +98,7 @@
 #' @examples
 #' library(dplyr)
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' seur_obj <- ReadMPX_Seurat(pxl_file) %>%
 #'   LoadCellGraphs(cells = colnames(.)[1]) %>%
 #'   ComputeLayout(layout_method = "pmds", dim = 3)

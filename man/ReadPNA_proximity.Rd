@@ -2,12 +2,12 @@
 % Please edit documentation in R/load_data_pna.R
 \name{ReadPNA_proximity}
 \alias{ReadPNA_proximity}
-\title{Load the Proximity scores table from a PNA data set PXL file}
+\title{Load the Proximity scores table from a PNA PXL file}
 \usage{
 ReadPNA_proximity(pxl_file, calc_log2_ratio = TRUE, verbose = TRUE)
 }
 \arguments{
-\item{pxl_file}{Path to a PXL file with a PNA data set}
+\item{pxl_file}{Path to a PXL file containing PNA data}
 
 \item{calc_log2_ratio}{A logical specifying whether to calculate and add
 a log2ratio column to the output table. Default is \code{TRUE}}
@@ -18,7 +18,7 @@ a log2ratio column to the output table. Default is \code{TRUE}}
 A \code{tbl_df} or a \code{Table} with PNA Proximity scores
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+Load the Proximity scores table from a PNA PXL file
 }
 \examples{
 library(pixelatorR)

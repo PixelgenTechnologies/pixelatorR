@@ -67,18 +67,18 @@ Convert proximity score table to an Assay or Assay5
 \section{Behavior}{
 
 
-Takes an object with proximity scores in long format and returns an
+Takes an object with PNA proximity scores in long format and returns an
 object with proximity scores in a wide format. The proximity score
-table contains various spatial metrics along with p-values for each pair of
-markers and component.
+table contains various spatial metrics along with p-values for each
+protein pair and component.
 
 The wide format is an array-like object with dimensions (markers_1 * marker_2) x components,
 where each cell is filled with a value for a selected spatial metric.
 
 Note that that observations that are missing from the proximity score table
 can be replaced with 0's in the wide array by setting \code{missing_obs_val = 0},
-which might be required by various functions in Seurat. However, this may not be
-the desired behavior as a value of 0 usually doesn't mean that the observation
+which might be required by various functions in \code{Seurat}. However, this may
+not be the desired behavior as a value of 0 usually doesn't mean that the observation
 is missing.
 
 Different outputs are returned depending on the input object type:
@@ -89,7 +89,7 @@ Different outputs are returned depending on the input object type:
 and components in columns
 }
 \item{
-\code{CelGraphAssay}: returns an \code{Assay} or \code{Assay5} with marker
+\code{PNAAssay/PNAAssay5}: returns an \code{Assay} or \code{Assay5} with marker
 pairs in rows and  components in columns
 }
 \item{

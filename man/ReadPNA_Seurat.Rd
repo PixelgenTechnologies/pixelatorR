@@ -41,11 +41,10 @@ a log2ratio column to the output table. Default is \code{TRUE}}
 An object of class \code{Seurat}
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-
 This function can be used to load data from a PXL file, and returns
 a \code{Seurat} object.
-
+}
+\details{
 By default, the count matrix is returned in a \code{PNAAssay} object.
 If the global option \code{Seurat.object.assay.version} is set to \code{"v5"},
 the function will return a \code{PNAAssay5} object instead.

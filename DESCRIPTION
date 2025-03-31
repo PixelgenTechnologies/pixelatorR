@@ -92,7 +92,6 @@ Collate:
     'load_cell_graphs.R'
     'load_data_mpx.R'
     'load_data_pna.R'
-    'load_layouts.R'
     'local_G.R'
     'molecule_rank_plot.R'
     'objects.R'

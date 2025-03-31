@@ -33,11 +33,9 @@ score table.}
 \code{Edgelists}: Edgelist(s)
 }
 \description{
-Get the edgelist(s) from a \code{\link{PNAAssay}},
-\code{\link{PNAAssay5}} or a \code{Seurat} object.
-The edgelist(s) are stored on disk in the PXL files,
-so the method only works if the paths are set correctly
-(see \code{?FSMap}).
+Get the edgelist(s) from a \code{\link{PNAAssay}}, \code{\link{PNAAssay5}} or
+a \code{Seurat} object. The edgelist(s) are stored on disk in the PXL files,
+so the method only works if the paths are set correctly (see \code{?FSMap}).
 }
 \examples{
 library(pixelatorR)

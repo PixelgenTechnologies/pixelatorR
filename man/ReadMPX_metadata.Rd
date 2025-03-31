@@ -16,10 +16,7 @@ Read metadata from a PXL file
 library(pixelatorR)
 
 # Load example data
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 meta_data <- ReadMPX_metadata(pxl_file)
 
 # Check pixelator version and sample ID

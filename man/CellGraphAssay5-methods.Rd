@@ -80,10 +80,7 @@ Join Layers Together
 \examples{
 library(SeuratObject)
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
 
 # Merge Seurat objects

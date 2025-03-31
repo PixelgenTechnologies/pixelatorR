@@ -15,11 +15,7 @@
 #'
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file(
-#'   "extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' se <- ReadMPX_Seurat(pxl_file)
 #' norm_data_dsb <- NormalizeMPX(
 #'   se,
@@ -114,11 +110,7 @@
 #'
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file(
-#'   "extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' se <- ReadMPX_Seurat(pxl_file)
 #' norm_data_clr <- NormalizeMPX(se, method = "clr")
 #'
@@ -136,7 +128,7 @@
 
 #' @rdname NormalizeMPX
 #' @method NormalizeMPX Matrix
-#'
+#' @docType methods
 #' @export
 #'
 NormalizeMPX.Matrix <- function(
@@ -166,7 +158,7 @@ NormalizeMPX.Matrix <- function(
 
 #' @rdname NormalizeMPX
 #' @method NormalizeMPX MPXAssay
-#'
+#' @docType methods
 #' @export
 #'
 NormalizeMPX.MPXAssay <- function(
@@ -223,8 +215,45 @@ NormalizeMPX.Assay5 <- NormalizeMPX.MPXAssay
 NormalizeMPX.CellGraphAssay5 <- NormalizeMPX.MPXAssay
 
 #' @rdname NormalizeMPX
-#' @method NormalizeMPX Seurat
+#' @method NormalizeMPX PNAAssay
+#' @docType methods
+#' @export
 #'
+NormalizeMPX.PNAAssay <- function(
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
+) {
+  # If object has been merged before, join layers
+  if (inherits(object, c("PNAAssay", "PNAAssay5"))) {
+    object <- JoinLayers(object)
+  }
+
+  newData <-
+    NormalizeMPX(
+      object = LayerData(object, "counts"),
+      method = method,
+      isotype_controls = isotype_controls,
+      ...
+    )
+
+  LayerData(object, "data") <-
+    as(newData, "CsparseMatrix")
+
+  return(object)
+}
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX PNAAssay
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.PNAAssay <- NormalizeMPX.PNAAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX Seurat
+#' @docType methods
 #' @export
 #'
 NormalizeMPX.Seurat <- function(

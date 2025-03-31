@@ -150,40 +150,36 @@ An object with a list of \code{\link{CellGraph}} objects
 Loads a list of \code{\link{CellGraph}} objects.
 }
 \details{
-Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of
-these graph representations in the sections below.
-
 \code{LoadCellGraphs} will only work if the PXL file path(s) stored in the object are valid.
-You can check the PXL file paths stored in a \code{Seurat}, a \code{CellGraphAssay} or a
-\code{CellGraphAssay5} object with the \code{\link{FSMap}} method. If the PXL file(s) are
-invalid, an error will be thrown. Visit \code{\link{RestorePaths}} for more information on how
-to update the PXL file paths.
+You can check the PXL file paths stored in the object with the \code{\link{FSMap}} method.
+If the PXL file(s) are invalid, an error will be thrown. Visit \code{\link{RestorePaths}}
+for more information on how to update the PXL file paths.
 }
-\section{Bi-partite graph}{
+\section{Graph representations}{
 
-In the bi-partite graph, edges can only go from a upia to a upib. The bi-partite graph
+
+Note that PNA component graphs are always loaded as bipartite graphs.
+
+For MPX data, one of the following graph representations can be used by specifying the
+\code{load_as} parameter:
+
+In the bipartite graph, edges can only go from a upia to a upib. The bipartite graph
 is first collapsed from a multigraph to a simple graph by aggregating marker counts
 for each upia/upib combination. For visualization of marker counts on the graph, it is
 often convenient to project values on the nodes; however, the marker counts are not available
-in the nodes in the bi-partite graph. To circumvent this issue, node counts are calculated
+in the nodes in the bipartite graph. To circumvent this issue, node counts are calculated
 by aggregating its edge counts. This means that the total marker count will be inflated.
-}
-
-\section{A node projected-graph}{
 
 In the A node projected-graph, pairs of upias that share a upib are connected with an edge.
 The (upia) node counts are calculated by aggregating counts across all edges associated
 with the A nodes. The number of nodes in the A node projected-graph is substantially
-lower than the bi-partite graph.
-}
+lower than the bipartite graph.
 
-\section{Line graph}{
-
-Starting with a bi-partite graph, a node is placed on each edge. Then, an edge is drawn
+Starting with a bipartite graph, a node is placed on each edge. Then, an edge is drawn
 between each pair of adjacent nodes. The number of nodes in the linegraph is equivalent
-to the number of edges in the bi-partite graph. However, the number of edges is substantially
+to the number of edges in the bipartite graph. However, the number of edges is substantially
 larger. One major advantage with the linegraph is that the node counts represent the actual
-raw data, which is not the case for the bi-partite graph and the A node projected-graph. On the
+raw data, which is not the case for the bipartite graph and the A node projected-graph. On the
 down side, linegraphs are much larger and tends to slow down layout computations and
 visualizations.
 }

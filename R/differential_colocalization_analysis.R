@@ -244,10 +244,7 @@ RunDCA.data.frame <- function(
 #' library(pixelatorR)
 #' library(dplyr)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' # Seurat objects
 #' seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
 #' seur1$sample <- "Sample1"

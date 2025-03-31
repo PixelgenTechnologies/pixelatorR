@@ -52,7 +52,7 @@ ProximityScores(object, ...) <- value
 
 \item{...}{Not implemented}
 
-\item{value}{A \code{tbl_df} with proximity scores}
+\item{value}{A \code{tbl_df} or \code{tbl_lazy} with proximity scores}
 
 \item{add_marker_counts}{A logical indicating whether to add marker
 counts to the output}
@@ -72,8 +72,7 @@ score table.}
 \value{
 \code{ProximityScores}: Proximity scores
 
-\code{ProximityScores<-}: An object with proximity scores
-updated
+\code{ProximityScores<-}: An object with updated proximity scores
 }
 \description{
 Get and set proximity scores for a \code{\link{PNAAssay}},

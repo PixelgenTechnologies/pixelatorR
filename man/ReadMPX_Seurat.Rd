@@ -19,7 +19,7 @@ ReadMPX_Seurat(
 )
 }
 \arguments{
-\item{filename}{Path to a .pxl file}
+\item{filename}{Path to a PXL file}
 
 \item{assay}{Assay name}
 
@@ -63,10 +63,7 @@ the function will return a \code{CellGraphAssay5} object instead.
 library(pixelatorR)
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj
 
