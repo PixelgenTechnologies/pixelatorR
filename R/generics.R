@@ -814,19 +814,18 @@ FSMap <- function(
   UseMethod(generic = "FSMap<-", object = object)
 }
 
-
 #' Normalize MPX or PNA data
 #'
 #' Normalizes MPX or PNA data using the specified method. The normalization method can be one of "dsb" or "CLR".
 #'
 #' CLR can be used to normalize MPX or PNA data using the centered log-ratio transformation in which
 #' the assumption is that the geometric mean of the marker abundance is constant across cells
-#' (e.g cell lines). This assumption might not hold for datasets from samples from different
+#' (e.g cell lines). This assumption might not hold for data sets from samples from different
 #' sources or having a variable cell type composition. In addition, CLR does not take the noise
 #' from unspecific binding of antibodies into account.
 #'
 #' For these reasons, the dsb normalization method can be a useful alternative in mixed-population
-#' datasets. dsb normalizes marker counts based on their abundance in a negative population across
+#' data sets. dsb normalizes marker counts based on their abundance in a negative population across
 #' all cells and regresses out a per-cell noise component based on isotype controls and non-specific
 #' marker abundance.
 #'
@@ -840,9 +839,34 @@ FSMap <- function(
 #' @param assay Name of assay to use; defaults to the default assay.
 #' @param ... Additional arguments. Currently not used.
 #'
-#' @rdname NormalizeMPX
+#' @rdname Normalize
 #'
 #' @return An object with normalized MPX or PNA data.
+#'
+#' @export
+#'
+Normalize <- function(
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  assay = NULL,
+  ...
+) {
+  UseMethod(generic = "Normalize", object = object)
+}
+
+#' Normalize MPX data
+#'
+#' @description
+#' `r lifecycle::badge("superseded")`
+#'
+#' This function has been replaced by \code{\link{Normalize}}.
+#'
+#' @inheritParams Normalize
+#'
+#' @rdname NormalizeMPX
+#'
+#' @return An object with normalized MPX data.
 #'
 #' @export
 #'

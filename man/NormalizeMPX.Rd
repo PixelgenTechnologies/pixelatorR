@@ -10,8 +10,9 @@
 \alias{NormalizeMPX.Assay5}
 \alias{NormalizeMPX.CellGraphAssay5}
 \alias{NormalizeMPX.PNAAssay}
+\alias{NormalizeMPX.PNAAssay5}
 \alias{NormalizeMPX.Seurat}
-\title{Normalize MPX or PNA data}
+\title{Normalize MPX data}
 \usage{
 NormalizeMPX(
   object,
@@ -70,7 +71,7 @@ NormalizeMPX(
   ...
 )
 
-\method{NormalizeMPX}{PNAAssay}(
+\method{NormalizeMPX}{PNAAssay5}(
   object,
   method = c("dsb", "clr"),
   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
@@ -97,25 +98,10 @@ NormalizeMPX(
 \item{...}{Additional arguments. Currently not used.}
 }
 \value{
-An object with normalized MPX or PNA data.
+An object with normalized MPX data.
 }
 \description{
-Normalizes MPX or PNA data using the specified method. The normalization method can be one of "dsb" or "CLR".
-}
-\details{
-CLR can be used to normalize MPX or PNA data using the centered log-ratio transformation in which
-the assumption is that the geometric mean of the marker abundance is constant across cells
-(e.g cell lines). This assumption might not hold for datasets from samples from different
-sources or having a variable cell type composition. In addition, CLR does not take the noise
-from unspecific binding of antibodies into account.
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#superseded}{\figure{lifecycle-superseded.svg}{options: alt='[Superseded]'}}}{\strong{[Superseded]}}
 
-For these reasons, the dsb normalization method can be a useful alternative in mixed-population
-datasets. dsb normalizes marker counts based on their abundance in a negative population across
-all cells and regresses out a per-cell noise component based on isotype controls and non-specific
-marker abundance.
-}
-\references{
-Mulè, M.P., Martins, A.J. & Tsang, J.S. Normalizing and denoising protein expression
-data from droplet-based single cell profiling. Nat Commun 13, 2099 (2022).
-\url{https://doi.org/10.1038/s41467-022-29356-8}
+This function has been replaced by \code{\link{Normalize}}.
 }
