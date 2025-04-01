@@ -13,6 +13,7 @@ NULL
 #' seur_obj
 #'
 #' # Add random labels to color by
+#' set.seed(123)
 #' seur_obj$labels <- sample(c("A", "B"), size = ncol(seur_obj), replace = TRUE)
 #'
 #' # Plot with data.frame and color by labels
