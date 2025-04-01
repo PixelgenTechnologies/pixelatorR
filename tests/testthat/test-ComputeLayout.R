@@ -3,9 +3,7 @@ library(dplyr)
 for (assay_version in c("v3", "v5")) {
   options(Seurat.object.assay.version = assay_version)
 
-  se <- ReadMPX_Seurat(system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
-    overwrite = TRUE, return_cellgraphassay = TRUE
-  )
+  se <- ReadMPX_Seurat(minimal_mpx_pxl_file())
 
   se <- LoadCellGraphs(se, cells = colnames(se)[1:2])
 
@@ -14,21 +12,15 @@ for (assay_version in c("v3", "v5")) {
     expect_no_error(se <- se %>% ComputeLayout())
 
     # CellGraphAssay
-    layout_method <- "pmds"
-    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(layout_method = layout_method))
+    layout_method <- "pmds_3d"
+    expect_no_error(cg_assay <- se[["mpxCells"]] %>% ComputeLayout(layout_method = "pmds"))
     expect_true(layout_method %in% names(cg_assay@cellgraphs[[1]]@layout))
-    expect_equal(c("x", "y"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method]]))
-
-    # Test with three dimensions
-    layout_method_3d <- "pmds_3d"
-    expect_no_error(cg_assay <- se[["mpxCells"]] %>%
-      ComputeLayout(layout_method = layout_method, dim = 3))
-    expect_equal(c("x", "y", "z"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method_3d]]))
+    expect_equal(c("x", "y", "z"), colnames(cg_assay@cellgraphs[[1]]@layout[[layout_method]]))
 
     # Test with normalize_layout
     expect_no_error(cg_assay <- se[["mpxCells"]] %>%
-      ComputeLayout(dim = 3, layout_method = layout_method, normalize_layout = TRUE))
-    median_radius <- cg_assay@cellgraphs[[1]]@layout[[layout_method_3d]] %>%
+      ComputeLayout(dim = 3, layout_method = "pmds", normalize_layout = TRUE))
+    median_radius <- cg_assay@cellgraphs[[1]]@layout[["pmds_3d"]] %>%
       mutate(across(x:z, ~ .x^2)) %>%
       rowSums() %>%
       sqrt() %>%
@@ -37,8 +29,8 @@ for (assay_version in c("v3", "v5")) {
 
     # Test with project_on_unit_sphere
     expect_no_error(cg_assay <- se[["mpxCells"]] %>%
-      ComputeLayout(dim = 3, layout_method = layout_method, project_on_unit_sphere = TRUE))
-    radii <- cg_assay@cellgraphs[[1]]@layout[[layout_method_3d]] %>%
+      ComputeLayout(dim = 3, layout_method = "pmds", project_on_unit_sphere = TRUE))
+    radii <- cg_assay@cellgraphs[[1]]@layout[[layout_method]] %>%
       mutate(across(x:z, ~ .x^2)) %>%
       rowSums() %>%
       sqrt() %>%
@@ -59,31 +51,31 @@ for (assay_version in c("v3", "v5")) {
     cg <- CellGraphs(se)[[colnames(se)[1]]]
 
     # tbl_graph
-    expect_no_error(layout <- ComputeLayout(cg@cellgraph, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
-    expect_equal(dim(layout), c(2470, 2))
+    expect_no_error(layout <- ComputeLayout(cg@cellgraph, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100, dim = 3)))
+    expect_equal(dim(layout), c(2470, 3))
 
     # CellGraph
-    expect_no_error(cg_layout <- ComputeLayout(cg, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
+    expect_no_error(cg_layout <- ComputeLayout(cg, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100, dim = 3)))
     expect_true("custom" %in% names(cg_layout@layout))
-    expect_equal(dim(cg_layout@layout[["custom"]]), c(2470, 2))
+    expect_equal(dim(cg_layout@layout[["custom"]]), c(2470, 3))
 
     # CellGraphAssay
-    expect_no_error(cg_assay_layout <- ComputeLayout(se[["mpxCells"]], custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
+    expect_no_error(cg_assay_layout <- ComputeLayout(se[["mpxCells"]], custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100, dim = 3)))
     expect_true("custom" %in% names(CellGraphs(cg_assay_layout)[[1]]@layout))
-    expect_equal(dim(CellGraphs(cg_assay_layout)[[1]]@layout[["custom"]]), c(2470, 2))
+    expect_equal(dim(CellGraphs(cg_assay_layout)[[1]]@layout[["custom"]]), c(2470, 3))
 
     # Seurat
-    expect_no_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100)))
+    expect_no_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn, custom_layout_function_args = list(pivots = 100, dim = 3)))
     expect_true("custom" %in% names(CellGraphs(se_layout)[[1]]@layout))
-    expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["custom"]]), c(2470, 2))
+    expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["custom"]]), c(2470, 3))
 
     # Test with new layout name
     expect_no_error(se_layout <- ComputeLayout(se,
       custom_layout_function = custom_layout_fkn,
-      custom_layout_function_args = list(pivots = 100), layout_name = "my_layout"
+      custom_layout_function_args = list(pivots = 100, dim = 3), layout_name = "my_layout"
     ))
     expect_true("my_layout" %in% names(CellGraphs(se_layout)[[1]]@layout))
-    expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["my_layout"]]), c(2470, 2))
+    expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["my_layout"]]), c(2470, 3))
   })
 
 

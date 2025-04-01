@@ -1,10 +1,7 @@
 options(Seurat.object.assay.version = "v3")
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
-seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+pxl_file <- minimal_mpx_pxl_file()
+seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1])
 
 set.seed(123)
@@ -13,7 +10,7 @@ cg <- CellGraphs(seur_obj)[[1]]
 
 test_that(".add_coordinates_to_tbl_graph works as expected", {
   # Default
-  expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]]))
+  expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds_3d"]]))
   expect_equal(
     cg@cellgraph %>% select(x, y) %>% as_tibble() %>% head(n = 10),
     structure(
@@ -47,7 +44,7 @@ test_that(".add_coordinates_to_tbl_graph works as expected", {
   )
 
   # No scaling
-  expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]], scale = FALSE))
+  expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds_3d"]], scale = FALSE))
   expect_equal(
     cg@cellgraph %>% select(x, y) %>% as_tibble() %>% head(n = 10),
     structure(
@@ -82,7 +79,7 @@ test_that(".add_coordinates_to_tbl_graph works as expected", {
   )
 
   # No scaling
-  expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds"]], keep_aspect_ratio = FALSE))
+  expect_no_error(cg <- pixelatorR:::.add_coordinates_to_tbl_graph(cg, layout_coordinates = cg@layout[["pmds_3d"]], keep_aspect_ratio = FALSE))
   expect_equal(
     cg@cellgraph %>% select(x, y) %>% as_tibble() %>% head(n = 10),
     structure(
