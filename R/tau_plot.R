@@ -24,11 +24,11 @@ TauPlot.data.frame <- function(
   ...
 ) {
   # Validate object
-  mol_per_upia <- intersect(c("umi_per_upia", "mean_molecules_per_a_pixel"), colnames(object))
+  mol_per_upia <- intersect(c("umi_per_upia", "mean_molecules_per_a_pixel", "n_umi"), colnames(object))
   if (length(mol_per_upia) == 0) {
     cli::cli_abort(
       c(
-        "i" = "Either {.str umi_per_upia} or {.str mean_molecules_per_a_pixel}",
+        "i" = "One of {.str umi_per_upia}, {.str mean_molecules_per_a_pixel} or {.str n_umi}",
         " " = "must be available in the {.cls {class(object)}}",
         "x" = "Missing columns in the {.cls {class(object)}}"
       )
@@ -51,7 +51,8 @@ TauPlot.data.frame <- function(
 
   y_lab <- switch(mol_per_upia,
     umi_per_upia = "Pixel content (UMI / UPIA)",
-    mean_molecules_per_a_pixel = "Pixel content (mean molecules / UPIA)"
+    mean_molecules_per_a_pixel = "Pixel content (mean molecules / UPIA)",
+    n_umi = "Molecules"
   )
 
   # Create plot
@@ -66,7 +67,7 @@ TauPlot.data.frame <- function(
     scale_y_log10() +
     scale_color_manual(values = c("high" = "orangered2", "low" = "skyblue3", "normal" = "gray")) +
     theme_minimal() +
-    labs(x = "Marker specificity (Tau)", y = y_lab)
+    labs(x = "Marker specificity (Tau)", y = y_lab, color = "Tau type")
 }
 
 #' @rdname TauPlot
@@ -91,11 +92,11 @@ TauPlot.Seurat <- function(
   ...
 ) {
   # Validate object
-  mol_per_upia <- intersect(c("umi_per_upia", "mean_molecules_per_a_pixel"), colnames(object[[]]))
+  mol_per_upia <- intersect(c("umi_per_upia", "mean_molecules_per_a_pixel", "n_umi"), colnames(object[[]]))
   if (length(mol_per_upia) == 0) {
     cli::cli_abort(
       c(
-        "i" = "Either {.str umi_per_upia} or {.str mean_molecules_per_a_pixel}",
+        "i" = "One of {.str umi_per_upia}, {.str mean_molecules_per_a_pixel} or {.str n_umi}",
         " " = "must be available in the {.cls {class(object)}}",
         "x" = "Missing columns in the {.cls {class(object)}}"
       )

@@ -1,35 +1,32 @@
 for (assay_version in c("v3", "v5")) {
   options(Seurat.object.assay.version = assay_version)
 
-  pxl_file <- system.file("extdata/five_cells",
-    "five_cells.pxl",
-    package = "pixelatorR"
-  )
+  pxl_file <- minimal_mpx_pxl_file()
   seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
   seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1:2])
   seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds")
 
   test_that("Plot2DGraph works as expected", {
     expect_no_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds")
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d")
     })
     expect_s3_class(layout_plot, "ggplot")
     expect_no_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", marker = "CD3E")
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", marker = "CD3E")
     })
     expect_equal(layout_plot[[1]]$labels$title, "RCVCMP0000217")
     expect_equal(layout_plot[[1]]$labels$colour, "CD3E\n(log-scaled)")
-    expect_equal(dim(layout_plot[[1]]$data), c(1395, 8))
+    expect_equal(dim(layout_plot[[1]]$data), c(2470, 8))
 
     # Test with showBnodes active
     expect_no_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", show_Bnodes = TRUE)
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", show_Bnodes = TRUE)
     })
     expect_equal(dim(layout_plot[[1]]$data), c(2470, 7))
 
     # Test with return_plot_list = TRUE
     expect_no_error({
-      layout_plots <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1:2], layout_method = "pmds", return_plot_list = TRUE)
+      layout_plots <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1:2], layout_method = "pmds_3d", return_plot_list = TRUE)
     })
     expect_type(layout_plots, "list")
     expect_equal(length(layout_plots), 2)
@@ -61,7 +58,7 @@ for (assay_version in c("v3", "v5")) {
 
   test_that("Plot2DGraphM works as expected", {
     expect_no_error({
-      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"))
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", markers = c("HLA-DR"))
     })
     expect_s3_class(layout_plot, "patchwork")
     expect_equal(layout_plot[[1]]$labels$title, NULL)

@@ -18,7 +18,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{tbl_graph}(
   object,
   layout_method = c("pmds", "wpmds"),
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -32,7 +32,7 @@ ComputeLayout(object, ...)
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -46,7 +46,7 @@ ComputeLayout(object, ...)
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -62,7 +62,7 @@ ComputeLayout(object, ...)
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -78,7 +78,7 @@ ComputeLayout(object, ...)
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -94,7 +94,7 @@ ComputeLayout(object, ...)
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -110,7 +110,7 @@ ComputeLayout(object, ...)
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -127,7 +127,7 @@ ComputeLayout(object, ...)
   assay = NULL,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -147,7 +147,9 @@ ComputeLayout(object, ...)
 \item{layout_method}{The method for calculating the graph layout:
 weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)}
 
-\item{dim}{An integer specifying the dimensions of the layout (2 or 3)}
+\item{dim}{An integer specifying the dimensions of the layout (2 or 3). Note that
+for "pmds" and "wpmds", the x and y coordinates will be identical regardless if
+dim is set to 2 or 3.}
 
 \item{normalize_layout}{Logical specifying whether the coordinate system
 should be centered at origo and the coordinates scaled such that their median

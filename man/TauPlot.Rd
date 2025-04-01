@@ -13,8 +13,9 @@ TauPlot(object, ...)
 \method{TauPlot}{Seurat}(object, group_by = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{data.frame}-like object or a \code{Seurat} object with
-\code{umi_per_upia}, \code{tau} and \code{tau_type} values}
+\item{object}{A \code{data.frame}-like object or a \code{Seurat} object where
+columns \code{tau} and \code{tau_type} are present and one of the columns
+\code{umi_per_upia}, \code{mean_molecules_per_a_pixel} or \code{n_umi}.}
 
 \item{...}{Not yet implemented}
 

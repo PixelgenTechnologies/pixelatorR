@@ -7,7 +7,9 @@ NULL
 #'
 #' @param layout_method The method for calculating the graph layout:
 #' weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)
-#' @param dim An integer specifying the dimensions of the layout (2 or 3)
+#' @param dim An integer specifying the dimensions of the layout (2 or 3). Note that
+#' for "pmds" and "wpmds", the x and y coordinates will be identical regardless if
+#' dim is set to 2 or 3.
 #' @param normalize_layout Logical specifying whether the coordinate system
 #' should be centered at origo and the coordinates scaled such that their median
 #' length (euclidean norm) is 1.
@@ -61,7 +63,7 @@ NULL
 ComputeLayout.tbl_graph <- function(
   object,
   layout_method = c("pmds", "wpmds"),
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -163,7 +165,7 @@ ComputeLayout.CellGraph <- function(
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -228,7 +230,7 @@ ComputeLayout.MPXAssay <- function(
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -303,7 +305,7 @@ ComputeLayout.PNAAssay <- function(
   object,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -374,7 +376,7 @@ ComputeLayout.Seurat <- function(
   assay = NULL,
   layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,

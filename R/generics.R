@@ -194,8 +194,9 @@ CellCountPlot <- function(
 #' @concept plots
 #' @family QC-plots
 #'
-#' @param object A \code{data.frame}-like object or a \code{Seurat} object with
-#' \code{umi_per_upia}, \code{tau} and \code{tau_type} values
+#' @param object A \code{data.frame}-like object or a \code{Seurat} object where
+#' columns \code{tau} and \code{tau_type} are present and one of the columns
+#' \code{umi_per_upia}, \code{mean_molecules_per_a_pixel} or \code{n_umi}.
 #' @param group_by A column in the object representing a 'character' or 'factor'
 #' to group data by
 #' @param ... Not yet implemented
