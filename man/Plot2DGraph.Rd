@@ -76,7 +76,7 @@ pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, load_as = "Anode")
 seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
-Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3E")
+Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "pmds", marker = "CD3E")
 
 # PNA
 pxl_file <- minimal_pna_pxl_file()
