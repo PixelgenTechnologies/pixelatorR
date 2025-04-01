@@ -628,6 +628,38 @@ assert_vectors_match <- function(
     )
   }
 }
+#' @rdname type_check_helpers
+#'
+assert_valid_color <- function(
+  x,
+  n = 1,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  assert_vector(x, type = "character", n = n, arg = arg, call = call)
+
+  invalid_colors <-
+    x[!vapply(
+      x,
+      function(x1) any(!is.na(tryCatch(grDevices::col2rgb(x1), error = function(e) NA))),
+      logical(1)
+    )]
+
+
+  if (length(invalid_colors) > 0) {
+    cli::cli_abort(
+      c(
+        "i" = "{.arg {arg}} must be a valid color name or hex code.",
+        "x" = "You've provided invalid color(s): {.val {invalid_colors}}"
+      ),
+      call = call
+    )
+  }
+}
 
 
 is_scalar_wholenumber <- function(x, tol = .Machine$double.eps^0.5) {

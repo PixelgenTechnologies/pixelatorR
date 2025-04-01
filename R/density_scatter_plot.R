@@ -143,15 +143,18 @@ DensityScatterPlot <- function(
     facet_vars,
     plot_gate,
     gate_type,
-    margin_density,
-    coord_fixed,
     grid_n,
     scale_density,
+    margin_density,
     pt_size,
     alpha,
     layer,
-    annotation_params
+    coord_fixed,
+    annotation_params,
+    colors
   )
+
+  gate_type <- match.arg(gate_type, choices = c("rectangle", "quadrant"))
 
   # Prepare data
   plot_data <- .prepareDensityData(
@@ -233,15 +236,16 @@ DensityScatterPlot <- function(
   marker2,
   facet_vars,
   plot_gate,
-  gate_type = NULL,
-  margin_density,
-  coord_fixed,
+  gate_type,
   grid_n,
   scale_density,
+  margin_density,
   pt_size,
   alpha,
-  layer = NULL,
-  annotation_params = NULL,
+  layer,
+  coord_fixed,
+  annotation_params,
+  colors,
   call = caller_env()
 ) {
   # Basic object validation
@@ -265,6 +269,9 @@ DensityScatterPlot <- function(
 
   # Layer validation
   assert_single_value(layer, type = "string", allow_null = TRUE, call = call)
+
+  # Colors validation
+  assert_valid_color(colors, n = 2, allow_null = TRUE, call = call)
 
   # Facet variable checks
   if (!is.null(facet_vars)) {
@@ -319,8 +326,7 @@ DensityScatterPlot <- function(
     }
 
     # Check for invalid columns in plot_gate
-    allowed_cols <- switch(
-      gate_type,
+    allowed_cols <- switch(gate_type,
       "rectangle" = c("xmin", "xmax", "ymin", "ymax"),
       "quadrant" = c("x", "y")
     )

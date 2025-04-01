@@ -23,6 +23,7 @@
 \alias{assert_is_one_of}
 \alias{assert_different}
 \alias{assert_vectors_match}
+\alias{assert_valid_color}
 \title{Type check helpers}
 \usage{
 assert_single_value(
@@ -170,6 +171,14 @@ assert_vectors_match(
   allow_null = FALSE,
   arg_x = caller_arg(x),
   arg_y = caller_arg(y),
+  call = caller_env()
+)
+
+assert_valid_color(
+  x,
+  n = 1,
+  allow_null = FALSE,
+  arg = caller_arg(x),
   call = caller_env()
 )
 }

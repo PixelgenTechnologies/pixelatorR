@@ -2,16 +2,16 @@
 globalVariables(
   names = c(
     "id_map", "component_new", "tau", "tau_type", "umi_per_upia",
-    "upia1", "upia2", "component", "rn", "x", "y", "z", "name",
-    "type", "g", "from", "to", "node_type", "id", "layout",
-    "pearson_z", "p", "p.value", ".", "original_id", "current_id",
-    "graph_projection", "label", "in_gate", "dens", "xmax",
-    "xmin", "ymax", "ymin", "marker_x", "marker_y", "val", ".x",
-    "value_x", "value_y", "bi_prob", "pxl_file", "value",
-    "marker_1", "marker_2", "graph_projection", "modality",
-    "mixture_component", "morans_z", "upia", "upib", "marker",
-    "n", "norm_factor", "nodes", "group", "molecules", "frequency",
-    "ref_n", "target_n", "p_adj", "p_val", "p_val_adj", "pct.1", "pct.2"
+    "upia1", "upia2", "component", "rn", "x", "y", "z", "name", "type",
+    "g", "from", "to", "node_type", "id", "layout", "pearson_z",
+    "p", "p.value", ".", "original_id", "current_id", "graph_projection",
+    "label", "in_gate", "dens", "xmax", "xmin", "ymax", "ymin", "marker_x",
+    "marker_y", "val", ".x", "value_x", "value_y", "bi_prob", "pxl_file",
+    "value", "marker_1", "marker_2", "modality", "mixture_component",
+    "morans_z", "upia", "upib", "marker", "n", "norm_factor", "nodes",
+    "group", "molecules", "frequency", "ref_n", "target_n", "p_adj",
+    "p_val", "p_val_adj", "pct.1", "pct.2", "quadrant", "n_inside",
+    "total", "x_label", "y_label", "hjust", "vjust", "marker1", "marker2"
   ),
   package = "pixelatorR",
   add = TRUE
