@@ -35,7 +35,8 @@ as.CellGraphAssay <- function(
 #' @param ... Arguments passed to other methods
 #'
 #' @return Returns a list of \code{\link{CellGraph}} objects. If there are
-#' no \code{\link{CellGraph}} objects present, returns an empty named list.
+#' no \code{\link{CellGraph}} objects present, returns a named list where each element
+#' is \code{NULL}.
 #'
 #' @rdname CellGraphs
 #' @seealso [PolarizationScores()] and [ColocalizationScores()] for getting/setting spatial metrics
@@ -66,35 +67,35 @@ CellGraphs <- function(
 #'
 #' Loads a list of \code{\link{CellGraph}} objects.
 #'
-#' Graphs can be loaded as one of 'bipartite', 'Anode' or 'linegraph'. See details about each of
-#' these graph representations in the sections below.
-#'
 #' \code{LoadCellGraphs} will only work if the PXL file path(s) stored in the object are valid.
-#' You can check the PXL file paths stored in a \code{Seurat}, a \code{CellGraphAssay} or a
-#' \code{CellGraphAssay5} object with the \code{\link{FSMap}} method. If the PXL file(s) are
-#' invalid, an error will be thrown. Visit \code{\link{RestorePaths}} for more information on how
-#' to update the PXL file paths.
+#' You can check the PXL file paths stored in the object with the \code{\link{FSMap}} method.
+#' If the PXL file(s) are invalid, an error will be thrown. Visit \code{\link{RestorePaths}}
+#' for more information on how to update the PXL file paths.
 #'
-#' @section Bi-partite graph:
-#' In the bi-partite graph, edges can only go from a upia to a upib. The bi-partite graph
+#' @section Graph representations:
+#'
+#' Note that PNA component graphs are always loaded as bipartite graphs.
+#'
+#' For MPX data, one of the following graph representations can be used by specifying the
+#' \code{load_as} parameter:
+#'
+#' In the bipartite graph, edges can only go from a upia to a upib. The bipartite graph
 #' is first collapsed from a multigraph to a simple graph by aggregating marker counts
 #' for each upia/upib combination. For visualization of marker counts on the graph, it is
 #' often convenient to project values on the nodes; however, the marker counts are not available
-#' in the nodes in the bi-partite graph. To circumvent this issue, node counts are calculated
+#' in the nodes in the bipartite graph. To circumvent this issue, node counts are calculated
 #' by aggregating its edge counts. This means that the total marker count will be inflated.
 #'
-#' @section A node projected-graph:
 #' In the A node projected-graph, pairs of upias that share a upib are connected with an edge.
 #' The (upia) node counts are calculated by aggregating counts across all edges associated
 #' with the A nodes. The number of nodes in the A node projected-graph is substantially
-#' lower than the bi-partite graph.
+#' lower than the bipartite graph.
 #'
-#' @section Line graph:
-#' Starting with a bi-partite graph, a node is placed on each edge. Then, an edge is drawn
+#' Starting with a bipartite graph, a node is placed on each edge. Then, an edge is drawn
 #' between each pair of adjacent nodes. The number of nodes in the linegraph is equivalent
-#' to the number of edges in the bi-partite graph. However, the number of edges is substantially
+#' to the number of edges in the bipartite graph. However, the number of edges is substantially
 #' larger. One major advantage with the linegraph is that the node counts represent the actual
-#' raw data, which is not the case for the bi-partite graph and the A node projected-graph. On the
+#' raw data, which is not the case for the bipartite graph and the A node projected-graph. On the
 #' down side, linegraphs are much larger and tends to slow down layout computations and
 #' visualizations.
 #'
@@ -123,7 +124,7 @@ LoadCellGraphs <- function(
 #'
 #' @rdname RemoveCellGraphs
 #'
-#' @return An object without CellGraphs
+#' @return An object where the elements of the cellgraphs list are set to \code{NULL}
 #'
 #' @export
 #'
@@ -156,8 +157,8 @@ MoleculeRankPlot <- function(
 
 #' Plot cell counts per group
 #'
-#' QC plot function used to get a quick overview of called cells in an
-#' MPX data set.
+#' QC plot function used to get a quick overview of called cells in a
+#' Molecular Pixelation (MPX) or Proximity Network Assay (PNA) data set.
 #'
 #' @concept plots
 #' @family QC-plots
@@ -193,8 +194,9 @@ CellCountPlot <- function(
 #' @concept plots
 #' @family QC-plots
 #'
-#' @param object A \code{data.frame}-like object or a \code{Seurat} object with
-#' \code{umi_per_upia}, \code{tau} and \code{tau_type} values
+#' @param object A \code{data.frame}-like object or a \code{Seurat} object where
+#' columns \code{tau} and \code{tau_type} are present and one of the columns
+#' \code{umi_per_upia}, \code{mean_molecules_per_a_pixel} or \code{n_umi}.
 #' @param group_by A column in the object representing a 'character' or 'factor'
 #' to group data by
 #' @param ... Not yet implemented
@@ -251,6 +253,9 @@ KeepLargestComponent <- function(
 
 #' A-node projection
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' A function to create an A node projection graph from an edgelist
 #' representing a bipartite graph.
 #'
@@ -275,7 +280,7 @@ edgelist_to_simple_Anode_graph <- function(
 
 #' Differential analysis (abundance)
 #'
-#' Runs differential analysis on abundance scores generated with the
+#' Runs differential analysis on abundance values generated with the
 #' \code{Pixelator} data processing pipeline. The function is a wrapper around
 #' the \code{FindMarkers} function from \code{Seurat} but provides a similar
 #' interface as \code{\link{RunDPA}} and \code{\link{RunDCA}} from \code{pixelatorR}.
@@ -303,11 +308,11 @@ edgelist_to_simple_Anode_graph <- function(
 #' tests across each cell type.
 #'
 #' @section Types of comparisons:
-#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with PNA data.
 #' \code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
-#' information about what samples the MPX components originated from. This column could have
+#' information about what samples the PNA components originated from. This column could have
 #' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
-#' called "cell_type" that holds information about the cell type identity of each MPX component.
+#' called "cell_type" that holds information about the cell type identity of each PNA component.
 #'
 #' 1. If we want to compare the "stimulated1" group to the "control" group:
 #' \preformatted{
@@ -397,11 +402,11 @@ RunDAA <- function(
 #' tests across each cell type.
 #'
 #' @section Types of comparisons:
-#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with PNA data.
 #' \code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
-#' information about what samples the MPX components originated from. This column could have
+#' information about what samples the PNA components originated from. This column could have
 #' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
-#' called "cell_type" that holds information about the cell type identity of each MPX component.
+#' called "cell_type" that holds information about the cell type identity of each PNA component.
 #'
 #' 1. If we want to compare the "stimulated1" group to the "control" group:
 #' \preformatted{
@@ -503,11 +508,11 @@ RunDPA <- function(
 #' tests across each cell type.
 #'
 #' @section Types of comparisons:
-#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with PNA data.
 #' \code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
-#' information about what samples the MPX components originated from. This column could have
+#' information about what samples the PNA components originated from. This column could have
 #' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
-#' called "cell_type" that holds information about the cell type identity of each MPX component.
+#' called "cell_type" that holds information about the cell type identity of each PNA component.
 #'
 #' 1. If we want to compare the "stimulated1" group to the "control" group:
 #' \preformatted{
@@ -810,19 +815,18 @@ FSMap <- function(
   UseMethod(generic = "FSMap<-", object = object)
 }
 
-
-#' Normalize MPX data
+#' Normalize MPX or PNA data
 #'
-#' Normalizes MPX data using the specified method. The normalization method can be one of "dsb" or "CLR".
+#' Normalizes MPX or PNA data using the specified method. The normalization method can be one of "dsb" or "CLR".
 #'
-#' CLR can be used to normalize MPX data using the centered log-ratio transformation in which
+#' CLR can be used to normalize MPX or PNA data using the centered log-ratio transformation in which
 #' the assumption is that the geometric mean of the marker abundance is constant across cells
-#' (e.g cell lines). This assumption might not hold for datasets from samples from different
+#' (e.g cell lines). This assumption might not hold for data sets from samples from different
 #' sources or having a variable cell type composition. In addition, CLR does not take the noise
 #' from unspecific binding of antibodies into account.
 #'
 #' For these reasons, the dsb normalization method can be a useful alternative in mixed-population
-#' datasets. dsb normalizes marker counts based on their abundance in a negative population across
+#' data sets. dsb normalizes marker counts based on their abundance in a negative population across
 #' all cells and regresses out a per-cell noise component based on isotype controls and non-specific
 #' marker abundance.
 #'
@@ -835,6 +839,31 @@ FSMap <- function(
 #' @param isotype_controls A vector of isotype controls to use for normalization.
 #' @param assay Name of assay to use; defaults to the default assay.
 #' @param ... Additional arguments. Currently not used.
+#'
+#' @rdname Normalize
+#'
+#' @return An object with normalized MPX or PNA data.
+#'
+#' @export
+#'
+Normalize <- function(
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  assay = NULL,
+  ...
+) {
+  UseMethod(generic = "Normalize", object = object)
+}
+
+#' Normalize MPX data
+#'
+#' @description
+#' `r lifecycle::badge("superseded")`
+#'
+#' This function has been replaced by \code{\link{Normalize}}.
+#'
+#' @inheritParams Normalize
 #'
 #' @rdname NormalizeMPX
 #'
@@ -858,16 +887,17 @@ NormalizeMPX <- function(
 #' Updates the PXL file paths in an object with the paths in the specified directory.
 #'
 #' @details
-#' Seurat objects created with \code{pixelatorR} store the MPX data
-#' in a \code{\link{CellGraphAssay}} or \code{\link{CellGraphAssay5}} object.
-#' For some analytical tasks, such as component visualization, you need
-#' to load the component graphs in memory with \code{\link{LoadCellGraphs}}.
+#' Seurat objects created with \code{pixelatorR} store the MPX/PNA data
+#' in a \code{\link{CellGraphAssay}}, \code{\link{CellGraphAssay5}}, \code{\link{PNAAssay}}
+#' or \code{\link{PNAAssay5}} object. For some analytic tasks, such as component
+#' visualization, you need to load the component graphs in memory with \code{\link{LoadCellGraphs}}.
 #'
 #' \code{\link{LoadCellGraphs}} reads data from the edgelist(s) stored in the PXL
-#' files(s) that the Seurat object was created from (see \code{\link{ReadMPX_Seurat}}).
-#' This means that the PXL files must be accessible in the \code{\link{CellGraphAssay}}
-#' or \code{\link{CellGraphAssay5}} when you load the component graphs.
-#' You can check the PXL file paths with \code{\link{FSMap}}.
+#' files(s) that the Seurat object was created from (see \code{\link{ReadMPX_Seurat}}
+#' and \code{\link{ReadPNA_Seurat}}). This means that the PXL files must be accessible
+#' in the \code{\link{CellGraphAssay}}, \code{\link{CellGraphAssay5}}, \code{\link{PNAAssay}}
+#' or \code{\link{PNAAssay5}} when you load the component graphs. You can check the PXL file paths
+#' with \code{\link{FSMap}}.
 #'
 #' If the PXL files are moved or copied to a different directory, \code{\link{LoadCellGraphs}}
 #' will fail because the PXL file paths are invalid. \code{RestorePaths} can
@@ -916,4 +946,261 @@ RestorePaths <- function(
   ...
 ) {
   UseMethod(generic = "RestorePaths", object = object)
+}
+
+#' Differential analysis of proximity scores
+#'
+#' Runs differential analysis (Running Wilcoxon rank-sum test) on proximity scores calculated
+#' from Proximity Network Assay (PNA) data generated with the \code{Pixelator} data processing
+#' pipeline.
+#'
+#' If you are working with a \code{Seurat} object created with pixelatorR, the proximity scores
+#' can be accessed with \code{\link{ProximityScores}}.
+#'
+#' The input object should contain a \code{contrast_column} (character vector or factor)
+#' that includes information about the groups to compare. A typical example is a column
+#' with sample labels, for instance: "control", "stimulated1", "stimulated2". If the input
+#' object is a \code{Seurat} object, the \code{contrast_column} should be available in
+#' the \code{meta.data} slot. For those familiar with \code{FindMarkers} from Seurat,
+#' \code{contrast_column} is equivalent to the \code{group.by} parameter.
+#'
+#' The \code{targets} parameter specifies a character vector with the names of the groups
+#' to compare \code{reference}. \code{targets} can be a single group name or a vector of
+#' group names while \code{reference} can only refer to a single group. Both \code{targets}
+#' and \code{reference} should be present in the \code{contrast_column}. These parameters
+#' are similar to the \code{ident.1} and \code{ident.2} parameters in \code{FindMarkers}.
+#'
+#' @section Additional groups:
+#' The test is always computed between \code{targets} and \code{reference}, but it is possible
+#' to add additional grouping variables with \code{group_vars}. If \code{group_vars} is used,
+#' each comparison is split into groups defined by the \code{group_vars}. For instance, if we
+#' have annotated cells into cell type populations and saved these annotations in a \code{meta.data}
+#' column called "cell_type", we can pass "cell_type" to \code{group_vars="cell_type"} to split
+#' tests across each cell type.
+#'
+#' @section Types of comparisons:
+#' Consider a scenario where we have a Seurat object (\code{seurat_object}) with Proximity Network Assay
+#' (PNA) data. \code{seurat_object} contains a \code{meta.data} column called "sampleID"
+#' that holds information about what samples the components originated from. This column could have
+#' three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
+#' called "cell_type" that holds information about the cell type identity of each component.
+#'
+#' 1. If we want to compare the "stimulated1" group to the "control" group:
+#' \preformatted{
+#' dp_markers <- DifferentialProximityAnalysis(
+#'    object = seurat_object,
+#'    contrast_column = "sampleID",
+#'    reference = "control",
+#'    targets = "stimulated1"
+#' )
+#' }
+#'
+#' 2. If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group:
+#' \preformatted{
+#' dp_markers <- DifferentialProximityAnalysis(
+#'   object = seurat_object,
+#'   contrast_column = "sampleID",
+#'   reference = "control",
+#'   targets = c("stimulated1", "stimulated2")
+#' )
+#' }
+#'
+#' 3. If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group, and split
+#' the tests by cell type:
+#' \preformatted{
+#' dp_markers <- DifferentialProximityAnalysis(
+#'    object = seurat_object,
+#'    contrast_column = "sampleID",
+#'    reference = "control",
+#'    targets = c("stimulated1", "stimulated2"),
+#'    group_vars = "cell_type"
+#' )
+#' }
+#'
+#' @concept DA
+#' @family DA-methods
+#'
+#' @param object An object containing PNA proximity scores
+#' @param contrast_column The name of the column where the group labels are stored.
+#' This column must include \code{target} and \code{reference}.
+#' @param targets The names of the target groups. These groups will be compared to the reference group.
+#' If the value is set to \code{NULL} (default), all groups available in \code{contrast_column} except
+#' \code{reference} will be compared to the \code{reference} group.
+#' @param reference The name of the reference group
+#' @param group_vars An optional character vector with column names to group the tests by.
+#' @param proximity_metric The proximity metric to use. Any numeric data column in the proximity score table
+#' can be selected. The default is "pearson_z".
+#' @param metric_type One of "all", "self" or "cross". If "all", all pairwise comparisons are considered.
+#' If "self", only protein pairs of the same type are considered. If "cross", protein pairs of different
+#' type are considered.
+#' @param backend One of "dplyr" or "data.table". The latter requires the \code{dtplyr} package to be installed.
+#' @param min_n_obs Minimum number of observations allowed in a group. Target groups with less
+#' observations than \code{min_n_obs} will be skipped.
+#' @param p_adjust_method One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
+#' (see \code{?p.adjust} for details)
+#' @param verbose Print messages
+#' @param ... Not yet implemented
+#'
+#' @rdname DifferentialProximityAnalysis
+#'
+#' @return A \code{tbl_df} object with test results
+#'
+#' @export
+#'
+DifferentialProximityAnalysis <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "DifferentialProximityAnalysis", object = object)
+}
+
+#' Convert objects to a \code{\link{PNAAssay5}}
+#'
+#' @param x An object to convert to class \code{\link{PNAAssay5}}
+#' @param ... Arguments passed to other methods
+#' @rdname as.PNAAssay5
+#' @export as.PNAAssay5
+as.PNAAssay5 <- function(
+  x,
+  ...
+) {
+  UseMethod(generic = "as.PNAAssay5", object = x)
+}
+
+#' Convert objects to a \code{\link{PNAAssay}}
+#'
+#' @param x An object to convert to class \code{\link{PNAAssay}}
+#' @param ... Arguments passed to other methods
+#' @rdname as.PNAAssay
+#' @export as.PNAAssay
+as.PNAAssay <- function(
+  x,
+  ...
+) {
+  UseMethod(generic = "as.PNAAssay", object = x)
+}
+
+#' ProximityScores
+#'
+#' Get and set proximity scores for a \code{\link{PNAAssay}},
+#' \code{\link{PNAAssay5}} or a \code{Seurat} object
+#'
+#' @param object An object with polarization scores
+#' @param ... Not implemented
+#'
+#' @rdname ProximityScores
+#' @family spatial metrics
+#'
+#' @return \code{ProximityScores}: Proximity scores
+#'
+#' @export
+#'
+ProximityScores <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ProximityScores", object = object)
+}
+
+#' @param value A \code{tbl_df} or \code{tbl_lazy} with proximity scores
+#'
+#' @rdname ProximityScores
+#'
+#' @return \code{ProximityScores<-}: An object with updated proximity scores
+#'
+#' @export
+#'
+"ProximityScores<-" <- function(
+  object,
+  ...,
+  value
+) {
+  UseMethod(generic = "ProximityScores<-", object = object)
+}
+
+#' Convert proximity score table to an Assay or Assay5
+#'
+#' @section Behavior:
+#'
+#' Takes an object with PNA proximity scores in long format and returns an
+#' object with proximity scores in a wide format. The proximity score
+#' table contains various spatial metrics along with p-values for each
+#' protein pair and component.
+#'
+#' The wide format is an array-like object with dimensions (markers_1 * marker_2) x components,
+#' where each cell is filled with a value for a selected spatial metric.
+#'
+#' Note that that observations that are missing from the proximity score table
+#' can be replaced with 0's in the wide array by setting \code{missing_obs_val = 0},
+#' which might be required by various functions in \code{Seurat}. However, this may
+#' not be the desired behavior as a value of 0 usually doesn't mean that the observation
+#' is missing.
+#'
+#' Different outputs are returned depending on the input object type:
+#'
+#' \itemize{
+#'    \item{
+#'      \code{tibble/data.frame}: returns a \code{matrix} with marker pairs in rows
+#'      and components in columns
+#'    }
+#'    \item{
+#'      \code{PNAAssay/PNAAssay5}: returns an \code{Assay} or \code{Assay5} with marker
+#'      pairs in rows and  components in columns
+#'    }
+#'    \item{
+#'      \code{Seurat} object: returns the \code{Seurat} object with a new \code{Assay}
+#'      or \code{Assay5} with marker pairs in rows and components in columns
+#'    }
+#' }
+#'
+#' As many methods provided in Seurat operates on \code{Assay}/\code{Assay5}
+#' objects, it can sometimes be convenient to make this conversion if you
+#' wish to use these methods on spatial metrics in the proximity score table.
+#' For instance, if we want to compute a UMAP on the proximity scores with
+#' \code{RunUMAP}, we need the values to be formatted in an \code{Assay}/\code{Assay5}.
+#' This also makes it possible to use various visualization functions such as
+#' \code{VlnPlot} or \code{FeaturePlot} to show the distribution of proximity scores.
+#'
+#' @param object An object with proximity scores
+#' @param values_from A single string defining what column in the proximity score table
+#' to pick values from.
+#' @param missing_obs A numeric value or NA to replace missing observations with. Default
+#' is \code{NA_real_}.
+#' @param return_sparse A logical specifying whether to return a sparse matrix (\code{dgCMatrix}).
+#' @param ... Not yet implemented
+#'
+#' @rdname ProximityScoresToAssay
+#' @family Spatial metrics conversion methods
+#'
+#' @export
+#'
+ProximityScoresToAssay <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ProximityScoresToAssay", object = object)
+}
+
+
+#' Load edgelists
+#'
+#' Get the edgelist(s) from a \code{\link{PNAAssay}}, \code{\link{PNAAssay5}} or
+#' a \code{Seurat} object. The edgelist(s) are stored on disk in the PXL files,
+#' so the method only works if the paths are set correctly (see \code{?FSMap}).
+#'
+#' @param object An object with polarization scores
+#' @param ... Not implemented
+#'
+#' @rdname Edgelists
+#' @family spatial metrics
+#'
+#' @return \code{Edgelists}: Edgelist(s)
+#'
+#' @export
+#'
+Edgelists <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "Edgelists", object = object)
 }

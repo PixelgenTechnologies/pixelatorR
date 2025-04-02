@@ -130,7 +130,8 @@ object <- CreateSeuratObject(counts = counts)
 DensityScatterPlot(
   object,
   marker1 = "Feature1",
-  marker2 = "Feature2"
+  marker2 = "Feature2",
+  layer = "counts"
 )
 
 # Create a density scatter plot with a quadrant gate
@@ -151,7 +152,8 @@ DensityScatterPlot(
     color = "darkblue",
     size = 4,
     fontface = "bold"
-  )
+  ),
+  layer = "counts"
 )
 
 }

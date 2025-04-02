@@ -49,11 +49,7 @@ Create a scatter plot of the abundance values for two sets of markers from a Seu
 library(pixelatorR)
 
 # Load example data as a Seurat object
-pxl_file <- system.file(
-  "extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
 
 # Plot with data.frame

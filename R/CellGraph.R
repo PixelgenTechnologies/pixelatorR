@@ -54,10 +54,7 @@ CellGraph <- setClass(
 #'
 #' edge_list <-
 #'   ReadMPX_item(
-#'     system.file("extdata/five_cells",
-#'       "five_cells.pxl",
-#'       package = "pixelatorR"
-#'     ),
+#'     minimal_mpx_pxl_file(),
 #'     items = "edgelist"
 #'   )
 #' bipart_graph <-
@@ -142,10 +139,7 @@ CreateCellGraphObject <- function(
 #'
 #' edge_list <-
 #'   ReadMPX_item(
-#'     system.file("extdata/five_cells",
-#'       "five_cells.pxl",
-#'       package = "pixelatorR"
-#'     ),
+#'     minimal_mpx_pxl_file(),
 #'     items = "edgelist"
 #'   )
 #' bipart_graph <-
@@ -297,10 +291,7 @@ CellGraphData <- function(
 #'
 #' edge_list <-
 #'   ReadMPX_item(
-#'     system.file("extdata/five_cells",
-#'       "five_cells.pxl",
-#'       package = "pixelatorR"
-#'     ),
+#'     minimal_mpx_pxl_file(),
 #'     items = "edgelist"
 #'   )
 #' bipart_graph <-

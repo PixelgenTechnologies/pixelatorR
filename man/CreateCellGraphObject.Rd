@@ -29,10 +29,7 @@ library(tidygraph)
 
 edge_list <-
   ReadMPX_item(
-    system.file("extdata/five_cells",
-      "five_cells.pxl",
-      package = "pixelatorR"
-    ),
+    minimal_mpx_pxl_file(),
     items = "edgelist"
   )
 bipart_graph <-

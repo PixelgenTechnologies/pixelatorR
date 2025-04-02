@@ -19,17 +19,14 @@ NULL
 #' library(dplyr)
 #' library(SeuratObject)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' # Seurat objects
 #' se <- ReadMPX_Seurat(pxl_file)
 #' se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
 #' se$sample <- c("T", "C", "C", "C", "C") %>% rep(times = 10)
-#' se <- Seurat::NormalizeData(se, normalization.method = "CLR", margin = 2)
+#' se <- Seurat::NormalizeData(se %>% JoinLayers(), normalization.method = "CLR", margin = 2)
 #'
-#' # Run DPA
+#' # Run DAA
 #' daa_markers <- RunDAA(se,
 #'   contrast_column = "sample",
 #'   targets = "T", reference = "C"

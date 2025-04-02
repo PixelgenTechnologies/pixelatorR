@@ -118,11 +118,11 @@ tests across each cell type.
 
 \section{Types of comparisons}{
 
-Consider a scenario where we have a Seurat object (\code{seurat_object}) with MPX data.
+Consider a scenario where we have a Seurat object (\code{seurat_object}) with PNA data.
 \code{seurat_object} contains a \code{meta.data} column called "sampleID" that holds
-information about what samples the MPX components originated from. This column could have
+information about what samples the PNA components originated from. This column could have
 three sample IDs: "control", "stimulated1" and "stimulated2". In addition, we have a column
-called "cell_type" that holds information about the cell type identity of each MPX component.
+called "cell_type" that holds information about the cell type identity of each PNA component.
 \enumerate{
 \item If we want to compare the "stimulated1" group to the "control" group:
 \preformatted{
@@ -163,10 +163,7 @@ to reduce the overhead of communication between processes.
 library(pixelatorR)
 library(dplyr)
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 
 # Load polarization scores
 polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
@@ -197,6 +194,7 @@ dpa_markers
 }
 \seealso{
 Other DA-methods: 
+\code{\link{DifferentialProximityAnalysis}()},
 \code{\link{RunDAA}()},
 \code{\link{RunDCA}()}
 }

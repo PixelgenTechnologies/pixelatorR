@@ -9,14 +9,14 @@ Plot2DGraph(
   cells,
   marker = NULL,
   assay = NULL,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
   log_scale = TRUE,
   node_size = 0.5,
   edge_width = 0.3,
-  show_Bnodes = FALSE,
+  show_Bnodes = TRUE,
   collect_scales = FALSE,
   return_plot_list = FALSE,
   ...
@@ -36,16 +36,18 @@ Plot2DGraph(
 
 \item{colors}{A character vector of colors to color marker counts by}
 
-\item{map_nodes, map_edges}{Should nodes and/or edges be mapped?}
+\item{map_nodes, map_edges}{Should nodes and/or edges be mapped? Note that
+component graphs can have >100k edges which can be very slow to draw.}
 
-\item{log_scale}{Convert node counts to log-scale with \code{log1p}}
+\item{log_scale}{Convert node counts to log-scale with \code{log1p}. This
+parameter is ignored for PNA graphs.}
 
 \item{node_size}{Size of nodes}
 
 \item{edge_width}{Set the width of the edges if \code{map_edges = TRUE}}
 
 \item{show_Bnodes}{Should B nodes be included in the visualization?
-This option is only applicable to bipartite graphs. Note that by removing
+This option is only applicable to bipartite MPX graphs. Note that by removing
 the B nodes, all edges are removed from the graph and hence, \code{map_edges}
 will have no effect.}
 
@@ -69,16 +71,18 @@ large, this can take a long time to draw.
 \examples{
 library(pixelatorR)
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
-
+# MPX
+pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, load_as = "Anode")
 seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
+Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "pmds", marker = "CD3E")
 
-Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3E")
+# PNA
+pxl_file <- minimal_pna_pxl_file()
+seur <- ReadPNA_Seurat(pxl_file)
+seur <- LoadCellGraphs(seur, cells = colnames(seur)[1], add_layouts = TRUE)
+Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3e")
 
 }
 \seealso{

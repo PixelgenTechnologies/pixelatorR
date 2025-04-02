@@ -16,10 +16,7 @@ NULL
 #' library(pixelatorR)
 #' library(dplyr)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #'
 #' # Load polarization scores
 #' polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)

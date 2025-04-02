@@ -13,8 +13,9 @@ TauPlot(object, ...)
 \method{TauPlot}{Seurat}(object, group_by = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{data.frame}-like object or a \code{Seurat} object with
-\code{umi_per_upia}, \code{tau} and \code{tau_type} values}
+\item{object}{A \code{data.frame}-like object or a \code{Seurat} object where
+columns \code{tau} and \code{tau_type} are present and one of the columns
+\code{umi_per_upia}, \code{mean_molecules_per_a_pixel} or \code{n_umi}.}
 
 \item{...}{Not yet implemented}
 
@@ -32,10 +33,7 @@ Plot UMIs per UPIa for quality control
 library(pixelatorR)
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj
 

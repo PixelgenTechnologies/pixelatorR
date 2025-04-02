@@ -5,6 +5,8 @@
 \alias{KeepLargestComponent.tbl_graph}
 \alias{KeepLargestComponent.CellGraph}
 \alias{KeepLargestComponent.MPXAssay}
+\alias{KeepLargestComponent.PNAAssay}
+\alias{KeepLargestComponent.PNAAssay5}
 \alias{KeepLargestComponent.Seurat}
 \title{Keep largest component}
 \usage{
@@ -16,6 +18,10 @@ KeepLargestComponent(object, ...)
 
 \method{KeepLargestComponent}{MPXAssay}(object, verbose = TRUE, ...)
 
+\method{KeepLargestComponent}{PNAAssay}(object, verbose = TRUE, ...)
+
+\method{KeepLargestComponent}{PNAAssay5}(object, verbose = TRUE, ...)
+
 \method{KeepLargestComponent}{Seurat}(object, assay = NULL, verbose = TRUE, ...)
 }
 \arguments{
@@ -25,7 +31,8 @@ KeepLargestComponent(object, ...)
 
 \item{verbose}{Print messages}
 
-\item{assay}{Name of a \code{CellGraphAssay} or \code{CellGraphAssay5}
+\item{assay}{Name of a \code{CellGraphAssay}, \code{CellGraphAssay5},
+\code{PNAAssay} or\code{PNAAssay5}
 assay stored on the \code{Seurat} object}
 }
 \description{
@@ -35,16 +42,13 @@ Finds connected components of a graph and returns the largest component
 library(pixelatorR)
 library(tidygraph)
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 
 # Read edgelist
 edgelist <- ReadMPX_arrow_edgelist(pxl_file)
 
 # Load graph from edge list and store in a CellGraph object
-cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000217")[[1]]
+cg <- LoadCellGraphs(edgelist, cells = "RCVCMP0000217", data_type = "MPX")[[1]]
 cg
 
 # Fetch tbl_graph from CellGraph object

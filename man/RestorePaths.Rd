@@ -6,6 +6,8 @@
 \alias{RestorePaths.MPXAssay}
 \alias{RestorePaths.CellGraphAssay}
 \alias{RestorePaths.CellGraphAssay5}
+\alias{RestorePaths.PNAAssay}
+\alias{RestorePaths.PNAAssay5}
 \alias{RestorePaths.Seurat}
 \title{Restore PXL file paths}
 \usage{
@@ -16,6 +18,10 @@ RestorePaths(object, ...)
 \method{RestorePaths}{CellGraphAssay}(object, pxl_files_dir, verbose = TRUE, ...)
 
 \method{RestorePaths}{CellGraphAssay5}(object, pxl_files_dir, verbose = TRUE, ...)
+
+\method{RestorePaths}{PNAAssay}(object, pxl_files_dir, verbose = TRUE, ...)
+
+\method{RestorePaths}{PNAAssay5}(object, pxl_files_dir, verbose = TRUE, ...)
 
 \method{RestorePaths}{Seurat}(object, pxl_files_dir, assay = NULL, verbose = TRUE, ...)
 }
@@ -37,16 +43,17 @@ An object with updated PXL file paths
 Updates the PXL file paths in an object with the paths in the specified directory.
 }
 \details{
-Seurat objects created with \code{pixelatorR} store the MPX data
-in a \code{\link{CellGraphAssay}} or \code{\link{CellGraphAssay5}} object.
-For some analytical tasks, such as component visualization, you need
-to load the component graphs in memory with \code{\link{LoadCellGraphs}}.
+Seurat objects created with \code{pixelatorR} store the MPX/PNA data
+in a \code{\link{CellGraphAssay}}, \code{\link{CellGraphAssay5}}, \code{\link{PNAAssay}}
+or \code{\link{PNAAssay5}} object. For some analytic tasks, such as component
+visualization, you need to load the component graphs in memory with \code{\link{LoadCellGraphs}}.
 
 \code{\link{LoadCellGraphs}} reads data from the edgelist(s) stored in the PXL
-files(s) that the Seurat object was created from (see \code{\link{ReadMPX_Seurat}}).
-This means that the PXL files must be accessible in the \code{\link{CellGraphAssay}}
-or \code{\link{CellGraphAssay5}} when you load the component graphs.
-You can check the PXL file paths with \code{\link{FSMap}}.
+files(s) that the Seurat object was created from (see \code{\link{ReadMPX_Seurat}}
+and \code{\link{ReadPNA_Seurat}}). This means that the PXL files must be accessible
+in the \code{\link{CellGraphAssay}}, \code{\link{CellGraphAssay5}}, \code{\link{PNAAssay}}
+or \code{\link{PNAAssay5}} when you load the component graphs. You can check the PXL file paths
+with \code{\link{FSMap}}.
 
 If the PXL files are moved or copied to a different directory, \code{\link{LoadCellGraphs}}
 will fail because the PXL file paths are invalid. \code{RestorePaths} can
@@ -89,10 +96,7 @@ library(pixelatorR)
 library(dplyr)
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 
 # Copy PXL file to tempdir
 tmp_pxl_file <- file.path(fs::path_temp(), "five_cells.pxl")

@@ -15,16 +15,16 @@ test_that("NormalizeMethods work as expected", {
   )
 })
 
-test_that("NormalizeMPX works as expected", {
+test_that("Normalize works as expected", {
   # Valid input
   expect_no_error(
-    NormalizeMPX(LayerData(se, "counts"))
+    Normalize(LayerData(se, "counts"))
   )
   expect_no_error(
-    NormalizeMPX(se[["mpxCells"]])
+    Normalize(se[["mpxCells"]])
   )
   expect_no_error(
-    norm_data_clr <- NormalizeMPX(se, method = "clr")
+    norm_data_clr <- Normalize(se, method = "clr")
   )
 
   expect_equal(
@@ -57,7 +57,7 @@ test_that("NormalizeMPX works as expected", {
   )
 
   expect_no_error(
-    norm_data_dsb <- NormalizeMPX(se)
+    norm_data_dsb <- Normalize(se)
   )
 
   expect_equal(
@@ -91,13 +91,13 @@ test_that("NormalizeMPX works as expected", {
 
   # Invalid input
   expect_error(
-    NormalizeMPX(se,
+    Normalize(se,
       method = "invalid_method"
     ),
     regexp = "'arg' should be"
   )
   expect_error(
-    NormalizeMPX(se,
+    Normalize(se,
       method = "dsb",
       isotype_controls = c(
         "isotype_control_that_definitely_does_not_exist",
@@ -108,7 +108,7 @@ test_that("NormalizeMPX works as expected", {
   )
 
   expect_error(
-    NormalizeMPX(se,
+    Normalize(se,
       method = "dsb",
       isotype_controls = NULL
     )
@@ -117,11 +117,11 @@ test_that("NormalizeMPX works as expected", {
 
 # Test Assay5 only
 se5 <- se
-se <- NormalizeMPX(se, method = "clr")
+se <- Normalize(se, method = "clr")
 suppressWarnings({
   se5[["mpxCells"]] <- as(object = se[["mpxCells"]], Class = "Assay5")
 })
-se5 <- NormalizeMPX(se5, method = "clr")
+se5 <- Normalize(se5, method = "clr")
 test_that("CellGraphAssay5 and Assay5 are equal", {
   expect_equal(
     se[["mpxCells"]]$data,

@@ -55,22 +55,20 @@ variable is provided.}
 A \code{ggplot} object
 }
 \description{
-QC plot function used to get a quick overview of called cells in an
-MPX data set.
+QC plot function used to get a quick overview of called cells in a
+Molecular Pixelation (MPX) or Proximity Network Assay (PNA) data set.
 }
 \examples{
 
 library(pixelatorR)
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj
 
 # Add random labels to color by
+set.seed(123)
 seur_obj$labels <- sample(c("A", "B"), size = ncol(seur_obj), replace = TRUE)
 
 # Plot with data.frame and color by labels

@@ -101,10 +101,7 @@ library(pixelatorR)
 library(SeuratObject)
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 col_scores <- ReadMPX_colocalization(pxl_file)
 
 # ColocalizationScoresToAssay returns a matrix for a tbl_df
@@ -137,6 +134,7 @@ DefaultAssay(seur) <- "colocalization"
 }
 \seealso{
 Other Spatial metrics conversion methods: 
-\code{\link{PolarizationScoresToAssay}()}
+\code{\link{PolarizationScoresToAssay}()},
+\code{\link{ProximityScoresToAssay}()}
 }
 \concept{Spatial metrics conversion methods}

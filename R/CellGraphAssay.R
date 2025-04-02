@@ -105,10 +105,7 @@ setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -210,10 +207,7 @@ CreateCellGraphAssay <- function(
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -307,10 +301,7 @@ CreateCellGraphAssay5 <- function(
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -515,10 +506,7 @@ RenameCells.CellGraphAssay5 <- RenameCells.MPXAssay
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -640,10 +628,7 @@ setAs(
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -955,10 +940,7 @@ NULL
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' counts <- ReadMPX_counts(pxl_file)
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
@@ -1058,10 +1040,7 @@ setMethod(
 #' library(dplyr)
 #' options(Seurat.object.assay.version = "v3")
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur)
 #' cg_assay <- seur[["mpxCells"]]

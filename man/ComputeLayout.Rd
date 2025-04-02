@@ -8,6 +8,8 @@
 \alias{ComputeLayout.MPXAssay}
 \alias{ComputeLayout.CellGraphAssay}
 \alias{ComputeLayout.CellGraphAssay5}
+\alias{ComputeLayout.PNAAssay}
+\alias{ComputeLayout.PNAAssay5}
 \alias{ComputeLayout.Seurat}
 \title{Compute a graph layout}
 \usage{
@@ -15,8 +17,8 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{tbl_graph}(
   object,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
-  dim = 2,
+  layout_method = c("pmds", "wpmds"),
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -28,9 +30,9 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraph}(
   object,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -42,9 +44,9 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{MPXAssay}(
   object,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -58,9 +60,9 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay}(
   object,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -74,9 +76,41 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay5}(
   object,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
+  normalize_layout = FALSE,
+  project_on_unit_sphere = FALSE,
+  pivots = 100,
+  seed = 123,
+  verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  cl = NULL,
+  ...
+)
+
+\method{ComputeLayout}{PNAAssay}(
+  object,
+  layout_method = c("pmds", "wpmds"),
+  layout_name = NULL,
+  dim = 3,
+  normalize_layout = FALSE,
+  project_on_unit_sphere = FALSE,
+  pivots = 100,
+  seed = 123,
+  verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  cl = NULL,
+  ...
+)
+
+\method{ComputeLayout}{PNAAssay5}(
+  object,
+  layout_method = c("pmds", "wpmds"),
+  layout_name = NULL,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -91,9 +125,9 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{Seurat}(
   object,
   assay = NULL,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("pmds", "wpmds"),
   layout_name = NULL,
-  dim = 2,
+  dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
   pivots = 100,
@@ -111,10 +145,11 @@ ComputeLayout(object, ...)
 \item{...}{Additional parameters passed to other methods}
 
 \item{layout_method}{The method for calculating the graph layout:
-weighted Pivot MDS ("wpmds"), Pivot MDS (pmds), Fruchterman-Reingold ("fr"),
-Kamada-Kawai ("kk"), "drl".}
+weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)}
 
-\item{dim}{An integer specifying the dimensions of the layout (2 or 3)}
+\item{dim}{An integer specifying the dimensions of the layout (2 or 3). Note that
+for "pmds" and "wpmds", the x and y coordinates will be identical regardless if
+dim is set to 2 or 3.}
 
 \item{normalize_layout}{Logical specifying whether the coordinate system
 should be centered at origo and the coordinates scaled such that their median
@@ -144,8 +179,7 @@ is provided.}
 
 \item{verbose}{Print messages}
 
-\item{cl}{A cluster object created by makeCluster, or an integer
-to indicate number of child-processes (integer values are ignored
+\item{cl}{An integer to indicate number of child-processes (integer values are ignored
 on Windows) for parallel evaluations. See Details on performance
 in the documentation for \code{pbapply}. The default is NULL,
 which means that no parallelization is used.}
@@ -156,17 +190,13 @@ which means that no parallelization is used.}
 An object containing a graph layout
 }
 \description{
-Calculates a graph layout for a component's edgelist, and outputs a list
-with the bipartite graph, layout, and antibody counts per A pixel.
+Computes graph layouts for component graphs.
 }
 \examples{
 library(pixelatorR)
 library(dplyr)
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 
 # Load example data
 seur <- ReadMPX_Seurat(pxl_file)
@@ -174,7 +204,7 @@ seur <- ReadMPX_Seurat(pxl_file)
 # Load 1 cellgraph
 seur <- LoadCellGraphs(seur,
   cells = colnames(seur)[1],
-  load_as = "Anode", force = TRUE
+  force = TRUE
 )
 
 # Get CellGraph
@@ -184,20 +214,16 @@ cg <- CellGraphs(seur)[[colnames(seur)[1]]]
 tbl_graph <- slot(cg, name = "cellgraph")
 
 # Compute layout for a tbl_graph
-layout <- ComputeLayout(tbl_graph, layout_method = "fr")
+layout <- ComputeLayout(tbl_graph, layout_method = "wpmds")
 layout \%>\% head()
 
 
 # Compute layout for a CellGraph
-cg <- ComputeLayout(cg, layout_method = "fr")
+cg <- ComputeLayout(cg, layout_method = "wpmds")
 
 
 # Compute layout for a CellGraphAssay
-cg_assay <- ComputeLayout(seur[["mpxCells"]], layout_method = "fr")
-
-
-# Compute layout for a Seurat object
-seur <- ComputeLayout(seur, layout_method = "fr")
+cg_assay <- ComputeLayout(seur[["mpxCells"]], layout_method = "wpmds")
 
 }
 \seealso{

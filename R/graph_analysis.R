@@ -1,5 +1,8 @@
 #' Calculate antibody counts per A-node
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' Computes and returns a data frame of antibody counts per node (vertex) of
 #' the A node graph given a component edge list as input. The parameter \code{k}
 #' allows to include neighbors (of each node) when computing the counts.

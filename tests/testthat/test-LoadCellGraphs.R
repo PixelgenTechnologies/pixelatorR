@@ -46,7 +46,7 @@ for (assay_version in c("v3", "v5")) {
     expect_s4_class(seur_obj, "Seurat")
 
     # Data set with pre-computed layouts
-    seur_obj_precomputed <- LoadCellGraphs(seur_obj_precomputed, cells = colnames(seur_obj)[1], load_layouts = TRUE)
+    seur_obj_precomputed <- LoadCellGraphs(seur_obj_precomputed, cells = colnames(seur_obj)[1], add_layouts = TRUE)
     layouts <- seur_obj_precomputed[["mpxCells"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(2470, 3))
     expect_equal(
@@ -116,7 +116,7 @@ for (assay_version in c("v3", "v5")) {
 
     # Single data set
     expect_no_error({
-      g_list <- LoadCellGraphs(el, cells = colnames(seur_obj))
+      g_list <- LoadCellGraphs(el, cells = colnames(seur_obj), data_type = "MPX")
     })
     expect_type(g_list, "list")
     expect_s4_class(g_list[[1]], "CellGraph")
@@ -149,7 +149,7 @@ for (assay_version in c("v3", "v5")) {
     expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], load_as = "invalid"))
     expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], assay = "invalid"))
     expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], add_marker_counts = "invalid"))
-    expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], load_layouts = "invalid"))
+    expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], add_layouts = "invalid"))
     expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], force = "invalid"))
     expect_error(LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1], chunk_size = "invalid"))
 

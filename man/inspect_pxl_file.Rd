@@ -2,12 +2,12 @@
 % Please edit documentation in R/inspect_pxl_file.R
 \name{inspect_pxl_file}
 \alias{inspect_pxl_file}
-\title{Inspect a PXL file}
+\title{Inspect a PXL file with MPX data}
 \usage{
 inspect_pxl_file(pxl_file)
 }
 \arguments{
-\item{pxl_file}{Path to a PXL file}
+\item{pxl_file}{Path to a PXL file with MPX data}
 }
 \value{
 A tibble with information about the files contained
@@ -18,11 +18,7 @@ This function inspects a PXL file and returns a tibble with
 information about the files contained in the PXL file.
 }
 \examples{
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
-
+pxl_file <- minimal_mpx_pxl_file()
 inspect_pxl_file(pxl_file)
 
 }

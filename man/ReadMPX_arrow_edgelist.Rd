@@ -2,12 +2,12 @@
 % Please edit documentation in R/read_edgelist.R
 \name{ReadMPX_arrow_edgelist}
 \alias{ReadMPX_arrow_edgelist}
-\title{Read edgelists from .pxl files}
+\title{Read edgelists from a PXL file containing MPX data}
 \usage{
 ReadMPX_arrow_edgelist(pxl_file, edge_list_file = NULL, verbose = TRUE, ...)
 }
 \arguments{
-\item{pxl_file}{Path to a .pxl file}
+\item{pxl_file}{Path to a PXL file}
 
 \item{edge_list_file}{Path to the output edgelist.parquet file}
 
@@ -21,17 +21,14 @@ set with \code{edge_list_file}
 }
 \description{
 This function uses arrow to read edgelists from one or several
-.pxl files. The edgelists are stored in parquet files in
+PXL files. The edgelists are stored in parquet files in
 the \code{outdir} directory which can be modified on disk.
 }
 \examples{
 library(pixelatorR)
 
 # Load example data
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file)
 edgelist_arrow
 

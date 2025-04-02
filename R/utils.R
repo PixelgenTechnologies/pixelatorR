@@ -245,7 +245,7 @@
         call = call
       )
     }
-    # Check .pxl file for content
+    # Check PXL file for content
     pxl_files <- utils::unzip(f, list = TRUE)$Name
 
 

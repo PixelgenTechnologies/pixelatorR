@@ -1,10 +1,10 @@
-#' Read edgelists from .pxl files
+#' Read edgelists from a PXL file containing MPX data
 #'
 #' This function uses arrow to read edgelists from one or several
-#' .pxl files. The edgelists are stored in parquet files in
+#' PXL files. The edgelists are stored in parquet files in
 #' the \code{outdir} directory which can be modified on disk.
 #'
-#' @param pxl_file Path to a .pxl file
+#' @param pxl_file Path to a PXL file
 #' @param edge_list_file Path to the output edgelist.parquet file
 #' @param verbose Print messages
 #' @param ... Parameters passed to other methods
@@ -18,10 +18,7 @@
 #' library(pixelatorR)
 #'
 #' # Load example data
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file)
 #' edgelist_arrow
 #'

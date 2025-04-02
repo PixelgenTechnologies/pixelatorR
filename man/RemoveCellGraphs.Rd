@@ -3,6 +3,8 @@
 \name{RemoveCellGraphs}
 \alias{RemoveCellGraphs}
 \alias{RemoveCellGraphs.MPXAssay}
+\alias{RemoveCellGraphs.PNAAssay}
+\alias{RemoveCellGraphs.PNAAssay5}
 \alias{RemoveCellGraphs.Seurat}
 \title{Remove CellGraphs}
 \usage{
@@ -10,17 +12,21 @@ RemoveCellGraphs(object, ...)
 
 \method{RemoveCellGraphs}{MPXAssay}(object, ...)
 
+\method{RemoveCellGraphs}{PNAAssay}(object, ...)
+
+\method{RemoveCellGraphs}{PNAAssay5}(object, ...)
+
 \method{RemoveCellGraphs}{Seurat}(object, assay = NULL, ...)
 }
 \arguments{
-\item{object}{A \code{Seurat} object or an \code{\link{CellGraphAssay}} object}
+\item{object}{An object with cell graphs}
 
-\item{...}{Parameters passed to other methods}
+\item{...}{Additional arguments (not used)}
 
 \item{assay}{The name of the target assay}
 }
 \value{
-An object without CellGraphs
+An object where the elements of the cellgraphs list are set to \code{NULL}
 }
 \description{
 Clears the \code{\link{CellGraph}} objects from the "cellgraphs" slot.
