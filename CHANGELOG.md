@@ -7,24 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `PixelDB` R6 class to access data from a PXL file (`<pxl_file>`) containing a duckdb database.
-        - `PixelDB$new` create a new `PixelDB` object from a PXL file containing PNA data.
-        - `PixelDB$info` get information about the tables stored in the PXL file.
-        - `PixelDB$query` send an SQL query to the database.
-        - `PixelDB$check_connection` check if the connection to the PXL file is still valid.
-        - `PixelDB$reconnect` reconnect to the database if the connection is closed.
-        - `PixelDB$names` get the names of the tables stored in the database.
-        - `PixelDB$fetch_table` fetch an entire table as a `data.frame`.
-        - `PixelDB$fetch_table_subset` fetch a subset of a table as a `data.frame`
-        - `PixelDB$counts` fetch the antibody count matrix.
-        - `PixelDB$proximity` fetch the proximity scores table.
-        - `PixelDB$cell_meta` fetch the component/cell meta data.
-        - `PixelDB$protein_meta` fetch the protein meta data.
-        - `PixelDB$run_meta` fetch the Pixelator run meta data.
-        - `PixelDB$components_edgelist` fetch the edgelist(s) for selected components/cells.
-        - `PixelDB$components_layout` fetch the layout(s) for selected components/cells.
-        - `PixelDB$components_marker_counts` fetch the node counts for selected component/cell graphs.
-        - `PixelDB$export_parquet` export a table in the database to a parquet file.
-        - `PixelDB$close` close the connection.
+  - `PixelDB$new` create a new `PixelDB` object from a PXL file containing PNA data.
+  - `PixelDB$info` get information about the tables stored in the PXL file.
+  - `PixelDB$query` send an SQL query to the database.
+  - `PixelDB$check_connection` check if the connection to the PXL file is still valid.
+  - `PixelDB$reconnect` reconnect to the database if the connection is closed.
+  - `PixelDB$names` get the names of the tables stored in the database.
+  - `PixelDB$fetch_table` fetch an entire table as a `data.frame`.
+  - `PixelDB$fetch_table_subset` fetch a subset of a table as a `data.frame`
+  - `PixelDB$counts` fetch the antibody count matrix.
+  - `PixelDB$proximity` fetch the proximity scores table.
+  - `PixelDB$cell_meta` fetch the component/cell meta data.
+  - `PixelDB$protein_meta` fetch the protein meta data.
+  - `PixelDB$run_meta` fetch the Pixelator run meta data.
+  - `PixelDB$components_edgelist` fetch the edgelist(s) for selected components/cells.
+  - `PixelDB$components_layout` fetch the layout(s) for selected components/cells.
+  - `PixelDB$components_marker_counts` fetch the node counts for selected component/cell graphs.
+  - `PixelDB$export_parquet` export a table in the database to a parquet file.
+  - `PixelDB$close` close the connection.
 - `ReadPNA_counts` function to load the count matrix from a PXL file containing PNA data.
 - `ReadPNA_proximity` function to load the proximity scores table from a PXL file containing PNA data.
 - `ReadPNA_edgelist` function to load the edgelist from a PXL file containing PNA data.
