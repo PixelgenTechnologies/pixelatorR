@@ -40,7 +40,8 @@ Imports:
     jsonlite,
     lifecycle,
     R6,
-    DBI
+    DBI,
+    duckdb
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -49,7 +50,6 @@ Suggests:
     scales,
     pheatmap,
     ComplexHeatmap,
-    duckdb,
     dbplyr,
     reticulate,
     MASS,
