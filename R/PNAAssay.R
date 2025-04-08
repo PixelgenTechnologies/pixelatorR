@@ -666,7 +666,7 @@ ProximityScores.PNAAssay <- function(
   if (lazy) {
     # Load proximity scores from the PXL files
     fs_map <- FSMap(object)
-    proximity_scores <- .lazy_load_table(fs_map, "proximity", calc_log2ratio)
+    proximity_scores <- .lazy_load_table(fs_map, "proximity", calc_log2ratio, rownames(object))
   } else {
     proximity_scores <- slot(object, name = "proximity")
 
@@ -1008,7 +1008,8 @@ subset.PNAAssay <- function(
   cells = NULL,
   ...
 ) {
-  assert_x_in_y(cells, colnames(x))
+  assert_x_in_y(cells, colnames(x), allow_null = TRUE)
+  assert_x_in_y(features, rownames(x), allow_null = TRUE)
 
   # Get cellgraphs
   cellgraphs <- x@cellgraphs
@@ -1018,6 +1019,9 @@ subset.PNAAssay <- function(
     "Assay",
     "Assay5"
   ))
+  if (inherits(assay, "Assay5")) {
+    assay <- JoinLayers(assay)
+  }
   assay_subset <- subset(x = assay, features = features, cells = cells)
 
   # Filter cellgraphs

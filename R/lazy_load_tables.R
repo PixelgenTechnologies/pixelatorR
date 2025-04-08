@@ -5,6 +5,8 @@
 #' @param table_name The name of the table to load, e.g. "proximity".
 #' @param calc_log2ratio A logical indicating whether to calculate the
 #' log2 ratio proximity score. This is only used for the "proximity" table.
+#' @param proteins_keep A character vector of protein names (marker_1/marker_2)
+#' to keep in the proximity score table.
 #' @param call The calling environment.
 #'
 #' @return A \code{tbl_lazy} table.
@@ -51,6 +53,7 @@
   fs_map,
   table_name = "proximity",
   calc_log2ratio = TRUE,
+  proteins_keep = NULL,
   call = caller_env()
 ) {
   # Check that PXL files are unique
@@ -74,6 +77,10 @@
     DBI::dbExecute(con_federated, glue::glue("ATTACH '{fs_map$pxl_file[i]}' AS db{i} (TYPE duckdb, READ_ONLY)"))
     # Copy the ID map to the federated database
     copy_to(con_federated, fs_map$id_map[[i]] %>% rename(component = original_id), glue::glue("id_map{i}"))
+    # If proteins_keep is provided, filter the data to include only those proteins
+    if (!is.null(proteins_keep) && table_name == "proximity") {
+      copy_to(con_federated, tibble(marker = proteins_keep), glue::glue("proteins_keep{i}"))
+    }
   }
 
   # Select column names to keep
@@ -92,6 +99,17 @@
   } else {
     select_sql <- "SELECT {column_names}, "
   }
+
+  if (!is.null(proteins_keep) && table_name == "proximity") {
+    proteins_keep_formatted <- glue_sql("{proteins_keep*}", .con = con_federated)
+    select_proteins_sql <- glue::glue(
+      "WHERE marker_1 IN ({proteins_keep_formatted})\n",
+      "AND marker_2 IN ({proteins_keep_formatted})"
+    )
+  } else {
+    select_proteins_sql <- ""
+  }
+
   union_sql <- paste(
     glue::glue(
       select_sql,
@@ -99,12 +117,14 @@
       "FROM db{dbs}.{table_name}\n",
       # Update component IDs using the ID map
       "JOIN id_map{dbs}\n",
-      "ON db{dbs}.{table_name}.component = id_map{dbs}.component\n"
+      "ON db{dbs}.{table_name}.component = id_map{dbs}.component\n",
+      select_proteins_sql
     ),
     # Combine all tables with UNION ALL
     collapse = "\nUNION ALL\n"
   )
-  create_view_sql <- glue::glue("CREATE OR REPLACE VIEW combined_{table_name} AS {union_sql[1]}")
+
+  create_view_sql <- glue::glue("CREATE OR REPLACE VIEW combined_{table_name} AS {union_sql}")
 
   # Execute the SQL query to create the view
   DBI::dbExecute(con_federated, create_view_sql)
