@@ -12,12 +12,14 @@ NULL
 #' library(pixelatorR)
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- minimal_mpx_pxl_file()
-#' seur_obj <- ReadMPX_Seurat(pxl_file)
-#' seur_obj
+#' pxl_file_mpx <- minimal_mpx_pxl_file()
+#' pxl_file_pna <- minimal_pna_pxl_file()
+#'
+#' seur_obj_mpx <- ReadMPX_Seurat(pxl_file_mpx)
+#' seur_obj_mpx
 #'
 #' # Plot with data.frame
-#' MoleculeRankPlot(seur_obj[[]])
+#' MoleculeRankPlot(seur_obj_mpx[[]])
 #'
 #' @export
 #'
@@ -28,14 +30,13 @@ MoleculeRankPlot.data.frame <- function(
 ) {
   # Check object
   assert_non_empty_object(object, classes = "data.frame")
-  if (!any(c("edges", "molecules") %in% colnames(object))) {
+  if (!any(c("edges", "molecules", "n_umi") %in% colnames(object))) {
     cli::cli_abort(
       c("x" = "Either {.str edges} or {.str molecules} must be present in {.var object}")
     )
   }
 
-  molecules_column <-
-    ifelse("molecules" %in% colnames(object), "molecules", "edges")
+  molecules_column <- intersect(colnames(object), c("molecules", "edges", "n_umi"))[1]
 
   assert_col_class(molecules_column, object, c("numeric", "integer"))
 
@@ -85,7 +86,11 @@ MoleculeRankPlot.data.frame <- function(
 #' library(pixelatorR)
 #'
 #' # Plot with Seurat object
-#' MoleculeRankPlot(seur_obj)
+#' MoleculeRankPlot(seur_obj_mpx)
+#'
+#' # Plot with Seurat object containing PNA data
+#' seur_obj_pna <- ReadPNA_Seurat(pxl_file_pna)
+#' MoleculeRankPlot(seur_obj_pna)
 #'
 #' @export
 #'
