@@ -55,6 +55,8 @@ Get and set colocalization scores for a \code{\link{CellGraphAssay}},
 }
 \seealso{
 Other spatial metrics: 
-\code{\link{PolarizationScores}()}
+\code{\link{Edgelists}()},
+\code{\link{PolarizationScores}()},
+\code{\link{ProximityScores}()}
 }
 \concept{spatial metrics}

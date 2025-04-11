@@ -30,20 +30,23 @@ Plots the number of edges/molecules per component against the component rank
 library(pixelatorR)
 
 # Load example data as a Seurat object
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
-seur_obj <- ReadMPX_Seurat(pxl_file)
-seur_obj
+pxl_file_mpx <- minimal_mpx_pxl_file()
+pxl_file_pna <- minimal_pna_pxl_file()
+
+seur_obj_mpx <- ReadMPX_Seurat(pxl_file_mpx)
+seur_obj_mpx
 
 # Plot with data.frame
-MoleculeRankPlot(seur_obj[[]])
+MoleculeRankPlot(seur_obj_mpx[[]])
 
 library(pixelatorR)
 
 # Plot with Seurat object
-MoleculeRankPlot(seur_obj)
+MoleculeRankPlot(seur_obj_mpx)
+
+# Plot with Seurat object containing PNA data
+seur_obj_pna <- ReadPNA_Seurat(pxl_file_pna)
+MoleculeRankPlot(seur_obj_pna)
 
 }
 \concept{plots}

@@ -9,7 +9,7 @@ Plot3DGraph(
   cell_id,
   marker = NULL,
   assay = NULL,
-  layout_method = "pmds",
+  layout_method = c("wpmds_3d", "pmds_3d"),
   project = FALSE,
   aspectmode = c("data", "cube"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
@@ -64,15 +64,17 @@ color nodes by a marker.
 \examples{
 library(pixelatorR)
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
-
+# MPX
+pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[5])
-seur <- ComputeLayout(seur, layout_method = "pmds", dim = 3)
+seur <- ComputeLayout(seur, layout_method = "wpmds", dim = 3, pivots = 50)
+Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50", layout_method = "wpmds_3d")
 
-Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50", layout_method = "pmds_3d")
+# PNA
+pxl_file <- minimal_pna_pxl_file()
+seur <- ReadPNA_Seurat(pxl_file)
+seur <- LoadCellGraphs(seur, cells = colnames(seur)[1], add_layouts = TRUE)
+Plot3DGraph(seur, cell_id = colnames(seur)[1], marker = "CD16", layout_method = "wpmds_3d")
 
 }

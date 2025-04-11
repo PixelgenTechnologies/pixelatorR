@@ -6,10 +6,74 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
+- `PixelDB` R6 class to access data from a PXL file (`<pxl_file>`) containing a duckdb database.
+  - `PixelDB$new` create a new `PixelDB` object from a PXL file containing PNA data.
+  - `PixelDB$info` get information about the tables stored in the PXL file.
+  - `PixelDB$query` send an SQL query to the database.
+  - `PixelDB$check_connection` check if the connection to the PXL file is still valid.
+  - `PixelDB$reconnect` reconnect to the database if the connection is closed.
+  - `PixelDB$names` get the names of the tables stored in the database.
+  - `PixelDB$fetch_table` fetch an entire table as a `data.frame`.
+  - `PixelDB$fetch_table_subset` fetch a subset of a table as a `data.frame`
+  - `PixelDB$counts` fetch the antibody count matrix.
+  - `PixelDB$proximity` fetch the proximity scores table.
+  - `PixelDB$cell_meta` fetch the component/cell meta data.
+  - `PixelDB$protein_meta` fetch the protein meta data.
+  - `PixelDB$run_meta` fetch the Pixelator run meta data.
+  - `PixelDB$components_edgelist` fetch the edgelist(s) for selected components/cells.
+  - `PixelDB$components_layout` fetch the layout(s) for selected components/cells.
+  - `PixelDB$components_marker_counts` fetch the node counts for selected component/cell graphs.
+  - `PixelDB$export_parquet` export a table in the database to a parquet file.
+  - `PixelDB$close` close the connection.
+- `ReadPNA_counts` function to load the count matrix from a PXL file containing PNA data.
+- `ReadPNA_proximity` function to load the proximity scores table from a PXL file containing PNA data.
+- `ReadPNA_edgelist` function to load the edgelist from a PXL file containing PNA data.
+- `ReadPNA_layouts` function to load component layouts from a PXL file containing PNA data with pre-computed layouts.
+- `ReadPNA_Seurat` function to construct a `Seurat` object from a PXL file containing PNA data.
+- `ReadPNA_metadata` function to load sample meta data from a PXL file containing PNA data.
+- `PNAAssay` class to store PNA data in a `Seurat` object (v3).
+- `CreatePNAAssay` to create a `PNAAssay` object.
+- `PNAAssay5` class to store PNA data in a `Seurat` object (v5).
+- `CreatePNAAssay5` to create a `PNAAssay5` object.
+- `Edgelists` methods for `PNAAssay`, `PNAAssay5` and `Seurat` to load edgelists. Supports lazy loading for manipulation with `dbplyr`.
+- `ProximityScores` methods for `PNAAssay`, `PNAAssay5` and `Seurat` to fetch proximity scores. Supports lazy loading for manipulation with `dbplyr`.
+- `ProximityScores<-` methods for `PNAAssay`, `PNAAssay5` and `Seurat` to set proximity scores.
+- `ProximityScoresToAssay` methods for `PNAAssay`, `PNAAssay5` and `Seurat` to convert the long formatted proximity score table into a wide format.
+- `LoadCellGraphs` methods for for `PNAAssay` and `PNAAssay5`.
+- `ComputeLayout` methods for for `PNAAssay` and `PNAAssay5`.
+- `RemoveCellGraphs` methods for for `PNAAssay` and `PNAAssay5`.
+- `CellGraphs` methods for for `PNAAssay` and `PNAAssay5`.
+- `RestorePaths` methods for for `PNAAssay` and `PNAAssay5`.
+- `FSMap`/`FSMap<-` methods for `PNAAssay` and `PNAAssay5`.
+- `show` method for `PNAAssay` and `PNAAssay5`.
+- `subset` method for `PNAAssay` and `PNAAssay5`.
+- `merge` method for `PNAAssay` and `PNAAssay5`.
+- `RenameCells` methods for `PNAAssay` and `PNAAssay5`.
+- `JoinLayers` method for `PNAAssay5`.
+- `as.PNAAssay` method to convert an `Assay` object to a `PNAAssay` object.
+- `as.PNAAssay5` method to convert an `Assay5` object to a `PNAAssay5` object.
+- `DifferentialProximityAnalysis` function to perform differential testing on PNA proximity scores. The function has a similar API as `RunDAA`, `RunDPA` and `RunDCA` but uses a much faster implementation of the Wilcoxon rank sum test (Mann-Whitney U test) with the `data.table` R package.
+- A minimal PXL file woth PNA data.
+- `minimal_mpx_pxl_file` function to get the path to the minimal MPX PXL file.
+- `minimal_mpx_pna_file` function to get the path to the minimal PNA PXL file.
 - Utility function for asserting valid colors; `assert_valid_color`.
+- Utility function for asserting valid `PNAAssay`/`PNAAssay5`; `assert_pna_assay`.
+- Utility function for asserting valid `PNAAssay`/`PNAAssay5`/`CellGraphAssay`/`CellGraphAssay5`; `assert_pna_assay`.
 
 ### Updates
+- `MoleculeRankPlot` now supports Seurat objects with PNA data with `n_umi` representing the total number of detected antibodies.
+- `TauPlot` now supports Seurat objects with PNA data using `n_umi` on the y-axis.
+- `Plot2DGraph` now supports Seurat objects with PNA data. 
+- `Plot2DGraphM` now supports Seurat objects with PNA data. 
+- `Plot3DGraph` now supports Seurat objects with PNA data. 
 - `DensityScatterPlot` can now draw `rectangle` or `quadrant` gates by selecting the appropriate `gate_type` argument. Additionally, gate annotation aesthetics can now be customized using `annotation_params`.
+
+### Changes
+- `ComputeLayout` now only supports the "pmds" and "wpmds" graph drawing methods. The "kk", "fr" and "drl" methods have been removed but can be run if needed using the `custom_layout_function` parameter. The default layout method is now "wpmds" with `dim = 3`.
+- `NormalizeMPX` is superseded by `Normalize`. The `NormalizeMPX` function will be removed in a future release.
+
+### Removed
+- `LoadCellGraphs.data.frame` method
 
 ### Fixes
 - Fixed bug in `DensityScatterPlot` where the `gate_type` default would lead to an error.

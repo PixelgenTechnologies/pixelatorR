@@ -15,13 +15,9 @@
 #'
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file(
-#'   "extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' se <- ReadMPX_Seurat(pxl_file)
-#' norm_data_dsb <- NormalizeMPX(
+#' norm_data_dsb <- Normalize(
 #'   se,
 #'   method = "dsb",
 #'   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b")
@@ -114,13 +110,9 @@
 #'
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file(
-#'   "extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' se <- ReadMPX_Seurat(pxl_file)
-#' norm_data_clr <- NormalizeMPX(se, method = "clr")
+#' norm_data_clr <- Normalize(se, method = "clr")
 #'
 #' @return A matrix of normalized MPX counts
 #'
@@ -134,12 +126,12 @@
   sweep(log1p(counts), 2, Matrix::colMeans(log1p(counts)), "-")
 }
 
-#' @rdname NormalizeMPX
-#' @method NormalizeMPX Matrix
-#'
+#' @rdname Normalize
+#' @method Normalize Matrix
+#' @docType methods
 #' @export
 #'
-NormalizeMPX.Matrix <- function(
+Normalize.Matrix <- function(
   object,
   method = c("dsb", "clr"),
   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
@@ -164,12 +156,12 @@ NormalizeMPX.Matrix <- function(
 }
 
 
-#' @rdname NormalizeMPX
-#' @method NormalizeMPX MPXAssay
-#'
+#' @rdname Normalize
+#' @method Normalize MPXAssay
+#' @docType methods
 #' @export
 #'
-NormalizeMPX.MPXAssay <- function(
+Normalize.MPXAssay <- function(
   object,
   method = c("dsb", "clr"),
   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
@@ -181,7 +173,7 @@ NormalizeMPX.MPXAssay <- function(
   }
 
   newData <-
-    NormalizeMPX(
+    Normalize(
       object = LayerData(object, "counts"),
       method = method,
       isotype_controls = isotype_controls,
@@ -194,40 +186,77 @@ NormalizeMPX.MPXAssay <- function(
   return(object)
 }
 
-#' @rdname NormalizeMPX
-#' @method NormalizeMPX Assay
+#' @rdname Normalize
+#' @method Normalize Assay
 #' @docType methods
 #' @export
 #'
-NormalizeMPX.Assay <- NormalizeMPX.MPXAssay
+Normalize.Assay <- Normalize.MPXAssay
 
-#' @rdname NormalizeMPX
-#' @method NormalizeMPX CellGraphAssay
+#' @rdname Normalize
+#' @method Normalize CellGraphAssay
 #' @docType methods
 #' @export
 #'
-NormalizeMPX.CellGraphAssay <- NormalizeMPX.MPXAssay
+Normalize.CellGraphAssay <- Normalize.MPXAssay
 
-#' @rdname NormalizeMPX
-#' @method NormalizeMPX Assay5
+#' @rdname Normalize
+#' @method Normalize Assay5
 #' @docType methods
 #' @export
 #'
-NormalizeMPX.Assay5 <- NormalizeMPX.MPXAssay
+Normalize.Assay5 <- Normalize.MPXAssay
 
-#' @rdname NormalizeMPX
-#' @method NormalizeMPX CellGraphAssay5
+#' @rdname Normalize
+#' @method Normalize CellGraphAssay5
 #' @docType methods
 #' @export
 #'
-NormalizeMPX.CellGraphAssay5 <- NormalizeMPX.MPXAssay
+Normalize.CellGraphAssay5 <- Normalize.MPXAssay
 
-#' @rdname NormalizeMPX
-#' @method NormalizeMPX Seurat
-#'
+#' @rdname Normalize
+#' @method Normalize PNAAssay
+#' @docType methods
 #' @export
 #'
-NormalizeMPX.Seurat <- function(
+Normalize.PNAAssay <- function(
+  object,
+  method = c("dsb", "clr"),
+  isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
+  ...
+) {
+  # If object has been merged before, join layers
+  if (inherits(object, c("PNAAssay", "PNAAssay5"))) {
+    object <- JoinLayers(object)
+  }
+
+  newData <-
+    Normalize(
+      object = LayerData(object, "counts"),
+      method = method,
+      isotype_controls = isotype_controls,
+      ...
+    )
+
+  LayerData(object, "data") <-
+    as(newData, "CsparseMatrix")
+
+  return(object)
+}
+
+#' @rdname Normalize
+#' @method Normalize PNAAssay
+#' @docType methods
+#' @export
+#'
+Normalize.PNAAssay <- Normalize.PNAAssay
+
+#' @rdname Normalize
+#' @method Normalize Seurat
+#' @docType methods
+#' @export
+#'
+Normalize.Seurat <- function(
   object,
   method = c("dsb", "clr"),
   isotype_controls = c("mIgG1", "mIgG2a", "mIgG2b"),
@@ -236,7 +265,7 @@ NormalizeMPX.Seurat <- function(
 ) {
   assay <- assay %||% DefaultAssay(object = object)
   object[[assay]] <-
-    NormalizeMPX(
+    Normalize(
       object = object[[assay]],
       method = method,
       isotype_controls = isotype_controls,
@@ -245,3 +274,70 @@ NormalizeMPX.Seurat <- function(
 
   return(object)
 }
+
+
+# Superseeded NormalizeMPX function
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX Matrix
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.Matrix <- Normalize.Matrix
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX MPXAssay
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.MPXAssay <- Normalize.MPXAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX Assay
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.Assay <- Normalize.MPXAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX CellGraphAssay
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.CellGraphAssay <- Normalize.MPXAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX Assay5
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.Assay5 <- Normalize.MPXAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX CellGraphAssay5
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.CellGraphAssay5 <- Normalize.MPXAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX PNAAssay
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.PNAAssay <- Normalize.PNAAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX PNAAssay5
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.PNAAssay5 <- Normalize.PNAAssay
+
+#' @rdname NormalizeMPX
+#' @method NormalizeMPX Seurat
+#' @docType methods
+#' @export
+#'
+NormalizeMPX.Seurat <- Normalize.Seurat

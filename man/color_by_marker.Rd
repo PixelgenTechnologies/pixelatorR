@@ -46,6 +46,8 @@ are calculated from the marker counts values prior to normalization.
 \item{nNodes}{Number of nodes to keep in the graph}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 Adds node colors based on the expression of a single or multiple
 markers. If multiple markers are provided, their values are either
 multiplied or summed depending on the \code{mode}.

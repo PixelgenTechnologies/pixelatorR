@@ -15,12 +15,13 @@ node_markers_counts(component_edge_list, k = 0)
 A matrix with node marker counts
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
 Computes and returns a data frame of antibody counts per node (vertex) of
 the A node graph given a component edge list as input. The parameter \code{k}
 allows to include neighbors (of each node) when computing the counts.
 \code{k} defines the number of levels when searching neighbors.
-}
-\details{
+
 If \code{k > 0}, \code{\link{edgelist_to_simple_Anode_graph}} is used
 to calculate an A-node projected graph.
 }

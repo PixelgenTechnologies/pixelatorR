@@ -1,16 +1,12 @@
-#' Inspect a PXL file
+#' Inspect a PXL file with MPX data
 #'
 #' This function inspects a PXL file and returns a tibble with
 #' information about the files contained in the PXL file.
 #'
-#' @param pxl_file Path to a PXL file
+#' @param pxl_file Path to a PXL file with MPX data
 #'
 #' @examples
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
-#'
+#' pxl_file <- minimal_mpx_pxl_file()
 #' inspect_pxl_file(pxl_file)
 #'
 #' @return A tibble with information about the files contained

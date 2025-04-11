@@ -9,10 +9,7 @@ NULL
 #' library(SeuratObject)
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' pol_scores <- ReadMPX_polarization(pxl_file)
 #'
 #' # PolarizationScoresToAssay returns a matrix for a tbl_df
@@ -169,10 +166,7 @@ PolarizationScoresToAssay.Seurat <- function(
 #' library(SeuratObject)
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' col_scores <- ReadMPX_colocalization(pxl_file)
 #'
 #' # ColocalizationScoresToAssay returns a matrix for a tbl_df
@@ -374,4 +368,128 @@ ColocalizationScoresToAssay.Seurat <- function(
   tofillMat[, colnames(spatial_metric_wide_format)] <- spatial_metric_wide_format
 
   return(tofillMat)
+}
+
+
+#' @rdname ProximityScoresToAssay
+#' @method ProximityScoresToAssay data.frame
+#'
+#' @export
+#'
+ProximityScoresToAssay.data.frame <- function(
+  object,
+  values_from = "join_count_z",
+  missing_obs = NA_real_,
+  return_sparse = TRUE,
+  ...
+) {
+  # Validate input
+  assert_single_value(values_from, type = "string")
+  assert_col_in_data(values_from, object)
+  assert_col_class(values_from, object, classes = "numeric")
+  assert_col_in_data("component", object)
+  assert_col_in_data("marker_1", object)
+  assert_col_in_data("marker_2", object)
+  assert_col_in_data(values_from, object)
+  assert_single_value(missing_obs, type = "numeric")
+  assert_single_value(return_sparse, type = "bool")
+
+  # Cast data.frame to wide format
+  col_scores_wide_format <- object %>%
+    pivot_wider(
+      id_cols = c("marker_1", "marker_2"),
+      names_from = "component",
+      values_from = all_of(values_from),
+      values_fill = missing_obs
+    ) %>%
+    unite(marker_1, marker_2, col = "pair", sep = "/") %>%
+    data.frame(row.names = 1, check.names = FALSE) %>%
+    as.matrix()
+
+  if (return_sparse) {
+    col_scores_wide_format <- as(col_scores_wide_format, "dgCMatrix")
+  }
+
+  return(col_scores_wide_format)
+}
+
+
+#' @rdname ProximityScoresToAssay
+#' @method ProximityScoresToAssay PNAAssay
+#'
+#' @export
+#'
+ProximityScoresToAssay.PNAAssay <- function(
+  object,
+  values_from = "join_count_z",
+  missing_obs = NA_real_,
+  ...
+) {
+  proximity_matrix <- ProximityScores(object) %>%
+    ProximityScoresToAssay(
+      values_from = values_from,
+      missing_obs = missing_obs,
+      return_sparse = TRUE
+    )
+
+  # Create Assay from filled matrix
+  create_assay_function <- ifelse(is(object, "CellGraphAssay"), CreateAssayObject, CreateAssay5Object)
+  proximity_assay <- create_assay_function(data = proximity_matrix)
+
+  return(proximity_assay)
+}
+
+#' @rdname ProximityScoresToAssay
+#' @method ProximityScoresToAssay PNAAssay5
+#' @docType methods
+#' @export
+#'
+ProximityScoresToAssay.PNAAssay5 <- ProximityScoresToAssay.PNAAssay
+
+
+#' @param assay Name of the \code{\link{PNAAssay}} or \code{\link{PNAAssay5}} to
+#' pull proximity scores from
+#' @param new_assay Name of the \code{\link{Assay}} or \code{\link{Assay5}} to
+#' store the wide formatted spatial metric in
+#'
+#' @rdname ProximityScoresToAssay
+#' @method ProximityScoresToAssay Seurat
+#'
+#' @export
+#'
+ProximityScoresToAssay.Seurat <- function(
+  object,
+  assay = NULL,
+  new_assay = NULL,
+  values_from = "join_count_z",
+  missing_obs = NA_real_,
+  ...
+) {
+  # Use default assay if assay = NULL
+  if (!is.null(assay)) {
+    assert_single_value(assay, type = "string")
+  } else {
+    # Use default assay if assay = NULL
+    assay <- DefaultAssay(object)
+  }
+
+  # Use "polarization" if new_assay = NULL
+  if (!is.null(new_assay)) {
+    assert_single_value(new_assay, type = "string")
+  } else {
+    # Use default assay if assay = NULL
+    new_assay <- "proximity"
+  }
+
+  # fetch CellGraphAssay
+  pna_assay <- object[[assay]]
+
+  # Create new assay
+  proximity_assay <- ProximityScoresToAssay(pna_assay, values_from, missing_obs, ...)
+  Key(proximity_assay) <- "proximity_"
+
+  # Place new assay in Seurat object
+  object@assays[[new_assay]] <- proximity_assay
+
+  return(object)
 }

@@ -13,10 +13,7 @@ NULL
 #' library(dplyr)
 #'
 #' # Load example data as a Seurat object
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #'
 #' # Copy PXL file to tempdir
 #' tmp_pxl_file <- file.path(fs::path_temp(), "five_cells.pxl")
@@ -108,6 +105,20 @@ RestorePaths.CellGraphAssay <- RestorePaths.MPXAssay
 #' @export
 #'
 RestorePaths.CellGraphAssay5 <- RestorePaths.MPXAssay
+
+#' @rdname RestorePaths
+#' @method RestorePaths PNAAssay
+#' @docType methods
+#' @export
+#'
+RestorePaths.PNAAssay <- RestorePaths.MPXAssay
+
+#' @rdname RestorePaths
+#' @method RestorePaths PNAAssay5
+#' @docType methods
+#' @export
+#'
+RestorePaths.PNAAssay5 <- RestorePaths.MPXAssay
 
 #' @param assay Assay name
 #'
