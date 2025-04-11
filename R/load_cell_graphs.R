@@ -10,6 +10,8 @@ NULL
 #' effect when \code{data_type = "PNA"} (see details below)
 #' @param data_type One of "PNA" or "MPX"
 #' @param add_marker_counts Should marker counts be added to the CellGraph objects?
+#' Note that this option is ignored for the \code{data.frame} method when \code{data_type = "PNA"}.
+#'
 #' @param chunk_size Length of chunks used to load CellGraphs from edge list.
 #' @param verbose Print messages
 #'
@@ -104,49 +106,6 @@ LoadCellGraphs.FileSystemDataset <- function(
   return(cellgraphs)
 }
 
-
-#' @rdname LoadCellGraphs
-#' @method LoadCellGraphs data.frame
-#'
-#' @export
-#'
-LoadCellGraphs.data.frame <- function(
-  object,
-  cells,
-  load_as = c("bipartite", "Anode", "linegraph"),
-  add_marker_counts = TRUE,
-  data_type = c("PNA", "MPX"),
-  verbose = TRUE,
-  ...
-) {
-  # Validate input parameters
-  assert_vector(cells, type = "character", n = 1)
-  assert_single_value(add_marker_counts, type = "bool")
-  data_type <- match.arg(data_type, choices = c("PNA", "MPX"))
-
-  # Make sure that cells doesn't contain duplicated values
-  if (sum(duplicated(cells)) > 0) {
-    cli::cli_abort(
-      c(
-        "i" = "{.var cells} cannot contain duplicated values.",
-        "x" = "Cell IDs {.val {cells[duplicated(cells)]}} are duplicated"
-      )
-    )
-  }
-
-  # Validate load_as
-  load_as <- match.arg(load_as, choices = c("bipartite", "Anode", "linegraph"))
-
-  if (data_type == "MPX") {
-    cellgraphs <- .load_mpx_graphs_from_df(object, cells, load_as, add_marker_counts, verbose)
-  }
-  if (data_type == "PNA") {
-    cellgraphs <- .load_pna_graphs_from_df(object, cells, add_marker_counts, verbose)
-  }
-
-  return(cellgraphs)
-}
-
 #' Internal load method for MPX data
 #'
 #' @noRd
@@ -186,7 +145,6 @@ LoadCellGraphs.data.frame <- function(
 .load_pna_graphs_from_df <- function(
   object,
   cells,
-  add_marker_counts = TRUE,
   verbose = TRUE
 ) {
   # Select load function
@@ -202,8 +160,7 @@ LoadCellGraphs.data.frame <- function(
     {
       graph_load_fkn(
         object,
-        cell_ids = cells,
-        add_markers = add_marker_counts
+        cell_ids = cells
       )
     },
     silent = TRUE
@@ -213,16 +170,10 @@ LoadCellGraphs.data.frame <- function(
     abort(glue("Failed to load edge list data. Most likely reason is that invalid cells were provided."))
   }
 
-  # Add marker counts
-  if (add_marker_counts) {
-    g_list <- lapply(g_list, function(g) {
-      return(CreateCellGraphObject(g$graph, counts = g$counts, verbose = FALSE))
-    })
-  } else {
-    g_list <- lapply(g_list, function(g) {
-      return(CreateCellGraphObject(g, verbose = FALSE))
-    })
-  }
+  # Create CellGraph objects
+  g_list <- lapply(g_list, function(g) {
+    return(CreateCellGraphObject(g, verbose = FALSE))
+  })
 
   return(g_list)
 }
@@ -396,15 +347,13 @@ LoadCellGraphs.MPXAssay <- function(
         filter(component %in% id_chunk$original_id) %>%
         collect()
 
-      # Send to tbl_df method
-      cg_list <- LoadCellGraphs(
+      # Send to internal data.frame method
+      cg_list <- .load_mpx_graphs_from_df(
         edgelist_data,
         cells = id_chunk$original_id,
         load_as = load_as,
-        add_marker_counts = add_marker_counts,
-        data_type = "MPX",
-        verbose = verbose,
-        ... = ...
+        add_marker_counts= add_marker_counts,
+        verbose = verbose
       )
 
       return(cg_list)
@@ -574,7 +523,7 @@ LoadCellGraphs.PNAAssay <- function(
 
     # Fetch the component edge tables from the data base
     edge_table_list <- pblapply(id_data_chunks, function(id_chunk) {
-      db$components_edgelist(id_chunk$original_id)
+      db$components_edgelist(id_chunk$original_id, umi_data_type = "suffixed_string")
     })
 
     if (verbose && check_global_verbosity()) {
@@ -586,13 +535,11 @@ LoadCellGraphs.PNAAssay <- function(
       edge_table <- edge_table_list[[i]]
       id_chunk <- id_data_chunks[[i]]
 
-      # Send to PixelDB method
-      cg_list <- LoadCellGraphs(
+      # Send to internal data.frame method
+      cg_list <- .load_pna_graphs_from_df(
         edge_table,
         cells = id_chunk$original_id,
-        add_marker_counts = FALSE,
-        verbose = FALSE,
-        ... = ...
+        verbose = FALSE
       )
 
       return(cg_list)
@@ -746,78 +693,29 @@ LoadCellGraphs.Seurat <- function(
 #' @noRd
 .load_pna_as_bipartite <- function(
   edge_table,
-  cell_ids,
-  add_markers = TRUE
+  cell_ids
 ) {
   components <- pull(edge_table, component)
 
-  edge_table_split <- lapply(cell_ids, function(i) {
+  component_graphs <- lapply(cell_ids, function(i) {
     edge_table_cur <- edge_table[components == i, ] %>% select(-component)
-
-    # Drop rows with node collisions
-    colliding_nodes <- intersect(edge_table_cur$umi1, edge_table_cur$umi2)
-    edge_table_cur <- edge_table_cur %>%
-      filter(!umi1 %in% colliding_nodes & !umi2 %in% colliding_nodes)
 
     # Convert to a tbl_graph
     g <- edge_table_cur %>%
       select(umi1, umi2) %>%
-      mutate(umi1 = stringr::str_c(umi1, "-umi1"), umi2 = stringr::str_c(umi2, "-umi2")) %>%
       as.matrix() %>%
       igraph::graph_from_edgelist(directed = FALSE)
     g <- as_tbl_graph(g, directed = FALSE) %>%
       mutate(node_type = stringr::str_extract(name, "umi[1|2]"))
 
-    if (add_markers) {
-      # Get node counts
-      markers_umi1 <- edge_table_cur %>%
-        select(umi1, marker_1) %>%
-        group_by(umi1, marker_1) %>%
-        rename(name = umi1, marker = marker_1) %>%
-        distinct() %>%
-        mutate(name = paste0(name, "-umi1"))
-
-      markers_umi2 <- edge_table_cur %>%
-        select(umi2, marker_2) %>%
-        group_by(umi2, marker_2) %>%
-        rename(name = umi2, marker = marker_2) %>%
-        distinct() %>%
-        mutate(name = paste0(name, "-umi2"))
-
-      markers_umi <-
-        bind_rows(markers_umi1, markers_umi2) %>%
-        mutate(val = 1L) %>%
-        ungroup()
-
-      # Cast table to a sparse matrix with nodes in rows
-      # and markers in columns. The matrix can only have
-      # 0 or 1 values and is therefore a binary matrix.
-      node_cnt_wide <- markers_umi %>%
-        pivot_wider(id_cols = "name", names_from = "marker", values_from = "val", values_fill = 0)
-
-      # Order rows to make sure that they match with the graph
-      node_cnt_wide <- node_cnt_wide[match(g %N>% dplyr::pull(name), node_cnt_wide$name), ]
-      node_ids <- node_cnt_wide$name
-      node_cntMatrix <- node_cnt_wide %>%
-        select(-name) %>%
-        as.matrix() %>%
-        as("dgCMatrix")
-
-      rownames(node_cntMatrix) <- node_ids
-    }
-
     # Return results
     attr(g, "type") <- "bipartite"
     attr(g, "component_id") <- cell_ids[i]
-    if (add_markers) {
-      return(list(graph = g, counts = node_cntMatrix))
-    } else {
-      return(g)
-    }
+    return(g)
   }) %>%
     set_names(nm = cell_ids)
 
-  return(edge_table_split[cell_ids])
+  return(component_graphs[cell_ids])
 }
 
 

@@ -4,11 +4,11 @@ pna_pxl_file <- minimal_pna_pxl_file()
 for (assay_version in c("v3", "v5")) {
   options(Seurat.object.assay.version = assay_version)
 
-  seur_obj_mpx <- ReadMPX_Seurat(mpx_pxl_file, overwrite = TRUE)
-  seur_obj_mpx <- LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1])
+  seur_obj_mpx <- ReadMPX_Seurat(mpx_pxl_file)
+  seur_obj_mpx <- LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], verbose = FALSE)
 
-  seur_obj_pna <- ReadPNA_Seurat(pna_pxl_file, overwrite = TRUE)
-  seur_obj_pna <- LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1])
+  seur_obj_pna <- ReadPNA_Seurat(pna_pxl_file)
+  seur_obj_pna <- LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1], verbose = FALSE)
 
   test_that("RemoveCellGraphs works for MPXAssay objects", {
     expect_no_error({

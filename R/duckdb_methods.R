@@ -552,7 +552,7 @@ PixelDB <- R6Class(
     #' # Fetch marker counts
     #' db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
     #'
-    #' @return A list with \code{tbl_df}'s with the marker counts
+    #' @return A list with \code{dgCMatrix} matrices or \code{tbl_df}'s with the marker counts
     #'
     components_marker_counts = function(components, as_sparse = FALSE, verbose = FALSE) {
       self$check_connection()
@@ -579,21 +579,25 @@ PixelDB <- R6Class(
       lapply_func <- ifelse(verbose, pbapply::pblapply, lapply)
 
       component_list <- lapply_func(components, function(x) {
-        component_query(x) %>%
+        data <- component_query(x) %>%
           DBI::dbGetQuery(private$con, .) %>%
-          as_tibble() %>%
-          mutate(across(where(bit64::is.integer64), ~ as.integer(.x))) %>%
-          mutate(n = 1) %>%
-          pivot_wider(names_from = marker, values_from = n, values_fill = 0)
+          mutate(across(everything(), ~factor(.x, levels = unique(.x))))
+        m <- Matrix::sparseMatrix(
+          i = as.integer(data$name),
+          j = as.integer(data$marker),
+          x = 1,
+        )
+        rownames(m) <- levels(data$name)
+        colnames(m) <- levels(data$marker)
+        return(m)
       }) %>%
         set_names(nm = components)
 
-      if (as_sparse) {
+      if (!as_sparse) {
         component_list <- lapply(component_list, function(x) {
           x %>%
-            data.frame(row.names = 1, check.names = FALSE) %>%
             as.matrix() %>%
-            as("dgCMatrix")
+            as_tibble(rownames = "name")
         })
       }
 

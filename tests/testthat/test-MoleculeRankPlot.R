@@ -23,7 +23,7 @@ test_that("MoleculeRankPlot works for Seurat objects", {
 
 test_that("MoleculeRankPlot works for data.frame-like objects", {
   expect_no_error({
-    moleculerank_plot <- MoleculeRankPlot(seur_obj[[]])
+    moleculerank_plot <- MoleculeRankPlot(seur_obj_mpx[[]])
   })
   expect_s3_class(moleculerank_plot, "ggplot")
 })

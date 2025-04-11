@@ -733,7 +733,7 @@ the resulting table.
 \if{html}{\out{</div>}}
 }
 \subsection{Returns}{
-A list with \code{tbl_df}'s with the marker counts
+A list with \code{dgCMatrix} matrices or \code{tbl_df}'s with the marker counts
 }
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}

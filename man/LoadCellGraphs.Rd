@@ -4,7 +4,6 @@
 \name{LoadCellGraphs}
 \alias{LoadCellGraphs}
 \alias{LoadCellGraphs.FileSystemDataset}
-\alias{LoadCellGraphs.data.frame}
 \alias{LoadCellGraphs.MPXAssay}
 \alias{LoadCellGraphs.CellGraphAssay}
 \alias{LoadCellGraphs.CellGraphAssay5}
@@ -22,16 +21,6 @@ LoadCellGraphs(object, ...)
   add_marker_counts = TRUE,
   data_type = c("PNA", "MPX"),
   chunk_size = 10,
-  verbose = TRUE,
-  ...
-)
-
-\method{LoadCellGraphs}{data.frame}(
-  object,
-  cells,
-  load_as = c("bipartite", "Anode", "linegraph"),
-  add_marker_counts = TRUE,
-  data_type = c("PNA", "MPX"),
   verbose = TRUE,
   ...
 )
@@ -123,7 +112,8 @@ LoadCellGraphs(object, ...)
 \item{load_as}{Choose how the cell graph should be represented. This option has no
 effect when \code{data_type = "PNA"} (see details below)}
 
-\item{add_marker_counts}{Should marker counts be added to the CellGraph objects?}
+\item{add_marker_counts}{Should marker counts be added to the CellGraph objects?
+Note that this option is ignored for the \code{data.frame} method when \code{data_type = "PNA"}.}
 
 \item{data_type}{One of "PNA" or "MPX"}
 
