@@ -443,7 +443,7 @@ LoadCellGraphs.PNAAssay <- function(
   add_marker_counts = TRUE,
   add_layouts = FALSE,
   force = FALSE,
-  chunk_size = 1,
+  chunk_size = 10,
   cl = NULL,
   verbose = TRUE,
   ...
