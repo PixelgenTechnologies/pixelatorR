@@ -72,6 +72,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ComputeLayout` now only supports the "pmds" and "wpmds" graph drawing methods. The "kk", "fr" and "drl" methods have been removed but can be run if needed using the `custom_layout_function` parameter. The default layout method is now "wpmds" with `dim = 3`.
 - `NormalizeMPX` is superseded by `Normalize`. The `NormalizeMPX` function will be removed in a future release.
 
+### Removed
+- `LoadCellGraphs.data.frame` method
+
 ### Fixes
 - Fixed bug in `DensityScatterPlot` where the `gate_type` default would lead to an error.
 
