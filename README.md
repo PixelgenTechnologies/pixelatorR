@@ -14,7 +14,7 @@
 [**Documentation**](https://pixelgentechnologies.github.io/pixelatorR/reference/index.html) |
 [**Tutorials**](https://software.pixelgen.com/mpx-analysis/introduction)
 
-# pixelatorR
+# pixelatorR <img src="man/figures/logo.png" align="right" height="138" alt="" />
 
 pixelatorR provides the infrastructure to process, analyze and visualize MPX data for R users.
 
