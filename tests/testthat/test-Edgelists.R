@@ -25,7 +25,6 @@ for (assay_version in c("v3", "v5")) {
   options(Seurat.object.assay.version = assay_version)
 
   test_that("Edgelists method works as expected", {
-
     # TODO: handle the case where the test is run on Windows
     skip_on_os("windows")
     expect_no_error(el <- Edgelists(merged_seurat_obj, lazy = FALSE))

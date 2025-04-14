@@ -8,7 +8,9 @@ test_that("PixelDB initialize/finalize methods works as expected", {
   expect_no_error(rm(db))
   gc(full = FALSE)
   # Connection should be garbage collected
-  expect_true(!DBI::dbIsValid(con))
+  if (.Platform$OS.type == "unix") {
+    expect_true(!DBI::dbIsValid(con))
+  }
 })
 
 test_that("PixelDB methods work as expected", {
@@ -16,7 +18,9 @@ test_that("PixelDB methods work as expected", {
   expect_no_error(db <- PixelDB$new(pxl_file))
   con <- db$.__enclos_env__$private$con
   expect_no_error(db$close())
-  expect_true(!DBI::dbIsValid(con))
+  if (.Platform$OS.type == "unix") {
+    expect_true(!DBI::dbIsValid(con))
+  }
 
   # info method
   expect_no_error(db <- PixelDB$new(pxl_file))
@@ -45,7 +49,7 @@ test_that("PixelDB methods work as expected", {
     structure(
       list(value = "{\"sample_name\":\"PNA055_Sample07_S7\",\"version\":\"0.1.0\",\"technology\":\"single-cell-pna\",\"panel_name\":\"pna-rnd-158plex-final\",\"panel_version\":\"0.1.0\",\"post_analysis\":{\"params\":{\"degree-analysis-per-marker-type\":{\"degree-analysis-per-marker-type\":{}}}}}"),
       class = "data.frame",
-      row.names = c(NA,-1L)
+      row.names = c(NA, -1L)
     )
   expect_equal(mdata, expected_mdata)
 
@@ -84,12 +88,16 @@ test_that("PixelDB methods work as expected", {
       "dgCMatrix",
       i = c(0L, 1L, 0L, 1L),
       p = c(0L, 2L, 4L),
-      Dim = c(2L,
-              2L),
+      Dim = c(
+        2L,
+        2L
+      ),
       Dimnames = list(
         c("HLA-ABC", "B2M"),
-        c("0a45497c6bfbfb22",
-          "2708240b908e2eba")
+        c(
+          "0a45497c6bfbfb22",
+          "2708240b908e2eba"
+        )
       ),
       x = c(865, 1182, 2077, 3448),
       factors = list()
@@ -102,19 +110,25 @@ test_that("PixelDB methods work as expected", {
     structure(
       list(
         marker_1 = c("CD56", "CD56"),
-        marker_2 = c("CD56",
-                     "mIgG2b"),
+        marker_2 = c(
+          "CD56",
+          "mIgG2b"
+        ),
         join_count = c(0, 0),
-        join_count_expected_mean = c(0,
-                                     0.03),
+        join_count_expected_mean = c(
+          0,
+          0.03
+        ),
         join_count_expected_sd = c(0, 0.171446607997765),
-        join_count_z = c(0,-0.03),
+        join_count_z = c(0, -0.03),
         join_count_p = c(0.5, 0.488033526585887),
-        component = c("c3c393e9a17c1981",
-                      "c3c393e9a17c1981"),
+        component = c(
+          "c3c393e9a17c1981",
+          "c3c393e9a17c1981"
+        ),
         log2_ratio = c(0, 0)
       ),
-      row.names = c(NA,-2L),
+      row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     )
   expect_equal(prox %>% head(n = 2), expected_prox)

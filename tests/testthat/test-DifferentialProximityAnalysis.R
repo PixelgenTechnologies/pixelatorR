@@ -52,23 +52,33 @@ for (assay_version in c("v3", "v5")) {
           reference = c("pDC", "pDC"),
           n_tgt = c(30L, 30L),
           n_ref = c(10L, 10L),
-          diff_median = c(1.12578767971233,-0.660561539890729),
+          diff_median = c(1.12578767971233, -0.660561539890729),
           statistic = c(100, 200),
-          auc = c(0.333333333333333,
-                  0.666666666666667),
+          auc = c(
+            0.333333333333333,
+            0.666666666666667
+          ),
           p = c(0.11041579736434, 0.11041579736434),
           p_adj = c(1, 1),
-          method = c("Wilcoxon rank-sum test test",
-                     "Wilcoxon rank-sum test test"),
-          alternative = c("two.sided",
-                          "two.sided"),
+          method = c(
+            "Wilcoxon rank-sum test test",
+            "Wilcoxon rank-sum test test"
+          ),
+          alternative = c(
+            "two.sided",
+            "two.sided"
+          ),
           marker_1 = c("B2M", "B2M"),
-          marker_2 = c("B2M",
-                       "CD10")
+          marker_2 = c(
+            "B2M",
+            "CD10"
+          )
         ),
-        row.names = c(NA,-2L),
-        class = c("tbl_df", "tbl",
-                  "data.frame")
+        row.names = c(NA, -2L),
+        class = c(
+          "tbl_df", "tbl",
+          "data.frame"
+        )
       )
 
     expect_equal(head(de_results1, 2), expected_data)

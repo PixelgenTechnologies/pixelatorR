@@ -218,8 +218,10 @@
   id_map_check2 <- sapply(fs_map$id_map, function(x) all(colnames(x) == c("current_id", "original_id")))
   if (!all(id_map_check2)) {
     cli::cli_abort(
-      c("x" = "All elements of {.var id_map} must be {.cls tbl_df} objects with",
-        " " = "columns {.str current_id} and {.str original_id}"),
+      c(
+        "x" = "All elements of {.var id_map} must be {.cls tbl_df} objects with",
+        " " = "columns {.str current_id} and {.str original_id}"
+      ),
       call = call
     )
   }

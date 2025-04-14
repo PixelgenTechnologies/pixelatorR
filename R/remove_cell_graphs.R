@@ -22,8 +22,8 @@ RemoveCellGraphs.MPXAssay <- function(
 #' @export
 #'
 RemoveCellGraphs.PNAAssay <- function(
-    object,
-    ...
+  object,
+  ...
 ) {
   slot(object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
   return(object)

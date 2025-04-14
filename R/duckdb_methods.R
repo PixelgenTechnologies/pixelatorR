@@ -428,9 +428,9 @@ PixelDB <- R6Class(
     #'  - uei_count: The number of unique event identifiers (UEIs) supporting the edge
     #'
     components_edgelist = function(
-      components,
-      umi_data_type = c("int64", "string", "suffixed_string"),
-      include_all_columns = FALSE
+                                     components,
+                                     umi_data_type = c("int64", "string", "suffixed_string"),
+                                     include_all_columns = FALSE
     ) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
@@ -581,7 +581,7 @@ PixelDB <- R6Class(
       component_list <- lapply_func(components, function(x) {
         data <- component_query(x) %>%
           DBI::dbGetQuery(private$con, .) %>%
-          mutate(across(everything(), ~factor(.x, levels = unique(.x))))
+          mutate(across(everything(), ~ factor(.x, levels = unique(.x))))
         m <- Matrix::sparseMatrix(
           i = as.integer(data$name),
           j = as.integer(data$marker),
@@ -622,10 +622,10 @@ PixelDB <- R6Class(
     #' @return Nothing
     #'
     export_parquet = function(
-      parquet_file,
-      table_name = c("proximity", "edgelist", "layouts"),
-      compression = c("snappy", "zstd"),
-      compression_level = 1L
+                                parquet_file,
+                                table_name = c("proximity", "edgelist", "layouts"),
+                                compression = c("snappy", "zstd"),
+                                compression_level = 1L
     ) {
       self$check_connection()
       assert_single_value(parquet_file, "string")

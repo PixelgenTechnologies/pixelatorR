@@ -118,9 +118,9 @@ LoadCellGraphs.FileSystemDataset <- function(
 ) {
   # Select load function
   graph_load_fkn <- switch(load_as,
-                           "bipartite" = .load_mpx_as_bipartite,
-                           "Anode" = .load_mpx_as_anode,
-                           "linegraph" = .load_mpx_as_linegraph
+    "bipartite" = .load_mpx_as_bipartite,
+    "Anode" = .load_mpx_as_anode,
+    "linegraph" = .load_mpx_as_linegraph
   )
 
   # Load cell graphs
@@ -449,15 +449,9 @@ LoadCellGraphs.PNAAssay <- function(
   ...
 ) {
   # Validate input parameters
-  stopifnot(
-    "'cells' must be a non-empty charcacter vector of cell names" =
-      is.character(cells) &&
-      (length(cells) > 0),
-    "'cells' must have unique IDs" =
-      length(unique(cells)) == length(cells),
-    "'cells' must be present in 'object'" =
-      all(cells %in% colnames(object))
-  )
+  assert_vector(cells, type = "character", n = 1)
+  assert_unique(cells)
+  assert_x_in_y(cells, colnames(object))
 
   # Check if cells are already loaded
   loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)

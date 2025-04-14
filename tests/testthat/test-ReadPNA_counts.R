@@ -19,8 +19,10 @@ test_that("ReadPNA_counts works as expected", {
           "efe0ed189cb499fc"
         )
       ),
-      x = c(865, 1182, 2077, 3448, 2480, 5307, 2994, 9753,
-            2212, 6082),
+      x = c(
+        865, 1182, 2077, 3448, 2480, 5307, 2994, 9753,
+        2212, 6082
+      ),
       factors = list()
     )
   expect_identical(head(counts, 2), expected_data)

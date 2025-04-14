@@ -38,8 +38,8 @@ NULL
 #'
 minimal_mpx_pxl_file <- function() {
   system.file("extdata/five_cells",
-              "five_cells.pxl",
-              package = "pixelatorR"
+    "five_cells.pxl",
+    package = "pixelatorR"
   )
 }
 
@@ -53,7 +53,7 @@ minimal_mpx_pxl_file <- function() {
 #'
 minimal_pna_pxl_file <- function() {
   system.file("extdata/five_cells",
-              "minimal_PNA_PBMC.pxl",
-              package = "pixelatorR"
+    "minimal_PNA_PBMC.pxl",
+    package = "pixelatorR"
   )
 }

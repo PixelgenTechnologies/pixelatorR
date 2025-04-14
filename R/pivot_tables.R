@@ -370,6 +370,50 @@ ColocalizationScoresToAssay.Seurat <- function(
   return(tofillMat)
 }
 
+#' @rdname ProximityScoresToAssay
+#' @method ProximityScoresToAssay tbl_lazy
+#'
+#' @export
+#'
+ProximityScoresToAssay.tbl_lazy <- function(
+  object,
+  values_from = "join_count_z",
+  ...
+) {
+  # Validate input
+  assert_single_value(values_from, type = "string")
+  assert_col_in_data(values_from, object)
+  assert_col_class(values_from, object, classes = "numeric")
+  assert_col_in_data("component", object)
+  assert_col_in_data("marker_1", object)
+  assert_col_in_data("marker_2", object)
+  assert_col_in_data(values_from, object)
+
+  # Ignore 0 values
+  object <- object %>%
+    filter(!!sym(values_from) != 0)
+
+  # Cast values to wide format
+  pair <- object %>%
+    mutate(pair = stringr::str_c(marker_1, "/", marker_2)) %>%
+    pull(pair) %>%
+    factor(levels = unique(.))
+  components <- object %>%
+    pull(component) %>%
+    factor(levels = unique(.))
+  prox_wide <- Matrix::sparseMatrix(
+    i = as.integer(pair),
+    j = as.integer(components),
+    x = object %>% pull(all_of(values_from)),
+    dimnames = list(
+      levels(pair),
+      levels(components)
+    )
+  )
+
+  return(prox_wide)
+}
+
 
 #' @rdname ProximityScoresToAssay
 #' @method ProximityScoresToAssay data.frame
@@ -431,6 +475,7 @@ ProximityScoresToAssay.PNAAssay <- function(
       missing_obs = missing_obs,
       return_sparse = TRUE
     )
+  proximity_matrix <- proximity_matrix[, colnames(object)]
 
   # Create Assay from filled matrix
   create_assay_function <- ifelse(is(object, "CellGraphAssay"), CreateAssayObject, CreateAssay5Object)
@@ -449,7 +494,7 @@ ProximityScoresToAssay.PNAAssay5 <- ProximityScoresToAssay.PNAAssay
 
 #' @param assay Name of the \code{\link{PNAAssay}} or \code{\link{PNAAssay5}} to
 #' pull proximity scores from
-#' @param new_assay Name of the \code{\link{Assay}} or \code{\link{Assay5}} to
+#' @param new_assay Name of the \code{\link[SeuratObject]{Assay}} or \code{\link[SeuratObject]{Assay5}} to
 #' store the wide formatted spatial metric in
 #'
 #' @rdname ProximityScoresToAssay
@@ -469,7 +514,6 @@ ProximityScoresToAssay.Seurat <- function(
   if (!is.null(assay)) {
     assert_single_value(assay, type = "string")
   } else {
-    # Use default assay if assay = NULL
     assay <- DefaultAssay(object)
   }
 
