@@ -61,7 +61,7 @@ is \code{NA_real_}.}
 \item{assay}{Name of the \code{\link{PNAAssay}} or \code{\link{PNAAssay5}} to
 pull proximity scores from}
 
-\item{new_assay}{Name of the \code{\link{Assay}} or \code{\link{Assay5}} to
+\item{new_assay}{Name of the \code{\link[SeuratObject]{Assay}} or \code{\link[SeuratObject]{Assay5}} to
 store the wide formatted spatial metric in}
 }
 \description{

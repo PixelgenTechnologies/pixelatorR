@@ -492,9 +492,9 @@ ProximityScoresToAssay.PNAAssay <- function(
 ProximityScoresToAssay.PNAAssay5 <- ProximityScoresToAssay.PNAAssay
 
 
-#' @param assay Name of the \code{\link[SeuratObject]{PNAAssay}} or \code{\link{PNAAssay5}} to
+#' @param assay Name of the \code{\link{PNAAssay}} or \code{\link{PNAAssay5}} to
 #' pull proximity scores from
-#' @param new_assay Name of the \code{\link[SeuratObject]{Assay}} or \code{\link{Assay5}} to
+#' @param new_assay Name of the \code{\link[SeuratObject]{Assay}} or \code{\link[SeuratObject]{Assay5}} to
 #' store the wide formatted spatial metric in
 #'
 #' @rdname ProximityScoresToAssay
