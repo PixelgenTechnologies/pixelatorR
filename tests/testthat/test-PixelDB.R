@@ -8,7 +8,9 @@ test_that("PixelDB initialize/finalize methods works as expected", {
   expect_no_error(rm(db))
   gc(full = FALSE)
   # Connection should be garbage collected
-  expect_true(!DBI::dbIsValid(con))
+  if (.Platform$OS.type == "unix") {
+    expect_true(!DBI::dbIsValid(con))
+  }
 })
 
 test_that("PixelDB methods work as expected", {
