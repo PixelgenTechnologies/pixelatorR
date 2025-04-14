@@ -16,7 +16,7 @@ test_that("PixelDB methods work as expected", {
   expect_no_error(db <- PixelDB$new(pxl_file))
   con <- db$.__enclos_env__$private$con
   expect_no_error(db$close())
-  expect_true(!DBI::dbIsValid(con))
+  expect_true((!DBI::dbIsValid(con)) & (.Platform$OS.type == "unix"))
 
   # info method
   expect_no_error(db <- PixelDB$new(pxl_file))
