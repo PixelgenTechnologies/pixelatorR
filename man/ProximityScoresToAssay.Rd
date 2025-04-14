@@ -3,6 +3,7 @@
 \docType{methods}
 \name{ProximityScoresToAssay}
 \alias{ProximityScoresToAssay}
+\alias{ProximityScoresToAssay.tbl_lazy}
 \alias{ProximityScoresToAssay.data.frame}
 \alias{ProximityScoresToAssay.PNAAssay}
 \alias{ProximityScoresToAssay.PNAAssay5}
@@ -10,6 +11,8 @@
 \title{Convert proximity score table to an Assay or Assay5}
 \usage{
 ProximityScoresToAssay(object, ...)
+
+\method{ProximityScoresToAssay}{tbl_lazy}(object, values_from = "join_count_z", ...)
 
 \method{ProximityScoresToAssay}{data.frame}(
   object,

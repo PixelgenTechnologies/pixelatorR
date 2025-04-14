@@ -506,9 +506,9 @@ assert_col_class <- function(
     "`x` must be a string`" =
       is_string(x),
     "`data` must be a data.frame-like object`" =
-      inherits(data, "data.frame")
+      inherits(data, c("data.frame", "tbl_lazy"))
   )
-  col_x <- data[, x, drop = TRUE]
+  col_x <- data %>% pull(all_of(x))
   if (!inherits(col_x, classes)) {
     cli::cli_abort(
       c(
@@ -539,9 +539,9 @@ assert_col_in_data <- function(
     "`x` must be a string`" =
       is_string(x),
     "`data` must be a data.frame-like object`" =
-      inherits(data, "data.frame")
+      inherits(data, c("data.frame", "tbl_lazy"))
   )
-  if (!(x %in% names(data))) {
+  if (!(x %in% colnames(data))) {
     cli::cli_abort(
       c("x" = "Column {.str {x}} is missing from {.arg {arg_data}}."),
       call = call

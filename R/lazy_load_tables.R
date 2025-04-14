@@ -129,6 +129,15 @@
   # Execute the SQL query to create the view
   DBI::dbExecute(con_federated, create_view_sql)
 
+  # Clean up temporary tables
+  tables_to_remove <- DBI::dbGetQuery(con_federated, "SHOW ALL TABLES") %>%
+    select(database, name) %>%
+    filter(database == "temp") %>%
+    apply(1, paste, collapse = ".")
+  for (table in tables_to_remove) {
+    DBI::dbExecute(con_federated, glue::glue("DROP TABLE IF EXISTS {table}"))
+  }
+
   # Create a lazy table with dbplyr
   lazy_table <- tbl(con_federated, glue::glue("combined_{table_name}"))
 
