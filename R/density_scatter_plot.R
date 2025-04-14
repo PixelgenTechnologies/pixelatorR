@@ -173,6 +173,8 @@ DensityScatterPlot <- function(
   # Create base plot
   gg <- .createBasePlot(
     plot_data,
+    marker1,
+    marker2,
     pt_size,
     alpha,
     colors,
@@ -441,6 +443,8 @@ DensityScatterPlot <- function(
 #' Create base ggplot for density scatter plot
 #'
 #' @param plot_data Data frame with plot data
+#' @param lab1 Name of first marker
+#' @param lab2 Name of second marker
 #' @param pt_size Point size for scatter plot
 #' @param alpha Alpha transparency for points
 #' @param colors Vector of colors for density gradient
@@ -449,7 +453,7 @@ DensityScatterPlot <- function(
 #'
 #' @noRd
 #'
-.createBasePlot <- function(plot_data, pt_size, alpha, colors, coord_fixed) {
+.createBasePlot <- function(plot_data, lab1, lab2, pt_size, alpha, colors, coord_fixed) {
   gg <- ggplot(
     plot_data,
     aes(x = marker1, y = marker2, color = dens)
@@ -457,7 +461,7 @@ DensityScatterPlot <- function(
     geom_point(size = pt_size, alpha = alpha, show.legend = FALSE) +
     geom_hline(yintercept = 0, color = "gray50") +
     geom_vline(xintercept = 0, color = "gray50") +
-    labs(x = "Marker1", y = "Marker2") +
+    labs(x = lab1, y = lab2) +
     theme_bw() +
     theme(panel.grid = element_blank())
 
