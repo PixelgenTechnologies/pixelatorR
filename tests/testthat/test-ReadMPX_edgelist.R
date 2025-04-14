@@ -34,7 +34,6 @@ test_that("ReadMPX_arrow_edgelist fails when invalid input is provided", {
     )
   })
   expect_error({
-    el <- ReadMPX_arrow_edgelist("Invalid file", edge_list_file = fs::path_temp("test.pxl")
-    )
+    el <- ReadMPX_arrow_edgelist("Invalid file", edge_list_file = fs::path_temp("test.pxl"))
   })
 })

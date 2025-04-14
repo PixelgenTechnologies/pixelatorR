@@ -391,7 +391,7 @@ ProximityScoresToAssay.tbl_lazy <- function(
 
   # Ignore 0 values
   object <- object %>%
-    filter(!! sym(values_from) != 0)
+    filter(!!sym(values_from) != 0)
 
   # Cast values to wide format
   pair <- object %>%

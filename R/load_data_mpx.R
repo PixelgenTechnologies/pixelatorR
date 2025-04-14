@@ -392,7 +392,6 @@ ReadMPX_item <- function(
 
           # Try to delete temporary directory or throw a warning if it fails.
           .delete_temp_resource(exdir_temp)
-
         }
 
         return(outdata)
@@ -634,13 +633,13 @@ print.pixelator_metadata <- function(
 #' @export
 #'
 ReadMPX_layouts <- function(
-    filename,
-    cells = NULL,
-    graph_projection = c("bipartite", "Anode", "linegraph", "full"),
-    verbose = TRUE
+  filename,
+  cells = NULL,
+  graph_projection = c("bipartite", "Anode", "linegraph", "full"),
+  verbose = TRUE
 ) {
   graph_projection <- match.arg(graph_projection,
-                                choices = c("bipartite", "Anode", "linegraph", "full")
+    choices = c("bipartite", "Anode", "linegraph", "full")
   )
 
   # Check file

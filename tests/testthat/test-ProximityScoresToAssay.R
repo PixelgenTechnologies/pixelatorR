@@ -45,12 +45,14 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(dim(seur_conv), c(12561, 5))
     expect_equal(
       head(rownames(seur_conv)),
-      c("CD56/CD56",
+      c(
+        "CD56/CD56",
         "CD56/mIgG2b",
         "CD56/CD71",
         "CD56/CD6",
         "CD56/Siglec-9",
-        "CD56/CD79a")
+        "CD56/CD79a"
+      )
     )
   })
 

@@ -118,9 +118,9 @@ LoadCellGraphs.FileSystemDataset <- function(
 ) {
   # Select load function
   graph_load_fkn <- switch(load_as,
-                           "bipartite" = .load_mpx_as_bipartite,
-                           "Anode" = .load_mpx_as_anode,
-                           "linegraph" = .load_mpx_as_linegraph
+    "bipartite" = .load_mpx_as_bipartite,
+    "Anode" = .load_mpx_as_anode,
+    "linegraph" = .load_mpx_as_linegraph
   )
 
   # Load cell graphs

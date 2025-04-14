@@ -30,7 +30,6 @@ for (assay_version in c("v3", "v5")) {
     expect_true(all(colnames(proximity) %in% colnames(proximity_from_seur_lazy)))
 
     DBI::dbDisconnect(proximity_from_seur_lazy$src$con)
-
   })
 
   test_that("ProximityScores fails with invalid input", {
