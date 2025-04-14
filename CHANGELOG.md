@@ -38,7 +38,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Edgelists` methods for `PNAAssay`, `PNAAssay5` and `Seurat` to load edgelists. Supports lazy loading for manipulation with `dbplyr`.
 - `ProximityScores` methods for `PNAAssay`, `PNAAssay5` and `Seurat` to fetch proximity scores. Supports lazy loading for manipulation with `dbplyr`.
 - `ProximityScores<-` methods for `PNAAssay`, `PNAAssay5` and `Seurat` to set proximity scores.
-- `ProximityScoresToAssay` methods for `PNAAssay`, `PNAAssay5` and `Seurat` to convert the long formatted proximity score table into a wide format.
+- `ProximityScoresToAssay` methods for `data.frame`, `tbl_lazy`, `PNAAssay`, `PNAAssay5` and `Seurat` to convert the long formatted proximity score table into a wide format.
 - `LoadCellGraphs` methods for for `PNAAssay` and `PNAAssay5`.
 - `ComputeLayout` methods for for `PNAAssay` and `PNAAssay5`.
 - `RemoveCellGraphs` methods for for `PNAAssay` and `PNAAssay5`.
