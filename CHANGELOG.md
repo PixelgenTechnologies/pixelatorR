@@ -77,6 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 - Fixed bug in `DensityScatterPlot` where the `gate_type` default would lead to an error.
+- Fixed bug in `DensityScatterPlot` where the x- and y.axis titles were hardcoded as "Marker1" and "Marker2"
 
 ## [0.12.1] - 2025-01-21
 
