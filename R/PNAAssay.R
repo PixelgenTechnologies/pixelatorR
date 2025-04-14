@@ -2,13 +2,6 @@
 #' @importClassesFrom Matrix dgCMatrix
 NULL
 
-# Declarations used in package check
-globalVariables(
-  names = c("id_map"),
-  package = "pixelatorR",
-  add = TRUE
-)
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Class definition
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -389,8 +389,13 @@ ProximityScoresToAssay.tbl_lazy <- function(
   assert_col_in_data("marker_2", object)
   assert_col_in_data(values_from, object)
 
+  # Ignore 0 values
+  object <- object %>%
+    filter(!! sym(values_from) != 0)
+
   # Cast values to wide format
-  pair <- object %>% mutate(pair = stringr::str_c(marker_1, "/", marker_2)) %>%
+  pair <- object %>%
+    mutate(pair = stringr::str_c(marker_1, "/", marker_2)) %>%
     pull(pair) %>%
     factor(levels = unique(.))
   components <- object %>%
