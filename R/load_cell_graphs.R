@@ -167,7 +167,6 @@ LoadCellGraphs.FileSystemDataset <- function(
   )
 
   if (inherits(g_list, what = "try-error") || any(sapply(g_list, is.null))) {
-    cat(g_list)
     abort(glue("Failed to load edge list data. Most likely reason is that invalid cells were provided."))
   }
 
