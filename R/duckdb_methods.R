@@ -447,7 +447,7 @@ PixelDB <- R6Class(
     components_edgelist = function(
                                      components,
                                      umi_data_type = c("int64", "string", "suffixed_string"),
-                                     lazy = TRUE,
+                                     lazy = FALSE,
                                      include_all_columns = FALSE
     ) {
       self$check_connection()
@@ -469,6 +469,9 @@ PixelDB <- R6Class(
         el <- el %>%
           mutate(read_count = as.integer(read_count),
                  uei_count = as.integer(uei_count))
+      } else {
+        el <- el %>%
+          select(-read_count, -uei_count)
       }
 
       if (umi_data_type == "string") {
@@ -479,7 +482,7 @@ PixelDB <- R6Class(
       if (umi_data_type == "suffixed_string") {
         el <- el %>%
           mutate(umi1 = as.character(umi1) %>% stringr::str_c("-umi1"),
-                 umi2 = as.character(umi2) %>% stringr::str_c("-umi1"))
+                 umi2 = as.character(umi2) %>% stringr::str_c("-umi2"))
       }
 
       if (lazy) {

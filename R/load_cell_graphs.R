@@ -517,7 +517,7 @@ LoadCellGraphs.PNAAssay <- function(
 
     # Fetch the component edge tables from the data base
     edge_table_list <- pblapply(id_data_chunks, function(id_chunk) {
-      db$components_edgelist(id_chunk$original_id, umi_data_type = "suffixed_string")
+      db$components_edgelist(id_chunk$original_id, umi_data_type = "suffixed_string", include_all_columns = FALSE)
     })
 
     if (verbose && check_global_verbosity()) {

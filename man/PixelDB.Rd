@@ -621,7 +621,7 @@ character vectors be specifying the \code{umi_data_type}.
 \if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_edgelist(
   components,
   umi_data_type = c("int64", "string", "suffixed_string"),
-  lazy = TRUE,
+  lazy = FALSE,
   include_all_columns = FALSE
 )}\if{html}{\out{</div>}}
 }
