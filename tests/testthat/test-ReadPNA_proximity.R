@@ -11,6 +11,11 @@ test_that("ReadPNA_proximity works as expected", {
   )
   expect_equal(expected_names, names(proximity))
   expect_s3_class(proximity, "tbl_df")
+
+  # tbl_lazy
+  expect_no_error(proximity <- ReadPNA_proximity(pxl_file, lazy = TRUE, verbose = FALSE))
+  expect_s3_class(proximity, "tbl_lazy")
+  expect_equal(expected_names, colnames(proximity))
 })
 
 test_that("ReadPNA_proximity fails with invalid input", {
@@ -18,4 +23,5 @@ test_that("ReadPNA_proximity fails with invalid input", {
   expect_error(proximity <- ReadPNA_proximity(pxl_file, verbose = "Invalid"))
   expect_error(proximity <- ReadPNA_proximity(pxl_file, calc_log2ratio = "Invalid"))
   expect_error(proximity <- ReadPNA_proximity(pxl_file, return_tibble = "Invalid"))
+  expect_error(proximity <- ReadPNA_proximity(pxl_file, lazy = "Invalid"))
 })

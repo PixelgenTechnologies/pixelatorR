@@ -511,7 +511,7 @@ X[1:4, 1:4]
 \subsection{Method \code{proximity()}}{
 Fetches the proximity scores from the database
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PixelDB$proximity(calc_log2_ratio = TRUE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PixelDB$proximity(calc_log2_ratio = TRUE, lazy = FALSE)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -519,6 +519,9 @@ Fetches the proximity scores from the database
 \describe{
 \item{\code{calc_log2_ratio}}{A logical specifying whether to calculate and add
 a log2ratio column to the output table. Default is \code{TRUE}}
+
+\item{\code{lazy}}{A logical specifying whether to load the data lazily. If \code{TRUE},
+a \code{tbl_lazy} object is returned.}
 }
 \if{html}{\out{</div>}}
 }
@@ -618,6 +621,7 @@ character vectors be specifying the \code{umi_data_type}.
 \if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_edgelist(
   components,
   umi_data_type = c("int64", "string", "suffixed_string"),
+  lazy = TRUE,
   include_all_columns = FALSE
 )}\if{html}{\out{</div>}}
 }
@@ -633,6 +637,9 @@ character vectors be specifying the \code{umi_data_type}.
 \item "string": The UMIs are encoded as character
 \item "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
 }}
+
+\item{\code{lazy}}{A logical specifying whether to load the data lazily. If \code{TRUE},
+a \code{tbl_lazy} object is returned.}
 
 \item{\code{include_all_columns}}{Logical specifying whether to include all columns in the output.}
 }

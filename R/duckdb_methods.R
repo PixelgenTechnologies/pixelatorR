@@ -324,6 +324,8 @@ PixelDB <- R6Class(
     #'
     #' @param calc_log2_ratio A logical specifying whether to calculate and add
     #' a log2ratio column to the output table. Default is \code{TRUE}
+    #' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
+    #' a \code{tbl_lazy} object is returned.
     #'
     #' @examples
     #' # Fetch the proximity scores
@@ -332,26 +334,39 @@ PixelDB <- R6Class(
     #'
     #' @return A \code{tbl_df} with the proximity scores
     #'
-    proximity = function(calc_log2_ratio = TRUE) {
+    proximity = function(calc_log2_ratio = TRUE, lazy = FALSE) {
+      assert_single_value(calc_log2_ratio, "bool")
+      assert_single_value(lazy, "bool")
+
       self$check_connection()
-      proximity_scores <- self$fetch_table("proximity") %>%
-        as_tibble() %>%
+      if (lazy) {
+        proximity_scores <- tbl(private$con, "proximity")
+      } else {
+        proximity_scores <- self$fetch_table("proximity")
+      }
+      proximity_scores <- proximity_scores %>%
         select(-matches("__index"))
 
       # Calculate log2ratio
       if (calc_log2_ratio) {
-        if (!"join_count" %in% names(proximity_scores)) {
+        if (!"join_count" %in% colnames(proximity_scores)) {
           cli::cli_abort(
             c("x" = "The Proximity score table does not contain the required {.str join_count} column")
           )
         }
-        if (!"join_count_expected_mean" %in% names(proximity_scores)) {
+        if (!"join_count_expected_mean" %in% colnames(proximity_scores)) {
           cli::cli_abort(
             c("x" = "The Proximity score table does not contain the required {.str join_count_expected_mean} column")
           )
         }
         proximity_scores <- proximity_scores %>%
           mutate(log2_ratio = log2(pmax(join_count, 1) / pmax(join_count_expected_mean, 1)))
+      }
+
+      proximity_scores <- proximity_scores %>% compute()
+
+      if (!lazy) {
+        proximity_scores <- proximity_scores %>% as_tibble()
       }
 
       return(proximity_scores)
@@ -412,6 +427,8 @@ PixelDB <- R6Class(
     #'  - "int64": The UMIs are encoded as int64
     #'  - "string": The UMIs are encoded as character
     #'  - "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
+    #' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
+    #' a \code{tbl_lazy} object is returned.
     #' @param include_all_columns Logical specifying whether to include all columns in the output.
     #'
     #' @examples
@@ -430,50 +447,47 @@ PixelDB <- R6Class(
     components_edgelist = function(
                                      components,
                                      umi_data_type = c("int64", "string", "suffixed_string"),
+                                     lazy = TRUE,
                                      include_all_columns = FALSE
     ) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
+      assert_single_value(lazy, type = "bool")
       assert_single_value(include_all_columns, type = "bool")
 
       umi_data_type <- match.arg(umi_data_type, choices = c("int64", "string", "suffixed_string"))
 
-      columns <- "marker_1, marker_2, component"
-      if (include_all_columns) {
-        columns <- glue::glue(
-          "{columns}, ",
-          "CAST(read_count AS SMALLINT) AS read_count, ",
-          "CAST(uei_count AS SMALLINT) AS uei_count "
-        )
-      } else {
-        columns <- glue::glue("{columns} ")
-      }
+      el <- tbl(private$con, "edgelist")
 
       if (!is.null(components)) {
-        components_sql <- glue_sql("{components*}", .con = private$con)
-        components_filter_sql <- glue(" WHERE component IN ({components_sql})")
-      } else {
-        components_filter_sql <- ""
+        el <- el %>%
+          filter(component %in% components)
       }
 
-      sql_query <- glue::glue(
-        "SELECT ",
-        switch(umi_data_type,
-          "int64" = "umi1, ",
-          "string" = "CAST(umi1 AS STRING) AS umi1, ",
-          "suffixed_string" = "CAST(umi1 AS STRING) || '-umi1' AS umi1, "
-        ),
-        switch(umi_data_type,
-          "int64" = "umi2, ",
-          "string" = "CAST(umi2 AS STRING) AS umi2, ",
-          "suffixed_string" = "CAST(umi2 AS STRING) || '-umi2' AS umi2, "
-        ),
-        columns,
-        "FROM edgelist",
-        components_filter_sql
-      )
-      DBI::dbGetQuery(private$con, sql_query)
+      if (include_all_columns) {
+        el <- el %>%
+          mutate(read_count = as.integer(read_count),
+                 uei_count = as.integer(uei_count))
+      }
+
+      if (umi_data_type == "string") {
+        el <- el %>%
+          mutate(umi1 = as.character(umi1),
+                 umi2 = as.character(umi2))
+      }
+      if (umi_data_type == "suffixed_string") {
+        el <- el %>%
+          mutate(umi1 = as.character(umi1) %>% stringr::str_c("-umi1"),
+                 umi2 = as.character(umi2) %>% stringr::str_c("-umi1"))
+      }
+
+      if (lazy) {
+        el <- el %>% compute()
+      } else {
+        el <- el %>% collect()
+      }
+      return(el)
     },
     #' @description
     #' Fetches layout for selected components

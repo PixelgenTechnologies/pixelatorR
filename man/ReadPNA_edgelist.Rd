@@ -7,7 +7,8 @@
 ReadPNA_edgelist(
   pxl_file,
   cells = NULL,
-  umi_data_type = c("int64", "string", "suffixed_string")
+  umi_data_type = c("int64", "string", "suffixed_string"),
+  lazy = TRUE
 )
 }
 \arguments{
@@ -21,6 +22,9 @@ ReadPNA_edgelist(
 \item "string": The UMIs are encoded as character
 \item "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
 }}
+
+\item{lazy}{A logical specifying whether to load the data lazily. If \code{TRUE},
+a \code{tbl_lazy} object is returned.}
 }
 \description{
 Note that the umi1 and umi2 sequences are encoded as \code{integer64} which
