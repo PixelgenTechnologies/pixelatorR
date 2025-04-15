@@ -246,22 +246,28 @@ ReadPNA_metadata <- function(
 #'  - "int64": The UMIs are encoded as int64
 #'  - "string": The UMIs are encoded as character
 #'  - "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
+#' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
+#' a \code{tbl_lazy} object is returned.
 #'
 #' @export
 #'
 ReadPNA_edgelist <- function(
   pxl_file,
   cells = NULL,
-  umi_data_type = c("int64", "string", "suffixed_string")
+  umi_data_type = c("int64", "string", "suffixed_string"),
+  lazy = TRUE
 ) {
   assert_single_value(pxl_file, type = "string")
   assert_file_exists(pxl_file)
   assert_file_ext(pxl_file, ext = "pxl")
   assert_vector(cells, type = "character", allow_null = TRUE, n = 1)
+  assert_single_value(lazy, type = "bool")
 
-  # Read edgelist from database
+  # Connect to database
   db <- PixelDB$new(pxl_file)
-  on.exit(db$close())
+  if (!lazy) {
+    on.exit(db$close())
+  }
 
   available_components <- db$counts() %>% colnames()
   if (!any(cells %in% available_components) && !is.null(cells)) {
@@ -273,8 +279,7 @@ ReadPNA_edgelist <- function(
     )
   }
 
-  el <- db$components_edgelist(cells, umi_data_type, include_all_columns = TRUE) %>%
-    as_tibble()
+  el <- db$components_edgelist(cells, umi_data_type, lazy, include_all_columns = TRUE)
 
   return(el)
 }
@@ -334,13 +339,15 @@ ReadPNA_layouts <- function(
 #' @param pxl_file Path to a PXL file containing PNA data
 #' @param calc_log2_ratio A logical specifying whether to calculate and add
 #' a log2ratio column to the output table. Default is \code{TRUE}
+#' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
+#' a \code{tbl_lazy} object is returned.
 #' @param verbose Print messages
 #'
 #' @family data-loaders
 #'
 #' @rdname ReadPNA_proximity
 #'
-#' @return A \code{tbl_df} or a \code{Table} with PNA Proximity scores
+#' @return A \code{tbl_df} or a \code{tbl_lazy} with PNA Proximity scores
 #'
 #' @examples
 #' library(pixelatorR)
@@ -354,6 +361,7 @@ ReadPNA_layouts <- function(
 ReadPNA_proximity <- function(
   pxl_file,
   calc_log2_ratio = TRUE,
+  lazy = FALSE,
   verbose = TRUE
 ) {
   # Check input parameters
@@ -362,6 +370,7 @@ ReadPNA_proximity <- function(
   assert_file_exists(pxl_file)
   assert_single_value(calc_log2_ratio, type = "bool")
   assert_single_value(verbose, type = "bool")
+  assert_single_value(lazy, type = "bool")
 
   if (verbose && check_global_verbosity()) {
     cli_alert_info("Loading proximity scores from: {.file {pxl_file}}")
@@ -369,10 +378,12 @@ ReadPNA_proximity <- function(
 
   # Setup connection to PXL file
   db <- PixelDB$new(pxl_file)
-  on.exit(db$close())
+  if (!lazy) {
+    on.exit(db$close())
+  }
 
-  # Load proximity scores from database
-  proximity_scores <- db$proximity(calc_log2_ratio)
+  # Fetch proximity scores table
+  proximity_scores <- db$proximity(calc_log2_ratio, lazy)
 
   if (verbose && check_global_verbosity()) {
     cli_alert_success("Returning a {.cls {class(proximity_scores)[1]}} with the PNA proximity scores")

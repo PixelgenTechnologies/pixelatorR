@@ -153,10 +153,10 @@ test_that("PixelDB methods work as expected", {
   expect_equal(
     el %>% sapply(class),
     c(
-      umi1 = "integer64",
-      umi2 = "integer64",
       marker_1 = "character",
       marker_2 = "character",
+      umi1 = "integer64",
+      umi2 = "integer64",
       component = "character"
     )
   )
@@ -166,10 +166,10 @@ test_that("PixelDB methods work as expected", {
   expect_equal(
     el %>% sapply(class),
     c(
-      umi1 = "character",
-      umi2 = "character",
       marker_1 = "character",
       marker_2 = "character",
+      umi1 = "character",
+      umi2 = "character",
       component = "character"
     )
   )
@@ -179,10 +179,10 @@ test_that("PixelDB methods work as expected", {
   expect_equal(
     el %>% sapply(class),
     c(
-      umi1 = "character",
-      umi2 = "character",
       marker_1 = "character",
       marker_2 = "character",
+      umi1 = "character",
+      umi2 = "character",
       component = "character"
     )
   )

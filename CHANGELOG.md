@@ -26,8 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `PixelDB$export_parquet` export a table in the database to a parquet file.
   - `PixelDB$close` close the connection.
 - `ReadPNA_counts` function to load the count matrix from a PXL file containing PNA data.
-- `ReadPNA_proximity` function to load the proximity scores table from a PXL file containing PNA data.
-- `ReadPNA_edgelist` function to load the edgelist from a PXL file containing PNA data.
+- `ReadPNA_proximity` function to load the proximity scores table from a PXL file containing PNA data. Also supports lazy loading.
+- `ReadPNA_edgelist` function to load the edgelist from a PXL file containing PNA data. Also supports lazy loading.
 - `ReadPNA_layouts` function to load component layouts from a PXL file containing PNA data with pre-computed layouts.
 - `ReadPNA_Seurat` function to construct a `Seurat` object from a PXL file containing PNA data.
 - `ReadPNA_metadata` function to load sample meta data from a PXL file containing PNA data.
@@ -77,7 +77,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 - Fixed bug in `DensityScatterPlot` where the `gate_type` default would lead to an error.
-- Fixed bug in `DensityScatterPlot` where the x- and y.axis titles were hardcoded as "Marker1" and "Marker2"
+- Fixed bug in `DensityScatterPlot` where the x- and y-axis titles were hardcoded as "Marker1" and "Marker2"
 
 ## [0.12.1] - 2025-01-21
 

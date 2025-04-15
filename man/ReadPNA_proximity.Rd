@@ -4,7 +4,12 @@
 \alias{ReadPNA_proximity}
 \title{Load the Proximity scores table from a PNA PXL file}
 \usage{
-ReadPNA_proximity(pxl_file, calc_log2_ratio = TRUE, verbose = TRUE)
+ReadPNA_proximity(
+  pxl_file,
+  calc_log2_ratio = TRUE,
+  lazy = FALSE,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{pxl_file}{Path to a PXL file containing PNA data}
@@ -12,10 +17,13 @@ ReadPNA_proximity(pxl_file, calc_log2_ratio = TRUE, verbose = TRUE)
 \item{calc_log2_ratio}{A logical specifying whether to calculate and add
 a log2ratio column to the output table. Default is \code{TRUE}}
 
+\item{lazy}{A logical specifying whether to load the data lazily. If \code{TRUE},
+a \code{tbl_lazy} object is returned.}
+
 \item{verbose}{Print messages}
 }
 \value{
-A \code{tbl_df} or a \code{Table} with PNA Proximity scores
+A \code{tbl_df} or a \code{tbl_lazy} with PNA Proximity scores
 }
 \description{
 Load the Proximity scores table from a PNA PXL file
