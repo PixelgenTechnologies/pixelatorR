@@ -14,7 +14,7 @@ RunDAA(object, ...)
   targets = NULL,
   assay = NULL,
   group_vars = NULL,
-  mean_fxn = rowMeans,
+  mean_fxn = Matrix::rowMeans,
   fc_name = "difference",
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,

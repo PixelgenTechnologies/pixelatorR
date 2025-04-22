@@ -1105,7 +1105,12 @@ subset.MPXAssay <- function(
     fs_map$id_map <- lapply(fs_map$id_map, function(x) {
       x %>% filter(current_id %in% cells)
     })
+    # Drop sample if id_map is empty
+    rows_keep <- sapply(fs_map$id_map, nrow) > 0
+    fs_map <- fs_map[rows_keep, ]
     fs_map <- na.omit(fs_map)
+    # Update sample integer
+    fs_map$sample <- seq_len(nrow(fs_map))
   }
 
   # convert standard assay to CellGraphAssay or CellGraphAssay5
