@@ -51,6 +51,17 @@ for (assay_version in c("v3", "v5")) {
     }
     expect_equal(ncol(cg_assay_subset), 2)
     expect_equal(colnames(cg_assay_subset), c("RCVCMP0000217", "RCVCMP0000118"))
+
+    # Make sure that samples are correctly dropped
+    expect_no_error(cg_assay_big <- merge(cg_assay, list(cg_assay, cg_assay), add.cell.ids = c("A", "B", "C")))
+    if (assay_version == "v3") {
+      expect_no_error(cg_assay_slice <- subset(cg_assay_big, cells = colnames(cg_assay_big)[1:2]))
+    } else {
+      expect_warning({
+        cg_assay_slice <- subset(cg_assay_big, cells = colnames(cg_assay_big)[1:2])
+      })
+    }
+    expect_true(nrow(FSMap(cg_assay_slice)) == 1)
   })
 
   # merge method

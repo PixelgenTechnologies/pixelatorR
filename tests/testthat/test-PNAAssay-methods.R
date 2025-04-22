@@ -66,6 +66,17 @@ for (assay_version in c("v3", "v5")) {
     }
     expect_equal(ncol(pna_assay_subset), 2)
     expect_equal(colnames(pna_assay_subset), c("0a45497c6bfbfb22", "2708240b908e2eba"))
+
+    # Make sure that samples are correctly dropped
+    expect_no_error(pna_assay_big <- merge(pna_assay, list(pna_assay, pna_assay), add.cell.ids = c("A", "B", "C")))
+    if (assay_version == "v3") {
+      expect_no_error(pna_assay_slice <- subset(pna_assay_big, cells = colnames(pna_assay_big)[1:2]))
+    } else {
+      expect_warning({
+        pna_assay_slice <- subset(pna_assay_big, cells = colnames(pna_assay_big)[1:2])
+      })
+    }
+    expect_true(nrow(FSMap(pna_assay_slice)) == 1)
   })
 
   # merge method
