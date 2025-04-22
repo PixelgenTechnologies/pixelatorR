@@ -78,6 +78,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 - Fixed bug in `DensityScatterPlot` where the `gate_type` default would lead to an error.
 - Fixed bug in `DensityScatterPlot` where the x- and y-axis titles were hardcoded as "Marker1" and "Marker2"
+- Fixed bug in `subset.MPXAssay` and `subset.PNAAssay` where the `fs_map` table was not filtered correctly when all components from a sample are removed.
 
 ## [0.12.1] - 2025-01-21
 
