@@ -42,7 +42,7 @@ RunDAA.Seurat <- function(
   targets = NULL,
   assay = NULL,
   group_vars = NULL,
-  mean_fxn = rowMeans,
+  mean_fxn = Matrix::rowMeans,
   fc_name = "difference",
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
@@ -101,12 +101,12 @@ RunDAA.Seurat <- function(
   }
 
   # Get assay and convert if necessary
-  cg_assay <- object[[assay]]
-  if (inherits(cg_assay, "CellGraphAssay")) {
-    cg_assay <- as(cg_assay, "Assay")
+  pixel_assay <- object[[assay]]
+  if (inherits(pixel_assay, c("CellGraphAssay", "PNAAssay"))) {
+    pixel_assay <- as(pixel_assay, "Assay")
   }
-  if (inherits(cg_assay, "CellGraphAssay5")) {
-    cg_assay <- as(cg_assay, "Assay5")
+  if (inherits(pixel_assay, c("CellGraphAssay5", "PNAAssay5"))) {
+    pixel_assay <- as(pixel_assay, "Assay5")
   }
 
   da_results_all <- lapply(seq_along(group_data_split), function(i) {
@@ -123,7 +123,7 @@ RunDAA.Seurat <- function(
       cur_assay_subset <- try(
         {
           suppressWarnings({
-            subset(cg_assay, cells = group_data_split[[i]]$component)
+            subset(pixel_assay, cells = group_data_split[[i]]$component)
           })
         },
         silent = TRUE
