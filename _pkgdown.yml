@@ -48,6 +48,15 @@ reference:
     - ReadMPX_arrow_edgelist
     - ReadMPX_layouts
     - ReadMPX_metadata
+    - ReadPNA_Seurat
+    - ReadPNA_counts
+    - ReadPNA_edgelist
+    - ReadPNA_proximity
+    - ReadPNA_layouts
+    - ReadPNA_metadata
+  - subtitle: PXL file database
+  - contents:
+    - PixelDB
   - subtitle: Visualization
   - contents:
     - CellCountPlot
@@ -77,26 +86,37 @@ reference:
     - RunDAA
     - RunDPA
     - RunDCA
+    - DifferentialProximityAnalysis
     - ColocalizationHeatmap
   - subtitle: Seurat methods
   - contents:
     - PolarizationScoresToAssay
     - ColocalizationScoresToAssay
-  - subtitle: CellGraphAssay(5) and CellGraph methods
+    - ProximityScoresToAssay
+  - subtitle: CellGraphAssay(5), PNAAssay(5) and CellGraph methods
   - contents:
     - CellGraphAssay-methods
     - CellGraphAssay5-methods
+    - PNAAssay-methods
+    - PNAAssay5-methods
     - MPXAssay-methods
     - CreateCellGraphAssay
     - CreateCellGraphAssay5
+    - CreatePNAAssay
+    - CreatePNAAssay5
     - CellGraphs
     - PolarizationScores
     - ColocalizationScores
+    - ProximityScores
+    - Edgelists
+    - Normalize
     - FSMap
     - RestorePaths
     - CellGraphData
     - as.CellGraphAssay
     - as.CellGraphAssay5
+    - as.PNAAssay
+    - as.PNAAssay5
     - CellGraph
     - CreateCellGraphObject
   - subtitle: Graph functions
@@ -116,17 +136,22 @@ reference:
     - CellGraphAssay
     - CellGraphAssay5
     - MPXAssay
+    - PNAAssay
+    - PNAAssay5
   - subtitle: Misc
   - contents:
     - pixelatorR_options
     - pixelatorR-package
-    - pxl_dataset
+    - mpx_dataset
+    - pna_dataset
     - show,CellGraph-method
     - show,CellGraphAssay-method
     - inspect_pxl_file
     - pixelatorR_style
     - print.pixelator_metadata
     - type-checks
+    - minimal_mpx_pxl_file
+    - minimal_pna_pxl_file
 
 footer:
   structure:

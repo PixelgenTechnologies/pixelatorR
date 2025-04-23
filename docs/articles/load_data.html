@@ -6,6 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Load data • pixelatorR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.12.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,8 +61,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Load data</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Load data</h1>
             
             <h4 data-toc-skip class="date">2023-12-18</h4>
       
@@ -76,22 +81,21 @@ by setting:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>pixelatorR.verbose <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <blockquote>
-<p>In this tutorial, we will take a closer look at the functions that
-<code>pixelatorR</code> provides to load data. This is mainly intended
-for more advanced users. If you want to learn more about how to analyze
-MPX data, please visit our <a href="https://software.pixelgen.com/mpx-analysis/introduction" class="external-link">tutorials</a>.</p>
+<p>In this tutorial, we will take a closer look at the functions
+provided in <code>pixelatorR</code> to load data. This is mainly
+intended for advanced users. If you want to learn more about how to
+analyze MPX/PNA data, please visit our <a href="https://software.pixelgen.com/mpx-analysis/introduction" class="external-link">tutorials</a>.</p>
 </blockquote>
 <div class="section level2">
 <h2 id="load-data">Load data<a class="anchor" aria-label="anchor" href="#load-data"></a>
 </h2>
-<p>To get started, we need a <code>pxl</code> file which we can download
-from <a href="https://software.pixelgen.com/" class="external-link uri">https://software.pixelgen.com/</a>.</p>
+<p>To get started, we need a PXL file which we can download from <a href="https://software.pixelgen.com/" class="external-link uri">https://software.pixelgen.com/</a>.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/files2.html" class="external-link">dir.create</a></span><span class="op">(</span><span class="st">"PBMC_data"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file</a></span><span class="op">(</span>url <span class="op">=</span> <span class="st">"https://pixelgen-technologies-datasets.s3.eu-north-1.amazonaws.com/mpx-datasets/pixelator/0.12.0/1k-human-pbmcs-v1.0-immunology-I/Sample01_human_pbmcs_unstimulated.dataset.pxl?download=1"</span>,</span>
 <span>              destfile <span class="op">=</span> <span class="st">"PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl"</span><span class="op">)</span></span></code></pre></div>
 <p><code>pixelatorR</code> provides several functions to load data from
-a <code>pxl</code> file.</p>
+a PXL file.</p>
 <p>For instance, <code>ReadMPX_counts</code> allows us to load only the
 count matrix and nothing else:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
@@ -105,8 +109,8 @@ count matrix and nothing else:</p>
 <span><span class="co">## CD279             4             2             0             8             2</span></span>
 <span><span class="co">## CD41              6             1             3             5             6</span></span></code></pre>
 <p>With <code>ReadMPX_item</code>, we can chose a specific item to load
-from the <code>pxl</code> file, including: “polarization”,
-“colocalization”, “edgelist”.</p>
+from the PXL file, including: “polarization”, “colocalization”,
+“edgelist”.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">polarization_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="st">"polarization"</span><span class="op">)</span></span>
 <span><span class="va">polarization_scores</span></span></code></pre></div>
@@ -327,7 +331,7 @@ original component IDs:</p>
 “current_id” column will be updated, but the “original_id” column will
 remain unchanged:</p>
 <div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">seur_obj_renamed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mojaveazure.github.io/seurat-object/reference/RenameCells.html" class="external-link">RenameCells</a></span><span class="op">(</span><span class="va">seur_obj</span>, new.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"A_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="va">seur_obj_renamed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/RenameCells.html" class="external-link">RenameCells</a></span><span class="op">(</span><span class="va">seur_obj</span>, new.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"A_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/FSMap.html">FSMap</a></span><span class="op">(</span><span class="va">seur_obj_renamed</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/unnest.html" class="external-link">unnest</a></span><span class="op">(</span><span class="va">id_map</span><span class="op">)</span></span></code></pre></div>

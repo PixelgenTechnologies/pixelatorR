@@ -21,11 +21,11 @@ Tip: you can turn off the verbose messages in `pixelatorR` by setting:
 options(pixelatorR.verbose = FALSE)
 ```
 
->    In this tutorial, we will take a closer look at the functions that `pixelatorR` provides to load data. This is mainly intended for more advanced users. If you want to learn more about how to analyze MPX data, please visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction).
+>    In this tutorial, we will take a closer look at the functions provided in `pixelatorR` to load data. This is mainly intended for advanced users. If you want to learn more about how to analyze MPX/PNA data, please visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction).
 
 ## Load data
 
-To get started, we need a `pxl` file which we can download from https://software.pixelgen.com/. 
+To get started, we need a PXL file which we can download from https://software.pixelgen.com/. 
 
 ```{r eval = FALSE}
 dir.create("PBMC_data")
@@ -33,7 +33,7 @@ download.file(url = "https://pixelgen-technologies-datasets.s3.eu-north-1.amazon
               destfile = "PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
 ```
 
-`pixelatorR` provides several functions to load data from a `pxl` file. 
+`pixelatorR` provides several functions to load data from a PXL file. 
 
 For instance, `ReadMPX_counts` allows us to load only the count matrix and nothing else:
 
@@ -43,7 +43,7 @@ countMatrix <- ReadMPX_counts(pxl_file)
 countMatrix[1:5, 1:5]
 ```
 
-With `ReadMPX_item`, we can chose a specific item to load from the `pxl` file, including: "polarization", "colocalization", "edgelist".
+With `ReadMPX_item`, we can chose a specific item to load from the PXL file, including: "polarization", "colocalization", "edgelist".
 
 ```{r}
 polarization_scores <- ReadMPX_item(pxl_file, items = "polarization")

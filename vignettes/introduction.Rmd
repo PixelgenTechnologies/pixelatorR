@@ -8,7 +8,7 @@ date: "2023-12-18"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-The `pixelatorR` R package provides classes, functions and methods to load, process, analyze and visualize MPX data. It is built on top of the `Seurat` ecosystem, meaning that it shares the basic object type. Typical Seurat-style analysis workflows can be run as usual, but `pixelatorR` fills in the gaps where support for MPX data is currently lacking.
+The `pixelatorR` R package provides classes, functions and methods to load, process, analyze and visualize MPX/PNA data. It is built on top of the `Seurat` ecosystem, meaning that it shares the basic object type. Typical Seurat-style analysis workflows can be run as usual, but `pixelatorR` fills in the gaps where support for MPX data is currently lacking.
 
 ## Setting up a conda environment
 
@@ -64,6 +64,6 @@ seur <- ReadMPX_Seurat("PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl"
 
 ## Seurat v5
 
-In Seurat v5, a new Assay type was introduced called Assay5. Users can switch between using the Assay and Assay5 classes to store counts data by setting the global option `Seurat.object.assay.version` to either "v3" or "v5". Similarly, in `pixelatorR`, you can set the same global option to control whether to use the CellGraphAssay or CellGraphAssay5 class. 
+In Seurat v5, a new Assay type was introduced called Assay5. Users can switch between using the Assay and Assay5 classes to store counts data by setting the global option `Seurat.object.assay.version` to either "v3" or "v5". Similarly, in `pixelatorR`, you can set the same global option to control whether to use the CellGraphAssay/PNAAssay or CellGraphAssay5/PNAAssay5 class. 
 
-The CellGraphAssay class inherits the Assay class and the CellGraphAssay5 class inherits the Assay5 class. These two `pixelatorR` classes can be thought of as extensions of the Seurat Assay classes as they provide slots to store spatial metrics and MPX component graphs. 
+The CellGraphAssay/PNAAssay classes extend the Assay class and the CellGraphAssay5/PNAAssay5 class extend the Assay5 class, providing additional slots to store spatial metrics and component graphs. 

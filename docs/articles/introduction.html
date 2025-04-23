@@ -6,6 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Introduction • pixelatorR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -20,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.12.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,8 +61,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-
-      <h1>Introduction</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Introduction</h1>
             
             <h4 data-toc-skip class="date">2023-12-18</h4>
       
@@ -67,11 +72,11 @@
     
     
 <p>The <code>pixelatorR</code> R package provides classes, functions and
-methods to load, process, analyze and visualize MPX data. It is built on
-top of the <code>Seurat</code> ecosystem, meaning that it shares the
-basic object type. Typical Seurat-style analysis workflows can be run as
-usual, but <code>pixelatorR</code> fills in the gaps where support for
-MPX data is currently lacking.</p>
+methods to load, process, analyze and visualize MPX/PNA data. It is
+built on top of the <code>Seurat</code> ecosystem, meaning that it
+shares the basic object type. Typical Seurat-style analysis workflows
+can be run as usual, but <code>pixelatorR</code> fills in the gaps where
+support for MPX data is currently lacking.</p>
 <div class="section level2">
 <h2 id="setting-up-a-conda-environment">Setting up a conda environment<a class="anchor" aria-label="anchor" href="#setting-up-a-conda-environment"></a>
 </h2>
@@ -123,13 +128,11 @@ can switch between using the Assay and Assay5 classes to store counts
 data by setting the global option
 <code>Seurat.object.assay.version</code> to either “v3” or “v5”.
 Similarly, in <code>pixelatorR</code>, you can set the same global
-option to control whether to use the CellGraphAssay or CellGraphAssay5
-class.</p>
-<p>The CellGraphAssay class inherits the Assay class and the
-CellGraphAssay5 class inherits the Assay5 class. These two
-<code>pixelatorR</code> classes can be thought of as extensions of the
-Seurat Assay classes as they provide slots to store spatial metrics and
-MPX component graphs.</p>
+option to control whether to use the CellGraphAssay/PNAAssay or
+CellGraphAssay5/PNAAssay5 class.</p>
+<p>The CellGraphAssay/PNAAssay classes extend the Assay class and the
+CellGraphAssay5/PNAAssay5 class extend the Assay5 class, providing
+additional slots to store spatial metrics and component graphs.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

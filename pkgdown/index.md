@@ -1,6 +1,6 @@
 # pixelatorR
 
-pixelatorR provides the infrastructure to process, analyze and visualize MPX data for R users.
+pixelatorR provides the infrastructure to process, analyze and visualize MPX and Proximity Network Assay (PNA) data for R users.
 
 <p align="center">
     <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height=200
@@ -33,9 +33,9 @@ install.packages("<path to pixelatorR directory>", repos = NULL, type = "source"
 
 ## Usage
 
-Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) for a step-by step guide on MPX data analysis with pixelatorR. On this site, we also provide additional additional tutorials that are more directed towards users who are interested in the details of how pixelatorR stores and handles MPX data in R.
+Visit our [tutorials](https://software.pixelgen.com/mpx-analysis/introduction) for a step-by step guide on MPX/PNA data analysis with pixelatorR. On this site, we also provide additional additional tutorials that are more directed towards users who are interested in the details of how pixelatorR stores and handles MPX/PNA data in R.
 
-Function documentation can be accessed from the [reference](https://pixelgentechnologies.github.io/pixelatorR/reference/) tab above. Alternatively, you can access the documentation from an R session by running `?function_name` once the package is installed. 
+Function documentation can be accessed from the [reference](https://pixelgentechnologies.github.io/pixelatorR/reference/) tab above. Alternatively, you can access the documentation from an R session by running `?function_name` in the console once the package is installed. 
 
 ## Notes
 
@@ -51,13 +51,18 @@ You can also email the development team at [developers@pixelgen.com](mailto:deve
 
 pixelatorR is developed and maintained by the [developers](https://github.com/PixelgenTechnologies) at [Pixelgen Technologies](https://pixelgen.com).
 
-When using pixelator in your research, please cite the following publication:
+When using pixelatorR in your research, please cite the following publication:
 
-> Karlsson, Filip, Tomasz Kallas, Divya Thiagarajan, Max Karlsson, Maud Schweitzer, Jose Fernandez Navarro, Louise Leijonancker, _et al._ “Molecular Pixelation: Single Cell Spatial Proteomics by Sequencing.” bioRxiv, June 8, 2023. https://doi.org/10.1101/2023.06.05.543770.
+> Karlsson, F., Kallas, T., Thiagarajan, D. et al. Molecular pixelation: spatial proteomics of single cells by sequencing. Nat Methods 21, 1044–1052 (2024). https://doi.org/10.1038/s41592-024-02268-9.
 
-Main developers:
+Package maintainer:
 
 - Ludvig Larsson ([@ludvigla](https://github.com/ludvigla))
+
+Contributors:
+
 - Max Karlsson ([@maxkarlsson](https://github.com/maxkarlsson))
+- Vincent Van Hoef ([@vincent-van-hoef](https://github.com/vincent-van-hoef))
+- Stefan Petkov ([@stefanppetkov](https://github.com/stefanppetkov))
 
 A huge thank you to all [code contributors](https://github.com/PixelgenTechnologies/pixelatorR/graphs/contributors)!

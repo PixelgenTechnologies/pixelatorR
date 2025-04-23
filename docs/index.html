@@ -6,6 +6,12 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>pixelatorR • pixelatorR</title>
+<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="apple-touch-icon-120x120.png">
+<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="apple-touch-icon-76x76.png">
+<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
@@ -13,6 +19,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="pixelatorR">
 <meta name="description" content="Defines S4 classes for single-cell MPX data, extending the Seurat toolbox. In addition, pixelatorR provides functions to process and visualize MPX data.">
 <meta property="og:description" content="Defines S4 classes for single-cell MPX data, extending the Seurat toolbox. In addition, pixelatorR provides functions to process and visualize MPX data.">
+<meta property="og:image" content="/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -22,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.12.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.13.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,9 +60,11 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="pixelatorr">pixelatorR<a class="anchor" aria-label="anchor" href="#pixelatorr"></a>
-</h1></div>
-<p>pixelatorR provides the infrastructure to process, analyze and visualize MPX data for R users.</p>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="pixelatorr">pixelatorR<a class="anchor" aria-label="anchor" href="#pixelatorr"></a>
+</h1>
+</div>
+<p>pixelatorR provides the infrastructure to process, analyze and visualize MPX and Proximity Network Assay (PNA) data for R users.</p>
 <p align="center">
 <img src="https://www.pixelgen.com/wp-content/uploads/2022/12/share-image-pixelgen.png" height="200" alt="Pixelgen Technologies"></p>
 <div align="center">
@@ -81,8 +90,8 @@
 <div class="section level2">
 <h2 id="usage">Usage<a class="anchor" aria-label="anchor" href="#usage"></a>
 </h2>
-<p>Visit our <a href="https://software.pixelgen.com/mpx-analysis/introduction" class="external-link">tutorials</a> for a step-by step guide on MPX data analysis with pixelatorR. On this site, we also provide additional additional tutorials that are more directed towards users who are interested in the details of how pixelatorR stores and handles MPX data in R.</p>
-<p>Function documentation can be accessed from the <a href="https://pixelgentechnologies.github.io/pixelatorR/reference/" class="external-link">reference</a> tab above. Alternatively, you can access the documentation from an R session by running <code>?function_name</code> once the package is installed.</p>
+<p>Visit our <a href="https://software.pixelgen.com/mpx-analysis/introduction" class="external-link">tutorials</a> for a step-by step guide on MPX/PNA data analysis with pixelatorR. On this site, we also provide additional additional tutorials that are more directed towards users who are interested in the details of how pixelatorR stores and handles MPX/PNA data in R.</p>
+<p>Function documentation can be accessed from the <a href="https://pixelgentechnologies.github.io/pixelatorR/reference/" class="external-link">reference</a> tab above. Alternatively, you can access the documentation from an R session by running <code>?function_name</code> in the console once the package is installed.</p>
 </div>
 <div class="section level2">
 <h2 id="notes">Notes<a class="anchor" aria-label="anchor" href="#notes"></a>
@@ -99,14 +108,19 @@
 <h2 id="credits">Credits<a class="anchor" aria-label="anchor" href="#credits"></a>
 </h2>
 <p>pixelatorR is developed and maintained by the <a href="https://github.com/PixelgenTechnologies" class="external-link">developers</a> at <a href="https://pixelgen.com" class="external-link">Pixelgen Technologies</a>.</p>
-<p>When using pixelator in your research, please cite the following publication:</p>
+<p>When using pixelatorR in your research, please cite the following publication:</p>
 <blockquote>
-<p>Karlsson, Filip, Tomasz Kallas, Divya Thiagarajan, Max Karlsson, Maud Schweitzer, Jose Fernandez Navarro, Louise Leijonancker, <em>et al.</em> “Molecular Pixelation: Single Cell Spatial Proteomics by Sequencing.” bioRxiv, June 8, 2023. <a href="https://doi.org/10.1101/2023.06.05.543770" class="external-link uri">https://doi.org/10.1101/2023.06.05.543770</a>.</p>
+<p>Karlsson, F., Kallas, T., Thiagarajan, D. et al. Molecular pixelation: spatial proteomics of single cells by sequencing. Nat Methods 21, 1044–1052 (2024). <a href="https://doi.org/10.1038/s41592-024-02268-9" class="external-link uri">https://doi.org/10.1038/s41592-024-02268-9</a>.</p>
 </blockquote>
-<p>Main developers:</p>
+<p>Package maintainer:</p>
 <ul>
 <li>Ludvig Larsson (<a href="https://github.com/ludvigla" class="external-link">@ludvigla</a>)</li>
+</ul>
+<p>Contributors:</p>
+<ul>
 <li>Max Karlsson (<a href="https://github.com/maxkarlsson" class="external-link">@maxkarlsson</a>)</li>
+<li>Vincent Van Hoef (<a href="https://github.com/vincent-van-hoef" class="external-link">@vincent-van-hoef</a>)</li>
+<li>Stefan Petkov (<a href="https://github.com/stefanppetkov" class="external-link">@stefanppetkov</a>)</li>
 </ul>
 <p>A huge thank you to all <a href="https://github.com/PixelgenTechnologies/pixelatorR/graphs/contributors" class="external-link">code contributors</a>!</p>
 </div>
