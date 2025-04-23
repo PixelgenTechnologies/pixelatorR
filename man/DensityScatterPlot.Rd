@@ -10,13 +10,15 @@ DensityScatterPlot(
   marker2,
   facet_vars = NULL,
   plot_gate = NULL,
+  gate_type = c("rectangle", "quadrant"),
+  grid_n = 500,
   scale_density = TRUE,
-  margin_density = FALSE,
-  coord_fixed = TRUE,
+  margin_density = TRUE,
   pt_size = 1,
   alpha = 1,
   layer = NULL,
-  grid_n = 500,
+  coord_fixed = TRUE,
+  annotation_params = NULL,
   colors = NULL,
   ...
 )
@@ -24,34 +26,40 @@ DensityScatterPlot(
 \arguments{
 \item{object}{A Seurat object.}
 
-\item{marker1}{Marker to plot along the x-axis.}
+\item{marker1}{Name of first marker to plot.}
 
-\item{marker2}{Marker to plot along the y-axis.}
+\item{marker2}{Name of second marker to plot.}
 
-\item{facet_vars}{Variables to facet the plot by. If NULL, no faceting is done. If a character vector with 1 element,
-the plot is faceted by rows. If a character vector with 2 elements, the plot is faceted by rows and
-columns.}
+\item{facet_vars}{Optional character vector of length 1 or 2 specifying variables to facet by.}
 
-\item{plot_gate}{A data.frame with columns 'xmin', 'xmax', 'ymin', 'ymax' to plot a gate. This data.frame can also
-contain the variables in 'facet_vars' to plot different gates in different facets.}
+\item{plot_gate}{Optional data frame containing gate parameters. For \code{gate_type = "rectangle"}, must contain columns
+'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. For gate_type = "quadrant", must contain
+columns 'x' and 'y' defining the position of the quadrant lines. The data frame can also contain the variables
+specified in 'facet_vars' to plot different gates in different facets.}
 
-\item{scale_density}{Scale the density to the maximum density per facet.}
+\item{gate_type}{Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
+Required if \code{plot_gate} is provided.}
 
-\item{margin_density}{Add marginal density plots. Only supported when 'facet_vars' is NULL.}
+\item{grid_n}{Number of grid points in each direction to compute density.}
 
-\item{coord_fixed}{Fix the aspect ratio of the plot. Only supported when 'margin_density' is FALSE.}
+\item{scale_density}{Whether to scale the density within each facet.}
 
-\item{pt_size}{Size of the points.}
+\item{margin_density}{Whether to plot density plots in the margins.}
 
-\item{alpha}{Transparency of the points.}
+\item{pt_size}{Point size.}
 
-\item{layer}{Name of layer to plot. If NULL, the default layer is used.}
+\item{alpha}{Point transparency.}
 
-\item{grid_n}{Number of grid points to calculate the density.}
+\item{layer}{Optional string specifying a layer to plot.}
 
-\item{colors}{Colors to use for the density plot. If NULL, the 'viridis' "turbo" palette is used.}
+\item{coord_fixed}{Whether to use fixed coordinate ratio.}
 
-\item{...}{Additional arguments to pass to 'MASS::kde2d'.}
+\item{annotation_params}{Optional list of parameters to pass to \code{geom_text} for gate annotations. Common parameters
+include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).}
+
+\item{colors}{Optional character vector of colors to use for the color scale.}
+
+\item{...}{Additional arguments to pass to \code{MASS::kde2d}.}
 }
 \value{
 A ggplot object.
@@ -62,7 +70,6 @@ the scatter plot are colored by the point density, determined by 2D kernel densi
 can be faceted by one or two variables and a gate can be plotted.
 }
 \examples{
-
 library(pixelatorR)
 library(Seurat)
 
@@ -108,6 +115,44 @@ DensityScatterPlot(object,
   marker2 = "Feature2",
   facet_vars = "sample",
   plot_gate = plot_gate,
+  gate_type = "rectangle",
+  layer = "counts"
+)
+
+
+# Create a Seurat object with random data
+counts <- matrix(rpois(200, 5), nrow = 10)
+rownames(counts) <- paste0("Feature", 1:10)
+colnames(counts) <- paste0("Cell", 1:20)
+object <- CreateSeuratObject(counts = counts)
+
+# Create a basic density scatter plot
+DensityScatterPlot(
+  object,
+  marker1 = "Feature1",
+  marker2 = "Feature2",
+  layer = "counts"
+)
+
+# Create a density scatter plot with a quadrant gate
+# Define quadrant gate parameters
+quad_gate <- data.frame(
+  x = 2, # x-coordinate for vertical line
+  y = 3 # y-coordinate for horizontal line
+)
+
+# Plot with quadrant gate and custom annotations
+DensityScatterPlot(
+  object,
+  marker1 = "Feature1",
+  marker2 = "Feature2",
+  plot_gate = quad_gate,
+  gate_type = "quadrant",
+  annotation_params = list(
+    color = "darkblue",
+    size = 4,
+    fontface = "bold"
+  ),
   layer = "counts"
 )
 

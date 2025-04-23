@@ -1,13 +1,10 @@
 for (assay_version in c("v3", "v5")) {
   options(Seurat.object.assay.version = assay_version)
 
-  pxl_file <- system.file("extdata/five_cells",
-    "five_cells.pxl",
-    package = "pixelatorR"
-  )
+  pxl_file <- minimal_mpx_pxl_file()
   seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
   seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1:2])
-  seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds", dim = 3)
+  seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds")
 
   test_that("Plot3DGraph works as expected", {
     expect_no_error({

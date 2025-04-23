@@ -25,6 +25,9 @@
 #' least \code{n} elements.
 #' - \code{assert_class} checks if \code{x} is of a specific class.
 #' - \code{assert_mpx_assay} checks if \code{x} is a \code{CellGraphAssay} or \code{CellGraphAssay5}.
+#' - \code{assert_pna_assay} checks if \code{x} is a \code{PNAAssay} or \code{PNAAssay5}.
+#' - \code{assert_pixel_assay} checks if \code{x} is a \code{CellGraphAssay}, \code{CellGraphAssay5},
+#' \code{PNAAssay} or \code{PNAAssay5}.
 #' - \code{assert_x_in_y} checks if all elements of \code{x} are in \code{y}.
 #' - \code{assert_single_values_are_different} checks if \code{x} and \code{y} are not different strings.
 #' - \code{assert_col_class} checks if column \code{x} in \code{data} is of a specific class.
@@ -177,6 +180,49 @@ assert_mpx_assay <- function(
 }
 #' @rdname type_check_helpers
 #'
+assert_pna_assay <- function(
+  x,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  if (!inherits(x, c("PNAAssay", "PNAAssay5"))) {
+    cli::cli_abort(
+      c(
+        "i" = "The selected Assay must be a {.cls {c('PNAAssay', 'PNAAssay5')}} object",
+        "x" = "Got a {.cls {class(x)}} object."
+      )
+    )
+  }
+}
+#' @rdname type_check_helpers
+#'
+assert_pixel_assay <- function(
+  x,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  if (!inherits(x, c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))) {
+    cli::cli_abort(
+      c(
+        "i" = glue::glue(
+          "The selected Assay must be a {.cls {c('CellGraphAssay', ",
+          "'CellGraphAssay5', 'PNAAssay', 'PNAAssay5')}} object"
+        ),
+        "x" = "Got a {.cls {class(x)}} object."
+      )
+    )
+  }
+}
+#' @rdname type_check_helpers
+#'
 assert_within_limits <- function(
   x,
   limits,
@@ -255,7 +301,7 @@ assert_file_ext <- function(
   )
   if (fs::path_ext(x) != ext) {
     cli::cli_abort(
-      c("x" = "File {.file {x}} is not a PXL file"),
+      c("x" = "File {.file {x}} is not a {ext} file"),
       call = call
     )
   }
@@ -460,9 +506,9 @@ assert_col_class <- function(
     "`x` must be a string`" =
       is_string(x),
     "`data` must be a data.frame-like object`" =
-      inherits(data, "data.frame")
+      inherits(data, c("data.frame", "tbl_lazy"))
   )
-  col_x <- data[, x, drop = TRUE]
+  col_x <- data %>% pull(all_of(x))
   if (!inherits(col_x, classes)) {
     cli::cli_abort(
       c(
@@ -493,9 +539,9 @@ assert_col_in_data <- function(
     "`x` must be a string`" =
       is_string(x),
     "`data` must be a data.frame-like object`" =
-      inherits(data, "data.frame")
+      inherits(data, c("data.frame", "tbl_lazy"))
   )
-  if (!(x %in% names(data))) {
+  if (!(x %in% colnames(data))) {
     cli::cli_abort(
       c("x" = "Column {.str {x}} is missing from {.arg {arg_data}}."),
       call = call
@@ -623,6 +669,38 @@ assert_vectors_match <- function(
       c(
         "i" = "{.arg {arg_x}} and {.arg {arg_y}} must be identical.",
         "x" = "{.arg {arg_x}} and {.arg {arg_y}} differ at positions: {.val {unmatched_elements}}."
+      ),
+      call = call
+    )
+  }
+}
+#' @rdname type_check_helpers
+#'
+assert_valid_color <- function(
+  x,
+  n = 1,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
+  assert_vector(x, type = "character", n = n, arg = arg, call = call)
+
+  invalid_colors <-
+    x[!vapply(
+      x,
+      function(x1) any(!is.na(tryCatch(grDevices::col2rgb(x1), error = function(e) NA))),
+      logical(1)
+    )]
+
+
+  if (length(invalid_colors) > 0) {
+    cli::cli_abort(
+      c(
+        "i" = "{.arg {arg}} must be a valid color name or hex code.",
+        "x" = "You've provided invalid color(s): {.val {invalid_colors}}"
       ),
       call = call
     )

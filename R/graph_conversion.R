@@ -15,7 +15,7 @@ NULL
 #' library(pixelatorR)
 #' library(tibble)
 #'
-#' pxl_file <- system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
+#' pxl_file <- minimal_mpx_pxl_file()
 #'
 #' # Load edgelist
 #' el <- ReadMPX_arrow_edgelist(pxl_file)
@@ -105,8 +105,6 @@ edgelist_to_simple_Anode_graph.data.frame <- function(
 }
 
 
-#' @import rlang
-#'
 #' @rdname graph-conversion
 #' @method edgelist_to_simple_Anode_graph FileSystemDataset
 #'

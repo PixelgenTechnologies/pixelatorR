@@ -1,5 +1,8 @@
 #' Add node colors to a \code{CellGraph}
 #'
+#' @description
+#' `r lifecycle::badge("deprecated")`
+#'
 #' Adds node colors based on the expression of a single or multiple
 #' markers. If multiple markers are provided, their values are either
 #' multiplied or summed depending on the \code{mode}.

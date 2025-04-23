@@ -5,7 +5,11 @@
 \alias{pixelatorR-package}
 \title{pixelatorR: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data}
 \description{
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
+
 Defines S4 classes for single-cell MPX data, extending the Seurat toolbox. In addition, pixelatorR provides functions to process and visualize MPX data.
+
+\if{html}{\figure{logo.png}{options: style='float: right' alt='logo' width='120'}}
 
 Defines S4 classes for single-cell MPX data, extending the Seurat toolbox. In addition, pixelatorR provides functions to process and visualize MPX data.
 }

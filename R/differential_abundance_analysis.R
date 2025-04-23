@@ -19,17 +19,14 @@ NULL
 #' library(dplyr)
 #' library(SeuratObject)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' # Seurat objects
 #' se <- ReadMPX_Seurat(pxl_file)
 #' se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
 #' se$sample <- c("T", "C", "C", "C", "C") %>% rep(times = 10)
-#' se <- Seurat::NormalizeData(se, normalization.method = "CLR", margin = 2)
+#' se <- Seurat::NormalizeData(se %>% JoinLayers(), normalization.method = "CLR", margin = 2)
 #'
-#' # Run DPA
+#' # Run DAA
 #' daa_markers <- RunDAA(se,
 #'   contrast_column = "sample",
 #'   targets = "T", reference = "C"
@@ -45,7 +42,7 @@ RunDAA.Seurat <- function(
   targets = NULL,
   assay = NULL,
   group_vars = NULL,
-  mean_fxn = rowMeans,
+  mean_fxn = Matrix::rowMeans,
   fc_name = "difference",
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
@@ -104,12 +101,12 @@ RunDAA.Seurat <- function(
   }
 
   # Get assay and convert if necessary
-  cg_assay <- object[[assay]]
-  if (inherits(cg_assay, "CellGraphAssay")) {
-    cg_assay <- as(cg_assay, "Assay")
+  pixel_assay <- object[[assay]]
+  if (inherits(pixel_assay, c("CellGraphAssay", "PNAAssay"))) {
+    pixel_assay <- as(pixel_assay, "Assay")
   }
-  if (inherits(cg_assay, "CellGraphAssay5")) {
-    cg_assay <- as(cg_assay, "Assay5")
+  if (inherits(pixel_assay, c("CellGraphAssay5", "PNAAssay5"))) {
+    pixel_assay <- as(pixel_assay, "Assay5")
   }
 
   da_results_all <- lapply(seq_along(group_data_split), function(i) {
@@ -126,7 +123,7 @@ RunDAA.Seurat <- function(
       cur_assay_subset <- try(
         {
           suppressWarnings({
-            subset(cg_assay, cells = group_data_split[[i]]$component)
+            subset(pixel_assay, cells = group_data_split[[i]]$component)
           })
         },
         silent = TRUE

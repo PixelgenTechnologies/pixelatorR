@@ -218,8 +218,10 @@
   id_map_check2 <- sapply(fs_map$id_map, function(x) all(colnames(x) == c("current_id", "original_id")))
   if (!all(id_map_check2)) {
     cli::cli_abort(
-      c("x" = "All elements of {.var id_map} must be {.cls tbl_df} objects with",
-        " " = "columns {.str current_id} and {.str original_id}"),
+      c(
+        "x" = "All elements of {.var id_map} must be {.cls tbl_df} objects with",
+        " " = "columns {.str current_id} and {.str original_id}"
+      ),
       call = call
     )
   }
@@ -245,7 +247,7 @@
         call = call
       )
     }
-    # Check .pxl file for content
+    # Check PXL file for content
     pxl_files <- utils::unzip(f, list = TRUE)$Name
 
 
@@ -484,7 +486,7 @@ abort_if_not <- function(
 .validate_or_set_assay <- function(object, assay = NULL, call = caller_env()) {
   # Use default assay if assay = NULL
   if (!is.null(assay)) {
-    assert_single_value(assay, type = "character", call = call)
+    assert_single_value(assay, type = "string", call = call)
   } else {
     assay <- DefaultAssay(object)
   }

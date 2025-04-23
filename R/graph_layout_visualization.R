@@ -12,12 +12,14 @@
 #' @param layout_method Select appropriate layout previously computed with
 #' \code{\link{ComputeLayout}}
 #' @param colors A character vector of colors to color marker counts by
-#' @param map_nodes,map_edges Should nodes and/or edges be mapped?
-#' @param log_scale Convert node counts to log-scale with \code{log1p}
+#' @param map_nodes,map_edges Should nodes and/or edges be mapped? Note that
+#' component graphs can have >100k edges which can be very slow to draw.
+#' @param log_scale Convert node counts to log-scale with \code{log1p}. This
+#' parameter is ignored for PNA graphs.
 #' @param node_size Size of nodes
 #' @param edge_width Set the width of the edges if \code{map_edges = TRUE}
 #' @param show_Bnodes Should B nodes be included in the visualization?
-#' This option is only applicable to bipartite graphs. Note that by removing
+#' This option is only applicable to bipartite MPX graphs. Note that by removing
 #' the B nodes, all edges are removed from the graph and hence, \code{map_edges}
 #' will have no effect.
 #' @param collect_scales Collect color scales so that their limits are the same.
@@ -37,16 +39,18 @@
 #' @examples
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
-#'
+#' # MPX
+#' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
+#' Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "pmds", marker = "CD3E")
 #'
-#' Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3E")
+#' # PNA
+#' pxl_file <- minimal_pna_pxl_file()
+#' seur <- ReadPNA_Seurat(pxl_file)
+#' seur <- LoadCellGraphs(seur, cells = colnames(seur)[1], add_layouts = TRUE)
+#' Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3e")
 #'
 #' @export
 #'
@@ -55,14 +59,14 @@ Plot2DGraph <- function(
   cells,
   marker = NULL,
   assay = NULL,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
   log_scale = TRUE,
   node_size = 0.5,
   edge_width = 0.3,
-  show_Bnodes = FALSE,
+  show_Bnodes = TRUE,
   collect_scales = FALSE,
   return_plot_list = FALSE,
   ...
@@ -82,14 +86,13 @@ Plot2DGraph <- function(
   assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select a layout method
-  layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds", "fr", "kk", "drl"))
+  layout_method <- match.arg(layout_method, choices = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"))
   layout_method_ext <-
     switch(layout_method,
-      "fr" = "Fruchterman Reingold (fr)",
-      "kk" = "Kamada Kawai (kk)",
-      "drl" = "DrL graph layout generator (drl)",
       "pmds" = "pivot MDS (pmds)",
-      "wpmds" = "weighted pivot MDS (wpmds)"
+      "wpmds" = "weighted pivot MDS (wpmds)",
+      "pmds_3d" = "pivot MDS (pmds)",
+      "wpmds_3d" = "weighted pivot MDS (wpmds)"
     )
 
   # Use default assay if assay = NULL
@@ -100,13 +103,13 @@ Plot2DGraph <- function(
   }
 
   # Validate assay
-  cg_assay <- object[[assay]]
-  assert_mpx_assay(cg_assay)
+  pixel_assay <- object[[assay]]
+  assert_pixel_assay(pixel_assay)
 
   # Fetch data
   data_list <- lapply(cells, function(cell_id) {
     # Fetch component graph
-    component_graph <- CellGraphs(cg_assay)[[cell_id]]
+    component_graph <- CellGraphs(pixel_assay)[[cell_id]]
     if (is.null(component_graph)) {
       cli::cli_abort(
         c(
@@ -152,6 +155,7 @@ Plot2DGraph <- function(
         c("x" = "Missing layout {.str {layout_method}} for component '{.val {cell_id}}'")
       )
     }
+    layout <- layout %>% select(x, y)
 
     # Add node marker counts if needed
     if (!is.null(marker)) {
@@ -159,7 +163,7 @@ Plot2DGraph <- function(
         graph <- graph %N>%
           mutate(marker = component_graph@counts[, marker]) %>%
           {
-            if (log_scale) {
+            if (log_scale && !inherits(pixel_assay, c("PNAAssay", "PNAAssay5"))) {
               mutate(., marker = log1p(marker))
             } else {
               .
@@ -169,10 +173,10 @@ Plot2DGraph <- function(
     }
 
     # Remove B nodes if show_Bnodes=FALSE
-    if ((attr(graph, "type") == "bipartite") && !show_Bnodes) {
-      inds_keep <- (graph %N>% pull(node_type)) %in% c("A", "UMI1")
+    if ((attr(graph, "type") == "bipartite") && !show_Bnodes && !inherits(pixel_assay, c("PNAAssay", "PNAAssay5"))) {
+      inds_keep <- (graph %N>% pull(node_type)) %in% c("A", "umi1")
       graph <- graph %N>%
-        filter(node_type %in% c("A", "UMI1"))
+        filter(node_type %in% c("A", "umi1"))
       layout <- layout[inds_keep, ]
     }
 
@@ -247,7 +251,7 @@ Plot2DGraph <- function(
       {
         if (!is.null(marker)) {
           if (marker != "node_type") {
-            if (log_scale) {
+            if (log_scale && !inherits(pixel_assay, c("PNAAssay", "PNAAssay5"))) {
               labs(title = glue("{nm}"), color = paste0(marker, "\n(log-scaled)"))
             } else {
               labs(title = glue("{nm}"), color = marker)
@@ -306,15 +310,17 @@ Plot2DGraph <- function(
 #' @examples
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
-#'
+#' # MPX
+#' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
 #' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
+#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "pmds", markers = c("CD20", "CD4"))
 #'
+#' # PNA
+#' pxl_file <- minimal_pna_pxl_file()
+#' seur <- ReadPNA_Seurat(pxl_file)
+#' seur <- LoadCellGraphs(seur, cells = colnames(seur)[2:3], add_layouts = TRUE)
 #' Plot2DGraphM(seur, cells = colnames(seur)[2:3], markers = c("CD20", "CD4"))
 #'
 #' @export
@@ -324,14 +330,14 @@ Plot2DGraphM <- function(
   cells,
   markers,
   assay = NULL,
-  layout_method = c("pmds", "wpmds", "fr", "kk", "drl"),
+  layout_method = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
   log_scale = TRUE,
   node_size = 0.5,
   edge_width = 0.3,
-  show_Bnodes = FALSE,
+  show_Bnodes = TRUE,
   titles = NULL,
   titles_theme = NULL,
   titles_size = 10,
@@ -496,30 +502,32 @@ Plot2DGraphM <- function(
 #'
 #' @rdname Plot3DGraph
 #'
-#'
 #' @return A interactive 3D plot of a component graph layout as a \code{plotly} object
 #'
 #' @examples
 #' library(pixelatorR)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
-#'
+#' # MPX
+#' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[5])
-#' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 3)
+#' seur <- ComputeLayout(seur, layout_method = "wpmds", dim = 3, pivots = 50)
+#' Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50", layout_method = "wpmds_3d")
 #'
-#' Plot3DGraph(seur, cell_id = colnames(seur)[5], marker = "CD50", layout_method = "pmds_3d")
+#' # PNA
+#' pxl_file <- minimal_pna_pxl_file()
+#' seur <- ReadPNA_Seurat(pxl_file)
+#' seur <- LoadCellGraphs(seur, cells = colnames(seur)[1], add_layouts = TRUE)
+#' Plot3DGraph(seur, cell_id = colnames(seur)[1], marker = "CD16", layout_method = "wpmds_3d")
 #'
 #' @export
+#'
 Plot3DGraph <- function(
   object,
   cell_id,
   marker = NULL,
   assay = NULL,
-  layout_method = "pmds",
+  layout_method = c("wpmds_3d", "pmds_3d"),
   project = FALSE,
   aspectmode = c("data", "cube"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
@@ -555,11 +563,11 @@ Plot3DGraph <- function(
   }
 
   # Validate assay
-  cg_assay <- object[[assay]]
-  assert_mpx_assay(cg_assay)
+  pixel_assay <- object[[assay]]
+  assert_pixel_assay(pixel_assay)
 
   # Fetch component graph
-  component_graph <- CellGraphs(cg_assay)[[cell_id]]
+  component_graph <- CellGraphs(pixel_assay)[[cell_id]]
   if (is.null(component_graph)) abort(glue("Missing cellgraph for component '{cell_id}'"))
 
   # unpack values
@@ -607,9 +615,9 @@ Plot3DGraph <- function(
   if (!is.null(marker)) {
     if (marker != "node_type") {
       layout <- layout %>%
-        mutate(marker = component_graph@counts[, marker]) %>%
+        mutate(marker = component_graph@counts[, marker, drop = TRUE]) %>%
         {
-          if (log_scale) {
+          if (log_scale && !inherits(pixel_assay, c("PNAAssay", "PNAAssay5"))) {
             mutate(., marker = log1p(marker))
           } else {
             .
@@ -621,9 +629,9 @@ Plot3DGraph <- function(
   # Remove B nodes if show_Bnodes=FALSE
   if ((attr(graph, "type") == "bipartite")) {
     layout$node_type <- graph %N>% pull(node_type)
-    if (!show_Bnodes) {
+    if (!show_Bnodes && !inherits(pixel_assay, c("PNAAssay", "PNAAssay5"))) {
       layout <- layout %>%
-        filter(node_type %in% c("A", "UMI1"))
+        filter(node_type %in% c("A", "UMI1", "umi1"))
     }
   }
 

@@ -17,3 +17,4 @@
 ^DEVELOPERS.md
 ^inst/dev
 ^Taskfile.yml
+^Dockerfile

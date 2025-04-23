@@ -1,8 +1,5 @@
 #' Weighted PMDS
 #'
-#' @description
-#' `r lifecycle::badge("experimental")`
-#'
 #' This function is a wrapper around \code{layout_with_pmds} from
 #' the \code{graphlayouts} R package, and can be used to compute a pmds
 #' layout of a graph with edge weights.
@@ -26,10 +23,7 @@
 #' @examples
 #' library(dplyr)
 #'
-#' pxl_file <- system.file("extdata/five_cells",
-#'   "five_cells.pxl",
-#'   package = "pixelatorR"
-#' )
+#' pxl_file <- minimal_mpx_pxl_file()
 #' seur_obj <- ReadMPX_Seurat(pxl_file) %>%
 #'   LoadCellGraphs(cells = colnames(.)[1])
 #'

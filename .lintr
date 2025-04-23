@@ -4,9 +4,9 @@ linters: linters_with_defaults(
     brace_linter = NULL,
     function_left_parentheses_linter = NULL,
     object_length_linter(50L),
-    cyclocomp_linter = NULL,
     object_usage_linter = NULL,
-    indentation_linter = NULL
+    indentation_linter = NULL,
+    return_linter = NULL
   )
 exclusions: list(
     "vignettes/",

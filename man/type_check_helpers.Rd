@@ -6,6 +6,8 @@
 \alias{assert_vector}
 \alias{assert_class}
 \alias{assert_mpx_assay}
+\alias{assert_pna_assay}
+\alias{assert_pixel_assay}
 \alias{assert_within_limits}
 \alias{assert_function}
 \alias{assert_file_exists}
@@ -23,6 +25,7 @@
 \alias{assert_is_one_of}
 \alias{assert_different}
 \alias{assert_vectors_match}
+\alias{assert_valid_color}
 \title{Type check helpers}
 \usage{
 assert_single_value(
@@ -51,6 +54,20 @@ assert_class(
 )
 
 assert_mpx_assay(
+  x,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+)
+
+assert_pna_assay(
+  x,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+)
+
+assert_pixel_assay(
   x,
   allow_null = FALSE,
   arg = caller_arg(x),
@@ -172,6 +189,14 @@ assert_vectors_match(
   arg_y = caller_arg(y),
   call = caller_env()
 )
+
+assert_valid_color(
+  x,
+  n = 1,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+)
 }
 \arguments{
 \item{x, y}{An object to check}
@@ -212,6 +237,9 @@ throw informative error messages if the checks fail.
 least \code{n} elements.
 \item \code{assert_class} checks if \code{x} is of a specific class.
 \item \code{assert_mpx_assay} checks if \code{x} is a \code{CellGraphAssay} or \code{CellGraphAssay5}.
+\item \code{assert_pna_assay} checks if \code{x} is a \code{PNAAssay} or \code{PNAAssay5}.
+\item \code{assert_pixel_assay} checks if \code{x} is a \code{CellGraphAssay}, \code{CellGraphAssay5},
+\code{PNAAssay} or \code{PNAAssay5}.
 \item \code{assert_x_in_y} checks if all elements of \code{x} are in \code{y}.
 \item \code{assert_single_values_are_different} checks if \code{x} and \code{y} are not different strings.
 \item \code{assert_col_class} checks if column \code{x} in \code{data} is of a specific class.
