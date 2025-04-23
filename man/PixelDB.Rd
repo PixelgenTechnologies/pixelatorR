@@ -43,18 +43,6 @@ db <- PixelDB$new(pxl_file)
 
 
 ## ------------------------------------------------
-## Method `PixelDB$finalize`
-## ------------------------------------------------
-
-con <- db$.__enclos_env__$private$con
-rm(db)
-gc(full = FALSE)
-
-# Connection should now be closed
-DBI::dbIsValid(con) # FALSE
-
-
-## ------------------------------------------------
 ## Method `PixelDB$info`
 ## ------------------------------------------------
 
@@ -203,7 +191,6 @@ db$close()
 \subsection{Public methods}{
 \itemize{
 \item \href{#method-PixelDB-new}{\code{PixelDB$new()}}
-\item \href{#method-PixelDB-finalize}{\code{PixelDB$finalize()}}
 \item \href{#method-PixelDB-info}{\code{PixelDB$info()}}
 \item \href{#method-PixelDB-query}{\code{PixelDB$query()}}
 \item \href{#method-PixelDB-reconnect}{\code{PixelDB$reconnect()}}
@@ -248,33 +235,6 @@ An \code{R6} object representing the PXL database
 
 pxl_file <- minimal_pna_pxl_file()
 db <- PixelDB$new(pxl_file)
-
-}
-\if{html}{\out{</div>}}
-
-}
-
-}
-\if{html}{\out{<hr>}}
-\if{html}{\out{<a id="method-PixelDB-finalize"></a>}}
-\if{latex}{\out{\hypertarget{method-PixelDB-finalize}{}}}
-\subsection{Method \code{finalize()}}{
-Cleanup method that is called when the \code{PixelDB} object is garbage collected
-\subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PixelDB$finalize()}\if{html}{\out{</div>}}
-}
-
-\subsection{Returns}{
-Nothing
-}
-\subsection{Examples}{
-\if{html}{\out{<div class="r example copy">}}
-\preformatted{con <- db$.__enclos_env__$private$con
-rm(db)
-gc(full = FALSE)
-
-# Connection should now be closed
-DBI::dbIsValid(con) # FALSE
 
 }
 \if{html}{\out{</div>}}
