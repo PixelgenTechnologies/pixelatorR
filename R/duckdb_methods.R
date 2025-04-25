@@ -92,24 +92,6 @@ PixelDB <- R6Class(
       }
     },
     #' @description
-    #' Cleanup method that is called when the \code{PixelDB} object is garbage collected
-    #'
-    #' @examples
-    #' con <- db$.__enclos_env__$private$con
-    #' rm(db)
-    #' gc(full = FALSE)
-    #'
-    #' # Connection should now be closed
-    #' DBI::dbIsValid(con) # FALSE
-    #'
-    #' @return Nothing
-    #'
-    finalize = function() {
-      if (DBI::dbIsValid(private$con)) {
-        DBI::dbDisconnect(private$con)
-      }
-    },
-    #' @description
     #' Show information about tables in the PXL file
     #'
     #' @examples
@@ -694,7 +676,12 @@ PixelDB <- R6Class(
   ),
   private = list(
     file = NULL,
-    con = NULL
+    con = NULL,
+    finalize = function() {
+      if (DBI::dbIsValid(private$con)) {
+        DBI::dbDisconnect(private$con)
+      }
+    }
   ),
   cloneable = FALSE
 )
