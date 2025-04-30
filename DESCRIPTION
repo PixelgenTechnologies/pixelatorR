@@ -59,7 +59,8 @@ Suggests:
     styler,
     zip,
     dtplyr,
-    data.table
+    data.table,
+    bit64
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -102,6 +103,7 @@ Collate:
     'remove_cell_graphs.R'
     'restore_paths.R'
     'tau_plot.R'
+    'two_bit_encoding.R'
     'types_check.R'
     'weighted_pmds.R'
     'write_pxl_file.R'

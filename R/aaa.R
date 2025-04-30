@@ -87,3 +87,8 @@ expect_zip <- function(...) {
 expect_dtplyr <- function(...) {
   rlang::check_installed("dtplyr", ...)
 }
+
+expect_bit64 <-
+  function(...) {
+  rlang::check_installed("bit64", ...)
+  }
