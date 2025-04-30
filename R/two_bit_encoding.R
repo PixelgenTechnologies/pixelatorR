@@ -59,7 +59,7 @@ pack_2bits <- function(seq) {
 #' @examples
 #' library(bit64)
 #' packed <- pack_2bits("TCGT")
-#' unpack_2bits_64(packed, 4)  # returns "TCGT"
+#' unpack_2bits(packed, 4)  # returns "TCGT"
 #'
 #' @export
 unpack_2bits <- function(packed, k) {
