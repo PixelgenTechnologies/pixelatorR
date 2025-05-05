@@ -13,7 +13,6 @@
 #'
 #' @export
 pack_2bits <- function(seq) {
-  expect_bit64()
 
   assert_class(seq, "character")
   assert_single_value(seq)
@@ -58,7 +57,6 @@ pack_2bits <- function(seq) {
 #'
 #' @export
 unpack_2bits <- function(packed, k) {
-  expect_bit64()
 
   assert_class(packed, c("integer64", "character"))
 
@@ -67,7 +65,6 @@ unpack_2bits <- function(packed, k) {
   }
 
   assert_single_value(packed, type = "numeric")
-  assert_class(k, c("numeric", "integer"))
   assert_single_value(k, type = "numeric")
 
   lookup <- c("A", "C", "G", "T")

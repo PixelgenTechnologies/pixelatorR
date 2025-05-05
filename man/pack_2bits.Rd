@@ -18,6 +18,6 @@ This allows compact storage and efficient comparison of short DNA sequences (kme
 }
 \examples{
 library(bit64)
-pack_2bits("TCGT")  # returns integer64 encoding
+pack_2bits("TCGT") # returns integer64 encoding
 
 }

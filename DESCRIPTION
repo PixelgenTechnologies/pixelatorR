@@ -41,7 +41,8 @@ Imports:
     lifecycle,
     R6,
     DBI,
-    duckdb
+    duckdb,
+    bit64
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -59,8 +60,7 @@ Suggests:
     styler,
     zip,
     dtplyr,
-    data.table,
-    bit64
+    data.table
 Collate: 
     'generics.R'
     'CellGraph.R'

@@ -21,6 +21,6 @@ this function reconstructs the original DNA string.
 \examples{
 library(bit64)
 packed <- pack_2bits("TCGT")
-unpack_2bits(packed, 4)  # returns "TCGT"
+unpack_2bits(packed, 4) # returns "TCGT"
 
 }
