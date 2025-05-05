@@ -41,7 +41,8 @@ Imports:
     lifecycle,
     R6,
     DBI,
-    duckdb
+    duckdb,
+    bit64
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -102,6 +103,7 @@ Collate:
     'remove_cell_graphs.R'
     'restore_paths.R'
     'tau_plot.R'
+    'two_bit_encoding.R'
     'types_check.R'
     'weighted_pmds.R'
     'write_pxl_file.R'

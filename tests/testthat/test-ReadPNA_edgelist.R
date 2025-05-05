@@ -7,18 +7,24 @@ test_that("ReadPNA_edgelist works as expected", {
     structure(
       list(
         marker_1 = c("CD6", "CD6"),
-        marker_2 = c("CD44",
-                     "CD44"),
+        marker_2 = c(
+          "CD44",
+          "CD44"
+        ),
         umi1 = c("10004431758516698", "10004431758516698"),
         umi2 = c("10532227491147037", "66853920218164601"),
         read_count = 2:1,
         uei_count = c(1L, 1L),
-        component = c("c3c393e9a17c1981",
-                      "c3c393e9a17c1981")
+        component = c(
+          "c3c393e9a17c1981",
+          "c3c393e9a17c1981"
+        )
       ),
-      row.names = c(NA,-2L),
-      class = c("tbl_df",
-                "tbl", "data.frame")
+      row.names = c(NA, -2L),
+      class = c(
+        "tbl_df",
+        "tbl", "data.frame"
+      )
     )
   expect_identical(head(el %>% arrange(umi1), 2), expected_data)
 

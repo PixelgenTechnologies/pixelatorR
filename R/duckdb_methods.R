@@ -449,8 +449,10 @@ PixelDB <- R6Class(
 
       if (include_all_columns) {
         el <- el %>%
-          mutate(read_count = as.integer(read_count),
-                 uei_count = as.integer(uei_count))
+          mutate(
+            read_count = as.integer(read_count),
+            uei_count = as.integer(uei_count)
+          )
       } else {
         el <- el %>%
           select(-read_count, -uei_count)
@@ -458,13 +460,17 @@ PixelDB <- R6Class(
 
       if (umi_data_type == "string") {
         el <- el %>%
-          mutate(umi1 = as.character(umi1),
-                 umi2 = as.character(umi2))
+          mutate(
+            umi1 = as.character(umi1),
+            umi2 = as.character(umi2)
+          )
       }
       if (umi_data_type == "suffixed_string") {
         el <- el %>%
-          mutate(umi1 = as.character(umi1) %>% stringr::str_c("-umi1"),
-                 umi2 = as.character(umi2) %>% stringr::str_c("-umi2"))
+          mutate(
+            umi1 = as.character(umi1) %>% stringr::str_c("-umi1"),
+            umi2 = as.character(umi2) %>% stringr::str_c("-umi2")
+          )
       }
 
       if (lazy) {
