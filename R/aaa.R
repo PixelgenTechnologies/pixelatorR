@@ -90,5 +90,5 @@ expect_dtplyr <- function(...) {
 
 expect_bit64 <-
   function(...) {
-  rlang::check_installed("bit64", ...)
+    rlang::check_installed("bit64", ...)
   }

@@ -1,6 +1,3 @@
-
-
-
 #' Encode a DNA sequence using 2 bits per base
 #'
 #' Converts a DNA string (containing only A, C, G, T) into a 64-bit integer using 2 bits per base.
@@ -12,12 +9,10 @@
 #'
 #' @examples
 #' library(bit64)
-#' pack_2bits("TCGT")  # returns integer64 encoding
+#' pack_2bits("TCGT") # returns integer64 encoding
 #'
 #' @export
 pack_2bits <- function(seq) {
-
-
   expect_bit64()
 
   assert_class(seq, "character")
@@ -59,11 +54,10 @@ pack_2bits <- function(seq) {
 #' @examples
 #' library(bit64)
 #' packed <- pack_2bits("TCGT")
-#' unpack_2bits(packed, 4)  # returns "TCGT"
+#' unpack_2bits(packed, 4) # returns "TCGT"
 #'
 #' @export
 unpack_2bits <- function(packed, k) {
-
   expect_bit64()
 
   assert_class(packed, c("integer64", "character"))
