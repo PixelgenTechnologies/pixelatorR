@@ -300,17 +300,19 @@ ProximityScores.Seurat <- function(
   assay = NULL,
   meta_data_columns = NULL,
   add_marker_counts = FALSE,
+  add_marker_proportions = FALSE,
   lazy = FALSE,
   calc_log2ratio = TRUE,
   ...
 ) {
+
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   pixel_assay <- object[[assay]]
   assert_class(pixel_assay, classes = c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))
 
   # Get proximity scores
-  proximity_scores <- ProximityScores(pixel_assay, add_marker_counts, lazy, calc_log2ratio, ...)
+  proximity_scores <- ProximityScores(pixel_assay, add_marker_counts, add_marker_proportions, lazy, calc_log2ratio, ...)
 
   if (inherits(proximity_scores, "tbl_lazy")) {
     con <- proximity_scores[[1]]$con

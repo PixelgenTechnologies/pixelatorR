@@ -626,7 +626,9 @@ setAs(
 
 
 #' @param add_marker_counts A logical indicating whether to add marker
-#' counts to the output
+#' counts to the output ("count_1" and "count_2")
+#' @param add_marker_counts A logical indicating whether to add marker
+#' count proportions to the output ("p1" and "p2")
 #' @param lazy A logical indicating whether to lazy load the proximity scores
 #' from the PXL files
 #' @param calc_log2ratio A logical indicating whether to calculate the
@@ -648,11 +650,13 @@ setAs(
 ProximityScores.PNAAssay <- function(
   object,
   add_marker_counts = FALSE,
+  add_marker_proportions = FALSE,
   lazy = FALSE,
   calc_log2ratio = TRUE,
   ...
 ) {
   assert_single_value(add_marker_counts, type = "bool")
+  assert_single_value(add_marker_proportions, type = "bool")
   assert_single_value(calc_log2ratio, type = "bool")
   assert_single_value(lazy, type = "bool")
 
@@ -670,6 +674,13 @@ ProximityScores.PNAAssay <- function(
     }
   }
 
+  if (add_marker_proportions & !add_marker_counts) {
+    cli::cli_alert_warning(
+      "Setting {.var add_marker_counts = TRUE} which is required when {.var add_marker_proportions = TRUE}."
+    )
+    add_marker_counts <- TRUE
+  }
+
   # Add marker counts
   if (add_marker_counts) {
     if (length(proximity_scores) == 0) {
@@ -682,7 +693,8 @@ ProximityScores.PNAAssay <- function(
     }
     all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
       rownames_to_column("component") %>%
-      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count")
+      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count") %>%
+      mutate(count = as.integer(count))
 
     if (lazy) {
       # Copy to federated database to enable join operation
@@ -695,6 +707,28 @@ ProximityScores.PNAAssay <- function(
       rename(count_1 = count) %>%
       left_join(all_counts, by = c("component", "marker_2" = "marker")) %>%
       rename(count_2 = count)
+
+    if (add_marker_proportions) {
+      if (inherits(object, "PNAAssay5")) {
+        object <- object %>% JoinLayers()
+      }
+      numi <- LayerData(object, layer = "counts") %>% Matrix::colSums()
+      numi <- tibble(
+        component = names(numi),
+        umi_count = numi %>% unname()
+      )
+
+      if (lazy) {
+        copy_to(proximity_scores$src$con, numi, "numi")
+        numi <- tbl(proximity_scores$src$con, "numi")
+      }
+
+      proximity_scores <- proximity_scores %>%
+        left_join(numi, by = "component") %>%
+        mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) %>%
+        select(-umi_count) %>%
+        compute(name = "extended_proximity")
+    }
   }
 
   return(proximity_scores)
