@@ -18,6 +18,7 @@ ProximityScores(object, ...) <- value
 \method{ProximityScores}{PNAAssay}(
   object,
   add_marker_counts = FALSE,
+  add_marker_proportions = FALSE,
   lazy = FALSE,
   calc_log2ratio = TRUE,
   ...
@@ -26,6 +27,7 @@ ProximityScores(object, ...) <- value
 \method{ProximityScores}{PNAAssay5}(
   object,
   add_marker_counts = FALSE,
+  add_marker_proportions = FALSE,
   lazy = FALSE,
   calc_log2ratio = TRUE,
   ...
@@ -40,6 +42,7 @@ ProximityScores(object, ...) <- value
   assay = NULL,
   meta_data_columns = NULL,
   add_marker_counts = FALSE,
+  add_marker_proportions = FALSE,
   lazy = FALSE,
   calc_log2ratio = TRUE,
   ...
@@ -55,7 +58,10 @@ ProximityScores(object, ...) <- value
 \item{value}{A \code{tbl_df} or \code{tbl_lazy} with proximity scores}
 
 \item{add_marker_counts}{A logical indicating whether to add marker
-counts to the output}
+counts to the output ("count_1" and "count_2")}
+
+\item{add_marker_proportions}{A logical indicating whether to add marker
+count proportions to the output ("p1" and "p2")}
 
 \item{lazy}{A logical indicating whether to lazy load the proximity scores
 from the PXL files}

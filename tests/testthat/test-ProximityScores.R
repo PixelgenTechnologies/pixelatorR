@@ -15,6 +15,7 @@ for (assay_version in c("v3", "v5")) {
     expect_identical(proximity_from_seur, proximity)
     expect_no_error(proximity_from_seur <- ProximityScores(seur_obj, add_marker_counts = TRUE))
     expect_identical(select(proximity_from_seur, -matches("count_\\d")), proximity)
+    expect_no_error(proximity_from_seur <- ProximityScores(seur_obj, add_marker_proportions = TRUE))
     expect_no_error(ProximityScores(seur_obj) <- NULL)
     expect_length(ProximityScores(seur_obj), 0)
 
@@ -25,7 +26,8 @@ for (assay_version in c("v3", "v5")) {
 
     # Lazy load
     expect_no_error(proximity_from_seur_lazy <- ProximityScores(seur_obj, lazy = TRUE, add_marker_counts = TRUE))
-    expect_true(all(c("count_1", "count_2") %in% colnames(proximity_from_seur_lazy)))
+    expect_no_error(proximity_from_seur_lazy <- ProximityScores(seur_obj, lazy = TRUE, add_marker_proportions = TRUE))
+    expect_true(all(c("count_1", "count_2", "p1", "p2") %in% colnames(proximity_from_seur_lazy)))
     expect_identical(nrow(collect(proximity_from_seur_lazy)), nrow(proximity))
     expect_true(all(colnames(proximity) %in% colnames(proximity_from_seur_lazy)))
 
@@ -37,6 +39,7 @@ for (assay_version in c("v3", "v5")) {
     expect_error(ProximityScores(seur_obj, assay = FALSE))
     expect_error(ProximityScores(seur_obj, meta_data_columns = "Invalid"))
     expect_error(ProximityScores(seur_obj, add_marker_counts = "Invalid"))
+    expect_error(ProximityScores(seur_obj, add_marker_proportions = "Invalid"))
     expect_error(ProximityScores(seur_obj) <- "Invalid")
   })
 }
