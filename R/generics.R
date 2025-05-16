@@ -1210,14 +1210,27 @@ Edgelists <- function(
 #' @description
 #' `r lifecycle::badge("experimental")`
 #'
-#' Predict doublets in a Seurat object by simulating doublets. Both real and
-#' simulated cells are used to perform PCA and a nearest neighbor search is
-#' performed to find the number of doublets in the neighborhood of each cell.
+#' Predict doublets in a Seurat object by simulating doublets. Doublet detection
+#' can be used to identify cell-cell aggregates or technical doublet artefacts in
+#' single-cell omics data.
+#'
+#' Both real and simulated cells are used to perform PCA and a nearest neighbor
+#' search is performed to find the number of doublets in the neighborhood of
+#' each cell.
 #' The expected doublet rate is calculated based on the simulation rate and
 #' the number of nearest neighbors. A binomial test is performed to test if
 #' the number of doublets in the neighborhood of each cell is significantly
 #' different from the expected doublet rate. The algorithm is inspired by the
 #' DoubletFinder algorithm by McGinnis et al. (2019).
+#'
+#' This method of doublet detection assumes that a doublet attains a composite
+#' identity of the two cells that form it, i.e. that a doublet constitutes the
+#' sum of its parts. This may not always the case, as cell-cell aggregates could
+#' have molecular profiles that are different from the two cells that form them.
+#' Furthermore, if the two cells that form a doublet are of the same or similar
+#' identity, the doublet may not be detected as a doublet. This is a limitation
+#' of the method and should be taken into account when interpreting the results.
+#'
 #'
 #' @param object A \code{Seurat} object or a count matrix.
 #' @param ref_cells1,ref_cells2 A character vector with cell names or indices

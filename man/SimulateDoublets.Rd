@@ -10,11 +10,12 @@ SimulateDoublets(
   ref_cells2 = NULL,
   n_sim = 1000,
   seed = 37,
-  method = c("average", "sum")
+  method = c("average", "sum"),
+  simulated_cell_prefix = "simcell_"
 )
 }
 \arguments{
-\item{count_data}{A matrix with data to simulate doublets. Rows are features, and columns are cells.}
+\item{count_data}{A count matrix. Rows are features, and columns are cells.}
 
 \item{ref_cells1, ref_cells2}{A character vector with cell names or indices to use as the first and second reference
 populations. If NULL, all cells are used.}

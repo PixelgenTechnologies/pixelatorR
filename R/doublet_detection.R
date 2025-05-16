@@ -9,7 +9,7 @@ NULL
 #' and number of nearest neighbors (n_nn).
 #'
 #'
-#' @param dat A matrix with data to find nearest neighbors. Rows are cells, and columns are features.
+#' @param x A numeric matrix with data to find nearest neighbors. Rows are cells, and columns are features.
 #' @param cells A character vector with cell names to find nearest neighbors for. If NULL, all cells are used.
 #' @param n_trees An integer with the number of trees to build in the Annoy index.
 #' @param n_nn An integer with the number of nearest neighbors to find.
@@ -20,8 +20,8 @@ NULL
 #'
 #'
 #' @examples
-#' dat <- matrix(rnorm(1000), ncol = 10)
-#' FindAnnoyNeighbors(dat, n_trees = 50, n_nn = 10)
+#' x <- matrix(rnorm(1000), ncol = 10)
+#' FindAnnoyNeighbors(x, n_trees = 50, n_nn = 10)
 #'
 #' @return A tibble with the following columns:
 #' \itemize{
@@ -36,28 +36,24 @@ NULL
 #' @export
 #'
 FindAnnoyNeighbors <- function(
-  dat,
+  x,
   cells = NULL,
-  n_trees = 50,
-  n_nn = 10,
+  n_trees = 50L,
+  n_nn = 10L,
   search_k = NULL,
   annoy_alg = c("euclidean", "angular", "manhattan", "hamming")
 ) {
-  stopifnot(
-    "'dat' must be a matrix" =
-      inherits(dat, what = "matrix"),
-    "'n_trees' must be an integer" =
-      inherits(n_trees, what = "numeric") && (n_trees > 0),
-    "'n_nn' must be an integer" =
-      inherits(n_nn, what = "numeric") && (n_nn > 0),
-    "'search_k' must be an integer" =
-      is.null(search_k) |
-        inherits(search_k, what = "numeric"),
-    "'dat' must have row names if 'cells' are specified" =
-      is.null(cells) |
-        (inherits(cells, what = "character") &&
-          all(cells %in% rownames(dat)))
-  )
+
+  assert_class(x, c("matrix", "Matrix"))
+  assert_class(cells, c("character", "integer"), allow_null = TRUE)
+  assert_x_in_y(cells, rownames(x), allow_null = TRUE)
+  assert_class(n_trees, c("numeric", "integer"))
+  assert_within_limits(n_trees, c(1, Inf))
+  assert_class(n_nn, c("numeric", "integer"))
+  assert_within_limits(n_nn, c(1, Inf))
+  assert_class(search_k, c("numeric", "integer"), allow_null = TRUE)
+  assert_class(annoy_alg, "character")
+  assert_x_in_y(annoy_alg, c("euclidean", "angular", "manhattan", "hamming"))
 
   expect_RcppAnnoy()
 
@@ -77,12 +73,12 @@ FindAnnoyNeighbors <- function(
     hamming = RcppAnnoy::AnnoyHamming
     )
 
-  nrows <- nrow(dat)
-  ncols <- ncol(dat)
+  nrows <- nrow(x)
+  ncols <- ncol(x)
   annoy_index <- methods::new(annoy_alg, ncols)
 
-  if (is.null(rownames(dat))) {
-    rownames(dat) <- seq_len(nrows)
+  if (is.null(rownames(x))) {
+    rownames(x) <- seq_len(nrows)
   }
 
   if (is.null(search_k)) {
@@ -90,16 +86,16 @@ FindAnnoyNeighbors <- function(
   }
 
   for (i in 1:nrows) {
-    annoy_index$addItem(i - 1, dat[i, ])
+    annoy_index$addItem(i - 1, x[i, ])
   }
 
   annoy_index$build(n_trees)
 
   if (is.null(cells)) {
-    cells <- rownames(dat)
+    cells <- rownames(x)
   }
 
-  tibble(id = rownames(dat)) %>%
+  tibble(id = rownames(x)) %>%
     mutate(index = row_number() - 1) %>%
     filter(id %in% cells) %>%
     group_by_all() %>%
@@ -115,7 +111,7 @@ FindAnnoyNeighbors <- function(
 
     }) %>%
     ungroup() %>%
-    mutate(neighbor = rownames(dat)[item + 1])
+    mutate(neighbor = rownames(x)[item + 1])
 
 }
 
@@ -123,7 +119,7 @@ FindAnnoyNeighbors <- function(
 #'
 #' Simulates doublets by summing pairs of randomly selected cells from a matrix.
 #'
-#' @param count_data A matrix with data to simulate doublets. Rows are features, and columns are cells.
+#' @param count_data A count matrix. Rows are features, and columns are cells.
 #' @param ref_cells1,ref_cells2 A character vector with cell names or indices to use as the first and second reference
 #'                              populations. If NULL, all cells are used.
 #' @param n_sim An integer with the number of doublets to simulate.
@@ -322,6 +318,8 @@ PredictDoublets.Seurat <- function(
   ...
 ) {
   assert_class(object, "Seurat")
+  assert_class(assay, "character", allow_null = TRUE)
+  assert_class(layer, "character", allow_null = TRUE)
 
   LayerData(object, assay = assay, layer = layer) %>%
     PredictDoublets(

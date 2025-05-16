@@ -5,16 +5,16 @@
 \title{Approximate nearest neighbors using Annoy}
 \usage{
 FindAnnoyNeighbors(
-  dat,
+  x,
   cells = NULL,
-  n_trees = 50,
-  n_nn = 10,
+  n_trees = 50L,
+  n_nn = 10L,
   search_k = NULL,
   annoy_alg = c("euclidean", "angular", "manhattan", "hamming")
 )
 }
 \arguments{
-\item{dat}{A matrix with data to find nearest neighbors. Rows are cells, and columns are features.}
+\item{x}{A numeric matrix with data to find nearest neighbors. Rows are cells, and columns are features.}
 
 \item{cells}{A character vector with cell names to find nearest neighbors for. If NULL, all cells are used.}
 
@@ -45,7 +45,7 @@ neighbors and distances of row items given the number of trees (n_trees)
 and number of nearest neighbors (n_nn).
 }
 \examples{
-dat <- matrix(rnorm(1000), ncol = 10)
-FindAnnoyNeighbors(dat, n_trees = 50, n_nn = 10)
+x <- matrix(rnorm(1000), ncol = 10)
+FindAnnoyNeighbors(x, n_trees = 50, n_nn = 10)
 
 }
