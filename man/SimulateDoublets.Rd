@@ -24,7 +24,10 @@ populations. If NULL, all cells are used.}
 
 \item{seed}{An integer with the seed for the random number generator.}
 
-\item{method}{A character with the method to use to simulate doublets. Default is "average".}
+\item{method}{A character with the method to use to simulate doublets. Options are "average" (average of the two
+cells) or "sum" (sum of the two cells).}
+
+\item{simulated_cell_prefix}{A character with the prefix to use for the simulated doublet cell names.}
 }
 \value{
 A matrix with simulated doublets. Rows are features, and columns are simulated doublets.

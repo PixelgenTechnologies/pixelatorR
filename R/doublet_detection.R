@@ -124,7 +124,9 @@ FindAnnoyNeighbors <- function(
 #'                              populations. If NULL, all cells are used.
 #' @param n_sim An integer with the number of doublets to simulate.
 #' @param seed An integer with the seed for the random number generator.
-#' @param method A character with the method to use to simulate doublets. Default is "average".
+#' @param method A character with the method to use to simulate doublets. Options are "average" (average of the two
+#'               cells) or "sum" (sum of the two cells).
+#' @param simulated_cell_prefix A character with the prefix to use for the simulated doublet cell names.
 #'
 #'
 #' @examples
@@ -160,7 +162,7 @@ SimulateDoublets <- function(
     ref_pop1 <- count_data[, ref_cells1]
     ref_pop2 <- count_data[, ref_cells2]
   } else {
-    cli_abort("Please provide either `ref_cells1` and `ref_cells2` or both.")
+    cli::cli_abort("Please provide either `ref_cells1` and `ref_cells2` or both.")
   }
 
   n_cells1 <-
@@ -170,7 +172,7 @@ SimulateDoublets <- function(
 
 
 
-  cli_alert_info(glue("Simulating {n_sim} doublets"))
+  cli::cli_alert_info(glue("Simulating {n_sim} doublets"))
   set.seed(seed)
   random_doublets <-
     tibble(
@@ -250,7 +252,7 @@ PredictDoublets.Matrix <- function(
     scale()
 
 
-  cli_alert_info("Performing PCA on combined data")
+  cli::cli_alert_info("Performing PCA on combined data")
   pca_scores <-
     cbind(
       object,
@@ -263,7 +265,7 @@ PredictDoublets.Matrix <- function(
     ) %>%
     slot("scores")
 
-  cli_alert_info(glue("Predicting doublets using {n_neighbor} nearest neighbors"))
+  cli::cli_alert_info(glue("Predicting doublets using {n_neighbor} nearest neighbors"))
   cell_nn <-
     pca_scores %>%
     FindAnnoyNeighbors(
