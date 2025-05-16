@@ -60,7 +60,9 @@ Suggests:
     styler,
     zip,
     dtplyr,
-    data.table
+    data.table,
+    RcppAnnoy,
+    pcaMethods
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -80,6 +82,7 @@ Collate:
     'differential_colocalization_analysis.R'
     'differential_polarity_analysis.R'
     'differential_proximity_analysis.R'
+    'doublet_detection.R'
     'duckdb_methods.R'
     'extdata.R'
     'global_options.R'
