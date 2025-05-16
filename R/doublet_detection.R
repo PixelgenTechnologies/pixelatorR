@@ -145,11 +145,12 @@ SimulateDoublets <- function(
   ref_cells2 = NULL,
   n_sim = 1000,
   seed = 37,
-  method = c("average", "sum")
+  method = c("average", "sum"),
+  simulated_cell_prefix = "simcell_"
 ) {
   assert_class(count_data, c("matrix", "Matrix"))
-  assert_class(ref_cells1, "character", allow_null = TRUE)
-  assert_class(ref_cells2, "character", allow_null = TRUE)
+  assert_class(ref_cells1, c("character", "integer"), allow_null = TRUE)
+  assert_class(ref_cells2, c("character", "integer"), allow_null = TRUE)
   assert_class(n_sim, "numeric")
   assert_within_limits(n_sim, c(1, Inf))
   assert_class(seed, "numeric")
@@ -192,7 +193,7 @@ SimulateDoublets <- function(
   }
 
   colnames(simulated_doublets) <-
-    paste0("sim_", seq_len(n_sim))
+    paste0(simulated_cell_prefix, seq_len(n_sim))
 
   return(simulated_doublets)
 }
@@ -216,8 +217,6 @@ PredictDoublets.Matrix <- function(
   ...
 ) {
   assert_class(object, "Matrix")
-  assert_class(ref_cells1, "character", allow_null = TRUE)
-  assert_class(ref_cells2, "character", allow_null = TRUE)
   assert_class(simulation_rate, "numeric")
   assert_within_limits(simulation_rate, c(0, Inf))
   assert_class(n_neighbor, "numeric")
@@ -234,15 +233,6 @@ PredictDoublets.Matrix <- function(
 
   n_cells <-
     ncol(object)
-
-  cell_names <-
-    tibble(
-      original_names = colnames(object),
-      temp_names = paste0("cell_", seq_len(n_cells))
-    )
-
-  colnames(object) <-
-    cell_names$temp_names
 
   simulated_doublets <-
     SimulateDoublets(
@@ -264,7 +254,7 @@ PredictDoublets.Matrix <- function(
     scale()
 
 
-  cli_alert_info(glue("Performing PCA on combined data"))
+  cli_alert_info("Performing PCA on combined data")
   pca_scores <-
     cbind(
       object,
@@ -281,7 +271,7 @@ PredictDoublets.Matrix <- function(
   cell_nn <-
     pca_scores %>%
     FindAnnoyNeighbors(
-      cells = cell_names$temp_names,
+      cells = colnames(object),
       n_nn = n_neighbor + 1
     )
 
@@ -291,7 +281,7 @@ PredictDoublets.Matrix <- function(
   doublet_prediction <-
     cell_nn %>%
     filter(id != neighbor) %>%
-    mutate(simulated = !neighbor %in% cell_names$temp_names) %>%
+    mutate(simulated = !neighbor %in% colnames(object)) %>%
     group_by(id) %>%
     summarise(
       doublet_nns = sum(simulated),
@@ -303,11 +293,10 @@ PredictDoublets.Matrix <- function(
       doublet_p_adj = p.adjust(doublet_p, p_adjust_method),
       doublet_prediction = ifelse(doublet_p_adj < p_threshold, "doublet", "singlet")
     ) %>%
-    left_join(cell_names,
-      by = c("id" = "temp_names")
-    ) %>%
-    select(-id) %>%
-    column_to_rownames("original_names")
+    column_to_rownames("id")
+
+  doublet_prediction <-
+    doublet_prediction[colnames(object), ]
 
   return(doublet_prediction)
 }

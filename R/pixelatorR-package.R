@@ -53,6 +53,7 @@
 #' @importFrom dplyr filter
 #' @importFrom dplyr full_join
 #' @importFrom dplyr group_by
+#' @importFrom dplyr group_by_all
 #' @importFrom dplyr group_by_at
 #' @importFrom dplyr group_data
 #' @importFrom dplyr group_keys
