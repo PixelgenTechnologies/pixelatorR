@@ -59,6 +59,7 @@
 #' @importFrom dplyr group_modify
 #' @importFrom dplyr group_split
 #' @importFrom dplyr inner_join
+#' @importFrom dplyr is.grouped_df
 #' @importFrom dplyr left_join
 #' @importFrom dplyr mutate
 #' @importFrom dplyr mutate_all

@@ -170,7 +170,6 @@ test_that("RunDCA fails with invalid input", {
   expect_error(
     dca_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "sample")
   )
-
   expect_error(
     dpa_markers <- RunDCA(colocalization_table_merged, contrast_column = "sample", targets = "Sample2", reference = "Sample1", group_vars = "Invalid")
   )
