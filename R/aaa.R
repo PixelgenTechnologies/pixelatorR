@@ -15,11 +15,13 @@ globalVariables(
     "umi_per_upia", "umi1", "umi2", "upia", "upia1", "upia2", "upib",
     "val", "value", "value_x", "value_y", "vjust", "x", "x_label",
     "xmax", "xmin", "y", "y_label", "ymax", "ymin", "z", "count_1",
-    "count_2", "umi_count"
+    "count_2", "umi_count", "item", "neighbor", "simulated", "doublet_nns",
+    "doublet_p", "doublet_p_adj", "id"
   ),
   package = "pixelatorR",
   add = TRUE
 )
+
 
 #' Check global option for verbosity
 #'
@@ -87,4 +89,12 @@ expect_zip <- function(...) {
 
 expect_dtplyr <- function(...) {
   rlang::check_installed("dtplyr", ...)
+}
+
+expect_RcppAnnoy <- function(...) {
+  rlang::check_installed("RcppAnnoy", ...)
+}
+
+expect_pcaMethods <- function(...) {
+  rlang::check_installed("pcaMethods", ...)
 }

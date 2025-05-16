@@ -1204,3 +1204,50 @@ Edgelists <- function(
 ) {
   UseMethod(generic = "Edgelists", object = object)
 }
+
+
+#' @title Predict doublets in a Seurat object
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Predict doublets in a Seurat object by simulating doublets. Both real and
+#' simulated cells are used to perform PCA and a nearest neighbor search is
+#' performed to find the number of doublets in the neighborhood of each cell.
+#' The expected doublet rate is calculated based on the simulation rate and
+#' the number of nearest neighbors. A binomial test is performed to test if
+#' the number of doublets in the neighborhood of each cell is significantly
+#' different from the expected doublet rate. The algorithm is inspired by the
+#' DoubletFinder algorithm by McGinnis et al. (2019).
+#'
+#' @param object A \code{Seurat} object or a count matrix.
+#' @param ref_cells1,ref_cells2 A character vector with cell names or indices
+#'                              to use as the first and second reference
+#'                              populations. If NULL, all cells are used.
+#' @param simulation_rate The rate of doublets to simulate. E.g. 3 means that
+#'                        for each real cell, 3 doublets are simulated.
+#' @param n_neighbor The number of nearest neighbors to use for the doublet
+#'                   prediction. Default is 100.
+#' @param npcs The number of principal components to use for PCA. Default is 10.
+#' @param p_adjust_method The p-value adjustment method to use. Default is "BH".
+#' @param p_threshold The p-value threshold to use. Default is 0.01.
+#' @param seed The seed to use for reproducibility.
+#' @param assay A character with the name of the assay to use.
+#' @param layer A character with the name of the layer to use. Default is "counts".
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @references McGinnis CS, Murrow LM, Gartner ZJ.
+#'             DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data
+#'             Using Artificial Nearest Neighbors. Cell Syst.
+#'             2019 Apr 24;8(4):329-337.e4. doi: 10.1016/j.cels.2019.03.003.
+#'             Epub 2019 Apr 3. PMID: 30954475; PMCID: PMC6853612.
+#'
+#' @rdname PredictDoublets
+#'
+#' @export
+#'
+PredictDoublets <- function(
+    object,
+    ...
+) {
+  UseMethod(generic = "PredictDoublets", object = object)
+}

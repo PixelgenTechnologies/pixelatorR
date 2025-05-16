@@ -66,6 +66,7 @@
 #' @importFrom dplyr n
 #' @importFrom dplyr pick
 #' @importFrom dplyr pull
+#' @importFrom dplyr reframe
 #' @importFrom dplyr relocate
 #' @importFrom dplyr rename
 #' @importFrom dplyr row_number
