@@ -13,7 +13,6 @@
 #'
 #' @export
 pack_2bits <- function(seq) {
-
   assert_class(seq, "character")
   assert_single_value(seq)
 
@@ -57,7 +56,6 @@ pack_2bits <- function(seq) {
 #'
 #' @export
 unpack_2bits <- function(packed, k) {
-
   assert_class(packed, c("integer64", "character"))
 
   if (is.character(packed)) {

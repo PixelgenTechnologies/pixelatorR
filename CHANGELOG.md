@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Option to add marker count proportions to the proximity score table in `ProximityScores`
 - `pack_2bits` and `unpack_2bits` to pack and unpack DNA sequences into 64-bit integers using 2 bits per base.
+- Experimental `PredictDoublets` function for detecting doublets in a Seurat object or count matrix.
+- `SimulateDoublets` to simulate doublets.
+- `FindAnnoyNeighbors` Computes nearest neighbors using the Annoy algorithm.
 
 ### Fixes
 - Fixed bug in `ColocalizationHeatmap` where `marker1_col` and `marker2_col` only worked for "marker_1" and "marker_2".
