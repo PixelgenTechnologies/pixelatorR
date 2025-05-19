@@ -43,7 +43,6 @@ FindAnnoyNeighbors <- function(
   search_k = NULL,
   annoy_alg = c("euclidean", "angular", "manhattan", "hamming")
 ) {
-
   assert_class(x, c("matrix", "Matrix"))
   assert_class(cells, c("character", "integer"), allow_null = TRUE)
   assert_x_in_y(cells, rownames(x), allow_null = TRUE)
@@ -100,19 +99,16 @@ FindAnnoyNeighbors <- function(
     filter(id %in% cells) %>%
     group_by_all() %>%
     reframe({
-
       annoy_index$getNNsByItemList(index,
-                                   n = n_nn,
-                                   search_k = search_k,
-                                   include_distances = TRUE
+        n = n_nn,
+        search_k = search_k,
+        include_distances = TRUE
       ) %>%
         as_tibble() %>%
         mutate(nn = row_number())
-
     }) %>%
     ungroup() %>%
     mutate(neighbor = rownames(x)[item + 1])
-
 }
 
 #' Simulate doublets
@@ -183,7 +179,7 @@ SimulateDoublets <- function(
 
   simulated_doublets <-
     (ref_pop1[, random_doublets$i1] +
-       ref_pop2[, random_doublets$i2])
+      ref_pop2[, random_doublets$i2])
 
   if (method == "average") {
     simulated_doublets <-
@@ -237,7 +233,6 @@ PredictDoublets.Matrix <- function(
       count_data = object,
       ref_cells1 = ref_cells1,
       ref_cells2 = ref_cells2,
-
       n_sim = round(simulation_rate * n_cells),
       seed = seed,
       method = "sum"
@@ -333,5 +328,3 @@ PredictDoublets.Seurat <- function(
       seed = seed
     )
 }
-
-

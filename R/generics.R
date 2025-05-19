@@ -1259,8 +1259,8 @@ Edgelists <- function(
 #' @export
 #'
 PredictDoublets <- function(
-    object,
-    ...
+  object,
+  ...
 ) {
   UseMethod(generic = "PredictDoublets", object = object)
 }

@@ -305,7 +305,6 @@ ProximityScores.Seurat <- function(
   calc_log2ratio = TRUE,
   ...
 ) {
-
   # Use default assay if assay = NULL
   assay <- assay %||% DefaultAssay(object)
   pixel_assay <- object[[assay]]
