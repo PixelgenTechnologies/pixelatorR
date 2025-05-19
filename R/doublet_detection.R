@@ -123,6 +123,7 @@ FindAnnoyNeighbors <- function(
 #' @param method A character with the method to use to simulate doublets. Options are "average" (average of the two
 #'               cells) or "sum" (sum of the two cells).
 #' @param simulated_cell_prefix A character with the prefix to use for the simulated doublet cell names.
+#' @param verbose Print messages.
 #'
 #'
 #' @examples
@@ -140,7 +141,8 @@ SimulateDoublets <- function(
   n_sim = 1000,
   seed = 37,
   method = c("average", "sum"),
-  simulated_cell_prefix = "simcell_"
+  simulated_cell_prefix = "simcell_",
+  verbose = TRUE
 ) {
   assert_class(count_data, c("matrix", "Matrix"))
   assert_class(ref_cells1, c("character", "integer"), allow_null = TRUE)
@@ -167,8 +169,9 @@ SimulateDoublets <- function(
     ncol(ref_pop2)
 
 
-
-  cli::cli_alert_info(glue("Simulating {n_sim} doublets"))
+  if (verbose && check_global_verbosity()) {
+    cli::cli_alert_info(glue("Simulating {n_sim} doublets"))
+  }
   set.seed(seed)
   random_doublets <-
     tibble(
@@ -208,6 +211,7 @@ PredictDoublets.Matrix <- function(
   p_adjust_method = "BH",
   p_threshold = 0.01,
   seed = 37,
+  verbose = TRUE,
   ...
 ) {
   assert_class(object, "Matrix")
@@ -246,8 +250,9 @@ PredictDoublets.Matrix <- function(
     t() %>%
     scale()
 
-
-  cli::cli_alert_info("Performing PCA on combined data")
+  if (verbose && check_global_verbosity()) {
+    cli::cli_alert_info("Performing PCA on combined data")
+  }
   pca_scores <-
     cbind(
       object,
@@ -260,7 +265,9 @@ PredictDoublets.Matrix <- function(
     ) %>%
     slot("scores")
 
-  cli::cli_alert_info(glue("Predicting doublets using {n_neighbor} nearest neighbors"))
+  if (verbose && check_global_verbosity()) {
+    cli::cli_alert_info(glue("Predicting doublets using {n_neighbor} nearest neighbors"))
+  }
   cell_nn <-
     pca_scores %>%
     FindAnnoyNeighbors(
@@ -312,6 +319,7 @@ PredictDoublets.Seurat <- function(
   seed = 37,
   assay = NULL,
   layer = "counts",
+  verbose = TRUE,
   ...
 ) {
   assert_class(object, "Seurat")

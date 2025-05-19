@@ -1246,6 +1246,7 @@ Edgelists <- function(
 #' @param seed The seed to use for reproducibility.
 #' @param assay A character with the name of the assay to use.
 #' @param layer A character with the name of the layer to use. Default is "counts".
+#' @param verbose Print messages.
 #' @param ... Additional arguments. Currently not used.
 #'
 #' @references McGinnis CS, Murrow LM, Gartner ZJ.

@@ -11,7 +11,8 @@ SimulateDoublets(
   n_sim = 1000,
   seed = 37,
   method = c("average", "sum"),
-  simulated_cell_prefix = "simcell_"
+  simulated_cell_prefix = "simcell_",
+  verbose = TRUE
 )
 }
 \arguments{
@@ -28,6 +29,8 @@ populations. If NULL, all cells are used.}
 cells) or "sum" (sum of the two cells).}
 
 \item{simulated_cell_prefix}{A character with the prefix to use for the simulated doublet cell names.}
+
+\item{verbose}{Print messages.}
 }
 \value{
 A matrix with simulated doublets. Rows are features, and columns are simulated doublets.

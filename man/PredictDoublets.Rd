@@ -18,6 +18,7 @@ PredictDoublets(object, ...)
   p_adjust_method = "BH",
   p_threshold = 0.01,
   seed = 37,
+  verbose = TRUE,
   ...
 )
 
@@ -33,6 +34,7 @@ PredictDoublets(object, ...)
   seed = 37,
   assay = NULL,
   layer = "counts",
+  verbose = TRUE,
   ...
 )
 }
@@ -58,6 +60,8 @@ prediction. Default is 100.}
 \item{p_threshold}{The p-value threshold to use. Default is 0.01.}
 
 \item{seed}{The seed to use for reproducibility.}
+
+\item{verbose}{Print messages.}
 
 \item{assay}{A character with the name of the assay to use.}
 
