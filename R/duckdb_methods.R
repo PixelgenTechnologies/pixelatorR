@@ -474,7 +474,7 @@ PixelDB <- R6Class(
       }
 
       if (lazy) {
-        el <- el %>% compute(name = "edgelist_modified")
+        el <- el %>% compute(name = "edgelist_modified", overwrite = TRUE)
       } else {
         el <- el %>% collect()
       }
