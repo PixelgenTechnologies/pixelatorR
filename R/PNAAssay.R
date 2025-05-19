@@ -727,7 +727,7 @@ ProximityScores.PNAAssay <- function(
         left_join(numi, by = "component") %>%
         mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) %>%
         select(-umi_count) %>%
-        compute(name = "extended_proximity")
+        compute(name = "extended_proximity", overwrite = TRUE)
     }
   }
 
