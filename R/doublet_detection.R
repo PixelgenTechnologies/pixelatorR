@@ -151,10 +151,10 @@ SimulateDoublets <- function(
   method <- match.arg(method, c("average", "sum"))
 
   # Create doublet template data
-  if (is.null(ref_cells1) & is.null(ref_cells2)) {
+  if (is.null(ref_cells1) && is.null(ref_cells2)) {
     ref_pop1 <- count_data
     ref_pop2 <- count_data
-  } else if (!is.null(ref_cells1) & !is.null(ref_cells2)) {
+  } else if (!is.null(ref_cells1) && !is.null(ref_cells2)) {
     ref_pop1 <- count_data[, ref_cells1]
     ref_pop2 <- count_data[, ref_cells2]
   } else {
