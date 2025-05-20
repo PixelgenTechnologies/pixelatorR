@@ -35,7 +35,8 @@ this function reconstructs the original DNA string.
 }
 \examples{
 # Pack sequence
-pack_2bits("TCGT") # returns integer64 encoding
+packed <- pack_2bits("TCGT") # returns integer64 encoding
+packed
 
 # Can be vectorized for multiple sequences
 packed_seqs <- pack_2bits(rep("TCGTGTCGATCTATGCTGATGTCGTGAT", 1e4))
