@@ -328,11 +328,14 @@ PredictDoublets.Seurat <- function(
 
   LayerData(object, assay = assay, layer = layer) %>%
     PredictDoublets(
+      ref_cells1 = ref_cells1,
+      ref_cells2 = ref_cells2,
       simulation_rate = simulation_rate,
       n_neighbor = n_neighbor,
       npcs = npcs,
       p_adjust_method = p_adjust_method,
       p_threshold = p_threshold,
-      seed = seed
+      seed = seed,
+      verbose = verbose
     )
 }
