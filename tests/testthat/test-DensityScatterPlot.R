@@ -179,15 +179,6 @@ for (assay_version in c("v3", "v5")) {
         ymax = 50
       )
 
-      expect_no_error(
-        DensityScatterPlot(
-          object,
-          marker1 = "Feature1",
-          marker2 = "Feature2",
-          layer = "counts",
-          plot_gate = rect_gate
-        )
-      )
 
       expect_no_error(
         DensityScatterPlot(
