@@ -232,8 +232,10 @@ ColocalizationHeatmap <- function(
     plot_data <-
       plot_data %>%
       bind_rows(plot_data %>%
-        rename(!!sym(marker1_col) := !!sym(marker2_col),
-               !!sym(marker2_col) := !!sym(marker1_col))) %>%
+        rename(
+          !!sym(marker1_col) := !!sym(marker2_col),
+          !!sym(marker2_col) := !!sym(marker1_col)
+        )) %>%
       distinct()
   }
 

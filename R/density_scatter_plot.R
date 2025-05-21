@@ -521,10 +521,12 @@ DensityScatterPlot <- function(
 
 
   # Calculate points inside gates for each facet group
-  if(!is.null(facet_vars)) {
+  if (!is.null(facet_vars)) {
     gate_data <- gate_data %>%
-      left_join(plot_data, by = facet_vars,
-                relationship = "many-to-many")
+      left_join(plot_data,
+        by = facet_vars,
+        relationship = "many-to-many"
+      )
   } else {
     gate_data <- plot_data %>%
       cross_join(gate_data)
@@ -533,8 +535,10 @@ DensityScatterPlot <- function(
   if (gate_type == "rectangle") {
     gate_summary <-
       gate_data %>%
-      group_by(!!!syms(facet_vars),
-               xmin, xmax, ymin, ymax) %>%
+      group_by(
+        !!!syms(facet_vars),
+        xmin, xmax, ymin, ymax
+      ) %>%
       summarise(
         n_inside = sum(
           marker1 >= xmin &
@@ -545,15 +549,15 @@ DensityScatterPlot <- function(
         total = n()
       )
   } else if (gate_type == "quadrant") {
-
     gate_summary <-
       gate_data %>%
       crossing(
         quadrant = c("top_left", "top_right", "bottom_left", "bottom_right")
       ) %>%
-
-      group_by(!!!syms(facet_vars),
-               quadrant, x, y) %>%
+      group_by(
+        !!!syms(facet_vars),
+        quadrant, x, y
+      ) %>%
       summarise(
         n_inside = sum(
           (quadrant == "top_left" & marker1 < x & marker2 > y) |
@@ -589,7 +593,6 @@ DensityScatterPlot <- function(
         fill = NA,
         linetype = "dashed"
       )
-
   } else if (gate_type == "quadrant") {
     # Calculate plot ranges
     x_range <- layer_scales(gg)$x$range$range
