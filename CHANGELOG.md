@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 - Fixed bug in `ColocalizationHeatmap` where `marker1_col` and `marker2_col` only worked for "marker_1" and "marker_2".
+- Fixed bug in `DensityScatterPlot` where the % cells label would be calculated across all facets instead of per each facet.
 
 ## [0.13.0] - 2025-04-23
 
