@@ -7,7 +7,6 @@ prox_summarized <- prox %>%
   ungroup()
 
 test_that("ColocalizationHeatmap works as expected", {
-
   # Default method
   expect_no_error(ColocalizationHeatmap(prox_summarized))
 

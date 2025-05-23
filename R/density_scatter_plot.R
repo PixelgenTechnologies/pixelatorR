@@ -324,6 +324,10 @@ DensityScatterPlot <- function(
       assert_col_in_data("xmax", plot_gate, call = call)
       assert_col_in_data("ymin", plot_gate, call = call)
       assert_col_in_data("ymax", plot_gate, call = call)
+      for (i in seq_len(nrow(plot_gate))) {
+        assert_within_limits(plot_gate$xmin[i], limits = c(-Inf, plot_gate$xmax[i]), call = call)
+        assert_within_limits(plot_gate$ymin[i], limits = c(-Inf, plot_gate$ymax[i]), call = call)
+      }
     } else {
       assert_col_in_data("x", plot_gate, call = call)
       assert_col_in_data("y", plot_gate, call = call)
@@ -520,74 +524,89 @@ DensityScatterPlot <- function(
   }
 
   # Calculate points inside gates for each facet group
-  gate_data <- gate_data %>%
-    group_by(!!!syms(facet_vars)) %>%
-    group_modify(function(group_data, group_keys) {
-      if (gate_type == "rectangle") {
-        group_data %>%
-          rowwise() %>%
-          mutate(
-            n_inside = sum(
-              plot_data$marker1 >= xmin &
-                plot_data$marker1 <= xmax &
-                plot_data$marker2 >= ymin &
-                plot_data$marker2 <= ymax
-            ),
-            total = nrow(plot_data)
-          )
-      } else {
-        group_data %>%
-          crossing(
-            quadrant = c("top_left", "top_right", "bottom_left", "bottom_right")
-          ) %>%
-          rowwise() %>%
-          mutate(
-            total = nrow(plot_data),
-            n_inside = sum(
-              if (quadrant == "top_left") {
-                plot_data$marker1 < x & plot_data$marker2 > y
-              } else if (quadrant == "top_right") {
-                plot_data$marker1 >= x & plot_data$marker2 > y
-              } else if (quadrant == "bottom_left") {
-                plot_data$marker1 < x & plot_data$marker2 <= y
-              } else {
-                plot_data$marker1 >= x & plot_data$marker2 <= y
-              }
-            )
-          )
-      }
-    }) %>%
-    ungroup()
+  if (!is.null(facet_vars)) {
+    gate_data <- gate_data %>%
+      left_join(plot_data,
+        by = facet_vars,
+        relationship = "many-to-many"
+      )
+  } else {
+    gate_data <- plot_data %>%
+      cross_join(gate_data)
+  }
 
-  # Gate-type specific processing
+  if (gate_type == "rectangle") {
+    gate_summary <-
+      gate_data %>%
+      group_by(
+        !!!syms(facet_vars),
+        xmin, xmax, ymin, ymax
+      ) %>%
+      summarise(
+        n_inside = sum(
+          marker1 >= xmin &
+            marker1 <= xmax &
+            marker2 >= ymin &
+            marker2 <= ymax
+        ),
+        total = n()
+      )
+  } else if (gate_type == "quadrant") {
+    gate_summary <-
+      gate_data %>%
+      crossing(
+        quadrant = c("top_left", "top_right", "bottom_left", "bottom_right")
+      ) %>%
+      group_by(
+        !!!syms(facet_vars),
+        quadrant, x, y
+      ) %>%
+      summarise(
+        n_inside = sum(
+          (quadrant == "top_left" & marker1 < x & marker2 > y) |
+            (quadrant == "top_right" & marker1 >= x & marker2 > y) |
+            (quadrant == "bottom_left" & marker1 < x & marker2 <= y) |
+            (quadrant == "bottom_right" & marker1 >= x & marker2 <= y)
+        ),
+        total = n(),
+      )
+  }
+
+  # Create gate coordinates and add gate to plot
   if (gate_type == "rectangle") {
     # Calculate annotation positions
-    gate_labels <- gate_data %>%
+    gate_labels <-
+      gate_summary %>%
       mutate(
         x = (xmin + xmax) / 2,
         y = ymax,
-        label = sprintf("%.1f%%", 100 * (n_inside / total))
+        label = sprintf("%.1f%%", 100 * (n_inside / total)),
+        hjust = 0.5,
+        vjust = 1,
       )
 
-    # Create gate layers
-    gg <- gg +
+    # Add gate to plot
+    gg <-
+      gg +
       geom_rect(
-        data = gate_data,
+        data = gate_summary,
         aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
         inherit.aes = FALSE,
         color = "black",
         fill = NA,
         linetype = "dashed"
       )
-  } else {
+  } else if (gate_type == "quadrant") {
     # Calculate plot ranges
     x_range <- layer_scales(gg)$x$range$range
     y_range <- layer_scales(gg)$y$range$range
 
-    # Create gate labels with positions
-    gate_labels <- gate_data %>%
+    # Calculate annotation positions
+    gate_labels <-
+      gate_summary %>%
+      ungroup() %>%
       mutate(
-        x_label = case_when(
+        x = case_when(
           quadrant %in% c("top_left", "bottom_left") ~
             x_range[1] + 0.05 * diff(x_range),
           quadrant %in% c("top_right", "bottom_right") ~
@@ -595,25 +614,31 @@ DensityScatterPlot <- function(
         ),
         # Calculate consistent spacing based on plot range
         label_spacing = 0.05 * diff(y_range),
-        y_label = case_when(
+        y = case_when(
           quadrant %in% c("top_left", "top_right") ~ y_range[2] - label_spacing,
           quadrant %in% c("bottom_left", "bottom_right") ~ y - label_spacing
         ),
         hjust = ifelse(quadrant %in% c("top_left", "bottom_left"), 0, 1),
-        vjust = case_when(quadrant %in% c("top_left", "top_right") ~ 0),
+        vjust = ifelse(quadrant %in% c("top_left", "top_right"), 0, 1),
         label = sprintf("%.1f%%", 100 * (n_inside / total))
       )
 
-    # Create gate layers
-    gg <- gg +
+
+    # Add gate to plot
+    gg <-
+      gg +
       geom_vline(
-        data = unique(gate_data[, c("x", facet_vars)]),
+        data = gate_summary %>%
+          select(any_of(facet_vars), x) %>%
+          distinct(),
         aes(xintercept = x),
         linetype = "dashed",
         color = "black"
       ) +
       geom_hline(
-        data = unique(gate_data[, c("y", facet_vars)]),
+        data = gate_summary %>%
+          select(any_of(facet_vars), y) %>%
+          distinct(),
         aes(yintercept = y),
         linetype = "dashed",
         color = "black"
@@ -621,36 +646,36 @@ DensityScatterPlot <- function(
   }
 
   # Add text annotations
-  annotation_args <- list(
-    data = gate_labels,
-    inherit.aes = FALSE,
-    show.legend = FALSE
-  )
+  annotation_args <-
+    list(
+      data = gate_labels,
+      inherit.aes = FALSE,
+      show.legend = FALSE
+    )
 
-  # Gate-specific aesthetic mappings
-  if (gate_type == "rectangle") {
-    annotation_args$mapping <- aes(x = x, y = y, label = label)
-    default_params <- list(color = "black", size = 3, vjust = 1)
-  } else {
-    annotation_args$mapping <- aes(
-      x = x_label,
-      y = y_label,
+  annotation_args$mapping <-
+    aes(
+      x = x,
+      y = y,
       label = label,
       hjust = hjust,
       vjust = vjust
     )
-    default_params <- list(color = "black", size = 3.5)
-  }
 
   # Merge user parameters with defaults
-  final_params <- utils::modifyList(
-    default_params,
-    annotation_params %||% list()
-  )
+  default_params <- list(color = "black", size = 3)
+
+  final_params <-
+    utils::modifyList(
+      default_params,
+      annotation_params %||% list()
+    )
 
   # Add annotations to plot
-  gg <- gg +
+  gg <-
+    gg +
     do.call(geom_text, c(annotation_args, final_params))
+
 
   return(gg)
 }
