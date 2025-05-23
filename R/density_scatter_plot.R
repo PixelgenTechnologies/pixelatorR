@@ -324,8 +324,10 @@ DensityScatterPlot <- function(
       assert_col_in_data("xmax", plot_gate, call = call)
       assert_col_in_data("ymin", plot_gate, call = call)
       assert_col_in_data("ymax", plot_gate, call = call)
-      assert_within_limits(plot_gate$xmin, limits = c(-Inf, plot_gate$xmax), call = call)
-      assert_within_limits(plot_gate$ymin, limits = c(-Inf, plot_gate$ymax), call = call)
+      for (i in seq_len(nrow(plot_gate))) {
+        assert_within_limits(plot_gate$xmin[i], limits = c(-Inf, plot_gate$xmax[i]), call = call)
+        assert_within_limits(plot_gate$ymin[i], limits = c(-Inf, plot_gate$ymax[i]), call = call)
+      }
     } else {
       assert_col_in_data("x", plot_gate, call = call)
       assert_col_in_data("y", plot_gate, call = call)
