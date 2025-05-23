@@ -382,5 +382,25 @@ for (assay_version in c("v3", "v5")) {
         plot_gate = plot_gate
       )
     )
+
+    bad_gate <-
+      tibble(
+        xmin = 20,
+        xmax = -70,
+        ymin = 20,
+        ymax = 50
+      )
+
+    expect_error(
+      DensityScatterPlot(
+        object,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = bad_gate,
+        gate_type = "rectangle"
+
+      )
+    )
   })
 }
