@@ -399,7 +399,6 @@ for (assay_version in c("v3", "v5")) {
         layer = "counts",
         plot_gate = bad_gate,
         gate_type = "rectangle"
-
       )
     )
   })
