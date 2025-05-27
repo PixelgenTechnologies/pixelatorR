@@ -334,3 +334,38 @@ setMethod(
     }
   }
 )
+
+
+#' subset method for \code{CellGraph} object
+#'
+#' @param object A \code{CellGraph} object
+#'
+#' @examples
+#' library(pixelatorR)
+#' se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
+#' se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
+#' cg <- CellGraphs(se)[[1]]
+#'
+#' # Subset
+#' cg_small <- subset(cg, nodes = rownames(cg@counts)[1:100])
+#' cg_small
+#'
+#' @return A \code{CellGraph} object containing only the specified nodes.
+#'
+#' @export
+#'
+subset.CellGraph <- function(object, nodes) {
+  assert_vector(nodes, type = "character")
+  available_nodes <- object@cellgraph %>% pull(name)
+  assert_x_in_y(nodes, available_nodes)
+  if (!is.null(object@counts)) {
+    object@counts <- object@counts[match(nodes, available_nodes), ]
+  }
+  if (!is.null(object@layout)) {
+    for (lyt in names(object@layout)) {
+      object@layout[[lyt]] <- object@layout[[lyt]][match(nodes, available_nodes), ]
+    }
+  }
+  object@cellgraph <- object@cellgraph %N>% filter(name %in% nodes)
+  return(object)
+}
