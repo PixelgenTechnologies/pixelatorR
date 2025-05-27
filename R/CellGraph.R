@@ -356,7 +356,7 @@ setMethod(
 #'
 subset.CellGraph <- function(object, nodes) {
   assert_vector(nodes, type = "character")
-  available_nodes <- object@cellgraph %>% pull(name)
+  available_nodes <- object@cellgraph %N>% pull(name)
   assert_x_in_y(nodes, available_nodes)
   if (!is.null(object@counts)) {
     object@counts <- object@counts[match(nodes, available_nodes), ]
