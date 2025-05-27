@@ -1,3 +1,4 @@
+library(dplyr)
 prox <- ReadPNA_proximity(minimal_pna_pxl_file())
 prox_summarized <- prox %>%
   slice_sample(n = 1e4) %>%
