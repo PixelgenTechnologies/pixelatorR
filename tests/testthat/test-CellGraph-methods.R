@@ -35,7 +35,7 @@ test_that("CellGraphData<- fails when invalid input is provided", {
 # show method
 test_that("show.CellGraph works as expected", {
   msg <- capture_output(show(cg))
-  expect_equal(msg, "A CellGraph object containing a bipartite graph with 2470 nodes and 5138 edges\nNumber of markers:  79 ")
+  expect_equal(msg, "A CellGraph object containing a bipartite graph with 2470 nodes and 5138 edges\nNumber of markers:  79 \nLayouts: pmds_3d ")
 })
 
 # subset method
@@ -46,3 +46,4 @@ test_that("subset.CellGraph works as expected", {
   expect_equal(cg_small@cellgraph %>% length(), 2000)
   expect_equal(cg_small@cellgraph %>% igraph::gsize(), 4227)
 })
+
