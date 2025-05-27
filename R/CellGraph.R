@@ -279,30 +279,35 @@ CellGraphData <- function(
 # Base methods
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+#' CellGraph Methods
+#'
+#' Methods for \code{\link{CellGraph}} objects for generics defined in other
+#' packages
+#'
+#' @param object A \code{\link{CellGraph}} object
+#' @param x A \code{\link{CellGraph}} object
+#' @param nodes A character vector of node names
+#' @param ... Currently not used
+#'
+#' @name CellGraph-methods
+#' @rdname CellGraph-methods
+#'
+#' @concept assay
+#'
+NULL
+
 #' Show method for \code{CellGraph} object
 #'
-#' @param object A \code{CellGraph} object
+#' @describeIn CellGraph-methods Show a \code{CellGraph} object
+#' @method show CellGraph
+#' @docType methods
 #'
 #' @examples
 #'
 #' library(pixelatorR)
-#' library(dplyr)
-#' library(tidygraph)
-#'
-#' edge_list <-
-#'   ReadMPX_item(
-#'     minimal_mpx_pxl_file(),
-#'     items = "edgelist"
-#'   )
-#' bipart_graph <-
-#'   edge_list %>%
-#'   select(upia, upib, marker) %>%
-#'   distinct() %>%
-#'   as_tbl_graph(directed = FALSE) %>%
-#'   mutate(node_type = case_when(name %in% edge_list$upia ~ "A", TRUE ~ "B"))
-#' attr(bipart_graph, "type") <- "bipartite"
-#'
-#' cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+#' se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
+#' se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
+#' cg <- CellGraphs(se)[[1]]
 #'
 #' # Show method
 #' cg
@@ -338,14 +343,11 @@ setMethod(
 
 #' subset method for \code{CellGraph} object
 #'
-#' @param object A \code{CellGraph} object
+#' @describeIn CellGraph-methods Subset a \code{CellGraph} object
+#' @method subset CellGraph
+#' @docType methods
 #'
 #' @examples
-#' library(pixelatorR)
-#' se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
-#' se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
-#' cg <- CellGraphs(se)[[1]]
-#'
 #' # Subset
 #' cg_small <- subset(cg, nodes = rownames(cg@counts)[1:100])
 #' cg_small
@@ -354,18 +356,22 @@ setMethod(
 #'
 #' @export
 #'
-subset.CellGraph <- function(object, nodes) {
+subset.CellGraph <- function(
+  x,
+  nodes,
+  ...
+) {
   assert_vector(nodes, type = "character")
-  available_nodes <- object@cellgraph %N>% pull(name)
+  available_nodes <- x@cellgraph %N>% pull(name)
   assert_x_in_y(nodes, available_nodes)
-  if (!is.null(object@counts)) {
-    object@counts <- object@counts[match(nodes, available_nodes), ]
+  if (!is.null(x@counts)) {
+    x@counts <- x@counts[match(nodes, available_nodes), ]
   }
-  if (!is.null(object@layout)) {
-    for (lyt in names(object@layout)) {
-      object@layout[[lyt]] <- object@layout[[lyt]][match(nodes, available_nodes), ]
+  if (!is.null(x@layout)) {
+    for (lyt in names(x@layout)) {
+      x@layout[[lyt]] <- x@layout[[lyt]][match(nodes, available_nodes), ]
     }
   }
-  object@cellgraph <- object@cellgraph %N>% filter(name %in% nodes)
-  return(object)
+  x@cellgraph <- x@cellgraph %N>% filter(name %in% nodes)
+  return(x)
 }
