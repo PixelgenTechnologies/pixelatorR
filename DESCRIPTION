@@ -70,7 +70,8 @@ Suggests:
     av,
     magick,
     ragg,
-    png
+    png,
+    RColorBrewer
 Collate: 
     'generics.R'
     'CellGraph.R'
