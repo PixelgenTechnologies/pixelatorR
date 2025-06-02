@@ -65,7 +65,12 @@ Suggests:
     dtplyr,
     data.table,
     RcppAnnoy,
-    pcaMethods
+    pcaMethods,
+    gifski,
+    av,
+    magick,
+    ragg,
+    png
 Collate: 
     'generics.R'
     'CellGraph.R'
