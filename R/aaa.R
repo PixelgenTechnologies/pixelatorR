@@ -16,7 +16,8 @@ globalVariables(
     "tau", "tau_type", "to", "total", "type", "u", "uei_count", "umi_count",
     "umi_per_upia", "umi1", "umi2", "upia", "upia1", "upia2", "upib",
     "val", "value", "value_x", "value_y", "vjust", "x", "x_label",
-    "xmax", "xmin", "y", "y_label", "ymax", "ymin", "z"
+    "xmax", "xmin", "y", "y_label", "ymax", "ymin", "z", "dev_png",
+    "node_val", "png"
   ),
   package = "pixelatorR",
   add = TRUE
