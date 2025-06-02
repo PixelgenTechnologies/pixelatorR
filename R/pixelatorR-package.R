@@ -131,6 +131,7 @@
 #' @importFrom glue glue_sql
 #' @importFrom graphics par
 #' @importFrom grDevices as.raster
+#' @importFrom grDevices col2rgb
 #' @importFrom grDevices colorRampPalette
 #' @importFrom grDevices dev.off
 #' @importFrom grid gpar
