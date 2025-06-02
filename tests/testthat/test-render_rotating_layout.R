@@ -1,6 +1,8 @@
 set.seed(123)
-cg <- simulate_bipartite_graph(n_nodes = 1e3, verbose = FALSE)
-xyz <- cg@layout$sphere
+cg <- (ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) %>%
+  LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE, verbose = FALSE) %>%
+  CellGraphs())[[1]]
+xyz <- cg@layout$wpmds_3d
 xyz$node_val <- runif(nrow(xyz))
 gif_file <- fs::file_temp(ext = "gif")
 mp4_file <- fs::file_temp(ext = "mp4")
