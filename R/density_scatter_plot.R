@@ -494,7 +494,11 @@ DensityScatterPlot <- function(
     scale_range <- range(
       c(plot_data$marker1,
         plot_data$marker2,
-        unlist(plot_gate))
+        plot_gate %>%
+          select(any_of("x", "y",
+                        "xmin", "xmax",
+                        "ymin", "ymax")) %>%
+          unlist())
     )
 
     gg <- gg +
