@@ -13,7 +13,7 @@ DensityScatterPlot(
   gate_type = c("rectangle", "quadrant"),
   grid_n = 500,
   scale_density = TRUE,
-  margin_density = TRUE,
+  margin_density = FALSE,
   pt_size = 1,
   alpha = 1,
   layer = NULL,

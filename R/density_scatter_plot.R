@@ -129,7 +129,7 @@ DensityScatterPlot <- function(
   gate_type = c("rectangle", "quadrant"),
   grid_n = 500,
   scale_density = TRUE,
-  margin_density = TRUE,
+  margin_density = FALSE,
   pt_size = 1,
   alpha = 1,
   layer = NULL,
@@ -178,6 +178,7 @@ DensityScatterPlot <- function(
     plot_data = plot_data,
     lab1 = marker1,
     lab2 = marker2,
+    plot_gate = plot_gate,
     pt_size = pt_size,
     alpha = alpha,
     colors = colors,
@@ -457,6 +458,7 @@ DensityScatterPlot <- function(
 #' @param plot_data Data frame with plot data
 #' @param lab1 Name of first marker
 #' @param lab2 Name of second marker
+#' @param plot_gate Gate information for plotting
 #' @param pt_size Point size for scatter plot
 #' @param alpha Alpha transparency for points
 #' @param colors Vector of colors for density gradient
@@ -466,7 +468,7 @@ DensityScatterPlot <- function(
 #'
 #' @noRd
 #'
-.createBasePlot <- function(plot_data, lab1, lab2, pt_size, alpha, colors, coord_fixed, equal_axes) {
+.createBasePlot <- function(plot_data, lab1, lab2, plot_gate, pt_size, alpha, colors, coord_fixed, equal_axes) {
   gg <- ggplot(
     plot_data,
     aes(x = marker1, y = marker2, color = dens)
@@ -489,7 +491,12 @@ DensityScatterPlot <- function(
   }
 
   if (equal_axes) {
-    scale_range <- range(plot_data$marker1, plot_data$marker2)
+    scale_range <- range(
+      c(plot_data$marker1,
+        plot_data$marker2,
+        unlist(plot_gate))
+    )
+
     gg <- gg +
       scale_x_continuous(limits = scale_range) +
       scale_y_continuous(limits = scale_range)
