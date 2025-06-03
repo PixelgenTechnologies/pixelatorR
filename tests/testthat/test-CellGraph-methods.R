@@ -46,4 +46,3 @@ test_that("subset.CellGraph works as expected", {
   expect_equal(cg_small@cellgraph %>% length(), 2000)
   expect_equal(cg_small@cellgraph %>% igraph::gsize(), 4227)
 })
-
