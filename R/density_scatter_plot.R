@@ -493,13 +493,19 @@ DensityScatterPlot <- function(
   if (equal_axes) {
     scale_range <- range(
       c(plot_data$marker1,
-        plot_data$marker2,
-        plot_gate %>%
-          select(any_of("x", "y",
-                        "xmin", "xmax",
-                        "ymin", "ymax")) %>%
-          unlist())
+        plot_data$marker2)
     )
+
+    if(!is.null(plot_gate)) {
+      scale_range <- range(
+        c(scale_range,
+          plot_gate %>%
+            select(any_of(c("x", "y",
+                            "xmin", "xmax",
+                            "ymin", "ymax"))) %>%
+            unlist()
+        ))
+    }
 
     gg <- gg +
       scale_x_continuous(limits = scale_range) +
