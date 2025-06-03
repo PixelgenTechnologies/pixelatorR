@@ -18,8 +18,9 @@ DensityScatterPlot(
   alpha = 1,
   layer = NULL,
   coord_fixed = TRUE,
-  annotation_params = NULL,
+  equal_axes = TRUE,
   colors = NULL,
+  annotation_params = NULL,
   ...
 )
 }
@@ -54,10 +55,12 @@ Required if \code{plot_gate} is provided.}
 
 \item{coord_fixed}{Whether to use fixed coordinate ratio.}
 
-\item{annotation_params}{Optional list of parameters to pass to \code{geom_text} for gate annotations. Common parameters
-include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).}
+\item{equal_axes}{Whether to use equal axes scaling. If \code{TRUE} (default), the x and y axes will have the same scale.}
 
 \item{colors}{Optional character vector of colors to use for the color scale.}
+
+\item{annotation_params}{Optional list of parameters to pass to \code{geom_text} for gate annotations. Common parameters
+include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).}
 
 \item{...}{Additional arguments to pass to \code{MASS::kde2d}.}
 }
