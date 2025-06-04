@@ -22,9 +22,10 @@
 #' @param alpha Point transparency.
 #' @param layer Optional string specifying a layer to plot.
 #' @param coord_fixed Whether to use fixed coordinate ratio.
+#' @param equal_axes Whether to use equal axes scaling. If `TRUE` (default), the x and y axes will have the same scale.
+#' @param colors Optional character vector of colors to use for the color scale.
 #' @param annotation_params Optional list of parameters to pass to `geom_text` for gate annotations. Common parameters
 #' include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).
-#' @param colors Optional character vector of colors to use for the color scale.
 #' @param ... Additional arguments to pass to `MASS::kde2d`.
 #'
 #' @return A ggplot object.
@@ -128,57 +129,61 @@ DensityScatterPlot <- function(
   gate_type = c("rectangle", "quadrant"),
   grid_n = 500,
   scale_density = TRUE,
-  margin_density = TRUE,
+  margin_density = FALSE,
   pt_size = 1,
   alpha = 1,
   layer = NULL,
   coord_fixed = TRUE,
-  annotation_params = NULL,
+  equal_axes = TRUE,
   colors = NULL,
+  annotation_params = NULL,
   ...
 ) {
   # Validate inputs
   validated_inputs <- .validateDensityInputs(
-    object,
-    marker1,
-    marker2,
-    facet_vars,
-    plot_gate,
-    gate_type,
-    grid_n,
-    scale_density,
-    margin_density,
-    pt_size,
-    alpha,
-    layer,
-    coord_fixed,
-    annotation_params,
-    colors
+    object = object,
+    marker1 = marker1,
+    marker2 = marker2,
+    facet_vars = facet_vars,
+    plot_gate = plot_gate,
+    gate_type = gate_type,
+    grid_n = grid_n,
+    scale_density = scale_density,
+    margin_density = margin_density,
+    pt_size = pt_size,
+    alpha = alpha,
+    layer = layer,
+    coord_fixed = coord_fixed,
+    equal_axes = equal_axes,
+    colors = colors,
+    annotation_params = annotation_params
   )
 
   gate_type <- match.arg(gate_type, choices = c("rectangle", "quadrant"))
 
   # Prepare data
   plot_data <- .prepareDensityData(
-    object,
-    marker1,
-    marker2,
-    facet_vars,
-    grid_n,
-    scale_density,
-    layer,
+    object = object,
+    marker1 = marker1,
+    marker2 = marker2,
+    facet_vars = facet_vars,
+    grid_n = grid_n,
+    scale_density = scale_density,
+    layer = layer,
     ...
   )
 
   # Create base plot
   gg <- .createBasePlot(
-    plot_data,
-    marker1,
-    marker2,
-    pt_size,
-    alpha,
-    colors,
-    validated_inputs$coord_fixed
+    plot_data = plot_data,
+    lab1 = marker1,
+    lab2 = marker2,
+    plot_gate = plot_gate,
+    pt_size = pt_size,
+    alpha = alpha,
+    colors = colors,
+    coord_fixed = validated_inputs$coord_fixed,
+    equal_axes = equal_axes
   )
 
   # Add faceting
@@ -221,13 +226,15 @@ DensityScatterPlot <- function(
 #' @param facet_vars Variables to use for faceting
 #' @param plot_gate Gate information for plotting
 #' @param gate_type Type of gate ("rectangle" or "quadrant")
-#' @param margin_density Whether to add marginal density plots
-#' @param coord_fixed Whether to use fixed coordinate ratio
 #' @param grid_n Number of grid points for density estimation
 #' @param scale_density Whether to scale density values
+#' @param margin_density Whether to add marginal density plots
 #' @param pt_size Point size for plotting
 #' @param alpha Point transparency
 #' @param layer Layer to fetch data from
+#' @param coord_fixed Whether to use fixed coordinate ratio
+#' @param equal_axes Whether to use equal axes scaling
+#' @param colors Colors to use for the density gradient
 #' @param annotation_params Parameters for gate annotations
 #' @param call Environment to use for the error call
 #' @return List with validated margin_density and coord_fixed values
@@ -248,8 +255,9 @@ DensityScatterPlot <- function(
   alpha,
   layer,
   coord_fixed,
-  annotation_params,
+  equal_axes,
   colors,
+  annotation_params,
   call = caller_env()
 ) {
   # Basic object validation
@@ -270,6 +278,7 @@ DensityScatterPlot <- function(
   assert_single_value(scale_density, type = "bool", call = call)
   assert_single_value(margin_density, type = "bool", call = call)
   assert_single_value(coord_fixed, type = "bool", call = call)
+  assert_single_value(equal_axes, type = "bool", call = call)
 
   # Layer validation
   assert_single_value(layer, type = "string", allow_null = TRUE, call = call)
@@ -449,15 +458,17 @@ DensityScatterPlot <- function(
 #' @param plot_data Data frame with plot data
 #' @param lab1 Name of first marker
 #' @param lab2 Name of second marker
+#' @param plot_gate Gate information for plotting
 #' @param pt_size Point size for scatter plot
 #' @param alpha Alpha transparency for points
 #' @param colors Vector of colors for density gradient
 #' @param coord_fixed Whether to use fixed coordinate ratio
+#' @param equal_axes Whether to use equal axes scaling
 #' @return A ggplot object
 #'
 #' @noRd
 #'
-.createBasePlot <- function(plot_data, lab1, lab2, pt_size, alpha, colors, coord_fixed) {
+.createBasePlot <- function(plot_data, lab1, lab2, plot_gate, pt_size, alpha, colors, coord_fixed, equal_axes) {
   gg <- ggplot(
     plot_data,
     aes(x = marker1, y = marker2, color = dens)
@@ -477,6 +488,34 @@ DensityScatterPlot <- function(
 
   if (coord_fixed) {
     gg <- gg + coord_fixed()
+  }
+
+  if (equal_axes) {
+    scale_range <- range(
+      c(
+        plot_data$marker1,
+        plot_data$marker2
+      )
+    )
+
+    if (!is.null(plot_gate)) {
+      scale_range <- range(
+        c(
+          scale_range,
+          plot_gate %>%
+            select(any_of(c(
+              "x", "y",
+              "xmin", "xmax",
+              "ymin", "ymax"
+            ))) %>%
+            unlist()
+        )
+      )
+    }
+
+    gg <- gg +
+      scale_x_continuous(limits = scale_range) +
+      scale_y_continuous(limits = scale_range)
   }
 
   return(gg)

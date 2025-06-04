@@ -100,6 +100,20 @@ for (assay_version in c("v3", "v5")) {
       )
     )
 
+    # Unequal axes
+    expect_no_error(
+      DensityScatterPlot(
+        object,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = plot_gate,
+        gate_type = "rectangle",
+        equal_axes = FALSE,
+        coord_fixed = TRUE,
+      )
+    )
+
     # Facetting by one variable
     expect_no_error(
       DensityScatterPlot(

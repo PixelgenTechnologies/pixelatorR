@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Experimental `PredictDoublets` function for detecting doublets in a Seurat object or count matrix.
 - `SimulateDoublets` to simulate doublets.
 - `FindAnnoyNeighbors` Computes nearest neighbors using the Annoy algorithm.
+- `DensityScatterPlot` now has an argument `equal_axes` to control whether the x and y axes should have a common range. 
 
 ### Fixes
 - Fixed bug in `ColocalizationHeatmap` where `marker1_col` and `marker2_col` only worked for "marker_1" and "marker_2".
