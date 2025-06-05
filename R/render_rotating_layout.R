@@ -48,7 +48,8 @@
 #' @section graphics_use:
 #' The \code{graphics_use} argument can be used to switch between the default
 #' "base" and the "ggplot2" graphics system. The "base" option is much faster
-#' but has fewer customization options.
+#' but has fewer customization options. For instance, it is currently not possible to
+#' get row and column labels with the "base" graphics option.
 #'
 #' @param data A tibble (\code{tbl_df}) with columns 'x', 'y', 'z',
 #' and 'node_val'. The 'node_val' column can be either a numeric or a
@@ -227,6 +228,7 @@ render_rotating_layout <- function(
   colors = RColorBrewer::brewer.pal(9, "Blues"),
   max_degree = 360,
   center_zero = FALSE,
+  scale_layout = TRUE,
   frames = 500,
   pad = 0.1,
   show_first_frame = TRUE,
@@ -273,7 +275,7 @@ render_rotating_layout <- function(
 
   .validate_render_rotating_layout_input_params(
     data, marker_col, cell_col, pt_opacity,
-    pt_size, colors, max_degree, center_zero,
+    pt_size, colors, max_degree, center_zero, scale_layout,
     frames, pad, show_first_frame, width, height,
     res, delay, ggplot_theme, title, bg,
     label_grid_axes, margin_widths, use_facet_grid,
@@ -316,13 +318,15 @@ render_rotating_layout <- function(
   xyz_list <- xyz_grouped %>%
     group_split() %>%
     set_names(nm = if (nrow(group_d) == 1) "cell" else group_d[, 1, drop = TRUE])
-  xyz_list <- lapply(xyz_list, function(xyz) {
-    xyz_scaled <- xyz %>%
-      select(x, y, z) %>%
-      scale_layout(percentile = 1)
-    xyz[, c("x", "y", "z")] <- xyz_scaled
-    return(xyz)
-  })
+  if (scale_layout) {
+    xyz_list <- lapply(xyz_list, function(xyz) {
+      xyz_scaled <- xyz %>%
+        select(x, y, z) %>%
+        scale_layout(percentile = 1)
+      xyz[, c("x", "y", "z")] <- xyz_scaled
+      return(xyz)
+    })
+  }
 
   # Set the axis limits
   padded_max_lim <- 1 + 2 * pad
@@ -769,7 +773,7 @@ render_rotating_layout <- function(
       # perceived size differences.
       apparent_sizes <- sqrt(1 / (y_norm^2)) * pt_size
 
-      # TODO: Add column and ro labels
+      # TODO: Add column and row labels
       plot(
         df$x,
         df$z,
@@ -1030,6 +1034,8 @@ scale_layout <- function(
 #' @param pt_size A numeric value
 #' @param colors A vector of color names
 #' @param max_degree A numeric value between 90 and 360
+#' @param center_zero A logical value
+#' @param scale_layout A logical value
 #' @param frames An integer value
 #' @param pad A numeric value
 #' @param show_first_frame A logical value
@@ -1058,6 +1064,7 @@ scale_layout <- function(
   colors,
   max_degree,
   center_zero,
+  scale_layout,
   frames,
   pad,
   show_first_frame,
@@ -1081,6 +1088,7 @@ scale_layout <- function(
   assert_vector(colors, "character", call = call)
   assert_within_limits(max_degree, c(90, 360), call = call)
   assert_single_value(center_zero, "bool", call = call)
+  assert_single_value(scale_layout, "bool", call = call)
   assert_single_value(frames, "integer", call = call)
   assert_within_limits(pad, c(0, 1), call = call)
   assert_single_value(show_first_frame, "bool", call = call)
@@ -1114,7 +1122,7 @@ scale_layout <- function(
     )
   }
 
-  missing_cols <- setdiff(c("x", "y", "x", "node_val"), names(data))
+  missing_cols <- setdiff(c("x", "y", "z", "node_val"), names(data))
   if (length(missing_cols) > 0) {
     cli::cli_abort(
       c(
