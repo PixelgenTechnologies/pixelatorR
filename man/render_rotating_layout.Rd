@@ -14,6 +14,7 @@ render_rotating_layout(
   colors = RColorBrewer::brewer.pal(9, "Blues"),
   max_degree = 360,
   center_zero = FALSE,
+  scale_layout = TRUE,
   frames = 500,
   pad = 0.1,
   show_first_frame = TRUE,
@@ -192,7 +193,8 @@ to a single-threaded operation (sequential processing).
 
 The \code{graphics_use} argument can be used to switch between the default
 "base" and the "ggplot2" graphics system. The "base" option is much faster
-but has fewer customization options.
+but has fewer customization options. For instance, it is currently not possible to
+get row and column labels with the "base" graphics option.
 }
 
 \examples{
