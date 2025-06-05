@@ -13,7 +13,7 @@ test_that("ReadPNA_proximity works as expected", {
   expect_s3_class(proximity, "tbl_df")
 
   # tbl_lazy
-  expect_no_error(proximity <- ReadPNA_proximity(pxl_file, lazy = TRUE, verbose = FALSE))
+  expect_no_error(proximity <- suppressWarnings(ReadPNA_proximity(pxl_file, lazy = TRUE, verbose = FALSE)))
   expect_s3_class(proximity, "tbl_lazy")
   expect_equal(expected_names, colnames(proximity))
 })

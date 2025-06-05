@@ -42,7 +42,10 @@ Imports:
     R6,
     DBI,
     duckdb,
-    bit64
+    bit64,
+    grDevices,
+    graphics,
+    stats
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -62,7 +65,13 @@ Suggests:
     dtplyr,
     data.table,
     RcppAnnoy,
-    pcaMethods
+    pcaMethods,
+    gifski,
+    av,
+    magick,
+    ragg,
+    png,
+    RColorBrewer
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -104,6 +113,7 @@ Collate:
     'pixelatorR_style.R'
     'read_edgelist.R'
     'remove_cell_graphs.R'
+    'render_rotating_layout.R'
     'restore_paths.R'
     'tau_plot.R'
     'two_bit_encoding.R'
