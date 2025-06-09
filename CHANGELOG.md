@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- `render_rotating_layout` function to create videos of rotating cells from a tibble containing layout coordinates. The function supports multiple video formats but uses GIF as default.
 - `subset` method for `CellGraph` class
 - Option to add marker count proportions to the proximity score table in `ProximityScores`
 - `pack_2bits` and `unpack_2bits` to pack and unpack DNA sequences into 64-bit integers using 2 bits per base.
