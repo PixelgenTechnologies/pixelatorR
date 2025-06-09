@@ -52,6 +52,7 @@ Thiagarajan
 Tsang
 UEIs
 UMAP
+UMI
 UMIs
 UPIa
 Uropod
@@ -62,6 +63,7 @@ anndata
 artefacts
 bb
 bfbfb
+bleedover
 bonferroni
 cb
 cellgraph
@@ -94,6 +96,7 @@ hommel
 isotype
 json
 kmers
+labelled
 linegraph
 linegraphs
 makeCluster
@@ -118,12 +121,15 @@ pxl
 renormalization
 reproducibility
 sampleID
+subgraphs
 th
 tibble
 tidyverse
 uei
 umi
 undirected
+unmix
+unmixing
 upia
 upias
 upib
