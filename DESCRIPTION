@@ -72,6 +72,8 @@ Suggests:
     ragg,
     png,
     RColorBrewer
+    RcppML,
+    ggrepel
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -108,6 +110,7 @@ Collate:
     'local_G.R'
     'molecule_rank_plot.R'
     'objects.R'
+    'patch_detection.R'
     'pivot_tables.R'
     'pixelatorR-package.R'
     'pixelatorR_style.R'

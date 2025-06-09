@@ -1,23 +1,24 @@
 # Declarations used in package check
 globalVariables(
   names = c(
-    ".", ".x", "bi_prob", "component", "component_new", "count_1",
-    "count_2", "current_id", "dens", "doublet_nns", "doublet_p",
-    "doublet_p_adj", "frequency", "from", "g", "graph_projection",
-    "group", "hjust", "id", "id", "id_map", "in_gate", "index", "item",
-    "join_count", "join_count_expected_mean", "label", "layout",
-    "marker", "marker_1", "marker_2", "marker_x", "marker_y", "marker1",
-    "marker2", "med_ref", "med_tgt", "mixture_component", "modality",
-    "molecules", "morans_z", "n", "n_inside", "n_ref", "n_tgt", "name",
-    "neighbor", "node_type", "nodes", "norm_factor", "nties", "nties_const",
-    "original_id", "p", "p.value", "p_adj", "p_val", "p_val_adj",
-    "pct.1", "pct.2", "pearson_z", "pxl_file", "quadrant", "r", "read_count",
-    "ref_n", "rn", "rs_ref", "rs_tgt", "sigma", "simulated", "target_n",
-    "tau", "tau_type", "to", "total", "type", "u", "uei_count", "umi_count",
-    "umi_per_upia", "umi1", "umi2", "upia", "upia1", "upia2", "upib",
-    "val", "value", "value_x", "value_y", "vjust", "x", "x_label",
-    "xmax", "xmin", "y", "y_label", "ymax", "ymin", "z", "dev_png",
-    "node_val", "png"
+    ".", ".x", "bi_prob", "community", "comp", "component", "component_new",
+    "count_1", "count_2", "current_id", "dens", "dev_png", "doublet_nns",
+    "doublet_p", "doublet_p_adj", "frequency", "from", "g", "graph_projection",
+    "group", "hjust", "host_freq", "host_unmixed_freq", "hp", "hup",
+    "id", "id_map", "in_gate", "index", "item", "join_count", "join_count_expected_mean",
+    "label", "layout", "marker", "marker_1", "marker_2", "marker_x",
+    "marker_y", "marker1", "marker2", "med_ref", "med_tgt", "mixture_component",
+    "modality", "molecules", "morans_z", "n", "n_inside", "n_ref",
+    "n_tgt", "name", "neighbor", "node_type", "node_val", "nodes",
+    "norm_factor", "nties", "nties_const", "original_id", "p", "p_adj",
+    "p_val", "p_val_adj", "p.value", "patch", "pct.1", "pct.2", "pearson_z",
+    "png", "pxl_file", "quadrant", "r", "read_count", "ref_n", "rn",
+    "rs_ref", "rs_tgt", "sigma", "simulated", "size", "target_freq",
+    "target_n", "target_unmixed_freq", "tau", "tau_type", "to", "total",
+    "tp", "tup", "type", "u", "uei_count", "umi_count", "umi_per_upia",
+    "umi1", "umi2", "upia", "upia1", "upia2", "upib", "val", "value",
+    "value_x", "value_y", "vjust", "x", "x_label", "xmax", "xmin",
+    "y", "y_label", "ymax", "ymin", "z"
   ),
   package = "pixelatorR",
   add = TRUE
@@ -98,4 +99,12 @@ expect_RcppAnnoy <- function(...) {
 
 expect_pcaMethods <- function(...) {
   rlang::check_installed("pcaMethods", ...)
+}
+
+expect_RcppML <- function(...) {
+  rlang::check_installed("RcppML", ...)
+}
+
+expect_ggrepel <- function(...) {
+  rlang::check_installed("ggrepel", ...)
 }
