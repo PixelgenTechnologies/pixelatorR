@@ -75,6 +75,9 @@
 #' full turn around the z axis.
 #' @param center_zero A logical value indicating whether the color gradient
 #' should be centered around zero.
+#' @param scale_layout A logical value indicating whether the layouts should be
+#' such that they all fit the same bounding box. This is typically necessary
+#' as layouts vary significantly in size.
 #' @param frames A positive numeric value indicating the number of frames
 #' to render. More frames will result in a smoother animation but will
 #' increase the size of the output file and rendering time.
