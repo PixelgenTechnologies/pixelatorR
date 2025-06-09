@@ -63,12 +63,13 @@ A \code{CellGraph} object with two additional node columns in the \code{tbl_grap
 }
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+
 A patch is defined as a subgraph which is enriched for a set of patch-specific protein
 markers. A patch should typically have a different origin than the bulk of the PNA graph.
 A typical example of a patch is a small piece of another cell, e.g. a patch of a B cell on
 a T cell (receiver).
-}
-\details{
+
 This analysis tool requires a predefined set of patch-specific protein markers and is therefore
 a supervised method. Patch-specific means that these markers are high abundant on the patch
 and low abundant on the receiver cell. Optimal patch markers are those that are high abundant
@@ -137,9 +138,9 @@ library(dplyr)
 library(ggplot2)
 library(Matrix)
 
+# Load a CellGraph object with PNA data
 se <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
   LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE)
-
 cg <- CellGraphs(se)[[1]]
 
 protein_props <- cg@counts \%>\% Matrix::colSums() \%>\% prop.table()
@@ -147,7 +148,8 @@ patch_props <- protein_props
 patch_props["CD8"] <- 0.4
 patch_props <- patch_props \%>\% prop.table()
 
-# Sample node indices for a. new patch
+# Here we'll create an artifical patch by replacing node counts
+# in a small region
 inds <- 1
 patch_size <- 1000
 xyz <- cg@layout$wpmds_3d \%>\% as.matrix()

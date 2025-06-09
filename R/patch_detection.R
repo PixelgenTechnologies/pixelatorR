@@ -1,5 +1,8 @@
 #' Supervised patch detection
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
 #' A patch is defined as a subgraph which is enriched for a set of patch-specific protein
 #' markers. A patch should typically have a different origin than the bulk of the PNA graph.
 #' A typical example of a patch is a small piece of another cell, e.g. a patch of a B cell on
@@ -84,9 +87,9 @@
 #' library(ggplot2)
 #' library(Matrix)
 #'
+#' # Load a CellGraph object with PNA data
 #' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
 #'   LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE)
-#'
 #' cg <- CellGraphs(se)[[1]]
 #'
 #' protein_props <- cg@counts %>% Matrix::colSums() %>% prop.table()
@@ -94,7 +97,8 @@
 #' patch_props["CD8"] <- 0.4
 #' patch_props <- patch_props %>% prop.table()
 #'
-#' # Sample node indices for a. new patch
+#' # Here we'll create an artifical patch by replacing node counts
+#' # in a small region
 #' inds <- 1
 #' patch_size <- 1000
 #' xyz <- cg@layout$wpmds_3d %>% as.matrix()
