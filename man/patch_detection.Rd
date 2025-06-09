@@ -55,8 +55,12 @@ patches.}
 \item{verbose}{A logical indicating if messages should be printed to the console.}
 }
 \value{
-A \code{CellGraph} object with the patches detected as an additional
-node column in the \code{tbl_graph} object.
+A \code{CellGraph} object with two additional node columns in the \code{tbl_graph} object:
+\itemize{
+\item \code{patch}: An integer vector indicating the patch each node belongs to.
+\item \code{potential_patch}: An integer vector indicating potential patches which are smaller than
+\code{patch_nodes_threshold}.
+}
 }
 \description{
 A patch is defined as a subgraph which is enriched for a set of patch-specific protein
@@ -88,19 +92,19 @@ Two algorithms are available for patch detection, described in the sections belo
 \item Expansion:
 \itemize{
 \item Expand \code{P} to include nodes that connect with at least 2 nodes in \code{P} within
-a 2-step neighborhood.
+a \code{k}-step neighborhood.
 \item Expand \code{P} to include nodes that connect with at least 2 nodes in \code{P} within
 a 1-step neighborhood.
 }
 \item Contract \code{P} by only keeping nodes with the highest in- out-degree ratio. The number of
 kept nodes is controlled by the \code{contraction} parameter.
 \item (optional) Remove nodes from \code{P} at the patch border with low patch connectivity
-\item Construct the patch graph from \code{P} and split it into its connected components and remove
+\item Construct the patch graph from \code{P}, split it into its connected components and remove
 components smaller than \code{patch_nodes_threshold}
-\item (optional) Run an iterative community detection (Leiden) to split up weakly connected
-patch components and repeat the \code{patch_nodes_threshold} filtering step. The resolution
-is defined by \code{leiden_resolution} where a higher value is more likely to result in more
-patches and vice versa.
+\item (optional) Run community detection (Leiden) to split up weakly connected
+patch components and repeat the \code{patch_nodes_threshold} filtering step. The
+\code{leiden_resolution} parameter controls the granularity of the communities, where
+a higher value is more likely to result in more patches and vice versa.
 \item Label nodes in the original graph with the patch information. The largest
 "patch" is labeled as 0 and should  correspond to the receiver cell graph. The rest
 of the patches are labeled as 1, 2, etc. and correspond to patches ordered by
@@ -112,14 +116,14 @@ decreasing size.
 
 \enumerate{
 \item Run local G using the \code{patch_markers} UMI counts.
-\item Define \code{P} as the set of nodes with a p value below \code{pval_threshold}.
+\item Define \code{P} as the set of nodes with a p value for the local G Z score below \code{pval_threshold}.
 \item (optional) Remove nodes from \code{P} at the patch border with low patch connectivity
-\item Construct the patch graph from \code{P} and split it into its connected components and remove
+\item Construct the patch graph from \code{P}, split it into its connected components and remove
 components smaller than \code{patch_nodes_threshold}.
-\item (optional) Run an iterative community detection (Leiden) to split up weakly connected
-patch components and repeat the \code{patch_nodes_threshold} filtering step. The resolution
-is defined by \code{leiden_resolution} where a higher value is more likely to result in more
-patches and vice versa.
+\item (optional) Run community detection (Leiden) to split up weakly connected
+patch components and repeat the \code{patch_nodes_threshold} filtering step. The
+\code{leiden_resolution} parameter controls the granularity of the communities, where
+a higher value is more likely to result in more patches and vice versa.
 \item Label nodes in the original graph with the patch information. The largest
 "patch" is labeled as 0 and should  correspond to the receiver cell graph. The rest
 of the patches are labeled as 1, 2, etc. and correspond to patches ordered by

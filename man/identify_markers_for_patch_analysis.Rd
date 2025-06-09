@@ -7,7 +7,7 @@
 identify_markers_for_patch_analysis(
   object,
   group_by,
-  host_population,
+  receiver_population,
   target_population,
   abundance_difference = 10,
   min_freq = 0.01,
@@ -20,7 +20,7 @@ identify_markers_for_patch_analysis(
 
 \item{group_by}{A string specifying the metadata column to group by}
 
-\item{host_population}{A string specifying the host population name
+\item{receiver_population}{A string specifying the receiver population name
 present in the \code{group_by} column}
 
 \item{target_population}{A string specifying the target population name
@@ -41,11 +41,11 @@ a protein to be labeled in the output table.}
 A \code{tbl_df} with the following columns:
 \itemize{
 \item \code{marker}: the name of the protein.
-\item \code{host_unmixed_freq}: the estimated proportion in the host population after unmixing.
+\item \code{receiver_unmixed_freq}: the estimated proportion in the receiver population after unmixing.
 \item \code{target_unmixed_freq}: the estimated proportion in the target population after unmixing.
-\item \code{host_freq}: the proportion in the host population.
+\item \code{receiver_freq}: the proportion in the receiver population.
 \item \code{target_freq}: the proportion in the target population.
-\item \code{label}: a label indicating whether the protein is a marker for the host
+\item \code{label}: a label indicating whether the protein is a marker for the receiver
 or target population. NA values indicate that the protein is unspecific.
 }
 }
@@ -53,8 +53,8 @@ or target population. NA values indicate that the protein is unspecific.
 Patch detection can be applied to identify patches of one cell type
 on another. The prerequisite for this analysis is that the patch-specific
 markers are known. Patch detection can be improved further by also leveraging
-host-specific markers. This function identifies population-specific markers
-for the patch and host populations, which can then be used for patch detection.
+receiver-specific markers. This function identifies population-specific markers
+for the patch and receiver populations, which can then be used for patch detection.
 }
 \details{
 Patch detection is sensitive to the selection of markers and therefore requires
@@ -63,7 +63,7 @@ cell population.
 
 The method requires a \code{Seurat} object with a metadata column containing
 the population information, e.g. a column with cell type labels. We then need
-to specify the host and target populations, where the host population represent
+to specify the receiver and target populations, where the receiver population represent
 the cells on which the patches are expected to be found and the target population
 represents the cell type from which the patches originated.
 
@@ -74,7 +74,7 @@ harder to determine what markers are T-cell specific. In other words, the abunda
 data is mixed.
 
 This method attempts to unmix the abundance data using matrix factorization, estimating
-the composition of the pure host and target populations. The unmixed abundance profiles
+the composition of the pure receiver and target populations. The unmixed abundance profiles
 are then used to label population-specific markers based on the difference in abundance
 and minimum frequency. The results are summarized in a table, and an optional plot is drawn
 to help interpret the results.

@@ -25,18 +25,18 @@
 #' 1. Initialization: Start with the set of nodes `P` labelled by patch-specific protein markers.
 #' 2. Expansion:
 #'    - Expand `P` to include nodes that connect with at least 2 nodes in `P` within
-#'      a 2-step neighborhood.
+#'      a `k`-step neighborhood.
 #'    - Expand `P` to include nodes that connect with at least 2 nodes in `P` within
 #'      a 1-step neighborhood.
 #' 3. Contract `P` by only keeping nodes with the highest in- out-degree ratio. The number of
 #' kept nodes is controlled by the `contraction` parameter.
 #' 4. (optional) Remove nodes from `P` at the patch border with low patch connectivity
-#' 5. Construct the patch graph from `P` and split it into its connected components and remove
+#' 5. Construct the patch graph from `P`, split it into its connected components and remove
 #' components smaller than `patch_nodes_threshold`
-#' 6. (optional) Run an iterative community detection (Leiden) to split up weakly connected
-#' patch components and repeat the `patch_nodes_threshold` filtering step. The resolution
-#' is defined by `leiden_resolution` where a higher value is more likely to result in more
-#' patches and vice versa.
+#' 6. (optional) Run community detection (Leiden) to split up weakly connected
+#' patch components and repeat the `patch_nodes_threshold` filtering step. The
+#' `leiden_resolution` parameter controls the granularity of the communities, where
+#' a higher value is more likely to result in more patches and vice versa.
 #' 7. Label nodes in the original graph with the patch information. The largest
 #' "patch" is labeled as 0 and should  correspond to the receiver cell graph. The rest
 #' of the patches are labeled as 1, 2, etc. and correspond to patches ordered by
@@ -44,14 +44,14 @@
 #'
 #' @section Local G:
 #' 1. Run local G using the `patch_markers` UMI counts.
-#' 2. Define `P` as the set of nodes with a p value below `pval_threshold`.
+#' 2. Define `P` as the set of nodes with a p value for the local G Z score below `pval_threshold`.
 #' 3. (optional) Remove nodes from `P` at the patch border with low patch connectivity
-#' 4. Construct the patch graph from `P` and split it into its connected components and remove
+#' 4. Construct the patch graph from `P`, split it into its connected components and remove
 #' components smaller than `patch_nodes_threshold`.
-#' 5. (optional) Run an iterative community detection (Leiden) to split up weakly connected
-#' patch components and repeat the `patch_nodes_threshold` filtering step. The resolution
-#' is defined by `leiden_resolution` where a higher value is more likely to result in more
-#' patches and vice versa.
+#' 5. (optional) Run community detection (Leiden) to split up weakly connected
+#' patch components and repeat the `patch_nodes_threshold` filtering step. The
+#' `leiden_resolution` parameter controls the granularity of the communities, where
+#' a higher value is more likely to result in more patches and vice versa.
 #' 6. Label nodes in the original graph with the patch information. The largest
 #' "patch" is labeled as 0 and should  correspond to the receiver cell graph. The rest
 #' of the patches are labeled as 1, 2, etc. and correspond to patches ordered by
@@ -170,8 +170,10 @@
 #'   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
 #'   labs(fill = "Fraction of\ncounts")
 #'
-#' @return A \code{CellGraph} object with the patches detected as an additional
-#' node column in the `tbl_graph` object.
+#' @return A \code{CellGraph} object with two additional node columns in the `tbl_graph` object:
+#' - `patch`: An integer vector indicating the patch each node belongs to.
+#' - `potential_patch`: An integer vector indicating potential patches which are smaller than
+#'                      `patch_nodes_threshold`.
 #'
 #' @export
 #'
@@ -210,6 +212,15 @@ patch_detection <- function(
   assert_within_limits(pval_threshold, limits = c(0, 1))
   assert_single_value(seed, type = "integer")
   assert_single_value(verbose, type = "bool")
+
+  if (attributes(cg@cellgraph)$assay_type != "PNA") {
+    cli::cli_abort(
+      c(
+        "i" = "The patch detection method only works on {.val PNA} graphs.",
+        "x" = "The provided {.cls CellGraph} object contains a {.val {attributes(cg@cellgraph)$assay_type}} graph."
+      )
+    )
+  }
 
   set.seed(seed)
 
@@ -335,10 +346,10 @@ patch_detection <- function(
 #'
 #' @param cg A `CellGraph` object containing the cell graph.
 #' @param patch_markers A character vector of patch protein markers.
-#' @param receiver_markers A character vector of host protein markers.
+#' @param receiver_markers A character vector of receiver protein markers.
 #' @param k The neighborhood size to consider.
 #' @param remove_1_core_patch_nodes Logical, whether to remove nodes with core number 1
-#' that have multiple connections with the host graph.
+#' that have multiple connections with the receiver cell graph.
 #' @param s Scaling factor for the expand-contract method.
 #'
 #'
@@ -360,11 +371,11 @@ patch_detection <- function(
   # Define initial patch nodes
   patch_nodes_i <- (cg@counts[, patch_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
 
-  # Define host nodes to block later if desired
+  # Define receiver nodes to block later if desired
   if (!is.null(receiver_markers)) {
-    host_nodes <- (cg@counts[, receiver_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
+    receiver_nodes <- (cg@counts[, receiver_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
   } else {
-    host_nodes <- rep(FALSE, nrow(cg@counts))
+    receiver_nodes <- rep(FALSE, nrow(cg@counts))
   }
 
   # Update patch_nodes to include outside nodes connecting at least
@@ -386,13 +397,13 @@ patch_detection <- function(
   patch_nodes_keep <- (order(ratio, decreasing = TRUE) %in% ord_keep) | (ratio >= 1)
 
   if (!is.null(receiver_markers)) {
-    host_nodes <- host_nodes &
+    receiver_nodes <- receiver_nodes &
       (((A[, !patch_nodes] %>% Matrix::rowSums()) > 0) |
-      ((A[, host_nodes] %>% Matrix::rowSums()) > 0))
+      ((A[, receiver_nodes] %>% Matrix::rowSums()) > 0))
   }
 
   # Define final patch nodes and subset adjacency matrix
-  patch_nodes_final <- (rownames(A) %in% names(patch_nodes_keep)[patch_nodes_keep]) & !host_nodes
+  patch_nodes_final <- (rownames(A) %in% names(patch_nodes_keep)[patch_nodes_keep]) & !receiver_nodes
   A_patch <- A[patch_nodes_final, patch_nodes_final]
 
   # Construct initial patch graph
@@ -401,7 +412,7 @@ patch_detection <- function(
 
   # Remove nodes with out degree > 1 and coreness == 1 which are located
   # near the edge(s) of the patch(es). These are more likely to belong to
-  # the host graph.
+  # the receiver graph.
   if (remove_1_core_patch_nodes) {
     g_patch <- .core_1_filter(g_patch, A, patch_nodes_i, patch_nodes_final)
   }
@@ -421,10 +432,10 @@ patch_detection <- function(
 #'
 #' @param cg A `CellGraph` object containing the cell graph.
 #' @param patch_markers A character vector of patch protein markers.
-#' @param receiver_markers A character vector of host protein markers.
+#' @param receiver_markers A character vector of receiver protein markers.
 #' @param k The neighborhood size to consider.
 #' @param remove_1_core_patch_nodes Logical, whether to remove nodes with core number 1
-#' that have multiple connections with the host graph.
+#' that have multiple connections with the receiver graph.
 #' @param s Scaling factor for the local G method.
 #'
 #'
@@ -444,11 +455,11 @@ patch_detection <- function(
   # Define initial patch nodes
   patch_nodes_i <- (cg@counts[, patch_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
 
-  # Block host nodes if desired
+  # Block receiver nodes if desired
   if (!is.null(receiver_markers)) {
-    host_nodes <- (cg@counts[, receiver_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
+    receiver_nodes <- (cg@counts[, receiver_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
   } else {
-    host_nodes <- rep(FALSE, nrow(cg@counts))
+    receiver_nodes <- rep(FALSE, nrow(cg@counts))
   }
 
   patch_counts <- cg@counts[, patch_markers, drop = FALSE] %>% Matrix::rowSums()
@@ -465,7 +476,7 @@ patch_detection <- function(
       alternative = "greater"
     )
   patch_nodes_final <- gi_mat$gi_p_mat[, 1] < s
-  patch_nodes_final <- patch_nodes_final & !host_nodes
+  patch_nodes_final <- patch_nodes_final & !receiver_nodes
 
   A_patch <- A[patch_nodes_final, patch_nodes_final]
 
@@ -482,7 +493,7 @@ patch_detection <- function(
   return(g_patch)
 }
 
-#' Filter nodes with core number 1 that have multiple connections with the host graph
+#' Filter nodes with core number 1 that have multiple connections with the receiver graph
 #'
 #' @param g_patch The patch graph.
 #' @param A The adjacency matrix of the original cell graph.
@@ -505,8 +516,8 @@ patch_detection <- function(
 #' Patch detection can be applied to identify patches of one cell type
 #' on another. The prerequisite for this analysis is that the patch-specific
 #' markers are known. Patch detection can be improved further by also leveraging
-#' host-specific markers. This function identifies population-specific markers
-#' for the patch and host populations, which can then be used for patch detection.
+#' receiver-specific markers. This function identifies population-specific markers
+#' for the patch and receiver populations, which can then be used for patch detection.
 #'
 #' @details
 #' Patch detection is sensitive to the selection of markers and therefore requires
@@ -515,7 +526,7 @@ patch_detection <- function(
 #'
 #' The method requires a \code{Seurat} object with a metadata column containing
 #' the population information, e.g. a column with cell type labels. We then need
-#' to specify the host and target populations, where the host population represent
+#' to specify the receiver and target populations, where the receiver population represent
 #' the cells on which the patches are expected to be found and the target population
 #' represents the cell type from which the patches originated.
 #'
@@ -526,14 +537,14 @@ patch_detection <- function(
 #' data is mixed.
 #'
 #' This method attempts to unmix the abundance data using matrix factorization, estimating
-#' the composition of the pure host and target populations. The unmixed abundance profiles
+#' the composition of the pure receiver and target populations. The unmixed abundance profiles
 #' are then used to label population-specific markers based on the difference in abundance
 #' and minimum frequency. The results are summarized in a table, and an optional plot is drawn
 #' to help interpret the results.
 #'
 #' @param object A \code{Seurat} object
 #' @param group_by A string specifying the metadata column to group by
-#' @param host_population A string specifying the host population name
+#' @param receiver_population A string specifying the receiver population name
 #' present in the \code{group_by} column
 #' @param target_population A string specifying the target population name
 #' present in the \code{group_by} column
@@ -547,11 +558,11 @@ patch_detection <- function(
 #'
 #' @return A \code{tbl_df} with the following columns:
 #'   - `marker`: the name of the protein.
-#'   - `host_unmixed_freq`: the estimated proportion in the host population after unmixing.
+#'   - `receiver_unmixed_freq`: the estimated proportion in the receiver population after unmixing.
 #'   - `target_unmixed_freq`: the estimated proportion in the target population after unmixing.
-#'   - `host_freq`: the proportion in the host population.
+#'   - `receiver_freq`: the proportion in the receiver population.
 #'   - `target_freq`: the proportion in the target population.
-#'   - `label`: a label indicating whether the protein is a marker for the host
+#'   - `label`: a label indicating whether the protein is a marker for the receiver
 #'              or target population. NA values indicate that the protein is unspecific.
 #'
 #' @export
@@ -559,7 +570,7 @@ patch_detection <- function(
 identify_markers_for_patch_analysis <- function(
   object,
   group_by,
-  host_population,
+  receiver_population,
   target_population,
   abundance_difference = 10,
   min_freq = 1e-2,
@@ -573,12 +584,12 @@ identify_markers_for_patch_analysis <- function(
 
   assert_class(object, "Seurat")
   assert_single_value(group_by, "string")
-  assert_single_value(host_population, "string")
+  assert_single_value(receiver_population, "string")
   assert_single_value(target_population, "string")
   assert_col_in_data(group_by, object[[]])
   assert_col_class(group_by, object[[]], c("character", "factor"))
   group_vec <- object[[]] %>% pull(all_of(group_by))
-  assert_x_in_y(host_population, group_vec)
+  assert_x_in_y(receiver_population, group_vec)
   assert_x_in_y(target_population, group_vec)
   assert_single_value(abundance_difference, "numeric")
   assert_within_limits(abundance_difference, c(1, 100))
@@ -587,61 +598,61 @@ identify_markers_for_patch_analysis <- function(
   assert_single_value(show_plot, "bool")
   assert_single_value(seed, "integer")
 
-  cells <- colnames(object)[group_vec %in% c(host_population, target_population)]
+  cells <- colnames(object)[group_vec %in% c(receiver_population, target_population)]
   counts <- object %>%
     subset(cells = cells) %>%
     JoinLayers() %>%
     LayerData(layer = "counts") %>%
     as.matrix()
 
-  # Get protein proportions for target and host populations
-  group_vec <- group_vec[group_vec %in% c(host_population, target_population)]
+  # Get protein proportions for target and receiver populations
+  group_vec <- group_vec[group_vec %in% c(receiver_population, target_population)]
   target_props <- counts[, group_vec %in% target_population] %>%
     Matrix::rowSums() %>%
     prop.table()
-  host_props <- counts[, group_vec %in% host_population] %>%
+  receiver_props <- counts[, group_vec %in% receiver_population] %>%
     Matrix::rowSums() %>%
     prop.table()
 
   # Run NMF
   nm <- RcppML::nmf(counts, k = 2, verbose = FALSE)
   w <- nm$w %>% prop.table(margin = 2)
-  cor_host_w1 <- cor(w[, 1], host_props)
+  cor_receiver_w1 <- cor(w[, 1], receiver_props)
   cor_target_w1 <- cor(w[, 1], target_props)
-  if (max(c(cor_host_w1, cor_target_w1)) < 0.9) {
+  if (max(c(cor_receiver_w1, cor_target_w1)) < 0.9) {
     cli::cli_abort(
       c(
         "x" = "Failed to identify population markers."
       )
     )
   }
-  if (cor_target_w1 > cor_host_w1) {
+  if (cor_target_w1 > cor_receiver_w1) {
     target_unmixed_props <- w[, 1]
-    host_unmixed_props <- w[, 2]
+    receiver_unmixed_props <- w[, 2]
   } else {
     target_unmixed_props <- w[, 2]
-    host_unmixed_props <- w[, 1]
+    receiver_unmixed_props <- w[, 1]
   }
 
   # Create tibble
   df <- tibble(
     marker = rownames(object),
     tup = target_unmixed_props,
-    hup = host_unmixed_props,
+    hup = receiver_unmixed_props,
     tp = target_props,
-    hp = host_props
+    hp = receiver_props
   ) %>%
     mutate(
       label = case_when(
         (tup > abundance_difference * hup) & (hup < min_freq) ~ glue::glue("marker for {target_population}"),
-        (hup > abundance_difference * tup) & (tup < min_freq)  ~ glue::glue("marker for {host_population}"),
+        (hup > abundance_difference * tup) & (tup < min_freq)  ~ glue::glue("marker for {receiver_population}"),
         TRUE ~ "Unspecific"
       )
     ) %>%
     rename(
-      host_freq = hp,
+      receiver_freq = hp,
       target_freq = tp,
-      host_unmixed_freq = hup,
+      receiver_unmixed_freq = hup,
       target_unmixed_freq = tup
     )
 
@@ -649,7 +660,7 @@ identify_markers_for_patch_analysis <- function(
   if (show_plot) {
     visualize_patch_analysis_markers(
       df,
-      host_population,
+      receiver_population,
       target_population
     ) %>%
       print()
@@ -666,34 +677,34 @@ identify_markers_for_patch_analysis <- function(
 #' @noRd
 visualize_patch_analysis_markers <- function(
   df,
-  host_population,
+  receiver_population,
   target_population
 ) {
   dfm <- bind_rows(
     df %>%
-      select(marker, host_freq, target_freq, label) %>%
+      select(marker, receiver_freq, target_freq, label) %>%
       mutate(type = "True"),
     df %>%
-      select(marker, host_unmixed_freq, target_unmixed_freq, label) %>%
-      rename(host_freq = host_unmixed_freq, target_freq = target_unmixed_freq) %>%
+      select(marker, receiver_unmixed_freq, target_unmixed_freq, label) %>%
+      rename(receiver_freq = receiver_unmixed_freq, target_freq = target_unmixed_freq) %>%
       mutate(type = "Estimated")
   ) %>%
     mutate(type = factor(type, c("True", "Estimated")))
   cols <- set_names(
     c("#4A73C0", "#DB5D61", "lightgrey"),
-    c(glue::glue("marker for {host_population}"),
+    c(glue::glue("marker for {receiver_population}"),
       glue::glue("marker for {target_population}"),
       "Unspecific")
 
   )
-  p1 <- ggplot(dfm, aes(host_freq, target_freq, color = label, size = pmax(host_freq, target_freq))) +
+  p1 <- ggplot(dfm, aes(receiver_freq, target_freq, color = label, size = pmax(receiver_freq, target_freq))) +
     geom_point() +
     theme_bw() +
     ggrepel::geom_text_repel(aes(label = marker), max.overlaps = 50) +
     scale_x_continuous(expand = c(0, 0.02), labels = scales::percent) +
     scale_y_continuous(expand = c(0, 0.02), labels = scales::percent) +
     scale_size(range = c(1, 4)) +
-    labs(x = glue::glue("Proportion in {host_population}"),
+    labs(x = glue::glue("Proportion in {receiver_population}"),
          y = glue::glue("Proportion in {target_population}"),
          color = "") +
     facet_grid(~type) +
@@ -702,16 +713,16 @@ visualize_patch_analysis_markers <- function(
   est_props <- df %>%
     na.omit() %>%
     group_by(label) %>%
-    summarize(hp_tot = sum(host_freq),
+    summarize(hp_tot = sum(receiver_freq),
               tp_tot = sum(target_freq),
-              hup_tot = sum(host_unmixed_freq),
+              hup_tot = sum(receiver_unmixed_freq),
               tup_tot = sum(target_unmixed_freq)) %>%
     pivot_longer(all_of(c("hp_tot", "tp_tot", "hup_tot", "tup_tot"))) %>%
     mutate(type = if_else(
       stringr::str_detect(name, "hup|tup"), "Estimated", "True"
     )) %>%
     mutate(name = case_when(
-      name %in% c("hp_tot", "hup_tot") ~ host_population,
+      name %in% c("hp_tot", "hup_tot") ~ receiver_population,
       name %in% c("tp_tot", "tup_tot") ~ target_population
     )) %>%
     mutate(type = factor(type, c("True", "Estimated")))
