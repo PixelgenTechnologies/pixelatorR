@@ -798,7 +798,7 @@ cos_dist <- function(A, B) {
   if (!ncol(A) == ncol(B)) {
     cli::cli_abort(
       c("i" = "A and B must have the same number of columns",
-        x = "{.var A} has {ncol(A)} columns, but {.var B} has {ncol(B)} columns." )
+        x = "{.var A} has {ncol(A)} columns, but {.var B} has {ncol(B)} columns.")
     )
   }
 
