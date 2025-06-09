@@ -71,7 +71,7 @@ Suggests:
     magick,
     ragg,
     png,
-    RColorBrewer
+    RColorBrewer,
     RcppML,
     ggrepel
 Collate: 
