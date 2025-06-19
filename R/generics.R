@@ -1265,3 +1265,90 @@ PredictDoublets <- function(
 ) {
   UseMethod(generic = "PredictDoublets", object = object)
 }
+
+
+#' @title Filter proximity scores
+#'
+#' @description
+#' At least one of the thresholds must be set. The function will filter out protein
+#' pairs that do not meet the specified thresholds.
+#'
+#' All filters can be used together or separately, but it's  recommended to only use
+#' the \code{background_threshold_pct} filter. This filter is applied to the fraction
+#' of UMI counts which does not depend on the cell size (total number of molecules).
+#'
+#' The filters are applied in the following order:
+#'
+#' 1. Remove protein pairs with a minimum UMI count fraction below \code{background_threshold_pct}
+#' 2. Remove protein pairs with a minimum UMI count below \code{background_threshold_count}
+#' 3. Remove protein pairs detected in fewer than \code{min_cells_count} cells
+#'
+#' @param object An \code{tbl_df} or \code{tbl_lazy} object with proximity scores.
+#' @param background_threshold_pct The background abundance level given as a fraction
+#' total UMI counts. For example, 0.05 means that the background is set at 5% of the
+#' total UMI counts for each cell. A protein pair must have at least this fraction
+#' for both proteins to be kept in the table.
+#' @param background_threshold_count The background abundance level given as a UMI count.
+#' For example, 30 means that the background is set at 30 UMI counts. A protein pair
+#' must have at least this UMI count for both proteins to be kept in the table. Note that
+#' this puts a hard cutoff on the UMI counts, which may not be desired if the cells have
+#' very different total UMI counts.
+#' @param min_cells_count The minimum number of cells in which a protein pair must be
+#' detected to be kept in the table. This is useful to remove protein pairs that are
+#' detected in very few cells, which may be due to noise or low expression levels.
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @return A \code{tbl_df} or \code{tbl_lazy} with filtered proximity scores.
+#'
+#' @rdname FilterProximityScores
+#'
+#' @export
+#'
+FilterProximityScores <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "FilterProximityScores", object = object)
+}
+
+
+#' @title Summarize proximity scores
+#'
+#' @description
+#' Computes the median or mean proximity score for each protein pair across all group combinations
+#' defined by \code{group_vars}. This is typically useful when profiling a population of interest,
+#' where the goal is to compute representative proximity scores for each protein pair within that
+#' population.
+#'
+#' The proximity table typically contains a small fraction of the possible protein pairs for each
+#' cell. These missing pairs typically have UMI counts below the detection threshold and their
+#' proximity scores can therefore be imputed as 0 (0 observed join counts and 0 expected join
+#' counts => no deviation from the expected value). \code{SummarizeProximityScores} pads the
+#' proximity score vectors with 0s for the missing pairs to ensure that the summary statistics
+#' are computed for the entire population. This behavior can be turned off by setting
+#' \code{include_missing_obs = FALSE}.
+#'
+#' @param object A \code{tbl_df} or \code{tbl_lazy} object with proximity scores.
+#' @param proximity_metric The proximity metric to use. One of "log2_ratio" or "join_count_z".
+#' @param group_vars A character vector with the names of the variables to use for
+#' grouping This is typically used is you want to summarize the proximity scores
+#' for multiple cell types and/or conditions.
+#' @param include_missing_obs Logical indicating whether to include missing observations
+#' as 0 when computing the summary statistics.
+#' @param summary_stat One of "mean" or "median"
+#' @param detailed Logical indicating whether to return lists which can be used to compute
+#' custom summary statistics. See examples for details
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @return A \code{tbl_df} with summary statistics
+#'
+#' @rdname SummarizeProximityScores
+#'
+#' @export
+#'
+SummarizeProximityScores <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "SummarizeProximityScores", object = object)
+}
