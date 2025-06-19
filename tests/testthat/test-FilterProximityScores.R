@@ -1,0 +1,25 @@
+pxl_file <- minimal_pna_pxl_file()
+seur_obj <- ReadPNA_Seurat(pxl_file, verbose = FALSE)
+proximity <- ProximityScores(seur_obj, add_marker_counts = TRUE, add_marker_proportions = TRUE)
+proximity_lazy <- ProximityScores(seur_obj, add_marker_counts = TRUE, add_marker_proportions = TRUE, lazy = TRUE)
+proximity_missing_cols <- ProximityScores(seur_obj)
+
+test_that("FilterProximityScores works as expected", {
+  expect_no_error(proximity_filtered <- FilterProximityScores(proximity, background_threshold_pct = 0.001))
+  expect_no_error(proximity_filtered_lazy <- FilterProximityScores(proximity_lazy, background_threshold_pct = 0.001))
+  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy %>% collect()))
+  expect_no_error(proximity_filtered <- FilterProximityScores(proximity, background_threshold_count = 10))
+  expect_no_error(proximity_filtered_lazy <- FilterProximityScores(proximity_lazy, background_threshold_count = 10))
+  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy %>% collect()))
+  expect_no_error(proximity_filtered <- FilterProximityScores(proximity, min_cells_count = 2))
+  expect_no_error(proximity_filtered_lazy <- FilterProximityScores(proximity_lazy, min_cells_count = 2))
+  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy %>% collect()))
+})
+
+test_that("FilterProximityScores fails with invalid input", {
+  expect_error(proximity_filtered <- FilterProximityScores(proximity))
+  expect_error(proximity_filtered <- FilterProximityScores(proximity, background_threshold_pct = "Invalid"))
+  expect_error(proximity_filtered <- FilterProximityScores(proximity, background_threshold_count = "Invalid"))
+  expect_error(proximity_filtered <- FilterProximityScores(proximity, min_cells_count = "Invalid"))
+  expect_error(proximity_filtered <- FilterProximityScores(proximity_missing_cols, background_threshold_pct = 0.001))
+})

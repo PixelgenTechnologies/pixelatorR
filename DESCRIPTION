@@ -45,7 +45,8 @@ Imports:
     bit64,
     grDevices,
     graphics,
-    stats
+    stats,
+    utils
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -96,6 +97,7 @@ Collate:
     'doublet_detection.R'
     'duckdb_methods.R'
     'extdata.R'
+    'filter_and_summarize_proximity_scores.R'
     'global_options.R'
     'graph_analysis.R'
     'graph_conversion.R'
