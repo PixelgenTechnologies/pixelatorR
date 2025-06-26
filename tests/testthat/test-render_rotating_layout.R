@@ -16,43 +16,43 @@ test_that("render_rotating_layout works as expected", {
 
   # Change colors
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         colors = c("red", "blue")
+    frames = 2, show_first_frame = FALSE,
+    colors = c("red", "blue")
   ))
   # Change opacity
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         pt_opacity = 0.1
+    frames = 2, show_first_frame = FALSE,
+    pt_opacity = 0.1
   ))
 
   # Change point size
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         pt_size = 2
+    frames = 2, show_first_frame = FALSE,
+    pt_size = 2
   ))
 
   # Change max_degree
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         max_degree = 120
+    frames = 2, show_first_frame = FALSE,
+    max_degree = 120
   ))
 
   # Change center_zero
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         center_zero = TRUE
+    frames = 2, show_first_frame = FALSE,
+    center_zero = TRUE
   ))
 
   # Change padding
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         pad = 0.5
+    frames = 2, show_first_frame = FALSE,
+    pad = 0.5
   ))
 
   # Change width / height
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         width = 300, height = 300
+    frames = 2, show_first_frame = FALSE,
+    width = 300, height = 300
   ))
   gif <- magick::image_read(gif_file)
   magick::image_info(gif)$width %>% expect_equal(300)
@@ -60,20 +60,20 @@ test_that("render_rotating_layout works as expected", {
 
   # Change resolution
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         res = 100, width = 300, height = 300
+    frames = 2, show_first_frame = FALSE,
+    res = 100, width = 300, height = 300
   ))
 
   # Use base R graphics
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         graphics_use = "base"
+    frames = 2, show_first_frame = FALSE,
+    graphics_use = "base"
   ))
 
   # Use base R graphics
   expect_no_error(render_rotating_layout(xyz, gif_file,
-                                         frames = 2, show_first_frame = FALSE,
-                                         ggplot_theme = ggplot2::theme_classic()
+    frames = 2, show_first_frame = FALSE,
+    ggplot_theme = ggplot2::theme_classic()
   ))
 })
 

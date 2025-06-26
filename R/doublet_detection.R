@@ -195,16 +195,17 @@ SimulateDoublets <- function(
   colnames(simulated_doublets) <-
     paste0(simulated_cell_prefix, seq_len(n_sim))
 
-  if(return_id) {
-
+  if (return_id) {
     return(
-      list(counts = simulated_doublets,
-           ids = random_doublets %>%
-             mutate(id1 = colnames(count_data)[i1],
-                    id2 = colnames(count_data)[i2])
+      list(
+        counts = simulated_doublets,
+        ids = random_doublets %>%
+          mutate(
+            id1 = colnames(count_data)[i1],
+            id2 = colnames(count_data)[i2]
+          )
       )
     )
-
   } else {
     return(simulated_doublets)
   }

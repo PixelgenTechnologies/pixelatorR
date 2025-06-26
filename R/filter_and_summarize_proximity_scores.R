@@ -217,8 +217,8 @@ SummarizeProximityScores.tbl_lazy <- function(
   # Set the summary function
   prefix <- ifelse(summary_stat == "median", "median_", "mean_")
   summary_fkn <- switch(summary_stat,
-                        "median" = median,
-                        "mean" = mean
+    "median" = median,
+    "mean" = mean
   )
 
   # Count number of components
@@ -251,17 +251,17 @@ SummarizeProximityScores.tbl_lazy <- function(
     {
       if (detailed) {
         summarize(.,
-                  n_cells_detected = as.integer(n()),
-                  join_count_list = list(join_count),
-                  join_count_expected_mean_list = list(join_count_expected_mean),
-                  !!sym(paste0(proximity_metric, "_list")) := list(!!sym(proximity_metric)),
-                  .groups = "drop"
+          n_cells_detected = as.integer(n()),
+          join_count_list = list(join_count),
+          join_count_expected_mean_list = list(join_count_expected_mean),
+          !!sym(paste0(proximity_metric, "_list")) := list(!!sym(proximity_metric)),
+          .groups = "drop"
         )
       } else {
         summarize(.,
-                  n_cells_detected = as.integer(n()),
-                  !!sym(paste0(proximity_metric, "_list")) := list(!!sym(proximity_metric)),
-                  .groups = "drop"
+          n_cells_detected = as.integer(n()),
+          !!sym(paste0(proximity_metric, "_list")) := list(!!sym(proximity_metric)),
+          .groups = "drop"
         )
       }
     } %>%

@@ -3,11 +3,11 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file(), load_proximity_scores = FALSE, verb
 
 test_that("patch_detection works as expected", {
   expect_no_error(cg_patch <-
-                    patch_detection(
-                      CellGraphs(se)[[1]],
-                      patch_markers = c("CD58"),
-                      verbose = FALSE
-                    ))
+    patch_detection(
+      CellGraphs(se)[[1]],
+      patch_markers = c("CD58"),
+      verbose = FALSE
+    ))
   expect_no_error(cg_patch@cellgraph %>% pull(patch))
   expect_equal(
     table(cg_patch@cellgraph %>% pull(patch)),
