@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `SimulateDoublets` to simulate doublets.
 - `FindAnnoyNeighbors` Computes nearest neighbors using the Annoy algorithm.
 - `DensityScatterPlot` now has an argument `equal_axes` to control whether the x and y axes should have a common range. 
+- `return_id` argument to `SimulateDoublets` to output the IDs of cells used to simulate each doublet.
 
 ### Fixes
 - Fixed bug in `ColocalizationHeatmap` where `marker1_col` and `marker2_col` only worked for "marker_1" and "marker_2".
