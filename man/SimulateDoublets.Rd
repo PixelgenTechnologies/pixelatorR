@@ -12,6 +12,7 @@ SimulateDoublets(
   seed = 37,
   method = c("average", "sum"),
   simulated_cell_prefix = "simcell_",
+  return_id = FALSE,
   verbose = TRUE
 )
 }
@@ -29,6 +30,9 @@ populations. If NULL, all cells are used.}
 cells) or "sum" (sum of the two cells).}
 
 \item{simulated_cell_prefix}{A character with the prefix to use for the simulated doublet cell names.}
+
+\item{return_id}{If TRUE, returns a list with the simulated doublet counts and a tibble withe their original cell
+IDs. If FALSE, returns only the simulated doublet counts.}
 
 \item{verbose}{Print messages.}
 }

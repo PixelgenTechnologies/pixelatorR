@@ -1023,7 +1023,7 @@ scale_layout <- function(
 .areColors <- function(colors) {
   sapply(colors, function(X) {
     tryCatch(is.matrix(col2rgb(X)),
-             error = function(e) FALSE
+      error = function(e) FALSE
     )
   })
 }

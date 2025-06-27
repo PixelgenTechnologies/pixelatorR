@@ -92,7 +92,9 @@
 #'   LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE)
 #' cg <- CellGraphs(se)[[1]]
 #'
-#' protein_props <- cg@counts %>% Matrix::colSums() %>% prop.table()
+#' protein_props <- cg@counts %>%
+#'   Matrix::colSums() %>%
+#'   prop.table()
 #' patch_props <- protein_props
 #' patch_props["CD8"] <- 0.4
 #' patch_props <- patch_props %>% prop.table()
@@ -163,7 +165,10 @@
 #'   tidyr::pivot_longer(where(is.numeric)) %>%
 #'   group_by(patch) %>%
 #'   mutate(value = value / sum(value))
-#' lvls <- gg %>% arrange(desc(patch), value) %>% pull(name) %>% unique()
+#' lvls <- gg %>%
+#'   arrange(desc(patch), value) %>%
+#'   pull(name) %>%
+#'   unique()
 #' ggplot(gg %>% mutate(name = factor(name, lvls)), aes(name, patch, fill = value)) +
 #'   geom_tile() +
 #'   scale_fill_gradientn(
@@ -196,7 +201,6 @@ patch_detection <- function(
   seed = 123,
   verbose = TRUE
 ) {
-
   # Validate input parameters
   method <- match.arg(method, choices = c("expand_contract", "local_G"))
   assert_class(cg, "CellGraph")
@@ -228,25 +232,33 @@ patch_detection <- function(
 
   set.seed(seed)
 
-  if (verbose) cli::cli_alert_info(
-    "Extracting connected patches using method {.str {method}}..."
-  )
+  if (verbose) {
+    cli::cli_alert_info(
+      "Extracting connected patches using method {.str {method}}..."
+    )
+  }
 
   # Select patch detection method
   patch_detection_fkn <- switch(method,
-                                expand_contract = .patch_detection_expand_contract,
-                                local_G = .patch_detection_local_G)
+    expand_contract = .patch_detection_expand_contract,
+    local_G = .patch_detection_local_G
+  )
   s <- switch(method,
-              expand_contract = contraction,
-              local_G = pval_threshold)
+    expand_contract = contraction,
+    local_G = pval_threshold
+  )
 
   # Run patch detection
   g_patch <- patch_detection_fkn(cg, patch_markers, receiver_markers, k, prune_patch_edge, s)
 
-  if (verbose) cli::cli_alert(
-    c("   {.val {length(g_patch)}} out of {.val {nrow(cg@counts)}}",
-      " nodes are labelled as patch nodes...")
-  )
+  if (verbose) {
+    cli::cli_alert(
+      c(
+        "   {.val {length(g_patch)}} out of {.val {nrow(cg@counts)}}",
+        " nodes are labelled as patch nodes..."
+      )
+    )
+  }
 
   # Split graph into connected components and remove small components with fewer
   # than patch_nodes_threshold nodes
@@ -273,17 +285,25 @@ patch_detection <- function(
     return(cg)
   }
 
-  if (verbose) cli::cli_alert(
-    c("   Found {.val {length(g_exp_patch_list)}}",
-      " connected patches after filtering...")
-  )
+  if (verbose) {
+    cli::cli_alert(
+      c(
+        "   Found {.val {length(g_exp_patch_list)}}",
+        " connected patches after filtering..."
+      )
+    )
+  }
 
   # Run iterative leiden to split up weakly connected patches
   if (leiden_refinement) {
-    if (verbose) cli::cli_alert(
-      c("   Splitting up weakly connected patches using",
-        " Leiden with resolution={.val {leiden_resolution}}...")
-    )
+    if (verbose) {
+      cli::cli_alert(
+        c(
+          "   Splitting up weakly connected patches using",
+          " Leiden with resolution={.val {leiden_resolution}}..."
+        )
+      )
+    }
     g_patch_nodes <- lapply(seq_along(g_exp_patch_list), function(i) {
       g_exp_patch_list[[i]] %>%
         mutate(community = igraph::cluster_leiden(
@@ -299,10 +319,14 @@ patch_detection <- function(
       group_by(patch) %>%
       mutate(n = n()) %>%
       filter(n >= patch_nodes_threshold)
-    if (verbose) cli::cli_alert_info(
-      c("   Found {.val {length(unique(g_patch_nodes$patch))}}",
-        " patches after splitting...")
-    )
+    if (verbose) {
+      cli::cli_alert_info(
+        c(
+          "   Found {.val {length(unique(g_patch_nodes$patch))}}",
+          " patches after splitting..."
+        )
+      )
+    }
   } else {
     g_patch_nodes <- lapply(seq_along(g_exp_patch_list), function(i) {
       g_exp_patch_list[[i]] %N>% as_tibble() %>%
@@ -403,7 +427,7 @@ patch_detection <- function(
   if (!is.null(receiver_markers)) {
     receiver_nodes <- receiver_nodes &
       (((A[, !patch_nodes] %>% Matrix::rowSums()) > 0) |
-      ((A[, receiver_nodes] %>% Matrix::rowSums()) > 0))
+        ((A[, receiver_nodes] %>% Matrix::rowSums()) > 0))
   }
 
   # Define final patch nodes and subset adjacency matrix
@@ -452,7 +476,6 @@ patch_detection <- function(
   remove_1_core_patch_nodes,
   s = 0.01
 ) {
-
   # Get adjacency matrix
   A <- cg@cellgraph %>% igraph::as_adjacency_matrix()
 
@@ -581,7 +604,6 @@ identify_markers_for_patch_analysis <- function(
   show_plot = TRUE,
   seed = 123
 ) {
-
   expect_RcppML()
   expect_ggrepel()
   set.seed(seed)
@@ -649,7 +671,7 @@ identify_markers_for_patch_analysis <- function(
     mutate(
       label = case_when(
         (tup > abundance_difference * hup) & (hup < min_freq) ~ glue::glue("marker for {target_population}"),
-        (hup > abundance_difference * tup) & (tup < min_freq)  ~ glue::glue("marker for {receiver_population}"),
+        (hup > abundance_difference * tup) & (tup < min_freq) ~ glue::glue("marker for {receiver_population}"),
         TRUE ~ "Unspecific"
       )
     ) %>%
@@ -696,10 +718,11 @@ visualize_patch_analysis_markers <- function(
     mutate(type = factor(type, c("True", "Estimated")))
   cols <- set_names(
     c("#4A73C0", "#DB5D61", "lightgrey"),
-    c(glue::glue("marker for {receiver_population}"),
+    c(
+      glue::glue("marker for {receiver_population}"),
       glue::glue("marker for {target_population}"),
-      "Unspecific")
-
+      "Unspecific"
+    )
   )
   p1 <- ggplot(dfm, aes(receiver_freq, target_freq, color = label, size = pmax(receiver_freq, target_freq))) +
     geom_point() +
@@ -708,19 +731,23 @@ visualize_patch_analysis_markers <- function(
     scale_x_continuous(expand = c(0, 0.02), labels = scales::percent) +
     scale_y_continuous(expand = c(0, 0.02), labels = scales::percent) +
     scale_size(range = c(1, 4)) +
-    labs(x = glue::glue("Proportion in {receiver_population}"),
-         y = glue::glue("Proportion in {target_population}"),
-         color = "") +
+    labs(
+      x = glue::glue("Proportion in {receiver_population}"),
+      y = glue::glue("Proportion in {target_population}"),
+      color = ""
+    ) +
     facet_grid(~type) +
     guides(size = "none") +
     scale_color_manual(values = cols)
   est_props <- df %>%
     na.omit() %>%
     group_by(label) %>%
-    summarize(hp_tot = sum(receiver_freq),
-              tp_tot = sum(target_freq),
-              hup_tot = sum(receiver_unmixed_freq),
-              tup_tot = sum(target_unmixed_freq)) %>%
+    summarize(
+      hp_tot = sum(receiver_freq),
+      tp_tot = sum(target_freq),
+      hup_tot = sum(receiver_unmixed_freq),
+      tup_tot = sum(target_unmixed_freq)
+    ) %>%
     pivot_longer(all_of(c("hp_tot", "tp_tot", "hup_tot", "tup_tot"))) %>%
     mutate(type = if_else(
       stringr::str_detect(name, "hup|tup"), "Estimated", "True"
@@ -812,8 +839,10 @@ cos_dist <- function(A, B) {
   assert_class(B, "matrix")
   if (!ncol(A) == ncol(B)) {
     cli::cli_abort(
-      c("i" = "A and B must have the same number of columns",
-        x = "{.var A} has {ncol(A)} columns, but {.var B} has {ncol(B)} columns.")
+      c(
+        "i" = "A and B must have the same number of columns",
+        x = "{.var A} has {ncol(A)} columns, but {.var B} has {ncol(B)} columns."
+      )
     )
   }
 

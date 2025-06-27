@@ -123,6 +123,8 @@ FindAnnoyNeighbors <- function(
 #' @param method A character with the method to use to simulate doublets. Options are "average" (average of the two
 #'               cells) or "sum" (sum of the two cells).
 #' @param simulated_cell_prefix A character with the prefix to use for the simulated doublet cell names.
+#' @param return_id If TRUE, returns a list with the simulated doublet counts and a tibble withe their original cell
+#'                  IDs. If FALSE, returns only the simulated doublet counts.
 #' @param verbose Print messages.
 #'
 #'
@@ -142,6 +144,7 @@ SimulateDoublets <- function(
   seed = 37,
   method = c("average", "sum"),
   simulated_cell_prefix = "simcell_",
+  return_id = FALSE,
   verbose = TRUE
 ) {
   assert_class(count_data, c("matrix", "Matrix"))
@@ -192,7 +195,20 @@ SimulateDoublets <- function(
   colnames(simulated_doublets) <-
     paste0(simulated_cell_prefix, seq_len(n_sim))
 
-  return(simulated_doublets)
+  if (return_id) {
+    return(
+      list(
+        counts = simulated_doublets,
+        ids = random_doublets %>%
+          mutate(
+            id1 = colnames(count_data)[i1],
+            id2 = colnames(count_data)[i2]
+          )
+      )
+    )
+  } else {
+    return(simulated_doublets)
+  }
 }
 
 
