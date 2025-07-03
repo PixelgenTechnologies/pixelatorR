@@ -63,6 +63,9 @@ prediction. Default is 100.}
 
 \item{seed}{The seed to use for reproducibility.}
 
+\item{iter}{The number of iterations to use for the doublet simulation. Increasing
+the number of iterations will increase the robustness of the doublet detection.}
+
 \item{verbose}{Print messages.}
 
 \item{assay}{A character with the name of the assay to use.}
