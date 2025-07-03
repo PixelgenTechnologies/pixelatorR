@@ -18,6 +18,7 @@ PredictDoublets(object, ...)
   p_adjust_method = "BH",
   p_threshold = 0.01,
   seed = 37,
+  iter = 1,
   verbose = TRUE,
   ...
 )
@@ -32,6 +33,7 @@ PredictDoublets(object, ...)
   p_adjust_method = "BH",
   p_threshold = 0.01,
   seed = 37,
+  iter = 1,
   assay = NULL,
   layer = "counts",
   verbose = TRUE,
@@ -60,6 +62,9 @@ prediction. Default is 100.}
 \item{p_threshold}{The p-value threshold to use. Default is 0.01.}
 
 \item{seed}{The seed to use for reproducibility.}
+
+\item{iter}{The number of iterations to use for the doublet simulation. Increasing
+the number of iterations will increase the robustness of the doublet detection.}
 
 \item{verbose}{Print messages.}
 

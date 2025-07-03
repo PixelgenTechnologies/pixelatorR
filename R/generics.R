@@ -1244,6 +1244,8 @@ Edgelists <- function(
 #' @param p_adjust_method The p-value adjustment method to use. Default is "BH".
 #' @param p_threshold The p-value threshold to use. Default is 0.01.
 #' @param seed The seed to use for reproducibility.
+#' @param iter The number of iterations to use for the doublet simulation. Increasing
+#' the number of iterations will increase the robustness of the doublet detection.
 #' @param assay A character with the name of the assay to use.
 #' @param layer A character with the name of the layer to use. Default is "counts".
 #' @param verbose Print messages.
