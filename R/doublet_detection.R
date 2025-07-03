@@ -257,6 +257,14 @@ PredictDoublets.Matrix <- function(
     pb <- cli_progress_bar("Predicting doublets", total = iter, .auto_close = FALSE)
   }
 
+  pca_prep <-
+    . %>%
+    as.matrix() %>%
+    log1p() %>%
+    sweep(2, apply(., 2, mean), `-`) %>%
+    t() %>%
+    scale()
+
   cell_nn_res <-
     lapply(seq_len(iter),
            function(i) {
@@ -275,14 +283,6 @@ PredictDoublets.Matrix <- function(
                  method = "sum",
                  verbose = FALSE
                )
-
-             pca_prep <-
-               . %>%
-               as.matrix() %>%
-               log1p() %>%
-               sweep(2, apply(., 2, mean), `-`) %>%
-               t() %>%
-               scale()
 
              pca_scores <-
                cbind(
