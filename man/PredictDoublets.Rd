@@ -18,6 +18,7 @@ PredictDoublets(object, ...)
   p_adjust_method = "BH",
   p_threshold = 0.01,
   seed = 37,
+  iter = 1,
   verbose = TRUE,
   ...
 )
@@ -32,6 +33,7 @@ PredictDoublets(object, ...)
   p_adjust_method = "BH",
   p_threshold = 0.01,
   seed = 37,
+  iter = 1,
   assay = NULL,
   layer = "counts",
   verbose = TRUE,

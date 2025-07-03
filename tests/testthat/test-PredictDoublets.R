@@ -150,6 +150,23 @@ test_that("PredictDoublets works as expected", {
     )
   )
 
+  expect_equal(
+    head(PredictDoublets(sim_data, n_neighbor = 10, iter = 2)),
+    structure(list(doublet_nns = c(14L, 10L, 18L, 14L, 16L, 16L),
+                   doublet_nn_rate = c(0.7, 0.5, 0.9, 0.7, 0.8, 0.8),
+                   doublet_p = c(0.785781947601208, 0.996057858335917,
+                                 0.0912604324648783, 0.785781947601208,
+                                 0.41484150253018, 0.41484150253018),
+                   doublet_p_adj = c(0.921738354957429, 0.999996186972567,
+                                     0.198392244488866, 0.921738354957429,
+                                     0.590521711786733, 0.590521711786733),
+                   doublet_prediction = c("singlet", "singlet", "singlet",
+                                          "singlet", "singlet", "singlet")),
+              row.names = c("cell1", "cell2", "cell3",
+                            "cell4", "cell5", "cell6"),
+              class = "data.frame")
+  )
+
 
   expect_no_error(pred_seur <- PredictDoublets(sim_data,
     simulation_rate = 0.1,
