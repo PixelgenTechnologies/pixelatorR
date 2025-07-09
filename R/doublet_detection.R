@@ -267,52 +267,52 @@ PredictDoublets.Matrix <- function(
     scale()
 
   cell_nn_res <-
-    lapply(seq_len(iter),
-           function(i) {
+    lapply(
+      seq_len(iter),
+      function(i) {
+        if (verbose && check_global_verbosity() && iter > 1) {
+          cli_progress_update(id = pb)
+        }
 
-             if (verbose && check_global_verbosity() && iter > 1) {
-               cli_progress_update(id = pb)
-             }
+        simulated_doublets <-
+          SimulateDoublets(
+            count_data = object,
+            ref_cells1 = ref_cells1,
+            ref_cells2 = ref_cells2,
+            n_sim = round(simulation_rate * n_cells),
+            seed = seed + i - 1,
+            method = "sum",
+            verbose = FALSE
+          )
 
-             simulated_doublets <-
-               SimulateDoublets(
-                 count_data = object,
-                 ref_cells1 = ref_cells1,
-                 ref_cells2 = ref_cells2,
-                 n_sim = round(simulation_rate * n_cells),
-                 seed = seed + i - 1,
-                 method = "sum",
-                 verbose = FALSE
-               )
+        pca_scores <-
+          cbind(
+            object,
+            simulated_doublets
+          ) %>%
+          pca_prep() %>%
+          pcaMethods::pca(
+            method = "ppca",
+            nPcs = npcs
+          ) %>%
+          slot("scores")
 
-             pca_scores <-
-               cbind(
-                 object,
-                 simulated_doublets
-               ) %>%
-               pca_prep() %>%
-               pcaMethods::pca(
-                 method = "ppca",
-                 nPcs = npcs
-               ) %>%
-               slot("scores")
-
-             cell_nn <-
-               pca_scores %>%
-               FindAnnoyNeighbors(
-                 cells = colnames(object),
-                 n_nn = n_neighbor + 1
-               ) %>%
-               filter(id != neighbor) %>%
-               mutate(simulated = !neighbor %in% colnames(object)) %>%
-               group_by(id) %>%
-               summarise(
-                 doublet_nns = sum(simulated),
-                 doublet_nn_rate = doublet_nns / n_neighbor,
-                 .groups = "drop"
-               )
-
-           })
+        cell_nn <-
+          pca_scores %>%
+          FindAnnoyNeighbors(
+            cells = colnames(object),
+            n_nn = n_neighbor + 1
+          ) %>%
+          filter(id != neighbor) %>%
+          mutate(simulated = !neighbor %in% colnames(object)) %>%
+          group_by(id) %>%
+          summarise(
+            doublet_nns = sum(simulated),
+            doublet_nn_rate = doublet_nns / n_neighbor,
+            .groups = "drop"
+          )
+      }
+    )
   if (verbose && check_global_verbosity() && iter > 1) {
     cli_progress_done()
   }
@@ -334,18 +334,22 @@ PredictDoublets.Matrix <- function(
     bind_rows(.id = "trial") %>%
     mutate(trial = as.numeric(trial)) %>%
     calc_stats() %>%
-    arrange(factor(id, levels = colnames(object)),
-            trial)
+    arrange(
+      factor(id, levels = colnames(object)),
+      trial
+    )
 
-  if(return_trials) {
+  if (return_trials) {
     return(doublet_prediction_trials)
   }
 
   doublet_prediction <-
     doublet_prediction_trials %>%
     group_by(id) %>%
-    summarise(doublet_nns = round(median(doublet_nns), 0),
-              doublet_vote = sum(doublet_prediction == "doublet") / n()) %>%
+    summarise(
+      doublet_nns = round(median(doublet_nns), 0),
+      doublet_vote = sum(doublet_prediction == "doublet") / n()
+    ) %>%
     calc_stats() %>%
     arrange(factor(id, levels = colnames(object)))
 
