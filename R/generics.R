@@ -1259,7 +1259,7 @@ Edgelists <- function(
 #'   \code{return_trials = TRUE}.}
 #'   \item{id}{Cell ID.}
 #'   \item{doublet_nns}{Number of nearest neighbors that are simulated doublets.}
-#'   #'   \item{doublet_nn_rate}{Proportion of nearest neighbors that are simulated
+#'   \item{doublet_nn_rate}{Proportion of nearest neighbors that are simulated
 #'   doublets. Only returned if \code{return_trials = FALSE}.}
 #'   \item{doublet_vote}{The fraction of iterations where the cell has been classified
 #'   as a doublet. Only returned if \code{return_trials = FALSE}.}
@@ -1269,6 +1269,7 @@ Edgelists <- function(
 #'   \item{logratio}{Log2-ratio of observed simulated doublet neighbors compared to
 #'   expectation.}
 #'   \item{doublet_prediction}{Predicted doublet status (doublet/singlet).}
+#'   }
 #'
 #' @references McGinnis CS, Murrow LM, Gartner ZJ.
 #'             DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data
