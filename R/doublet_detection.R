@@ -221,13 +221,14 @@ PredictDoublets.Matrix <- function(
   object,
   ref_cells1 = NULL,
   ref_cells2 = NULL,
-  simulation_rate = 3,
+  simulation_rate = 1,
   n_neighbor = 100,
   npcs = 10,
   p_adjust_method = "BH",
-  p_threshold = 0.01,
+  p_threshold = 0.05,
   seed = 37,
   iter = 1,
+  return_trials = FALSE,
   verbose = TRUE,
   ...
 ) {
@@ -279,7 +280,7 @@ PredictDoublets.Matrix <- function(
                  ref_cells1 = ref_cells1,
                  ref_cells2 = ref_cells2,
                  n_sim = round(simulation_rate * n_cells),
-                 seed = seed,
+                 seed = seed + i - 1,
                  method = "sum",
                  verbose = FALSE
                )
@@ -316,27 +317,37 @@ PredictDoublets.Matrix <- function(
     cli_progress_done()
   }
 
-expected_doublet_rate <- simulation_rate / (1 + simulation_rate)
-  expected_doublet_nns <- n_neighbor * expected_doublet_rate * iter
+  expected_doublet_rate <- simulation_rate / (1 + simulation_rate)
+  expected_doublet_nns <- n_neighbor * expected_doublet_rate
 
-  doublet_prediction <-
-    cell_nn_res %>%
-    bind_rows() %>%
-    group_by(id) %>%
-    summarise(
-      doublet_nns = sum(doublet_nns),
-      doublet_nn_rate = mean(doublet_nn_rate),
-      .groups = "drop"
-    ) %>%
+  calc_stats <-
+    . %>%
     mutate(
-      doublet_p = stats::pbinom(doublet_nns - 1, n_neighbor * iter, expected_doublet_rate, lower.tail = FALSE),
+      doublet_p = stats::pbinom(doublet_nns - 1, n_neighbor, expected_doublet_rate, lower.tail = FALSE),
       doublet_p_adj = p.adjust(doublet_p, p_adjust_method),
-      doublet_prediction = ifelse(doublet_p_adj < p_threshold, "doublet", "singlet")
-    ) %>%
-    column_to_rownames("id")
+      logratio = log2(doublet_nns / expected_doublet_nns),
+      doublet_prediction = ifelse(doublet_p_adj < p_threshold, "doublet", "singlet"),
+    )
+
+  doublet_prediction_trials <-
+    cell_nn_res %>%
+    bind_rows(.id = "trial") %>%
+    mutate(trial = as.numeric(trial)) %>%
+    calc_stats() %>%
+    arrange(factor(id, levels = colnames(object)),
+            trial)
+
+  if(return_trials) {
+    return(doublet_prediction_trials)
+  }
 
   doublet_prediction <-
-    doublet_prediction[colnames(object), ]
+    doublet_prediction_trials %>%
+    group_by(id) %>%
+    summarise(doublet_nns = round(median(doublet_nns), 0),
+              doublet_vote = sum(doublet_prediction == "doublet") / n()) %>%
+    calc_stats() %>%
+    arrange(factor(id, levels = colnames(object)))
 
   return(doublet_prediction)
 }
@@ -351,11 +362,11 @@ PredictDoublets.Seurat <- function(
   object,
   ref_cells1 = NULL,
   ref_cells2 = NULL,
-  simulation_rate = 3,
+  simulation_rate = 1,
   n_neighbor = 100,
   npcs = 10,
   p_adjust_method = "BH",
-  p_threshold = 0.01,
+  p_threshold = 0.05,
   seed = 37,
   iter = 1,
   assay = NULL,

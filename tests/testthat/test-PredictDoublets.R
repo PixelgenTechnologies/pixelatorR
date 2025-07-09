@@ -115,61 +115,104 @@ test_that("PredictDoublets works as expected", {
   expect_named(
     pred_seur,
     c(
-      "doublet_nns", "doublet_nn_rate",
+      "id", "doublet_nns", "doublet_vote",
       "doublet_p", "doublet_p_adj",
-      "doublet_prediction"
-    )
+      "logratio", "doublet_prediction")
   )
-  expect_true(all(paste0("cell", seq_len(ncol(sim_data))) %in% rownames(pred_seur)))
+  expect_true(all(paste0("cell", seq_len(ncol(sim_data))) %in% pred_seur$id))
   expect_equal(
     head(pred_seur),
-    structure(
-      list(
-        doublet_nns = c(7L, 5L, 9L, 7L, 8L, 8L),
-        doublet_nn_rate = c(0.7, 0.5, 0.9, 0.7, 0.8, 0.8),
-        doublet_p = c(
-          0.775875091552734, 0.98027229309082,
-          0.244025230407715, 0.775875091552734,
-          0.525592803955078, 0.525592803955078
-        ),
-        doublet_p_adj = c(
-          0.910117409446023, 0.995200297554132,
-          0.53048963132112, 0.910117409446023,
-          0.748174809900467, 0.748174809900467
-        ),
-        doublet_prediction = c(
-          "singlet", "singlet", "singlet",
-          "singlet", "singlet", "singlet"
-        )
-      ),
-      row.names = c(
-        "cell1", "cell2", "cell3",
-        "cell4", "cell5", "cell6"
-      ),
-      class = "data.frame"
-    )
+    structure(list(id = c("cell1", "cell2", "cell3",
+                          "cell4", "cell5", "cell6"),
+                   doublet_nns = c(7L, 5L, 9L, 7L, 8L, 8L),
+                   doublet_vote = c(0, 0, 0, 0, 0, 0),
+                   doublet_p = c(
+                     0.775875091552734, 0.98027229309082,
+                     0.244025230407715, 0.775875091552734,
+                     0.525592803955078, 0.525592803955078
+                   ),
+                   doublet_p_adj = c(
+                     0.910117409446023, 0.995200297554132,
+                     0.53048963132112, 0.910117409446023,
+                     0.748174809900467, 0.748174809900467
+                   ),
+                   logratio = c(
+                     -0.0995356735509144, -0.584962500721156,
+                     0.263034405833794, -0.0995356735509144,
+                     0.0931094043914815, 0.0931094043914815
+                   ),
+                   doublet_prediction = c(
+                     "singlet", "singlet", "singlet",
+                     "singlet", "singlet", "singlet"
+                   )),
+              row.names = c(NA, -6L),
+              class = c("tbl_df", "tbl", "data.frame"))
   )
 
   expect_equal(
     head(PredictDoublets(sim_data, n_neighbor = 10, iter = 2)),
-    structure(list(doublet_nns = c(14L, 10L, 18L, 14L, 16L, 16L),
-                   doublet_nn_rate = c(0.7, 0.5, 0.9, 0.7, 0.8, 0.8),
-                   doublet_p = c(0.785781947601208, 0.996057858335917,
-                                 0.0912604324648783, 0.785781947601208,
-                                 0.41484150253018, 0.41484150253018),
-                   doublet_p_adj = c(0.921738354957429, 0.999996186972567,
-                                     0.198392244488866, 0.921738354957429,
-                                     0.590521711786733, 0.590521711786733),
-                   doublet_prediction = c("singlet", "singlet", "singlet",
-                                          "singlet", "singlet", "singlet")),
-              row.names = c("cell1", "cell2", "cell3",
-                            "cell4", "cell5", "cell6"),
-              class = "data.frame")
+    structure(list(id = c(
+      "cell1", "cell2", "cell3",
+      "cell4", "cell5", "cell6"
+    ),
+    doublet_nns = c(8, 5, 8, 8, 8, 8),
+    doublet_vote = c(0, 0, 0, 0, 0, 0),
+    doublet_p = c(
+      0.525592803955078, 0.98027229309082,
+      0.525592803955078, 0.525592803955078,
+      0.525592803955078, 0.525592803955078
+    ),
+    doublet_p_adj = c(
+      0.717532838163929, 0.996494293212891,
+      0.717532838163929, 0.717532838163929,
+      0.717532838163929, 0.717532838163929
+    ),
+    logratio = c(
+      0.0931094043914815, -0.584962500721156,
+      0.0931094043914815, 0.0931094043914815,
+      0.0931094043914815, 0.0931094043914815
+    ),
+    doublet_prediction = c(
+      "singlet", "singlet", "singlet",
+      "singlet", "singlet", "singlet"
+    )),
+    row.names = c(NA, -6L),
+              class = c("tbl_df", "tbl", "data.frame"))
+  )
+
+  expect_equal(
+    head(PredictDoublets(sim_data, n_neighbor = 10, iter = 2, return_trials = TRUE)),
+    structure(list(trial = c(1, 2, 1, 2, 1, 2),
+                   id = c("cell1", "cell1", "cell2",
+                          "cell2", "cell3", "cell3"),
+                   doublet_nns = c(7L, 8L, 5L, 5L, 9L, 8L),
+                   doublet_nn_rate = c(0.7, 0.8, 0.5, 0.5, 0.9, 0.8),
+                   doublet_p = c(
+                     0.775875091552734, 0.525592803955078,
+                     0.98027229309082, 0.98027229309082,
+                     0.244025230407715, 0.525592803955078
+                   ),
+                   doublet_p_adj = c(
+                     0.914138546748435, 0.753538070186491,
+                     0.999584197998047, 0.999584197998047,
+                     0.534849820071704, 0.753538070186491
+                   ),
+                   logratio = c(
+                     -0.0995356735509144, 0.0931094043914815,
+                     -0.584962500721156, -0.584962500721156,
+                     0.263034405833794, 0.0931094043914815
+                   ),
+                   doublet_prediction = c(
+                     "singlet", "singlet", "singlet",
+                     "singlet", "singlet", "singlet"
+                   )),
+              row.names = c(NA, -6L),
+              class = c("tbl_df", "tbl", "data.frame"))
   )
 
 
   expect_no_error(pred_seur <- PredictDoublets(sim_data,
-    simulation_rate = 0.1,
+                                               simulation_rate = 0.1,
     n_neighbor = 10,
     ref_cells1 = 1:10,
     ref_cells2 = 201:220
