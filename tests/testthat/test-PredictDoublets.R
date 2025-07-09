@@ -3,7 +3,7 @@ pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file, verbose = FALSE)
 
 test_that("PredictDoublets works as expected", {
-  expect_no_error(PredictDoublets(seur))
+  expect_no_error(PredictDoublets(seur, npcs = 3))
   expect_no_error(suppressWarnings(PredictDoublets(seur, simulation_rate = 100)))
 
   # Simulate data
@@ -29,7 +29,7 @@ test_that("PredictDoublets works as expected", {
   rownames(sim_data) <- paste0("CD", seq_len(nrow(sim_data)))
   colnames(sim_data) <- paste0("cell", seq_len(ncol(sim_data)))
 
-  expect_no_error(pred_seur <- PredictDoublets(sim_data, n_neighbor = 10))
+  expect_no_error(pred_seur <- PredictDoublets(sim_data, n_neighbor = 10, p_threshold = 0.01, simulation_rate = 3))
 
   set.seed(1)
   expect_equal(
@@ -157,7 +157,12 @@ test_that("PredictDoublets works as expected", {
   )
 
   expect_equal(
-    head(PredictDoublets(sim_data, n_neighbor = 10, iter = 2)),
+    head(PredictDoublets(sim_data,
+      n_neighbor = 10,
+      iter = 2,
+      simulation_rate = 3,
+      p_threshold = 0.05
+    )),
     structure(
       list(
         id = c(
@@ -192,7 +197,13 @@ test_that("PredictDoublets works as expected", {
   )
 
   expect_equal(
-    head(PredictDoublets(sim_data, n_neighbor = 10, iter = 2, return_trials = TRUE)),
+    head(PredictDoublets(sim_data,
+      n_neighbor = 10,
+      iter = 2,
+      simulation_rate = 3,
+      p_threshold = 0.05,
+      return_trials = TRUE
+    )),
     structure(
       list(
         trial = c(1, 2, 1, 2, 1, 2),

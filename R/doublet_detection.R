@@ -244,6 +244,7 @@ PredictDoublets.Matrix <- function(
   assert_class(p_threshold, "numeric")
   assert_within_limits(p_threshold, c(0, 1))
   assert_class(seed, "numeric")
+  assert_within_limits(npcs, c(1, ncol(object) * (simulation_rate + 1) - 1))
 
   expect_pcaMethods()
 
