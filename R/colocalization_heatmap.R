@@ -185,6 +185,14 @@ ColocalizationHeatmap <- function(
     assert_length(legend_range, 2)
   }
 
+  # Check if the data is grouped
+  if (is.grouped_df(data)) {
+    cli::cli_warn(
+      c("i" = "The input data is grouped and will be ungrouped.")
+    )
+    data <- data %>% ungroup()
+  }
+
   cols_keep <- c(marker1_col, marker2_col, value_col)
   numeric_cols <- value_col
   if (type == "dots") {
@@ -224,7 +232,10 @@ ColocalizationHeatmap <- function(
     plot_data <-
       plot_data %>%
       bind_rows(plot_data %>%
-        rename(marker_1 = marker_2, marker_2 = marker_1)) %>%
+        rename(
+          !!sym(marker1_col) := !!sym(marker2_col),
+          !!sym(marker2_col) := !!sym(marker1_col)
+        )) %>%
       distinct()
   }
 
@@ -264,8 +275,8 @@ ColocalizationHeatmap <- function(
           .
         }
       } %>%
-      pivot_wider(names_from = "marker_2", values_from = all_of(value_col), values_fill = 0) %>%
-      column_to_rownames("marker_1") %>%
+      pivot_wider(names_from = all_of(marker2_col), values_from = all_of(value_col), values_fill = 0) %>%
+      column_to_rownames(marker1_col) %>%
       as.matrix()
 
     # Cluster rows for the dots method
@@ -273,7 +284,7 @@ ColocalizationHeatmap <- function(
       rows_clust <- dist(plot_data_wide, method = clustering_distance_rows) %>%
         hclust(method = clustering_method)
       plot_data <- plot_data %>%
-        mutate(marker_1 = factor(marker_1, levels = with(rows_clust, labels[order])))
+        mutate(!!sym(marker1_col) := factor(!!sym(marker1_col), levels = with(rows_clust, labels[order])))
     }
 
     # Cluster columns for the dots method
@@ -285,7 +296,7 @@ ColocalizationHeatmap <- function(
           hclust(method = clustering_method)
       }
       plot_data <- plot_data %>%
-        mutate(marker_2 = factor(marker_2, levels = with(cols_clust, labels[order])))
+        mutate(!!sym(marker2_col) := factor(!!sym(marker2_col), levels = with(cols_clust, labels[order])))
     }
   }
 

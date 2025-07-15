@@ -92,24 +92,6 @@ PixelDB <- R6Class(
       }
     },
     #' @description
-    #' Cleanup method that is called when the \code{PixelDB} object is garbage collected
-    #'
-    #' @examples
-    #' con <- db$.__enclos_env__$private$con
-    #' rm(db)
-    #' gc(full = FALSE)
-    #'
-    #' # Connection should now be closed
-    #' DBI::dbIsValid(con) # FALSE
-    #'
-    #' @return Nothing
-    #'
-    finalize = function() {
-      if (DBI::dbIsValid(private$con)) {
-        DBI::dbDisconnect(private$con)
-      }
-    },
-    #' @description
     #' Show information about tables in the PXL file
     #'
     #' @examples
@@ -467,8 +449,10 @@ PixelDB <- R6Class(
 
       if (include_all_columns) {
         el <- el %>%
-          mutate(read_count = as.integer(read_count),
-                 uei_count = as.integer(uei_count))
+          mutate(
+            read_count = as.integer(read_count),
+            uei_count = as.integer(uei_count)
+          )
       } else {
         el <- el %>%
           select(-read_count, -uei_count)
@@ -476,17 +460,21 @@ PixelDB <- R6Class(
 
       if (umi_data_type == "string") {
         el <- el %>%
-          mutate(umi1 = as.character(umi1),
-                 umi2 = as.character(umi2))
+          mutate(
+            umi1 = as.character(umi1),
+            umi2 = as.character(umi2)
+          )
       }
       if (umi_data_type == "suffixed_string") {
         el <- el %>%
-          mutate(umi1 = as.character(umi1) %>% stringr::str_c("-umi1"),
-                 umi2 = as.character(umi2) %>% stringr::str_c("-umi2"))
+          mutate(
+            umi1 = as.character(umi1) %>% stringr::str_c("-umi1"),
+            umi2 = as.character(umi2) %>% stringr::str_c("-umi2")
+          )
       }
 
       if (lazy) {
-        el <- el %>% compute()
+        el <- el %>% compute(name = "edgelist_modified", overwrite = TRUE)
       } else {
         el <- el %>% collect()
       }
@@ -694,7 +682,12 @@ PixelDB <- R6Class(
   ),
   private = list(
     file = NULL,
-    con = NULL
+    con = NULL,
+    finalize = function() {
+      if (DBI::dbIsValid(private$con)) {
+        DBI::dbDisconnect(private$con)
+      }
+    }
   ),
   cloneable = FALSE
 )

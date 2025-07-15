@@ -1,29 +1,15 @@
-library(tidygraph)
-
-edge_list <-
-  ReadMPX_item(
-    system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
-    items = "edgelist"
-  )
-edge_list <-
-  edge_list %>%
-  select(upia, upib, marker) %>%
-  distinct()
-bipart_graph <-
-  edge_list %>%
-  # Create tidy graph
-  as_tbl_graph(directed = FALSE) %>%
-  mutate(node_type = case_when(name %in% edge_list$upia ~ "A", TRUE ~ "B"))
-attr(bipart_graph, "type") <- "bipartite"
-
-cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+library(pixelatorR)
+se <- ReadMPX_Seurat(minimal_mpx_pxl_file(), verbose = FALSE)
+se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE) %>%
+  ComputeLayout(layout_method = "pmds", dim = 3, pivots = 50)
+cg <- CellGraphs(se)[[1]]
 
 # CellGraphData method
 test_that("CellGraphData works as expected", {
   expect_no_error(cellgraph <- CellGraphData(cg))
   expect_s3_class(cellgraph, class = "tbl_graph")
-  expect_equal(cellgraph %>% igraph::gsize(), 68255)
-  expect_equal(cellgraph %>% length(), 16800)
+  expect_equal(cellgraph %>% igraph::gsize(), 5138)
+  expect_equal(cellgraph %>% length(), 2470)
 })
 
 test_that("CellGraphData fails when invalid input is provided", {
@@ -36,8 +22,8 @@ test_that("CellGraphData<- works as expected", {
   expect_no_error(CellGraphData(cg) <- CellGraphData(cg))
   expect_no_error(cellgraph <- CellGraphData(cg))
   expect_s3_class(cellgraph, class = "tbl_graph")
-  expect_equal(cellgraph %>% igraph::gsize(), 68255)
-  expect_equal(cellgraph %>% length(), 16800)
+  expect_equal(cellgraph %>% igraph::gsize(), 5138)
+  expect_equal(cellgraph %>% length(), 2470)
 })
 
 test_that("CellGraphData<- fails when invalid input is provided", {
@@ -49,5 +35,14 @@ test_that("CellGraphData<- fails when invalid input is provided", {
 # show method
 test_that("show.CellGraph works as expected", {
   msg <- capture_output(show(cg))
-  expect_equal(msg, "A CellGraph object containing a bipartite graph with 16800 nodes and 68255 edges")
+  expect_equal(msg, "A CellGraph object containing a bipartite graph with 2470 nodes and 5138 edges\nNumber of markers:  79 \nLayouts: pmds_3d ")
+})
+
+# subset method
+test_that("subset.CellGraph works as expected", {
+  expect_no_error(cg_small <- subset(cg, nodes = rownames(cg@counts)[1:2000]))
+  expect_equal(cg_small@layout$pmds_3d %>% dim(), c(2000, 3))
+  expect_equal(cg_small@counts %>% dim(), c(2000, 79))
+  expect_equal(cg_small@cellgraph %>% length(), 2000)
+  expect_equal(cg_small@cellgraph %>% igraph::gsize(), 4227)
 })

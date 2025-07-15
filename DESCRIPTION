@@ -41,7 +41,12 @@ Imports:
     lifecycle,
     R6,
     DBI,
-    duckdb
+    duckdb,
+    bit64,
+    grDevices,
+    graphics,
+    stats,
+    utils
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -59,7 +64,17 @@ Suggests:
     styler,
     zip,
     dtplyr,
-    data.table
+    data.table,
+    RcppAnnoy,
+    pcaMethods,
+    gifski,
+    av,
+    magick,
+    ragg,
+    png,
+    RColorBrewer,
+    RcppML,
+    ggrepel
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -79,8 +94,10 @@ Collate:
     'differential_colocalization_analysis.R'
     'differential_polarity_analysis.R'
     'differential_proximity_analysis.R'
+    'doublet_detection.R'
     'duckdb_methods.R'
     'extdata.R'
+    'filter_and_summarize_proximity_scores.R'
     'global_options.R'
     'graph_analysis.R'
     'graph_conversion.R'
@@ -95,13 +112,16 @@ Collate:
     'local_G.R'
     'molecule_rank_plot.R'
     'objects.R'
+    'patch_detection.R'
     'pivot_tables.R'
     'pixelatorR-package.R'
     'pixelatorR_style.R'
     'read_edgelist.R'
     'remove_cell_graphs.R'
+    'render_rotating_layout.R'
     'restore_paths.R'
     'tau_plot.R'
+    'two_bit_encoding.R'
     'types_check.R'
     'weighted_pmds.R'
     'write_pxl_file.R'

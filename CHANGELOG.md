@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Supervised patch detection implemented in the `patch_detection` function. Added `identify_markers_for_patch_analysis` to identify markers for patch analysis.
+- `render_rotating_layout` function to create videos of rotating cells from a tibble containing layout coordinates. The function supports multiple video formats but uses GIF as default.
+- `subset` method for `CellGraph` class
+- Option to add marker count proportions to the proximity score table in `ProximityScores`
+- `pack_2bits` and `unpack_2bits` to pack and unpack DNA sequences into 64-bit integers using 2 bits per base.
+- Experimental `PredictDoublets` function for detecting doublets in a Seurat object or count matrix.
+- `SimulateDoublets` to simulate doublets.
+- `FindAnnoyNeighbors` Computes nearest neighbors using the Annoy algorithm.
+- `DensityScatterPlot` now has an argument `equal_axes` to control whether the x and y axes should have a common range. 
+- `return_id` argument to `SimulateDoublets` to output the IDs of cells used to simulate each doublet.
+
+### Fixes
+- Fixed bug in `ColocalizationHeatmap` where `marker1_col` and `marker2_col` only worked for "marker_1" and "marker_2".
+- Fixed bug in `DensityScatterPlot` where the % cells label would be calculated across all facets instead of per each facet.
+
 ## [0.13.0] - 2025-04-23
 
 ### Added

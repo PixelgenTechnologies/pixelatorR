@@ -1,17 +1,23 @@
 # Declarations used in package check
 globalVariables(
   names = c(
-    ".", ".x", "bi_prob", "component", "component_new", "current_id",
-    "dens", "frequency", "from", "g", "graph_projection", "group",
-    "hjust", "id", "id_map", "in_gate", "join_count", "join_count_expected_mean",
-    "label", "layout", "marker", "marker_1", "marker_2", "marker_x",
-    "marker_y", "marker1", "marker2", "med_ref", "med_tgt", "mixture_component",
-    "modality", "molecules", "morans_z", "n", "n_inside", "n_ref",
-    "n_tgt", "name", "node_type", "nodes", "norm_factor", "nties",
-    "nties_const", "original_id", "p", "p_adj", "p_val", "p_val_adj",
-    "p.value", "pct.1", "pct.2", "pearson_z", "pxl_file", "quadrant",
-    "r", "read_count", "ref_n", "rn", "rs_ref", "rs_tgt", "sigma",
-    "target_n", "tau", "tau_type", "to", "total", "type", "u", "uei_count",
+    ".", ".x", "bi_prob", "community", "comp", "component", "component_new",
+    "count_1", "count_2", "current_id", "dens", "dev_png", "doublet_nns",
+    "doublet_p", "doublet_p_adj", "frequency", "from", "g", "graph_projection",
+    "group", "hjust", "hp", "hup", "i1", "i2", "id", "id_map", "in_gate", "index",
+    "item", "join_count", "join_count_expected_mean", "join_count_expected_mean_list",
+    "join_count_list", "label", "layout", "marker", "marker_1", "marker_2",
+    "marker_x", "marker_y", "marker1", "marker2", "med_ref", "med_tgt",
+    "mixture_component", "modality", "molecules", "morans_z", "n",
+    "n_cells", "n_cells_detected", "n_cells_missing", "n_inside",
+    "n_ref", "n_tgt", "name", "neighbor", "node_type", "node_val",
+    "nodes", "norm_factor", "nties", "nties_const", "original_id",
+    "p", "p_adj", "p_val", "p_val_adj", "p.value", "p1", "p2", "patch",
+    "pct.1", "pct.2", "pearson_z", "png", "pxl_file", "quadrant",
+    "r", "read_count", "receiver_freq", "receiver_unmixed_freq",
+    "ref_n", "rn", "rs_ref", "rs_tgt", "sigma", "simulated", "size",
+    "target_freq", "target_n", "target_unmixed_freq", "tau", "tau_type",
+    "to", "total", "tp", "tup", "type", "u", "uei_count", "umi_count",
     "umi_per_upia", "umi1", "umi2", "upia", "upia1", "upia2", "upib",
     "val", "value", "value_x", "value_y", "vjust", "x", "x_label",
     "xmax", "xmin", "y", "y_label", "ymax", "ymin", "z"
@@ -19,6 +25,7 @@ globalVariables(
   package = "pixelatorR",
   add = TRUE
 )
+
 
 #' Check global option for verbosity
 #'
@@ -86,4 +93,20 @@ expect_zip <- function(...) {
 
 expect_dtplyr <- function(...) {
   rlang::check_installed("dtplyr", ...)
+}
+
+expect_RcppAnnoy <- function(...) {
+  rlang::check_installed("RcppAnnoy", ...)
+}
+
+expect_pcaMethods <- function(...) {
+  rlang::check_installed("pcaMethods", ...)
+}
+
+expect_RcppML <- function(...) {
+  rlang::check_installed("RcppML", ...)
+}
+
+expect_ggrepel <- function(...) {
+  rlang::check_installed("ggrepel", ...)
 }

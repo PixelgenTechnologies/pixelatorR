@@ -1204,3 +1204,151 @@ Edgelists <- function(
 ) {
   UseMethod(generic = "Edgelists", object = object)
 }
+
+
+#' @title Predict doublets in a Seurat object
+#' @description
+#' `r lifecycle::badge("experimental")`
+#'
+#' Predict doublets in a Seurat object by simulating doublets. Doublet detection
+#' can be used to identify cell-cell aggregates or technical doublet artefacts in
+#' single-cell omics data.
+#'
+#' Both real and simulated cells are used to perform PCA and a nearest neighbor
+#' search is performed to find the number of doublets in the neighborhood of
+#' each cell.
+#' The expected doublet rate is calculated based on the simulation rate and
+#' the number of nearest neighbors. A binomial test is performed to test if
+#' the number of doublets in the neighborhood of each cell is significantly
+#' different from the expected doublet rate. The algorithm is inspired by the
+#' DoubletFinder algorithm by McGinnis et al. (2019).
+#'
+#' This method of doublet detection assumes that a doublet attains a composite
+#' identity of the two cells that form it, i.e. that a doublet constitutes the
+#' sum of its parts. This may not always the case, as cell-cell aggregates could
+#' have molecular profiles that are different from the two cells that form them.
+#' Furthermore, if the two cells that form a doublet are of the same or similar
+#' identity, the doublet may not be detected as a doublet. This is a limitation
+#' of the method and should be taken into account when interpreting the results.
+#'
+#'
+#' @param object A \code{Seurat} object or a count matrix.
+#' @param ref_cells1,ref_cells2 A character vector with cell names or indices
+#'                              to use as the first and second reference
+#'                              populations. If NULL, all cells are used.
+#' @param simulation_rate The rate of doublets to simulate. E.g. 3 means that
+#'                        for each real cell, 3 doublets are simulated.
+#' @param n_neighbor The number of nearest neighbors to use for the doublet
+#'                   prediction. Default is 100.
+#' @param npcs The number of principal components to use for PCA. Default is 10.
+#' @param p_adjust_method The p-value adjustment method to use. Default is "BH".
+#' @param p_threshold The p-value threshold to use. Default is 0.01.
+#' @param seed The seed to use for reproducibility.
+#' @param assay A character with the name of the assay to use.
+#' @param layer A character with the name of the layer to use. Default is "counts".
+#' @param verbose Print messages.
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @references McGinnis CS, Murrow LM, Gartner ZJ.
+#'             DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data
+#'             Using Artificial Nearest Neighbors. Cell Syst.
+#'             2019 Apr 24;8(4):329-337.e4. doi: 10.1016/j.cels.2019.03.003.
+#'             Epub 2019 Apr 3. PMID: 30954475; PMCID: PMC6853612.
+#'
+#' @rdname PredictDoublets
+#'
+#' @export
+#'
+PredictDoublets <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "PredictDoublets", object = object)
+}
+
+
+#' @title Filter proximity scores
+#'
+#' @description
+#' At least one of the thresholds must be set. The function will filter out protein
+#' pairs that do not meet the specified thresholds.
+#'
+#' All filters can be used together or separately, but it's  recommended to only use
+#' the \code{background_threshold_pct} filter. This filter is applied to the fraction
+#' of UMI counts which does not depend on the cell size (total number of molecules).
+#'
+#' The filters are applied in the following order:
+#'
+#' 1. Remove protein pairs with a minimum UMI count fraction below \code{background_threshold_pct}
+#' 2. Remove protein pairs with a minimum UMI count below \code{background_threshold_count}
+#' 3. Remove protein pairs detected in fewer than \code{min_cells_count} cells
+#'
+#' @param object An \code{tbl_df} or \code{tbl_lazy} object with proximity scores.
+#' @param background_threshold_pct The background abundance level given as a fraction
+#' total UMI counts. For example, 0.05 means that the background is set at 5% of the
+#' total UMI counts for each cell. A protein pair must have at least this fraction
+#' for both proteins to be kept in the table.
+#' @param background_threshold_count The background abundance level given as a UMI count.
+#' For example, 30 means that the background is set at 30 UMI counts. A protein pair
+#' must have at least this UMI count for both proteins to be kept in the table. Note that
+#' this puts a hard cutoff on the UMI counts, which may not be desired if the cells have
+#' very different total UMI counts.
+#' @param min_cells_count The minimum number of cells in which a protein pair must be
+#' detected to be kept in the table. This is useful to remove protein pairs that are
+#' detected in very few cells, which may be due to noise or low expression levels.
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @return A \code{tbl_df} or \code{tbl_lazy} with filtered proximity scores.
+#'
+#' @rdname FilterProximityScores
+#'
+#' @export
+#'
+FilterProximityScores <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "FilterProximityScores", object = object)
+}
+
+
+#' @title Summarize proximity scores
+#'
+#' @description
+#' Computes the median or mean proximity score for each protein pair across all group combinations
+#' defined by \code{group_vars}. This is typically useful when profiling a population of interest,
+#' where the goal is to compute representative proximity scores for each protein pair within that
+#' population.
+#'
+#' The proximity table typically contains a small fraction of the possible protein pairs for each
+#' cell. These missing pairs typically have UMI counts below the detection threshold and their
+#' proximity scores can therefore be imputed as 0 (0 observed join counts and 0 expected join
+#' counts => no deviation from the expected value). \code{SummarizeProximityScores} pads the
+#' proximity score vectors with 0s for the missing pairs to ensure that the summary statistics
+#' are computed for the entire population. This behavior can be turned off by setting
+#' \code{include_missing_obs = FALSE}.
+#'
+#' @param object A \code{tbl_df} or \code{tbl_lazy} object with proximity scores.
+#' @param proximity_metric The proximity metric to use. One of "log2_ratio" or "join_count_z".
+#' @param group_vars A character vector with the names of the variables to use for
+#' grouping This is typically used is you want to summarize the proximity scores
+#' for multiple cell types and/or conditions.
+#' @param include_missing_obs Logical indicating whether to include missing observations
+#' as 0 when computing the summary statistics.
+#' @param summary_stat One of "mean" or "median"
+#' @param detailed Logical indicating whether to return lists which can be used to compute
+#' custom summary statistics. See examples for details
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @return A \code{tbl_df} with summary statistics
+#'
+#' @rdname SummarizeProximityScores
+#'
+#' @export
+#'
+SummarizeProximityScores <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "SummarizeProximityScores", object = object)
+}

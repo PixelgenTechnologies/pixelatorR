@@ -704,7 +704,8 @@ LoadCellGraphs.Seurat <- function(
 
     # Return results
     attr(g, "type") <- "bipartite"
-    attr(g, "component_id") <- cell_ids[i]
+    attr(g, "component_id") <- i
+    attr(g, "assay_type") <- "PNA"
     return(g)
   }) %>%
     set_names(nm = cell_ids)
@@ -805,6 +806,7 @@ LoadCellGraphs.Seurat <- function(
     # Return results
     attr(g, "type") <- "bipartite"
     attr(g, "component_id") <- nm
+    attr(g, "assay_type") <- "MPX"
     if (add_markers) {
       return(list(graph = g, counts = node_cntMatrix, counts_edges = edge_cntMatrix))
     } else {
