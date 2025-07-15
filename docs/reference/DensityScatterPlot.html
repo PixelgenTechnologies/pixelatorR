@@ -57,13 +57,14 @@ can be faceted by one or two variables and a gate can be plotted.</p>
 <span>  gate_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rectangle"</span>, <span class="st">"quadrant"</span><span class="op">)</span>,</span>
 <span>  grid_n <span class="op">=</span> <span class="fl">500</span>,</span>
 <span>  scale_density <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  margin_density <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  margin_density <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  pt_size <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  alpha <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  layer <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  coord_fixed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
-<span>  annotation_params <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  equal_axes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  annotation_params <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -128,13 +129,17 @@ Required if <code>plot_gate</code> is provided.</p></dd>
 <dd><p>Whether to use fixed coordinate ratio.</p></dd>
 
 
-<dt id="arg-annotation-params">annotation_params<a class="anchor" aria-label="anchor" href="#arg-annotation-params"></a></dt>
-<dd><p>Optional list of parameters to pass to <code>geom_text</code> for gate annotations. Common parameters
-include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).</p></dd>
+<dt id="arg-equal-axes">equal_axes<a class="anchor" aria-label="anchor" href="#arg-equal-axes"></a></dt>
+<dd><p>Whether to use equal axes scaling. If <code>TRUE</code> (default), the x and y axes will have the same scale.</p></dd>
 
 
 <dt id="arg-colors">colors<a class="anchor" aria-label="anchor" href="#arg-colors"></a></dt>
 <dd><p>Optional character vector of colors to use for the color scale.</p></dd>
+
+
+<dt id="arg-annotation-params">annotation_params<a class="anchor" aria-label="anchor" href="#arg-annotation-params"></a></dt>
+<dd><p>Optional list of parameters to pass to <code>geom_text</code> for gate annotations. Common parameters
+include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -197,8 +202,6 @@ include color (text color), vjust (vertical justification), hjust (horizontal ju
 <span class="r-in"><span>  gate_type <span class="op">=</span> <span class="st">"rectangle"</span>,</span></span>
 <span class="r-in"><span>  layer <span class="op">=</span> <span class="st">"counts"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Marginal density (`margin_density = TRUE`) is not supported with faceting.</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Setting `margin_density = FALSE`</span>
 <span class="r-plt img"><img src="DensityScatterPlot-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
@@ -216,7 +219,6 @@ include color (text color), vjust (vertical justification), hjust (horizontal ju
 <span class="r-in"><span>  marker2 <span class="op">=</span> <span class="st">"Feature2"</span>,</span></span>
 <span class="r-in"><span>  layer <span class="op">=</span> <span class="st">"counts"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Setting `coord_fixed = FALSE` for compatibility with `margin_density = TRUE`</span>
 <span class="r-plt img"><img src="DensityScatterPlot-2.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a density scatter plot with a quadrant gate</span></span></span>
@@ -240,7 +242,8 @@ include color (text color), vjust (vertical justification), hjust (horizontal ju
 <span class="r-in"><span>  <span class="op">)</span>,</span></span>
 <span class="r-in"><span>  layer <span class="op">=</span> <span class="st">"counts"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Setting `coord_fixed = FALSE` for compatibility with `margin_density = TRUE`</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding missing grouping variables: `quadrant`</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Adding missing grouping variables: `quadrant`, `x`</span>
 <span class="r-plt img"><img src="DensityScatterPlot-3.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

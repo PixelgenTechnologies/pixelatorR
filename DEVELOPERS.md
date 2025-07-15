@@ -199,3 +199,31 @@ Error in `my_func()`:
 ℹ `x` must be a finite number.
 ✖ x = Inf
 ````
+
+
+# Package website (pkgdown)
+
+The package website is built with `pkgdown` and contains an online reference for all classes, datasets and functions in the package. After a new release, the package website be updated.
+
+1. Check out the main branch and make sure the package is up to date.
+
+````
+git checkout main
+git pull
+````
+
+2. Check out the `gh-pages` branch and merge the main branch into it.
+
+````
+git checkout gh-pages
+git merge main
+````
+
+3. Update the `_pkgdown.yml` file to include new content. The most important thing is to update the `reference` section with new function, classes etc. All exported features needs to be documented here, otherwise you cannot build the website. 
+
+4. Update the website.
+
+From R:
+````
+pkgdown::build_site()
+````

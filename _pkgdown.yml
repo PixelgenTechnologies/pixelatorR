@@ -75,12 +75,16 @@ reference:
     - center_layout_coordinates
     - normalize_layout_coordinates
     - project_layout_coordinates_on_unit_sphere
+    - render_rotating_layout
+    - scale_layout
   - subtitle: Data processing
   - contents:
     - NormalizeMPX
     - KeepLargestComponent
     - RemoveCellGraphs
     - LoadCellGraphs
+    - cos_dist
+    - pack_2bits
   - subtitle: Differential analysis
   - contents:
     - RunDAA
@@ -88,11 +92,22 @@ reference:
     - RunDCA
     - DifferentialProximityAnalysis
     - ColocalizationHeatmap
-  - subtitle: Seurat methods
+  - subtitle: Proximity scores
   - contents:
     - PolarizationScoresToAssay
     - ColocalizationScoresToAssay
     - ProximityScoresToAssay
+    - FilterProximityScores
+    - SummarizeProximityScores
+  - subtitle: Doublet detection
+  - contents:
+    - FindAnnoyNeighbors
+    - SimulateDoublets
+    - PredictDoublets
+  - subtitle: Patch analysis
+  - contents:
+    - identify_markers_for_patch_analysis
+    - patch_detection
   - subtitle: CellGraphAssay(5), PNAAssay(5) and CellGraph methods
   - contents:
     - CellGraphAssay-methods
@@ -128,6 +143,7 @@ reference:
     - compute_transition_probabilities
     - edge_weights_for_pmds
     - local_G
+    - expand_adjacency_matrix
   - subtitle: Export
   - contents:
     - WriteMPX_pxl_file

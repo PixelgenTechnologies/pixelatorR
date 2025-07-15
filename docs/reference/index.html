@@ -234,6 +234,18 @@
 
         </dt>
         <dd>Layout Coordinates Utility Functions</dd>
+      </dl><dl><dt>
+
+          <code><a href="render_rotating_layout.html">render_rotating_layout()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Create a rotating 3D layout video</dd>
+      </dl><dl><dt>
+
+          <code><a href="scale_layout.html">scale_layout()</a></code>
+
+        </dt>
+        <dd>Scale layout coordinates</dd>
       </dl></div><div class="section level2">
 
       <h3 id="data-processing">Data processing<a class="anchor" aria-label="anchor" href="#data-processing"></a></h3>
@@ -269,6 +281,18 @@
 
         </dt>
         <dd>Load CellGraphs</dd>
+      </dl><dl><dt>
+
+          <code><a href="cos_dist.html">cos_dist()</a></code>
+
+        </dt>
+        <dd>Calculate cosine distances between two sets of coordinates</dd>
+      </dl><dl><dt>
+
+          <code><a href="two_bit_encoding.html">pack_2bits()</a></code> <code><a href="two_bit_encoding.html">unpack_2bits()</a></code>
+
+        </dt>
+        <dd>Encode/decode DNA sequences</dd>
       </dl></div><div class="section level2">
 
       <h3 id="differential-analysis">Differential analysis<a class="anchor" aria-label="anchor" href="#differential-analysis"></a></h3>
@@ -312,7 +336,7 @@
         <dd>Plot a colocalization heatmap</dd>
       </dl></div><div class="section level2">
 
-      <h3 id="seurat-methods">Seurat methods<a class="anchor" aria-label="anchor" href="#seurat-methods"></a></h3>
+      <h3 id="proximity-scores">Proximity scores<a class="anchor" aria-label="anchor" href="#proximity-scores"></a></h3>
 
 
 
@@ -339,6 +363,70 @@
 
         </dt>
         <dd>Convert proximity score table to an Assay or Assay5</dd>
+      </dl><dl><dt>
+
+          <code><a href="FilterProximityScores.html">FilterProximityScores()</a></code>
+
+        </dt>
+        <dd>Filter proximity scores</dd>
+      </dl><dl><dt>
+
+          <code><a href="SummarizeProximityScores.html">SummarizeProximityScores()</a></code>
+
+        </dt>
+        <dd>Summarize proximity scores</dd>
+      </dl></div><div class="section level2">
+
+      <h3 id="doublet-detection">Doublet detection<a class="anchor" aria-label="anchor" href="#doublet-detection"></a></h3>
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="FindAnnoyNeighbors.html">FindAnnoyNeighbors()</a></code>
+
+        </dt>
+        <dd>Approximate nearest neighbors using Annoy</dd>
+      </dl><dl><dt>
+
+          <code><a href="SimulateDoublets.html">SimulateDoublets()</a></code>
+
+        </dt>
+        <dd>Simulate doublets</dd>
+      </dl><dl><dt>
+
+          <code><a href="PredictDoublets.html">PredictDoublets()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Predict doublets in a Seurat object</dd>
+      </dl></div><div class="section level2">
+
+      <h3 id="patch-analysis">Patch analysis<a class="anchor" aria-label="anchor" href="#patch-analysis"></a></h3>
+
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="identify_markers_for_patch_analysis.html">identify_markers_for_patch_analysis()</a></code>
+
+        </dt>
+        <dd>Identify population-specific markers for patch detection</dd>
+      </dl><dl><dt>
+
+          <code><a href="patch_detection.html">patch_detection()</a></code>
+          <span class="badge lifecycle lifecycle-experimental">experimental</span>
+        </dt>
+        <dd>Supervised patch detection</dd>
       </dl></div><div class="section level2">
 
       <h3 id="cellgraphassay-pnaassay-and-cellgraph-methods">CellGraphAssay(5), PNAAssay(5) and CellGraph methods<a class="anchor" aria-label="anchor" href="#cellgraphassay-pnaassay-and-cellgraph-methods"></a></h3>
@@ -463,25 +551,25 @@
           <code><a href="as.CellGraphAssay.html">as.CellGraphAssay()</a></code>
 
         </dt>
-        <dd>Convert objects to a <code>CellGraphAssay</code></dd>
+        <dd>Convert objects to a <code><a href="https://pixelgentechnologies.github.io/pixelatorR/reference/CellGraphAssay-class.html" class="external-link">CellGraphAssay</a></code></dd>
       </dl><dl><dt>
 
           <code><a href="as.CellGraphAssay5.html">as.CellGraphAssay5()</a></code>
 
         </dt>
-        <dd>Convert objects to a <code>CellGraphAssay5</code></dd>
+        <dd>Convert objects to a <code><a href="https://pixelgentechnologies.github.io/pixelatorR/reference/CellGraphAssay5-class.html" class="external-link">CellGraphAssay5</a></code></dd>
       </dl><dl><dt>
 
           <code><a href="as.PNAAssay.html">as.PNAAssay()</a></code>
 
         </dt>
-        <dd>Convert objects to a <code>PNAAssay</code></dd>
+        <dd>Convert objects to a <code><a href="https://pixelgentechnologies.github.io/pixelatorR/reference/PNAAssay-class.html" class="external-link">PNAAssay</a></code></dd>
       </dl><dl><dt>
 
           <code><a href="as.PNAAssay5.html">as.PNAAssay5()</a></code>
 
         </dt>
-        <dd>Convert objects to a <code>PNAAssay5</code></dd>
+        <dd>Convert objects to a <code><a href="https://pixelgentechnologies.github.io/pixelatorR/reference/PNAAssay5-class.html" class="external-link">PNAAssay5</a></code></dd>
       </dl><dl><dt>
 
           <code><a href="CellGraph-class.html">CellGraph-class</a></code> <code><a href="CellGraph-class.html">CellGraph</a></code>
@@ -547,6 +635,12 @@
 
         </dt>
         <dd>Calculate Local G</dd>
+      </dl><dl><dt>
+
+          <code><a href="expand_adjacency_matrix.html">expand_adjacency_matrix()</a></code>
+
+        </dt>
+        <dd>Expand an adjacency matrix to include higher-order neighborhoods</dd>
       </dl></div><div class="section level2">
 
       <h3 id="export">Export<a class="anchor" aria-label="anchor" href="#export"></a></h3>
@@ -642,10 +736,10 @@
         <dd>Five Cells PNA Test data</dd>
       </dl><dl><dt>
 
-          <code><a href="show-CellGraph-method.html">show(<i>&lt;CellGraph&gt;</i>)</a></code>
+          <code><a href="CellGraph-methods.html">show(<i>&lt;CellGraph&gt;</i>)</a></code> <code><a href="CellGraph-methods.html">subset(<i>&lt;CellGraph&gt;</i>)</a></code>
 
         </dt>
-        <dd>Show method for <code>CellGraph</code> object</dd>
+        <dd>CellGraph Methods</dd>
       </dl><dl><dt>
 
           <code><a href="CellGraphAssay-methods.html">RenameCells(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">show(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">subset(<i>&lt;CellGraphAssay&gt;</i>)</a></code> <code><a href="CellGraphAssay-methods.html">merge(<i>&lt;CellGraphAssay&gt;</i>)</a></code>

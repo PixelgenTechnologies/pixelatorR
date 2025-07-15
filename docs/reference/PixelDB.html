@@ -70,7 +70,6 @@ is exposed to the user for advanced use cases.</p>
 <h3 id="public-methods">Public methods<a class="anchor" aria-label="anchor" href="#public-methods"></a></h3>
 
 <ul><li><p><a href="#method-PixelDB-new"><code>PixelDB$new()</code></a></p></li>
-<li><p><a href="#method-PixelDB-finalize"><code>PixelDB$finalize()</code></a></p></li>
 <li><p><a href="#method-PixelDB-info"><code>PixelDB$info()</code></a></p></li>
 <li><p><a href="#method-PixelDB-query"><code>PixelDB$query()</code></a></p></li>
 <li><p><a href="#method-PixelDB-reconnect"><code>PixelDB$reconnect()</code></a></p></li>
@@ -117,42 +116,19 @@ is exposed to the user for advanced use cases.</p>
 </div>
 
 
-</div><p></p><hr><a id="method-PixelDB-finalize"></a><div class="section">
-<h3 id="method-finalize-">Method <code>finalize()</code><a class="anchor" aria-label="anchor" href="#method-finalize-"></a></h3>
-<p>Cleanup method that is called when the <code>PixelDB</code> object is garbage collected</p><div class="section">
-<h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
-<p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">finalize</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
-</div>
-
-<div class="section">
-<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
-<p>Nothing</p>
-</div>
-<div class="section">
-<h4 id="examples-1">Examples<a class="anchor" aria-label="anchor" href="#examples-1"></a></h4>
-<p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="va">db</span><span class="op">$</span><span class="va">.__enclos_env__</span><span class="op">$</span><span class="va">private</span><span class="op">$</span><span class="va">con</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span><span class="va">db</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/gc.html" class="external-link">gc</a></span><span class="op">(</span>full <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># Connection should now be closed</span></span>
-<span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbIsValid.html" class="external-link">dbIsValid</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="co"># FALSE</span></span>
-<span></span></code></pre></div><p></p></div>
-</div>
-
-
 </div><p></p><hr><a id="method-PixelDB-info"></a><div class="section">
 <h3 id="method-info-">Method <code>info()</code><a class="anchor" aria-label="anchor" href="#method-info-"></a></h3>
 <p>Show information about tables in the PXL file</p><div class="section">
-<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
+<h4 id="usage-1">Usage<a class="anchor" aria-label="anchor" href="#usage-1"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">info</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
+<h4 id="returns-1">Returns<a class="anchor" aria-label="anchor" href="#returns-1"></a></h4>
 <p>A <code>tbl_df</code> with information about tables in the PXL file</p>
 </div>
 <div class="section">
-<h4 id="examples-2">Examples<a class="anchor" aria-label="anchor" href="#examples-2"></a></h4>
+<h4 id="examples-1">Examples<a class="anchor" aria-label="anchor" href="#examples-1"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="va"><a href="../reference/PixelDB.html">PixelDB</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">info</span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -162,7 +138,7 @@ is exposed to the user for advanced use cases.</p>
 </div><p></p><hr><a id="method-PixelDB-query"></a><div class="section">
 <h3 id="method-query-">Method <code>query()</code><a class="anchor" aria-label="anchor" href="#method-query-"></a></h3>
 <p>Send a database query</p><div class="section">
-<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
+<h4 id="usage-2">Usage<a class="anchor" aria-label="anchor" href="#usage-2"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">query</span><span class="op">(</span><span class="va">sql</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -175,11 +151,11 @@ is exposed to the user for advanced use cases.</p>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
+<h4 id="returns-2">Returns<a class="anchor" aria-label="anchor" href="#returns-2"></a></h4>
 <p>A <code>data.frame</code> with the results of the query</p>
 </div>
 <div class="section">
-<h4 id="examples-3">Examples<a class="anchor" aria-label="anchor" href="#examples-3"></a></h4>
+<h4 id="examples-2">Examples<a class="anchor" aria-label="anchor" href="#examples-2"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Select the proximity score table</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">query</span><span class="op">(</span><span class="st">"SELECT * FROM proximity"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -191,16 +167,16 @@ is exposed to the user for advanced use cases.</p>
 <p>Method to reconnect to the PXL file. This is useful if the connection is lost,
 for instance if the R session restarted.</p>
 <p>If the method fails, an error is thrown.</p><div class="section">
-<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
+<h4 id="usage-3">Usage<a class="anchor" aria-label="anchor" href="#usage-3"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">reconnect</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
+<h4 id="returns-3">Returns<a class="anchor" aria-label="anchor" href="#returns-3"></a></h4>
 <p>Nothing</p>
 </div>
 <div class="section">
-<h4 id="examples-4">Examples<a class="anchor" aria-label="anchor" href="#examples-4"></a></h4>
+<h4 id="examples-3">Examples<a class="anchor" aria-label="anchor" href="#examples-3"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="va">db</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">reconnect</span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -211,16 +187,16 @@ for instance if the R session restarted.</p>
 <h3 id="method-check-connection-">Method <code>check_connection()</code><a class="anchor" aria-label="anchor" href="#method-check-connection-"></a></h3>
 <p>Check the connection to the PXL database</p>
 <p>If the connection is invalid, the <code>$reconnect()</code> method is called.</p><div class="section">
-<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
+<h4 id="usage-4">Usage<a class="anchor" aria-label="anchor" href="#usage-4"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">check_connection</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
+<h4 id="returns-4">Returns<a class="anchor" aria-label="anchor" href="#returns-4"></a></h4>
 <p>Nothing</p>
 </div>
 <div class="section">
-<h4 id="examples-5">Examples<a class="anchor" aria-label="anchor" href="#examples-5"></a></h4>
+<h4 id="examples-4">Examples<a class="anchor" aria-label="anchor" href="#examples-4"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># If the connection is closed, the method will attempt to reconnect</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">check_connection</span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -230,17 +206,17 @@ for instance if the R session restarted.</p>
 </div><p></p><hr><a id="method-PixelDB-names"></a><div class="section">
 <h3 id="method-names-">Method <code><a href="https://rdrr.io/r/base/names.html" class="external-link">names()</a></code><a class="anchor" aria-label="anchor" href="#method-names-"></a></h3>
 <p>Get the names of the tables in the database</p><div class="section">
-<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
+<h4 id="usage-5">Usage<a class="anchor" aria-label="anchor" href="#usage-5"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">names</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
+<h4 id="returns-5">Returns<a class="anchor" aria-label="anchor" href="#returns-5"></a></h4>
 <p>A character vector with table names that can be used
 in <code>$fetch_table()</code></p>
 </div>
 <div class="section">
-<h4 id="examples-6">Examples<a class="anchor" aria-label="anchor" href="#examples-6"></a></h4>
+<h4 id="examples-5">Examples<a class="anchor" aria-label="anchor" href="#examples-5"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Get the table names</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">names</span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -253,7 +229,7 @@ in <code>$fetch_table()</code></p>
 <p>This general method can be used to fetch any table from the database.
 Large tables such as the edgelist are not recommended to be fetched in this way
 as you will get the entire table in memory.</p><div class="section">
-<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
+<h4 id="usage-6">Usage<a class="anchor" aria-label="anchor" href="#usage-6"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">fetch_table</span><span class="op">(</span><span class="va">name</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -266,11 +242,11 @@ as you will get the entire table in memory.</p><div class="section">
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
+<h4 id="returns-6">Returns<a class="anchor" aria-label="anchor" href="#returns-6"></a></h4>
 <p>A <code>data.frame</code> with the table contents</p>
 </div>
 <div class="section">
-<h4 id="examples-7">Examples<a class="anchor" aria-label="anchor" href="#examples-7"></a></h4>
+<h4 id="examples-6">Examples<a class="anchor" aria-label="anchor" href="#examples-6"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch any table from the database</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">fetch_table</span><span class="op">(</span><span class="st">"proximity"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -281,7 +257,7 @@ as you will get the entire table in memory.</p><div class="section">
 <h3 id="method-fetch-table-subset-">Method <code>fetch_table_subset()</code><a class="anchor" aria-label="anchor" href="#method-fetch-table-subset-"></a></h3>
 <p>Fetches a subset of columns from a table in the database</p>
 <p>This method can be used to fetch a subset of columns from a table in the database.</p><div class="section">
-<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
+<h4 id="usage-7">Usage<a class="anchor" aria-label="anchor" href="#usage-7"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">fetch_table_subset</span><span class="op">(</span><span class="va">name</span>, <span class="va">columns_filter</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -298,11 +274,11 @@ as you will get the entire table in memory.</p><div class="section">
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
+<h4 id="returns-7">Returns<a class="anchor" aria-label="anchor" href="#returns-7"></a></h4>
 <p>A <code>data.frame</code> with the table contents</p>
 </div>
 <div class="section">
-<h4 id="examples-8">Examples<a class="anchor" aria-label="anchor" href="#examples-8"></a></h4>
+<h4 id="examples-7">Examples<a class="anchor" aria-label="anchor" href="#examples-7"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch any table from the database and filter on the fly</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">fetch_table_subset</span><span class="op">(</span></span>
 <span>  <span class="st">"proximity"</span>,</span>
@@ -315,16 +291,16 @@ as you will get the entire table in memory.</p><div class="section">
 </div><p></p><hr><a id="method-PixelDB-counts"></a><div class="section">
 <h3 id="method-counts-">Method <code>counts()</code><a class="anchor" aria-label="anchor" href="#method-counts-"></a></h3>
 <p>Fetches the __adata__X count table from the database and converts it to a sparse <code>dgCMatrix</code></p><div class="section">
-<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
+<h4 id="usage-8">Usage<a class="anchor" aria-label="anchor" href="#usage-8"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">counts</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
+<h4 id="returns-8">Returns<a class="anchor" aria-label="anchor" href="#returns-8"></a></h4>
 <p>A sparse matrix of class <code>dgCMatrix</code> with antibody counts</p>
 </div>
 <div class="section">
-<h4 id="examples-9">Examples<a class="anchor" aria-label="anchor" href="#examples-9"></a></h4>
+<h4 id="examples-8">Examples<a class="anchor" aria-label="anchor" href="#examples-8"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch the antibody counts</span></span>
 <span><span class="va">X</span> <span class="op">&lt;-</span> <span class="va">db</span><span class="op">$</span><span class="fu">counts</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">X</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">4</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span>
@@ -335,7 +311,7 @@ as you will get the entire table in memory.</p><div class="section">
 </div><p></p><hr><a id="method-PixelDB-proximity"></a><div class="section">
 <h3 id="method-proximity-">Method <code>proximity()</code><a class="anchor" aria-label="anchor" href="#method-proximity-"></a></h3>
 <p>Fetches the proximity scores from the database</p><div class="section">
-<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
+<h4 id="usage-9">Usage<a class="anchor" aria-label="anchor" href="#usage-9"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">proximity</span><span class="op">(</span>calc_log2_ratio <span class="op">=</span> <span class="cn">TRUE</span>, lazy <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
@@ -354,11 +330,11 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
+<h4 id="returns-9">Returns<a class="anchor" aria-label="anchor" href="#returns-9"></a></h4>
 <p>A <code>tbl_df</code> with the proximity scores</p>
 </div>
 <div class="section">
-<h4 id="examples-10">Examples<a class="anchor" aria-label="anchor" href="#examples-10"></a></h4>
+<h4 id="examples-9">Examples<a class="anchor" aria-label="anchor" href="#examples-9"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch the proximity scores</span></span>
 <span><span class="va">prox</span> <span class="op">&lt;-</span> <span class="va">db</span><span class="op">$</span><span class="fu">proximity</span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="va">prox</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
@@ -369,16 +345,16 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 </div><p></p><hr><a id="method-PixelDB-cell_meta"></a><div class="section">
 <h3 id="method-cell-meta-">Method <code>cell_meta()</code><a class="anchor" aria-label="anchor" href="#method-cell-meta-"></a></h3>
 <p>Fetches the __adata__obs meta data</p><div class="section">
-<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
+<h4 id="usage-10">Usage<a class="anchor" aria-label="anchor" href="#usage-10"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">cell_meta</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
+<h4 id="returns-10">Returns<a class="anchor" aria-label="anchor" href="#returns-10"></a></h4>
 <p>A <code>data.frame</code> with the cell meta data</p>
 </div>
 <div class="section">
-<h4 id="examples-11">Examples<a class="anchor" aria-label="anchor" href="#examples-11"></a></h4>
+<h4 id="examples-10">Examples<a class="anchor" aria-label="anchor" href="#examples-10"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch the cell meta data</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">cell_meta</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -388,16 +364,16 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 </div><p></p><hr><a id="method-PixelDB-protein_meta"></a><div class="section">
 <h3 id="method-protein-meta-">Method <code>protein_meta()</code><a class="anchor" aria-label="anchor" href="#method-protein-meta-"></a></h3>
 <p>Fetches the __adata__var meta data</p><div class="section">
-<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
+<h4 id="usage-11">Usage<a class="anchor" aria-label="anchor" href="#usage-11"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">protein_meta</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
+<h4 id="returns-11">Returns<a class="anchor" aria-label="anchor" href="#returns-11"></a></h4>
 <p>A <code>data.frame</code> with the protein meta data</p>
 </div>
 <div class="section">
-<h4 id="examples-12">Examples<a class="anchor" aria-label="anchor" href="#examples-12"></a></h4>
+<h4 id="examples-11">Examples<a class="anchor" aria-label="anchor" href="#examples-11"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch the protein meta data</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">protein_meta</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -407,16 +383,16 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 </div><p></p><hr><a id="method-PixelDB-run_meta"></a><div class="section">
 <h3 id="method-run-meta-">Method <code>run_meta()</code><a class="anchor" aria-label="anchor" href="#method-run-meta-"></a></h3>
 <p>Fetch the run meta data</p><div class="section">
-<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
+<h4 id="usage-12">Usage<a class="anchor" aria-label="anchor" href="#usage-12"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">run_meta</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
+<h4 id="returns-12">Returns<a class="anchor" aria-label="anchor" href="#returns-12"></a></h4>
 <p>A <code>tbl_df</code> with the run meta data</p>
 </div>
 <div class="section">
-<h4 id="examples-13">Examples<a class="anchor" aria-label="anchor" href="#examples-13"></a></h4>
+<h4 id="examples-12">Examples<a class="anchor" aria-label="anchor" href="#examples-12"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch the run meta data</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">run_meta</span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -428,7 +404,7 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 <p>Fetches a component edgelist or the entire edgelist from the database</p>
 <p>The UMIs are encoded as int64 but since R doesn't support int64, the UMIs can be converted to
 character vectors be specifying the <code>umi_data_type</code>.</p><div class="section">
-<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
+<h4 id="usage-13">Usage<a class="anchor" aria-label="anchor" href="#usage-13"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">components_edgelist</span><span class="op">(</span></span>
 <span>  <span class="va">components</span>,</span>
 <span>  umi_data_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"int64"</span>, <span class="st">"string"</span>, <span class="st">"suffixed_string"</span><span class="op">)</span>,</span>
@@ -462,7 +438,7 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
+<h4 id="returns-13">Returns<a class="anchor" aria-label="anchor" href="#returns-13"></a></h4>
 <p>A <code>data.frame</code> with the component edgelist:</p><ul><li><p>umi1: A unique ID of the first RCA product</p></li>
 <li><p>umi2: A unique ID of the second RCA product</p></li>
 <li><p>marker_1: The first protein</p></li>
@@ -472,7 +448,7 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 <li><p>uei_count: The number of unique event identifiers (UEIs) supporting the edge</p></li>
 </ul></div>
 <div class="section">
-<h4 id="examples-14">Examples<a class="anchor" aria-label="anchor" href="#examples-14"></a></h4>
+<h4 id="examples-13">Examples<a class="anchor" aria-label="anchor" href="#examples-13"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch edgelists</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">components_edgelist</span><span class="op">(</span><span class="st">"0a45497c6bfbfb22"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -483,7 +459,7 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 <h3 id="method-components-layout-">Method <code>components_layout()</code><a class="anchor" aria-label="anchor" href="#method-components-layout-"></a></h3>
 <p>Fetches layout for selected components</p>
 <p>This method fetches the x, y, z layout coordinates for selected PNA <code>components</code>.</p><div class="section">
-<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
+<h4 id="usage-14">Usage<a class="anchor" aria-label="anchor" href="#usage-14"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">components_layout</span><span class="op">(</span></span>
 <span>  <span class="va">components</span>,</span>
 <span>  add_marker_counts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -508,11 +484,11 @@ a <code>tbl_lazy</code> object is returned.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
+<h4 id="returns-14">Returns<a class="anchor" aria-label="anchor" href="#returns-14"></a></h4>
 <p>A list with <code>tbl_df</code>'s with the layout coordinates and optionally marker counts</p>
 </div>
 <div class="section">
-<h4 id="examples-15">Examples<a class="anchor" aria-label="anchor" href="#examples-15"></a></h4>
+<h4 id="examples-14">Examples<a class="anchor" aria-label="anchor" href="#examples-14"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code># Fetch layouts (NOTE: This will only work if the layouts exist in the database)
 \dontrun{
 db$components_layout("0a45497c6bfbfb22")[[1]] %&gt;% head()
@@ -529,7 +505,7 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %&gt;% head()
 are stored in the <code>name</code> column. If <code>components</code> is <code>NULL</code>, all
 component marker counts are returned with an additional <code>components</code> column in
 the resulting table.</p><div class="section">
-<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
+<h4 id="usage-15">Usage<a class="anchor" aria-label="anchor" href="#usage-15"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">components_marker_counts</span><span class="op">(</span></span>
 <span>  <span class="va">components</span>,</span>
 <span>  as_sparse <span class="op">=</span> <span class="cn">FALSE</span>,</span>
@@ -554,11 +530,11 @@ the resulting table.</p><div class="section">
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-16">Returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
+<h4 id="returns-15">Returns<a class="anchor" aria-label="anchor" href="#returns-15"></a></h4>
 <p>A list with <code>dgCMatrix</code> matrices or <code>tbl_df</code>'s with the marker counts</p>
 </div>
 <div class="section">
-<h4 id="examples-16">Examples<a class="anchor" aria-label="anchor" href="#examples-16"></a></h4>
+<h4 id="examples-15">Examples<a class="anchor" aria-label="anchor" href="#examples-15"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Fetch marker counts</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">components_marker_counts</span><span class="op">(</span><span class="st">"0a45497c6bfbfb22"</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -568,7 +544,7 @@ the resulting table.</p><div class="section">
 </div><p></p><hr><a id="method-PixelDB-export_parquet"></a><div class="section">
 <h3 id="method-export-parquet-">Method <code>export_parquet()</code><a class="anchor" aria-label="anchor" href="#method-export-parquet-"></a></h3>
 <p>Export a table to a parquet file</p><div class="section">
-<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
+<h4 id="usage-16">Usage<a class="anchor" aria-label="anchor" href="#usage-16"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">export_parquet</span><span class="op">(</span></span>
 <span>  <span class="va">parquet_file</span>,</span>
 <span>  table_name <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"proximity"</span>, <span class="st">"edgelist"</span>, <span class="st">"layouts"</span><span class="op">)</span>,</span>
@@ -599,11 +575,11 @@ compression is 'zstd'.</p></dd>
 </dl><p></p></div>
 </div>
 <div class="section">
-<h4 id="returns-17">Returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
+<h4 id="returns-16">Returns<a class="anchor" aria-label="anchor" href="#returns-16"></a></h4>
 <p>Nothing</p>
 </div>
 <div class="section">
-<h4 id="examples-17">Examples<a class="anchor" aria-label="anchor" href="#examples-17"></a></h4>
+<h4 id="examples-16">Examples<a class="anchor" aria-label="anchor" href="#examples-16"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Export a table to a parquet file</span></span>
 <span><span class="va">tmp_parquet_file</span> <span class="op">&lt;-</span> <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/file_temp.html" class="external-link">file_temp</a></span><span class="op">(</span>ext <span class="op">=</span> <span class="st">"parquet"</span><span class="op">)</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">export_parquet</span><span class="op">(</span><span class="va">tmp_parquet_file</span>, <span class="st">"proximity"</span><span class="op">)</span></span>
@@ -615,16 +591,16 @@ compression is 'zstd'.</p></dd>
 </div><p></p><hr><a id="method-PixelDB-close"></a><div class="section">
 <h3 id="method-close-">Method <code><a href="https://rdrr.io/r/base/connections.html" class="external-link">close()</a></code><a class="anchor" aria-label="anchor" href="#method-close-"></a></h3>
 <p>Close connection</p><div class="section">
-<h4 id="usage-18">Usage<a class="anchor" aria-label="anchor" href="#usage-18"></a></h4>
+<h4 id="usage-17">Usage<a class="anchor" aria-label="anchor" href="#usage-17"></a></h4>
 <p></p><div class="r"><div class="sourceCode"><pre><code><span><span class="va">PixelDB</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span></code></pre></div><p></p></div>
 </div>
 
 <div class="section">
-<h4 id="returns-18">Returns<a class="anchor" aria-label="anchor" href="#returns-18"></a></h4>
+<h4 id="returns-17">Returns<a class="anchor" aria-label="anchor" href="#returns-17"></a></h4>
 <p>Nothing</p>
 </div>
 <div class="section">
-<h4 id="examples-18">Examples<a class="anchor" aria-label="anchor" href="#examples-18"></a></h4>
+<h4 id="examples-17">Examples<a class="anchor" aria-label="anchor" href="#examples-17"></a></h4>
 <p></p><div class="r example copy"><div class="sourceCode"><pre><code><span><span class="co"># Close the connection when finished</span></span>
 <span><span class="va">db</span><span class="op">$</span><span class="fu">close</span><span class="op">(</span><span class="op">)</span></span>
 <span></span></code></pre></div><p></p></div>
@@ -646,22 +622,6 @@ compression is 'zstd'.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="pna_dataset.html">minimal_pna_pxl_file</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="va">PixelDB</span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
-<span class="r-in"><span><span class="co">## Method `PixelDB$finalize`</span></span></span>
-<span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">con</span> <span class="op">&lt;-</span> <span class="va">db</span><span class="op">$</span><span class="va">.__enclos_env__</span><span class="op">$</span><span class="va">private</span><span class="op">$</span><span class="va">con</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm</a></span><span class="op">(</span><span class="va">db</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/gc.html" class="external-link">gc</a></span><span class="op">(</span>full <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>            used  (Mb) gc trigger  (Mb) limit (Mb) max used  (Mb)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Ncells  7688426 410.7   13293758 710.0         NA 13293758 710.0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Vcells 21974095 167.7   26104806 199.2      32768 26104806 199.2</span>
-<span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="co"># Connection should now be closed</span></span></span>
-<span class="r-in"><span><span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbIsValid.html" class="external-link">dbIsValid</a></span><span class="op">(</span><span class="va">con</span><span class="op">)</span> <span class="co"># FALSE</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] FALSE</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
@@ -917,11 +877,11 @@ compression is 'zstd'.</p></dd>
 <span class="r-in"><span><span class="co"># Fetch marker counts</span></span></span>
 <span class="r-in"><span><span class="va">db</span><span class="op">$</span><span class="fu">components_marker_counts</span><span class="op">(</span><span class="st">"0a45497c6bfbfb22"</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   name                   `HLA-ABC`   B2M  CD18</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 61208583141770358-umi1         1     0     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 20908764047174569-umi1         0     1     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 71855263655827950-umi1         0     1     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   name                     B2M  CD16  CD59</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 20908764047174569-umi1     1     0     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 25128942256596909-umi1     0     1     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 8533879498557860-umi1      0     1     0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
@@ -932,8 +892,8 @@ compression is 'zstd'.</p></dd>
 <span class="r-in"><span><span class="va">tmp_parquet_file</span> <span class="op">&lt;-</span> <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/file_temp.html" class="external-link">file_temp</a></span><span class="op">(</span>ext <span class="op">=</span> <span class="st">"parquet"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">db</span><span class="op">$</span><span class="fu">export_parquet</span><span class="op">(</span><span class="va">tmp_parquet_file</span>, <span class="st">"proximity"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/file_access.html" class="external-link">file_exists</a></span><span class="op">(</span><span class="va">tmp_parquet_file</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmplGz5wi/file14f496f37da39.parquet </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                  TRUE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpoNg3om/fileb6963c896588.parquet </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                                                 TRUE </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>

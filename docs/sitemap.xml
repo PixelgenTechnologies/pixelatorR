@@ -12,6 +12,7 @@
 <url><loc>/reference/AbundanceColocalizationPlot.html</loc></url>
 <url><loc>/reference/CellCountPlot.html</loc></url>
 <url><loc>/reference/CellGraph-class.html</loc></url>
+<url><loc>/reference/CellGraph-methods.html</loc></url>
 <url><loc>/reference/CellGraphAssay-class.html</loc></url>
 <url><loc>/reference/CellGraphAssay-methods.html</loc></url>
 <url><loc>/reference/CellGraphAssay5-class.html</loc></url>
@@ -32,6 +33,8 @@
 <url><loc>/reference/EdgeRankPlot.html</loc></url>
 <url><loc>/reference/Edgelists.html</loc></url>
 <url><loc>/reference/FSMap.html</loc></url>
+<url><loc>/reference/FilterProximityScores.html</loc></url>
+<url><loc>/reference/FindAnnoyNeighbors.html</loc></url>
 <url><loc>/reference/KeepLargestComponent.html</loc></url>
 <url><loc>/reference/LoadCellGraphs.html</loc></url>
 <url><loc>/reference/MPXAssay-class.html</loc></url>
@@ -49,6 +52,7 @@
 <url><loc>/reference/Plot3DGraph.html</loc></url>
 <url><loc>/reference/PolarizationScores.html</loc></url>
 <url><loc>/reference/PolarizationScoresToAssay.html</loc></url>
+<url><loc>/reference/PredictDoublets.html</loc></url>
 <url><loc>/reference/ProximityScores.html</loc></url>
 <url><loc>/reference/ProximityScoresToAssay.html</loc></url>
 <url><loc>/reference/PseudocolorPlot.html</loc></url>
@@ -69,6 +73,8 @@
 <url><loc>/reference/RunDAA.html</loc></url>
 <url><loc>/reference/RunDCA.html</loc></url>
 <url><loc>/reference/RunDPA.html</loc></url>
+<url><loc>/reference/SimulateDoublets.html</loc></url>
+<url><loc>/reference/SummarizeProximityScores.html</loc></url>
 <url><loc>/reference/TauPlot.html</loc></url>
 <url><loc>/reference/WriteMPX_pxl_file.html</loc></url>
 <url><loc>/reference/as.CellGraphAssay.html</loc></url>
@@ -77,9 +83,12 @@
 <url><loc>/reference/as.PNAAssay5.html</loc></url>
 <url><loc>/reference/color_by_marker.html</loc></url>
 <url><loc>/reference/compute_transition_probabilities.html</loc></url>
+<url><loc>/reference/cos_dist.html</loc></url>
 <url><loc>/reference/edge-weights-pmds.html</loc></url>
 <url><loc>/reference/edgelist_to_simple_bipart_graph.html</loc></url>
+<url><loc>/reference/expand_adjacency_matrix.html</loc></url>
 <url><loc>/reference/graph-conversion.html</loc></url>
+<url><loc>/reference/identify_markers_for_patch_analysis.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/inspect_pxl_file.html</loc></url>
 <url><loc>/reference/layout_coordinates_utils.html</loc></url>
@@ -87,13 +96,17 @@
 <url><loc>/reference/local_G.html</loc></url>
 <url><loc>/reference/mpx_dataset.html</loc></url>
 <url><loc>/reference/node_markers_counts.html</loc></url>
+<url><loc>/reference/patch_detection.html</loc></url>
 <url><loc>/reference/pixelatorR-package.html</loc></url>
 <url><loc>/reference/pixelatorR_options.html</loc></url>
 <url><loc>/reference/pixelatorR_style.html</loc></url>
 <url><loc>/reference/pna_dataset.html</loc></url>
 <url><loc>/reference/print.pixelator_metadata.html</loc></url>
 <url><loc>/reference/pxl_dataset.html</loc></url>
+<url><loc>/reference/render_rotating_layout.html</loc></url>
+<url><loc>/reference/scale_layout.html</loc></url>
 <url><loc>/reference/show-CellGraph-method.html</loc></url>
+<url><loc>/reference/two_bit_encoding.html</loc></url>
 <url><loc>/reference/type_check_helpers.html</loc></url>
 </urlset>
 

@@ -53,6 +53,7 @@ PNAAssay5 or a Seurat object"><meta property="og:image" content="/logo.png"></he
 <span><span class="fu">ProximityScores</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  add_marker_counts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  add_marker_proportions <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  lazy <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  calc_log2ratio <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -62,6 +63,7 @@ PNAAssay5 or a Seurat object"><meta property="og:image" content="/logo.png"></he
 <span><span class="fu">ProximityScores</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
 <span>  add_marker_counts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  add_marker_proportions <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  lazy <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  calc_log2ratio <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -79,6 +81,7 @@ PNAAssay5 or a Seurat object"><meta property="og:image" content="/logo.png"></he
 <span>  assay <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  meta_data_columns <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  add_marker_counts <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  add_marker_proportions <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  lazy <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  calc_log2ratio <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -106,7 +109,12 @@ PNAAssay5 or a Seurat object"><meta property="og:image" content="/logo.png"></he
 
 <dt id="arg-add-marker-counts">add_marker_counts<a class="anchor" aria-label="anchor" href="#arg-add-marker-counts"></a></dt>
 <dd><p>A logical indicating whether to add marker
-counts to the output</p></dd>
+counts to the output ("count_1" and "count_2")</p></dd>
+
+
+<dt id="arg-add-marker-proportions">add_marker_proportions<a class="anchor" aria-label="anchor" href="#arg-add-marker-proportions"></a></dt>
+<dd><p>A logical indicating whether to add marker
+count proportions to the output ("p1" and "p2")</p></dd>
 
 
 <dt id="arg-lazy">lazy<a class="anchor" aria-label="anchor" href="#arg-lazy"></a></dt>
@@ -240,7 +248,7 @@ score table.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">10</span> CD56     TCRva7.2          0                     0.01                  0.1  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 58,686 more rows</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 6 more variables: join_count_z &lt;dbl&gt;, join_count_p &lt;dbl&gt;, component &lt;chr&gt;,</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   log2_ratio &lt;dbl&gt;, count_1 &lt;dbl&gt;, count_2 &lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;">#   log2_ratio &lt;dbl&gt;, count_1 &lt;int&gt;, count_2 &lt;int&gt;</span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Update proximity scores in Seurat object</span></span></span>
 <span class="r-in"><span><span class="fu">ProximityScores</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">ProximityScores</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
