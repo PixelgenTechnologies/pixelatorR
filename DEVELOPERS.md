@@ -227,3 +227,5 @@ From R:
 ````
 pkgdown::build_site()
 ````
+
+5. Commit the changes to the `gh-pages` branch and push to GitHub.
