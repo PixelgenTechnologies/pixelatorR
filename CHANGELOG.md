@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.14.0] - 2025-07-15
+
 ### Added
 - Supervised patch detection implemented in the `patch_detection` function. Added `identify_markers_for_patch_analysis` to identify markers for patch analysis.
 - `render_rotating_layout` function to create videos of rotating cells from a tibble containing layout coordinates. The function supports multiple video formats but uses GIF as default.
