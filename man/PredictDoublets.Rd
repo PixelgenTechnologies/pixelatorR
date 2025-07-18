@@ -78,21 +78,21 @@ an aggregated summary of all iterations.}
 }
 \value{
 A tibble with the following columns:
-\describe{
-\item{trial}{Integer or factor indicating the resampling trial. Only returned if
-\code{return_trials = TRUE}.}
-\item{id}{Cell ID.}
-\item{doublet_nns}{Number of nearest neighbors that are simulated doublets.}
-\item{doublet_nn_rate}{Proportion of nearest neighbors that are simulated
-doublets. Only returned if \code{return_trials = FALSE}.}
-\item{doublet_vote}{The fraction of iterations where the cell has been classified
-as a doublet. Only returned if \code{return_trials = FALSE}.}
-\item{doublet_p}{Raw p-value for the doublet prediction.}
-\item{doublet_p_adj}{Adjusted p-value (multiple testing correction) for the
-doublet prediction.}
-\item{logratio}{Log2-ratio of observed simulated doublet neighbors compared to
-expectation.}
-\item{doublet_prediction}{Predicted doublet status (doublet/singlet).}
+\itemize{
+\item \code{trial} Integer or factor indicating the resampling trial. Only returned if
+\code{return_trials = TRUE}.
+\item \code{id} Cell ID.
+\item \code{doublet_nns} Number of nearest neighbors that are simulated doublets.
+\item \code{doublet_nn_rate} Proportion of nearest neighbors that are simulated
+doublets. Only returned if \code{return_trials = FALSE}.
+\item \code{doublet_vote} The fraction of iterations where the cell has been classified
+as a doublet. Only returned if \code{return_trials = FALSE}.
+\item \code{doublet_p} Raw p-value for the doublet prediction.
+\item \code{doublet_p_adj} Adjusted p-value (multiple testing correction) for the
+doublet prediction.
+\item \code{logratio} Log2-ratio of observed simulated doublet neighbors compared to
+expectation.
+\item \code{doublet_prediction} Predicted doublet status (doublet/singlet).
 }
 }
 \description{
