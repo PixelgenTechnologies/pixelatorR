@@ -2,7 +2,7 @@
 globalVariables(
   names = c(
     ".", ".x", "bi_prob", "community", "comp", "component", "component_new",
-    "count_1", "count_2", "current_id", "dens", "dev_png", "doublet_nns",
+    "count_1", "count_2", "current_id", "dens", "dev_png", "doublet_nns", "doublet_nn_rate",
     "doublet_p", "doublet_p_adj", "frequency", "from", "g", "graph_projection",
     "group", "hjust", "hp", "hup", "i1", "i2", "id", "id_map", "in_gate", "index",
     "item", "join_count", "join_count_expected_mean", "join_count_expected_mean_list",
@@ -17,7 +17,7 @@ globalVariables(
     "r", "read_count", "receiver_freq", "receiver_unmixed_freq",
     "ref_n", "rn", "rs_ref", "rs_tgt", "sigma", "simulated", "size",
     "target_freq", "target_n", "target_unmixed_freq", "tau", "tau_type",
-    "to", "total", "tp", "tup", "type", "u", "uei_count", "umi_count",
+    "to", "total", "tp", "trial", "tup", "type", "u", "uei_count", "umi_count",
     "umi_per_upia", "umi1", "umi2", "upia", "upia1", "upia2", "upib",
     "val", "value", "value_x", "value_y", "vjust", "x", "x_label",
     "xmax", "xmin", "y", "y_label", "ymax", "ymin", "z"
