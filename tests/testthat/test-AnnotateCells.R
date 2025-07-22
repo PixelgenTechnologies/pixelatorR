@@ -14,13 +14,14 @@ sim_ref_counts["CD16", ] <- c(rep(0, 20), rep(1e4, 10))
 reference <- SeuratObject::CreateSeuratObject(
   counts = as(sim_ref_counts, "dgCMatrix"),
   assay = "anot",
-  meta.data = data.frame(cell_type = c(rep("CD4T", 10), rep("pDC", 10), rep("Mono CD16+", 10)),
-                         row.names = paste0("cell", 1:30))
+  meta.data = data.frame(
+    cell_type = c(rep("CD4T", 10), rep("pDC", 10), rep("Mono CD16+", 10)),
+    row.names = paste0("cell", 1:30)
+  )
 ) %>%
   Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
 
 test_that("annotate_cells works as expected", {
-
   # NMF default
   expect_no_error(seur <- annotate_cells(
     seur,
@@ -34,9 +35,11 @@ test_that("annotate_cells works as expected", {
   ))
   expect_equal(
     seur$cell_type_annotation %>% unname(),
-    c("Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+",
+    c(
+      "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T",
-      "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T")
+      "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T"
+    )
   )
 
   # NMF threshold
@@ -53,7 +56,8 @@ test_that("annotate_cells works as expected", {
   ))
   expect_equal(
     seur$cell_type_annotation %>% unname(),
-    c("Mono CD16+", "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+",
+    c(
+      "Mono CD16+", "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+", "Unknown", "CD4T",
       "CD4T", "CD4T", "Mono CD16+", "Unknown", "CD4T", "CD4T", "CD4T"
     )

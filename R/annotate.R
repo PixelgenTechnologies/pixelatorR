@@ -77,30 +77,30 @@ AnnotateCells <- function(
   verbose = TRUE,
   ...
 ) {
-  expect_seurat()
+  expect_Seurat()
 
   # Input validation
-  pixelatorR:::assert_class(object, "Seurat")
-  pixelatorR:::assert_class(reference, "Seurat")
-  pixelatorR:::assert_col_in_data(summarize_by_column, object[[]], allow_null = TRUE)
-  pixelatorR:::assert_single_value(reference_assay, "string")
-  pixelatorR:::assert_single_value(query_assay, "string")
-  pixelatorR:::assert_vector(reference_groups, "character", n = 1)
+  assert_class(object, "Seurat")
+  assert_class(reference, "Seurat")
+  assert_col_in_data(summarize_by_column, object[[]], allow_null = TRUE)
+  assert_single_value(reference_assay, "string")
+  assert_single_value(query_assay, "string")
+  assert_vector(reference_groups, "character", n = 1)
   for (ref_group in reference_groups) {
-    pixelatorR:::assert_col_in_data(ref_group, reference[[]])
+    assert_col_in_data(ref_group, reference[[]])
   }
-  pixelatorR:::assert_single_value(reduction, "string")
+  assert_single_value(reduction, "string")
   method <- match.arg(method, c("Seurat", "nmf"))
-  pixelatorR:::assert_single_value(skip_normalization, "bool")
+  assert_single_value(skip_normalization, "bool")
   normalization_method <- match.arg(normalization_method, c("LogNormalize", "SCT", "CLR"))
   if (normalization_method == "CLR" && method == "Seurat") {
     cli::cli_abort(
       c("x" = "CLR normalization is not supported with the {.val Seurat} method.")
     )
   }
-  pixelatorR:::assert_single_value(min_prediction_score, "numeric")
-  pixelatorR:::assert_within_limits(min_prediction_score, c(0, 1))
-  pixelatorR:::assert_single_value(verbose, "bool")
+  assert_single_value(min_prediction_score, "numeric")
+  assert_within_limits(min_prediction_score, c(0, 1))
+  assert_single_value(verbose, "bool")
 
   groups <- reference[[]][, reference_groups, drop = FALSE] %>% as.list()
 

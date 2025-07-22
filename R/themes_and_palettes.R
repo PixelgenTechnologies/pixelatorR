@@ -23,21 +23,21 @@ PixelgenGradient <- function(
   name
 ) {
   # Input validation
-  pixelatorR:::assert_single_value(name, type = "string")
-  pixelatorR:::assert_single_value(n, type = "integer")
-  pixelatorR:::assert_within_limits(n, c(1, Inf))
+  assert_single_value(name, type = "string")
+  assert_single_value(n, type = "integer")
+  assert_within_limits(n, c(1, Inf))
 
   colors <-
     switch(name,
-           "BluesCherry" = c(
-             "#1F395F", "#496389", "#728BB1", "#AABAD1", "#DFE5EE", "#FFFFFF",
-             "#FFE0EA", "#E9AABF", "#CD6F8D", "#A23F5E", "#781534"
-           ),
-           "GrayblueRose" = c("#798AAC", "#93A1BD", "#C4CBDB", "#FFFFFF", "#E8BFCD", "#D190A4", "#C1728B"),
-           "Cherry" = c("#F2F2F2", "#FFE0EA", "#E9AABF", "#CD6F8D", "#A23F5E", "#781534"),
-           "Blues" = c("#F2F2F2", "#DFE5EE", "#AABAD1", "#728BB1", "#496389", "#1F395F"),
-           "Magenta" = c("#F2F2F2", "#FDE0EF", "#F1B6DA", "#DE77AE", "#C51C7D", "#8E0152"),
-           "Cyan" = c("#F2F2F2", "#C2E5E1", "#9FE5DD", "#7CD5D0", "#59C5C3", "#36B5B6")
+      "BluesCherry" = c(
+        "#1F395F", "#496389", "#728BB1", "#AABAD1", "#DFE5EE", "#FFFFFF",
+        "#FFE0EA", "#E9AABF", "#CD6F8D", "#A23F5E", "#781534"
+      ),
+      "GrayblueRose" = c("#798AAC", "#93A1BD", "#C4CBDB", "#FFFFFF", "#E8BFCD", "#D190A4", "#C1728B"),
+      "Cherry" = c("#F2F2F2", "#FFE0EA", "#E9AABF", "#CD6F8D", "#A23F5E", "#781534"),
+      "Blues" = c("#F2F2F2", "#DFE5EE", "#AABAD1", "#728BB1", "#496389", "#1F395F"),
+      "Magenta" = c("#F2F2F2", "#FDE0EF", "#F1B6DA", "#DE77AE", "#C51C7D", "#8E0152"),
+      "Cyan" = c("#F2F2F2", "#C2E5E1", "#9FE5DD", "#7CD5D0", "#59C5C3", "#36B5B6")
     )
 
   if (all(is.null(colors))) abort("Invalid palette name.")
@@ -74,46 +74,46 @@ PixelgenPalette <- function(
   name
 ) {
   # Input validation
-  pixelatorR:::assert_single_value(name, type = "string")
-  pixelatorR:::assert_single_value(n, type = "integer")
-  pixelatorR:::assert_within_limits(n, c(1, Inf))
+  assert_single_value(name, type = "string")
+  assert_single_value(n, type = "integer")
+  assert_within_limits(n, c(1, Inf))
 
   colors <- switch(name,
-           "Tint" = c(
-             "#E0E6EF", "#BECCE0", "#D1C6BB",
-             "#DAD6D7", "#C4C4C4"
-           ),
-           "Pastel" = c(
-             "#8197BD", "#637EA5", "#D887A0",
-             "#C86584", "#D8BA98", "#E2A489",
-             "#B4ADAF", "#978D89"
-           ),
-           "Semi-saturated" = c(
-             "#4D988D", "#496389", "#1F395F",
-             "#E05573", "#BF9871", "#918F8F"
-           ),
-           "Saturated" = c(
-             "#1B9E8A", "#25C6F2", "#E24B7E",
-             "#AA498D", "#FFC950", "#231F20"
-           ),
-           "Cells1" = c(
-             "#E9CD98", "#E19DB0", "#526C92",
-             "#BECCE0", "#9E9188", "#7E9EA3",
-             "#DEBA95", "#C6C6C6", "#46616E",
-             "#1F395F"
-           ),
-           "Cells2" = c(
-             "#C89433", "#809EA2", "#85756C",
-             "#48696E", "#BA9D80", "#556C92",
-             "#EBCD97", "#21395E"
-           ),
-           "Cells3" = c(
-             "#A3A9CC", "#8DBFB3", "#F2EBC0",
-             "#F3B462", "#F06060", "#44D593",
-             "#B99095", "#E5E6E6", "#5D4C52",
-             "#07475A"
-           )
+    "Tint" = c(
+      "#E0E6EF", "#BECCE0", "#D1C6BB",
+      "#DAD6D7", "#C4C4C4"
+    ),
+    "Pastel" = c(
+      "#8197BD", "#637EA5", "#D887A0",
+      "#C86584", "#D8BA98", "#E2A489",
+      "#B4ADAF", "#978D89"
+    ),
+    "Semi-saturated" = c(
+      "#4D988D", "#496389", "#1F395F",
+      "#E05573", "#BF9871", "#918F8F"
+    ),
+    "Saturated" = c(
+      "#1B9E8A", "#25C6F2", "#E24B7E",
+      "#AA498D", "#FFC950", "#231F20"
+    ),
+    "Cells1" = c(
+      "#E9CD98", "#E19DB0", "#526C92",
+      "#BECCE0", "#9E9188", "#7E9EA3",
+      "#DEBA95", "#C6C6C6", "#46616E",
+      "#1F395F"
+    ),
+    "Cells2" = c(
+      "#C89433", "#809EA2", "#85756C",
+      "#48696E", "#BA9D80", "#556C92",
+      "#EBCD97", "#21395E"
+    ),
+    "Cells3" = c(
+      "#A3A9CC", "#8DBFB3", "#F2EBC0",
+      "#F3B462", "#F06060", "#44D593",
+      "#B99095", "#E5E6E6", "#5D4C52",
+      "#07475A"
     )
+  )
 
   if (all(is.null(colors))) abort("Invalid palette name.")
   if (n > length(colors)) abort(glue("Palette '{name}' only has {length(colors)} colors."))
@@ -143,71 +143,69 @@ PixelgenLegacyPalette <- function(
   name
 ) {
   # Input validation
-  pixelatorR:::assert_single_value(name, type = "string")
+  assert_single_value(name, type = "string")
 
   colors <-
     switch(name,
-           "PNA product sheet 2025" =
-             c(
-               "Naive CD4 T" = "#B9CDED",
-               "TCM CD4 T" = "#4A73C0",
-               "TEM CD4 T" = "#224792",
-               "Tregs" = "#1C3A76",
-               "Naive CD8 T" = "#D0EDE6",
-               "TCM CD8 T" = "#4AAF9D",
-               "TEM CD8 T" = "#1B7E6F",
-               "MAIT" = "#156559",
-               "CD56dim NK" = "#A28EDB",
-               "CD56bright NK" = "#866CCD",
-               "Naive B" = "#F0DAC4",
-               "Intermediate B" = "#C7A989",
-               "Memory B" = "#917557",
-               "mDC" = "#DA94C1",
-               "pDC" = "#BB5391",
-               "CD14 Mono" = "#E6BB43",
-               "CD16 Mono" = "#AE8A1B",
-               "Neutrophils" = "#CDCDCD",
-               "Basophils" = "#797979",
-               "Platelets" = "#7C2628",
-               "gdT" = "#5A3E9E"
-             ),
-
-           "PNA preprint 2025" =
-             c(
-               "Naive CD4 T" = "#B9CDED",
-               "CD4 TSCM" = "#92B0E0",
-               "CD4 TCM" = "#6D92D1",
-               "CD4 TEM" = "#4A73C0",
-               "CD4 TEFF" = "#224792",
-               "CD4 TEMRA" = "#1C3A76",
-               "Treg" = "#2955AE",
-               "Naive CD8 T" = "#D0EDE6",
-               "CD8 TSCM" = "#A2DACE",
-               "CD8 TCM" = "#75C5B5",
-               "CD8 TEM" = "#4AAF9D",
-               "CD8 TEFF" = "#209785",
-               "CD8 TEMRA" = "#1B7E6F",
-               "MAIT" = "#156559",
-               "DPT" = "#1B7E9F",
-               "DNT" = "#7B787F",
-               "CD56dim NK" = "#A28EDB",
-               "CD56bright NK" = "#866CCD",
-               "NKT" = "#6C4ABD",
-               "Naive B" = "#F0DAC4",
-               "Memory B" = "#917557",
-               "Plasma cells" = "#DE9982",
-               "cDC1" = "#DA94C1",
-               "cDC2" = "#BB5391",
-               "pDC" = "#9C4579",
-               "Classical Mono" = "#F0C966",
-               "Intermediate Mono" = "#DAAC22",
-               "Non-classical Mono" = "#836714",
-               "Neutrophils" = "#CDCDCD",
-               "Basophils" = "#797979",
-               "Platelets" = "#7C2628",
-               "gdT" = "#5A3E9E"
-             )
-
+      "PNA product sheet 2025" =
+        c(
+          "Naive CD4 T" = "#B9CDED",
+          "TCM CD4 T" = "#4A73C0",
+          "TEM CD4 T" = "#224792",
+          "Tregs" = "#1C3A76",
+          "Naive CD8 T" = "#D0EDE6",
+          "TCM CD8 T" = "#4AAF9D",
+          "TEM CD8 T" = "#1B7E6F",
+          "MAIT" = "#156559",
+          "CD56dim NK" = "#A28EDB",
+          "CD56bright NK" = "#866CCD",
+          "Naive B" = "#F0DAC4",
+          "Intermediate B" = "#C7A989",
+          "Memory B" = "#917557",
+          "mDC" = "#DA94C1",
+          "pDC" = "#BB5391",
+          "CD14 Mono" = "#E6BB43",
+          "CD16 Mono" = "#AE8A1B",
+          "Neutrophils" = "#CDCDCD",
+          "Basophils" = "#797979",
+          "Platelets" = "#7C2628",
+          "gdT" = "#5A3E9E"
+        ),
+      "PNA preprint 2025" =
+        c(
+          "Naive CD4 T" = "#B9CDED",
+          "CD4 TSCM" = "#92B0E0",
+          "CD4 TCM" = "#6D92D1",
+          "CD4 TEM" = "#4A73C0",
+          "CD4 TEFF" = "#224792",
+          "CD4 TEMRA" = "#1C3A76",
+          "Treg" = "#2955AE",
+          "Naive CD8 T" = "#D0EDE6",
+          "CD8 TSCM" = "#A2DACE",
+          "CD8 TCM" = "#75C5B5",
+          "CD8 TEM" = "#4AAF9D",
+          "CD8 TEFF" = "#209785",
+          "CD8 TEMRA" = "#1B7E6F",
+          "MAIT" = "#156559",
+          "DPT" = "#1B7E9F",
+          "DNT" = "#7B787F",
+          "CD56dim NK" = "#A28EDB",
+          "CD56bright NK" = "#866CCD",
+          "NKT" = "#6C4ABD",
+          "Naive B" = "#F0DAC4",
+          "Memory B" = "#917557",
+          "Plasma cells" = "#DE9982",
+          "cDC1" = "#DA94C1",
+          "cDC2" = "#BB5391",
+          "pDC" = "#9C4579",
+          "Classical Mono" = "#F0C966",
+          "Intermediate Mono" = "#DAAC22",
+          "Non-classical Mono" = "#836714",
+          "Neutrophils" = "#CDCDCD",
+          "Basophils" = "#797979",
+          "Platelets" = "#7C2628",
+          "gdT" = "#5A3E9E"
+        )
     )
 
   if (all(is.null(colors))) abort("Invalid palette name.")
@@ -295,8 +293,8 @@ color_discrete_pixelgen <- function(
   shuffle = FALSE,
   indices = NULL
 ) {
-  pixelatorR:::assert_single_value(aes_type, type = "string", allow_null = TRUE)
-  pixelatorR:::assert_vector(indices, type = "integer", allow_null = TRUE)
+  assert_single_value(aes_type, type = "string", allow_null = TRUE)
+  assert_vector(indices, type = "integer", allow_null = TRUE)
   if (!is.null(hue) || !is.null(level)) {
     cols <- PixelgenAccentColors(hue, level) %>% unname()
     if (!is.null(indices)) {
@@ -339,8 +337,8 @@ color_sequential_pixelgen <- function(
   direction = 1,
   aes_type = NULL
 ) {
-  pixelatorR:::assert_single_value(direction, type = "integer")
-  pixelatorR:::assert_single_value(aes_type, type = "string", allow_null = TRUE)
+  assert_single_value(direction, type = "integer")
+  assert_single_value(aes_type, type = "string", allow_null = TRUE)
   if (!direction %in% c(-1, 1)) {
     cli::cli_abort(
       c(
@@ -373,7 +371,7 @@ color_divergent_pixelgen <- function(
   limits = NULL,
   aes_type = NULL
 ) {
-  pixelatorR:::assert_single_value(aes_type, type = "string", allow_null = TRUE)
+  assert_single_value(aes_type, type = "string", allow_null = TRUE)
   cols_low <- PixelgenAccentColors(hue_low, level = NULL) %>% rev()
   cols_high <- PixelgenAccentColors(hue_high, level = NULL)
   list(
@@ -497,8 +495,10 @@ show_accent_colors <- function(
     labs(title = "Pixelgen Accent Colors", x = "Level", y = "Hue") +
     theme_minimal() +
     scale_y_discrete(limits = rev) +
-    theme(plot.background = element_rect(fill = "#F2F2F2"),
-          axis.text = element_text(size = 10))
+    theme(
+      plot.background = element_rect(fill = "#F2F2F2"),
+      axis.text = element_text(size = 10)
+    )
 
   if (label_discrete_order) {
     p <- p +
@@ -540,8 +540,8 @@ PixelgenAccentColors <- function(
   level = NULL
 ) {
   # Input validation
-  pixelatorR:::assert_vector(hue, type = "character", n = 1, allow_null = TRUE)
-  pixelatorR:::assert_vector(level, type = "numeric", n = 1, allow_null = TRUE)
+  assert_vector(hue, type = "character", n = 1, allow_null = TRUE)
+  assert_vector(level, type = "numeric", n = 1, allow_null = TRUE)
 
   stopifnot(
     "'hue' and 'level' cannot both be NULL." = !(is.null(hue) && is.null(level))
@@ -550,8 +550,8 @@ PixelgenAccentColors <- function(
   if (is.null(level)) level <- seq_len(nrow(Pixelgen_accent_colors))
   if (is.null(hue)) hue <- colnames(Pixelgen_accent_colors)
 
-  pixelatorR:::assert_x_in_y(hue, colnames(Pixelgen_accent_colors))
-  pixelatorR:::assert_within_limits(level, c(1, nrow(Pixelgen_accent_colors)))
+  assert_x_in_y(hue, colnames(Pixelgen_accent_colors))
+  assert_within_limits(level, c(1, nrow(Pixelgen_accent_colors)))
 
   # Get colors
   colors <-

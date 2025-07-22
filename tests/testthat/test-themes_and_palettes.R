@@ -41,7 +41,8 @@ test_that("theme_pixelgen works as expected", {
 test_that("PixelgenAccentColors works as expected", {
   expect_identical(
     PixelgenAccentColors(hue = "greens"),
-    c(greens1 = "#F4FBF3", greens2 = "#D2ECD0", greens3 = "#B0DCAD",
+    c(
+      greens1 = "#F4FBF3", greens2 = "#D2ECD0", greens3 = "#B0DCAD",
       greens4 = "#90CA8C", greens5 = "#71B96C", greens6 = "#53A54D",
       greens7 = "#369030", greens8 = "#2A8025", greens9 = "#206F1C",
       greens10 = "#175C14", greens11 = "#0F480D", greens12 = "#093207"
@@ -53,15 +54,19 @@ test_that("PixelgenAccentColors works as expected", {
   )
   expect_identical(
     PixelgenAccentColors(hue = c("greens", "reds"), level = 1:3),
-    c(greens1 = "#F4FBF3", greens2 = "#D2ECD0", greens3 = "#B0DCAD",
-      reds1 = "#FDF5F6", reds2 = "#FDF0F2", reds3 = "#FBE2E3")
+    c(
+      greens1 = "#F4FBF3", greens2 = "#D2ECD0", greens3 = "#B0DCAD",
+      reds1 = "#FDF5F6", reds2 = "#FDF0F2", reds3 = "#FBE2E3"
+    )
   )
   expect_identical(
     PixelgenAccentColors(level = 1),
-    c(purples1 = "#F7F5FD", blues1 = "#F3F6FD", cyans1 = "#F2FBFA",
+    c(
+      purples1 = "#F7F5FD", blues1 = "#F3F6FD", cyans1 = "#F2FBFA",
       greens1 = "#F4FBF3", pinks1 = "#FDF7FB", reds1 = "#FDF5F6", oranges1 = "#FDFAF6",
       yellows1 = "#FEFDF2", greys1 = "#F9F9F9", beiges1 = "#FFF6EE",
-      standardblues1 = "#F8F9FD")
+      standardblues1 = "#F8F9FD"
+    )
   )
 
   expect_error(PixelgenAccentColors())
