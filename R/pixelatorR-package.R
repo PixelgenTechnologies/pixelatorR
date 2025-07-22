@@ -83,6 +83,7 @@
 #' @importFrom dplyr row_number
 #' @importFrom dplyr rowwise
 #' @importFrom dplyr select
+#' @importFrom dplyr slice
 #' @importFrom dplyr slice_head
 #' @importFrom dplyr summarise
 #' @importFrom dplyr summarize

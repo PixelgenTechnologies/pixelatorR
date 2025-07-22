@@ -1,3 +1,4 @@
+options(Seurat.object.assay.version = "v3")
 seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE, load_proximity_scores = FALSE, verbose = FALSE)
 seur <- suppressWarnings(merge(seur, list(seur, seur, seur))) %>%
   Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
@@ -23,7 +24,7 @@ reference <- SeuratObject::CreateSeuratObject(
 
 test_that("annotate_cells works as expected", {
   # NMF default
-  expect_no_error(seur <- annotate_cells(
+  expect_no_error(seur <- AnnotateCells(
     seur,
     reference,
     query_assay = "PNA",
@@ -43,7 +44,7 @@ test_that("annotate_cells works as expected", {
   )
 
   # NMF threshold
-  expect_no_error(seur <- annotate_cells(
+  expect_no_error(seur <- AnnotateCells(
     seur,
     reference,
     query_assay = "PNA",
@@ -66,13 +67,13 @@ test_that("annotate_cells works as expected", {
 
 
 test_that("annotate_cells fails with invalid input", {
-  expect_error(seur <- annotate_cells("Invalid"))
-  expect_error(seur <- annotate_cells(seur, "Invalid"))
-  expect_error(seur <- annotate_cells(seur, reference, summarize_by_column = "Invalid"))
-  expect_error(seur <- annotate_cells(seur, reference, reference_assay = "Invalid"))
-  expect_error(seur <- annotate_cells(seur, reference, quary_assay = "Invalid"))
-  expect_error(seur <- annotate_cells(seur, reference, reference_assay = "anot", reference_groups = "Invalid"))
-  expect_error(seur <- annotate_cells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Invalid"))
-  expect_error(seur <- annotate_cells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_prediction_score = "Invalid"))
-  expect_error(seur <- annotate_cells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", skip_normalization = "Invalid"))
+  expect_error(seur <- AnnotateCells("Invalid"))
+  expect_error(seur <- AnnotateCells(seur, "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, summarize_by_column = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, quary_assay = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_prediction_score = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", skip_normalization = "Invalid"))
 })
