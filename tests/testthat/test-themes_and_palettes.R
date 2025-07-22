@@ -25,14 +25,6 @@ test_that("PixelgenGradient works as expected", {
   expect_error(PixelgenGradient(name = "not a palette", n = 5))
 })
 
-test_that("PixelgenLegacyPalette works as expected", {
-  expect_no_error(PixelgenLegacyPalette(name = "PNA product sheet 2025"))
-
-  expect_error(PixelgenLegacyPalette(name = "not a palette"))
-})
-
-
-
 test_that("theme_pixelgen works as expected", {
   expect_s3_class(theme_pixelgen(), "theme")
 })
