@@ -123,6 +123,7 @@ Collate:
     'restore_paths.R'
     'sequencing_saturation.R'
     'tau_plot.R'
+    'themes_and_palettes.R'
     'two_bit_encoding.R'
     'types_check.R'
     'weighted_pmds.R'
