@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Added
+- `sequencing_saturation` and `SequenceSaturationCurve` to compute sequencing saturation statistics from an edgelist. 
+
 ## [0.14.0] - 2025-07-15
 
 ### Added
