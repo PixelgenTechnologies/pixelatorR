@@ -48,8 +48,8 @@ sequencing_saturation <- function(
   if (any(graph_elements > graph_reads)) {
     cli_warn("The number of graph elements should not exceed the number of reads.")
   }
-  assert_vector(graph_elements, "numeric")
-  assert_vector(graph_reads, "numeric")
+  assert_vector(graph_elements, "numeric", n = 1)
+  assert_vector(graph_reads, "numeric", n = 1)
 
   return(100 * (1 - (graph_elements / graph_reads)))
 }
