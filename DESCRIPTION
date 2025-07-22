@@ -120,6 +120,7 @@ Collate:
     'remove_cell_graphs.R'
     'render_rotating_layout.R'
     'restore_paths.R'
+    'sequencing_saturation.R'
     'tau_plot.R'
     'two_bit_encoding.R'
     'types_check.R'
