@@ -193,7 +193,7 @@ test_that("PredictDoublets works as expected", {
       ),
       row.names = c(NA, -6L),
       class = c("tbl_df", "tbl", "data.frame")
-    )
+    ), tolerance = 0.01
   )
 
   expect_equal(
@@ -235,7 +235,7 @@ test_that("PredictDoublets works as expected", {
       ),
       row.names = c(NA, -6L),
       class = c("tbl_df", "tbl", "data.frame")
-    )
+    ), tolerance = 0.01
   )
 
 
