@@ -110,3 +110,80 @@ test_that("SequenceSaturationCurve works as expected", {
     sample_fracs = NULL
   ))
 })
+
+
+# approximate_edge_saturation
+test_that("approximate_edge_saturation works as expected", {
+  expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
+  expect_no_error(edgesat <- approximate_edge_saturation(db))
+  expect_equal(head(edgesat %>% collect() %>% arrange(component), 2),
+               structure(
+                 list(
+                   component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
+                   edges = structure(c(
+                     4.79312845656427e-319, 3.93463999035052e-319
+                   ), class = "integer64"),
+                   edge_saturation = c(0.751358719121778,
+                                       0.742954902077026),
+                   theoretical_max_edges = c(129118.086382752,
+                                             107190.893790944)
+                 ),
+                 row.names = c(NA,-2L),
+                 class = c("tbl_df",
+                           "tbl", "data.frame")
+               ))
+  expect_error(approximate_edge_saturation("Invalid"))
+  expect_error(approximate_edge_saturation(db, table_name = FALSE))
+  expect_no_error(db$close())
+})
+
+# approximate_node_saturation
+test_that("approximate_node_saturation works as expected", {
+  expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
+  expect_no_error(nodesat <- approximate_node_saturation(db))
+  expect_equal(head(edgesat %>% collect() %>% arrange(component), 2),
+               structure(
+                 list(
+                   component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
+                   nodes = c(43543L, 37665L),
+                   node_saturation = c(0.885827322462419,
+                                       0.886440632020902),
+                   theoretical_max_nodes = c(49155.1783240997,
+                                             42490.1551659828)
+                 ),
+                 row.names = c(NA,-2L),
+                 class = c("tbl_df",
+                           "tbl", "data.frame")
+               ))
+  expect_error(approximate_node_saturation("Invalid"))
+  expect_error(approximate_node_saturation(db, table_name = FALSE))
+  expect_no_error(db$close())
+})
+
+
+# approximate_saturation_curve
+test_that("approximate_saturation_curve works as expected", {
+  expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
+  expect_no_error(sat_points <- approximate_saturation_curve(db, fracs = c(0.1, 0.2)))
+  expect_equal(
+    head(sat_points %>% collect() %>% arrange(component), 2),
+    structure(
+      list(
+        component = c("0a45497c6bfbfb22", "0a45497c6bfbfb22"),
+        p = c(0.1, 0.2),
+        nodesat = c(0.546986224246965, 0.694512220887045),
+        edgesat = c(0.183978283619467, 0.313676981034575),
+        degree = c(1.7670057984165,
+                   2.37274221920626),
+        average_reads = c(29155, 58310)
+      ),
+      row.names = c(NA,-2L),
+      class = c("tbl_df", "tbl", "data.frame")
+    )
+  )
+  expect_error(approximate_saturation_curve("Invalid"))
+  expect_error(approximate_saturation_curve(db, fracs = "Invalid"))
+  expect_error(approximate_saturation_curve(db, detailed = "Invalid"))
+  expect_error(approximate_saturation_curve(db, verbose = "Invalid"))
+  expect_no_error(db$close())
+})
