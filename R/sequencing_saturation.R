@@ -450,12 +450,15 @@ approximate_saturation_curve <- function(
   for (col_name in paste0("p_", fracs)) {
     col_name_nodes <- paste0(col_name, "_nodes")
     col_name_nodesat <- paste0(col_name, "_nodesat")
-    mut_sat[[col_name_nodesat]] <- rlang::expr(!!rlang::sym(col_name_nodes) / theoretical_max_nodes)
+    mut_sat[[col_name_nodesat]] <-
+      rlang::expr(!!rlang::sym(col_name_nodes) / theoretical_max_nodes)
     col_name_pct <- paste0(col_name, "_pctkept")
     col_name_edgesat <- paste0(col_name, "_edgesat")
-    mut_sat[[col_name_edgesat]] <- rlang::expr((!!rlang::sym(col_name_pct) * as.integer(edges)) / theoretical_max_edges)
+    mut_sat[[col_name_edgesat]] <-
+      rlang::expr((!!rlang::sym(col_name_pct) * as.integer(edges)) / theoretical_max_edges)
     col_name_degree <- paste0(col_name, "_degree")
-    mut_sat[[col_name_degree]] <- rlang::expr(2 * (!!rlang::sym(col_name_pct) * as.integer(edges)) / !!rlang::sym(col_name_nodes))
+    mut_sat[[col_name_degree]] <-
+      rlang::expr(2 * (!!rlang::sym(col_name_pct) * as.integer(edges)) / !!rlang::sym(col_name_nodes))
   }
 
   # Calculate average reads per component to use for
