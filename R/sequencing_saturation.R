@@ -329,18 +329,18 @@ approximate_node_saturation <- function(
   type <- match.arg(type, c("edges", "nodes"))
   type_singular <- stringr::str_replace(type, "s$", "")
   df_lazy %>%
-  group_by(component) %>%
+    group_by(component) %>%
     summarize(
-      !! sym(type) := as.integer(n()),
+      !!sym(type) := as.integer(n()),
       f1 = sum(read_count == 1, na.rm = TRUE),
       f2 = sum(read_count == 2, na.rm = TRUE)
     ) %>%
     mutate(
-      !! sym(paste0("theoretical_max_", type)) := !! sym(type) + (f1 * (f1 - 1)) / (2 * (f2 + 1)),
+      !!sym(paste0("theoretical_max_", type)) := !!sym(type) + (f1 * (f1 - 1)) / (2 * (f2 + 1)),
     ) %>%
     mutate(
-      !! sym(paste0(type_singular, "_saturation")) :=
-        !! sym(type) / !! sym(paste0("theoretical_max_", type))
+      !!sym(paste0(type_singular, "_saturation")) :=
+        !!sym(type) / !!sym(paste0("theoretical_max_", type))
     ) %>%
     select(all_of(c("component", type, paste0(type_singular, "_saturation"), paste0("theoretical_max_", type)))) %>%
     compute(name = table_name, overwrite = TRUE)
@@ -395,7 +395,7 @@ approximate_saturation_curve <- function(
   for (p in fracs) {
     col_name <- paste0("p_", p)
     # Probability of being removed: (1 - p) ^ read_count
-    mut_actual_p[[col_name]] <- rlang::expr((1 - !!p) ^ read_count)
+    mut_actual_p[[col_name]] <- rlang::expr((1 - !!p)^read_count)
   }
   sum_est_edges <- list()
   for (col_name in paste0("p_", fracs)) {
@@ -482,8 +482,10 @@ approximate_saturation_curve <- function(
     downsampled_saturation <- list(
       "saturation_downsampled" = downsampled_saturation,
       "saturation_actual" = downsampled_features %>%
-        select(component, nodes, node_saturation, theoretical_max_nodes,
-               edges, edge_saturation, theoretical_max_edges) %>%
+        select(
+          component, nodes, node_saturation, theoretical_max_nodes,
+          edges, edge_saturation, theoretical_max_edges
+        ) %>%
         collect()
     )
   }
@@ -493,4 +495,322 @@ approximate_saturation_curve <- function(
   }
 
   return(downsampled_saturation)
+}
+
+
+#' Filter an edgelist by downsampling read counts
+#'
+#' Filter an edgelist (for a subset of components) in a PXL file by
+#' downsampling read counts using predefined fractions. The probability
+#' of a read staying in the edgelist is \eqn{1 - (1 - frac) ^ read_count}.
+#'
+#' The filtered edgelist(s) are written to parquet files in `outdir`.
+#'
+#' @param pxl_file Path to the PXL file.
+#' @param outdir Directory to write the output parquet files.
+#' @param components A character vector of component names to keep.
+#' @param fracs A numeric vector of fractions to downsample by.
+#'
+#' @return A tibble with paths to the written parquet files and the fractions.
+#'
+#' @export
+#'
+downsample_to_parquet <- function(
+  pxl_file,
+  outdir,
+  components,
+  fracs = seq(0.1, 0.9, 0.1)
+) {
+  assert_pxl_file(pxl_file)
+  assert_single_value(outdir, type = "string")
+  if (!fs::dir_exists(outdir)) {
+    fs::dir_create(outdir)
+  }
+  assert_vector(fracs, type = "numeric", n = 1)
+  assert_within_limits(fracs, limits = c(0, 1))
+
+  # Establish a connection to the PXL file
+  db <- PixelDB$new(pxl_file)
+  on.exit({
+    db$close()
+    rm(db)
+  })
+  if (!all(components %in% (db$counts() %>% colnames()))) {
+    cli::cli_abort("All {.var components} must be present in the PXL file")
+  }
+  comps_formatted <- glue::glue_sql("{components}", .con = db$.__enclos_env__$private$con) %>% paste(collapse = ",")
+
+  pq_paths <- file.path(outdir, glue::glue("edgelist_{sprintf('%03d', seq_along(fracs))}.parquet"))
+  for (f in pq_paths) {
+    if (fs::file_exists(f)) {
+      fs::file_delete(f)
+    }
+  }
+
+  # Iterate over selected fractions
+  for (i in seq_along(fracs)) {
+    p <- fracs[i]
+    pq_path <- pq_paths[i]
+    DBI::dbExecute(
+      db$.__enclos_env__$private$con,
+      glue::glue(
+        "
+      COPY (
+        SELECT q01.*
+        FROM (
+          SELECT q01.*, RANDOM() < pr AS keep
+          FROM (
+            SELECT
+              umi1,
+              umi2,
+              read_count,
+              component,
+              1.0 - POW((1.0 - {p}), read_count) AS pr -- Your probability calculation
+            FROM edgelist
+            WHERE (component IN ({comps_formatted}))
+          ) q01
+        ) q01
+        WHERE (keep)
+      )
+      TO '{pq_path}' (FORMAT PARQUET);
+      "
+      )
+    )
+  }
+
+  return(tibble(fracs = fracs, pq_files = pq_paths))
+}
+
+#' Calculate the sizes of the LCCs from an edgelist
+#'
+#' This function calculates the sizes of the largest connected components (LCCs)
+#' from a set of parquet files containing downsampled edgelists. The LCCs are
+#' computed for each fraction specified in the input tibble `df`, linking each
+#' fraction to its corresponding parquet file. Moreover, the LCCs are computed per
+#' cell (component).
+#'
+#' @param df A tibble with columns `pq_files` (paths to parquet files) and `fracs`
+#' generated with \code{\link{downsample_to_parquet}}.
+#' @param mc_cores Number of cores to use for parallel processing.
+#'
+#' @return A tibble with the sizes of the largest connected components (LCC) for each
+#' fraction in `df$fracs`. The results are grouped by cell (component).
+#'
+#' @export
+#'
+lcc_sizes <- function(
+  df,
+  mc_cores = 1
+) {
+  assert_class(df, "tbl_df")
+  for (f in df$pq_files) {
+    assert_file_exists(f)
+    assert_file_ext(f, "parquet")
+  }
+  assert_within_limits(df$fracs, limits = c(0, 1))
+  assert_single_value(mc_cores, type = "integer")
+
+  lcc <- parallel::mclapply(seq_len(nrow(df)), function(i) {
+    # Create a new duckdb connection and load the duckpgq extension
+    con <- DBI::dbConnect(duckdb::duckdb(bigint = "integer64"), dbdir = ":memory:")
+    DBI::dbExecute(con, "INSTALL duckpgq FROM community")
+    DBI::dbExecute(con, "LOAD duckpgq")
+
+    # Crete table from the current parquet file
+    pq_path <- df$pq_files[i]
+    DBI::dbExecute(con, glue::glue("CREATE OR REPLACE TABLE el AS SELECT * FROM '{pq_path}'"))
+
+    # Create a node table
+    DBI::dbExecute(
+      con,
+      glue::glue(
+        "
+          CREATE OR REPLACE TEMPORARY TABLE umi_nodes AS
+          SELECT component, umi1 AS id FROM el
+          UNION
+          SELECT component, umi2 AS id FROM el
+        "
+      )
+    )
+
+    # Construct graph from the node table and edgelist
+    DBI::dbExecute(
+      con,
+      glue::glue(
+        "
+          CREATE OR REPLACE PROPERTY GRAPH my_umi_graph
+          VERTEX TABLES (
+              umi_nodes PROPERTIES (id) LABEL UMI
+          )
+          EDGE TABLES (
+              el SOURCE KEY (umi1) REFERENCES umi_nodes (id)
+                       DESTINATION KEY (umi2) REFERENCES umi_nodes (id)
+                       LABEL CONNECTS
+          );
+        "
+      )
+    )
+
+    # Calculate weakly connected components
+    DBI::dbExecute(
+      con,
+      "
+        CREATE OR REPLACE TEMPORARY TABLE comps AS
+        SELECT *
+        FROM weakly_connected_component(my_umi_graph, UMI, CONNECTS);
+      "
+    )
+
+    # Get the size of the largest connected components (LCC)
+    # for each cell (component) in the edgelist
+    lcc_per_component <- tbl(con, "comps") %>%
+      left_join(tbl(con, "umi_nodes"), by = c("id" = "id")) %>%
+      group_by(componentId, component) %>%
+      count(name = "n_nodes") %>%
+      group_by(component) %>%
+      arrange(desc(n_nodes)) %>%
+      collect() %>%
+      slice_head(n = 1)
+
+    # Close connection
+    DBI::dbDisconnect(con)
+
+    return(lcc_per_component)
+  }, mc.cores = 1)
+
+  # Format results
+  lcc <- lapply(seq_along(lcc), function(i) {
+    lcc[[i]] %>%
+      mutate(frac = df$fracs[i]) %>%
+      select(component, frac, n_nodes)
+  }) %>%
+    bind_rows() %>%
+    ungroup()
+
+  return(lcc)
+}
+
+
+#' Compute LCC sizes for downsampled edgelists
+#'
+#' This function computes the sizes of the largest connected components (LCC) for
+#' downsampled edgelists. The downsampling is determined by the `fracs` parameter,
+#' which specifies the fractions of sequencing reads to retain.
+#'
+#' @section LCC:
+#' The LCC (largest connected component) can be used to analyze graph stability. When
+#' downsampling sequencing reads, edges are removed, which eventually leads to a collapse
+#' of the graph into many smaller components. By downsampling the graph at multiple fractions,
+#' we can observe how the size of the largest connected component changes. Typically, there
+#' is a sharp drop in the size of the LCC at a certain fraction, indicating that the graph
+#' no longer has a large connected component and becomes completely fragmented.
+#' Note that the LCC is computed for each fraction and component (cell) separately.
+#'
+#' @section: performance:
+#' Computations are scalable thanks to efficient SQL queries. LCCs are computed using the
+#' `duckpgq` extension for DuckDB, which enables fast graph operations. This avoids the need
+#' for loading the entire edgelist into memory, making it suitable for large datasets.
+#' However, it is recommended to compute the LCC sizes on a subset of the data to minimize
+#' memory usage.
+#'
+#' @param pxl_file Path to the input PXL file containing the edgelist.
+#' @param components A character vector of component names to include in the computation.
+#' These must be present in the PXL file.
+#' @param fracs A numeric vector specifying the fractions of sequencing reads to retain.
+#' @param outdir Optional output directory where the downsampled parquet files will be saved.
+#' If `NULL`, the files will be saved in a temporary directory which is deleted post processing.
+#' @param mc_cores Number of cores to use for parallel processing. Default is 1 indicating
+#' sequential processing.
+#' @param verbose Logical indicating whether to print progress messages.
+#'
+#' @return A tibble with columns `component` (the original component ID), `frac` (the fraction)
+#' and `n_nodes` (the size of the LCC for that fraction and component).
+#'
+#' @examples
+#' library(ggplot2)
+#' library(dplyr)
+#' pxl_file <- minimal_pna_pxl_file()
+#' components <- ReadPNA_counts(pxl_file) %>% colnames()
+#'
+#' # Select fractions
+#' db <- PixelDB$new(pxl_file)
+#' avg_reds <- db$cell_meta()$reads %>% mean()
+#' fracs <- (10^seq(4, log10(avg_reds), length.out = 20))[-20] / avg_reds
+#'
+#' lcc_df <- lcc_curve(
+#'   minimal_pna_pxl_file(),
+#'   components,
+#'   fracs = fracs
+#' )
+#'
+#' ggplot(lcc_df, aes(frac, n_nodes, color = component)) +
+#'   geom_point() +
+#'   geom_line() +
+#'   theme_bw() +
+#'   guides(color = "none")
+#'
+#' # We can calculate graph stability by dividing
+#' # the LCC by the maximum theoretical number of nodes
+#' nodesat <- approximate_node_saturation(db) %>%
+#'   collect()
+#' db$close()
+#' lcc_df <- lcc_df %>%
+#'   left_join(nodesat, by = "component")
+#'
+#' ggplot(lcc_df, aes(frac, n_nodes / theoretical_max_nodes, color = component)) +
+#'   geom_point() +
+#'   geom_line() +
+#'   theme_bw() +
+#'   guides(color = "none") +
+#'   scale_y_continuous(limits = c(0, 1))
+#'
+#' @export
+#'
+lcc_curve <- function(
+  pxl_file,
+  components,
+  fracs = seq(0.1, 1, by = 0.1),
+  outdir = NULL,
+  mc_cores = 1,
+  verbose = TRUE
+) {
+  assert_single_value(pxl_file, type = "string")
+  assert_pxl_file(pxl_file)
+  assert_vector(components, type = "character", n = 1)
+  assert_single_value(outdir, "string", allow_null = TRUE)
+  assert_vector(fracs, type = "numeric", allow_null = FALSE, n = 1)
+  assert_within_limits(fracs, limits = c(0, 1))
+  assert_single_value(mc_cores, type = "integer")
+  if (!is.null(outdir)) {
+    if (!fs::dir_exists(outdir)) {
+      cli::cli_abort("{.var outdir} {.val {outdir}} does not exist")
+    }
+    clean_up <- FALSE
+  } else {
+    outdir <- fs::file_temp() %>% stringr::str_replace("file", "dir")
+    fs::dir_create(outdir)
+    clean_up <- TRUE
+  }
+
+  if (verbose && check_global_verbosity()) {
+    cli::cli_alert_info("Downsampling and exporting edgelists for {.val {length(components)}} components")
+  }
+
+  pq_files <- downsample_to_parquet(pxl_file, outdir, components, fracs)
+
+  if (verbose && check_global_verbosity()) {
+    cli::cli_alert_info("Calculating largest connected components (LCC) for each fraction")
+  }
+
+  lcc <- lcc_sizes(df = pq_files, mc_cores)
+
+  if (clean_up) {
+    fs::dir_delete(outdir)
+  }
+
+  if (verbose && check_global_verbosity()) {
+    cli::cli_alert_success("Finished!")
+  }
+
+  return(lcc)
 }
