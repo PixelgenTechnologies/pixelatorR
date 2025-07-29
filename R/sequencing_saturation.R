@@ -400,17 +400,17 @@ approximate_saturation_curve <- function(
   sum_est_edges <- list()
   for (col_name in paste0("p_", fracs)) {
     summary_col_name <- paste0(col_name, "_tot")
-    # Total expected edges removed
-    sum_est_edges[[summary_col_name]] <- rlang::expr(sum(!!rlang::sym(col_name), na.rm = TRUE))
+    # Total expected edges kept
+    sum_est_edges[[summary_col_name]] <- rlang::expr(sum(1 - !!rlang::sym(col_name), na.rm = TRUE))
   }
   # Total edges
   sum_est_edges[["n_edges"]] <- rlang::expr(n())
-  # Calculate percentage of edges kept: 1 - (total expected edges removed / total edges)
+  # Calculate percentage of edges kept: total expected edges kept / total edges
   mut_pct_kept <- list()
   for (col_name in paste0("p_", fracs)) {
     col_name_tot <- paste0(col_name, "_tot")
     col_name_pctkept <- paste0(col_name, "_pctkept")
-    mut_pct_kept[[col_name_pctkept]] <- rlang::expr(1 - !!rlang::sym(col_name_tot) / n_edges)
+    mut_pct_kept[[col_name_pctkept]] <- rlang::expr(!!rlang::sym(col_name_tot) / n_edges)
   }
   result_df <- tbl(db$.__enclos_env__$private$con, "edgelist") %>%
     group_by(component) %>%
