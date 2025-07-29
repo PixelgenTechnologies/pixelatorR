@@ -35,7 +35,7 @@ test_that("annotate_cells works as expected", {
     verbose = FALSE
   ))
   expect_equal(
-    seur$cell_type_annotation %>% unname(),
+    seur$cell_type %>% unname(),
     c(
       "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T",
@@ -56,7 +56,7 @@ test_that("annotate_cells works as expected", {
     verbose = FALSE
   ))
   expect_equal(
-    seur$cell_type_annotation %>% unname(),
+    seur$cell_type %>% unname(),
     c(
       "Mono CD16+", "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+", "Unknown", "CD4T",

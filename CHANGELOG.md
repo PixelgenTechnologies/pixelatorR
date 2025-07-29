@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Changed
+- `AnnotateCells` now returns columns named exactly as `reference_groups`
+
 ### Added
 - new sequencing saturation and graph stability functions. 
   - `approximate_edge_saturation` computes edge saturation for components in a PXL file
