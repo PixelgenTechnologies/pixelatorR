@@ -7,6 +7,7 @@ CMD
 CellGraph
 CellGraphAssay
 CellGraphs
+Chao
 Colocalization
 ColocalizationScores
 Commun
@@ -23,6 +24,8 @@ Getis
 Hoef
 Johan
 Kallas
+LCC
+LCCs
 LM
 LogNormalize
 MDS
@@ -132,7 +135,6 @@ pixelator
 pmds
 png
 pre
-preprint
 proteomics
 pseudocolor
 pxl

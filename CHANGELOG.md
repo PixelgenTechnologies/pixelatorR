@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Added
+- new sequencing saturation and graph stability functions. 
+  - `approximate_edge_saturation` computes edge saturation for components in a PXL file
+  - `approximate_node_saturation` computes node saturation for components in a PXL file
+  - `approximate_saturation_curve` computes node/edge saturation for downsampled components in a PXL file
+  - `downsample_to_parquet` downsamples the edgelist in a PXL file and exports these edgelists to parquet files
+  - `lcc_sizes` computes the largest connected components for cell components in downsampled edgeslists (parquet files)
+  - `lcc_curve` computes LCC for downsampled components in a PXL file using the `duckpgq` DuckDB extension
 - `sequencing_saturation` and `SequenceSaturationCurve` to compute sequencing saturation statistics from an edgelist. 
 
 ## [0.14.0] - 2025-07-15
