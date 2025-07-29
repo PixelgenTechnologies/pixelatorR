@@ -292,17 +292,11 @@ AnnotateCells <- function(
   )
 
   # Format results
-  annotations <- lapply(predictions, function(x) x[, "predicted.id"]) %>% as.data.frame()
+  annotations <- lapply(predictions, function(x) x[, "predicted.id"]) %>% data.frame(check.names = FALSE)
 
   if (min_prediction_score > 0) {
     prediction_scores <- lapply(predictions, function(x) x[, "prediction.score.max"]) %>% as.data.frame()
     annotations[prediction_scores < min_prediction_score] <- "Unknown"
-  }
-
-  if (all(names(annotations) == c("celltype.l1", "celltype.l2"))) {
-    colnames(annotations) <- c("l1_annotation", "l2_annotation")
-  } else {
-    colnames(annotations) <- paste0(colnames(annotations), "_annotation")
   }
 
   # Add the transferred celltypes to the object metadata
@@ -424,13 +418,7 @@ AnnotateCells <- function(
   }
 
   # Format results
-  predicted_annotations <- predicted_annotations %>% as.data.frame()
-
-  if (all(names(predicted_annotations) == c("celltype.l1", "celltype.l2"))) {
-    colnames(predicted_annotations) <- c("l1_annotation", "l2_annotation")
-  } else {
-    colnames(predicted_annotations) <- paste0(colnames(predicted_annotations), "_annotation")
-  }
+  predicted_annotations <- predicted_annotations %>% data.frame(check.names = FALSE)
 
   # Add the transferred celltypes to the object metadata
   object <- SeuratObject::AddMetaData(
