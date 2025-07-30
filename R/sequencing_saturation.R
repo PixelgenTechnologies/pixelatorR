@@ -251,6 +251,8 @@ SequenceSaturationCurve <- function(
 #' of the actual number of edges to the theoretical maximum.
 #'
 #' @param db A `PixelDB` object.
+#' @param components Optional character vector of component names to filter the
+#' edgelist.
 #' @param table_name Optional name of the remote table.
 #'
 #' @return A `lazy_df` with the edge saturation.

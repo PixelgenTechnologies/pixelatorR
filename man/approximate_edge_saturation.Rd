@@ -9,6 +9,9 @@ approximate_edge_saturation(db, components = NULL, table_name = NULL)
 \arguments{
 \item{db}{A \code{PixelDB} object.}
 
+\item{components}{Optional character vector of component names to filter the
+edgelist.}
+
 \item{table_name}{Optional name of the remote table.}
 }
 \value{
