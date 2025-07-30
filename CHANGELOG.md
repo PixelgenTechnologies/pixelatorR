@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Updated 
+
+- `approximate_edge_saturation` and `approximate_node_saturation` now accepts a `components` argument for filtering.
+
 ### Changed
 - `AnnotateCells` now returns columns named exactly as `reference_groups`
 
