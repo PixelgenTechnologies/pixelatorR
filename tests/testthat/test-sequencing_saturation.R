@@ -121,6 +121,19 @@ test_that("approximate_edge_saturation works as expected", {
                  class = c("tbl_df",
                            "tbl", "data.frame")
                ))
+  expect_no_error(edgesat <- approximate_edge_saturation(db, components = "0a45497c6bfbfb22"))
+  expect_equal(edgesat %>% collect(),
+               structure(
+                 list(
+                   component = "0a45497c6bfbfb22",
+                   edges = 97014L,
+                   edge_saturation = 0.751358719121778,
+                   theoretical_max_edges = 129118.086382752
+                 ),
+                 class = c("tbl_df",
+                           "tbl", "data.frame"),
+                 row.names = c(NA,-1L)
+               ))
   expect_error(approximate_edge_saturation("Invalid"))
   expect_error(approximate_edge_saturation(db, table_name = FALSE))
   expect_no_error(db$close())
@@ -143,6 +156,19 @@ test_that("approximate_node_saturation works as expected", {
                  row.names = c(NA,-2L),
                  class = c("tbl_df",
                            "tbl", "data.frame")
+               ))
+  expect_no_error(nodesat <- approximate_node_saturation(db, components = "0a45497c6bfbfb22"))
+  expect_equal(nodesat %>% collect(),
+               structure(
+                 list(
+                   component = "0a45497c6bfbfb22",
+                   nodes = 43543L,
+                   node_saturation = 0.885827322462419,
+                   theoretical_max_nodes = 49155.1783240997
+                 ),
+                 class = c("tbl_df",
+                           "tbl", "data.frame"),
+                 row.names = c(NA,-1L)
                ))
   expect_error(approximate_node_saturation("Invalid"))
   expect_error(approximate_node_saturation(db, table_name = FALSE))

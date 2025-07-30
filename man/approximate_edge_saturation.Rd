@@ -4,7 +4,7 @@
 \alias{approximate_edge_saturation}
 \title{Compute approximate edge saturation}
 \usage{
-approximate_edge_saturation(db, table_name = NULL)
+approximate_edge_saturation(db, components = NULL, table_name = NULL)
 }
 \arguments{
 \item{db}{A \code{PixelDB} object.}
