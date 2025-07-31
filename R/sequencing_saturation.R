@@ -251,6 +251,8 @@ SequenceSaturationCurve <- function(
 #' of the actual number of edges to the theoretical maximum.
 #'
 #' @param db A `PixelDB` object.
+#' @param components Optional character vector of component names to filter the
+#' edgelist.
 #' @param table_name Optional name of the remote table.
 #'
 #' @return A `lazy_df` with the edge saturation.
@@ -259,13 +261,26 @@ SequenceSaturationCurve <- function(
 #'
 approximate_edge_saturation <- function(
   db,
+  components = NULL,
   table_name = NULL
 ) {
   assert_class(db, "PixelDB")
+  assert_vector(components, type = "character", allow_null = TRUE, n = 1)
+  if (is.null(components)) {
+    el_name <- "edgelist"
+  } else {
+    if (!all(components %in% (db$counts() %>% colnames()))) {
+      cli::cli_abort(
+        c("x" = "All {.var components} must be present in the PXL file.")
+      )
+    }
+    el_name <- "edgelist_modified"
+    .filter_edgelist_duckdb(db, components)
+  }
   assert_single_value(table_name, type = "string", allow_null = TRUE)
   # Estimate chao1 edge saturation
-  edge_saturation <- tbl(db$.__enclos_env__$private$con, "edgelist") %>%
-    .compute_saturation_lazy(
+  edge_saturation <- tbl(db$.__enclos_env__$private$con, el_name) %>%
+    .compute_saturation_duckdb(
       type = "edges",
       table_name = table_name
     )
@@ -280,6 +295,7 @@ approximate_edge_saturation <- function(
 #' of the actual number of nodes to the theoretical maximum.
 #'
 #' @param db A `PixelDB` object.
+#' @param components Optional vector of component names to filter the edgelist by.
 #' @param table_name Optional name of the remote table.
 #'
 #' @return A `lazy_df` with the node saturation.
@@ -288,28 +304,44 @@ approximate_edge_saturation <- function(
 #'
 approximate_node_saturation <- function(
   db,
+  components = NULL,
   table_name = NULL
 ) {
   assert_class(db, "PixelDB")
+  assert_vector(components, type = "character", allow_null = TRUE, n = 1)
+  if (is.null(components)) {
+    el_name <- "edgelist"
+  } else {
+    if (!all(components %in% (db$counts() %>% colnames()))) {
+      cli::cli_abort(
+        c("x" = "All {.var components} must be present in the PXL file.")
+      )
+    }
+    el_name <- "edgelist_modified"
+    .filter_edgelist_duckdb(db, components)
+  }
+
   assert_single_value(table_name, type = "string", allow_null = TRUE)
   # Summarize node stats
   DBI::dbExecute(
     db$.__enclos_env__$private$con,
-    "
-    CREATE OR REPLACE TEMPORARY VIEW nodes AS (
-      SELECT component, CAST(SUM(read_count) AS SMALLINT) AS read_count, CAST(COUNT(*) AS SMALLINT) AS degree
-      FROM edgelist
-      GROUP BY component, umi1
-      UNION ALL
-      SELECT component, CAST(SUM(read_count) AS SMALLINT) AS read_count, CAST(COUNT(*) AS SMALLINT) AS degree
-      FROM edgelist
-      GROUP BY component, umi2
+    glue::glue(
+      "
+      CREATE OR REPLACE TEMPORARY VIEW nodes AS (
+        SELECT component, CAST(SUM(read_count) AS SMALLINT) AS read_count, CAST(COUNT(*) AS SMALLINT) AS degree
+        FROM {el_name}
+        GROUP BY component, umi1
+        UNION ALL
+        SELECT component, CAST(SUM(read_count) AS SMALLINT) AS read_count, CAST(COUNT(*) AS SMALLINT) AS degree
+        FROM {el_name}
+        GROUP BY component, umi2
+      )
+      "
     )
-    "
   )
 
   node_saturation <- tbl(db$.__enclos_env__$private$con, "nodes") %>%
-    .compute_saturation_lazy(
+    .compute_saturation_duckdb(
       type = "nodes",
       table_name = table_name
     )
@@ -317,11 +349,32 @@ approximate_node_saturation <- function(
   return(node_saturation)
 }
 
+#' Filter edgelist by components
+#'
+#' @noRd
+.filter_edgelist_duckdb <- function(
+  db,
+  components
+) {
+  db$check_connection()
+  components_formatted <- glue::glue_sql("{components}", .con = db$.__enclos_env__$private$con) %>%
+    paste(collapse = ", ")
+  DBI::dbExecute(
+    db$.__enclos_env__$private$con,
+    glue::glue(
+      "CREATE OR REPLACE TEMPORARY VIEW edgelist_modified AS (
+          SELECT * FROM edgelist WHERE component IN
+          ({components_formatted})
+        )"
+    )
+  )
+}
+
 #' Compute edge/node saturation using Chao1 estimator
 #'
 #' @noRd
 #'
-.compute_saturation_lazy <- function(
+.compute_saturation_duckdb <- function(
   df_lazy,
   type = c("edges", "nodes"),
   table_name
@@ -679,7 +732,7 @@ lcc_sizes <- function(
     DBI::dbDisconnect(con)
 
     return(lcc_per_component)
-  }, mc.cores = 1)
+  }, mc.cores = mc_cores)
 
   # Format results
   lcc <- lapply(seq_along(lcc), function(i) {

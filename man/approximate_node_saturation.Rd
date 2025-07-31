@@ -4,10 +4,12 @@
 \alias{approximate_node_saturation}
 \title{Compute approximate node saturation}
 \usage{
-approximate_node_saturation(db, table_name = NULL)
+approximate_node_saturation(db, components = NULL, table_name = NULL)
 }
 \arguments{
 \item{db}{A \code{PixelDB} object.}
+
+\item{components}{Optional vector of component names to filter the edgelist by.}
 
 \item{table_name}{Optional name of the remote table.}
 }
