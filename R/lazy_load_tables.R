@@ -133,10 +133,13 @@
     lazy_table <- tbl(con_federated, view_name)
   } else {
     # don’t union, return a list of lazy tables (one per DB)
-    lazy_table <- purrr::map2(
+    lazy_tables <- mapply(
+      function(query, db) {
+        tbl(con_federated, dbplyr::sql(query))
+      },
       queries,
       dbs,
-      ~ tbl(con_federated, dbplyr::sql(.x))
+      SIMPLIFY = FALSE
     )
   }
 
