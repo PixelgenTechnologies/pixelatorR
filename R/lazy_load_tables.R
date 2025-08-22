@@ -7,7 +7,9 @@
 #' log2 ratio proximity score. This is only used for the "proximity" table.
 #' @param proteins_keep A character vector of protein names (marker_1/marker_2)
 #' to keep in the proximity score table.
-
+#' @param union A logical indicating whether to union the results from
+#' multiple databases (PXL files) into a single table. If \code{FALSE}, a list of
+#' lazy tables (one per PXL file) is returned.
 #' @param call The calling environment.
 #'
 #' @return A \code{tbl_lazy} table.
