@@ -7,6 +7,7 @@
 #' log2 ratio proximity score. This is only used for the "proximity" table.
 #' @param proteins_keep A character vector of protein names (marker_1/marker_2)
 #' to keep in the proximity score table.
+
 #' @param call The calling environment.
 #'
 #' @return A \code{tbl_lazy} table.
@@ -54,6 +55,7 @@
   table_name = "proximity",
   calc_log2ratio = TRUE,
   proteins_keep = NULL,
+  union = TRUE,
   call = caller_env()
 ) {
   # Check that PXL files are unique
@@ -110,7 +112,7 @@
     select_proteins_sql <- ""
   }
 
-  union_sql <- paste(
+  queries <-
     glue::glue(
       select_sql,
       "current_id AS component\n",
@@ -119,18 +121,22 @@
       "JOIN id_map{dbs}\n",
       "ON db{dbs}.{table_name}.component = id_map{dbs}.component\n",
       select_proteins_sql
-    ),
-    # Combine all tables with UNION ALL
-    collapse = "\nUNION ALL\n"
-  )
+    )
 
-  create_view_sql <- glue::glue("CREATE OR REPLACE VIEW combined_{table_name} AS {union_sql}")
-
-  # Execute the SQL query to create the view
-  DBI::dbExecute(con_federated, create_view_sql)
-
-  # Create a lazy table with dbplyr
-  lazy_table <- tbl(con_federated, glue::glue("combined_{table_name}"))
+  if (union) {
+    union_sql <- paste(queries, collapse = "\nUNION ALL\n")
+    view_name <- glue::glue("combined_{table_name}")
+    create_view_sql <- glue::glue("CREATE OR REPLACE VIEW {view_name} AS {union_sql}")
+    DBI::dbExecute(con_federated, create_view_sql)
+    lazy_table <- tbl(con_federated, view_name)
+  } else {
+    # don’t union, return a list of lazy tables (one per DB)
+    lazy_table <- purrr::map2(
+      queries,
+      dbs,
+      ~ tbl(con_federated, dbplyr::sql(.x))
+    )
+  }
 
   return(lazy_table)
 }
