@@ -379,6 +379,7 @@ Edgelists.Seurat <- function(
   assay = NULL,
   meta_data_columns = NULL,
   lazy = TRUE,
+  union = TRUE,
   ...
 ) {
   # Use default assay if assay = NULL
@@ -387,7 +388,7 @@ Edgelists.Seurat <- function(
   assert_class(pixel_assay, classes = c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))
 
   # Get edgelist
-  edgelists <- Edgelists(object[[assay]], lazy, ...)
+  edgelists <- Edgelists(object[[assay]], lazy, union, ...)
 
   if (inherits(edgelists, "tbl_lazy")) {
     con <- edgelists$src$con

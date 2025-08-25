@@ -133,14 +133,12 @@
     lazy_table <- tbl(con_federated, view_name)
   } else {
     # don’t union, return a list of lazy tables (one per DB)
-    lazy_tables <- mapply(
-      function(query, db) {
+    lazy_table <-
+      queries %>%
+      lapply(function(query, db) {
         tbl(con_federated, dbplyr::sql(query))
-      },
-      queries,
-      dbs,
-      SIMPLIFY = FALSE
-    )
+      }) %>%
+      set_names(fs_map$sample)
   }
 
   return(lazy_table)
