@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Updated 
 
 - `approximate_edge_saturation` and `approximate_node_saturation` now accepts a `components` argument for filtering.
+- Added an argument `union` to control whether tables of lazy tables should be joined or output as a list in `.lazy_load_table` and `Edgelists`.
 
 ### Changed
 - `AnnotateCells` now returns columns named exactly as `reference_groups`
@@ -23,6 +24,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `lcc_sizes` computes the largest connected components for cell components in downsampled edgeslists (parquet files)
   - `lcc_curve` computes LCC for downsampled components in a PXL file using the `duckpgq` DuckDB extension
 - `sequencing_saturation` and `SequenceSaturationCurve` to compute sequencing saturation statistics from an edgelist. 
+
+### Fixes
+- Fixed a bug in `.lazy_load_table` that prevented lazy loading of tables. 
 
 ## [0.14.0] - 2025-07-15
 
