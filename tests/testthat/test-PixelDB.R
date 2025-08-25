@@ -188,6 +188,18 @@ test_that("PixelDB methods work as expected", {
   )
   expect_equal(dim(el), c(97014, 5))
 
+  expect_no_error(el_lazy <- db$components_edgelist(c("0a45497c6bfbfb22", "c3c393e9a17c1981"), lazy = TRUE))
+  expect_no_error(el <- db$components_edgelist(c("0a45497c6bfbfb22", "c3c393e9a17c1981"), lazy = FALSE))
+
+  expect_s3_class(
+    el_lazy, "tbl_lazy"
+  )
+
+  expect_equal(
+    el_lazy %>% collect(),
+    el
+  )
+
   # components_marker_counts method
   expect_no_error(mc <- db$components_marker_counts("0a45497c6bfbfb22"))
   expect_type(mc, "list")
