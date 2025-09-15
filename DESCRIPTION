@@ -41,7 +41,7 @@ Imports:
     lifecycle,
     R6,
     DBI,
-    duckdb,
+    duckdb (>= 1.3.0, <= 1.3.2),
     bit64,
     grDevices,
     graphics,
