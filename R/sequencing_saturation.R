@@ -832,7 +832,7 @@ lcc_curve <- function(
   mc_cores = 1,
   verbose = TRUE
 ) {
-  duckdb_v <- packageVersion("duckdb")
+  duckdb_v <- utils::packageVersion("duckdb")
   if (utils::compareVersion(as.character(duckdb_v), "1.3.2") > 0) {
     cli_alert_warning(
       "This function is only tested with duckdb <= 1.3.2, but you have {.pkg duckdb} version {.val {duckdb_v}}
