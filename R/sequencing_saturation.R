@@ -785,6 +785,7 @@ lcc_sizes <- function(
 #' and `n_nodes` (the size of the LCC for that fraction and component).
 #'
 #' @examples
+#' \dontrun{
 #' library(ggplot2)
 #' library(dplyr)
 #' pxl_file <- minimal_pna_pxl_file()
@@ -821,7 +822,7 @@ lcc_sizes <- function(
 #'   theme_bw() +
 #'   guides(color = "none") +
 #'   scale_y_continuous(limits = c(0, 1))
-#'
+#' }
 #' @export
 #'
 lcc_curve <- function(
