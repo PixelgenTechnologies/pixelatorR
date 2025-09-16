@@ -62,6 +62,7 @@ Note that the LCC is computed for each fraction and component (cell) separately.
 }
 
 \examples{
+\dontrun{
 library(ggplot2)
 library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
@@ -98,5 +99,5 @@ ggplot(lcc_df, aes(frac, n_nodes / theoretical_max_nodes, color = component)) +
   theme_bw() +
   guides(color = "none") +
   scale_y_continuous(limits = c(0, 1))
-
+}
 }
