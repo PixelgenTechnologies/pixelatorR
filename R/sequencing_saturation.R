@@ -830,6 +830,15 @@ lcc_curve <- function(
   mc_cores = 1,
   verbose = TRUE
 ) {
+
+  duckdb_v <- packageVersion("duckdb")
+  if (utils::compareVersion(as.character(duckdb_v), "1.3.2") > 0) {
+    cli_alert_warning(
+      "This function is only tested with duckdb <= 1.3.2, but you have {.pkg duckdb} version {.val {duckdb_v}}
+      installed. This may result in compability issues with {.pkg duckpgq}."
+      )
+  }
+
   assert_single_value(pxl_file, type = "string")
   assert_pxl_file(pxl_file)
   assert_vector(components, type = "character", n = 1)

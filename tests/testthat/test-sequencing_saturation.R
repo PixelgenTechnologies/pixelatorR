@@ -216,24 +216,27 @@ test_that("downsample_to_parquet works as expected", {
   expect_error(downsample_to_parquet(minimal_pna_pxl_file(), components = "0a45497c6bfbfb22", outdir = FALSE))
 })
 
-# lcc_sizes
-test_that("lcc_sizes works as expected", {
-  expect_no_error(pg_files <- downsample_to_parquet(minimal_pna_pxl_file(), components = "0a45497c6bfbfb22", fracs = 0.1, outdir = tempdir()))
-  expect_no_error(lcc <- lcc_sizes(pg_files))
-  expect_s3_class(lcc, "tbl_df")
-  expect_equal(dim(lcc), c(1, 3))
-  expect_error(lcc_sizes("Invalid"))
-  expect_error(lcc_sizes(pg_files, "Invalid"))
-})
+duckdb_v <- packageVersion("duckdb")
+if (!utils::compareVersion(as.character(duckdb_v), "1.3.2") > 0) {
+  # lcc_sizes
+  test_that("lcc_sizes works as expected", {
+    expect_no_error(pg_files <- downsample_to_parquet(minimal_pna_pxl_file(), components = "0a45497c6bfbfb22", fracs = 0.1, outdir = tempdir()))
+    expect_no_error(lcc <- lcc_sizes(pg_files))
+    expect_s3_class(lcc, "tbl_df")
+    expect_equal(dim(lcc), c(1, 3))
+    expect_error(lcc_sizes("Invalid"))
+    expect_error(lcc_sizes(pg_files, "Invalid"))
+  })
 
-# lcc_curve
-test_that("lcc_curve works as expected", {
-  set.seed(123)
-  expect_no_error(lcc_pts <- lcc_curve(minimal_pna_pxl_file(), components = "0a45497c6bfbfb22", fracs = 0.1, outdir = tempdir()))
-  expect_s3_class(lcc_pts, "tbl_df")
-  expect_equal(dim(lcc_pts), c(1, 3))
-  expect_error(lcc_curve("Invalid"))
-  expect_error(lcc_curve(minimal_pna_pxl_file(), "Invalid"))
-  expect_error(lcc_curve(minimal_pna_pxl_file(), "0a45497c6bfbfb22", fracs = "Invalid"))
-  expect_error(lcc_curve(minimal_pna_pxl_file(), "0a45497c6bfbfb22", outdir = FALSE))
-})
+  # lcc_curve
+  test_that("lcc_curve works as expected", {
+    set.seed(123)
+    expect_no_error(lcc_pts <- lcc_curve(minimal_pna_pxl_file(), components = "0a45497c6bfbfb22", fracs = 0.1, outdir = tempdir()))
+    expect_s3_class(lcc_pts, "tbl_df")
+    expect_equal(dim(lcc_pts), c(1, 3))
+    expect_error(lcc_curve("Invalid"))
+    expect_error(lcc_curve(minimal_pna_pxl_file(), "Invalid"))
+    expect_error(lcc_curve(minimal_pna_pxl_file(), "0a45497c6bfbfb22", fracs = "Invalid"))
+    expect_error(lcc_curve(minimal_pna_pxl_file(), "0a45497c6bfbfb22", outdir = FALSE))
+  })
+}
