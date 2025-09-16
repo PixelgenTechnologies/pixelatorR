@@ -55,7 +55,6 @@ for (assay_version in c("v3", "v5")) {
     expect_true(inherits(el[[1]], "tbl_lazy"))
     expect_equal(length(el), 2)
     DBI::dbDisconnect(el[[1]]$src$con)
-
   })
 
   test_that("Edgelists method fails with invalid input", {

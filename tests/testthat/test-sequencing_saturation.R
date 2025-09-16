@@ -53,41 +53,51 @@ test_that("SequenceSaturationCurve works as expected", {
     n_comps = 2L
   ))
 
-  expect_equal(seqsat,
-               structure(
-                 list(
-                   component = c(
-                     "2708240b908e2eba",
-                     "2708240b908e2eba",
-                     "c3c393e9a17c1981",
-                     "c3c393e9a17c1981"
-                   ),
-                   sample_size = c(229977,
-                                   114988, 298516, 149258),
-                   sample_frac = c(1, 0.5, 1, 0.5),
-                   graph_edges = c(79638L,
-                                   57236L, 110657L, 78805L),
-                   graph_proteins = c(37665L, 33064L,
-                                      49351L, 43876L),
-                   graph_reads = c(229977L, 113870L, 298516L, 148509L),
-                   graph_stability = c(1, 0.877844152396124, 1, 0.889059998784219),
-                   graph_node_saturation = c(
-                     91.8111376355027,
-                     85.4816896460876,
-                     91.7339439092042,
-                     85.2278313098869
-                   ),
-                   graph_edge_saturation = c(
-                     65.3713197406697,
-                     49.7356634758936,
-                     62.930965174396,
-                     46.9358759401787
-                   )
-                 ),
-                 class = c("tbl_df",
-                           "tbl", "data.frame"),
-                 row.names = c(NA,-4L)
-               ))
+  expect_equal(
+    seqsat,
+    structure(
+      list(
+        component = c(
+          "2708240b908e2eba",
+          "2708240b908e2eba",
+          "c3c393e9a17c1981",
+          "c3c393e9a17c1981"
+        ),
+        sample_size = c(
+          229977,
+          114988, 298516, 149258
+        ),
+        sample_frac = c(1, 0.5, 1, 0.5),
+        graph_edges = c(
+          79638L,
+          57236L, 110657L, 78805L
+        ),
+        graph_proteins = c(
+          37665L, 33064L,
+          49351L, 43876L
+        ),
+        graph_reads = c(229977L, 113870L, 298516L, 148509L),
+        graph_stability = c(1, 0.877844152396124, 1, 0.889059998784219),
+        graph_node_saturation = c(
+          91.8111376355027,
+          85.4816896460876,
+          91.7339439092042,
+          85.2278313098869
+        ),
+        graph_edge_saturation = c(
+          65.3713197406697,
+          49.7356634758936,
+          62.930965174396,
+          46.9358759401787
+        )
+      ),
+      class = c(
+        "tbl_df",
+        "tbl", "data.frame"
+      ),
+      row.names = c(NA, -4L)
+    )
+  )
 
   expect_error(SequenceSaturationCurve(edgelist,
     sample_fracs = c(1, 0.5),
@@ -107,33 +117,45 @@ test_that("SequenceSaturationCurve works as expected", {
 test_that("approximate_edge_saturation works as expected", {
   expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
   expect_no_error(edgesat <- approximate_edge_saturation(db))
-  expect_equal(head(edgesat %>% collect() %>% arrange(component), 2),
-               structure(
-                 list(
-                   component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
-                   edges = c(97014L, 79638L),
-                   edge_saturation = c(0.751358719121778,
-                                       0.742954902077026),
-                   theoretical_max_edges = c(129118.086382752,
-                                             107190.893790944)
-                 ),
-                 row.names = c(NA,-2L),
-                 class = c("tbl_df",
-                           "tbl", "data.frame")
-               ))
+  expect_equal(
+    head(edgesat %>% collect() %>% arrange(component), 2),
+    structure(
+      list(
+        component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
+        edges = c(97014L, 79638L),
+        edge_saturation = c(
+          0.751358719121778,
+          0.742954902077026
+        ),
+        theoretical_max_edges = c(
+          129118.086382752,
+          107190.893790944
+        )
+      ),
+      row.names = c(NA, -2L),
+      class = c(
+        "tbl_df",
+        "tbl", "data.frame"
+      )
+    )
+  )
   expect_no_error(edgesat <- approximate_edge_saturation(db, components = "0a45497c6bfbfb22"))
-  expect_equal(edgesat %>% collect(),
-               structure(
-                 list(
-                   component = "0a45497c6bfbfb22",
-                   edges = 97014L,
-                   edge_saturation = 0.751358719121778,
-                   theoretical_max_edges = 129118.086382752
-                 ),
-                 class = c("tbl_df",
-                           "tbl", "data.frame"),
-                 row.names = c(NA,-1L)
-               ))
+  expect_equal(
+    edgesat %>% collect(),
+    structure(
+      list(
+        component = "0a45497c6bfbfb22",
+        edges = 97014L,
+        edge_saturation = 0.751358719121778,
+        theoretical_max_edges = 129118.086382752
+      ),
+      class = c(
+        "tbl_df",
+        "tbl", "data.frame"
+      ),
+      row.names = c(NA, -1L)
+    )
+  )
   expect_error(approximate_edge_saturation("Invalid"))
   expect_error(approximate_edge_saturation(db, table_name = FALSE))
   expect_no_error(db$close())
@@ -143,33 +165,45 @@ test_that("approximate_edge_saturation works as expected", {
 test_that("approximate_node_saturation works as expected", {
   expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
   expect_no_error(nodesat <- approximate_node_saturation(db))
-  expect_equal(head(nodesat %>% collect() %>% arrange(component), 2),
-               structure(
-                 list(
-                   component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
-                   nodes = c(43543L, 37665L),
-                   node_saturation = c(0.885827322462419,
-                                       0.886440632020902),
-                   theoretical_max_nodes = c(49155.1783240997,
-                                             42490.1551659828)
-                 ),
-                 row.names = c(NA,-2L),
-                 class = c("tbl_df",
-                           "tbl", "data.frame")
-               ))
+  expect_equal(
+    head(nodesat %>% collect() %>% arrange(component), 2),
+    structure(
+      list(
+        component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
+        nodes = c(43543L, 37665L),
+        node_saturation = c(
+          0.885827322462419,
+          0.886440632020902
+        ),
+        theoretical_max_nodes = c(
+          49155.1783240997,
+          42490.1551659828
+        )
+      ),
+      row.names = c(NA, -2L),
+      class = c(
+        "tbl_df",
+        "tbl", "data.frame"
+      )
+    )
+  )
   expect_no_error(nodesat <- approximate_node_saturation(db, components = "0a45497c6bfbfb22"))
-  expect_equal(nodesat %>% collect(),
-               structure(
-                 list(
-                   component = "0a45497c6bfbfb22",
-                   nodes = 43543L,
-                   node_saturation = 0.885827322462419,
-                   theoretical_max_nodes = 49155.1783240997
-                 ),
-                 class = c("tbl_df",
-                           "tbl", "data.frame"),
-                 row.names = c(NA,-1L)
-               ))
+  expect_equal(
+    nodesat %>% collect(),
+    structure(
+      list(
+        component = "0a45497c6bfbfb22",
+        nodes = 43543L,
+        node_saturation = 0.885827322462419,
+        theoretical_max_nodes = 49155.1783240997
+      ),
+      class = c(
+        "tbl_df",
+        "tbl", "data.frame"
+      ),
+      row.names = c(NA, -1L)
+    )
+  )
   expect_error(approximate_node_saturation("Invalid"))
   expect_error(approximate_node_saturation(db, table_name = FALSE))
   expect_no_error(db$close())

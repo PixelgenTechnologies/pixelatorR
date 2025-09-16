@@ -474,7 +474,6 @@ PixelDB <- R6Class(
       }
 
       if (lazy) {
-
         # Register as a temporary VIEW instead of materializing a table
         sql_query <- dbplyr::sql_render(el)
         DBI::dbExecute(
@@ -483,7 +482,6 @@ PixelDB <- R6Class(
         )
 
         el <- tbl(private$con, "edgelist_modified")
-
       } else {
         el <- el %>% collect()
       }

@@ -56,7 +56,6 @@ test_that("TauPlot works for Seurat objects", {
     tau_plot$mapping$colour,
     ~tau_type
   )
-
 })
 
 test_that("TauPlot works for data.frame-like objects", {
