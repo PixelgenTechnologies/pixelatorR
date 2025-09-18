@@ -14,8 +14,8 @@
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Load data">
 </head>
 <body>
@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.13.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.15.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -72,7 +72,7 @@
     
     
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pixelatorR</span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.github.io/seurat-object/" class="external-link">SeuratObject</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span></code></pre></div>
@@ -112,37 +112,44 @@ count matrix and nothing else:</p>
 from the PXL file, including: “polarization”, “colocalization”,
 “edgelist”.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">polarization_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="st">"polarization"</span><span class="op">)</span></span>
-<span><span class="va">polarization_scores</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="va">polarization_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="st">"polarization"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir78058b92bab</span></span></code></pre>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">polarization_scores</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 33,479 × 6</span></span></span>
 <span><span class="co">##     morans_i morans_p_value morans_p_adjusted morans_z marker component    </span></span>
 <span><span class="co">##        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">99</span>          0.772              1.00   -<span style="color: #BB0000;">0.290</span>  ACTB   RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 1</span> -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">99</span>          0.772              1.000  -<span style="color: #BB0000;">0.290</span>  ACTB   RCVCMP0000830</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;"> 2</span> -<span style="color: #BB0000;">0.016</span><span style="color: #BB0000; text-decoration: underline;">1</span>           0.177              0.771  -<span style="color: #BB0000;">1.35</span>   B2M    RCVCMP0000830</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;"> 3</span>  0.014<span style="text-decoration: underline;">7</span>           0.125              0.633   1.53   CD102  RCVCMP0000830</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> -<span style="color: #BB0000;">0.006</span><span style="color: #BB0000; text-decoration: underline;">78</span>          0.590              1.00   -<span style="color: #BB0000;">0.539</span>  CD11a  RCVCMP0000830</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 5</span>  0.000<span style="text-decoration: underline;">836</span>         0.891              1.00    0.137  CD127  RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 4</span> -<span style="color: #BB0000;">0.006</span><span style="color: #BB0000; text-decoration: underline;">78</span>          0.590              1.000  -<span style="color: #BB0000;">0.539</span>  CD11a  RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 5</span>  0.000<span style="text-decoration: underline;">836</span>         0.891              1.000   0.137  CD127  RCVCMP0000830</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;"> 6</span> -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">32</span>          0.145              0.693  -<span style="color: #BB0000;">1.46</span>   CD150  RCVCMP0000830</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">03</span>          0.395              1.00   -<span style="color: #BB0000;">0.851</span>  CD152  RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 7</span> -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">03</span>          0.395              1.000  -<span style="color: #BB0000;">0.851</span>  CD152  RCVCMP0000830</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;"> 8</span> -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">62</span>          0.036<span style="text-decoration: underline;">5</span>             0.265  -<span style="color: #BB0000;">2.09</span>   CD154  RCVCMP0000830</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">919</span>         0.971              1.00   -<span style="color: #BB0000;">0.036</span><span style="color: #BB0000; text-decoration: underline;">4</span> CD162  RCVCMP0000830</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">10</span> -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">345</span>         0.561              1.00    0.582  CD163  RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;"> 9</span> -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">919</span>         0.971              1.000  -<span style="color: #BB0000;">0.036</span><span style="color: #BB0000; text-decoration: underline;">4</span> CD162  RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">10</span> -<span style="color: #BB0000;">0.000</span><span style="color: #BB0000; text-decoration: underline;">345</span>         0.561              1.000   0.582  CD163  RCVCMP0000830</span></span>
 <span><span class="co">## <span style="color: #949494;"># ℹ 33,469 more rows</span></span></span></code></pre>
 <p>If we provide multiple items, <code>ReadMPX_item</code> returns a
 list instead:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">all_items</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"polarization"</span>, <span class="st">"colocalization"</span>, <span class="st">"edgelist"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">all_items</span><span class="op">)</span></span></code></pre></div>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">all_items</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"polarization"</span>, <span class="st">"colocalization"</span>, <span class="st">"edgelist"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir7804cc15982</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir7803e542c52</span></span></code></pre>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">all_items</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] "polarization"   "colocalization" "edgelist"</span></span></code></pre>
 <p>Alternatively, we can use the wrapper functions
 <code>ReadMPX_polarization</code>, <code>ReadMPX_colocaliztion</code>
 and <code>ReadMPX_edgelist</code> to do the same thing as
 <code>ReadMPX_item</code>:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">polarization_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_item.html">ReadMPX_polarization</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir78045552aff</span></span></code></pre>
 <p>is equivalent to</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">polarization_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span><span class="va">pxl_file</span>, items <span class="op">=</span> <span class="st">"polarization"</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir7806c25292e</span></span></code></pre>
 <div class="section level3">
 <h3 id="seurat">Seurat<a class="anchor" aria-label="anchor" href="#seurat"></a>
 </h3>
@@ -150,8 +157,11 @@ and <code>ReadMPX_edgelist</code> to do the same thing as
 which allows us to load MPX data into a <code>Seurat</code> object with
 some additional bells and whistles provided by
 <code>pixelatorR</code>.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seur_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir78012a64c85</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir78045136f15</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary file <span style="color: #0000BB;">C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/file7807d5e3fbe.h5ad</span></span></span></code></pre>
 <p>Here, you have a few options to modify how the <code>Seurat</code>
 should be created. First and foremost, we can set
 <code>return_cellgraphassay = FALSE</code> to return a
@@ -166,11 +176,12 @@ the spatial statistics.</p>
 faster to process which can be useful if protein
 <strong>abundance</strong> is the only interesting data type for the
 analysis.</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load simpler data set</span></span>
 <span><span class="va">seur_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span>, return_cellgraphassay <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning: Data is of class matrix. Coercing to dgCMatrix.</span></span></code></pre>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary file <span style="color: #0000BB;">C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/file7806849eb.h5ad</span></span></span></code></pre>
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seur_obj</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## Assay (v5) data with 80 features for 477 cells</span></span>
 <span><span class="co">## Top 10 variable features:</span></span>
@@ -187,9 +198,13 @@ in this tutorial.</p>
 the behavior when <code>return_cellgraphassay = TRUE</code>. By default,
 the MPX polarization scores and colocalization scores are loaded and
 stored in a <code>CellGraphAssay</code> named “mpxCells”.</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">seur_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span>
-<span><span class="va">seur_obj</span></span></code></pre></div>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">seur_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir7802d1952da</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/dir7803a0a5d52</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary file <span style="color: #0000BB;">C:/Users/Max/AppData/Local/Temp/RtmpyM7V4G/file780610f65f6.h5ad</span></span></span></code></pre>
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">seur_obj</span></span></code></pre></div>
 <pre><code><span><span class="co">## An object of class Seurat </span></span>
 <span><span class="co">## 80 features across 477 samples within 1 assay </span></span>
 <span><span class="co">## Active assay: mpxCells (80 features, 80 variable features)</span></span>
@@ -201,20 +216,20 @@ stored in a <code>CellGraphAssay</code> named “mpxCells”.</p>
 <p>We can fetch the polarization/colocalization score tables from the
 <code>Seurat</code> object with the <code>PolarizationScores</code> and
 <code>ColocalizationScores</code> methods:</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fetch polarization scores</span></span>
 <span><span class="va">polarizaton_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/PolarizationScores.html">PolarizationScores</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span></span>
 <span><span class="va">polarizaton_scores</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">##    morans_i morans_p_value morans_p_adjusted morans_z marker component    </span></span>
 <span><span class="co">##       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">1</span> -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">99</span>           0.772             1.00    -<span style="color: #BB0000;">0.290</span> ACTB   RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">1</span> -<span style="color: #BB0000;">0.002</span><span style="color: #BB0000; text-decoration: underline;">99</span>           0.772             1.000   -<span style="color: #BB0000;">0.290</span> ACTB   RCVCMP0000830</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">2</span> -<span style="color: #BB0000;">0.016</span><span style="color: #BB0000; text-decoration: underline;">1</span>            0.177             0.771   -<span style="color: #BB0000;">1.35</span>  B2M    RCVCMP0000830</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">3</span>  0.014<span style="text-decoration: underline;">7</span>            0.125             0.633    1.53  CD102  RCVCMP0000830</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">4</span> -<span style="color: #BB0000;">0.006</span><span style="color: #BB0000; text-decoration: underline;">78</span>           0.590             1.00    -<span style="color: #BB0000;">0.539</span> CD11a  RCVCMP0000830</span></span>
-<span><span class="co">## <span style="color: #BCBCBC;">5</span>  0.000<span style="text-decoration: underline;">836</span>          0.891             1.00     0.137 CD127  RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">4</span> -<span style="color: #BB0000;">0.006</span><span style="color: #BB0000; text-decoration: underline;">78</span>           0.590             1.000   -<span style="color: #BB0000;">0.539</span> CD11a  RCVCMP0000830</span></span>
+<span><span class="co">## <span style="color: #BCBCBC;">5</span>  0.000<span style="text-decoration: underline;">836</span>          0.891             1.000    0.137 CD127  RCVCMP0000830</span></span>
 <span><span class="co">## <span style="color: #BCBCBC;">6</span> -<span style="color: #BB0000;">0.001</span><span style="color: #BB0000; text-decoration: underline;">32</span>           0.145             0.693   -<span style="color: #BB0000;">1.46</span>  CD150  RCVCMP0000830</span></span></code></pre>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Fetch colocalization scores</span></span>
 <span><span class="va">colocalization_scores</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ColocalizationScores.html">ColocalizationScores</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span></span>
 <span><span class="va">colocalization_scores</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -231,7 +246,7 @@ stored in a <code>CellGraphAssay</code> named “mpxCells”.</p>
 <span><span class="co">## <span style="color: #949494;">#   jaccard_mean &lt;dbl&gt;, jaccard_stdev &lt;dbl&gt;, jaccard_z &lt;dbl&gt;,</span></span></span>
 <span><span class="co">## <span style="color: #949494;">#   jaccard_p_value &lt;dbl&gt;, jaccard_p_value_adjusted &lt;dbl&gt;, component &lt;chr&gt;</span></span></span></code></pre>
 <p>An equivalent way to extract the polarization scores would be:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb38"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">polarizaton_scores</span> <span class="op">&lt;-</span> <span class="va">seur_obj</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span><span class="op">@</span><span class="va">polarization</span></span></code></pre></div>
 <p>But it’s good practice to use
 <code>PolarizationScores</code>/<code>ColocalizationScores</code> which
@@ -244,7 +259,7 @@ is easier to read. One just have to make sure that the
 <p>Component-specific metrics are stored in the <code>@meta.data</code>
 slot of the <code>Seurat</code> object which can be accessed with double
 brackets (<code>[[]]</code>):</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##  [1] "antibodies"          "edges"               "leiden"             </span></span>
 <span><span class="co">##  [4] "mean_reads"          "mean_umi_per_upia"   "mean_upia_degree"   </span></span>
@@ -252,7 +267,7 @@ brackets (<code>[[]]</code>):</p>
 <span><span class="co">## [10] "reads"               "tau"                 "tau_type"           </span></span>
 <span><span class="co">## [13] "umi"                 "umi_per_upia"        "upia"               </span></span>
 <span><span class="co">## [16] "upia_per_upib"       "upib"                "vertices"</span></span></code></pre>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seur_obj</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">##               antibodies edges leiden mean_reads mean_umi_per_upia</span></span>
 <span><span class="co">## RCVCMP0000000         77 23925      2   6.099645          8.179487</span></span>
@@ -284,7 +299,7 @@ brackets (<code>[[]]</code>):</p>
 <span><span class="co">## RCVCMP0000007 1287      2.508772  513     1800</span></span></code></pre>
 <p>We can for instance explore QC metrics visually for component
 filtering:</p>
-<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">tau</span>, <span class="va">umi_per_upia</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_point.html" class="external-link">geom_point</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>labels <span class="op">=</span> <span class="fu">scales</span><span class="fu">::</span><span class="va"><a href="https://scales.r-lib.org/reference/percent_format.html" class="external-link">percent</a></span><span class="op">)</span></span></code></pre></div>
@@ -301,7 +316,7 @@ explore component graphs.</p>
 instead it keeps track of the paths of the PXL file(s) associated with
 the data. We can get the path to the PXL file with the
 <code>FSMap</code> function:</p>
-<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/FSMap.html">FSMap</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></code></pre></div>
 <p><code>FSMap</code> returns a tibble with the paths to the PXL files
 associated with the <code>Seurat</code> object. In this case, there is
@@ -310,7 +325,7 @@ consists of a tibble with component IDs that can be used as a look up
 table to map the “current” component IDs with the “original” component
 IDs. If we unnest the “id_map” column, we can see the current and
 original component IDs:</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb45"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/FSMap.html">FSMap</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
 <span>  <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/unnest.html" class="external-link">unnest</a></span><span class="op">(</span><span class="va">id_map</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #949494;"># A tibble: 477 × 4</span></span></span>
@@ -330,7 +345,7 @@ original component IDs:</p>
 <p>If we were to rename the component IDs of the Seurat object, the
 “current_id” column will be updated, but the “original_id” column will
 remain unchanged:</p>
-<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seur_obj_renamed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://satijalab.github.io/seurat-object/reference/RenameCells.html" class="external-link">RenameCells</a></span><span class="op">(</span><span class="va">seur_obj</span>, new.names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"A_"</span>, <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">colnames</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/FSMap.html">FSMap</a></span><span class="op">(</span><span class="va">seur_obj_renamed</span><span class="op">[[</span><span class="st">"mpxCells"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> </span>
@@ -360,11 +375,11 @@ edge list data is stored, reads the edge list data and converts it to a
 graph object per component.</p>
 <p>For example, we can load the graphs for two selected components like
 this:</p>
-<div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seur_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/LoadCellGraphs.html">LoadCellGraphs</a></span><span class="op">(</span><span class="va">seur_obj</span>, cells <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RCVCMP0000228"</span>, <span class="st">"RCVCMP0000231"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p>We can then fetch the loaded <code>CellGraph</code> objects for our
 two components using:</p>
-<div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/CellGraphs.html">CellGraphs</a></span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"RCVCMP0000228"</span>, <span class="st">"RCVCMP0000231"</span><span class="op">)</span><span class="op">]</span></span></code></pre></div>
 <pre><code><span><span class="co">## $RCVCMP0000228</span></span>
 <span><span class="co">## A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">3914</span> nodes and <span style="color: #5555FF;">8022</span> edges</span></span>

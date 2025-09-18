@@ -85,6 +85,7 @@ reference:
     - LoadCellGraphs
     - cos_dist
     - pack_2bits
+    - unpack_2bits
   - subtitle: Differential analysis
   - contents:
     - RunDAA
@@ -99,6 +100,28 @@ reference:
     - ProximityScoresToAssay
     - FilterProximityScores
     - SummarizeProximityScores
+  - subtitle: Sequencing saturation
+  - contents:
+    - sequencing_saturation
+    - SequenceSaturationCurve
+    - approximate_edge_saturation
+    - approximate_node_saturation
+    - approximate_saturation_curve
+    - downsample_to_parquet
+    - lcc_sizes
+    - lcc_curve
+  - subtitle: Cell Annotation
+  - contents:
+    - AnnotateCells
+  - subtitle: Color themes
+  - contents:
+    - color-themes
+    - PixelgenAccentColors
+    - PixelgenGradient
+    - PixelgenPalette
+    - Pixelgen_accent_colors
+    - show_accent_colors
+    - theme_pixelgen
   - subtitle: Doublet detection
   - contents:
     - FindAnnoyNeighbors
