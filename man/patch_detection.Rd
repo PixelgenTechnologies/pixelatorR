@@ -143,7 +143,9 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
   LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE)
 cg <- CellGraphs(se)[[1]]
 
-protein_props <- cg@counts \%>\% Matrix::colSums() \%>\% prop.table()
+protein_props <- cg@counts \%>\%
+  Matrix::colSums() \%>\%
+  prop.table()
 patch_props <- protein_props
 patch_props["CD8"] <- 0.4
 patch_props <- patch_props \%>\% prop.table()
@@ -214,7 +216,10 @@ gg <- tibble(patch = cg@cellgraph \%>\% pull(patch) \%>\% as.factor()) \%>\%
   tidyr::pivot_longer(where(is.numeric)) \%>\%
   group_by(patch) \%>\%
   mutate(value = value / sum(value))
-lvls <- gg \%>\% arrange(desc(patch), value) \%>\% pull(name) \%>\% unique()
+lvls <- gg \%>\%
+  arrange(desc(patch), value) \%>\%
+  pull(name) \%>\%
+  unique()
 ggplot(gg \%>\% mutate(name = factor(name, lvls)), aes(name, patch, fill = value)) +
   geom_tile() +
   scale_fill_gradientn(

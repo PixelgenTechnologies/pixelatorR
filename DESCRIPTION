@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.13.0
+Version: 0.15.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
@@ -84,6 +84,7 @@ Collate:
     'aaa.R'
     'abundance_colocalization_plot.R'
     'abundance_normalization.R'
+    'annotate.R'
     'cell_count_plot.R'
     'colocalization_heatmap.R'
     'd3_graph_helpers.R'
@@ -120,7 +121,9 @@ Collate:
     'remove_cell_graphs.R'
     'render_rotating_layout.R'
     'restore_paths.R'
+    'sequencing_saturation.R'
     'tau_plot.R'
+    'themes_and_palettes.R'
     'two_bit_encoding.R'
     'types_check.R'
     'weighted_pmds.R'

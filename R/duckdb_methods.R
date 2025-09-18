@@ -474,7 +474,14 @@ PixelDB <- R6Class(
       }
 
       if (lazy) {
-        el <- el %>% compute(name = "edgelist_modified", overwrite = TRUE)
+        # Register as a temporary VIEW instead of materializing a table
+        sql_query <- dbplyr::sql_render(el)
+        DBI::dbExecute(
+          private$con,
+          paste0("CREATE OR REPLACE TEMPORARY VIEW edgelist_modified AS ", sql_query)
+        )
+
+        el <- tbl(private$con, "edgelist_modified")
       } else {
         el <- el %>% collect()
       }

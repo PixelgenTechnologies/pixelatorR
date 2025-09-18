@@ -6,7 +6,8 @@ linters: linters_with_defaults(
     object_length_linter(50L),
     object_usage_linter = NULL,
     indentation_linter = NULL,
-    return_linter = NULL
+    return_linter = NULL,
+    unused_import_linter()
   )
 exclusions: list(
     "vignettes/",

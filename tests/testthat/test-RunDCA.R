@@ -61,7 +61,9 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
       class = c("tbl_df", "tbl", "data.frame")
     )
 
-  expect_equal(dca_markers[1:2, ], expected_result)
+  expect_equal(dca_markers %>%
+                 arrange(marker_1, marker_2) %>%
+                 head(2), expected_result)
 
   # cl = 1 should witch to sequential processing
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(colocalization_table_merged,

@@ -1244,10 +1244,30 @@ Edgelists <- function(
 #' @param p_adjust_method The p-value adjustment method to use. Default is "BH".
 #' @param p_threshold The p-value threshold to use. Default is 0.01.
 #' @param seed The seed to use for reproducibility.
+#' @param iter The number of iterations to use for the doublet simulation. Increasing
+#' the number of iterations will increase the robustness of the doublet detection.
+#' @param return_trials Whether to return the result from each iteration (TRUE) or
+#' an aggregated summary of all iterations.
 #' @param assay A character with the name of the assay to use.
 #' @param layer A character with the name of the layer to use. Default is "counts".
 #' @param verbose Print messages.
 #' @param ... Additional arguments. Currently not used.
+#'
+#' @return A tibble with the following columns:
+#'   - \code{trial} Integer or factor indicating the resampling trial. Only returned if
+#'   \code{return_trials = TRUE}.
+#'   - \code{id} Cell ID.
+#'   - \code{doublet_nns} Number of nearest neighbors that are simulated doublets.
+#'   - \code{doublet_nn_rate} Proportion of nearest neighbors that are simulated
+#'   doublets. Only returned if \code{return_trials = FALSE}.
+#'   - \code{doublet_vote} The fraction of iterations where the cell has been classified
+#'   as a doublet. Only returned if \code{return_trials = FALSE}.
+#'   - \code{doublet_p} Raw p-value for the doublet prediction.
+#'   - \code{doublet_p_adj} Adjusted p-value (multiple testing correction) for the
+#'   doublet prediction.
+#'   - \code{logratio} Log2-ratio of observed simulated doublet neighbors compared to
+#'   expectation.
+#'   - \code{doublet_prediction} Predicted doublet status (doublet/singlet).
 #'
 #' @references McGinnis CS, Murrow LM, Gartner ZJ.
 #'             DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data
