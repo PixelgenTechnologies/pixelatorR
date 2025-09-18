@@ -749,6 +749,8 @@ lcc_sizes <- function(
 
 #' Compute LCC sizes for downsampled edgelists
 #'
+#' @description
+#' `r lifecycle::badge("experimental")`
 #' This function computes the sizes of the largest connected components (LCC) for
 #' downsampled edgelists. The downsampling is determined by the `fracs` parameter,
 #' which specifies the fractions of sequencing reads to retain.
@@ -783,6 +785,7 @@ lcc_sizes <- function(
 #' and `n_nodes` (the size of the LCC for that fraction and component).
 #'
 #' @examples
+#' \dontrun{
 #' library(ggplot2)
 #' library(dplyr)
 #' pxl_file <- minimal_pna_pxl_file()
@@ -819,7 +822,7 @@ lcc_sizes <- function(
 #'   theme_bw() +
 #'   guides(color = "none") +
 #'   scale_y_continuous(limits = c(0, 1))
-#'
+#' }
 #' @export
 #'
 lcc_curve <- function(
@@ -830,6 +833,14 @@ lcc_curve <- function(
   mc_cores = 1,
   verbose = TRUE
 ) {
+  duckdb_v <- utils::packageVersion("duckdb")
+  if (utils::compareVersion(as.character(duckdb_v), "1.3.2") > 0) {
+    cli_alert_warning(
+      "This function is only tested with duckdb <= 1.3.2, but you have {.pkg duckdb} version {.val {duckdb_v}}
+      installed. This may result in compability issues with {.pkg duckpgq}."
+    )
+  }
+
   assert_single_value(pxl_file, type = "string")
   assert_pxl_file(pxl_file)
   assert_vector(components, type = "character", n = 1)

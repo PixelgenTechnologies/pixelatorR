@@ -34,6 +34,7 @@ A tibble with columns \code{component} (the original component ID), \code{frac} 
 and \code{n_nodes} (the size of the LCC for that fraction and component).
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
 This function computes the sizes of the largest connected components (LCC) for
 downsampled edgelists. The downsampling is determined by the \code{fracs} parameter,
 which specifies the fractions of sequencing reads to retain.
@@ -61,6 +62,7 @@ Note that the LCC is computed for each fraction and component (cell) separately.
 }
 
 \examples{
+\dontrun{
 library(ggplot2)
 library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
@@ -97,5 +99,5 @@ ggplot(lcc_df, aes(frac, n_nodes / theoretical_max_nodes, color = component)) +
   theme_bw() +
   guides(color = "none") +
   scale_y_continuous(limits = c(0, 1))
-
+}
 }

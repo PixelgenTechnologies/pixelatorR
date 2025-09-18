@@ -812,11 +812,9 @@ Edgelists.PNAAssay <- function(
     if (union) {
       con <- edgelists$src$con
       edgelists <- edgelists %>% collect()
-
     } else {
       con <- edgelists[[1]]$src$con
       edgelists <- edgelists %>% lapply(collect)
-
     }
     DBI::dbDisconnect(con)
   }
