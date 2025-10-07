@@ -295,6 +295,12 @@ assert_file_ext <- function(
   if (allow_null && is.null(x)) {
     return(invisible(NULL))
   }
+  if (!allow_null && is.null(x)) {
+    cli::cli_abort(
+      c("x" = "File {.file {x}} cannot be NULL"),
+      call = call
+    )
+  }
   stopifnot(
     "`ext` must be a string" =
       rlang::is_string(ext)
