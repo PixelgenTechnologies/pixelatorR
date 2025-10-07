@@ -297,7 +297,7 @@ assert_file_ext <- function(
   }
   if (!allow_null && is.null(x)) {
     cli::cli_abort(
-      c("x" = "File {.file {x}} cannot be NULL"),
+      c("x" = "File cannot be NULL"),
       call = call
     )
   }
