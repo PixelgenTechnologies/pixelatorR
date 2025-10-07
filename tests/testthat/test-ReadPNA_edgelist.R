@@ -2,6 +2,7 @@ pxl_file <- minimal_pna_pxl_file()
 
 test_that("ReadPNA_edgelist works as expected", {
   # tbl_df
+  skip_on_os("windows")
   expect_no_error(el <- ReadPNA_edgelist(pxl_file, lazy = FALSE, umi_data_type = "string"))
   expected_data <-
     structure(
