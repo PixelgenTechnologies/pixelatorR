@@ -25,6 +25,16 @@ assert_pxl_file <- function(pxl_file) {
 }
 
 
+get_config <- function() {
+  config <- list()
+  temp_dir <- tempSys.getenv("PIXELATOR_DUCKDB_TEMP_DIR")
+  if (temp_dir != "") {
+      config$temp_directory <- temp_dir
+  }
+  config
+}
+
+
 #' PXL database class
 #'
 #' This class provides an interface for working with a PXL file.
@@ -76,6 +86,7 @@ PixelDB <- R6Class(
               duckdb::duckdb(),
               bigint = "integer64",
               dbdir = private$file,
+              config = get_config(),
               read_only = TRUE
             )
         },
@@ -155,6 +166,7 @@ PixelDB <- R6Class(
               duckdb::duckdb(),
               bigint = "integer64",
               dbdir = private$file,
+              config = get_config(),
               read_only = TRUE
             )
         },
