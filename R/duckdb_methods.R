@@ -27,7 +27,7 @@ assert_pxl_file <- function(pxl_file) {
 
 get_config <- function() {
   config <- list()
-  temp_dir <- tempSys.getenv("PIXELATOR_DUCKDB_TEMP_DIR")
+  temp_dir <- Sys.getenv("PIXELATOR_DUCKDB_TEMP_DIR")
   if (temp_dir != "") {
       config$temp_directory <- temp_dir
   }
