@@ -25,6 +25,13 @@ assert_pxl_file <- function(pxl_file) {
 }
 
 
+#' Fetches the config values to be used with DuckDB
+#'
+#' Configuration options can be found here:
+#' https://duckdb.org/docs/stable/configuration/overview#global-configuration-options
+#'
+#' @return a named list with the config options to be used
+#'
 get_duckdb_config <- function() {
   config <- list()
   temp_dir <- Sys.getenv("PIXELATOR_DUCKDB_TEMP_DIR")
