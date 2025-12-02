@@ -296,7 +296,7 @@ PixelDB <- R6Class(
       self$check_connection()
       self$fetch_table("__adata__X") %>%
         mutate(across(where(bit64::is.integer64), as.integer)) %>%
-        column_to_rownames("index") %>%
+        tibble::column_to_rownames("index") %>%
         as.matrix() %>%
         as("dgCMatrix") %>%
         Matrix::t()
