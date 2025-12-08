@@ -232,7 +232,7 @@ SequenceSaturationCurve <- function(
           # Each edge contributes to 2 nodes, hence each edge read contributes to 2
           # nodes. Therefore, the total reads supporting the nodes is double the
           # number of reads supporting edges.
-          graph_node_saturation = sequencing_saturation(graph_proteins, graph_reads * 2),
+          graph_node_saturation = sequencing_saturation(graph_proteins, graph_reads),
           graph_edge_saturation = sequencing_saturation(graph_edges, graph_reads)
         )
 
