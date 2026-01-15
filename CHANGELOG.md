@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 - Fixed bug in `SequenceSaturationCurve` where the node saturation would be calculated as `1 - graph_proteins / (2 * graph_reads)` instead of `1 - graph_proteins / graph_reads`.
 
+## Unreleased
+### Fixes
+- DuckDB temporary directory can now be set with `PIXELATOR_DUCKDB_TEMP_DIR`
+
 ## [0.15.0] - 2025-09-15
 
 ### Updated 
