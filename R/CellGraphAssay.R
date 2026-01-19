@@ -75,7 +75,6 @@ CellGraphAssay5 <- setClass(
 setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
 
 
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Create methods
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
