@@ -537,7 +537,6 @@ patch_detection <- function(
 }
 
 
-
 #' Identify population-specific markers for patch detection
 #'
 #' Patch detection can be applied to identify patches of one cell type
