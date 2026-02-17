@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased] 2025-12-08
 
+### Updated
+- Switched to using pattern matrix representation of the adjacency matrix in `expand_adjacency_matrix` for a performance boost
+
 ### Added
 - Added reference PBMC dataset and load function `read_pbmc_reference` that can be used for annotation.  
 
