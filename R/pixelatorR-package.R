@@ -151,6 +151,7 @@
 #' @importFrom igraph connect
 #' @importFrom igraph gsize
 #' @importFrom igraph vertex_attr_names
+#' @importFrom Matrix %&%
 #' @importFrom Matrix colSums
 #' @importFrom Matrix rowSums
 #' @importFrom methods as
@@ -222,6 +223,7 @@
 #' @importFrom utils capture.output
 #' @importFrom utils head
 #' @importFrom utils menu
+#' @importFrom utils read.csv
 #' @importFrom utils unzip
 ## usethis namespace: end
 NULL

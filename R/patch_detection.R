@@ -815,11 +815,12 @@ expand_adjacency_matrix <- function(
       # Use incoming transition probabilities as weights
       A <- (A / Matrix::rowSums(A)) %>% Matrix::t()
     } else {
-      # Switch too pattern matrix for faster multiplication when not using weights
+      # Switch to pattern matrix for faster multiplication when not using weights
       A <- as(A, "ngCMatrix")
     }
     # Expand neighborhood
-    A <- Reduce(ifelse(use_weights, "%*%", "%&%"), rep(list(A), k))
+    op <- if (use_weights) "%*%" else "%&%"
+    A <- Reduce(op, rep(list(A), k))
     if (!use_weights) {
       # Convert to dgCMatrix format
       A <- as(A, "dgCMatrix")
