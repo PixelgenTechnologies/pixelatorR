@@ -814,12 +814,15 @@ expand_adjacency_matrix <- function(
     if (use_weights) {
       # Use incoming transition probabilities as weights
       A <- (A / Matrix::rowSums(A)) %>% Matrix::t()
+    } else {
+      # Switch too pattern matrix for faster multiplication when not using weights
+      A <- as(A, "ngCMatrix")
     }
     # Expand neighborhood
-    A <- Reduce("%*%", rep(list(A), k))
+    A <- Reduce(ifelse(use_weights, "%*%", "%&%"), rep(list(A), k))
     if (!use_weights) {
-      # Set all edge weights to 1 if not using weights
-      A@x <- rep(1, length(A@x))
+      # Convert to dgCMatrix format
+      A <- as(A, "dgCMatrix")
     }
     Matrix::diag(A) <- 0
   }

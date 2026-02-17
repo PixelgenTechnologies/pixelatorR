@@ -7,8 +7,7 @@ Authors@R:
            comment = c(ORCID = "0000-0003-4209-2911")),
     person("Max", "Karlsson", , "max.karlsson@pixelgen.com", role = c("aut"),
            comment = c(ORCID = "0000-0002-7000-4416")),
-    person("Vincent", "Van Hoef", , "vincent.vanhoef@pixelgen.com", role = c("aut"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
+    person("Vincent", "Van Hoef", , "vincent.vanhoef@pixelgen.com", role = c("aut"))
     )
 Description: Defines S4 classes for single-cell MPX data, extending the Seurat toolbox.
   In addition, pixelatorR provides functions to process and visualize MPX data.
