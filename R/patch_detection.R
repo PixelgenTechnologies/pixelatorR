@@ -786,6 +786,11 @@ visualize_patch_analysis_markers <- function(
 #' @param use_weights If \code{TRUE}, the transpose of the stochastic matrix
 #' will be expanded. The resulting edge weights will correspond to the incoming
 #' transition probabilities for a \code{k}-step random walk.
+#' @param min_weight A numeric value between 0 and 1 specifying the minimum weight
+#' threshold for edges in the expanded adjacency matrix. Only applicable when
+#' \code{use_weights = TRUE}. Edges with weights below this threshold will be set
+#' to zero, effectively removing them from the graph. This can help to reduce noise
+#' and focus on stronger connections in the expanded neighborhood.
 #'
 #' @returns An expanded adjacency matrix
 #'
@@ -794,11 +799,14 @@ visualize_patch_analysis_markers <- function(
 expand_adjacency_matrix <- function(
   A,
   k = 1L,
-  use_weights = FALSE
+  use_weights = FALSE,
+  min_weight = 0
 ) {
   assert_class(A, c("matrix", "dgCMatrix"))
   assert_single_value(k, "integer")
   assert_single_value(use_weights, "bool")
+  assert_single_value(min_weight, "numeric")
+  assert_within_limits(min_weight, c(0, 1))
 
   if (!use_weights && k == 1L) {
     return(A)
@@ -819,7 +827,11 @@ expand_adjacency_matrix <- function(
       A <- as(A, "ngCMatrix")
     }
     # Expand neighborhood
-    op <- if (use_weights) "%*%" else "%&%"
+    if (min_weight > 0 && use_weights) {
+      op <- function(X, Y) mat_prod_masked(X, Y, min_weight = min_weight)
+    } else {
+      op <- if (use_weights) "%*%" else "%&%"
+    }
     A <- Reduce(op, rep(list(A), k))
     if (!use_weights) {
       # Convert to dgCMatrix format
@@ -828,6 +840,20 @@ expand_adjacency_matrix <- function(
     Matrix::diag(A) <- 0
   }
   return(A)
+}
+
+#' Matrix multiplication with masking for small values
+#'
+#' @param X A matrix.
+#' @param Y A matrix.
+#' @param min_weight A numeric value specifying the minimum weight threshold.
+#'
+#' @noRd
+mat_prod_masked <- function(X, Y, min_weight) {
+  Z <- X %*% Y
+  Z@x[Z@x < min_weight] <- 0
+  Z <- Matrix::drop0(Z)
+  return(Z)
 }
 
 

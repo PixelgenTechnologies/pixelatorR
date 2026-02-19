@@ -4,7 +4,7 @@
 \alias{expand_adjacency_matrix}
 \title{Expand an adjacency matrix to include higher-order neighborhoods}
 \usage{
-expand_adjacency_matrix(A, k = 1L, use_weights = FALSE)
+expand_adjacency_matrix(A, k = 1L, use_weights = FALSE, min_weight = 0)
 }
 \arguments{
 \item{A}{An adjacency matrix. Can be a sparse matrix (\code{dgCMatrix})}
@@ -15,6 +15,12 @@ connected to nodes up to \code{k} steps away.}
 \item{use_weights}{If \code{TRUE}, the transpose of the stochastic matrix
 will be expanded. The resulting edge weights will correspond to the incoming
 transition probabilities for a \code{k}-step random walk.}
+
+\item{min_weight}{A numeric value between 0 and 1 specifying the minimum weight
+threshold for edges in the expanded adjacency matrix. Only applicable when
+\code{use_weights = TRUE}. Edges with weights below this threshold will be set
+to zero, effectively removing them from the graph. This can help to reduce noise
+and focus on stronger connections in the expanded neighborhood.}
 }
 \value{
 An expanded adjacency matrix
