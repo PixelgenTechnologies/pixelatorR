@@ -131,7 +131,9 @@ fast_pmds <- function(
 
   assert_class(g, classes = c("igraph", "tbl_graph"))
   assert_single_value(pivots, type = "integer")
-  assert_vector(weights, type = "numeric")
+  if (!is.na(weights)) {
+    assert_vector(weights, type = "numeric")
+  }
   assert_single_value(dim, type = "integer")
 
   pivs <- sample(1:igraph::vcount(g), pivots)
