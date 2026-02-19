@@ -272,4 +272,3 @@ prob_distance_weights <- function(
 
   return(g)
 }
-
