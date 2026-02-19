@@ -16,6 +16,9 @@
 #' Can be either "prob_dist" or "cos_dist".
 #' @param pow  Power to raise the distance weights to. Increasing this value
 #' will amplify higher distance weights. Default is 3.
+#' @param min_weight Minimum allowed weight when computing transition probabilities
+#' for method "prob_dist". Setting a small positive value (e.g. 0.001) can significantly
+#' speed up the computation.
 #' @param seed Set seed for pivot sampling
 #'
 #' @return A matrix of 2D or 3D coordinates
@@ -62,6 +65,7 @@ layout_with_weighted_pmds <- function(
   method = c("prob_dist", "cos_dist"),
   pivots = 200,
   pow = 3,
+  min_weight = 0,
   seed = 123
 ) {
   expect_graphlayouts()
@@ -71,7 +75,7 @@ layout_with_weighted_pmds <- function(
   if (!dim %in% c(2, 3)) {
     cli::cli_abort(
       c(
-        "i" = "{.var dim} must be either 1 or 2",
+        "i" = "{.var dim} must be either 2 or 3",
         "x" = "dim={dim}"
       )
     )
@@ -82,22 +86,63 @@ layout_with_weighted_pmds <- function(
   method <- match.arg(method, choices = c("prob_dist", "cos_dist"))
 
   if (method == "prob_dist") {
-    g <- prob_distance_weights(g, k = 5)
+    g <- prob_distance_weights(g, k = 5, min_weight = min_weight)
   }
   if (method == "cos_dist") {
     g <- cos_distance_weights(g, pivots)
   }
 
   scores <- g %E>% pull(scores)
+  scores[!is.finite(scores)] <- max(scores, na.rm = TRUE)
 
   if (pow != 1) {
     scores <- scores^pow
   }
 
   set.seed(seed)
-  xyz <- graphlayouts::layout_with_pmds(g, pivots = pivots, dim = dim, weights = scores)
+  xyz <- fast_pmds(g, pivots = pivots, dim = dim, weights = scores)
 
   return(xyz)
+}
+
+
+#' Fast pMDS implementation using RSpectra
+#'
+#' This function computes a pMDS layout using the RSpectra package for efficient
+#' eigen decomposition.
+#'
+#' @param g An \code{igraph} or a \code{tbl_graph} object
+#' @param pivots Number of pivots to use for distance calculations
+#' @param weights Optional edge weights to use for distance calculations
+#' @param dim Desired number of dimensions for the layout
+#'
+#' @return A matrix of coordinates for the pMDS layout
+#'
+#' @export
+#'
+fast_pmds <- function(
+  g,
+  pivots,
+  weights = NA,
+  dim = 3
+) {
+
+  expect_RSpectra()
+
+  assert_class(g, classes = c("igraph", "tbl_graph"))
+  assert_single_value(pivots, type = "integer")
+  assert_vector(weights, type = "numeric")
+  assert_single_value(dim, type = "integer")
+
+  pivs <- sample(1:igraph::vcount(g), pivots)
+  D <- t(igraph::distances(g, v = pivs, weights = weights))
+  cmean <- colMeans(D^2)
+  rmean <- rowMeans(D^2)
+  Dmat <- D^2 - outer(rmean, cmean, function(x, y) x + y) +
+    mean(D^2)
+  sl2 <- RSpectra::svds(Dmat, nu = 0, nv = 3, k = 3)
+  xy <- (Dmat %*% sl2$v[, 1:dim])
+  return(xy)
 }
 
 #' Calculate cosine distances
@@ -201,15 +246,14 @@ cos_distance_weights <- function(
 #'
 prob_distance_weights <- function(
   g,
-  k = 5
+  k = 5,
+  min_weight = 0.001
 ) {
   assert_class(g, classes = "tbl_graph")
 
   A <- as_adjacency_matrix(g)
-  diag(A) <- 1
-  P <- A / Matrix::rowSums(A)
 
-  P_steps <- Reduce("%*%", rep(list(P), k))
+  P_steps <- expand_adjacency_matrix(A, k = k, use_weights = TRUE, min_weight = min_weight)
   P_steps <- P_steps * A
   P_steps_bidirectional <- P_steps * Matrix::t(P_steps)
 
@@ -228,3 +272,4 @@ prob_distance_weights <- function(
 
   return(g)
 }
+
