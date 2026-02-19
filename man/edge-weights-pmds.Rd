@@ -8,7 +8,7 @@
 \usage{
 cos_distance_weights(g, pivots)
 
-prob_distance_weights(g, k = 5)
+prob_distance_weights(g, k = 5, min_weight = 0.001)
 }
 \arguments{
 \item{g}{A \code{tbl_graph} object}

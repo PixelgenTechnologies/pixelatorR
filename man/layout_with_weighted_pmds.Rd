@@ -10,6 +10,7 @@ layout_with_weighted_pmds(
   method = c("prob_dist", "cos_dist"),
   pivots = 200,
   pow = 3,
+  min_weight = 0,
   seed = 123
 )
 }
@@ -25,6 +26,10 @@ Can be either "prob_dist" or "cos_dist".}
 
 \item{pow}{Power to raise the distance weights to. Increasing this value
 will amplify higher distance weights. Default is 3.}
+
+\item{min_weight}{Minimum allowed weight when computing transition probabilities
+for method "prob_dist". Setting a small positive value (e.g. 0.001) can significantly
+speed up the computation.}
 
 \item{seed}{Set seed for pivot sampling}
 }
