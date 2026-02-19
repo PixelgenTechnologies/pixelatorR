@@ -231,6 +231,7 @@ cos_distance_weights <- function(
 #' @rdname edge-weights-pmds
 #'
 #' @param k Number of steps
+#' @param min_weight Minimum allowed weight when computing transition probabilities.
 #'
 #' @section Transition probability weights:
 #' Weights are calculated for edges in the graph from the bidirectional

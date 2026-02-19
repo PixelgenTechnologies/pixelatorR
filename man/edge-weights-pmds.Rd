@@ -16,6 +16,8 @@ prob_distance_weights(g, k = 5, min_weight = 0.001)
 \item{pivots}{Number of pivots}
 
 \item{k}{Number of steps}
+
+\item{min_weight}{Minimum allowed weight when computing transition probabilities.}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
