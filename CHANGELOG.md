@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] 2025-12-08
 
 ### Updated
+- Added option to ignore low transition probability edges in `expand_adjacency_matrix` when `use_weights = TRUE`. 
 - Switched to using pattern matrix representation of the adjacency matrix in `expand_adjacency_matrix` for a performance boost
 
 ### Added
