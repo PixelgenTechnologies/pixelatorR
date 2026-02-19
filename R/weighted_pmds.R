@@ -140,7 +140,7 @@ fast_pmds <- function(
   rmean <- rowMeans(D^2)
   Dmat <- D^2 - outer(rmean, cmean, function(x, y) x + y) +
     mean(D^2)
-  sl2 <- RSpectra::svds(Dmat, nu = 0, nv = 3, k = 3)
+  sl2 <- RSpectra::svds(Dmat, nu = 0, nv = dim, k = dim)
   xy <- (Dmat %*% sl2$v[, 1:dim])
   return(xy)
 }
