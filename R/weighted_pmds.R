@@ -131,8 +131,16 @@ fast_pmds <- function(
 
   assert_class(g, classes = c("igraph", "tbl_graph"))
   assert_single_value(pivots, type = "integer")
-  if (!is.na(weights)) {
+  if (length(weights) > 1) {
     assert_vector(weights, type = "numeric")
+  } else {
+    if (!is.na(weights)) {
+      cli::cli_abort(
+        c(
+          "x" = "{.var weights} must be a numeric vector of edge weights or NA"
+        )
+      )
+    }
   }
   assert_single_value(dim, type = "integer")
 
