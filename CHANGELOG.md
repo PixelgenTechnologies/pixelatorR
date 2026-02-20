@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Updated
 - Added option to ignore low transition probability edges in `expand_adjacency_matrix` when `use_weights = TRUE`. 
+- Switched to using svds from RSpectra to compute MDS in `layout_with_weighted_pmds` for a performance boost
 - Switched to using pattern matrix representation of the adjacency matrix in `expand_adjacency_matrix` for a performance boost
 
 ### Added

@@ -73,7 +73,8 @@ Suggests:
     png,
     RColorBrewer,
     RcppML,
-    ggrepel
+    ggrepel,
+    RSpectra
 Collate: 
     'generics.R'
     'CellGraph.R'

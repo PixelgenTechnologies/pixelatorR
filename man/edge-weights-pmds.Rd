@@ -8,7 +8,7 @@
 \usage{
 cos_distance_weights(g, pivots)
 
-prob_distance_weights(g, k = 5)
+prob_distance_weights(g, k = 5, min_weight = 0.001)
 }
 \arguments{
 \item{g}{A \code{tbl_graph} object}
@@ -16,6 +16,8 @@ prob_distance_weights(g, k = 5)
 \item{pivots}{Number of pivots}
 
 \item{k}{Number of steps}
+
+\item{min_weight}{Minimum allowed weight when computing transition probabilities.}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
