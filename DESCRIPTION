@@ -85,6 +85,7 @@ Collate:
     'aaa.R'
     'abundance_colocalization_plot.R'
     'abundance_normalization.R'
+    'analysis-utils.R'
     'annotate.R'
     'cell_count_plot.R'
     'colocalization_heatmap.R'
