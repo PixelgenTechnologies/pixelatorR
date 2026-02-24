@@ -74,7 +74,8 @@ Suggests:
     RColorBrewer,
     RcppML,
     ggrepel,
-    RSpectra
+    RSpectra,
+    pls
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -105,6 +106,7 @@ Collate:
     'graph_layout.R'
     'graph_layout_visualization.R'
     'inspect_pxl_file.R'
+    'isotype_analysis.R'
     'join_layers.R'
     'keep_largest_component.R'
     'load_cell_graphs.R'
