@@ -113,7 +113,9 @@ isotype_pls <-
       t()
 
     if (nrow(X) == 0 || ncol(X) == 0) {
-      cli::cli_abort(glue::glue("No data found in layer '{layer}'. Please check that the layer exists and contains data."))
+      cli::cli_abort(glue::glue("
+        No data found in layer '{layer}'.
+        Please check that the layer exists and contains data."))
     }
 
     # Residualize X
