@@ -55,7 +55,13 @@ known covariates (e.g., different samples, cell types, or conditions).
 
 library(pixelatorR)
 
-seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE, load_proximity_scores = FALSE, verbose = FALSE)
+seur <-
+ReadPNA_Seurat(
+  minimal_pna_pxl_file(),
+  overwrite = TRUE,
+  load_proximity_scores = FALSE,
+  verbose = FALSE
+  )
 
 pls_results <-
  isotype_pls(

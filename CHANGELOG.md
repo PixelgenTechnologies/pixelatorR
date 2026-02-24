@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added reference PBMC dataset and load function `read_pbmc_reference` that can be used for annotation.  
+- Added `isotype_pls` to calculate isotype background score.
+- Added `export_plot` utility function to export ggplot objects to file.
 
 ### Fixes
 - Fixed bug in `SequenceSaturationCurve` where the node saturation would be calculated as `1 - graph_proteins / (2 * graph_reads)` instead of `1 - graph_proteins / graph_reads`.
