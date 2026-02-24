@@ -1,4 +1,3 @@
-
 #' Save a ggplot2 plot to one or more file formats with options for size and directory creation.
 #'
 #' This function is a wrapper around `ggsave()` that allows for saving the same plot in multiple formats and handles
@@ -17,14 +16,14 @@
 #' @return Invisibly returns NULL. Used for its side effect of writing plot files.
 #' @examples
 #' \dontrun{
-#'   export_plot("results/myplot", plot = myplot, width = 8, height = 6)
+#' export_plot("results/myplot", plot = myplot, width = 8, height = 6)
 #' }
 #' # Change overwrite behavior globally
 #' options(export_plot.overwrite = TRUE)
 #'
 #' # Now existing files will be overwritten without needing to specify overwrite in the function call
 #' \dontrun{
-#'   export_plot("results/myplot", plot = myplot, width = 8, height = 6)
+#' export_plot("results/myplot", plot = myplot, width = 8, height = 6)
 #' }
 #'
 #' @export
@@ -48,7 +47,6 @@ export_plot <-
     assert_single_value(overwrite, type = "bool")
 
     for (format in file_formats) {
-
       out_file <- paste0(filename, ".", format)
 
       if (file.exists(out_file) && !overwrite) {

@@ -1,4 +1,3 @@
-
 #' Residualize a matrix against a model matrix
 #'
 #' This function takes a matrix M and a model matrix, and returns the residuals
@@ -51,20 +50,20 @@
 #' library(pixelatorR)
 #'
 #' seur <-
-#' ReadPNA_Seurat(
-#'   minimal_pna_pxl_file(),
-#'   overwrite = TRUE,
-#'   load_proximity_scores = FALSE,
-#'   verbose = FALSE
+#'   ReadPNA_Seurat(
+#'     minimal_pna_pxl_file(),
+#'     overwrite = TRUE,
+#'     load_proximity_scores = FALSE,
+#'     verbose = FALSE
 #'   )
 #'
 #' pls_results <-
-#'  isotype_pls(
-#'   object = seur,
-#'   isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
-#'   model_mat = NULL,
-#'   remove_covariates = FALSE,
-#'   layer = "counts"
+#'   isotype_pls(
+#'     object = seur,
+#'     isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
+#'     model_mat = NULL,
+#'     remove_covariates = FALSE,
+#'     layer = "counts"
 #'   )
 #'
 #' seur$sample <- c("S1", "S1", "S2", "S2", "S2")
@@ -73,13 +72,13 @@
 #' model_mat <- model.matrix(~ 0 + seur$sample)
 #'
 #' pls_results_resid <-
-#' isotype_pls(
-#'  object = seur,
-#'  isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
-#'  model_mat = model_mat,
-#'  remove_covariates = TRUE,
-#'  layer = "counts"
-#'  )
+#'   isotype_pls(
+#'     object = seur,
+#'     isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
+#'     model_mat = model_mat,
+#'     remove_covariates = TRUE,
+#'     layer = "counts"
+#'   )
 #'
 #' @export
 #'
@@ -113,7 +112,7 @@ isotype_pls <-
       as.matrix() |>
       t()
 
-    if(nrow(X) == 0 || ncol(X) == 0) {
+    if (nrow(X) == 0 || ncol(X) == 0) {
       cli::cli_abort(glue::glue("No data found in layer '{layer}'. Please check that the layer exists and contains data."))
     }
 
@@ -156,5 +155,4 @@ isotype_pls <-
         loadings = loadings
       )
     )
-
   }

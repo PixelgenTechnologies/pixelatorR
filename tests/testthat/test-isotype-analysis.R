@@ -1,28 +1,30 @@
-
 seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE, load_proximity_scores = FALSE, verbose = FALSE)
 seur$sample <- c("S1", "S1", "S2", "S2", "S2")
 model_mat <- model.matrix(~ 0 + seur$sample)
 
 test_that("isotype_pls works as expected", {
-
   expect_no_error(
     pls_res <-
       isotype_pls(seur,
-                  c("mIgG1", "mIgG2a", "mIgG2b"),
-                  layer = "counts",
-                  remove_covariates = FALSE)
+        c("mIgG1", "mIgG2a", "mIgG2b"),
+        layer = "counts",
+        remove_covariates = FALSE
+      )
   )
 
   expect_equal(
     pls_res$scores,
-    c(`0a45497c6bfbfb22` = -10835.0003893392, `2708240b908e2eba` = 1352.35797977133,
+    c(
+      `0a45497c6bfbfb22` = -10835.0003893392, `2708240b908e2eba` = 1352.35797977133,
       c3c393e9a17c1981 = 4422.53316213253, d4074c845bb62800 = 2821.12108858844,
-      efe0ed189cb499fc = 2238.98815884694)
+      efe0ed189cb499fc = 2238.98815884694
+    )
   )
 
   expect_equal(
     pls_res$loadings,
-    c(`HLA-ABC` = 0.117316290446928, B2M = 0.372031444508482, CD11b = -0.0656140879040214,
+    c(
+      `HLA-ABC` = 0.117316290446928, B2M = 0.372031444508482, CD11b = -0.0656140879040214,
       CD11c = 0.00353558324600213, CD18 = -0.00600224560808749, CD82 = 0.0141448647482045,
       CD8 = 0.0003380229392827, TCRab = 0.012658356108935, `HLA-DR` = 0.0231066396786248,
       CD45 = 0.222155023251149, CD14 = 0.00168030648378497, CD16 = -0.340341230282988,
@@ -75,27 +77,32 @@ test_that("isotype_pls works as expected", {
       CD66b = -0.600011944203488, CX3CR1 = 0.00168771365788765, CD326 = 1.29977617732418e-05,
       CD209 = 0.000482092392714368, CD34 = 0.000267909416710554, CD369 = 0.00070357617327761,
       CD54 = 0.00462827182816186, CD71 = 0.000474876384637339, CD47 = 0.00493040025155095,
-      CD117 = 0.00107440263386365, CD314 = 0.00081899079873385)
+      CD117 = 0.00107440263386365, CD314 = 0.00081899079873385
+    )
   )
 
   expect_no_error(
     pls_res <-
       isotype_pls(seur,
-                  c("mIgG1", "mIgG2a", "mIgG2b"),
-                  model_mat = model_mat,
-                  layer = "counts",
-                  remove_covariates = TRUE)
+        c("mIgG1", "mIgG2a", "mIgG2b"),
+        model_mat = model_mat,
+        layer = "counts",
+        remove_covariates = TRUE
+      )
   )
 
   expect_equal(
     pls_res$scores,
-    c(`0a45497c6bfbfb22` = -525.922313922045, `2708240b908e2eba` = 525.922313922042,
+    c(
+      `0a45497c6bfbfb22` = -525.922313922045, `2708240b908e2eba` = 525.922313922042,
       c3c393e9a17c1981 = 4994.1531587654, d4074c845bb62800 = -5005.85452260822,
-      efe0ed189cb499fc = 11.7013638428094)
+      efe0ed189cb499fc = 11.7013638428094
+    )
   )
   expect_equal(
     pls_res$loadings,
-    c(`HLA-ABC` = -0.0383500344609039, B2M = -0.416494068000092,
+    c(
+      `HLA-ABC` = -0.0383500344609039, B2M = -0.416494068000092,
       CD11b = -0.00845451912403591, CD11c = 0.0144797001222106, CD18 = -0.0786044007725238,
       CD82 = -0.166215577227118, CD8 = 0.00170570325597021, TCRab = 0.00442340386470241,
       `HLA-DR` = -0.034015547443008, CD45 = -0.0657349071395251, CD14 = 0.00372171803638805,
@@ -153,33 +160,34 @@ test_that("isotype_pls works as expected", {
 
   expect_error(
     isotype_pls(seur,
-                c("mIgG1", "mIgG2a", "misspelled marker"),
-                layer = "counts",
-                remove_covariates = FALSE)
+      c("mIgG1", "mIgG2a", "misspelled marker"),
+      layer = "counts",
+      remove_covariates = FALSE
+    )
   )
 
   expect_error(
     isotype_pls(seur[[]],
-                c("mIgG1", "mIgG2a", "mIgG2b"),
-                layer = "counts",
-                remove_covariates = FALSE)
+      c("mIgG1", "mIgG2a", "mIgG2b"),
+      layer = "counts",
+      remove_covariates = FALSE
+    )
   )
 
   expect_error(
     isotype_pls(seur,
-                c("mIgG1", "mIgG2a", "mIgG2b"),
-                layer = "nonexistent_layer",
-                remove_covariates = FALSE)
+      c("mIgG1", "mIgG2a", "mIgG2b"),
+      layer = "nonexistent_layer",
+      remove_covariates = FALSE
+    )
   )
 
   expect_error(
-      isotype_pls(seur,
-                  c("mIgG1", "mIgG2a", "mIgG2b"),
-                  model_mat = head(model_mat, 3),
-                  layer = "counts",
-                  remove_covariates = TRUE)
+    isotype_pls(seur,
+      c("mIgG1", "mIgG2a", "mIgG2b"),
+      model_mat = head(model_mat, 3),
+      layer = "counts",
+      remove_covariates = TRUE
+    )
   )
-
 })
-
-
