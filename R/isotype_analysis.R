@@ -7,7 +7,7 @@
 #' @param M A matrix of data (cells × features).
 #' @param model_mat A matrix of covariates (cells × covariates)
 #' @return A matrix of residuals with the same dimensions as M.
-#' @NoRd
+#' @noRd
 .residualize_matrix <- function(M, model_mat) {
   Q <- qr(model_mat)
   M - model_mat %*% qr.coef(Q, M)
