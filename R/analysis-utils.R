@@ -26,10 +26,13 @@
 #' \dontrun{
 #'   export_plot("results/myplot", plot = myplot, width = 8, height = 6)
 #' }
+#'
+#' @export
+#'
 export_plot <-
   function(
     filename,
-    plot = last_plot(),
+    plot = ggplot2::last_plot(),
     width = 10,
     height = 10,
     create_dir = TRUE,

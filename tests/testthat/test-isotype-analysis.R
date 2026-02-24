@@ -151,6 +151,35 @@ test_that("isotype_pls works as expected", {
     )
   )
 
+  expect_error(
+    isotype_pls(seur,
+                c("mIgG1", "mIgG2a", "misspelled marker"),
+                layer = "counts",
+                remove_covariates = FALSE)
+  )
+
+  expect_error(
+    isotype_pls(seur[[]],
+                c("mIgG1", "mIgG2a", "mIgG2b"),
+                layer = "counts",
+                remove_covariates = FALSE)
+  )
+
+  expect_error(
+    isotype_pls(seur,
+                c("mIgG1", "mIgG2a", "mIgG2b"),
+                layer = "nonexistent_layer",
+                remove_covariates = FALSE)
+  )
+
+  expect_error(
+      isotype_pls(seur,
+                  c("mIgG1", "mIgG2a", "mIgG2b"),
+                  model_mat = head(model_mat, 3),
+                  layer = "counts",
+                  remove_covariates = TRUE)
+  )
+
 })
 
 

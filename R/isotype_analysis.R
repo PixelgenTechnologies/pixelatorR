@@ -89,10 +89,22 @@ isotype_pls <-
 
     assert_class(object, "Seurat")
     assert_vector(isotype_markers, type = "character", n = 1)
+    assert_x_in_y(isotype_markers, rownames(object))
     assert_class(model_mat, "matrix", allow_null = TRUE)
+
+    if (!is.null(model_mat) && isTRUE(remove_covariates)) {
+      if (nrow(model_mat) != ncol(object)) {
+        cli::cli_abort("Number of rows in model_mat must match the number of cells in the Seurat object.")
+      }
+    }
+
     assert_single_value(remove_covariates, type = "bool")
     assert_single_value(layer, type = "string")
     assert_x_in_y(layer, Layers(object))
+
+    if (remove_covariates && is.null(model_mat)) {
+      cli::cli_abort("model_mat must be provided when remove_covariates is TRUE")
+    }
 
     # transpose to cells × features
     X <-
@@ -101,7 +113,7 @@ isotype_pls <-
       as.matrix() |>
       t()
 
-    if(length(X) == 0) {
+    if(nrow(X) == 0 || ncol(X) == 0) {
       cli::cli_abort(glue::glue("No data found in layer '{layer}'. Please check that the layer exists and contains data."))
     }
 
@@ -112,6 +124,10 @@ isotype_pls <-
       X[, !colnames(X) %in% isotype_markers]
     X_isotype <-
       X[, colnames(X) %in% isotype_markers]
+
+    if (ncol(X_no_isotype) == 0) {
+      cli::cli_abort("No non-isotype markers found. At least one non-isotype marker is required for PLS analysis.")
+    }
 
     model <-
       pls::plsr(
