@@ -15,7 +15,8 @@ export_plot(
 )
 }
 \arguments{
-\item{filename}{Character. The path and base filename (without extension) for saving the plot.}
+\item{filename}{Character. The path and base file name for saving the plot. If a file extension is included, it will
+override \code{file_formats} and save only in that format.}
 
 \item{plot}{ggplot object. The plot to save. Defaults to the last plot produced (\code{last_plot()}).}
 

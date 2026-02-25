@@ -489,7 +489,7 @@ PixelgenAccentColors <- function(
 #'
 create_discrete_palette <-
   function(conditions) {
-    pixelatorR:::assert_vector(conditions, "character", n = 1)
+    assert_vector(conditions, "character", n = 1)
 
     if (n_distinct(conditions) <= 2) {
       sample_palette <-

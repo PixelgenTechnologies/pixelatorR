@@ -107,9 +107,9 @@ isotype_pls <-
 
     # transpose to cells × features
     X <-
-      object |>
-      LayerData(layer = layer) |>
-      as.matrix() |>
+      object %>%
+      LayerData(layer = layer) %>%
+      as.matrix() %>%
       t()
 
     if (nrow(X) == 0 || ncol(X) == 0) {

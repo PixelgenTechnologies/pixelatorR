@@ -4,7 +4,8 @@
 #' directory creation if needed. It also includes an option to skip saving if the file already exists, based on a
 #' global option.
 #'
-#' @param filename Character. The path and base filename (without extension) for saving the plot.
+#' @param filename Character. The path and base file name for saving the plot. If a file extension is included, it will
+#' override `file_formats` and save only in that format.
 #' @param plot ggplot object. The plot to save. Defaults to the last plot produced (`last_plot()`).
 #' @param width Numeric. The width of the plot in inches. Default is 10.
 #' @param height Numeric. The height of the plot in inches. Default is 10.
@@ -46,11 +47,18 @@ export_plot <-
     assert_vector(file_formats, type = "character", n = 1)
     assert_single_value(overwrite, type = "bool")
 
+    ext <- fs::path_ext(filename)
+
+    if (nchar(ext) > 0) {
+      file_formats <- ext
+      filename <- fs::path_ext_remove(filename)
+    }
+
     for (format in file_formats) {
       out_file <- paste0(filename, ".", format)
 
       if (file.exists(out_file) && !overwrite) {
-        message("Skipping existing file: ", out_file)
+        rlang::warn(glue::glue("Skipping existing file: {out_file}"))
         next
       }
 
