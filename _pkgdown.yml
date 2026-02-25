@@ -113,6 +113,7 @@ reference:
   - subtitle: Cell Annotation
   - contents:
     - AnnotateCells
+    - read_pbmc_reference
   - subtitle: Color themes
   - contents:
     - color-themes
@@ -122,6 +123,8 @@ reference:
     - Pixelgen_accent_colors
     - show_accent_colors
     - theme_pixelgen
+    - create_discrete_palette
+    - Pixelgen_cell_palette
   - subtitle: Doublet detection
   - contents:
     - FindAnnoyNeighbors
@@ -170,6 +173,7 @@ reference:
   - subtitle: Export
   - contents:
     - WriteMPX_pxl_file
+    - export_plot
   - subtitle: Classes
   - contents:
     - CellGraphAssay
@@ -191,6 +195,7 @@ reference:
     - type-checks
     - minimal_mpx_pxl_file
     - minimal_pna_pxl_file
+    - isotype_pls
 
 footer:
   structure:
