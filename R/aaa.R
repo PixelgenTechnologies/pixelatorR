@@ -115,3 +115,11 @@ expect_RcppML <- function(...) {
 expect_ggrepel <- function(...) {
   rlang::check_installed("ggrepel", ...)
 }
+
+expect_RSpectra <- function(...) {
+  rlang::check_installed("RSpectra", ...)
+}
+
+expect_pls <- function(...) {
+  rlang::check_installed("pls", ...)
+}

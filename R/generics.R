@@ -811,7 +811,8 @@ FSMap <- function(
 "FSMap<-" <- function(
   object,
   ...,
-  value) {
+  value
+) {
   UseMethod(generic = "FSMap<-", object = object)
 }
 

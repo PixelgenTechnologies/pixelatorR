@@ -19,7 +19,7 @@ Defines S4 classes for single-cell MPX data, extending the Seurat toolbox. In ad
 Authors:
 \itemize{
   \item Max Karlsson \email{max.karlsson@pixelgen.com} (\href{https://orcid.org/0000-0002-7000-4416}{ORCID})
-  \item Vincent Van Hoef \email{vincent.vanhoef@pixelgen.com} (\href{https://orcid.org/YOUR-ORCID-ID}{ORCID})
+  \item Vincent Van Hoef \email{vincent.vanhoef@pixelgen.com}
 }
 
 }

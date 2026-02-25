@@ -748,7 +748,7 @@ render_rotating_layout <- function(
       # Define node colors based on the type of node_val
       if (inherits(df$node_val, "numeric")) {
         if (center_zero) {
-          max_abs_node_val <- max(marker_limits[[marker_id]])
+          max_abs_node_val <- max(abs(marker_limits[[marker_id]]))
           cols <- scales::col_numeric(domain = c(-max_abs_node_val, max_abs_node_val), palette = colors)(df$node_val)
         } else {
           cols <- scales::col_numeric(domain = marker_limits[[marker_id]], palette = colors)(df$node_val)

@@ -25,6 +25,23 @@ assert_pxl_file <- function(pxl_file) {
 }
 
 
+#' Fetches the config values to be used with DuckDB
+#'
+#' Configuration options can be found here:
+#' https://duckdb.org/docs/stable/configuration/overview#global-configuration-options
+#'
+#' @return a named list with the config options to be used
+#'
+get_duckdb_config <- function() {
+  config <- list()
+  temp_dir <- Sys.getenv("PIXELATOR_DUCKDB_TEMP_DIR")
+  if (temp_dir != "") {
+    config$temp_directory <- temp_dir
+  }
+  config
+}
+
+
 #' PXL database class
 #'
 #' This class provides an interface for working with a PXL file.
@@ -76,6 +93,7 @@ PixelDB <- R6Class(
               duckdb::duckdb(),
               bigint = "integer64",
               dbdir = private$file,
+              config = get_duckdb_config(),
               read_only = TRUE
             )
         },
@@ -155,6 +173,7 @@ PixelDB <- R6Class(
               duckdb::duckdb(),
               bigint = "integer64",
               dbdir = private$file,
+              config = get_duckdb_config(),
               read_only = TRUE
             )
         },
@@ -296,7 +315,7 @@ PixelDB <- R6Class(
       self$check_connection()
       self$fetch_table("__adata__X") %>%
         mutate(across(where(bit64::is.integer64), as.integer)) %>%
-        data.frame(row.names = 1, check.names = FALSE) %>%
+        tibble::column_to_rownames("index") %>%
         as.matrix() %>%
         as("dgCMatrix") %>%
         Matrix::t()
@@ -426,12 +445,10 @@ PixelDB <- R6Class(
     #'  - read_count: The number of reads supporting the edge
     #'  - uei_count: The number of unique event identifiers (UEIs) supporting the edge
     #'
-    components_edgelist = function(
-                                     components,
-                                     umi_data_type = c("int64", "string", "suffixed_string"),
-                                     lazy = FALSE,
-                                     include_all_columns = FALSE
-    ) {
+    components_edgelist = function(components,
+                                   umi_data_type = c("int64", "string", "suffixed_string"),
+                                   lazy = FALSE,
+                                   include_all_columns = FALSE) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
@@ -633,12 +650,10 @@ PixelDB <- R6Class(
     #'
     #' @return Nothing
     #'
-    export_parquet = function(
-                                parquet_file,
-                                table_name = c("proximity", "edgelist", "layouts"),
-                                compression = c("snappy", "zstd"),
-                                compression_level = 1L
-    ) {
+    export_parquet = function(parquet_file,
+                              table_name = c("proximity", "edgelist", "layouts"),
+                              compression = c("snappy", "zstd"),
+                              compression_level = 1L) {
       self$check_connection()
       assert_single_value(parquet_file, "string")
       assert_file_ext(parquet_file, "parquet")

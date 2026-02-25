@@ -7,6 +7,7 @@ linters: linters_with_defaults(
     object_usage_linter = NULL,
     indentation_linter = NULL,
     return_linter = NULL,
+    pipe_consistency_linter = NULL,
     unused_import_linter()
   )
 exclusions: list(

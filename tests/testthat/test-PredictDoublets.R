@@ -111,7 +111,6 @@ test_that("PredictDoublets works as expected", {
   )
 
 
-
   expect_named(
     pred_seur,
     c(

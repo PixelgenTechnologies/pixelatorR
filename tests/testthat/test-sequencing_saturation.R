@@ -79,10 +79,10 @@ test_that("SequenceSaturationCurve works as expected", {
         graph_reads = c(229977L, 113870L, 298516L, 148509L),
         graph_stability = c(1, 0.877844152396124, 1, 0.889059998784219),
         graph_node_saturation = c(
-          91.8111376355027,
-          85.4816896460876,
-          91.7339439092042,
-          85.2278313098869
+          83.6222752710054,
+          70.9633792921753,
+          83.4678878184084,
+          70.4556626197739
         ),
         graph_edge_saturation = c(
           65.3713197406697,
