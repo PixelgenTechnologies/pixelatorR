@@ -40,6 +40,7 @@
 <url><loc>/reference/CreateCellGraphObject.html</loc></url>
 <url><loc>/reference/CreatePNAAssay.html</loc></url>
 <url><loc>/reference/CreatePNAAssay5.html</loc></url>
+<url><loc>/reference/create_discrete_palette.html</loc></url>
 <url><loc>/reference/DensityScatterPlot.html</loc></url>
 <url><loc>/reference/DifferentialProximityAnalysis.html</loc></url>
 <url><loc>/reference/downsample_to_parquet.html</loc></url>
@@ -48,13 +49,17 @@
 <url><loc>/reference/edgelist_to_simple_bipart_graph.html</loc></url>
 <url><loc>/reference/EdgeRankPlot.html</loc></url>
 <url><loc>/reference/expand_adjacency_matrix.html</loc></url>
+<url><loc>/reference/export_plot.html</loc></url>
+<url><loc>/reference/fast_pmds.html</loc></url>
 <url><loc>/reference/FilterProximityScores.html</loc></url>
 <url><loc>/reference/FindAnnoyNeighbors.html</loc></url>
 <url><loc>/reference/FSMap.html</loc></url>
+<url><loc>/reference/get_duckdb_config.html</loc></url>
 <url><loc>/reference/graph-conversion.html</loc></url>
 <url><loc>/reference/identify_markers_for_patch_analysis.html</loc></url>
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/inspect_pxl_file.html</loc></url>
+<url><loc>/reference/isotype_pls.html</loc></url>
 <url><loc>/reference/KeepLargestComponent.html</loc></url>
 <url><loc>/reference/layout_coordinates_utils.html</loc></url>
 <url><loc>/reference/layout_with_weighted_pmds.html</loc></url>
@@ -78,6 +83,7 @@
 <url><loc>/reference/PixelgenGradient.html</loc></url>
 <url><loc>/reference/PixelgenPalette.html</loc></url>
 <url><loc>/reference/Pixelgen_accent_colors.html</loc></url>
+<url><loc>/reference/Pixelgen_cell_palette.html</loc></url>
 <url><loc>/reference/Plot2DGraph.html</loc></url>
 <url><loc>/reference/Plot2DGraphM.html</loc></url>
 <url><loc>/reference/Plot3DGraph.html</loc></url>
@@ -106,6 +112,7 @@
 <url><loc>/reference/ReadPNA_metadata.html</loc></url>
 <url><loc>/reference/ReadPNA_proximity.html</loc></url>
 <url><loc>/reference/ReadPNA_Seurat.html</loc></url>
+<url><loc>/reference/read_pbmc_reference.html</loc></url>
 <url><loc>/reference/RemoveCellGraphs.html</loc></url>
 <url><loc>/reference/render_rotating_layout.html</loc></url>
 <url><loc>/reference/RestorePaths.html</loc></url>

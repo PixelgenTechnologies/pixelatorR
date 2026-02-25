@@ -1,0 +1,87 @@
+# Introduction
+
+The `pixelatorR` R package provides classes, functions and methods to
+load, process, analyze and visualize MPX/PNA data. It is built on top of
+the `Seurat` ecosystem, meaning that it shares the basic object type.
+Typical Seurat-style analysis workflows can be run as usual, but
+`pixelatorR` fills in the gaps where support for MPX data is currently
+lacking.
+
+## Setting up a conda environment
+
+We highly recommend setting up a conda environment to run `pixelatorR`.
+With conda, you can create an enviroment using the YAML file provided on
+our GitHub page. Download the YAML file and run the following from a
+terminal:
+
+``` sh
+conda env create -f environment.yml
+```
+
+Once the environment is installed, you can activate it with:
+
+``` sh
+conda activate r-pixelator
+```
+
+If you’re using RStudio, you need to make sure that the application uses
+the correct environment. On Mac OS, you can open RStudio directly from
+the terminal (where the environment is active) with:
+
+``` sh
+/Applications/RStudio.app/Contents/MacOS/RStudio
+```
+
+## Installation
+
+When creating the environment, all required dependencies should be
+installed. However, `pixelatorR` is currently only available on GitHub
+and can be install via `remotes` or `devtools`:
+
+``` r
+remotes::install_github("PixelgenTechnologies/pixelatorR")
+```
+
+## Getting started
+
+``` r
+library(pixelatorR)
+```
+
+On our [software website](https://software.pixelgen.com/datasets), you
+can find publicly available data sets. To get started, you can download
+a PXL file and load it as a Seurat object:
+
+``` r
+download.file(url = "https://pixelgen-technologies-datasets.s3.eu-north-1.amazonaws.com/mpx-datasets/pixelator/0.12.0/1k-human-pbmcs-v1.0-immunology-I/Sample01_human_pbmcs_unstimulated.dataset.pxl?download=1", 
+              destfile = "PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
+```
+
+  
+
+Now, we can load the MPX data as a Seurat object with `ReadMPX_Seurat`:
+
+``` r
+seur <- ReadMPX_Seurat("PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
+```
+
+    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpEtNvc8/dir65cc4a80320
+
+    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpEtNvc8/dir65cc7fb67903
+
+    ## ✔ Created a 'Seurat' object with 477 cells and 80 targeted surface proteins
+
+    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpEtNvc8/file65cc6dd74ff6.h5ad
+
+## Seurat v5
+
+In Seurat v5, a new Assay type was introduced called Assay5. Users can
+switch between using the Assay and Assay5 classes to store counts data
+by setting the global option `Seurat.object.assay.version` to either
+“v3” or “v5”. Similarly, in `pixelatorR`, you can set the same global
+option to control whether to use the CellGraphAssay/PNAAssay or
+CellGraphAssay5/PNAAssay5 class.
+
+The CellGraphAssay/PNAAssay classes extend the Assay class and the
+CellGraphAssay5/PNAAssay5 class extend the Assay5 class, providing
+additional slots to store spatial metrics and component graphs.

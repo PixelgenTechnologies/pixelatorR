@@ -72,6 +72,7 @@ reference:
   - contents:
     - ComputeLayout
     - layout_with_weighted_pmds
+    - fast_pmds
     - center_layout_coordinates
     - normalize_layout_coordinates
     - project_layout_coordinates_on_unit_sphere
@@ -196,6 +197,7 @@ reference:
     - minimal_mpx_pxl_file
     - minimal_pna_pxl_file
     - isotype_pls
+    - get_duckdb_config
 
 footer:
   structure:
