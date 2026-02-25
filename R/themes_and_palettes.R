@@ -474,3 +474,122 @@ PixelgenAccentColors <- function(
 
   return(colors)
 }
+
+#' Create sample palette
+#'
+#' This function creates a sample palette of Pixelgen accent colors based on the number
+#' of unique samples or conditions provided. It selects colors from different hues and
+#' levels to ensure good visual distinction between conditions.
+#'
+#' @param conditions Character vector of conditions.
+#'
+#' @return Character vectors of color hex codes.
+#'
+#' @export
+#'
+create_sample_palette <-
+  function(conditions) {
+    pixelatorR:::assert_vector(conditions, "character", n = 1)
+
+    if (n_distinct(conditions) <= 2) {
+      sample_palette <-
+        c(Pixelgen_accent_colors$blues[4], Pixelgen_accent_colors$beiges[6]) %>%
+        rep(10)
+    } else if (n_distinct(conditions) <= 6) {
+      sample_palette <-
+        c(
+          PixelgenAccentColors(hue = c("blues"), level = c(4, 6)),
+          PixelgenAccentColors(hue = c("beiges"), level = c(6, 9)),
+          PixelgenAccentColors(hue = c("pinks"), level = c(5, 6))
+        ) %>%
+        unname() %>%
+        rep(10)
+    } else if (n_distinct(conditions) > 6) {
+      sample_palette <-
+        c(
+          PixelgenAccentColors(hue = c("blues"), level = c(4, 6)),
+          PixelgenAccentColors(hue = c("beiges"), level = c(6, 9)),
+          PixelgenAccentColors(hue = c("pinks"), level = c(5, 6)),
+          PixelgenAccentColors(hue = c("cyans"), level = c(4, 6)),
+          PixelgenAccentColors(hue = c("yellows"), level = c(5, 7)),
+          PixelgenAccentColors(hue = c("purples"), level = c(4, 6)),
+          PixelgenAccentColors(hue = c("greys"), level = c(4, 6))
+        ) %>%
+        unname() %>%
+        rep(10)
+    }
+
+    return(sample_palette)
+  }
+
+
+#' Pixelgen cell type colors
+#'
+#' This vector contains Pixelgen branded colors that are assigned to specific cell types.
+#' These colors can be used in visualizations to maintain consistency with Pixelgen
+#' branding and to help differentiate between cell types in plots such as UMAPs, bar plots,
+#' or heatmaps. The colors are chosen to provide good contrast between different cell types
+#' while adhering to the Pixelgen color palette.
+#'
+#' @format A named character vector where names are cell types and values are color hex codes.
+#'
+#' @rdname Pixelgen_cell_palette
+#'
+#' @export
+#'
+Pixelgen_cell_palette <-
+  c(
+    "CD4 T" = "#6D92D1",
+    "CD4 Naive" = "#B9CDED",
+    "Naive CD4 T" = "#B9CDED",
+    "CD4 TSCM" = "#92B0E0",
+    "CD4 TCM" = "#6D92D1",
+    "CD4 TEM" = "#4A73C0",
+    "CD4 TEFF" = "#224792",
+    "CD4 TEMRA" = "#1C3A76",
+    "Treg" = "#2955AE",
+    "CD4 CTL" = "#2955AE",
+    "CD8 T" = "#75C5B5",
+    "CD8 Naive" = "#D0EDE6",
+    "Naive CD8 T" = "#D0EDE6",
+    "CD8 TSCM" = "#A2DACE",
+    "CD8 TCM" = "#75C5B5",
+    "CD8 TEM" = "#4AAF9D",
+    "CD8 TEFF" = "#209785",
+    "CD8 TEMRA" = "#1B7E6F",
+    "other T" = "#1B7E9F",
+    "Other T" = "#1B7E9F",
+    "MAIT" = "#0D6D5E",
+    "DPT" = "#1B7E9F",
+    "DNT" = "#7B787F",
+    "dnT" = "#7B787F",
+    "NK" = "#A28EDB",
+    "CD56dim NK" = "#A28EDB",
+    "CD56bright NK" = "#866CCD",
+    "NK_CD56bright" = "#866CCD",
+    "NKT" = "#6C4ABD",
+    "B" = "#C7A989", # "#917557",
+    "B naive" = "#F0DAC4",
+    "Naive B" = "#F0DAC4",
+    "B intermediate" = "#F0DAC4",
+    "Memory B" = "#C7A989",
+    "B memory" = "#C7A989",
+    "Plasma cells" = "#DE9982",
+    "Plasmablast" = "#DE9982",
+    "DC" = "#DA94C1",
+    "cDC1" = "#DA94C1",
+    "cDC2" = "#BB5391",
+    "pDC" = "#9C4579",
+    "Mono" = "#F7DFA0",
+    "Classical Mono" = "#F7DFA0",
+    "CD14 Mono" = "#F7DFA0",
+    "Intermediate Mono" = "#E6BE4A",
+    "CD16 Mono" = "#BD9315",
+    "Non-classical Mono" = "#BD9315",
+    "other" = "#797979",
+    "Neutrophils" = "#CDCDCD",
+    "Basophils" = "#797979",
+    "Platelet" = "#DB6365",
+    "Platelets" = "#DB6365",
+    "gdT" = "#5A3E9E"
+  )
