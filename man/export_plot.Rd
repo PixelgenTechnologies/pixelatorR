@@ -10,7 +10,7 @@ export_plot(
   width = 10,
   height = 10,
   create_dir = TRUE,
-  file_formats = c("png", "pdf"),
+  file_formats = getOption("export_plot.file_formats", c("png", "pdf")),
   overwrite = getOption("export_plot.overwrite", FALSE)
 )
 }
