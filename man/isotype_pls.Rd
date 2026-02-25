@@ -56,20 +56,20 @@ known covariates (e.g., different samples, cell types, or conditions).
 library(pixelatorR)
 
 seur <-
-ReadPNA_Seurat(
-  minimal_pna_pxl_file(),
-  overwrite = TRUE,
-  load_proximity_scores = FALSE,
-  verbose = FALSE
+  ReadPNA_Seurat(
+    minimal_pna_pxl_file(),
+    overwrite = TRUE,
+    load_proximity_scores = FALSE,
+    verbose = FALSE
   )
 
 pls_results <-
- isotype_pls(
-  object = seur,
-  isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
-  model_mat = NULL,
-  remove_covariates = FALSE,
-  layer = "counts"
+  isotype_pls(
+    object = seur,
+    isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
+    model_mat = NULL,
+    remove_covariates = FALSE,
+    layer = "counts"
   )
 
 seur$sample <- c("S1", "S1", "S2", "S2", "S2")
@@ -78,12 +78,12 @@ seur$sample <- c("S1", "S1", "S2", "S2", "S2")
 model_mat <- model.matrix(~ 0 + seur$sample)
 
 pls_results_resid <-
-isotype_pls(
- object = seur,
- isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
- model_mat = model_mat,
- remove_covariates = TRUE,
- layer = "counts"
- )
+  isotype_pls(
+    object = seur,
+    isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
+    model_mat = model_mat,
+    remove_covariates = TRUE,
+    layer = "counts"
+  )
 
 }

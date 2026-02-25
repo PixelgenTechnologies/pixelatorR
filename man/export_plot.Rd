@@ -6,7 +6,7 @@
 \usage{
 export_plot(
   filename,
-  plot = last_plot(),
+  plot = ggplot2::last_plot(),
   width = 10,
   height = 10,
   create_dir = TRUE,
@@ -40,13 +40,14 @@ global option.
 }
 \examples{
 \dontrun{
-  export_plot("results/myplot", plot = myplot, width = 8, height = 6)
+export_plot("results/myplot", plot = myplot, width = 8, height = 6)
 }
 # Change overwrite behavior globally
 options(export_plot.overwrite = TRUE)
 
 # Now existing files will be overwritten without needing to specify overwrite in the function call
 \dontrun{
-  export_plot("results/myplot", plot = myplot, width = 8, height = 6)
+export_plot("results/myplot", plot = myplot, width = 8, height = 6)
 }
+
 }
