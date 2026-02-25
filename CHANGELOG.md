@@ -16,6 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added reference PBMC dataset and load function `read_pbmc_reference` that can be used for annotation.  
 - Added `isotype_pls` to calculate isotype background score.
 - Added `export_plot` utility function to export ggplot objects to file.
+- Added `create_sample_palette` to create palettes to color different samples or conditions.
+- Added `Pixelgen_cell_palette`, a named vector of colors assigned to cell types.
 
 ### Fixes
 - Fixed bug in `SequenceSaturationCurve` where the node saturation would be calculated as `1 - graph_proteins / (2 * graph_reads)` instead of `1 - graph_proteins / graph_reads`.
