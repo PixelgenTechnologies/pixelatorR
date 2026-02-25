@@ -126,7 +126,6 @@ fast_pmds <- function(
   weights = NA,
   dim = 3
 ) {
-
   expect_RSpectra()
 
   assert_class(g, classes = c("igraph", "tbl_graph"))

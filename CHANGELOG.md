@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased] 2025-12-08
+## [0.16.0] - 2026-02-25
 
 ### Updated
 - Added option to ignore low transition probability edges in `expand_adjacency_matrix` when `use_weights = TRUE`. 
@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Added reference PBMC dataset and load function `read_pbmc_reference` that can be used for annotation.  
+- Added `isotype_pls` to calculate isotype background score.
+- Added `export_plot` utility function to export ggplot objects to file.
+- Added `create_discrete_palette` to create palettes to color different samples or conditions.
+- Added `Pixelgen_cell_palette`, a named vector of colors assigned to cell types.
 
 ### Fixes
 - Fixed bug in `SequenceSaturationCurve` where the node saturation would be calculated as `1 - graph_proteins / (2 * graph_reads)` instead of `1 - graph_proteins / graph_reads`.
