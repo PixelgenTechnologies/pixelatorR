@@ -22,7 +22,7 @@ Imports:
     arrow,
     glue,
     hdf5r,
-    SeuratObject (>= 5.0.0),
+    SeuratObject,
     tibble,
     igraph,
     tidygraph,
