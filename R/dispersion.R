@@ -34,7 +34,17 @@ CalculateDispersion.matrix <- function(
         i <- seq_len(n)
         (2 * sum(i * x_sorted) / (n * sum_x)) - (n + 1) / n
       },
-      "tau" = function(x) sum(1 - x / max(x)) / (length(x) - 1)
+      "tau" = function(x) {
+        n <- length(x)
+        if (n <= 1L) {
+          return(0)
+        }
+        max_x <- max(x)
+        if (max_x == 0) {
+          return(0)
+        }
+        sum(1 - x / max_x) / (n - 1)
+      }
     )
 
   object %>%
