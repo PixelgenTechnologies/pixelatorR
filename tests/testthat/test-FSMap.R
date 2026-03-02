@@ -31,7 +31,7 @@ test_that("FSMap works as expected", {
   # Check that the update fails if the file is missing
   fs::file_delete(tmp_path)
   expect_error({
-    FSMap(seur_obj) <- FSMap(seur_obj) %>%
+    FSMap(seur_obj_mpx) <- FSMap(seur_obj_mpx) %>%
       mutate(pxl_file = tmp_path %>% as.character())
   })
 

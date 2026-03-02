@@ -109,6 +109,8 @@ FSMap.Seurat <- function(
       for (cur_assay in pxl_assays) {
         FSMap(object[[cur_assay]]) <- value
       }
+    } else {
+      FSMap(object[[assay]]) <- value
     }
   } else {
       FSMap(object[[assay]]) <- value
