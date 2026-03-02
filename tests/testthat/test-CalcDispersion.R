@@ -132,4 +132,53 @@ test_that("CalculateDispersion works as expected", {
   expect_error(CalculateDispersion(seur, layer = "counts", margin = "2"))
   expect_error(CalculateDispersion(seur, layer = "nolayer"))
   expect_error(CalculateDispersion(seur, metadata_name = 37))
+
+  ## Edge-case tests for potential division-by-zero scenarios
+  ## All-zero row: test both margins and methods
+  zero_row_mat <- matrix(c(0, 0, 0,
+                           1, 2, 3),
+                         nrow = 2, byrow = TRUE)
+  expect_no_error(disp_zero_row_1 <- CalculateDispersion(zero_row_mat, margin = 1))
+  expect_true(is.numeric(disp_zero_row_1))
+  expect_true(all(is.finite(disp_zero_row_1)))
+
+  expect_no_error(disp_zero_row_2 <- CalculateDispersion(zero_row_mat, margin = 2))
+  expect_true(is.numeric(disp_zero_row_2))
+  expect_true(all(is.finite(disp_zero_row_2)))
+
+  expect_no_error(disp_zero_row_tau_1 <- CalculateDispersion(zero_row_mat, method = "tau", margin = 1))
+  expect_true(is.numeric(disp_zero_row_tau_1))
+  expect_true(all(is.finite(disp_zero_row_tau_1)))
+
+  expect_no_error(disp_zero_row_tau_2 <- CalculateDispersion(zero_row_mat, method = "tau", margin = 2))
+  expect_true(is.numeric(disp_zero_row_tau_2))
+  expect_true(all(is.finite(disp_zero_row_tau_2)))
+
+  ## All-zero column: test both margins and methods
+  zero_col_mat <- matrix(c(0, 1,
+                           0, 2,
+                           0, 3),
+                         nrow = 3, byrow = TRUE)
+  expect_no_error(disp_zero_col_1 <- CalculateDispersion(zero_col_mat, margin = 1))
+  expect_true(is.numeric(disp_zero_col_1))
+  expect_true(all(is.finite(disp_zero_col_1)))
+
+  expect_no_error(disp_zero_col_2 <- CalculateDispersion(zero_col_mat, margin = 2))
+  expect_true(is.numeric(disp_zero_col_2))
+  expect_true(all(is.finite(disp_zero_col_2)))
+
+  expect_no_error(disp_zero_col_tau_1 <- CalculateDispersion(zero_col_mat, method = "tau", margin = 1))
+  expect_true(is.numeric(disp_zero_col_tau_1))
+  expect_true(all(is.finite(disp_zero_col_tau_1)))
+
+  expect_no_error(disp_zero_col_tau_2 <- CalculateDispersion(zero_col_mat, method = "tau", margin = 2))
+  expect_true(is.numeric(disp_zero_col_tau_2))
+  expect_true(all(is.finite(disp_zero_col_tau_2)))
+
+  ## Length-1 vector for tau
+  tau_vec <- c(0)
+  expect_no_error(disp_tau_vec <- CalculateDispersion(tau_vec, method = "tau", margin = 1))
+  expect_true(is.numeric(disp_tau_vec))
+  expect_equal(length(disp_tau_vec), 1L)
+  expect_true(all(is.finite(disp_tau_vec)))
 })
