@@ -176,6 +176,7 @@
 #' @importFrom R6 R6Class
 #' @importFrom rlang on_load
 #' @importFrom rlang run_on_load
+#' @importFrom SeuratObject Assays
 #' @importFrom SeuratObject Cells
 #' @importFrom SeuratObject CreateAssay5Object
 #' @importFrom SeuratObject CreateAssayObject
