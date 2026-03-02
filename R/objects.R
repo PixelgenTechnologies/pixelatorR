@@ -113,7 +113,7 @@ FSMap.Seurat <- function(
       FSMap(object[[assay]]) <- value
     }
   } else {
-      FSMap(object[[assay]]) <- value
+    FSMap(object[[assay]]) <- value
   }
 
   return(object)
