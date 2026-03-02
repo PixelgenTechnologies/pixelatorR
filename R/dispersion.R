@@ -21,7 +21,19 @@ CalculateDispersion.matrix <- function(
 
   dispersion_function <-
     switch(method,
-      "gini" = function(x) sum(outer(x, x, FUN = function(a, b) abs(a - b))) / (2 * length(x)^2 * mean(x)),
+      "gini" = function(x) {
+        n <- length(x)
+        if (n <= 1L) {
+          return(0)
+        }
+        sum_x <- sum(x)
+        if (sum_x == 0) {
+          return(0)
+        }
+        x_sorted <- sort(x)
+        i <- seq_len(n)
+        (2 * sum(i * x_sorted) / (n * sum_x)) - (n + 1) / n
+      },
       "tau" = function(x) sum(1 - x / max(x)) / (length(x) - 1)
     )
 
