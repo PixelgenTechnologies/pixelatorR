@@ -130,6 +130,6 @@ test_that("CalculateDispersion works as expected", {
 
   expect_error(CalculateDispersion(seur, layer = "counts", margin = 3))
   expect_error(CalculateDispersion(seur, layer = "counts", margin = "2"))
-  expect_warning(expect_error(CalculateDispersion(seur, layer = "nolayer")))
+  expect_error(CalculateDispersion(seur, layer = "nolayer"))
   expect_error(CalculateDispersion(seur, metadata_name = 37))
 })
