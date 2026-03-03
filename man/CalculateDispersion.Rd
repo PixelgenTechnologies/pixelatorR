@@ -58,7 +58,7 @@ values (such as counts) across components. The dispersion can be calculated
 using the Gini coefficient or the Tau statistic. The Gini and Tau
 coefficients are measures of inequality in a distribution, ranging from 0
 to 1, where 0 signifies a perfectly equal distribution and 1 signifies
-perfectly inequal distribution. In terms of marker counts across different
+perfectly unequal distribution. In terms of marker counts across different
 markers for a component, a low dispersion indicates that the marker counts
 are at similar levels across all markers, while a high dispersion indicates
 that the marker counts are distributed mostly to one or a few markers. The
