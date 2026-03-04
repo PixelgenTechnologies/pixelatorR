@@ -1373,3 +1373,50 @@ SummarizeProximityScores <- function(
 ) {
   UseMethod(generic = "SummarizeProximityScores", object = object)
 }
+
+
+
+#' @title Calculate dispersion of components
+#' @description
+#' Calculate the dispersion of numeric data in a Seurat object or matrix.
+#' The dispersion is calculated as a summary statistic of the distribution of
+#' values (such as counts) across components. The dispersion can be calculated
+#' using the Gini coefficient or the Tau statistic. The Gini and Tau
+#' coefficients are measures of inequality in a distribution, ranging from 0
+#' to 1, where 0 signifies a perfectly equal distribution and 1 signifies
+#' perfectly unequal distribution. In terms of marker counts across different
+#' markers for a component, a low dispersion indicates that the marker counts
+#' are at similar levels across all markers, while a high dispersion indicates
+#' that the marker counts are distributed mostly to one or a few markers. The
+#' dispersion can for example be used as a quantitative metric to assess
+#' whether a component's counts are dispersed between markers at an expected
+#' level. Both a high and low dispersion can indicate that the component is
+#' some kind of an artifact, rather than a real cell.
+#'
+#' @param object A \code{Seurat} object or a count matrix.
+#' @param method The method to use for calculating the dispersion. Can be "gini"
+#'              or "tau". Default is "gini".
+#' @param margin The margin of the object to apply the dispersion calculation on.
+#'              1 indicates rows (typically markers), 2 indicates columns (typically cells).
+#'              Default is 2. If \code{object} is a \code{Seurat} object and the margin is 2,
+#'              a \code{Seurat} object is returned with the dispersion added
+#'              as a metadata column.
+#' @param assay A character with the name of the assay to use.
+#' @param layer A character with the name of the layer to use.
+#' @param metadata_name A character with the name of the metadata column to add.
+#'                      Default is \code{"dispersion_[method]"}.
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @return A \code{Seurat} object with the dispersion added as a metadata column if \code{margin = 2},
+#' otherwise a numeric vector with the dispersion values for each row or column of the input object.
+#'
+#' @rdname CalculateDispersion
+#'
+#' @export
+#'
+CalculateDispersion <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "CalculateDispersion", object = object)
+}

@@ -97,6 +97,7 @@ Collate:
     'differential_colocalization_analysis.R'
     'differential_polarity_analysis.R'
     'differential_proximity_analysis.R'
+    'dispersion.R'
     'doublet_detection.R'
     'duckdb_methods.R'
     'extdata.R'
