@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 - Fixed bug in `FSMap<-` when handling Seurat objects multiple PNA/MPX assays. Previously, FSMap would only update the active assay. Now, the Seurat object is scanned for all PNA/MPX assays and updates them with `value`.
-- Fixed a bug in `SequenceSaturationCurve` that would throw an error when there are `int64` columns in the Edgelist.  
+- Fixed a bug in `SequenceSaturationCurve` that would throw an error when there are `int64` columns in the edgelist.
 
 ## [0.16.0] - 2026-02-25
 
