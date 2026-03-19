@@ -1375,7 +1375,6 @@ SummarizeProximityScores <- function(
 }
 
 
-
 #' @title Calculate dispersion of components
 #' @description
 #' Calculate the dispersion of numeric data in a Seurat object or matrix.

@@ -5,7 +5,7 @@
 #'
 #' @param n The number of colors to return
 #' @param name The name of the gradient to return. Options are "BluesCherry",
-#' "Cherry", "Blues", "Magenta", and "Cyan"
+#' "BluesGrayCherry", "GrayblueRose", "Cherry", "Blues", "Magenta", and "Cyan".
 #'
 #' @return A vector of colors
 #'
@@ -30,14 +30,72 @@ PixelgenGradient <- function(
   colors <-
     switch(name,
       "BluesCherry" = c(
-        "#1F395F", "#496389", "#728BB1", "#AABAD1", "#DFE5EE", "#FFFFFF",
-        "#FFE0EA", "#E9AABF", "#CD6F8D", "#A23F5E", "#781534"
+        "#1F395F",
+        "#496389",
+        "#728BB1",
+        "#AABAD1",
+        "#DFE5EE",
+        "#FFFFFF",
+        "#FFE0EA",
+        "#E9AABF",
+        "#CD6F8D",
+        "#A23F5E",
+        "#781534"
       ),
-      "GrayblueRose" = c("#798AAC", "#93A1BD", "#C4CBDB", "#FFFFFF", "#E8BFCD", "#D190A4", "#C1728B"),
-      "Cherry" = c("#F2F2F2", "#FFE0EA", "#E9AABF", "#CD6F8D", "#A23F5E", "#781534"),
-      "Blues" = c("#F2F2F2", "#DFE5EE", "#AABAD1", "#728BB1", "#496389", "#1F395F"),
-      "Magenta" = c("#F2F2F2", "#FDE0EF", "#F1B6DA", "#DE77AE", "#C51C7D", "#8E0152"),
-      "Cyan" = c("#F2F2F2", "#C2E5E1", "#9FE5DD", "#7CD5D0", "#59C5C3", "#36B5B6")
+      "BluesGrayCherry" = c(
+        "#1F395F",
+        "#44628E",
+        "#718BB2",
+        "#A8B9D1",
+        "#DBE1EA",
+        "#F1EEE9",
+        "#F0D7E0",
+        "#E3A6B8",
+        "#CB6E8B",
+        "#A23F5E",
+        "#781534"
+      ),
+      "GrayblueRose" = c(
+        "#798AAC",
+        "#93A1BD",
+        "#C4CBDB",
+        "#FFFFFF",
+        "#E8BFCD",
+        "#D190A4",
+        "#C1728B"
+      ),
+      "Cherry" = c(
+        "#F2F2F2",
+        "#FFE0EA",
+        "#E9AABF",
+        "#CD6F8D",
+        "#A23F5E",
+        "#781534"
+      ),
+      "Blues" = c(
+        "#F2F2F2",
+        "#DFE5EE",
+        "#AABAD1",
+        "#728BB1",
+        "#496389",
+        "#1F395F"
+      ),
+      "Magenta" = c(
+        "#F2F2F2",
+        "#FDE0EF",
+        "#F1B6DA",
+        "#DE77AE",
+        "#C51C7D",
+        "#8E0152"
+      ),
+      "Cyan" = c(
+        "#F2F2F2",
+        "#C2E5E1",
+        "#9FE5DD",
+        "#7CD5D0",
+        "#59C5C3",
+        "#36B5B6"
+      )
     )
 
   if (all(is.null(colors))) abort("Invalid palette name.")
