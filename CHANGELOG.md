@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Added `CalculateDispersion` method for calculating dispersion of counts across features and cells. Currently "tau" and "gini" dispersion metrics are supported. This method is useful for identifying outliers in the count data, for example to identify cells with an unusual count distribution across markers. 
+- Added a new gradient color palette "BluesGrayCherry" to `PixelgenGradient`.
 
 ### Fixes
 - Fixed bug in `FSMap<-` when handling Seurat objects multiple PNA/MPX assays. Previously, FSMap would only update the active assay. Now, the Seurat object is scanned for all PNA/MPX assays and updates them with `value`.
