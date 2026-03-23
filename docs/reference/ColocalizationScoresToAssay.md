@@ -114,9 +114,9 @@ library(SeuratObject)
 # Load example data as a Seurat object
 pxl_file <- minimal_mpx_pxl_file()
 col_scores <- ReadMPX_colocalization(pxl_file)
-#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/R/win-library/4.5/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/Temp/Rtmp2f7Zq5/temp_libpath7aa0ad0713/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading colocalization data
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de0326a334c
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf454443134
 #> ✔ Returning a 'tbl_df' object
 
 # ColocalizationScoresToAssay returns a matrix for a tbl_df
@@ -135,10 +135,10 @@ col_scores_mat[1:4, 1:5]
 
 # Create a Seurat object
 seur <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de027223a87
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de026dc7bc0
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf44f65ded
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf432a370a4
 #> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de03d7642f8.h5ad
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf473fa7ed4.h5ad
 
 # Fetch CellGraphAssay and create new polarization
 # scores Assay

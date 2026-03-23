@@ -43,10 +43,10 @@ pxl_file_mpx <- minimal_mpx_pxl_file()
 pxl_file_pna <- minimal_pna_pxl_file()
 
 seur_obj_mpx <- ReadMPX_Seurat(pxl_file_mpx)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de019fc246
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de055b527ef
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf452db4182
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf45f1928a2
 #> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de04235108a.h5ad
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf44b02f47.h5ad
 seur_obj_mpx
 #> An object of class Seurat 
 #> 80 features across 5 samples within 1 assay 

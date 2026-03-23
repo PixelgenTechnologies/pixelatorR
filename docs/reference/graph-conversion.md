@@ -68,7 +68,7 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Load edgelist
 el <- ReadMPX_arrow_edgelist(pxl_file)
-#> ℹ Extracting edgelist.parquet file to C:/Users/max/AppData/Local/Temp/RtmpInAYcT/edgelist.parquet
+#> ℹ Extracting edgelist.parquet file to C:/Users/max/AppData/Local/Temp/Rtmpampkmn/edgelist.parquet
 #> ✔ Returning FileSystemDataset
 
 # Convert to tbl_df

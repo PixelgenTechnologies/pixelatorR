@@ -94,9 +94,9 @@ options(Seurat.object.assay.version = "v5")
 # Create Seurat object
 pxl_file <- minimal_mpx_pxl_file()
 se <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de05d4ce44
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de01f73c7c
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de031e73e1c.h5ad
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf4582348eb
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf4251d5bdc
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf43c6787e.h5ad
 
 se_merged <- merge(se, list(se, se, se))
 #> Warning: Some cell names are duplicated across objects provided. Renaming to enforce unique cell names.
@@ -127,14 +127,14 @@ WriteMPX_pxl_file(se_merged, pxl_file)
 #> ✔ Exported merged edge list
 #> ✔ Exported merged meta data
 #> ✔ Exported anndata file
-#> ℹ Saving PXL file to C:/Users/max/AppData/Local/Temp/RtmpInAYcT/small.pxl
+#> ℹ Saving PXL file to C:/Users/max/AppData/Local/Temp/Rtmpampkmn/small.pxl
 #> ✔ Finished!
 
 # Read the new PXL file
 se_merged <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de046a3422d
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de060cd5120
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de0fc4253.h5ad
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf454da1274
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf47adb6f75
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf410ce74d5.h5ad
 
 # Reset global option
 options(Seurat.object.assay.version = "v3")

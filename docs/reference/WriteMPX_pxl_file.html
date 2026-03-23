@@ -11,7 +11,7 @@ PXL file. See details below for a description of what data is exported."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.16.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.17.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -124,9 +124,9 @@ then merged and exported to a .json file.</p></li>
 <span class="r-in"><span><span class="co"># Create Seurat object</span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="mpx_dataset.html">minimal_mpx_pxl_file</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">se</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de05d4ce44</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de01f73c7c</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de031e73e1c.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de031e73e1c.h5ad</span></a></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf4582348eb</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf4251d5bdc</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf43c6787e.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf43c6787e.h5ad</span></a></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">se_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://edzer.github.io/sp/reference/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">se</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="va">se</span>, <span class="va">se</span>, <span class="va">se</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Some cell names are duplicated across objects provided. Renaming to enforce unique cell names.</span>
@@ -157,14 +157,14 @@ then merged and exported to a .json file.</p></li>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Exported merged edge list</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Exported merged meta data</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Exported anndata file</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Saving PXL file to <a href="file://C:/Users/max/AppData/Local/Temp/RtmpInAYcT/small.pxl"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/RtmpInAYcT/small.pxl</span></a></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Saving PXL file to <a href="file://C:/Users/max/AppData/Local/Temp/Rtmpampkmn/small.pxl"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/Rtmpampkmn/small.pxl</span></a></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Finished!</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Read the new PXL file</span></span></span>
 <span class="r-in"><span><span class="va">se_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de046a3422d</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de060cd5120</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de0fc4253.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de0fc4253.h5ad</span></a></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf454da1274</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf47adb6f75</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf410ce74d5.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf410ce74d5.h5ad</span></a></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Reset global option</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">options</a></span><span class="op">(</span>Seurat.object.assay.version <span class="op">=</span> <span class="st">"v3"</span><span class="op">)</span></span></span>

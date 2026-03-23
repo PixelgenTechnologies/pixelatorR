@@ -238,10 +238,10 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Load example data
 seur <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de03d855a92
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de01c3c1dc0
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf423a45a91
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf426ca7991
 #> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de04286f54.h5ad
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf419f56fee.h5ad
 
 # Load 1 cellgraph
 seur <- LoadCellGraphs(seur,

@@ -42,7 +42,7 @@ edge_list <-
     minimal_mpx_pxl_file(),
     items = "edgelist"
   )
-#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/R/win-library/4.5/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/Temp/Rtmp2f7Zq5/temp_libpath7aa0ad0713/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 bipart_graph <-

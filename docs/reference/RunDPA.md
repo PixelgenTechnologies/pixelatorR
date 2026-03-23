@@ -216,7 +216,7 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Load polarization scores
 polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de0b91932
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf45f1d2873
 polarization_table1$sample <- "Sample1"
 polarization_table2$sample <- "Sample2"
 polarization_table_merged <- bind_rows(polarization_table1, polarization_table2)
@@ -406,9 +406,9 @@ dpa_markers
 
 # Seurat objects
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de019676db2
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de0162c1f1f
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de06409662f.h5ad
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf442977b54
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf41c501fb7
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf44f9dd8f.h5ad
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))

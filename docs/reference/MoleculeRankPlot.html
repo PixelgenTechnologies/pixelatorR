@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.16.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.17.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -75,17 +75,17 @@
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pixelatorR</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load example data as a Seurat object</span></span></span>
 <span class="r-in"><span><span class="va">pxl_file_mpx</span> <span class="op">&lt;-</span> <span class="fu"><a href="mpx_dataset.html">minimal_mpx_pxl_file</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">pxl_file_pna</span> <span class="op">&lt;-</span> <span class="fu"><a href="pna_dataset.html">minimal_pna_pxl_file</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">seur_obj_mpx</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file_mpx</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de019fc246</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de055b527ef</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf452db4182</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf45f1928a2</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de04235108a.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de04235108a.h5ad</span></a></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf44b02f47.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf44b02f47.h5ad</span></a></span>
 <span class="r-in"><span><span class="va">seur_obj_mpx</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> An object of class Seurat </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 80 features across 5 samples within 1 assay </span>
@@ -96,7 +96,7 @@
 <span class="r-in"><span><span class="fu">MoleculeRankPlot</span><span class="op">(</span><span class="va">seur_obj_mpx</span><span class="op">[[</span><span class="op">]</span><span class="op">]</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="MoleculeRankPlot-1.png" alt="" width="700" height="433"></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">pixelatorR</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Plot with Seurat object</span></span></span>
 <span class="r-in"><span><span class="fu">MoleculeRankPlot</span><span class="op">(</span><span class="va">seur_obj_mpx</span><span class="op">)</span></span></span>

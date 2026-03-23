@@ -98,7 +98,7 @@ library(SeuratObject)
 # Load example data as a Seurat object
 pxl_file <- minimal_mpx_pxl_file()
 pol_scores <- ReadMPX_polarization(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de07423200a
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf465c6668f
 
 # PolarizationScoresToAssay returns a matrix for a tbl_df
 pol_scores_mat <- PolarizationScoresToAssay(pol_scores)
@@ -111,9 +111,9 @@ pol_scores_mat[1:4, 1:5]
 
 # Create a Seurat object
 seur <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de03aa51e7b
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de0608d5b0b
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de052841ef7.h5ad
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf429d463ea
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf46be8681b
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf46f432feb.h5ad
 
 # Fetch CellGraphAssay and create new polarization
 # scores Assay

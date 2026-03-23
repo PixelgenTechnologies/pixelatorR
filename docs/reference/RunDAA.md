@@ -168,9 +168,9 @@ library(SeuratObject)
 pxl_file <- minimal_mpx_pxl_file()
 # Seurat objects
 se <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de0e58aeb
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpInAYcT/dir7de0751c5e38
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpInAYcT/file7de08b1365.h5ad
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf46f923227
+#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf4274d361c
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf45396233b.h5ad
 se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
 se$sample <- c("T", "C", "C", "C", "C") %>% rep(times = 10)
 se <- Seurat::NormalizeData(se %>% JoinLayers(), normalization.method = "CLR", margin = 2)

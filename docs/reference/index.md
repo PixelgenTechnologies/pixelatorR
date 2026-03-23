@@ -365,3 +365,5 @@
   for background factor regression
 - [`get_duckdb_config()`](get_duckdb_config.md) : Fetches the config
   values to be used with DuckDB
+- [`CalculateDispersion()`](CalculateDispersion.md) : Calculate
+  dispersion of components
