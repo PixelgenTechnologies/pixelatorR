@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.17.0] - 2026-03-23
+
 ### Added
 
 - Added `CalculateDispersion` method for calculating dispersion of counts across features and cells. Currently "tau" and "gini" dispersion metrics are supported. This method is useful for identifying outliers in the count data, for example to identify cells with an unusual count distribution across markers. 
