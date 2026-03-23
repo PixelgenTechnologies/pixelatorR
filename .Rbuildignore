@@ -18,3 +18,4 @@
 ^inst/dev
 ^Taskfile.yml
 ^Dockerfile
+^\\.Renviron$

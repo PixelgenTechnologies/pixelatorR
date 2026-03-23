@@ -27,12 +27,19 @@ test_that("FSMap works as expected", {
     FSMap(seur_obj_mpx) <- FSMap(seur_obj_mpx) %>%
       mutate(pxl_file = tmp_path %>% as.character())
   })
+
   # Check that the update fails if the file is missing
   fs::file_delete(tmp_path)
   expect_error({
-    FSMap(seur_obj) <- FSMap(seur_obj) %>%
+    FSMap(seur_obj_mpx) <- FSMap(seur_obj_mpx) %>%
       mutate(pxl_file = tmp_path %>% as.character())
   })
+
+  # Check that FSMap works with multiple PNA assays
+  expect_warning(seur_obj_pna[["PNA2"]] <- seur_obj_pna[["PNA"]])
+  expect_warning(FSMap(seur_obj_pna), "Multiple PNA/MPX assays found")
+  expect_equal(dim(FSMap(seur_obj_pna[["PNA"]])), c(1, 3))
+  expect_equal(FSMap(seur_obj_pna[["PNA"]]), FSMap(seur_obj_pna[["PNA2"]]))
 })
 
 test_that("FSMap fails when invalid input is provided", {

@@ -177,6 +177,7 @@ SequenceSaturationCurve <- function(
         el_init %>%
         select(read_count) %>%
         pull(1) %>%
+        as.numeric() %>%
         rep(seq_along(.), times = .)
 
       sample_sizes <-

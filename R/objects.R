@@ -43,7 +43,25 @@ FSMap.Seurat <- function(
   ...
 ) {
   assay <- DefaultAssay(object = object)
-  FSMap(object[[assay]])
+  assert_pixel_assay(object[[assay]])
+
+  # Check for other PNA/MPX assays
+  available_assays <- Assays(object)
+  if (length(available_assays) > 1) {
+    is_pxl_assay <- sapply(available_assays, function(assay) {
+      inherits(object[[assay]], c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))
+    })
+    if (sum(is_pxl_assay) > 1) {
+      cli::cli_warn(
+        c(
+          "!" = "Multiple PNA/MPX assays found in the Seurat object. ",
+          " " = "FSMap will be returned for the default assay ({.val {assay}}). ",
+          " " = "Use {.code FSMap(object[[assay_name]])} to access FSMap for a specific assay."
+        )
+      )
+    }
+  }
+
   return(FSMap(object[[assay]]))
 }
 
@@ -72,9 +90,32 @@ FSMap.Seurat <- function(
   # Validate value
   assay <- DefaultAssay(object = object)
   pixel_assay <- object[[assay]]
-  assert_class(pixel_assay, classes = c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))
-  FSMap(pixel_assay) <- value
-  object[[assay]] <- pixel_assay
+  assert_pixel_assay(object[[assay]])
+
+  # Check for other PNA/MPX assays
+  available_assays <- Assays(object)
+  if (length(available_assays) > 1) {
+    is_pxl_assay <- sapply(available_assays, function(assay) {
+      inherits(object[[assay]], c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))
+    })
+    if (sum(is_pxl_assay) > 1) {
+      pxl_assays <- available_assays[is_pxl_assay]
+      cli::cli_warn(
+        c(
+          "!" = "Multiple PNA/MPX assays found in the Seurat object. ",
+          " " = "FSMap will update assays {.str {pxl_assays}}. "
+        )
+      )
+      for (cur_assay in pxl_assays) {
+        FSMap(object[[cur_assay]]) <- value
+      }
+    } else {
+      FSMap(object[[assay]]) <- value
+    }
+  } else {
+    FSMap(object[[assay]]) <- value
+  }
+
   return(object)
 }
 
