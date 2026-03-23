@@ -198,6 +198,7 @@ reference:
     - minimal_pna_pxl_file
     - isotype_pls
     - get_duckdb_config
+    - CalculateDispersion
 
 footer:
   structure:
