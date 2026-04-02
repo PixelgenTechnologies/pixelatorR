@@ -74,7 +74,7 @@ test_that("annotate_cells works as expected", {
     Seurat::RunPCA(npcs = 3, features = rownames(seur)) |>
     Seurat::FindNeighbors(reduction = "pca", dims = 1:3) |>
     Seurat::FindClusters(resolution = 0.5) %>%
-    subset(features = c("CD4", "CD123", "CD16"))
+    subset(features = head(rownames(seur), 50))
 
 
   # NMF default

@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Fixes
+- Fixed bug in `.seeded_nmf_annotaton` where normalization of the internal temporary `Seurat` object would propagate to the output.
+
 ## [0.17.0] - 2026-03-23
 
 ### Added
