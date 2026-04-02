@@ -195,13 +195,13 @@ test_that("approximate_saturation_curve works as expected", {
     structure(
       list(
         component = c("0a45497c6bfbfb22", "0a45497c6bfbfb22"),
-        read_count = c(28985.5, 57971),
+        read_count = c(28986, 57971),
         p = c(0.1, 0.2),
-        nodes = c(26887.2053936728, 34138.872065982),
-        edges = c(23754.9239169071, 40501.3715335426),
-        degree = c(1.76700579841572, 2.37274221920768),
-        node_saturation = c(0.536195591008043, 0.705552154818944),
-        edge_saturation = c(0.180454919980436, 0.301351166384182)
+        nodes = c(26887.2053936728, 34138.8720659821),
+        edges = c(23754.9239169071, 40501.3715335425),
+        degree = c(1.76700579841572, 2.37274221920767),
+        node_saturation = c(0.536203591498088, 0.705552154818944),
+        edge_saturation = c(0.180469056892737, 0.301351166384184)
       ),
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
