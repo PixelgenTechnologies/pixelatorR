@@ -336,34 +336,44 @@ AnnotateCells <- function(
 ) {
   expect_RcppML()
 
-  # Apply normalization
+  # When normalization is required for NMF: normalize the reference in place, and build
+  # a separate minimal Seurat from the query counts for NormalizeData.
   if (!skip_normalization) {
     if (verbose && check_global_verbosity()) {
       cli::cli_alert_info("Normalizing reference and query data using method {.str {normalization_method}}")
     }
-    reference <-
-      Seurat::NormalizeData(
-        reference,
-        normalization.method = normalization_method,
-        margin = 2,
-        verbose = verbose
-      )
-    object <-
-      Seurat::NormalizeData(
-        object,
-        normalization.method = normalization_method,
-        margin = 2,
-        verbose = verbose
-      )
+    reference <- Seurat::NormalizeData(
+      reference,
+      assay = reference_assay,
+      normalization.method = normalization_method,
+      margin = 2,
+      verbose = verbose
+    )
+    query_counts <- SeuratObject::LayerData(object, assay = query_assay, layer = "counts")
+    query_for_nm <- SeuratObject::CreateSeuratObject(
+      counts = query_counts,
+      assay = query_assay,
+      meta.data = data.frame(row.names = colnames(query_counts))
+    )
+    query_for_nm <- Seurat::NormalizeData(
+      query_for_nm,
+      assay = query_assay,
+      normalization.method = normalization_method,
+      margin = 2,
+      verbose = verbose
+    )
   }
 
   if (verbose && check_global_verbosity()) {
     cli::cli_alert_info("Fetching overlapping data from reference and query assays.")
   }
 
-  # Get data
   reference_data <- SeuratObject::LayerData(reference, assay = reference_assay)
-  target_data <- SeuratObject::LayerData(object, assay = query_assay)
+  target_data <- if (!skip_normalization) {
+    SeuratObject::LayerData(query_for_nm, assay = query_assay)
+  } else {
+    SeuratObject::LayerData(object, assay = query_assay)
+  }
 
   # Subset data to use overlapping markers
   shared_markers <- intersect(rownames(reference_data), rownames(target_data))

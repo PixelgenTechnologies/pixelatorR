@@ -23,7 +23,6 @@ reference <- SeuratObject::CreateSeuratObject(
   Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
 
 test_that("annotate_cells works as expected", {
-  
   # NMF default
   expect_no_error(seur_anno <- AnnotateCells(
     seur,
@@ -67,17 +66,17 @@ test_that("annotate_cells works as expected", {
 
   # Test that normalization is preserved
   reference <- read_pbmc_reference()
-  seur_sub <- 
-    seur %>% 
+  seur_sub <-
+    seur %>%
     Seurat::NormalizeData(normalization.method = "CLR", margin = 2) |>
     # Z score scaling
-    Seurat::ScaleData() %>% 
+    Seurat::ScaleData() %>%
     Seurat::RunPCA(npcs = 3, features = rownames(seur)) |>
     Seurat::FindNeighbors(reduction = "pca", dims = 1:3) |>
     Seurat::FindClusters(resolution = 0.5) %>%
     subset(features = c("CD4", "CD123", "CD16"))
 
-  
+
   # NMF default
   expect_no_error(seur_anno <- AnnotateCells(
     seur_sub,
@@ -89,7 +88,7 @@ test_that("annotate_cells works as expected", {
     reference_assay = "PNA",
     method = "nmf"
   ))
-  
+
   expect_equal(
     LayerData(seur_anno, "counts"),
     LayerData(seur_sub, "counts")
