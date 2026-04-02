@@ -123,20 +123,11 @@ test_that("approximate_edge_saturation works as expected", {
       list(
         component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
         edges = c(97014L, 79638L),
-        edge_saturation = c(
-          0.751358719121778,
-          0.742954902077026
-        ),
-        theoretical_max_edges = c(
-          129118.086382752,
-          107190.893790944
-        )
+        read_count = c(289856, 229977),
+        edge_saturation = c(0.665302771031133, 0.653713197406697)
       ),
       row.names = c(NA, -2L),
-      class = c(
-        "tbl_df",
-        "tbl", "data.frame"
-      )
+      class = c("tbl_df", "tbl", "data.frame")
     )
   )
   expect_no_error(edgesat <- approximate_edge_saturation(db, components = "0a45497c6bfbfb22"))
@@ -146,13 +137,10 @@ test_that("approximate_edge_saturation works as expected", {
       list(
         component = "0a45497c6bfbfb22",
         edges = 97014L,
-        edge_saturation = 0.751358719121778,
-        theoretical_max_edges = 129118.086382752
+        read_count = 289856,
+        edge_saturation = 0.665302771031133
       ),
-      class = c(
-        "tbl_df",
-        "tbl", "data.frame"
-      ),
+      class = c("tbl_df", "tbl", "data.frame"),
       row.names = c(NA, -1L)
     )
   )
@@ -171,20 +159,11 @@ test_that("approximate_node_saturation works as expected", {
       list(
         component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
         nodes = c(43543L, 37665L),
-        node_saturation = c(
-          0.885827322462419,
-          0.886440632020902
-        ),
-        theoretical_max_nodes = c(
-          49155.1783240997,
-          42490.1551659828
-        )
+        read_count = c(579712, 459954),
+        node_saturation = c(0.924888565356591, 0.918111376355027)
       ),
       row.names = c(NA, -2L),
-      class = c(
-        "tbl_df",
-        "tbl", "data.frame"
-      )
+      class = c("tbl_df", "tbl", "data.frame")
     )
   )
   expect_no_error(nodesat <- approximate_node_saturation(db, components = "0a45497c6bfbfb22"))
@@ -194,13 +173,10 @@ test_that("approximate_node_saturation works as expected", {
       list(
         component = "0a45497c6bfbfb22",
         nodes = 43543L,
-        node_saturation = 0.885827322462419,
-        theoretical_max_nodes = 49155.1783240997
+        read_count = 579712,
+        node_saturation = 0.924888565356591
       ),
-      class = c(
-        "tbl_df",
-        "tbl", "data.frame"
-      ),
+      class = c("tbl_df", "tbl", "data.frame"),
       row.names = c(NA, -1L)
     )
   )
@@ -219,14 +195,13 @@ test_that("approximate_saturation_curve works as expected", {
     structure(
       list(
         component = c("0a45497c6bfbfb22", "0a45497c6bfbfb22"),
+        read_count = c(28986, 57971),
         p = c(0.1, 0.2),
-        nodesat = c(0.546986224246965, 0.694512220887045),
-        edgesat = c(0.183978283619467, 0.313676981034575),
-        degree = c(
-          1.7670057984165,
-          2.37274221920626
-        ),
-        average_reads = c(29155, 58310)
+        nodes = c(26887.2053936728, 34138.8720659821),
+        edges = c(23754.9239169071, 40501.3715335425),
+        degree = c(1.76700579841572, 2.37274221920767),
+        node_saturation = c(0.536203591498088, 0.705552154818944),
+        edge_saturation = c(0.180469056892737, 0.301351166384184)
       ),
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
@@ -251,7 +226,7 @@ test_that("downsample_to_parquet works as expected", {
 })
 
 duckdb_v <- packageVersion("duckdb")
-if (!utils::compareVersion(as.character(duckdb_v), "1.3.2") > 0) {
+if (!utils::compareVersion(as.character(duckdb_v), "1.5.0") > 0) {
   # lcc_sizes
   test_that("lcc_sizes works as expected", {
     expect_no_error(pg_files <- downsample_to_parquet(minimal_pna_pxl_file(), components = "0a45497c6bfbfb22", fracs = 0.1, outdir = tempdir()))
@@ -267,7 +242,7 @@ if (!utils::compareVersion(as.character(duckdb_v), "1.3.2") > 0) {
     set.seed(123)
     expect_no_error(lcc_pts <- lcc_curve(minimal_pna_pxl_file(), components = "0a45497c6bfbfb22", fracs = 0.1, outdir = tempdir()))
     expect_s3_class(lcc_pts, "tbl_df")
-    expect_equal(dim(lcc_pts), c(1, 3))
+    expect_equal(dim(lcc_pts), c(1, 4))
     expect_error(lcc_curve("Invalid"))
     expect_error(lcc_curve(minimal_pna_pxl_file(), "Invalid"))
     expect_error(lcc_curve(minimal_pna_pxl_file(), "0a45497c6bfbfb22", fracs = "Invalid"))

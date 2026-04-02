@@ -2,7 +2,7 @@
 % Please edit documentation in R/sequencing_saturation.R
 \name{lcc_curve}
 \alias{lcc_curve}
-\title{Compute LCC sizes for downsampled edgelists}
+\title{Compute LCC curve for downsampled edgelists}
 \usage{
 lcc_curve(
   pxl_file,
@@ -16,51 +16,70 @@ lcc_curve(
 \arguments{
 \item{pxl_file}{Path to the input PXL file containing the edgelist.}
 
-\item{components}{A character vector of component names to include in the computation.
-These must be present in the PXL file.}
+\item{components}{A character vector of component names to include. All
+components must be present in the PXL file.}
 
-\item{fracs}{A numeric vector specifying the fractions of sequencing reads to retain.}
+\item{fracs}{A numeric vector of downsampling fractions. Values must be
+strictly between 0 and 1. Default is \code{seq(0.1, 1, by = 0.1)}.}
 
-\item{outdir}{Optional output directory where the downsampled parquet files will be saved.
-If \code{NULL}, the files will be saved in a temporary directory which is deleted post processing.}
+\item{outdir}{Optional output directory for downsampled parquet files.
+If \code{NULL} (default), files are saved to a temporary directory and deleted
+after computation.}
 
-\item{mc_cores}{Number of cores to use for parallel processing. Default is 1 indicating
-sequential processing.}
+\item{mc_cores}{Number of cores for parallel processing. Default is 1
+(sequential). Values > 1 use \code{parallel::mclapply}.}
 
-\item{verbose}{Logical indicating whether to print progress messages.}
+\item{verbose}{Logical; if \code{TRUE} (default), print progress messages.}
 }
 \value{
-A tibble with columns \code{component} (the original component ID), \code{frac} (the fraction)
-and \code{n_nodes} (the size of the LCC for that fraction and component).
+A tibble with columns:
+\describe{
+\item{component}{The component (cell) identifier.}
+\item{frac}{The downsampling fraction.}
+\item{n_nodes}{The number of nodes in the largest connected component.}
+\item{read_count}{The estimated number of reads supporting the LCC at the given fraction.}
+}
 }
 \description{
 \ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-This function computes the sizes of the largest connected components (LCC) for
-downsampled edgelists. The downsampling is determined by the \code{fracs} parameter,
-which specifies the fractions of sequencing reads to retain.
+
+Computes the sizes of the largest connected components (LCC) for edgelists
+downsampled at multiple fractions. This is useful for analyzing graph stability
+and determining the critical sequencing depth.
 }
-\section{LCC}{
+\details{
+\subsection{Graph stability analysis}{
 
-The LCC (largest connected component) can be used to analyze graph stability. When
-downsampling sequencing reads, edges are removed, which eventually leads to a collapse
-of the graph into many smaller components. By downsampling the graph at multiple fractions,
-we can observe how the size of the largest connected component changes. Typically, there
-is a sharp drop in the size of the LCC at a certain fraction, indicating that the graph
-no longer has a large connected component and becomes completely fragmented.
-Note that the LCC is computed for each fraction and component (cell) separately.
-}
+The LCC (largest connected component) measures graph connectivity. When
+downsampling sequencing reads, edges are removed probabilistically, which
+eventually causes the graph to fragment into smaller disconnected components.
 
-\section{NA}{
-
-The LCC (largest connected component) can be used to analyze graph stability. When
-downsampling sequencing reads, edges are removed, which eventually leads to a collapse
-of the graph into many smaller components. By downsampling the graph at multiple fractions,
-we can observe how the size of the largest connected component changes. Typically, there
-is a sharp drop in the size of the LCC at a certain fraction, indicating that the graph
-no longer has a large connected component and becomes completely fragmented.
-Note that the LCC is computed for each fraction and component (cell) separately.
+By computing LCC sizes at multiple downsampling fractions, you can observe
+how graph connectivity degrades with reduced sequencing depth. Typically,
+there is a sharp transition point where the LCC collapses, indicating the
+minimum sequencing depth required to maintain graph structure.
 }
 
+\subsection{Workflow}{
+
+This function is a high-level wrapper that:
+\enumerate{
+\item Calls \code{\link{downsample_to_parquet}} to create downsampled edgelists
+\item Calls \code{\link{lcc_sizes}} to compute LCC sizes for each fraction
+\item Optionally cleans up temporary files
+}
+}
+
+\subsection{Performance}{
+
+Computations are scalable thanks to efficient SQL queries. LCCs are computed
+using the \code{duckpgq} extension for DuckDB, enabling fast graph operations
+without loading the full edgelist into memory.
+
+For large datasets, it is recommended to compute LCC sizes on a subset of
+components to minimize memory usage and computation time.
+}
+}
 \examples{
 \dontrun{
 library(ggplot2)
@@ -68,36 +87,40 @@ library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
 components <- ReadPNA_counts(pxl_file) \%>\% colnames()
 
-# Select fractions
+# Select fractions based on average read depth
 db <- PixelDB$new(pxl_file)
-avg_reds <- db$cell_meta()$reads \%>\% mean()
-fracs <- (10^seq(4, log10(avg_reds), length.out = 20))[-20] / avg_reds
+avg_reads <- db$cell_meta()$reads \%>\% mean()
+fracs <- (10^seq(4, log10(avg_reads), length.out = 20))[-20] / avg_reads
 
-lcc_df <- lcc_curve(
-  minimal_pna_pxl_file(),
-  components,
-  fracs = fracs
-)
+lcc_df <- lcc_curve(pxl_file, components, fracs = fracs)
 
+# Plot LCC sizes by fraction
 ggplot(lcc_df, aes(frac, n_nodes, color = component)) +
   geom_point() +
   geom_line() +
   theme_bw() +
   guides(color = "none")
 
-# We can calculate graph stability by dividing
-# the LCC by the maximum theoretical number of nodes
-nodesat <- approximate_node_saturation(db) \%>\%
-  collect()
+# Compute graph stability (LCC / max theoretical nodes)
+nodesat <- approximate_node_saturation(db) \%>\% collect()
 db$close()
+
 lcc_df <- lcc_df \%>\%
   left_join(nodesat, by = "component")
 
-ggplot(lcc_df, aes(frac, n_nodes / theoretical_max_nodes, color = component)) +
+ggplot(lcc_df, aes(frac, n_nodes / nodes, color = component)) +
   geom_point() +
   geom_line() +
+  scale_y_continuous(limits = c(0, 1)) +
+  labs(y = "Graph stability (LCC / total nodes)") +
   theme_bw() +
-  guides(color = "none") +
-  scale_y_continuous(limits = c(0, 1))
+  guides(color = "none")
 }
+
+}
+\seealso{
+\code{\link{downsample_to_parquet}} for the downsampling step.
+\code{\link{lcc_sizes}} for computing LCC sizes from parquet files.
+\code{\link{approximate_saturation_curve}} for saturation analysis without
+actual downsampling.
 }

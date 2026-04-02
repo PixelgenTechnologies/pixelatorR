@@ -7,18 +7,42 @@
 approximate_node_saturation(db, components = NULL, table_name = NULL)
 }
 \arguments{
-\item{db}{A \code{PixelDB} object.}
+\item{db}{A \code{PixelDB} object with an active DuckDB connection.}
 
-\item{components}{Optional vector of component names to filter the edgelist by.}
+\item{components}{Optional character vector of component names to filter the
+edgelist. If \code{NULL} (default), all components are included.}
 
-\item{table_name}{Optional name of the remote table.}
+\item{table_name}{Optional name for the computed remote table. If provided,
+the result is materialized as a table in the DuckDB connection.}
 }
 \value{
-A \code{lazy_df} with the node saturation.
+A lazy \code{tbl} (DuckDB query) with columns:
+\describe{
+\item{component}{The component (cell) identifier.}
+\item{nodes}{The number of unique nodes.}
+\item{read_count}{The total read count for the component.}
+\item{node_saturation}{The node saturation value (0 to 1).}
+}
 }
 \description{
-This function computes an approximate node saturation for each component
-in the edgelist. It estimates the theoretical maximum number of nodes
-using the Chao1 estimator and calculates the nodes saturation as the ratio
-of the actual number of nodes to the theoretical maximum.
+Computes an approximate node saturation for each component in the edgelist
+using SQL queries on a DuckDB connection. Node saturation measures how many
+unique nodes (UMIs) have been observed relative to the total number of reads.
+}
+\details{
+Node saturation is calculated as:
+\deqn{S_{node} = 1 - \frac{N}{R}}
+where \eqn{N} is the number of unique nodes and \eqn{R} is the total read count
+(counted twice per edge, once for each endpoint).
+
+This function creates a temporary view called \code{nodes} in the DuckDB connection
+that aggregates node statistics (read count and degree) from the edgelist.
+
+Higher saturation values indicate that additional sequencing reads are unlikely
+to reveal new nodes, suggesting the sample has been sequenced to near-saturation.
+}
+\seealso{
+\code{\link{approximate_edge_saturation}} for edge-based saturation.
+\code{\link{approximate_saturation_curve}} for computing saturation at
+multiple downsampling fractions.
 }

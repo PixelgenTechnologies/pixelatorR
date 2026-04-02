@@ -2,24 +2,53 @@
 % Please edit documentation in R/sequencing_saturation.R
 \name{lcc_sizes}
 \alias{lcc_sizes}
-\title{Calculate the sizes of the LCCs from an edgelist}
+\title{Compute LCC sizes from downsampled edgelists}
 \usage{
 lcc_sizes(df, mc_cores = 1)
 }
 \arguments{
-\item{df}{A tibble with columns \code{pq_files} (paths to parquet files) and \code{fracs}
-generated with \code{\link{downsample_to_parquet}}.}
+\item{df}{A tibble with columns:
+\describe{
+\item{pq_files}{Paths to parquet files containing downsampled edgelists.}
+\item{fracs}{The corresponding downsampling fractions.}
+}
+Typically generated with \code{\link{downsample_to_parquet}}.}
 
-\item{mc_cores}{Number of cores to use for parallel processing.}
+\item{mc_cores}{Number of cores to use for parallel processing. Default is 1
+(sequential processing). Values > 1 use \code{parallel::mclapply}.}
 }
 \value{
-A tibble with the sizes of the largest connected components (LCC) for each
-fraction in \code{df$fracs}. The results are grouped by cell (component).
+A tibble with columns:
+\describe{
+\item{component}{The component (cell) identifier.}
+\item{frac}{The downsampling fraction.}
+\item{n_nodes}{The number of nodes in the largest connected component.}
+}
 }
 \description{
-This function calculates the sizes of the largest connected components (LCCs)
-from a set of parquet files containing downsampled edgelists. The LCCs are
-computed for each fraction specified in the input tibble \code{df}, linking each
-fraction to its corresponding parquet file. Moreover, the LCCs are computed per
-cell (component).
+Calculates the sizes of the largest connected components (LCCs) from a set
+of parquet files containing downsampled edgelists.
+}
+\details{
+\subsection{Algorithm}{
+
+For each parquet file (representing a downsampling fraction), this function:
+\enumerate{
+\item Loads the edgelist into a DuckDB connection
+\item Constructs a property graph using the \code{duckpgq} extension
+\item Computes weakly connected components
+\item Identifies the largest component for each cell
+}
+}
+
+\subsection{Performance}{
+
+The \code{duckpgq} extension enables efficient graph operations without loading
+the full edgelist into memory. Parallel processing across fractions is
+supported via \code{mc_cores}.
+}
+}
+\seealso{
+\code{\link{downsample_to_parquet}} for generating the input parquet files.
+\code{\link{lcc_curve}} for a high-level wrapper.
 }

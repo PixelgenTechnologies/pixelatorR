@@ -2,27 +2,48 @@
 % Please edit documentation in R/sequencing_saturation.R
 \name{downsample_to_parquet}
 \alias{downsample_to_parquet}
-\title{Filter an edgelist by downsampling read counts}
+\title{Downsample edgelist and export to parquet files}
 \usage{
 downsample_to_parquet(pxl_file, outdir, components, fracs = seq(0.1, 0.9, 0.1))
 }
 \arguments{
 \item{pxl_file}{Path to the PXL file.}
 
-\item{outdir}{Directory to write the output parquet files.}
+\item{outdir}{Directory to write the output parquet files. Created if it
+does not exist.}
 
-\item{components}{A character vector of component names to keep.}
+\item{components}{A character vector of component names to include. All
+components must be present in the PXL file.}
 
-\item{fracs}{A numeric vector of fractions to downsample by.}
+\item{fracs}{A numeric vector of fractions to downsample by. Values must
+be strictly between 0 and 1. Default is \code{seq(0.1, 0.9, 0.1)}.}
 }
 \value{
-A tibble with paths to the written parquet files and the fractions.
+A tibble with columns:
+\describe{
+\item{fracs}{The downsampling fraction.}
+\item{pq_files}{Path to the corresponding parquet file.}
+}
 }
 \description{
-Filter an edgelist (for a subset of components) in a PXL file by
-downsampling read counts using predefined fractions. The probability
-of a read staying in the edgelist is \eqn{1 - (1 - frac) ^ read_count}.
+Filters an edgelist by probabilistically downsampling read counts and exports
+the results to parquet files. This simulates the effect of sequencing at lower
+depth.
 }
 \details{
-The filtered edgelist(s) are written to parquet files in \code{outdir}.
+For each edge with a given \code{read_count}, the probability of the edge being
+retained at fraction \code{p} is:
+\deqn{P(\text{edge retained}) = 1 - (1 - p)^{\text{read\_count}}}
+
+This means edges with higher read counts are more likely to be retained,
+which accurately models the effect of sequencing at lower depth.
+
+The filtered edgelists are written to parquet files in \code{outdir}, one file
+per fraction. File names follow the pattern \code{edgelist_001.parquet},
+\code{edgelist_002.parquet}, etc., corresponding to the order of fractions.
+}
+\seealso{
+\code{\link{lcc_sizes}} for computing LCC sizes from the output parquet files.
+\code{\link{lcc_curve}} for a high-level wrapper that combines downsampling
+and LCC computation.
 }
