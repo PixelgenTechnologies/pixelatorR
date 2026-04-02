@@ -243,17 +243,36 @@ SequenceSaturationCurve <- function(
 
 #' Compute approximate edge saturation
 #'
-#' This function computes an approximate edge saturation for each component
-#' in the edgelist. It estimates the theoretical maximum number of edges
-#' using the Chao1 estimator and calculates the edge saturation as the ratio
-#' of the actual number of edges to the theoretical maximum.
+#' Computes an approximate edge saturation for each component in the edgelist
+#' using SQL queries on a DuckDB connection. Edge saturation measures how many
+#' unique edges have been observed relative to the total number of reads.
 #'
-#' @param db A `PixelDB` object.
+#' @details
+#' Edge saturation is calculated as:
+#' \deqn{S_{edge} = 1 - \frac{E}{R}}
+#' where \eqn{E} is the number of unique edges and \eqn{R} is the total read count.
+#'
+#' Higher saturation values indicate that additional sequencing reads are unlikely
+#' to reveal new edges, suggesting the sample has been sequenced to near-saturation.
+#'
+#' @param db A `PixelDB` object with an active DuckDB connection.
 #' @param components Optional character vector of component names to filter the
-#' edgelist.
-#' @param table_name Optional name of the remote table.
+#'   edgelist. If `NULL` (default), all components are included.
+#' @param table_name Optional name for the computed remote table. If provided,
+#'   the result is materialized as a table in the DuckDB connection.
 #'
-#' @return A `lazy_df` with the edge saturation.
+#' @return A lazy `tbl` (DuckDB query) with columns:
+#' \describe{
+#'   \item{component}{The component (cell) identifier.}
+#'   \item{edges}{The number of unique edges.}
+#'   \item{read_count}{The total read count for the component.}
+#'   \item{edge_saturation}{The edge saturation value (0 to 1).}
+#' }
+#'
+#' @seealso
+#' \code{\link{approximate_node_saturation}} for node-based saturation.
+#' \code{\link{approximate_saturation_curve}} for computing saturation at
+#' multiple downsampling fractions.
 #'
 #' @export
 #'
@@ -276,7 +295,7 @@ approximate_edge_saturation <- function(
     .filter_edgelist_duckdb(db, components)
   }
   assert_single_value(table_name, type = "string", allow_null = TRUE)
-  # Estimate chao1 edge saturation
+
   edge_saturation <- tbl(db$.__enclos_env__$private$con, el_name) %>%
     .compute_saturation_duckdb(
       type = "edges",
@@ -287,16 +306,40 @@ approximate_edge_saturation <- function(
 
 #' Compute approximate node saturation
 #'
-#' This function computes an approximate node saturation for each component
-#' in the edgelist. It estimates the theoretical maximum number of nodes
-#' using the Chao1 estimator and calculates the nodes saturation as the ratio
-#' of the actual number of nodes to the theoretical maximum.
+#' Computes an approximate node saturation for each component in the edgelist
+#' using SQL queries on a DuckDB connection. Node saturation measures how many
+#' unique nodes (UMIs) have been observed relative to the total number of reads.
 #'
-#' @param db A `PixelDB` object.
-#' @param components Optional vector of component names to filter the edgelist by.
-#' @param table_name Optional name of the remote table.
+#' @details
+#' Node saturation is calculated as:
+#' \deqn{S_{node} = 1 - \frac{N}{R}}
+#' where \eqn{N} is the number of unique nodes and \eqn{R} is the total read count
+#' (counted twice per edge, once for each endpoint).
 #'
-#' @return A `lazy_df` with the node saturation.
+#' This function creates a temporary view called `nodes` in the DuckDB connection
+#' that aggregates node statistics (read count and degree) from the edgelist.
+#'
+#' Higher saturation values indicate that additional sequencing reads are unlikely
+#' to reveal new nodes, suggesting the sample has been sequenced to near-saturation.
+#'
+#' @param db A `PixelDB` object with an active DuckDB connection.
+#' @param components Optional character vector of component names to filter the
+#'   edgelist. If `NULL` (default), all components are included.
+#' @param table_name Optional name for the computed remote table. If provided,
+#'   the result is materialized as a table in the DuckDB connection.
+#'
+#' @return A lazy `tbl` (DuckDB query) with columns:
+#' \describe{
+#'   \item{component}{The component (cell) identifier.}
+#'   \item{nodes}{The number of unique nodes.}
+#'   \item{read_count}{The total read count for the component.}
+#'   \item{node_saturation}{The node saturation value (0 to 1).}
+#' }
+#'
+#' @seealso
+#' \code{\link{approximate_edge_saturation}} for edge-based saturation.
+#' \code{\link{approximate_saturation_curve}} for computing saturation at
+#' multiple downsampling fractions.
 #'
 #' @export
 #'
@@ -349,6 +392,15 @@ approximate_node_saturation <- function(
 
 #' Filter edgelist by components
 #'
+#' Creates a temporary view `edgelist_modified` containing only edges from
+#' the specified components.
+#'
+#' @param db A `PixelDB` object with an active DuckDB connection.
+#' @param components Character vector of component names to include.
+#'
+#' @return Called for side effects. Creates a temporary view in the DuckDB
+#'   connection.
+#'
 #' @noRd
 .filter_edgelist_duckdb <- function(
   db,
@@ -368,10 +420,18 @@ approximate_node_saturation <- function(
   )
 }
 
-#' Compute edge/node saturation using Chao1 estimator
+#' Compute edge/node saturation from a lazy DuckDB table
+#'
+#' Computes saturation as `1 - (count of elements) / (sum of read counts)`
+#' for each component.
+#'
+#' @param df_lazy A lazy `tbl` representing the edgelist or node table.
+#' @param type Character; either `"edges"` or `"nodes"`.
+#' @param table_name Optional name for materializing the result as a table.
+#'
+#' @return A lazy `tbl` with component, count, read_count, and saturation columns.
 #'
 #' @noRd
-#'
 .compute_saturation_duckdb <- function(
   df_lazy,
   type = c("edges", "nodes"),
@@ -383,80 +443,149 @@ approximate_node_saturation <- function(
     group_by(component) %>%
     summarize(
       !!sym(type) := as.integer(n()),
-      f1 = sum(read_count == 1, na.rm = TRUE),
-      f2 = sum(read_count == 2, na.rm = TRUE)
+      read_count = sum(read_count, na.rm = TRUE)
     ) %>%
-    mutate(
-      !!sym(paste0("theoretical_max_", type)) := !!sym(type) + (f1 * (f1 - 1)) / (2 * (f2 + 1)),
-    ) %>%
-    mutate(
-      !!sym(paste0(type_singular, "_saturation")) :=
-        !!sym(type) / !!sym(paste0("theoretical_max_", type))
-    ) %>%
-    select(all_of(c("component", type, paste0(type_singular, "_saturation"), paste0("theoretical_max_", type)))) %>%
+    mutate(!!sym(paste0(type_singular, "_saturation")) := 1 - (!!sym(type) / read_count)) %>%
     compute(name = table_name, overwrite = TRUE)
 }
 
 #' Compute approximate saturation curve
 #'
-#' This function computes an approximate saturation curve for nodes and edges
-#' in an edgelist. The edgelist is downsampled to various fractions of the
-#' total number of reads, and the number of remaining nodes and edges are calculated
-#' for each fraction. The saturation values are then calculated relative to the
-#' theoretical maximum number of nodes and edges using the Chao1 estimator. The
-#' theoretical maximum is computed for each component in the full edgelist. Note
-#' that Chao1 will give a lower bound for the theoretical maximum, hence the
-#' saturation values are likely overestimated. The estimate will be more robust
-#' if the sample was sequenced at a high depth.
+#' Computes an approximate saturation curve for nodes and edges in an edgelist
+#' by estimating the expected number of retained elements at various downsampling
+#' fractions. This provides insight into how sequencing depth affects saturation
+#' without requiring actual downsampling.
 #'
-#' @param db A `PixelDB` object.
+#' @details
+#' ## Downsampling model
+#'
+#' The downsampling is performed probabilistically using expected values rather
+#' than actual random sampling. For each edge with a given `read_count`, the
+#' probability of the edge being retained at fraction `p` is:
+#' \deqn{P(\text{edge retained}) = 1 - (1 - p)^{\text{read\_count}}}
+#'
+#' For nodes, the probability of retention depends on the node's degree. A node
+#' is retained if at least one of its incident edges is retained:
+#' \deqn{P(\text{node retained}) = 1 - (1 - p_{edges})^{\text{degree}}}
+#' where \eqn{p_{edges}} is the fraction of edges retained.
+#'
+#' ## Saturation calculation
+#'
+#' The saturation values are calculated using:
+#' \deqn{S = 1 - \frac{N_{downsampled}}{R_{downsampled}}}
+#'
+#' where \eqn{N_{downsampled}} is the number of nodes or edges in the downsampled
+#' graph, and \eqn{R_{downsampled}} is the number of reads supporting those elements.
+#' Since each read supports two nodes (one at each endpoint),
+#' \eqn{R_{downsampled, nodes} = 2 \times R_{downsampled, edges}}.
+#'
+#' ## Implementation notes
+#'
+#' This function requires that \code{\link{approximate_node_saturation}} has been
+#' called first (either directly or through this function) to create the `nodes`
+#' temporary view in the DuckDB connection.
+#'
+#' @param db A `PixelDB` object with an active DuckDB connection.
 #' @param fracs A numeric vector of fractions to downsample the edgelist.
-#' @param detailed If `TRUE`, the function will return ...
-#' @param verbose Print messages
+#'   Values must be strictly between 0 and 1. Default is `seq(0.04, 0.96, by = 0.04)`.
+#' @param node_reads_multiplier Numeric; multiplier for the read count when calculating
+#' node saturation. Default is `2`, reflecting that each edge contributes to two nodes.
+#' Optionally, set to `1` to use the same read count for nodes and edges, which may 
+#' be more appropriate in certain contexts.
+#' @param verbose Logical; if `TRUE` (default), print progress messages.
 #'
-#' @return A tibble with the saturation values
+#' @return A tibble with the following columns:
+#' \describe{
+#'   \item{component}{The component (cell) identifier.}
+#'   \item{read_count}{The estimated number of reads after downsampling.}
+#'   \item{p}{The downsampling fraction.}
+#'   \item{nodes}{The estimated number of nodes retained.}
+#'   \item{edges}{The estimated number of edges retained.}
+#'   \item{degree}{The estimated average node degree.}
+#'   \item{node_saturation}{The node saturation at the given fraction.}
+#'   \item{edge_saturation}{The edge saturation at the given fraction.}
+#' }
+#'
+#' @seealso
+#' \code{\link{approximate_node_saturation}} and \code{\link{approximate_edge_saturation}}
+#' for computing saturation at full depth.
+#' \code{\link{lcc_curve}} for computing largest connected component sizes at
+#' different downsampling fractions.
+#'
+#' @examples
+#' \dontrun{
+#' library(ggplot2)
+#' library(dplyr)
+#'
+#' pxl_file <- minimal_pna_pxl_file()
+#' db <- PixelDB$new(pxl_file)
+#' 
+#' sat_curve <- approximate_saturation_curve(db, fracs = seq(0.1, 0.9, by = 0.1))
+#' 
+#' # Plot node saturation curve
+#' sat_curve %>% 
+#'   tidyr::pivot_longer(cols = c(node_saturation, edge_saturation), names_to = "type", values_to = "saturation") %>% 
+#'   ggplot(aes(read_count, saturation, color = component)) +
+#'   geom_line() +
+#'   geom_point() +
+#'   labs(x = "Reads", y = "Saturation") +
+#'   theme_minimal() +
+#'   facet_grid(~type)
+#' 
+#' db$close()
+#' }
 #'
 #' @export
 #'
 approximate_saturation_curve <- function(
   db,
   fracs = seq(0.04, 0.96, by = 0.04),
-  detailed = FALSE,
+  components = NULL,
+  node_reads_multiplier = 2,
   verbose = TRUE
 ) {
   assert_class(db, "PixelDB")
   assert_vector(fracs, type = "numeric", n = 1)
   assert_within_limits(fracs, limits = c(0, 1))
-  assert_single_value(detailed, type = "bool")
-
-  if (verbose && check_global_verbosity()) {
-    cli::cli_alert_info("Computing theoretical maxmimum for nodes and edges using the Chao1 estimator... ")
+  assert_vector(components, type = "character", allow_null = TRUE, n = 1)
+  assert_single_value(node_reads_multiplier, type = "integer")
+  if (!node_reads_multiplier %in% c(1, 2)) {
+    cli::cli_abort(
+      c("x" = "{.var node_reads_multiplier} must be either {.val 1} 
+               or {.val 2}, but got {.val {node_reads_multiplier}}.")
+    )
   }
+  assert_single_value(verbose, type = "bool")
 
-  # Compute node and edge saturation per component
-  node_saturation <- approximate_node_saturation(db, table_name = "node_saturation")
-  edge_saturation <- approximate_edge_saturation(db, table_name = "edge_saturation")
+  # Compute node and edge saturation per component at full depth
+  node_saturation <- approximate_node_saturation(db, components = components, table_name = "node_saturation") %>%
+    select(-read_count)
+  edge_saturation <- approximate_edge_saturation(db, components = components, table_name = "edge_saturation") %>%
+    select(-read_count)
 
   if (verbose && check_global_verbosity()) {
-    cli::cli_alert_info("Computing downsampled nodes and edges for break points:\n {.val {fracs}}... ")
+    cli::cli_alert_info(
+      "Computing downsampled nodes and edges for {.val {length(fracs)}} fractions..."
+    )
   }
 
   # Calculate expected fraction of edges remaining after downsampling
+  # For each edge, P(removed) = (1 - p)^read_count
   mut_actual_p <- list()
   for (p in fracs) {
     col_name <- paste0("p_", p)
-    # Probability of being removed: (1 - p) ^ read_count
     mut_actual_p[[col_name]] <- rlang::expr((1 - !!p)^read_count)
   }
+
+  # Sum expected edges kept per component
   sum_est_edges <- list()
   for (col_name in paste0("p_", fracs)) {
     summary_col_name <- paste0(col_name, "_tot")
-    # Total expected edges kept
     sum_est_edges[[summary_col_name]] <- rlang::expr(sum(1 - !!rlang::sym(col_name), na.rm = TRUE))
   }
-  # Total edges
   sum_est_edges[["n_edges"]] <- rlang::expr(n())
-  # Calculate percentage of edges kept: total expected edges kept / total edges
+
+  # Calculate percentage of edges kept: expected edges kept / total edges
   mut_pct_kept <- list()
   for (col_name in paste0("p_", fracs)) {
     col_name_tot <- paste0(col_name, "_tot")
@@ -464,14 +593,15 @@ approximate_saturation_curve <- function(
     mut_pct_kept[[col_name_pctkept]] <- rlang::expr(!!rlang::sym(col_name_tot) / n_edges)
   }
   result_df <- tbl(db$.__enclos_env__$private$con, "edgelist") %>%
+    {if (!is.null(components)) filter(., component %in% components) else .} %>%
     group_by(component) %>%
     mutate(!!!mut_actual_p) %>%
     summarize(!!!sum_est_edges) %>%
     mutate(!!!mut_pct_kept) %>%
     compute(name = "kept_edges", overwrite = TRUE)
 
-  # Compute estimated nodes kept: 1 - (1 - p) ^ degree
-  # where 1 - p is the probability of being removed
+  # Compute estimated nodes kept using: 1 - (1 - pct_kept)^degree
+  # where (1 - pct_kept) is the probability of all edges to a node being removed
   sum_nodes <- list()
   for (col_name in paste0("p_", fracs)) {
     col_name_pctkept <- paste0(col_name, "_pctkept")
@@ -485,64 +615,52 @@ approximate_saturation_curve <- function(
   downsampled_features <- tbl(db$.__enclos_env__$private$con, "nodes") %>%
     left_join(tbl(db$.__enclos_env__$private$con, "kept_edges"), by = "component") %>%
     group_by(component) %>%
-    summarize(!!!sum_nodes) %>%
+    summarize(!!!sum_nodes, read_count = sum(read_count)) %>%
     left_join(node_saturation, by = "component") %>%
     left_join(edge_saturation, by = "component")
 
   if (verbose && check_global_verbosity()) {
-    cli::cli_alert_info("Computing edge and node saturation and average degree for downsampled graphs... ")
+    cli::cli_alert_info(
+      "Computing edge saturation, node saturation and average degree for downsampled graphs..."
+    )
   }
 
-  # Compute saturation values and degree
-  # Edge saturation: downsampled edges / theoretical max edges
-  # Node saturation: downsampled nodes / theoretical max nodes
-  # Degree: 2 * downsampled edges / downsampled nodes
+  # Compute number of edges and average degree
+  # Degree = 2 * edges / nodes
   mut_sat <- list()
   for (col_name in paste0("p_", fracs)) {
-    col_name_nodes <- paste0(col_name, "_nodes")
-    col_name_nodesat <- paste0(col_name, "_nodesat")
-    mut_sat[[col_name_nodesat]] <-
-      rlang::expr(!!rlang::sym(col_name_nodes) / theoretical_max_nodes)
     col_name_pct <- paste0(col_name, "_pctkept")
-    col_name_edgesat <- paste0(col_name, "_edgesat")
-    mut_sat[[col_name_edgesat]] <-
-      rlang::expr((!!rlang::sym(col_name_pct) * as.integer(edges)) / theoretical_max_edges)
+    col_name_nodes <- paste0(col_name, "_nodes")
+    col_name_edges <- paste0(col_name, "_edges")
     col_name_degree <- paste0(col_name, "_degree")
+
+    mut_sat[[col_name_edges]] <-
+      rlang::expr((!!rlang::sym(col_name_pct) * as.integer(edges)))
     mut_sat[[col_name_degree]] <-
       rlang::expr(2 * (!!rlang::sym(col_name_pct) * as.integer(edges)) / !!rlang::sym(col_name_nodes))
   }
-
-  # Calculate average reads per component to use for
-  # converting downsampled proportions to downsampled average reads
-  average_reads <- tbl(db$.__enclos_env__$private$con, "edgelist") %>%
-    group_by(component) %>%
-    summarize(reads = sum(read_count, na.rm = TRUE)) %>%
-    pull(reads) %>%
-    mean()
 
   # Apply saturation/degree calculations and format results
   downsampled_saturation <- downsampled_features %>%
     mutate(!!!mut_sat) %>%
     collect() %>%
-    select(component, matches("nodesat"), matches("edgesat"), matches("degree")) %>%
+    select(component, read_count, matches("_nodes"), matches("_edges"), matches("_degree")) %>% 
     tidyr::pivot_longer(matches("^p_")) %>%
     tidyr::separate(name, into = c("lbl", "p", "type"), sep = "_") %>%
     select(-lbl) %>%
     mutate(p = as.numeric(p)) %>%
-    tidyr::pivot_wider(names_from = type, values_from = value) %>%
-    mutate(average_reads = round(average_reads * p))
-
-  if (detailed) {
-    downsampled_saturation <- list(
-      "saturation_downsampled" = downsampled_saturation,
-      "saturation_actual" = downsampled_features %>%
-        select(
-          component, nodes, node_saturation, theoretical_max_nodes,
-          edges, edge_saturation, theoretical_max_edges
-        ) %>%
-        collect()
+    tidyr::pivot_wider(names_from = type, values_from = value) %>% 
+    mutate(
+      read_count = round(read_count * p) / 2
+    ) %>%
+    mutate(
+      node_saturation = 1 - (nodes / (read_count * node_reads_multiplier)),
+      edge_saturation = 1 - (edges / read_count)
+    ) %>% 
+    mutate(
+      node_saturation = if_else(node_saturation < 0, NA_real_, node_saturation),
+      edge_saturation = if_else(edge_saturation < 0, NA_real_, edge_saturation)
     )
-  }
 
   if (verbose && check_global_verbosity()) {
     cli::cli_alert_success("Finished!")
@@ -552,20 +670,42 @@ approximate_saturation_curve <- function(
 }
 
 
-#' Filter an edgelist by downsampling read counts
+#' Downsample edgelist and export to parquet files
 #'
-#' Filter an edgelist (for a subset of components) in a PXL file by
-#' downsampling read counts using predefined fractions. The probability
-#' of a read staying in the edgelist is \eqn{1 - (1 - frac) ^ read_count}.
+#' Filters an edgelist by probabilistically downsampling read counts and exports
+#' the results to parquet files. This simulates the effect of sequencing at lower
+#' depth.
 #'
-#' The filtered edgelist(s) are written to parquet files in `outdir`.
+#' @details
+#' For each edge with a given `read_count`, the probability of the edge being
+#' retained at fraction `p` is:
+#' \deqn{P(\text{edge retained}) = 1 - (1 - p)^{\text{read\_count}}}
+#'
+#' This means edges with higher read counts are more likely to be retained,
+#' which accurately models the effect of sequencing at lower depth.
+#'
+#' The filtered edgelists are written to parquet files in `outdir`, one file
+#' per fraction. File names follow the pattern `edgelist_001.parquet`,
+#' `edgelist_002.parquet`, etc., corresponding to the order of fractions.
 #'
 #' @param pxl_file Path to the PXL file.
-#' @param outdir Directory to write the output parquet files.
-#' @param components A character vector of component names to keep.
-#' @param fracs A numeric vector of fractions to downsample by.
+#' @param outdir Directory to write the output parquet files. Created if it
+#'   does not exist.
+#' @param components A character vector of component names to include. All
+#'   components must be present in the PXL file.
+#' @param fracs A numeric vector of fractions to downsample by. Values must
+#'   be strictly between 0 and 1. Default is `seq(0.1, 0.9, 0.1)`.
 #'
-#' @return A tibble with paths to the written parquet files and the fractions.
+#' @return A tibble with columns:
+#' \describe{
+#'   \item{fracs}{The downsampling fraction.}
+#'   \item{pq_files}{Path to the corresponding parquet file.}
+#' }
+#'
+#' @seealso
+#' \code{\link{lcc_sizes}} for computing LCC sizes from the output parquet files.
+#' \code{\link{lcc_curve}} for a high-level wrapper that combines downsampling
+#' and LCC computation.
 #'
 #' @export
 #'
@@ -635,20 +775,45 @@ downsample_to_parquet <- function(
   return(tibble(fracs = fracs, pq_files = pq_paths))
 }
 
-#' Calculate the sizes of the LCCs from an edgelist
+#' Compute LCC sizes from downsampled edgelists
 #'
-#' This function calculates the sizes of the largest connected components (LCCs)
-#' from a set of parquet files containing downsampled edgelists. The LCCs are
-#' computed for each fraction specified in the input tibble `df`, linking each
-#' fraction to its corresponding parquet file. Moreover, the LCCs are computed per
-#' cell (component).
+#' Calculates the sizes of the largest connected components (LCCs) from a set
+#' of parquet files containing downsampled edgelists.
 #'
-#' @param df A tibble with columns `pq_files` (paths to parquet files) and `fracs`
-#' generated with \code{\link{downsample_to_parquet}}.
-#' @param mc_cores Number of cores to use for parallel processing.
+#' @details
+#' ## Algorithm
 #'
-#' @return A tibble with the sizes of the largest connected components (LCC) for each
-#' fraction in `df$fracs`. The results are grouped by cell (component).
+#' For each parquet file (representing a downsampling fraction), this function:
+#' 1. Loads the edgelist into a DuckDB connection
+#' 2. Constructs a property graph using the `duckpgq` extension
+#' 3. Computes weakly connected components
+#' 4. Identifies the largest component for each cell
+#'
+#' ## Performance
+#'
+#' The `duckpgq` extension enables efficient graph operations without loading
+#' the full edgelist into memory. Parallel processing across fractions is
+#' supported via `mc_cores`.
+#'
+#' @param df A tibble with columns:
+#' \describe{
+#'   \item{pq_files}{Paths to parquet files containing downsampled edgelists.}
+#'   \item{fracs}{The corresponding downsampling fractions.}
+#' }
+#' Typically generated with \code{\link{downsample_to_parquet}}.
+#' @param mc_cores Number of cores to use for parallel processing. Default is 1
+#'   (sequential processing). Values > 1 use `parallel::mclapply`.
+#'
+#' @return A tibble with columns:
+#' \describe{
+#'   \item{component}{The component (cell) identifier.}
+#'   \item{frac}{The downsampling fraction.}
+#'   \item{n_nodes}{The number of nodes in the largest connected component.}
+#' }
+#'
+#' @seealso
+#' \code{\link{downsample_to_parquet}} for generating the input parquet files.
+#' \code{\link{lcc_curve}} for a high-level wrapper.
 #'
 #' @export
 #'
@@ -665,44 +830,42 @@ lcc_sizes <- function(
   assert_single_value(mc_cores, type = "integer")
 
   lcc <- parallel::mclapply(seq_len(nrow(df)), function(i) {
-    # Create a new duckdb connection and load the duckpgq extension
+    # Create a new DuckDB connection and load the duckpgq extension
     con <- DBI::dbConnect(duckdb::duckdb(bigint = "integer64"), dbdir = ":memory:")
+    on.exit(DBI::dbDisconnect(con), add = TRUE)
+
     DBI::dbExecute(con, "INSTALL duckpgq FROM community")
     DBI::dbExecute(con, "LOAD duckpgq")
 
-    # Crete table from the current parquet file
+    # Create table from the current parquet file
     pq_path <- df$pq_files[i]
     DBI::dbExecute(con, glue::glue("CREATE OR REPLACE TABLE el AS SELECT * FROM '{pq_path}'"))
 
-    # Create a node table
+    # Create a node table from unique UMIs
     DBI::dbExecute(
       con,
-      glue::glue(
-        "
-          CREATE OR REPLACE TEMPORARY TABLE umi_nodes AS
-          SELECT component, umi1 AS id FROM el
-          UNION
-          SELECT component, umi2 AS id FROM el
-        "
-      )
+      "
+        CREATE OR REPLACE TEMPORARY TABLE umi_nodes AS
+        SELECT component, umi1 AS id FROM el
+        UNION
+        SELECT component, umi2 AS id FROM el
+      "
     )
 
-    # Construct graph from the node table and edgelist
+    # Construct property graph from the node table and edgelist
     DBI::dbExecute(
       con,
-      glue::glue(
-        "
-          CREATE OR REPLACE PROPERTY GRAPH my_umi_graph
-          VERTEX TABLES (
-              umi_nodes PROPERTIES (id) LABEL UMI
-          )
-          EDGE TABLES (
-              el SOURCE KEY (umi1) REFERENCES umi_nodes (id)
-                       DESTINATION KEY (umi2) REFERENCES umi_nodes (id)
-                       LABEL CONNECTS
-          );
-        "
-      )
+      "
+        CREATE OR REPLACE PROPERTY GRAPH my_umi_graph
+        VERTEX TABLES (
+            umi_nodes PROPERTIES (id) LABEL UMI
+        )
+        EDGE TABLES (
+            el SOURCE KEY (umi1) REFERENCES umi_nodes (id)
+                     DESTINATION KEY (umi2) REFERENCES umi_nodes (id)
+                     LABEL CONNECTS
+        );
+      "
     )
 
     # Calculate weakly connected components
@@ -721,18 +884,16 @@ lcc_sizes <- function(
       left_join(tbl(con, "umi_nodes"), by = c("id" = "id")) %>%
       group_by(componentId, component) %>%
       count(name = "n_nodes") %>%
+      mutate(n_nodes = as.integer(n_nodes)) %>% 
       group_by(component) %>%
       arrange(desc(n_nodes)) %>%
       collect() %>%
       slice_head(n = 1)
 
-    # Close connection
-    DBI::dbDisconnect(con)
-
     return(lcc_per_component)
   }, mc.cores = mc_cores)
 
-  # Format results
+  # Format results into a single tibble
   lcc <- lapply(seq_along(lcc), function(i) {
     lcc[[i]] %>%
       mutate(frac = df$fracs[i]) %>%
@@ -745,42 +906,62 @@ lcc_sizes <- function(
 }
 
 
-#' Compute LCC sizes for downsampled edgelists
+#' Compute LCC curve for downsampled edgelists
 #'
 #' @description
 #' `r lifecycle::badge("experimental")`
-#' This function computes the sizes of the largest connected components (LCC) for
-#' downsampled edgelists. The downsampling is determined by the `fracs` parameter,
-#' which specifies the fractions of sequencing reads to retain.
 #'
-#' @section LCC:
-#' The LCC (largest connected component) can be used to analyze graph stability. When
-#' downsampling sequencing reads, edges are removed, which eventually leads to a collapse
-#' of the graph into many smaller components. By downsampling the graph at multiple fractions,
-#' we can observe how the size of the largest connected component changes. Typically, there
-#' is a sharp drop in the size of the LCC at a certain fraction, indicating that the graph
-#' no longer has a large connected component and becomes completely fragmented.
-#' Note that the LCC is computed for each fraction and component (cell) separately.
+#' Computes the sizes of the largest connected components (LCC) for edgelists
+#' downsampled at multiple fractions. This is useful for analyzing graph stability
+#' and determining the critical sequencing depth.
 #'
-#' @section: performance:
-#' Computations are scalable thanks to efficient SQL queries. LCCs are computed using the
-#' `duckpgq` extension for DuckDB, which enables fast graph operations. This avoids the need
-#' for loading the entire edgelist into memory, making it suitable for large datasets.
-#' However, it is recommended to compute the LCC sizes on a subset of the data to minimize
-#' memory usage.
+#' @details
+#' ## Graph stability analysis
+#'
+#' The LCC (largest connected component) measures graph connectivity. When
+#' downsampling sequencing reads, edges are removed probabilistically, which
+#' eventually causes the graph to fragment into smaller disconnected components.
+#'
+#' By computing LCC sizes at multiple downsampling fractions, you can observe
+#' how graph connectivity degrades with reduced sequencing depth. Typically,
+#' there is a sharp transition point where the LCC collapses, indicating the
+#' minimum sequencing depth required to maintain graph structure.
+#'
+#' ## Workflow
+#'
+#' This function is a high-level wrapper that:
+#' 1. Calls \code{\link{downsample_to_parquet}} to create downsampled edgelists
+#' 2. Calls \code{\link{lcc_sizes}} to compute LCC sizes for each fraction
+#' 3. Optionally cleans up temporary files
+#'
+#' ## Performance
+#'
+#' Computations are scalable thanks to efficient SQL queries. LCCs are computed
+#' using the `duckpgq` extension for DuckDB, enabling fast graph operations
+#' without loading the full edgelist into memory.
+#'
+#' For large datasets, it is recommended to compute LCC sizes on a subset of
+#' components to minimize memory usage and computation time.
 #'
 #' @param pxl_file Path to the input PXL file containing the edgelist.
-#' @param components A character vector of component names to include in the computation.
-#' These must be present in the PXL file.
-#' @param fracs A numeric vector specifying the fractions of sequencing reads to retain.
-#' @param outdir Optional output directory where the downsampled parquet files will be saved.
-#' If `NULL`, the files will be saved in a temporary directory which is deleted post processing.
-#' @param mc_cores Number of cores to use for parallel processing. Default is 1 indicating
-#' sequential processing.
-#' @param verbose Logical indicating whether to print progress messages.
+#' @param components A character vector of component names to include. All
+#'   components must be present in the PXL file.
+#' @param fracs A numeric vector of downsampling fractions. Values must be
+#'   strictly between 0 and 1. Default is `seq(0.1, 1, by = 0.1)`.
+#' @param outdir Optional output directory for downsampled parquet files.
+#'   If `NULL` (default), files are saved to a temporary directory and deleted
+#'   after computation.
+#' @param mc_cores Number of cores for parallel processing. Default is 1
+#'   (sequential). Values > 1 use `parallel::mclapply`.
+#' @param verbose Logical; if `TRUE` (default), print progress messages.
 #'
-#' @return A tibble with columns `component` (the original component ID), `frac` (the fraction)
-#' and `n_nodes` (the size of the LCC for that fraction and component).
+#' @return A tibble with columns:
+#' \describe{
+#'   \item{component}{The component (cell) identifier.}
+#'   \item{frac}{The downsampling fraction.}
+#'   \item{n_nodes}{The number of nodes in the largest connected component.}
+#'   \item{read_count}{The estimated number of reads supporting the LCC at the given fraction.}
+#' }
 #'
 #' @examples
 #' \dontrun{
@@ -789,38 +970,42 @@ lcc_sizes <- function(
 #' pxl_file <- minimal_pna_pxl_file()
 #' components <- ReadPNA_counts(pxl_file) %>% colnames()
 #'
-#' # Select fractions
+#' # Select fractions based on average read depth
 #' db <- PixelDB$new(pxl_file)
 #' avg_reds <- db$cell_meta()$reads %>% mean()
 #' fracs <- (10^seq(4, log10(avg_reds), length.out = 20))[-20] / avg_reds
 #'
-#' lcc_df <- lcc_curve(
-#'   minimal_pna_pxl_file(),
-#'   components,
-#'   fracs = fracs
-#' )
+#' lcc_df <- lcc_curve(pxl_file, components, fracs = fracs)
 #'
+#' # Plot LCC sizes by fraction
 #' ggplot(lcc_df, aes(frac, n_nodes, color = component)) +
 #'   geom_point() +
 #'   geom_line() +
 #'   theme_bw() +
 #'   guides(color = "none")
 #'
-#' # We can calculate graph stability by dividing
-#' # the LCC by the maximum theoretical number of nodes
-#' nodesat <- approximate_node_saturation(db) %>%
-#'   collect()
+#' # Compute graph stability (LCC / max theoretical nodes)
+#' nodesat <- approximate_node_saturation(db) %>% collect()
 #' db$close()
+#'
 #' lcc_df <- lcc_df %>%
 #'   left_join(nodesat, by = "component")
 #'
-#' ggplot(lcc_df, aes(frac, n_nodes / theoretical_max_nodes, color = component)) +
+#' ggplot(lcc_df, aes(frac, n_nodes / nodes, color = component)) +
 #'   geom_point() +
 #'   geom_line() +
+#'   scale_y_continuous(limits = c(0, 1)) +
+#'   labs(y = "Graph stability (LCC / total nodes)") +
 #'   theme_bw() +
-#'   guides(color = "none") +
-#'   scale_y_continuous(limits = c(0, 1))
+#'   guides(color = "none")
 #' }
+#'
+#' @seealso
+#' \code{\link{downsample_to_parquet}} for the downsampling step.
+#' \code{\link{lcc_sizes}} for computing LCC sizes from parquet files.
+#' \code{\link{approximate_saturation_curve}} for saturation analysis without
+#' actual downsampling.
+#'
 #' @export
 #'
 lcc_curve <- function(
@@ -832,9 +1017,9 @@ lcc_curve <- function(
   verbose = TRUE
 ) {
   duckdb_v <- utils::packageVersion("duckdb")
-  if (utils::compareVersion(as.character(duckdb_v), "1.3.2") > 0) {
+  if (utils::compareVersion(as.character(duckdb_v), "1.5.0") > 0) {
     cli_alert_warning(
-      "This function is only tested with duckdb <= 1.3.2, but you have {.pkg duckdb} version {.val {duckdb_v}}
+      "This function is only tested with duckdb <= 1.5.0, but you have {.pkg duckdb} version {.val {duckdb_v}}
       installed. This may result in compability issues with {.pkg duckpgq}."
     )
   }
@@ -868,6 +1053,16 @@ lcc_curve <- function(
   }
 
   lcc <- lcc_sizes(df = pq_files, mc_cores)
+
+  # Add read counts to the LCC results for better interpretability
+  db <- PixelDB$new(pxl_file)
+  on.exit({db$close()})
+  read_counts <- db$cell_meta() %>%
+    select(read_count = reads_in_component) %>% 
+    rownames_to_column("component")
+  lcc <- lcc %>%
+    left_join(read_counts, by = "component") %>% 
+    mutate(read_count = as.integer(round(read_count * frac)))
 
   if (clean_up) {
     fs::dir_delete(outdir)

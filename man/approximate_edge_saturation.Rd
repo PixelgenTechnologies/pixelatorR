@@ -7,19 +7,38 @@
 approximate_edge_saturation(db, components = NULL, table_name = NULL)
 }
 \arguments{
-\item{db}{A \code{PixelDB} object.}
+\item{db}{A \code{PixelDB} object with an active DuckDB connection.}
 
 \item{components}{Optional character vector of component names to filter the
-edgelist.}
+edgelist. If \code{NULL} (default), all components are included.}
 
-\item{table_name}{Optional name of the remote table.}
+\item{table_name}{Optional name for the computed remote table. If provided,
+the result is materialized as a table in the DuckDB connection.}
 }
 \value{
-A \code{lazy_df} with the edge saturation.
+A lazy \code{tbl} (DuckDB query) with columns:
+\describe{
+\item{component}{The component (cell) identifier.}
+\item{edges}{The number of unique edges.}
+\item{read_count}{The total read count for the component.}
+\item{edge_saturation}{The edge saturation value (0 to 1).}
+}
 }
 \description{
-This function computes an approximate edge saturation for each component
-in the edgelist. It estimates the theoretical maximum number of edges
-using the Chao1 estimator and calculates the edge saturation as the ratio
-of the actual number of edges to the theoretical maximum.
+Computes an approximate edge saturation for each component in the edgelist
+using SQL queries on a DuckDB connection. Edge saturation measures how many
+unique edges have been observed relative to the total number of reads.
+}
+\details{
+Edge saturation is calculated as:
+\deqn{S_{edge} = 1 - \frac{E}{R}}
+where \eqn{E} is the number of unique edges and \eqn{R} is the total read count.
+
+Higher saturation values indicate that additional sequencing reads are unlikely
+to reveal new edges, suggesting the sample has been sequenced to near-saturation.
+}
+\seealso{
+\code{\link{approximate_node_saturation}} for node-based saturation.
+\code{\link{approximate_saturation_curve}} for computing saturation at
+multiple downsampling fractions.
 }
