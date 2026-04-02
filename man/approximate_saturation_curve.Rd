@@ -18,6 +18,9 @@ approximate_saturation_curve(
 \item{fracs}{A numeric vector of fractions to downsample the edgelist.
 Values must be strictly between 0 and 1. Default is \code{seq(0.04, 0.96, by = 0.04)}.}
 
+\item{components}{Optional character vector of component names to compute saturation for.
+If \code{NULL} (default), all components are included.}
+
 \item{node_reads_multiplier}{Numeric; multiplier for the read count when calculating
 node saturation. Default is \code{2}, reflecting that each edge contributes to two nodes.
 Optionally, set to \code{1} to use the same read count for nodes and edges, which may
@@ -87,8 +90,12 @@ db <- PixelDB$new(pxl_file)
 sat_curve <- approximate_saturation_curve(db, fracs = seq(0.1, 0.9, by = 0.1))
 
 # Plot node saturation curve
-sat_curve \%>\% 
-  tidyr::pivot_longer(cols = c(node_saturation, edge_saturation), names_to = "type", values_to = "saturation") \%>\% 
+sat_curve \%>\%
+  tidyr::pivot_longer(
+    cols = c(node_saturation, edge_saturation),
+    names_to = "type",
+    values_to = "saturation"
+  ) \%>\%
   ggplot(aes(read_count, saturation, color = component)) +
   geom_line() +
   geom_point() +
