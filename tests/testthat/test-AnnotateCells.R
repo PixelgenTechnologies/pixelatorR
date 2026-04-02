@@ -68,11 +68,11 @@ test_that("annotate_cells works as expected", {
   reference <- read_pbmc_reference()
   seur_sub <-
     seur %>%
-    Seurat::NormalizeData(normalization.method = "CLR", margin = 2) |>
+    Seurat::NormalizeData(normalization.method = "CLR", margin = 2) %>%
     # Z score scaling
     Seurat::ScaleData() %>%
-    Seurat::RunPCA(npcs = 3, features = rownames(seur)) |>
-    Seurat::FindNeighbors(reduction = "pca", dims = 1:3) |>
+    Seurat::RunPCA(npcs = 3, features = rownames(seur)) %>%
+    Seurat::FindNeighbors(reduction = "pca", dims = 1:3) %>%
     Seurat::FindClusters(resolution = 0.5) %>%
     subset(features = head(rownames(seur), 50))
 
