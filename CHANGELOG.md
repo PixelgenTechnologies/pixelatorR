@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 ### Fixes
-- Fixed bug in `.seeded_nmf_annotaton` where normalization of the internal temporary `Seurat` object would propagate to the output.
+- Fixed a bug where running `AnnotateCells(..., method = "nmf")` could unintentionally propagate normalization changes from an internal temporary `Seurat` object to the returned object.
 
 ## [0.17.0] - 2026-03-23
 
