@@ -488,7 +488,7 @@ approximate_node_saturation <- function(
 #' @param db A `PixelDB` object with an active DuckDB connection.
 #' @param fracs A numeric vector of fractions to downsample the edgelist.
 #'   Values must be strictly between 0 and 1. Default is `seq(0.04, 0.96, by = 0.04)`.
-#' @param components Optional character vector of component names to compute saturation for. 
+#' @param components Optional character vector of component names to compute saturation for.
 #' If `NULL` (default), all components are included.
 #' @param node_reads_multiplier Numeric; multiplier for the read count when calculating
 #' node saturation. Default is `2`, reflecting that each edge contributes to two nodes.
@@ -537,7 +537,7 @@ approximate_node_saturation <- function(
 #'   labs(x = "Reads", y = "Saturation") +
 #'   theme_minimal() +
 #'   facet_grid(~type)
-#' 
+#'
 #' db$close()
 #' }
 #'
@@ -557,7 +557,7 @@ approximate_saturation_curve <- function(
   assert_single_value(node_reads_multiplier, type = "integer")
   if (!node_reads_multiplier %in% c(1, 2)) {
     cli::cli_abort(
-      c("x" = "{.var node_reads_multiplier} must be either {.val 1} 
+      c("x" = "{.var node_reads_multiplier} must be either {.val 1}
                or {.val 2}, but got {.val {node_reads_multiplier}}.")
     )
   }
@@ -599,7 +599,9 @@ approximate_saturation_curve <- function(
     mut_pct_kept[[col_name_pctkept]] <- rlang::expr(!!rlang::sym(col_name_tot) / n_edges)
   }
   result_df <- tbl(db$.__enclos_env__$private$con, "edgelist") %>%
-    {if (!is.null(components)) filter(., component %in% components) else .} %>%
+    {
+      if (!is.null(components)) filter(., component %in% components) else .
+    } %>%
     group_by(component) %>%
     mutate(!!!mut_actual_p) %>%
     summarize(!!!sum_est_edges) %>%
@@ -632,7 +634,7 @@ approximate_saturation_curve <- function(
   }
 
   # Compute number of edges and average degree
-  # Degree = 2 * edges / nodes
+  # Degree is defined as d = 2 * edges / nodes
   mut_sat <- list()
   for (col_name in paste0("p_", fracs)) {
     col_name_pct <- paste0(col_name, "_pctkept")
@@ -650,19 +652,19 @@ approximate_saturation_curve <- function(
   downsampled_saturation <- downsampled_features %>%
     mutate(!!!mut_sat) %>%
     collect() %>%
-    select(component, read_count, matches("_nodes"), matches("_edges"), matches("_degree")) %>% 
+    select(component, read_count, matches("_nodes"), matches("_edges"), matches("_degree")) %>%
     tidyr::pivot_longer(matches("^p_")) %>%
     tidyr::separate(name, into = c("lbl", "p", "type"), sep = "_") %>%
     select(-lbl) %>%
     mutate(p = as.numeric(p)) %>%
-    tidyr::pivot_wider(names_from = type, values_from = value) %>% 
+    tidyr::pivot_wider(names_from = type, values_from = value) %>%
     mutate(
       read_count = round(read_count * p) / 2
     ) %>%
     mutate(
       node_saturation = 1 - (nodes / (read_count * node_reads_multiplier)),
       edge_saturation = 1 - (edges / read_count)
-    ) %>% 
+    ) %>%
     mutate(
       node_saturation = if_else(node_saturation < 0, NA_real_, node_saturation),
       edge_saturation = if_else(edge_saturation < 0, NA_real_, edge_saturation)
@@ -890,7 +892,7 @@ lcc_sizes <- function(
       left_join(tbl(con, "umi_nodes"), by = c("id" = "id")) %>%
       group_by(componentId, component) %>%
       count(name = "n_nodes") %>%
-      mutate(n_nodes = as.integer(n_nodes)) %>% 
+      mutate(n_nodes = as.integer(n_nodes)) %>%
       group_by(component) %>%
       arrange(desc(n_nodes)) %>%
       collect() %>%
@@ -1062,12 +1064,14 @@ lcc_curve <- function(
 
   # Add read counts to the LCC results for better interpretability
   db <- PixelDB$new(pxl_file)
-  on.exit({db$close()})
+  on.exit({
+    db$close()
+  })
   read_counts <- db$cell_meta() %>%
-    select(read_count = reads_in_component) %>% 
+    select(read_count = reads_in_component) %>%
     rownames_to_column("component")
   lcc <- lcc %>%
-    left_join(read_counts, by = "component") %>% 
+    left_join(read_counts, by = "component") %>%
     mutate(read_count = as.integer(round(read_count * frac)))
 
   if (clean_up) {
