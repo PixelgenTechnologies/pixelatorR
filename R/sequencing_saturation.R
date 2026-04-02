@@ -488,9 +488,11 @@ approximate_node_saturation <- function(
 #' @param db A `PixelDB` object with an active DuckDB connection.
 #' @param fracs A numeric vector of fractions to downsample the edgelist.
 #'   Values must be strictly between 0 and 1. Default is `seq(0.04, 0.96, by = 0.04)`.
+#' @param components Optional character vector of component names to compute saturation for. 
+#' If `NULL` (default), all components are included.
 #' @param node_reads_multiplier Numeric; multiplier for the read count when calculating
 #' node saturation. Default is `2`, reflecting that each edge contributes to two nodes.
-#' Optionally, set to `1` to use the same read count for nodes and edges, which may 
+#' Optionally, set to `1` to use the same read count for nodes and edges, which may
 #' be more appropriate in certain contexts.
 #' @param verbose Logical; if `TRUE` (default), print progress messages.
 #'
@@ -519,12 +521,16 @@ approximate_node_saturation <- function(
 #'
 #' pxl_file <- minimal_pna_pxl_file()
 #' db <- PixelDB$new(pxl_file)
-#' 
+#'
 #' sat_curve <- approximate_saturation_curve(db, fracs = seq(0.1, 0.9, by = 0.1))
-#' 
+#'
 #' # Plot node saturation curve
-#' sat_curve %>% 
-#'   tidyr::pivot_longer(cols = c(node_saturation, edge_saturation), names_to = "type", values_to = "saturation") %>% 
+#' sat_curve %>%
+#'   tidyr::pivot_longer(
+#'     cols = c(node_saturation, edge_saturation),
+#'     names_to = "type",
+#'     values_to = "saturation"
+#'   ) %>%
 #'   ggplot(aes(read_count, saturation, color = component)) +
 #'   geom_line() +
 #'   geom_point() +
