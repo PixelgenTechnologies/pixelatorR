@@ -659,7 +659,7 @@ approximate_saturation_curve <- function(
     mutate(p = as.numeric(p)) %>%
     tidyr::pivot_wider(names_from = type, values_from = value) %>%
     mutate(
-      read_count = round(read_count * p) / 2
+      read_count = round((read_count * p) / 2)
     ) %>%
     mutate(
       node_saturation = 1 - (nodes / (read_count * node_reads_multiplier)),
@@ -980,8 +980,8 @@ lcc_sizes <- function(
 #'
 #' # Select fractions based on average read depth
 #' db <- PixelDB$new(pxl_file)
-#' avg_reds <- db$cell_meta()$reads %>% mean()
-#' fracs <- (10^seq(4, log10(avg_reds), length.out = 20))[-20] / avg_reds
+#' avg_reads <- db$cell_meta()$reads %>% mean()
+#' fracs <- (10^seq(4, log10(avg_reads), length.out = 20))[-20] / avg_reads
 #'
 #' lcc_df <- lcc_curve(pxl_file, components, fracs = fracs)
 #'
@@ -1028,7 +1028,7 @@ lcc_curve <- function(
   if (utils::compareVersion(as.character(duckdb_v), "1.5.0") > 0) {
     cli_alert_warning(
       "This function is only tested with duckdb <= 1.5.0, but you have {.pkg duckdb} version {.val {duckdb_v}}
-      installed. This may result in compability issues with {.pkg duckpgq}."
+      installed. This may result in compatibility issues with {.pkg duckpgq}."
     )
   }
 

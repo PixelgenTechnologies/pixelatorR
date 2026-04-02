@@ -89,8 +89,8 @@ components <- ReadPNA_counts(pxl_file) \%>\% colnames()
 
 # Select fractions based on average read depth
 db <- PixelDB$new(pxl_file)
-avg_reds <- db$cell_meta()$reads \%>\% mean()
-fracs <- (10^seq(4, log10(avg_reds), length.out = 20))[-20] / avg_reds
+avg_reads <- db$cell_meta()$reads \%>\% mean()
+fracs <- (10^seq(4, log10(avg_reads), length.out = 20))[-20] / avg_reads
 
 lcc_df <- lcc_curve(pxl_file, components, fracs = fracs)
 
