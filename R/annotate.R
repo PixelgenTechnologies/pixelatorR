@@ -338,7 +338,8 @@ AnnotateCells <- function(
   cli::cli_abort(
     c(
       "x" = "The {role}assay {.val {assay_name}} has unjoined v5 layers ({.val {split_layers}}).",
-      "i" = "Call {.fn JoinLayers} on the {.cls Seurat} object (or on that assay) after {.fn merge}, then retry {.fn AnnotateCells} with {.arg method} = {.val nmf}."
+      "i" = "Call {.fn JoinLayers} on the {.cls Seurat} object (or on that assay)
+      after {.fn merge}, then retry {.fn AnnotateCells} with {.arg method} = {.val nmf}."
     )
   )
 }
