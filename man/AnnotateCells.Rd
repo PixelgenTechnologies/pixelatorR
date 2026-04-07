@@ -74,6 +74,11 @@ per cluster is added to the metadata of the object.
 \details{
 The "Seurat" method is a wrapper for the \code{FindTransferAnchors} and \code{TransferData}
 functions from Seurat, followed by an optional summary per cluster.
+
+For \code{method = "nmf"}, merged \pkg{SeuratObject} v5 assays (\code{Assay5}, including
+\code{PNAAssay5}) must not retain split merge layers (\code{counts.1}, \code{data.1}, etc.).
+Run \code{JoinLayers()} on the \code{Seurat} object (or on the assay) after \code{merge()}
+before calling \code{AnnotateCells()}.
 }
 \examples{
 \dontrun{

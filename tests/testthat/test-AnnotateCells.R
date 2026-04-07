@@ -99,6 +99,48 @@ test_that("annotate_cells works as expected", {
   )
 })
 
+test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
+  options(Seurat.object.assay.version = "v5")
+  on.exit(options(Seurat.object.assay.version = "v3"), add = TRUE)
+
+  seur_v5 <- suppressWarnings(ReadPNA_Seurat(
+    minimal_pna_pxl_file(),
+    overwrite = TRUE,
+    load_proximity_scores = FALSE,
+    verbose = FALSE
+  ))
+  seur_merged <- suppressWarnings(merge(seur_v5, seur_v5, add.cell.ids = c("A", "B")))
+  ref <- read_pbmc_reference()
+
+  expect_error(
+    AnnotateCells(
+      seur_merged,
+      ref,
+      query_assay = "PNA",
+      reference_assay = "PNA",
+      reference_groups = c("celltype.l1", "celltype.l2"),
+      method = "nmf",
+      skip_normalization = TRUE,
+      verbose = FALSE
+    ),
+    regexp = "JoinLayers"
+  )
+
+  seur_joined <- suppressWarnings(JoinLayers(seur_merged))
+  expect_no_error(
+    AnnotateCells(
+      seur_joined,
+      ref,
+      query_assay = "PNA",
+      reference_assay = "PNA",
+      reference_groups = c("celltype.l1", "celltype.l2"),
+      method = "nmf",
+      skip_normalization = TRUE,
+      verbose = FALSE
+    )
+  )
+})
+
 
 test_that("annotate_cells fails with invalid input", {
   expect_error(seur <- AnnotateCells("Invalid"))

@@ -39,6 +39,11 @@
 #' @details The "Seurat" method is a wrapper for the \code{FindTransferAnchors} and \code{TransferData}
 #' functions from Seurat, followed by an optional summary per cluster.
 #'
+#' For \code{method = "nmf"}, merged \pkg{SeuratObject} v5 assays (\code{Assay5}, including
+#' \code{PNAAssay5}) must not retain split merge layers (\code{counts.1}, \code{data.1}, etc.).
+#' Run \code{JoinLayers()} on the \code{Seurat} object (or on the assay) after \code{merge()}
+#' before calling \code{AnnotateCells()}.
+#'
 #' @examples
 #' \dontrun{
 #' # Download reference file
@@ -82,6 +87,10 @@ AnnotateCells <- function(
   # Input validation
   assert_class(object, "Seurat")
   assert_class(reference, "Seurat")
+
+  .assert_assay_layers_joined(object[[query_assay]], "query", query_assay)
+  .assert_assay_layers_joined(reference[[reference_assay]], "reference", reference_assay)
+
   assert_col_in_data(summarize_by_column, object[[]], allow_null = TRUE)
   assert_single_value(reference_assay, "string")
   assert_single_value(query_assay, "string")
@@ -308,6 +317,31 @@ AnnotateCells <- function(
   return(object)
 }
 
+
+#' Fail fast when an Assay5 still has split merge layers (counts.1, data.1, ...).
+#'
+#' @param assay Assay from `object[[assay_name]]`.
+#' @param role `"query"` or `"reference"` for the error message.
+#' @param assay_name Assay name for the error message.
+#'
+#' @noRd
+#'
+.assert_assay_layers_joined <- function(assay, role = " ", assay_name) {
+  if (!methods::is(assay, "Assay5")) {
+    return(invisible(NULL))
+  }
+  lys <- SeuratObject::Layers(assay)
+  split_layers <- grep("^(counts|data)\\.\\d+$", lys, value = TRUE, perl = TRUE)
+  if (length(split_layers) == 0L) {
+    return(invisible(NULL))
+  }
+  cli::cli_abort(
+    c(
+      "x" = "The {role}assay {.val {assay_name}} has unjoined v5 layers ({.val {split_layers}}).",
+      "i" = "Call {.fn JoinLayers} on the {.cls Seurat} object (or on that assay) after {.fn merge}, then retry {.fn AnnotateCells} with {.arg method} = {.val nmf}."
+    )
+  )
+}
 
 #' Run cell type annotation using seeded NMF
 #'
