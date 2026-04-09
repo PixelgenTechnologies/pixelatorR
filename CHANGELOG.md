@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+### Updated
+- Added scaling to `isotype_pls` and changed default `layer` to "data" to avoid issues where some markers are missing from the "scale.data" `layer`.
+
 ### Fixes
 - Fixed a bug where running `AnnotateCells(..., method = "nmf")` could unintentionally propagate normalization changes from an internal temporary `Seurat` object to the returned object.
 

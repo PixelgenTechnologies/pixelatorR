@@ -41,7 +41,8 @@
 #' @param isotype_markers A character vector of isotype control marker names.
 #' @param model_mat An optional matrix of covariates for residualization (cells × covariates).
 #' @param remove_covariates Logical; if TRUE, residualizes data against model_mat before PLS.
-#' @param layer String; the data layer in object to use (default is "scale.data").
+#' @param layer String; the data layer in object to use (default is "data").
+#' @param scale Logical; if TRUE, scales the data using `base::scale` before fitting the PLS model (default is TRUE).
 #'
 #' @return A list containing the PLS model, scores, and loadings.
 #'
@@ -83,7 +84,14 @@
 #' @export
 #'
 isotype_pls <-
-  function(object, isotype_markers, model_mat = NULL, remove_covariates = FALSE, layer = "scale.data") {
+  function(
+    object,
+    isotype_markers,
+    model_mat = NULL,
+    remove_covariates = FALSE,
+    layer = "data",
+    scale = TRUE
+  ) {
     expect_pls()
 
     assert_class(object, "Seurat")
@@ -111,6 +119,10 @@ isotype_pls <-
       LayerData(layer = layer) %>%
       as.matrix() %>%
       t()
+
+    if (scale) {
+      X <- scale(X)
+    }
 
     if (nrow(X) == 0 || ncol(X) == 0) {
       cli::cli_abort(glue::glue("

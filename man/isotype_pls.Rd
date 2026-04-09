@@ -9,7 +9,8 @@ isotype_pls(
   isotype_markers,
   model_mat = NULL,
   remove_covariates = FALSE,
-  layer = "scale.data"
+  layer = "data",
+  scale = TRUE
 )
 }
 \arguments{
@@ -21,7 +22,9 @@ isotype_pls(
 
 \item{remove_covariates}{Logical; if TRUE, residualizes data against model_mat before PLS.}
 
-\item{layer}{String; the data layer in object to use (default is "scale.data").}
+\item{layer}{String; the data layer in object to use (default is "data").}
+
+\item{scale}{Logical; if TRUE, scales the data using \code{base::scale} before fitting the PLS model (default is TRUE).}
 }
 \value{
 A list containing the PLS model, scores, and loadings.
