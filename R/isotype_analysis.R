@@ -108,6 +108,7 @@ isotype_pls <-
     assert_single_value(remove_covariates, type = "bool")
     assert_single_value(layer, type = "string")
     assert_x_in_y(layer, Layers(object))
+    assert_single_value(scale, type = "bool")
 
     if (remove_covariates && is.null(model_mat)) {
       cli::cli_abort("model_mat must be provided when remove_covariates is TRUE")
