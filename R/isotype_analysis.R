@@ -110,6 +110,10 @@ isotype_pls <-
     assert_x_in_y(layer, Layers(object))
     assert_single_value(scale, type = "bool")
 
+    if (layer == "scale.data" & isTRUE(scale)) {
+      cli::cli_warn("Data in 'scale.data' layer is already scaled. Set 'scale = FALSE' to avoid double scaling.")
+    }
+
     if (remove_covariates && is.null(model_mat)) {
       cli::cli_abort("model_mat must be provided when remove_covariates is TRUE")
     }
