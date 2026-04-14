@@ -17,7 +17,7 @@ per cluster is added to the metadata of the object."><meta property="og:image" c
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.17.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.17.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -151,6 +151,10 @@ used, so use this setting at your own risk.</p></dd>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The "Seurat" method is a wrapper for the <code>FindTransferAnchors</code> and <code>TransferData</code>
 functions from Seurat, followed by an optional summary per cluster.</p>
+<p>For <code>method = "nmf"</code>, merged <span class="pkg">SeuratObject</span> v5 assays (<code>Assay5</code>, including
+<code>PNAAssay5</code>) must not retain split merge layers (<code>counts.1</code>, <code>data.1</code>, etc.).
+Run <code>JoinLayers()</code> on the <code>Seurat</code> object (or on the assay) after <code><a href="https://rdrr.io/r/base/merge.html" class="external-link">merge()</a></code>
+before calling <code>AnnotateCells()</code>.</p>
     </div>
 
     <div class="section level2">

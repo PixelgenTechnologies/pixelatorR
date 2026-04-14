@@ -76,7 +76,7 @@ FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <chr>                                                 
-#> 1 <tibble [5 × 2]>      1 "C:\\Users\\max\\AppData\\Local\\Temp\\Rtmp2f7Zq5\\te…
+#> 1 <tibble [5 × 2]>      1 "C:\\Users\\max\\AppData\\Local\\R\\win-library\\4.5\…
 
 # If the PXL has been moved, we can update the fs_map
 # Here we copy the test PXL file to a temporary location
@@ -93,21 +93,19 @@ FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <fs::path>                                            
-#> 1 <tibble [5 × 2]>      1 …ax/AppData/Local/Temp/Rtmpampkmn/file5bf472535cc9.pxl
+#> 1 <tibble [5 × 2]>      1 …max/AppData/Local/Temp/RtmpmOhqBt/file62e831871bd.pxl
 
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf43cf641bb
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf419136800
 #> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf43131138c.h5ad
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpmOhqBt/file62e8c2b50a0.h5ad
 
 # Check PXL file paths in a Seurat object
 FSMap(seur_obj)
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <chr>                                                 
-#> 1 <tibble [5 × 2]>      1 "C:\\Users\\max\\AppData\\Local\\Temp\\Rtmp2f7Zq5\\te…
+#> 1 <tibble [5 × 2]>      1 "C:\\Users\\max\\AppData\\Local\\R\\win-library\\4.5\…
 
 library(pixelatorR)
 

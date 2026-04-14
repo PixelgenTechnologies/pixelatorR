@@ -124,14 +124,10 @@ pxl_file <- minimal_mpx_pxl_file()
 tmp_pxl_file <- file.path(fs::path_temp(), "five_cells.pxl")
 fs::file_copy(pxl_file, tmp_pxl_file)
 seur_obj <- ReadMPX_Seurat(tmp_pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf45f6e47d9
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf41fa9
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf473ba3254.h5ad
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpmOhqBt/file62e87af8174e.h5ad
 
 # Now we can load graphs
 seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1])
-#> ! Failed to delete temporary edge list parquet file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf449297ec1.parquet.
-#> ! Failed to delete temporary edge list parquet file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf449297ec1.parquet.
 
 # Removing or moving PXL file will make graphs inaccessible
 fs::file_delete(tmp_pxl_file)

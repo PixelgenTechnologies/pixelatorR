@@ -168,9 +168,7 @@ library(SeuratObject)
 pxl_file <- minimal_mpx_pxl_file()
 # Seurat objects
 se <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf46f923227
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf4274d361c
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf45396233b.h5ad
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpmOhqBt/file62e84d492fb7.h5ad
 se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
 se$sample <- c("T", "C", "C", "C", "C") %>% rep(times = 10)
 se <- Seurat::NormalizeData(se %>% JoinLayers(), normalization.method = "CLR", margin = 2)
@@ -182,14 +180,6 @@ daa_markers <- RunDAA(se,
   contrast_column = "sample",
   targets = "T", reference = "C"
 )
-#> Warning: The `slot` argument of `GetAssayData()` is deprecated as of SeuratObject 5.0.0.
-#> ℹ Please use the `layer` argument instead.
-#> ℹ The deprecated feature was likely used in the Seurat package.
-#>   Please report the issue at <https://github.com/satijalab/seurat/issues>.
-#> Warning: `PackageCheck()` was deprecated in SeuratObject 5.0.0.
-#> ℹ Please use `rlang::check_installed()` instead.
-#> ℹ The deprecated feature was likely used in the Seurat package.
-#>   Please report the issue at <https://github.com/satijalab/seurat/issues>.
 #> For a (much!) faster implementation of the Wilcoxon Rank Sum Test,
 #> (default method for FindMarkers) please install the presto package
 #> --------------------------------------------

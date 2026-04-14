@@ -857,11 +857,11 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name                    CD16  CD44  CD59
+#>   name                    CD45  CD44 CD191
 #>   <chr>                  <dbl> <dbl> <dbl>
-#> 1 55619162189985174-umi1     1     0     0
-#> 2 71258604383722477-umi1     1     0     0
-#> 3 5652424385946256-umi1      1     0     0
+#> 1 38257614889103735-umi1     1     0     0
+#> 2 61562482712795739-umi1     1     0     0
+#> 3 46981889898425634-umi1     1     0     0
 
 
 ## ------------------------------------------------
@@ -872,7 +872,7 @@ db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf44bcd64ee.parquet 
+#> C:/Users/max/AppData/Local/Temp/RtmpmOhqBt/file62e812a91e58.parquet 
 #>                                                                TRUE 
 
 

@@ -65,13 +65,9 @@ Now, we can load the MPX data as a Seurat object with `ReadMPX_Seurat`:
 seur <- ReadMPX_Seurat("PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
 ```
 
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmp6bbzEP/dir49345e5e673d
-
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmp6bbzEP/dir49342a3e52cd
-
     ## ✔ Created a 'Seurat' object with 477 cells and 80 targeted surface proteins
 
-    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp6bbzEP/file493444fdaed.h5ad
+    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpIz2qep/file97e852bb43d0.h5ad
 
 ## Seurat v5
 

@@ -8,6 +8,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## \[0.17.1\] - 2026-04-10
+
+### Updated
+
+- Added scaling to `isotype_pls` and changed default `layer` to “data”
+  to avoid issues where some markers are missing from the “scale.data”
+  `layer`.
+- `render_rotating_layout` now accepts `max_degree` down to 0 degrees
+  instead of 90 degrees as a minimum.
+
+### Fixes
+
+- Fixed a bug where running `AnnotateCells(..., method = "nmf")` could
+  unintentionally propagate normalization changes from an internal
+  temporary `Seurat` object to the returned object.
+- Fixed a bug in `render_rotating_layout` to explicitly use
+  [`graphics::layout`](https://rdrr.io/r/graphics/layout.html) to avoid
+  an error being triggered when having `plotly` loaded.
+
 ## \[0.17.0\] - 2026-03-23
 
 ### Added

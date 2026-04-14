@@ -106,6 +106,12 @@ The "Seurat" method is a wrapper for the `FindTransferAnchors` and
 `TransferData` functions from Seurat, followed by an optional summary
 per cluster.
 
+For `method = "nmf"`, merged SeuratObject v5 assays (`Assay5`, including
+`PNAAssay5`) must not retain split merge layers (`counts.1`, `data.1`,
+etc.). Run `JoinLayers()` on the `Seurat` object (or on the assay) after
+[`merge()`](https://rdrr.io/r/base/merge.html) before calling
+`AnnotateCells()`.
+
 ## Examples
 
 ``` r

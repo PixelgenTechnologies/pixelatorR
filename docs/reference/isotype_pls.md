@@ -13,7 +13,8 @@ isotype_pls(
   isotype_markers,
   model_mat = NULL,
   remove_covariates = FALSE,
-  layer = "scale.data"
+  layer = "data",
+  scale = TRUE
 )
 ```
 
@@ -38,7 +39,13 @@ isotype_pls(
 
 - layer:
 
-  String; the data layer in object to use (default is "scale.data").
+  String; the data layer in object to use (default is "data").
+
+- scale:
+
+  Logical; if TRUE, scales the data using
+  [`base::scale`](https://rdrr.io/r/base/scale.html) before fitting the
+  PLS model (default is TRUE).
 
 ## Value
 

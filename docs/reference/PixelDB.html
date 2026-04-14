@@ -9,7 +9,7 @@ PXL database class"><meta property="og:image" content="/logo.png"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.17.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.17.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -877,11 +877,11 @@ compression is 'zstd'.</p></dd>
 <span class="r-in"><span><span class="co"># Fetch marker counts</span></span></span>
 <span class="r-in"><span><span class="va">db</span><span class="op">$</span><span class="fu">components_marker_counts</span><span class="op">(</span><span class="st">"0a45497c6bfbfb22"</span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">]</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 4</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   name                    CD16  CD44  CD59</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   name                    CD45  CD44 CD191</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 55619162189985174-umi1     1     0     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 71258604383722477-umi1     1     0     0</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 5652424385946256-umi1      1     0     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 38257614889103735-umi1     1     0     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 61562482712795739-umi1     1     0     0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 46981889898425634-umi1     1     0     0</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co">## ------------------------------------------------</span></span></span>
@@ -892,7 +892,7 @@ compression is 'zstd'.</p></dd>
 <span class="r-in"><span><span class="va">tmp_parquet_file</span> <span class="op">&lt;-</span> <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/file_temp.html" class="external-link">file_temp</a></span><span class="op">(</span>ext <span class="op">=</span> <span class="st">"parquet"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">db</span><span class="op">$</span><span class="fu">export_parquet</span><span class="op">(</span><span class="va">tmp_parquet_file</span>, <span class="st">"proximity"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/file_access.html" class="external-link">file_exists</a></span><span class="op">(</span><span class="va">tmp_parquet_file</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf44bcd64ee.parquet </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> C:/Users/max/AppData/Local/Temp/RtmpmOhqBt/file62e812a91e58.parquet </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                                                TRUE </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span></span></span>

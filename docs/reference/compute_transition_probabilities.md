@@ -38,6 +38,7 @@ the k-step walk.
 
 ``` r
 library(igraph)
+#> Warning: package 'igraph' was built under R version 4.5.3
 #> 
 #> Attaching package: 'igraph'
 #> The following object is masked from 'package:tidygraph':

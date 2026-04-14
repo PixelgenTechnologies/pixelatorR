@@ -54,7 +54,6 @@ library(pixelatorR)
 # Load example data
 pxl_file <- minimal_mpx_pxl_file()
 polarization <- ReadMPX_item(pxl_file, items = "polarization")
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf42d6069d3
 polarization
 #> # A tibble: 380 × 6
 #>    morans_i morans_p_value morans_p_adjusted morans_z marker component    
@@ -73,5 +72,4 @@ polarization
 
 # Alternative 2
 polarization <- ReadMPX_polarization(pxl_file)
-#> ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/Rtmpampkmn/dir5bf46b0270d2
 ```

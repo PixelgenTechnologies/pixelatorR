@@ -42,7 +42,7 @@ edge_list <-
     minimal_mpx_pxl_file(),
     items = "edgelist"
   )
-#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/Temp/Rtmp2f7Zq5/temp_libpath7aa0ad0713/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/R/win-library/4.5/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 bipart_graph <-
@@ -78,7 +78,7 @@ CellGraphData(cg, slot = "cellgraph")
 #> #
 #> # Edge Data: 68,255 × 3
 #>    from    to marker
-#>   <int> <int> <chr> 
+#>   <int> <int> <fct> 
 #> 1     1 11034 CD27  
 #> 2     2 11035 CD27  
 #> 3     3 11036 CD27  

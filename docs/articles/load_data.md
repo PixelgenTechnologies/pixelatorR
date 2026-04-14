@@ -53,11 +53,6 @@ file, including: “polarization”, “colocalization”, “edgelist”.
 
 ``` r
 polarization_scores <- ReadMPX_item(pxl_file, items = "polarization")
-```
-
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540ca8214f9
-
-``` r
 polarization_scores
 ```
 
@@ -80,13 +75,6 @@ If we provide multiple items, `ReadMPX_item` returns a list instead:
 
 ``` r
 all_items <- ReadMPX_item(pxl_file, items = c("polarization", "colocalization", "edgelist"))
-```
-
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540c14a67efd
-
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540ce14156c
-
-``` r
 names(all_items)
 ```
 
@@ -100,15 +88,11 @@ Alternatively, we can use the wrapper functions `ReadMPX_polarization`,
 polarization_scores <- ReadMPX_polarization(pxl_file)
 ```
 
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540c55ae6b46
-
 is equivalent to
 
 ``` r
 polarization_scores <- ReadMPX_item(pxl_file, items = "polarization")
 ```
-
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540c64956d13
 
 ### Seurat
 
@@ -120,11 +104,7 @@ and whistles provided by `pixelatorR`.
 seur_obj <- ReadMPX_Seurat(pxl_file)
 ```
 
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540c107d355d
-
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540c53a2579b
-
-    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/file540c8925e6a.h5ad
+    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpmadf6o/file94905be36869.h5ad
 
 Here, you have a few options to modify how the `Seurat` should be
 created. First and foremost, we can set `return_cellgraphassay = FALSE`
@@ -147,7 +127,7 @@ seur_obj <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = FALSE)
 
     ## Warning: Data is of class matrix. Coercing to dgCMatrix.
 
-    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/file540c83374c4.h5ad
+    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpmadf6o/file9490674da6e.h5ad
 
 ``` r
 seur_obj[["mpxCells"]]
@@ -174,11 +154,7 @@ scores and colocalization scores are loaded and stored in a
 seur_obj <- ReadMPX_Seurat(pxl_file)
 ```
 
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540c3ec148a6
-
-    ## ! Failed to remove temporary dir C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/dir540c248615ac
-
-    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpyUcZK7/file540ca3213c3.h5ad
+    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmpmadf6o/file94907dbe2ca7.h5ad
 
 ``` r
 seur_obj

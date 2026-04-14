@@ -82,7 +82,7 @@ render_rotating_layout(
 
 - max_degree:
 
-  A numeric value between 90 and 360. The maximum angle of rotation
+  A numeric value between 0 and 360. The maximum angle of rotation
   around the z axis. Default is 360, which corresponds to a full turn
   around the z axis.
 
@@ -286,7 +286,7 @@ render_rotating_layout(
 #> 
 #> ── Creating video... 
 #> ✔ The video has been saved to:
-#> C:/Users/max/AppData/Local/Temp/Rtmpampkmn/file5bf45b033fd3.gif
+#> C:/Users/max/AppData/Local/Temp/RtmpmOhqBt/file62e858b284c.gif
 magick::image_read(temp_gif)
 #> # A tibble: 20 × 7
 #>    format width height colorspace matte filesize density

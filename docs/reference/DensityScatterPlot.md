@@ -121,6 +121,7 @@ A ggplot object.
 ``` r
 library(pixelatorR)
 library(Seurat)
+#> Warning: package 'Seurat' was built under R version 4.5.3
 #> 
 #> Attaching package: 'Seurat'
 #> The following object is masked from 'package:igraph':
