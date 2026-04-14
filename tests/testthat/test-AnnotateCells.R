@@ -24,7 +24,7 @@ reference <- SeuratObject::CreateSeuratObject(
 
 test_that("annotate_cells works as expected", {
   # NMF default
-  expect_no_error(seur <- AnnotateCells(
+  expect_no_error(seur_anno <- AnnotateCells(
     seur,
     reference,
     query_assay = "PNA",
@@ -35,7 +35,7 @@ test_that("annotate_cells works as expected", {
     verbose = FALSE
   ))
   expect_equal(
-    seur$cell_type %>% unname(),
+    seur_anno$cell_type %>% unname(),
     c(
       "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T",
@@ -61,6 +61,82 @@ test_that("annotate_cells works as expected", {
       "Mono CD16+", "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+", "Unknown", "CD4T",
       "CD4T", "CD4T", "Mono CD16+", "Unknown", "CD4T", "CD4T", "CD4T"
+    )
+  )
+
+  # Test that normalization is preserved
+  reference <- read_pbmc_reference()
+  seur_sub <-
+    seur %>%
+    Seurat::NormalizeData(normalization.method = "CLR", margin = 2) %>%
+    # Z score scaling
+    Seurat::ScaleData() %>%
+    Seurat::RunPCA(npcs = 3, features = rownames(seur)) %>%
+    Seurat::FindNeighbors(reduction = "pca", dims = 1:3) %>%
+    Seurat::FindClusters(resolution = 0.5) %>%
+    subset(features = head(rownames(seur), 50))
+
+
+  # NMF default
+  expect_no_error(seur_anno <- AnnotateCells(
+    seur_sub,
+    reference,
+    reference_groups = c("celltype.l1", "celltype.l2"),
+    # Summarise annotations by cluster, adding an extra column with majority vote
+    summarize_by_column = "seurat_clusters",
+    query_assay = "PNA",
+    reference_assay = "PNA",
+    method = "nmf"
+  ))
+
+  expect_equal(
+    LayerData(seur_anno, "counts"),
+    LayerData(seur_sub, "counts")
+  )
+  expect_equal(
+    LayerData(seur_anno, "data"),
+    LayerData(seur_sub, "data")
+  )
+})
+
+test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
+  options(Seurat.object.assay.version = "v5")
+  on.exit(options(Seurat.object.assay.version = "v3"), add = TRUE)
+
+  seur_v5 <- suppressWarnings(ReadPNA_Seurat(
+    minimal_pna_pxl_file(),
+    overwrite = TRUE,
+    load_proximity_scores = FALSE,
+    verbose = FALSE
+  ))
+  seur_merged <- suppressWarnings(merge(seur_v5, seur_v5, add.cell.ids = c("A", "B")))
+  ref <- read_pbmc_reference()
+
+  expect_error(
+    AnnotateCells(
+      seur_merged,
+      ref,
+      query_assay = "PNA",
+      reference_assay = "PNA",
+      reference_groups = c("celltype.l1", "celltype.l2"),
+      method = "nmf",
+      skip_normalization = TRUE,
+      verbose = FALSE
+    ),
+    regexp = "JoinLayers"
+  )
+
+  seur_joined <- suppressWarnings(JoinLayers(seur_merged))
+  expect_no_error(
+    AnnotateCells(
+      seur_joined,
+      ref,
+      query_assay = "PNA",
+      reference_assay = "PNA",
+      reference_groups = c("celltype.l1", "celltype.l2"),
+      method = "nmf",
+      skip_normalization = TRUE,
+      verbose = FALSE
     )
   )
 })
