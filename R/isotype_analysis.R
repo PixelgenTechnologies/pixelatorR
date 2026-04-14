@@ -110,7 +110,7 @@ isotype_pls <-
     assert_x_in_y(layer, Layers(object))
     assert_single_value(scale, type = "bool")
 
-    if (layer == "scale.data" & isTRUE(scale)) {
+    if (layer == "scale.data" && isTRUE(scale)) {
       cli::cli_warn("Data in 'scale.data' layer is already scaled. Set 'scale = FALSE' to avoid double scaling.")
     }
 
