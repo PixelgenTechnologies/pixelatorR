@@ -41,7 +41,8 @@
 #' @param isotype_markers A character vector of isotype control marker names.
 #' @param model_mat An optional matrix of covariates for residualization (cells × covariates).
 #' @param remove_covariates Logical; if TRUE, residualizes data against model_mat before PLS.
-#' @param layer String; the data layer in object to use (default is "scale.data").
+#' @param layer String; the data layer in object to use (default is "data").
+#' @param scale Logical; if TRUE, scales the data using `base::scale` before fitting the PLS model (default is TRUE).
 #'
 #' @return A list containing the PLS model, scores, and loadings.
 #'
@@ -83,7 +84,14 @@
 #' @export
 #'
 isotype_pls <-
-  function(object, isotype_markers, model_mat = NULL, remove_covariates = FALSE, layer = "scale.data") {
+  function(
+    object,
+    isotype_markers,
+    model_mat = NULL,
+    remove_covariates = FALSE,
+    layer = "data",
+    scale = TRUE
+  ) {
     expect_pls()
 
     assert_class(object, "Seurat")
@@ -100,6 +108,11 @@ isotype_pls <-
     assert_single_value(remove_covariates, type = "bool")
     assert_single_value(layer, type = "string")
     assert_x_in_y(layer, Layers(object))
+    assert_single_value(scale, type = "bool")
+
+    if (layer == "scale.data" && isTRUE(scale)) {
+      cli::cli_warn("Data in 'scale.data' layer is already scaled. Set 'scale = FALSE' to avoid double scaling.")
+    }
 
     if (remove_covariates && is.null(model_mat)) {
       cli::cli_abort("model_mat must be provided when remove_covariates is TRUE")
@@ -111,6 +124,10 @@ isotype_pls <-
       LayerData(layer = layer) %>%
       as.matrix() %>%
       t()
+
+    if (scale) {
+      X <- scale(X)
+    }
 
     if (nrow(X) == 0 || ncol(X) == 0) {
       cli::cli_abort(glue::glue("
