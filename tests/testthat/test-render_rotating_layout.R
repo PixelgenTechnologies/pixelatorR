@@ -106,7 +106,7 @@ test_that("render_rotating_layout fails with invalid input", {
 
   # Invalid max_degree
   expect_error(
-    render_rotating_layout(xyz, gif_file, max_degree = 20)
+    render_rotating_layout(xyz, gif_file, max_degree = -20)
   )
 
   # Invalid center_zero

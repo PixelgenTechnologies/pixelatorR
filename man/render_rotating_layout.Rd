@@ -61,7 +61,7 @@ the length of 'colors' should be equal to the number of unique levels.
 If 'node_val' is numeric, the colors will be used to create a gradient
 color scale.}
 
-\item{max_degree}{A numeric value between 90 and 360. The maximum angle
+\item{max_degree}{A numeric value between 0 and 360. The maximum angle
 of rotation around the z axis. Default is 360, which corresponds to a
 full turn around the z axis.}
 

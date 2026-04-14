@@ -70,7 +70,7 @@
 #' the length of 'colors' should be equal to the number of unique levels.
 #' If 'node_val' is numeric, the colors will be used to create a gradient
 #' color scale.
-#' @param max_degree A numeric value between 90 and 360. The maximum angle
+#' @param max_degree A numeric value between 0 and 360. The maximum angle
 #' of rotation around the z axis. Default is 360, which corresponds to a
 #' full turn around the z axis.
 #' @param center_zero A logical value indicating whether the color gradient
@@ -734,7 +734,7 @@ render_rotating_layout <- function(
     bg = ifelse(bg == "transparent", NA, bg)
   )
 
-  layout(mat = lyt)
+  graphics::layout(mat = lyt)
 
   for (marker_id in names(xyz_list_nested[[1]])) {
     for (cell_id in names(xyz_list_nested)) {
@@ -1036,7 +1036,7 @@ scale_layout <- function(
 #' @param pt_opacity A numeric value between 0 and 1
 #' @param pt_size A numeric value
 #' @param colors A vector of color names
-#' @param max_degree A numeric value between 90 and 360
+#' @param max_degree A numeric value between 0 and 360
 #' @param center_zero A logical value
 #' @param scale_layout A logical value
 #' @param frames An integer value
@@ -1089,7 +1089,7 @@ scale_layout <- function(
   assert_within_limits(pt_opacity, c(0, 1), call = call)
   assert_within_limits(pt_size, c(0, 5), call = call)
   assert_vector(colors, "character", call = call)
-  assert_within_limits(max_degree, c(90, 360), call = call)
+  assert_within_limits(max_degree, c(0, 360), call = call)
   assert_single_value(center_zero, "bool", call = call)
   assert_single_value(scale_layout, "bool", call = call)
   assert_single_value(frames, "integer", call = call)
