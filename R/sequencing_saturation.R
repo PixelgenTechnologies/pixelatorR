@@ -548,7 +548,8 @@ approximate_node_saturation <- function(
 #'   geom_point() +
 #'   labs(x = "Reads", y = "Saturation") +
 #'   theme_minimal() +
-#'   facet_grid(~type)
+#'   facet_grid(~type) +
+#'   scale_y_continuous(limits = c(0, 1))
 #'
 #' db$close()
 #' }
@@ -576,9 +577,18 @@ approximate_saturation_curve <- function(
   assert_single_value(verbose, type = "bool")
 
   # Compute node and edge saturation per component at full depth
-  node_saturation <- approximate_node_saturation(db, components = components, table_name = "node_saturation") %>%
+  node_saturation <- approximate_node_saturation(
+    db,
+    components = components,
+    table_name = "node_saturation",
+    node_reads_multiplier = node_reads_multiplier
+  ) %>%
     select(-read_count)
-  edge_saturation <- approximate_edge_saturation(db, components = components, table_name = "edge_saturation") %>%
+  edge_saturation <- approximate_edge_saturation(
+    db,
+    components = components,
+    table_name = "edge_saturation"
+  ) %>%
     select(-read_count)
 
   if (verbose && check_global_verbosity()) {

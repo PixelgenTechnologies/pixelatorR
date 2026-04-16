@@ -101,7 +101,8 @@ sat_curve \%>\%
   geom_point() +
   labs(x = "Reads", y = "Saturation") +
   theme_minimal() +
-  facet_grid(~type)
+  facet_grid(~type) +
+  scale_y_continuous(limits = c(0, 1))
 
 db$close()
 }
