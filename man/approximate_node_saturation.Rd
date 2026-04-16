@@ -4,7 +4,12 @@
 \alias{approximate_node_saturation}
 \title{Compute approximate node saturation}
 \usage{
-approximate_node_saturation(db, components = NULL, table_name = NULL)
+approximate_node_saturation(
+  db,
+  components = NULL,
+  table_name = NULL,
+  node_reads_multiplier = 2
+)
 }
 \arguments{
 \item{db}{A \code{PixelDB} object with an active DuckDB connection.}
@@ -14,6 +19,9 @@ edgelist. If \code{NULL} (default), all components are included.}
 
 \item{table_name}{Optional name for the computed remote table. If provided,
 the result is materialized as a table in the DuckDB connection.}
+
+\item{node_reads_multiplier}{Numeric; multiplier for the read count when calculating
+node saturation. Default is \code{2}, reflecting that each edge contributes to two nodes.}
 }
 \value{
 A lazy \code{tbl} (DuckDB query) with columns:
