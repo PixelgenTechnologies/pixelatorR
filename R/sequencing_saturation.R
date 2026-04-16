@@ -367,8 +367,8 @@ approximate_node_saturation <- function(
 
   assert_single_value(table_name, type = "string", allow_null = TRUE)
   # Summarize node stats
-  # Note that by default, each read supports two nodes (one at each endpoint), 
-  # so the total read count for nodes is 2x the total read count for edges. 
+  # Note that by default, each read supports two nodes (one at each endpoint),
+  # so the total read count for nodes is 2x the total read count for edges.
   DBI::dbExecute(
     db$.__enclos_env__$private$con,
     glue::glue(
@@ -391,7 +391,7 @@ approximate_node_saturation <- function(
       type = "nodes",
       table_name = table_name
     )
-  
+
   # If node_reads_multiplier is 1, we are treating the read count for nodes as the same as for edges.
   # In this case, we need to adjust the read count for nodes by dividing by 2.
   if (node_reads_multiplier == 1) {
@@ -588,7 +588,7 @@ approximate_saturation_curve <- function(
   }
 
   # Calculate expected fraction of edges removed after downsampling
-  # For each edge, P(edges, removed) = (1 - p)^read_count. This is computed 
+  # For each edge, P(edges, removed) = (1 - p)^read_count. This is computed
   # for each fraction and stored in a new column, e.g., p_0.1, p_0.2, etc.
   mut_actual_p <- list()
   for (p in fracs) {
@@ -597,9 +597,9 @@ approximate_saturation_curve <- function(
   }
 
   # Calculate expected fraction of edges remaining after downsampling
-  # This is simply P(edges, retained) = 1 - P(edges, removed) = 1 - (1 - p)^read_count. 
+  # This is simply P(edges, retained) = 1 - P(edges, removed) = 1 - (1 - p)^read_count.
   # We will sum this value across all edges to get the expected number of edges retained at each fraction.
-  # The new columns will be named p_0.1_tot, p_0.2_tot, etc., and will represent the total 
+  # The new columns will be named p_0.1_tot, p_0.2_tot, etc., and will represent the total
   # expected edges retained at each fraction.
   sum_est_edges <- list()
   for (col_name in paste0("p_", fracs)) {
@@ -611,7 +611,7 @@ approximate_saturation_curve <- function(
   sum_est_edges[["n_edges"]] <- rlang::expr(n())
 
   # Calculate percentage of edges kept: expected edges kept / total edges
-  # This will give us the expected percentage of edges retained at each fraction, 
+  # This will give us the expected percentage of edges retained at each fraction,
   # which we can use to estimate node retention and saturation.
   # The new columns will be named p_0.1_pctkept, p_0.2_pctkept, etc.
   mut_pct_kept <- list()
@@ -621,7 +621,7 @@ approximate_saturation_curve <- function(
     mut_pct_kept[[col_name_pctkept]] <- rlang::expr(!!rlang::sym(col_name_tot) / n_edges)
   }
 
-  # Now we apply the calculations to the edgelist, grouping by component. 
+  # Now we apply the calculations to the edgelist, grouping by component.
   result_df <- tbl(db$.__enclos_env__$private$con, "edgelist") %>%
     {
       # Optional filtering by components. If components is NULL, we keep all edges.
@@ -636,7 +636,8 @@ approximate_saturation_curve <- function(
 
   # Compute estimated nodes remaining using: P(nodes, retained) = 1 - (1 - P(edges, retained))^degree
   # where pct_kept (P(edges, retained)) is the probability of all edges to a node being removed.
-  # The new columns will be named p_0.1_nodes, p_0.2_nodes, etc., and will represent P(nodes, retained) at each fraction.
+  # The new columns will be named p_0.1_nodes, p_0.2_nodes, etc., and will represent P(nodes, retained)
+  # at each fraction.
   # We also keep track of the percentage of edges kept for each fraction to use in the saturation calculation.
   sum_nodes <- list()
   for (col_name in paste0("p_", fracs)) {
