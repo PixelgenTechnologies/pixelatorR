@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.17.1] - 2026-04-10
 
 ### Updated
+- `approximate_node_saturation`, `approximate_edge_saturation` and `approximate_saturation_curve` now uses the standard definition of saturation (s = 1 - molecules / reads).
 - Added scaling to `isotype_pls` and changed default `layer` to "data" to avoid issues where some markers are missing from the "scale.data" `layer`.
 - `render_rotating_layout` now accepts `max_degree` down to 0 degrees instead of 90 degrees as a minimum. 
 
