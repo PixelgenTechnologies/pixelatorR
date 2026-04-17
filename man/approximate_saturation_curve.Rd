@@ -7,30 +7,110 @@
 approximate_saturation_curve(
   db,
   fracs = seq(0.04, 0.96, by = 0.04),
-  detailed = FALSE,
+  components = NULL,
+  node_reads_multiplier = 2,
   verbose = TRUE
 )
 }
 \arguments{
-\item{db}{A \code{PixelDB} object.}
+\item{db}{A \code{PixelDB} object with an active DuckDB connection.}
 
-\item{fracs}{A numeric vector of fractions to downsample the edgelist.}
+\item{fracs}{A numeric vector of fractions to downsample the edgelist.
+Values must be strictly between 0 and 1. Default is \code{seq(0.04, 0.96, by = 0.04)}.}
 
-\item{detailed}{If \code{TRUE}, the function will return ...}
+\item{components}{Optional character vector of component names to compute saturation for.
+If \code{NULL} (default), all components are included.}
 
-\item{verbose}{Print messages}
+\item{node_reads_multiplier}{Numeric; multiplier for the read count when calculating
+node saturation. Default is \code{2}, reflecting that each edge contributes to two nodes.
+Optionally, set to \code{1} to use the same read count for nodes and edges, which may
+be more appropriate in certain contexts.}
+
+\item{verbose}{Logical; if \code{TRUE} (default), print progress messages.}
 }
 \value{
-A tibble with the saturation values
+A tibble with the following columns:
+\describe{
+\item{component}{The component (cell) identifier.}
+\item{read_count}{The estimated number of reads after downsampling.}
+\item{p}{The downsampling fraction.}
+\item{nodes}{The estimated number of nodes retained.}
+\item{edges}{The estimated number of edges retained.}
+\item{degree}{The estimated average node degree.}
+\item{node_saturation}{The node saturation at the given fraction.}
+\item{edge_saturation}{The edge saturation at the given fraction.}
+}
 }
 \description{
-This function computes an approximate saturation curve for nodes and edges
-in an edgelist. The edgelist is downsampled to various fractions of the
-total number of reads, and the number of remaining nodes and edges are calculated
-for each fraction. The saturation values are then calculated relative to the
-theoretical maximum number of nodes and edges using the Chao1 estimator. The
-theoretical maximum is computed for each component in the full edgelist. Note
-that Chao1 will give a lower bound for the theoretical maximum, hence the
-saturation values are likely overestimated. The estimate will be more robust
-if the sample was sequenced at a high depth.
+Computes an approximate saturation curve for nodes and edges in an edgelist
+by estimating the expected number of retained elements at various downsampling
+fractions. This provides insight into how sequencing depth affects saturation
+without requiring actual downsampling.
+}
+\details{
+\subsection{Downsampling model}{
+
+The downsampling is performed probabilistically using expected values rather
+than actual random sampling. For each edge with a given \code{read_count}, the
+probability of the edge being retained at fraction \code{p} is:
+\deqn{P(\text{edge retained}) = 1 - (1 - p)^{\text{read\_count}}}
+
+For nodes, the probability of retention depends on the node's degree. A node
+is retained if at least one of its incident edges is retained:
+\deqn{P(\text{node retained}) = 1 - (1 - p_{edges})^{\text{degree}}}
+where \eqn{p_{edges}} is the fraction of edges retained.
+}
+
+\subsection{Saturation calculation}{
+
+The saturation values are calculated using:
+\deqn{S = 1 - \frac{N_{downsampled}}{R_{downsampled}}}
+
+where \eqn{N_{downsampled}} is the number of nodes or edges in the downsampled
+graph, and \eqn{R_{downsampled}} is the number of reads supporting those elements.
+Since each read supports two nodes (one at each endpoint),
+\eqn{R_{downsampled, nodes} = 2 \times R_{downsampled, edges}}.
+}
+
+\subsection{Implementation notes}{
+
+This function requires that \code{\link{approximate_node_saturation}} has been
+called first (either directly or through this function) to create the \code{nodes}
+temporary view in the DuckDB connection.
+}
+}
+\examples{
+\dontrun{
+library(ggplot2)
+library(dplyr)
+
+pxl_file <- minimal_pna_pxl_file()
+db <- PixelDB$new(pxl_file)
+
+sat_curve <- approximate_saturation_curve(db, fracs = seq(0.1, 0.9, by = 0.1))
+
+# Plot node saturation curve
+sat_curve \%>\%
+  tidyr::pivot_longer(
+    cols = c(node_saturation, edge_saturation),
+    names_to = "type",
+    values_to = "saturation"
+  ) \%>\%
+  ggplot(aes(read_count, saturation, color = component)) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Reads", y = "Saturation") +
+  theme_minimal() +
+  facet_grid(~type) +
+  scale_y_continuous(limits = c(0, 1))
+
+db$close()
+}
+
+}
+\seealso{
+\code{\link{approximate_node_saturation}} and \code{\link{approximate_edge_saturation}}
+for computing saturation at full depth.
+\code{\link{lcc_curve}} for computing largest connected component sizes at
+different downsampling fractions.
 }
