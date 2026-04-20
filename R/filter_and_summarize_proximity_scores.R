@@ -290,13 +290,15 @@ SummarizeProximityScores.tbl_lazy <- function(
             c(unlist(join_count_expected_mean_list), rep(0, n_cells_missing))
           )
         )
-      } else {
+      } else if (include_missing_obs && !detailed) {
         mutate(
           .,
           !!sym(paste0(proximity_metric, "_list")) := list(
             c(unlist(!!sym(paste0(proximity_metric, "_list"))), rep(0, n_cells_missing))
           )
         )
+      } else {
+        .
       }
     } %>%
     mutate(
