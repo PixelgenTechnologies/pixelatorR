@@ -20,6 +20,13 @@ test_that("SummarizeProximityScores works as expected", {
   expect_no_error(proximity_summarized_lazy <- SummarizeProximityScores(proximity_lazy, proximity_metric = "join_count_z"))
   expect_equal(dim(proximity_summarized), dim(proximity_summarized_lazy))
   expect_equal(dim(proximity_summarized), c(12561, 7))
+
+  # Including or excluding missing obs
+  expect_no_error(proximity_summarized_w0 <- SummarizeProximityScores(proximity, include_missing_obs = TRUE, detailed = TRUE))
+  expect_no_error(proximity_summarized_wo0 <- SummarizeProximityScores(proximity, include_missing_obs = FALSE, detailed = TRUE))
+  expect_true(all(sapply(proximity_summarized_w0$log2_ratio_list, length) == 5))
+  expect_true(!all(sapply(proximity_summarized_wo0$log2_ratio_list, length) == 5))
+  expect_true(!all(proximity_summarized_w0$mean_log2_ratio == proximity_summarized_wo0$mean_log2_ratio))
 })
 
 test_that("SummarizeProximityScores fails with invalid input", {
