@@ -1,3 +1,4 @@
+library(dplyr)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
   LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)
 
