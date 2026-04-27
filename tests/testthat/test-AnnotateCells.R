@@ -66,15 +66,17 @@ test_that("annotate_cells works as expected", {
 
   # Test that normalization is preserved
   reference <- read_pbmc_reference()
-  seur_sub <-
-    seur %>%
-    Seurat::NormalizeData(normalization.method = "CLR", margin = 2) %>%
-    # Z score scaling
-    Seurat::ScaleData() %>%
-    Seurat::RunPCA(npcs = 3, features = rownames(seur)) %>%
-    Seurat::FindNeighbors(reduction = "pca", dims = 1:3) %>%
-    Seurat::FindClusters(resolution = 0.5) %>%
-    subset(features = head(rownames(seur), 50))
+  expect_no_error(
+    seur_sub <-
+      seur %>%
+      Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE) %>%
+      # Z score scaling
+      Seurat::ScaleData(verbose = FALSE) %>%
+      Seurat::RunPCA(npcs = 3, features = rownames(seur), verbose = FALSE) %>%
+      Seurat::FindNeighbors(reduction = "pca", dims = 1:3, verbose = FALSE) %>%
+      Seurat::FindClusters(resolution = 0.5, verbose = FALSE) %>%
+      subset(features = head(rownames(seur), 50))
+  )
 
 
   # NMF default
@@ -86,7 +88,8 @@ test_that("annotate_cells works as expected", {
     summarize_by_column = "seurat_clusters",
     query_assay = "PNA",
     reference_assay = "PNA",
-    method = "nmf"
+    method = "nmf",
+    verbose = FALSE
   ))
 
   expect_equal(
@@ -110,7 +113,10 @@ test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
     verbose = FALSE
   ))
   seur_merged <- suppressWarnings(merge(seur_v5, seur_v5, add.cell.ids = c("A", "B")))
-  ref <- read_pbmc_reference()
+  expect_no_error(
+    ref <- read_pbmc_reference() %>%
+      NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
+  )
 
   expect_error(
     AnnotateCells(
@@ -126,7 +132,10 @@ test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
     regexp = "JoinLayers"
   )
 
-  seur_joined <- suppressWarnings(JoinLayers(seur_merged))
+  expect_no_error(
+    seur_joined <- JoinLayers(seur_merged) %>% 
+      NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
+  )
   expect_no_error(
     AnnotateCells(
       seur_joined,
