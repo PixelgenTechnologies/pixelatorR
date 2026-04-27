@@ -7,7 +7,7 @@
 #'   LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE) %>%
 #'   CellGraphs() %>%
 #'   .[[1]]
-#' 
+#'
 #' ComputeProximityScores(cg) %>%
 #'   filter(join_count_z > 3)
 #'

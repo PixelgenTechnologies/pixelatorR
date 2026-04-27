@@ -1466,7 +1466,7 @@ CalculateDispersion <- function(
 #' expected join counts and standard deviations are calculated using analytical formulas.
 #' If "permutation", the expected join counts and standard deviations are are calculated
 #' using permutations.
-#' @param k `r lifecycle::badge("experimental")` The maximum number of steps in the local 
+#' @param k `r lifecycle::badge("experimental")` The maximum number of steps in the local
 #' neighborhood to consider. Default is 1, corresponding to immediate neighbors.
 #' @param iterations Number of iterations for permutation. Default is 100.
 #' @param calc_z_score Logical indicating whether to calculate z-scores.
