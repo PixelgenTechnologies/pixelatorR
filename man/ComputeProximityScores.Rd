@@ -7,7 +7,7 @@
 \alias{ComputeProximityScores.PNAAssay}
 \alias{ComputeProximityScores.PNAAssay5}
 \alias{ComputeProximityScores.Seurat}
-\title{Compute proximity scores using permutations}
+\title{Compute proximity scores}
 \usage{
 ComputeProximityScores(object, ...)
 
@@ -86,7 +86,7 @@ ComputeProximityScores(object, ...)
 
 \item{mode}{Either "analytical" or "permutation". If "analytical", the
 expected join counts and standard deviations are calculated using analytical formulas.
-If "permutation", the expected join counts and standard deviations are are calculated
+If "permutation", the expected join counts and standard deviations are calculated
 using permutations.}
 
 \item{k}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} The maximum number of steps in the local
@@ -117,8 +117,8 @@ A tibble with the following columns:
 \item \code{marker_1}: Name of the first marker.
 \item \code{marker_2}: Name of the second marker.
 \item \code{join_count}: Observed join count.
-\item \code{join_count_expected_mean}: Expected mean join count from permutations.
-\item \code{join_count_expected_sd}: Expected standard deviation of join count from permutations.
+\item \code{join_count_expected_mean}: Expected mean join count.
+\item \code{join_count_expected_sd}: Expected standard deviation of the join count.
 \item \code{join_count_z}: Z-score for the observed join count. (optional)
 \item \code{log2_ratio}: Log2 ratio of observed join count to expected mean. (optional)
 \item \code{component}: PNA component name. Only provided for some methods.
@@ -130,10 +130,10 @@ First, the observed join_counts are calculated. The direction of the join counts
 is ignored, meaning that the join_counts are combined for both directions (e.g. A/B = B/A).
 }
 \details{
-Thea mean and standard deviations are calculated either from permutations or using analytical formulas.
+The mean and standard deviations are calculated either from permutations or using analytical formulas.
 See details below.
 
-Finally, two proximity metrics are computed from the resulting join_count statics.
+Finally, two proximity metrics are computed from the resulting join_count statistics.
 }
 \section{Analytical proximity score}{
 
@@ -178,7 +178,6 @@ cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
 ComputeProximityScores(cg) \%>\%
   filter(join_count_z > 3)
 
-library(pixelatorRinternal)
 library(ggplot2)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
   LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)

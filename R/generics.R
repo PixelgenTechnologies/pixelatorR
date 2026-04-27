@@ -1421,16 +1421,16 @@ CalculateDispersion <- function(
 }
 
 
-#' Compute proximity scores using permutations
+#' Compute proximity scores
 #'
 #' This function computes proximity scores for pairs of proteins in a PNA graph.
 #' First, the observed join_counts are calculated. The direction of the join counts
 #' is ignored, meaning that the join_counts are combined for both directions (e.g. A/B = B/A).
 #'
-#' Thea mean and standard deviations are calculated either from permutations or using analytical formulas.
+#' The mean and standard deviations are calculated either from permutations or using analytical formulas.
 #' See details below.
 #'
-#' Finally, two proximity metrics are computed from the resulting join_count statics.
+#' Finally, two proximity metrics are computed from the resulting join_count statistics.
 #'
 #' @section Analytical proximity score:
 #' The expected mean is calculated as \eqn{p_{umi1,m1} * p_{umi2,m2} * S0}, where \eqn{p_{umi1,m1}}
@@ -1464,7 +1464,7 @@ CalculateDispersion <- function(
 #' @param object An object containing PNA graph data.
 #' @param mode Either "analytical" or "permutation". If "analytical", the
 #' expected join counts and standard deviations are calculated using analytical formulas.
-#' If "permutation", the expected join counts and standard deviations are are calculated
+#' If "permutation", the expected join counts and standard deviations are calculated
 #' using permutations.
 #' @param k `r lifecycle::badge("experimental")` The maximum number of steps in the local
 #' neighborhood to consider. Default is 1, corresponding to immediate neighbors.
@@ -1480,8 +1480,8 @@ CalculateDispersion <- function(
 #'  - `marker_1`: Name of the first marker.
 #'  - `marker_2`: Name of the second marker.
 #'  - `join_count`: Observed join count.
-#'  - `join_count_expected_mean`: Expected mean join count from permutations.
-#'  - `join_count_expected_sd`: Expected standard deviation of join count from permutations.
+#'  - `join_count_expected_mean`: Expected mean join count.
+#'  - `join_count_expected_sd`: Expected standard deviation of the join count.
 #'  - `join_count_z`: Z-score for the observed join count. (optional)
 #'  - `log2_ratio`: Log2 ratio of observed join count to expected mean. (optional)
 #'  - `component`: PNA component name. Only provided for some methods.
