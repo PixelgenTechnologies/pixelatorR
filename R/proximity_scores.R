@@ -32,8 +32,8 @@ ComputeProximityScores.CellGraph <- function(
   assert_single_value(k, "integer", allow_null = TRUE)
   if (is.null(k)) {
     k <- 1L
-    lifecycle::signal_stage("experimental", "ComputeProximityScores(k = )")
   } else {
+    lifecycle::signal_stage("experimental", "ComputeProximityScores(k = )")
     assert_within_limits(k, c(1L, 6L))
   }
   assert_single_value(iterations, "integer")
@@ -42,7 +42,6 @@ ComputeProximityScores.CellGraph <- function(
   assert_single_value(calc_log2_ratio, "bool")
   assert_single_value(min_marker_count, "integer")
   assert_single_value(seed, "integer")
-  set.seed(seed)
 
   if (!"node_type" %in% (object@cellgraph %N>% as_tibble() %>% names())) {
     cli::cli_abort(
@@ -109,8 +108,8 @@ ComputeProximityScores.CellGraph <- function(
     join_count_expected_sd <- join_count_expected_sd[upper.tri(join_count_expected_sd, diag = TRUE)]
   }
   if (mode == "permutation") {
+    set.seed(seed)
     N <- ncol(counts)
-    N_row <- nrow(counts)
 
     # Initialize the array to store the permuted join counts
     ar <- array(data = 0, dim = c(N, N, iterations))

@@ -90,7 +90,7 @@ If "permutation", the expected join counts and standard deviations are calculate
 using permutations.}
 
 \item{k}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}} The maximum number of steps in the local
-neighborhood to consider. Default is 1, corresponding to immediate neighbors.}
+neighborhood to consider. Default is to only include immediate neighbors.}
 
 \item{iterations}{Number of iterations for permutation. Default is 100.}
 
