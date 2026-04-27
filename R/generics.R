@@ -1419,3 +1419,80 @@ CalculateDispersion <- function(
 ) {
   UseMethod(generic = "CalculateDispersion", object = object)
 }
+
+
+#' Compute proximity scores using permutations
+#'
+#' This function computes proximity scores for pairs of proteins in a PNA graph.
+#' First, the observed join_counts are calculated. The direction of the join counts
+#' is ignored, meaning that the join_counts are combined for both directions (e.g. A/B = B/A).
+#'
+#' Thea mean and standard deviations are calculated either from permutations or using analytical formulas.
+#' See details below.
+#'
+#' Finally, two proximity metrics are computed from the resulting join_count statics.
+#'
+#' @section Analytical proximity score:
+#' The expected mean is calculated as \eqn{p_{umi1,m1} * p_{umi2,m2} * S0}, where \eqn{p_{umi1,m1}}
+#' and \eqn{p_{umi2,m2}}  are the frequencies of the two markers in the graph for umi1 and umi2 nodes,
+#' respectively. \eqn{S0} is the total number of edges in the graph.
+#' The formula for the variance of the join count statistic is given by (eq. 8, Epperson, B. K. 2002):
+#' \deqn{
+#' Var_{m1m2} = \frac{1}{4} \times (2S1p_{umi1,m1}p_{umi2,m2} + (S2 - 2S1)(p_{umi1,m1}p_{umi2,m2}(p_{umi1,m1} +
+#' p_{umi2,m2})) + 4(S1 - S2)(p_{umi1,m1}^2p_{umi2,m2}^2))
+#' }
+#'
+#' where
+#'
+#' \deqn{
+#' S1 = \frac{1}{2} \times (\sum_{i,j} (A_{ij} + A_{ji})^2)
+#' }
+#'
+#' and
+#'
+#' \deqn{
+#' S2 = \sum_{i} \left(\sum_{j} (A_{ij} + A_{ji})^2\right)
+#' }
+#'
+#' @section Permuted proximity score:
+#' The expected mean and standard deviation are calculated from a number of permutations of the graph.
+#' In each permutation, the marker labels of the nodes are shuffled, and the join counts are recalculated.
+#' The expected mean is then calculated as the mean of the join counts across all permutations, and the
+#' expected standard deviation is calculated as the standard deviation of the join counts across all
+#' permutations.
+#'
+#' @param object An object containing PNA graph data.
+#' @param mode Either "analytical" or "permutation". If "analytical", the
+#' expected join counts and standard deviations are calculated using analytical formulas.
+#' If "permutation", the expected join counts and standard deviations are are calculated
+#' using permutations.
+#' @param k `r lifecycle::badge("experimental")` The maximum number of steps in the local 
+#' neighborhood to consider. Default is 1, corresponding to immediate neighbors.
+#' @param iterations Number of iterations for permutation. Default is 100.
+#' @param calc_z_score Logical indicating whether to calculate z-scores.
+#' @param calc_log2_ratio Logical indicating whether to calculate log2 ratios.
+#' @param min_marker_count Minimum number of UMI counts required for a protein
+#' to be considered.
+#' @param seed Random seed for reproducibility.
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @return A tibble with the following columns:
+#'  - `marker_1`: Name of the first marker.
+#'  - `marker_2`: Name of the second marker.
+#'  - `join_count`: Observed join count.
+#'  - `join_count_expected_mean`: Expected mean join count from permutations.
+#'  - `join_count_expected_sd`: Expected standard deviation of join count from permutations.
+#'  - `join_count_z`: Z-score for the observed join count. (optional)
+#'  - `log2_ratio`: Log2 ratio of observed join count to expected mean. (optional)
+#'  - `component`: PNA component name. Only provided for some methods.
+#'
+#' @rdname ComputeProximityScores
+#'
+#' @export
+#'
+ComputeProximityScores <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ComputeProximityScores", object = object)
+}
