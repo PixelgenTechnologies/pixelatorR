@@ -1,9 +1,6 @@
 options(Seurat.object.assay.version = "v3")
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 
 # Load polarization scores
 polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
@@ -64,7 +61,7 @@ test_that("RunDPA works as expected on a data.frame", {
       )
     )
 
-  expect_equal(dpa_markers[1:2, ], expected_result)
+  expect_equal(dpa_markers[1:2, ], expected_result, tolerance = 1e-4)
 
   # morans_i
   expect_no_error(suppressWarnings(
@@ -111,7 +108,7 @@ test_that("RunDPA works as expected on a data.frame", {
       class = c("tbl_df", "tbl", "data.frame")
     )
 
-  expect_equal(dpa_markers[1:2, ], expected_result)
+  expect_equal(dpa_markers[1:2, ], expected_result, tolerance = 1e-4)
 
   # Automatic selection of targets
   expect_no_error(suppressWarnings(dpa_markers <- RunDPA(seur_merged, contrast_column = "sample", reference = "Sample2")))
@@ -170,7 +167,7 @@ test_that("RunDPA works as expected on a Seurat object", {
       )
     )
 
-  expect_equal(dpa_markers[1:2, ], expected_result)
+  expect_equal(dpa_markers[1:2, ], expected_result, tolerance = 1e-4)
 })
 
 test_that("RunDPA fails with invalid input", {

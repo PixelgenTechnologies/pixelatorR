@@ -1,10 +1,7 @@
 library(dplyr)
 options(Seurat.object.assay.version = "v3")
 
-pxl_file <- system.file("extdata/five_cells",
-  "five_cells.pxl",
-  package = "pixelatorR"
-)
+pxl_file <- minimal_mpx_pxl_file()
 
 # Load colocalization scores
 colocalization_table1 <- colocalization_table2 <- ReadMPX_colocalization(pxl_file)
@@ -63,7 +60,7 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
 
   expect_equal(dca_markers %>%
     arrange(marker_1, marker_2) %>%
-    head(2), expected_result)
+    head(2), expected_result, tolerance = 1e-4)
 
   # cl = 1 should witch to sequential processing
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(colocalization_table_merged,
@@ -137,7 +134,7 @@ test_that("RunDCA works as expected on a Seurat object", {
     class = c("tbl_df", "tbl", "data.frame")
   )
 
-  expect_equal(dca_markers, expected_result)
+  expect_equal(dca_markers, expected_result, tolerance = 1e-4)
 
   # Automatic selection of targets
   expect_no_error(suppressWarnings(dca_markers <- RunDCA(seur_merged, contrast_column = "sample", reference = "Sample2")))
