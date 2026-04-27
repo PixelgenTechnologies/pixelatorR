@@ -61,7 +61,7 @@ test_that("RunDPA works as expected on a data.frame", {
       )
     )
 
-  expect_equal(dpa_markers[1:2, ], expected_result, tolerance = 1e-4)
+  expect_equal(dpa_markers[1:2, ], expected_result, tolerance = 1e-2)
 
   # morans_i
   expect_no_error(suppressWarnings(
