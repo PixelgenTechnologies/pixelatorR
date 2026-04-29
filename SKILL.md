@@ -3,7 +3,7 @@
 ## Objective
 
 Generate `testthat` unit test files for R functions in the `pixelatorR` package.
-Each exported or internal function should have a dedicated test script in `tests/testthat/` following the conventions described below.
+Each exported or internal function should have a dedicated test script in `tests/testthat/` following the conventions described below. Closely related functions/methods (for example a function that has methods for different input classes) may be grouped together in the same test script if appropriate.
 
 ---
 
@@ -11,7 +11,7 @@ Each exported or internal function should have a dedicated test script in `tests
 
 - **Package**: `pixelatorR` — an R/Seurat extension for Molecular Pixelation (MPX) and Proximity Network Assay (PNA) single-cell spatial proteomics data.
 - **Test framework**: [`testthat`](https://testthat.r-lib.org/) (>= 3.0.0).
-- **Test runner entry point**: `tests/testthat.R` (loads `testthat`, `pixelatorR`, and sets `options(Seurat.object.assay.version = "v3")`).
+- **Test runner entry point**: `tests/testthat.R` (loads `testthat` and `pixelatorR`).
 - **Source code**: `R/` directory. Each file typically contains one or a few closely related exported functions.
 
 ---
@@ -70,27 +70,19 @@ test_that("<function_name> fails with invalid input", {
 
 ## Test Data
 
-The package ships two minimal PXL files. Use the helpers below to get paths — they are always available after `library(pixelatorR)`.
+The package ships two minimal PXL files. Use the helpers below to get paths — they are always available after `library(pixelatorR)`. MPX will be deprecated in the future, so only PNA test data should be used for new tests.
 
 | Helper                    | Data type | Cells | Description                    |
 |---------------------------|-----------|-------|--------------------------------|
 | `minimal_mpx_pxl_file()`  | MPX       | 5     | 5 immune cells (MPX protocol)  |
 | `minimal_pna_pxl_file()`  | PNA       | 5     | 5 PBMC cells (PNA protocol)    |
 
-You can also reference the five_cells MPX file directly:
-
-```r
-system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR")
-```
 
 ### Loading Test Data
 
 Choose the reader that fits the function under test:
 
 ```r
-# Seurat object (MPX)
-seur <- ReadMPX_Seurat(minimal_mpx_pxl_file(), overwrite = TRUE)
-
 # Seurat object (PNA)
 seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE,
                        load_proximity_scores = FALSE, verbose = FALSE)
@@ -99,7 +91,7 @@ seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE,
 prox <- ReadPNA_proximity(minimal_pna_pxl_file())
 
 # Count matrix
-counts <- ReadMPX_counts(minimal_mpx_pxl_file())
+counts <- ReadPNA_counts(minimal_pna_pxl_file())
 
 # Edgelist
 edgelist <- ReadPNA_edgelist(minimal_pna_pxl_file())
@@ -108,7 +100,7 @@ edgelist <- ReadPNA_edgelist(minimal_pna_pxl_file())
 When testing Seurat methods that require merged data:
 
 ```r
-seur1 <- seur2 <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
+seur1 <- seur2 <- ReadPNA_Seurat(pxl_file, overwrite = TRUE)
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
@@ -117,7 +109,7 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 When testing CellGraph-level functions:
 
 ```r
-seur <- ReadMPX_Seurat(minimal_mpx_pxl_file(), overwrite = TRUE, return_cellgraphassay = TRUE)
+seur <- ReadPNA_Seurat(minimal_pna_pxl_file())
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
 cg <- CellGraphs(seur)[[1]]
 g <- CellGraphData(cg, slot = "cellgraph")
@@ -300,7 +292,7 @@ When asked to generate a test file for function `foo`:
    - What it returns (class, structure)
    - Whether it has S4 methods for multiple classes
 
-2. **Identify the correct test data** (MPX vs PNA, Seurat vs raw table).
+2. **Identify the correct test data** (for example, Seurat vs raw table).
 
 3. **Run the function** interactively to capture a small expected output snippet using `dput()`.
 
