@@ -15,5 +15,5 @@
 ^Taskfile.yml
 ^Dockerfile
 ^\\.Renviron$
-^SKILL.md
-^SKILL_USAGE.MD
+^SKILL\.md$
+^SKILL_USAGE\.MD$
