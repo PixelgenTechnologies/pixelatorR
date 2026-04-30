@@ -31,7 +31,7 @@ test_that("pack_2bits and unpack_2bits work as expected", {
 
 test_that("pack_2bits and unpack_2bits fails with invalid input", {
   expect_error(pack_2bits("Invalid"))
-  expect_error(unpack_2bits("Invalid"))
+  expect_error(suppressWarnings(unpack_2bits("Invalid")))
   expect_error(unpack_2bits(bit64::as.integer64(180), k = "Invalid"))
   expect_error(pack_2bits(c("ACTG", "ACTTA")))
   expect_error(pack_2bits(c("ACTG", "ACTN")))
