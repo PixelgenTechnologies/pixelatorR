@@ -824,7 +824,7 @@ expand_adjacency_matrix <- function(
       A <- (A / Matrix::rowSums(A)) %>% Matrix::t()
     } else {
       # Switch to pattern matrix for faster multiplication when not using weights
-      A <- as(A, "nCMatrix")
+      A <- as(A, "ngCMatrix")
     }
     # Expand neighborhood
     if (min_weight > 0 && use_weights) {
