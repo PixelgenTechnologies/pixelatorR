@@ -7,3 +7,4 @@
 ^pkgdown
 environment_arm.yml
 *.pdf
+.positai

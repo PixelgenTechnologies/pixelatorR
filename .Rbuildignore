@@ -15,3 +15,5 @@
 ^Taskfile.yml
 ^Dockerfile
 ^\\.Renviron$
+^\.positai$
+^\.claude$

@@ -133,7 +133,7 @@ test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
   )
 
   expect_no_error(
-    seur_joined <- JoinLayers(seur_merged) %>% 
+    seur_joined <- JoinLayers(seur_merged) %>%
       NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
   )
   expect_no_error(
