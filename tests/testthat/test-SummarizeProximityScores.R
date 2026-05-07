@@ -35,5 +35,7 @@ test_that("SummarizeProximityScores fails with invalid input", {
   expect_error(proximity_filtered <- SummarizeProximityScores(proximity, proximity_metric = "marker_1"))
   expect_error(proximity_filtered <- SummarizeProximityScores(proximity, group_vars = "Invalid"))
   expect_error(proximity_filtered <- SummarizeProximityScores(proximity, group_vars = "join_count"))
-  expect_error(proximity_filtered <- SummarizeProximityScores(bind_rows(proximity, proximity)))
+  expect_error(proximity_filtered <- SummarizeProximityScores(bind_rows(proximity, proximity)),
+    regexp = "(duplicate rows|multiple rows)"
+  )
 })
