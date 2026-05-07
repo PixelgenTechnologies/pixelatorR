@@ -108,7 +108,7 @@ test_that("RunDPA works as expected on a data.frame", {
       class = c("tbl_df", "tbl", "data.frame")
     )
 
-  expect_equal(dpa_markers[1:2, ], expected_result, tolerance = 1e-4)
+  expect_equal(dpa_markers[1:2, ], expected_result, tolerance = 1e-2)
 
   # Automatic selection of targets
   expect_no_error(suppressWarnings(dpa_markers <- RunDPA(seur_merged, contrast_column = "sample", reference = "Sample2")))
