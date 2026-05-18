@@ -1199,7 +1199,8 @@ scale_layout <- function(
 #' @param normalize_weights Logical; if `TRUE`, weights are normalized to sum to 1.
 #'   Default: `TRUE`.
 #'
-#' @returns A numeric vector of illumination values (length `nrow(layout)`).
+#' @returns A numeric vector of illumination values (length `nrow(layout)`). Higher values indicate stronger
+#'   illumination.
 #'
 #' @examples
 #' set.seed(1)
@@ -1221,7 +1222,6 @@ apply_heuristic_lighting <- function(
   ambient_occlusion_k = 20,
   normalize_weights = TRUE
 ) {
-
   assert_class(layout, c("data.frame", "tbl_df"))
   assert_x_in_y(x = c("x", "y", "z"), y = names(layout))
   assert_vector(layout$x, "numeric")
@@ -1243,9 +1243,9 @@ apply_heuristic_lighting <- function(
   assert_single_value(ambient_occlusion_k, "integer")
   assert_within_limits(ambient_occlusion_k, c(1, nrow(layout) - 1))
   assert_single_value(normalize_weights, "bool")
-  
+
   coords <- as.matrix(layout[, c("x", "y", "z")])
-  
+
   if (any(!is.finite(coords))) {
     cli::cli_abort("Columns `x`, `y`, and `z` must contain only finite values.")
   }
@@ -1265,7 +1265,7 @@ apply_heuristic_lighting <- function(
     volume_shading_weight,
     ambient_occlusion_weight
   )
-  
+
   if (normalize_weights) {
     s <- sum(weights)
     if (s == 0) {
@@ -1274,7 +1274,7 @@ apply_heuristic_lighting <- function(
     weights <- weights / s
   }
 
-  
+
   # Compute directional light as the rescaled z-coordinate (light from above)
   directional_light <- safe_rescale(layout$z)
 
