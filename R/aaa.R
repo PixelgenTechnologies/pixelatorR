@@ -128,3 +128,7 @@ expect_pls <- function(...) {
 expect_matrixStats <- function(...) {
   rlang::check_installed("matrixStats", ...)
 }
+
+expect_FNN <- function(...) {
+  rlang::check_installed("FNN", ...)
+}

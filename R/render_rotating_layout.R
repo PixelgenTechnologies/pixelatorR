@@ -1221,6 +1221,8 @@ heuristic_illumination <- function(
   ambient_occlusion_k = 20,
   normalize_weights = TRUE
 ) {
+  expect_FNN()
+
   assert_class(layout, c("data.frame", "tbl_df"))
   assert_x_in_y(x = c("x", "y", "z"), y = names(layout))
   assert_vector(layout$x, "numeric")
