@@ -88,6 +88,7 @@
 #' @importFrom dplyr ungroup
 #' @importFrom dplyr vars
 #' @importFrom dplyr where
+#' @importFrom FNN get.knn
 #' @importFrom ggplot2 aes
 #' @importFrom ggplot2 coord_fixed
 #' @importFrom ggplot2 coord_flip

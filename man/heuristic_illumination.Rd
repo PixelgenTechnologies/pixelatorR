@@ -53,6 +53,5 @@ layout <- tibble::tibble(
   z = rnorm(100)
 )
 illum <- heuristic_illumination(layout)
-layout_with_illum <- heuristic_illumination(layout, return_layout = TRUE)
 
 }

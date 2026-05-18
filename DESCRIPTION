@@ -45,7 +45,8 @@ Imports:
     grDevices,
     graphics,
     stats,
-    utils
+    utils,
+    FNN
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
