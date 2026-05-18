@@ -1227,6 +1227,13 @@ apply_heuristic_lighting <- function(
   assert_vector(layout$x, "numeric")
   assert_vector(layout$y, "numeric")
   assert_vector(layout$z, "numeric")
+
+  coords <- as.matrix(layout[, c("x", "y", "z")])
+
+  if (any(!is.finite(coords))) {
+    cli::cli_abort("Columns `x`, `y`, and `z` must contain only finite values.")
+  }
+
   assert_vector(clamp_quantiles, "numeric", n = 2)
   assert_within_limits(clamp_quantiles, c(0, 1))
 
@@ -1243,12 +1250,6 @@ apply_heuristic_lighting <- function(
   assert_single_value(ambient_occlusion_k, "integer")
   assert_within_limits(ambient_occlusion_k, c(1, nrow(layout) - 1))
   assert_single_value(normalize_weights, "bool")
-
-  coords <- as.matrix(layout[, c("x", "y", "z")])
-
-  if (any(!is.finite(coords))) {
-    cli::cli_abort("Columns `x`, `y`, and `z` must contain only finite values.")
-  }
 
   # Rescale function
   safe_rescale <- function(x, to = c(0, 1)) {
