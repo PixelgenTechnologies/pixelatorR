@@ -47,11 +47,45 @@ and (3) ambient occlusion approximated from mean distance to nearest neighbors.
 }
 \examples{
 set.seed(1)
+
+# Here we simulate some 3D coordinates with a roughly spherical distribution
+n <- 20000
+n_surface <- 19000
+n_interior <- 1000
+
+# Surface points: normalize to unit sphere, add small Gaussian noise
+xyz_surface <- matrix(rnorm(n_surface * 3), ncol = 3)
+xyz_surface <- xyz_surface / sqrt(rowSums(xyz_surface^2)) # project to unit sphere
+xyz_surface <- xyz_surface + matrix(rnorm(n_surface * 3, sd = 0.05), ncol = 3)
+
+# Interior points: uniform in ball via rejection sampling
+xyz_interior <- matrix(rnorm(n_interior * 3), ncol = 3)
+radii <- runif(n_interior)^(1 / 3) # cube root for uniform volume distribution
+xyz_interior <- xyz_interior / sqrt(rowSums(xyz_interior^2)) * radii * 0.8
+
 layout <- tibble::tibble(
-  x = rnorm(100),
-  y = rnorm(100),
-  z = rnorm(100)
+  x = c(xyz_surface[, 1], xyz_interior[, 1]),
+  y = c(xyz_surface[, 2], xyz_interior[, 2]),
+  z = c(xyz_surface[, 3], xyz_interior[, 3])
 )
 illum <- heuristic_illumination(layout)
+
+# Create a temporary GIF file and render a rotating layout using the computed illumination as node values
+temp_gif <- fs::file_temp(ext = ".gif")
+render_rotating_layout(
+  data = layout \%>\%
+    mutate(node_val = illum),
+  pt_size = 0.8,
+  width = 740,
+  height = 650,
+  colors = PixelgenGradient(100, "NaturalBlue"),
+  file = temp_gif,
+  max_degree = 30,
+  frames = 20,
+  delay = 1 / 20,
+  res = 100,
+  boomerang = TRUE,
+  show_first_frame = FALSE
+)
 
 }
