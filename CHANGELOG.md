@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `ComputeProximityScores` methods to compute global proximity scores for cell graphs.
 - `heuristic_illumination` to approximate natural illumination of a 3D layout.
+- "NaturalBlue" option as a gradient palette in `PixelgenGradient` to use as a natural illuminated color gradient.
 
 ### Updated
 - `approximate_node_saturation`, `approximate_edge_saturation` and `approximate_saturation_curve` now uses the standard definition of saturation (s = 1 - molecules / reads).

@@ -5,7 +5,7 @@
 #'
 #' @param n The number of colors to return
 #' @param name The name of the gradient to return. Options are "BluesCherry",
-#' "BluesGrayCherry", "GrayblueRose", "Cherry", "Blues", "Magenta", and "Cyan".
+#' "BluesGrayCherry", "GrayblueRose", "Cherry", "Blues", "Magenta", "Cyan", and "NaturalBlue".
 #'
 #' @return A vector of colors
 #'

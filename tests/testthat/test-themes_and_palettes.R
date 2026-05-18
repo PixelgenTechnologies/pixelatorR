@@ -17,6 +17,7 @@ test_that("PixelgenGradient works as expected", {
   expect_no_error(PixelgenGradient(name = "Blues", n = 5))
   expect_no_error(PixelgenGradient(name = "Magenta", n = 5))
   expect_no_error(PixelgenGradient(name = "Cyan", n = 5))
+  expect_no_error(PixelgenGradient(name = "NaturalBlue", n = 5))
   expect_no_error(PixelgenGradient(name = "Cyan", n = 50))
   expect_no_error(PixelgenGradient(name = "Cyan", n = 500))
   expect_no_error(PixelgenGradient(name = "Cyan", n = 5000))

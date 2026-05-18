@@ -10,7 +10,7 @@ PixelgenGradient(n, name)
 \item{n}{The number of colors to return}
 
 \item{name}{The name of the gradient to return. Options are "BluesCherry",
-"BluesGrayCherry", "GrayblueRose", "Cherry", "Blues", "Magenta", and "Cyan".}
+"BluesGrayCherry", "GrayblueRose", "Cherry", "Blues", "Magenta", "Cyan", and "NaturalBlue".}
 }
 \value{
 A vector of colors
