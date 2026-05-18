@@ -17,5 +17,8 @@
 ^\\.Renviron$
 ^\.positai$
 ^\.claude$
+<<<<<<< Updated upstream
 ^SKILL.md
 ^SKILL_USAGE.MD
+=======
+>>>>>>> Stashed changes
