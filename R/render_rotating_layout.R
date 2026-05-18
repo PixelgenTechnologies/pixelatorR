@@ -1209,11 +1209,10 @@ scale_layout <- function(
 #'   y = rnorm(100),
 #'   z = rnorm(100)
 #' )
-#' illum <- apply_heuristic_lighting(layout)
-#' layout_with_illum <- apply_heuristic_lighting(layout, return_layout = TRUE)
+#' illum <- heuristic_illumination(layout)
 #'
 #' @export
-apply_heuristic_lighting <- function(
+heuristic_illumination <- function(
   layout,
   clamp_quantiles = c(0.01, 0.95),
   directional_light_weight = 0.7,

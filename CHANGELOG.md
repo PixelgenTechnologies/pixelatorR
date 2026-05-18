@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `ComputeProximityScores` methods to compute global proximity scores for cell graphs.
-- `apply_heuristic_lighting` to approximate natural illumination of a 3D layout.
+- `heuristic_illumination` to approximate natural illumination of a 3D layout.
 
 ### Updated
 - `approximate_node_saturation`, `approximate_edge_saturation` and `approximate_saturation_curve` now uses the standard definition of saturation (s = 1 - molecules / reads).
