@@ -46,6 +46,8 @@ Combines three simple lighting heuristics for 3D coordinates:
 and (3) ambient occlusion approximated from mean distance to nearest neighbors.
 }
 \examples{
+
+library(dplyr)
 set.seed(1)
 
 # Here we simulate some 3D coordinates with a roughly spherical distribution

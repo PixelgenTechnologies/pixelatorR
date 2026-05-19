@@ -1203,6 +1203,8 @@ scale_layout <- function(
 #'   illumination.
 #'
 #' @examples
+#' 
+#' library(dplyr)
 #' set.seed(1)
 #'
 #' # Here we simulate some 3D coordinates with a roughly spherical distribution
