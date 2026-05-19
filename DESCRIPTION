@@ -76,7 +76,8 @@ Suggests:
     ggrepel,
     RSpectra,
     pls,
-    matrixStats
+    matrixStats,
+    FNN
 Collate: 
     'generics.R'
     'CellGraph.R'

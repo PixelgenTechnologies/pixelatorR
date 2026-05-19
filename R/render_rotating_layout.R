@@ -1177,3 +1177,163 @@ scale_layout <- function(
     assert_class(ggplot_theme, "theme", call = call)
   }
 }
+
+#' Compute heuristic illumination for 3D layouts
+#'
+#' Combines three simple lighting heuristics for 3D coordinates:
+#' (1) directional light from the positive z-axis,
+#' (2) radial volume shading from the origin,
+#' and (3) ambient occlusion approximated from mean distance to nearest neighbors.
+#'
+#' @param layout A data frame or tibble with numeric columns `x`, `y`, and `z`.
+#' @param clamp_quantiles Numeric vector of length 2 in `[0, 1]`. Illumination is
+#'   clamped to these quantiles to reduce outlier influence. Default: `c(0.01, 0.95)`.
+#' @param directional_light_weight Non-negative numeric scalar. Weight for directional
+#'   light component. Default: `0.7`.
+#' @param volume_shading_weight Non-negative numeric scalar. Weight for radial volume
+#'   shading component. Default: `0.5`.
+#' @param ambient_occlusion_weight Non-negative numeric scalar. Weight for ambient
+#'   occlusion component. Default: `1`.
+#' @param ambient_occlusion_k Positive integer. Number of nearest neighbors used for
+#'   ambient occlusion approximation. Default: `20`.
+#' @param normalize_weights Logical; if `TRUE`, weights are normalized to sum to 1.
+#'   Default: `TRUE`.
+#'
+#' @returns A numeric vector of illumination values (length `nrow(layout)`). Higher values indicate stronger
+#'   illumination.
+#'
+#' @examples
+#'
+#' library(dplyr)
+#' set.seed(1)
+#'
+#' # Here we simulate some 3D coordinates with a roughly spherical distribution
+#' n <- 20000
+#' n_surface <- 19000
+#' n_interior <- 1000
+#'
+#' # Surface points: normalize to unit sphere, add small Gaussian noise
+#' xyz_surface <- matrix(rnorm(n_surface * 3), ncol = 3)
+#' xyz_surface <- xyz_surface / sqrt(rowSums(xyz_surface^2)) # project to unit sphere
+#' xyz_surface <- xyz_surface + matrix(rnorm(n_surface * 3, sd = 0.05), ncol = 3)
+#'
+#' # Interior points: uniform in ball via rejection sampling
+#' xyz_interior <- matrix(rnorm(n_interior * 3), ncol = 3)
+#' radii <- runif(n_interior)^(1 / 3) # cube root for uniform volume distribution
+#' xyz_interior <- xyz_interior / sqrt(rowSums(xyz_interior^2)) * radii * 0.8
+#'
+#' layout <- tibble::tibble(
+#'   x = c(xyz_surface[, 1], xyz_interior[, 1]),
+#'   y = c(xyz_surface[, 2], xyz_interior[, 2]),
+#'   z = c(xyz_surface[, 3], xyz_interior[, 3])
+#' )
+#' illum <- heuristic_illumination(layout)
+#'
+#' # Create a temporary GIF file and render a rotating layout
+#' # using the computed illumination as node values
+#' temp_gif <- fs::file_temp(ext = ".gif")
+#' render_rotating_layout(
+#'   data = layout %>%
+#'     mutate(node_val = illum),
+#'   pt_size = 0.8,
+#'   width = 740,
+#'   height = 650,
+#'   colors = PixelgenGradient(100, "NaturalBlue"),
+#'   file = temp_gif,
+#'   max_degree = 30,
+#'   frames = 20,
+#'   delay = 1 / 20,
+#'   res = 100,
+#'   boomerang = TRUE,
+#'   show_first_frame = FALSE
+#' )
+#'
+#' @export
+heuristic_illumination <- function(
+  layout,
+  clamp_quantiles = c(0.01, 0.95),
+  directional_light_weight = 0.7,
+  volume_shading_weight = 0.5,
+  ambient_occlusion_weight = 1,
+  ambient_occlusion_k = 20,
+  normalize_weights = TRUE
+) {
+  expect_FNN()
+
+  assert_class(layout, c("data.frame", "tbl_df"))
+  assert_x_in_y(x = c("x", "y", "z"), y = names(layout))
+  assert_vector(layout$x, "numeric")
+  assert_vector(layout$y, "numeric")
+  assert_vector(layout$z, "numeric")
+
+  coords <- as.matrix(layout[, c("x", "y", "z")])
+
+  if (any(!is.finite(coords))) {
+    cli::cli_abort("Columns `x`, `y`, and `z` must contain only finite values.")
+  }
+
+  assert_vector(clamp_quantiles, "numeric", n = 2)
+  assert_within_limits(clamp_quantiles, c(0, 1))
+
+  if (clamp_quantiles[1] >= clamp_quantiles[2]) {
+    cli::cli_abort("`clamp_quantiles[1]` must be less than `clamp_quantiles[2]`.")
+  }
+
+  assert_single_value(directional_light_weight, "numeric")
+  assert_within_limits(directional_light_weight, c(0, Inf))
+  assert_single_value(volume_shading_weight, "numeric")
+  assert_within_limits(volume_shading_weight, c(0, Inf))
+  assert_single_value(ambient_occlusion_weight, "numeric")
+  assert_within_limits(ambient_occlusion_weight, c(0, Inf))
+  assert_single_value(ambient_occlusion_k, "integer")
+  assert_within_limits(ambient_occlusion_k, c(1, nrow(layout) - 1))
+  assert_single_value(normalize_weights, "bool")
+
+  # Rescale function
+  safe_rescale <- function(x, to = c(0, 1)) {
+    rng <- range(x, na.rm = TRUE)
+    if (!is.finite(rng[1]) || !is.finite(rng[2]) || diff(rng) == 0) {
+      return(rep(mean(to), length(x)))
+    }
+    scales::rescale(x, to = to, from = rng)
+  }
+
+  # Normalize weights to sum to 1 if `normalize_weights` is TRUE
+  weights <- c(
+    directional_light_weight,
+    volume_shading_weight,
+    ambient_occlusion_weight
+  )
+
+  if (normalize_weights) {
+    s <- sum(weights)
+    if (s == 0) {
+      cli::cli_abort("At least one weight must be > 0 when `normalize_weights = TRUE`.")
+    }
+    weights <- weights / s
+  }
+
+
+  # Compute directional light as the rescaled z-coordinate (light from above)
+  directional_light <- safe_rescale(layout$z)
+
+  # Compute radial volume shading as the rescaled distance from the origin
+  r <- sqrt(layout$x^2 + layout$y^2 + layout$z^2)
+  volume_shading <- safe_rescale(r)
+
+  # Approximate ambient occlusion using mean distance to k nearest neighbors
+  nn <- FNN::get.knn(coords, k = ambient_occlusion_k)$nn.dist
+  ambient_occlusion <- safe_rescale(rowMeans(sqrt(nn)), to = c(1, 0))
+
+  # Combine components using specified weights
+  illumination <-
+    weights[1] * directional_light +
+    weights[2] * volume_shading +
+    weights[3] * ambient_occlusion
+
+  # Clamp illumination to specified quantiles to reduce outlier influence
+  quants <- stats::quantile(illumination, probs = clamp_quantiles, na.rm = TRUE)
+  illumination <- pmin(pmax(illumination, quants[[1]]), quants[[2]])
+
+  return(illumination)
+}

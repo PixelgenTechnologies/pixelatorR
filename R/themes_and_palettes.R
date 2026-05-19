@@ -5,7 +5,7 @@
 #'
 #' @param n The number of colors to return
 #' @param name The name of the gradient to return. Options are "BluesCherry",
-#' "BluesGrayCherry", "GrayblueRose", "Cherry", "Blues", "Magenta", and "Cyan".
+#' "BluesGrayCherry", "GrayblueRose", "Cherry", "Blues", "Magenta", "Cyan", and "NaturalBlue".
 #'
 #' @return A vector of colors
 #'
@@ -95,6 +95,40 @@ PixelgenGradient <- function(
         "#7CD5D0",
         "#59C5C3",
         "#36B5B6"
+      ),
+      "NaturalBlue" = c(
+        "#1F385A",
+        "#25456F",
+        "#234977",
+        "#214D80",
+        "#1F5188",
+        "#1D5591",
+        "#1C5A99",
+        "#1C5F9E",
+        "#1C65A3",
+        "#1C6AA8",
+        "#1C6FAD",
+        "#1E74B1",
+        "#2478B2",
+        "#2A7CB3",
+        "#3080B5",
+        "#3684B6",
+        "#3E8AB9",
+        "#4792BF",
+        "#519AC5",
+        "#5AA2CB",
+        "#63AAD1",
+        "#69B0D5",
+        "#6DB6D8",
+        "#71BBDB",
+        "#75C1DE",
+        "#79C6E1",
+        "#83C9E0",
+        "#8FCCDF",
+        "#9BCEDD",
+        "#A6D1DB",
+        "#B2D3DA",
+        "#C1DBE0"
       )
     )
 
