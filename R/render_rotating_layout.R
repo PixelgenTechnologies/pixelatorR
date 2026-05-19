@@ -1203,7 +1203,7 @@ scale_layout <- function(
 #'   illumination.
 #'
 #' @examples
-#' 
+#'
 #' library(dplyr)
 #' set.seed(1)
 #'
@@ -1229,7 +1229,7 @@ scale_layout <- function(
 #' )
 #' illum <- heuristic_illumination(layout)
 #'
-#' # Create a temporary GIF file and render a rotating layout 
+#' # Create a temporary GIF file and render a rotating layout
 #' # using the computed illumination as node values
 #' temp_gif <- fs::file_temp(ext = ".gif")
 #' render_rotating_layout(
