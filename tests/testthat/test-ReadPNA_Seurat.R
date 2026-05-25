@@ -28,7 +28,6 @@ for (assay_version in c("v3", "v5")) {
     expect_error(ReadPNA_Seurat(pxl_file, return_pna_assay = "Invalid"))
     expect_error(ReadPNA_Seurat(pxl_file, load_proximity_scores = "Invalid"))
     expect_error(ReadPNA_Seurat(pxl_file, assay = FALSE))
-    expect_error(ReadPNA_Seurat(pxl_file, verbose = FALSE))
 
     # Inject an error by subsetting X to have only one cell
     trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1]), at = 13, print = FALSE)
