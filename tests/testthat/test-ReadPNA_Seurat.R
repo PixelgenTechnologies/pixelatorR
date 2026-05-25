@@ -28,21 +28,27 @@ for (assay_version in c("v3", "v5")) {
     expect_error(ReadPNA_Seurat(pxl_file, return_pna_assay = "Invalid"))
     expect_error(ReadPNA_Seurat(pxl_file, load_proximity_scores = "Invalid"))
     expect_error(ReadPNA_Seurat(pxl_file, assay = FALSE))
+  })
 
+  test_that("ReadPNA_Seurat fails when X collapses to a vector (1 cell)", {
     # Inject an error by subsetting X to have only one cell
     trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1]), at = 13, print = FALSE)
     on.exit(untrace(ReadPNA_Seurat), add = TRUE)
-    expect_error(ReadPNA_Seurat(pxl_file, verbose = FALSE),
+
+    expect_error(
+      ReadPNA_Seurat(pxl_file, verbose = FALSE),
       regexp = "least 2|contains only one"
     )
-    untrace(ReadPNA_Seurat)
+  })
 
-    # Inject an error by subsetting X to have only one cell, but keep it as a matrix
+  test_that("ReadPNA_Seurat fails when X is a 1-column matrix", {
+    # Inject an error by subsetting X to have only one cell, keeping it as a matrix
     trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1, drop = FALSE]), at = 13, print = FALSE)
     on.exit(untrace(ReadPNA_Seurat), add = TRUE)
-    expect_error(ReadPNA_Seurat(pxl_file, verbose = FALSE),
+
+    expect_error(
+      ReadPNA_Seurat(pxl_file, verbose = FALSE),
       regexp = "least 2|contains only one"
     )
-    untrace(ReadPNA_Seurat)
   })
 }
