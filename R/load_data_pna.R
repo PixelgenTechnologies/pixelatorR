@@ -95,6 +95,16 @@ ReadPNA_Seurat <- function(
   # Load count matrix from database
   X <- db$counts()
 
+  # Check that the count matrix contains at least 2 cells
+  if (is.null(ncol(X)) || ncol(X) == 1) {
+    cli::cli_abort(
+      c(
+        "x" = "The count matrix must contain at least 2 cells to create a Seurat object.",
+        "i" = "The count matrix in the PXL file contains only one cell."
+      )
+    )
+  }
+
   # Create an empty cellgraphs list
   empty_graphs <- rep(list(NULL), ncol(X)) %>% set_names(nm = colnames(X))
 
