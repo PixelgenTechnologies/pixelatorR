@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Updated
 - `approximate_node_saturation`, `approximate_edge_saturation` and `approximate_saturation_curve` now uses the standard definition of saturation (s = 1 - molecules / reads).
+- `ReadPNA_Seurat` will now throw an informative error when reading a file with only a single cell, which would otherwise throw a cryptic error when trying to create the Seurat object.
 
 ### Fixes
 - Fixed a bug in `SummarizeProximityScores` where the `include_missing_obs` argument was not properly handled when `include_missing_obs = FALSE`.
