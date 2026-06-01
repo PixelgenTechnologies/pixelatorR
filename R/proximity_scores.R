@@ -85,31 +85,22 @@ ComputeProximityScores.CellGraph <- function(
   jc_obs <- Matrix::t(counts) %*% A %*% counts
 
   if (mode == "analytical") {
-    
+    N_edges <- sum(A)
     fA <- Matrix::colSums(counts[node_types_vector == "umi1", , drop = FALSE]) / nA
     fB <- Matrix::colSums(counts[node_types_vector == "umi2", , drop = FALSE]) / nB
-    if (k > 1) {
-      aa <- sum(A[node_types_vector == "umi1", node_types_vector == "umi1"])
-      bb <- sum(A[node_types_vector == "umi2", node_types_vector == "umi2"])
-      ab <- sum(A[node_types_vector == "umi1", node_types_vector == "umi2"])
-      join_count_expected_mean <- (outer(fA, fA) * aa) + (outer(fB, fB) * bb) + (outer(fA, fB) * ab)
-    } else {
-      N_edges <- sum(A)
-      join_count_expected_mean <- outer(fA, fB) * N_edges
-    }
-
+    join_count_expected_mean <- outer(fA, fB) * N_edges
     join_count_expected_mean <- join_count_expected_mean + t(join_count_expected_mean)
     diag(join_count_expected_mean) <- diag(join_count_expected_mean) / 2
     join_count_expected_mean <- join_count_expected_mean[upper.tri(join_count_expected_mean, diag = TRUE)]
 
-    # S1 <- (sum((A + Matrix::t(A))^2)) / 2
-    # S2 <- sum((Matrix::colSums(A) + Matrix::rowSums(A))^2)
-# 
-    # join_count_expected_var <- (
-    #   (2 * S1 * outer(fA, fB)) +
-    #     (S2 - (2 * S1)) * (outer(fA, fB) * outer(fA, fB, "+")) +
-    #     (4 * (S1 - S2) * outer(fA^2, fB^2))
-    # ) / 4
+    S1 <- (sum((A + Matrix::t(A))^2)) / 2
+    S2 <- sum((Matrix::colSums(A) + Matrix::rowSums(A))^2)
+
+    join_count_expected_var <- (
+      (2 * S1 * outer(fA, fB)) +
+        (S2 - (2 * S1)) * (outer(fA, fB) * outer(fA, fB, "+")) +
+        (4 * (S1 - S2) * outer(fA^2, fB^2))
+    ) / 4
 
     join_count_expected_var <- (join_count_expected_var + t(join_count_expected_var))
     diag(join_count_expected_var) <- diag(join_count_expected_var) / 2
