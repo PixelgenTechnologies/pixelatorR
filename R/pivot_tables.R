@@ -377,7 +377,8 @@ ColocalizationScoresToAssay.Seurat <- function(
 #'
 ProximityScoresToAssay.tbl_lazy <- function(
   object,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   ...
 ) {
   # Validate input
@@ -389,13 +390,35 @@ ProximityScoresToAssay.tbl_lazy <- function(
   assert_col_in_data("marker_2", object)
   assert_col_in_data(values_from, object)
 
+  assert_single_value(separator, type = "string")
+
+  if (nchar(separator) != 1) {
+    cli::cli_abort(
+      c(
+        "x" = "Separator must be a single character",
+        "i" = "Please provide a valid separator"
+      )
+    )
+  }
+
+  unique_markers <- unique(c(object %>% pull(marker_1), object %>% pull(marker_2)))
+  invalid_markers <- stringr::str_detect(unique_markers, separator)
+  if (sum(invalid_markers) > 0) {
+    cli::cli_abort(
+      c(
+        "x" = "Markers cannot contain the separator {.str {separator}}",
+        "i" = "Invalid marker{?s}: {.str {unique_markers[invalid_markers]}}"
+      )
+    )
+  }
+
   # Ignore 0 values
   object <- object %>%
     filter(!!sym(values_from) != 0)
 
   # Cast values to wide format
   pair <- object %>%
-    mutate(pair = stringr::str_c(marker_1, "/", marker_2)) %>%
+    mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>%
     pull(pair) %>%
     factor(levels = unique(.))
   components <- object %>%
@@ -422,7 +445,8 @@ ProximityScoresToAssay.tbl_lazy <- function(
 #'
 ProximityScoresToAssay.data.frame <- function(
   object,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   missing_obs = NA_real_,
   return_sparse = TRUE,
   ...
@@ -438,6 +462,28 @@ ProximityScoresToAssay.data.frame <- function(
   assert_single_value(missing_obs, type = "numeric")
   assert_single_value(return_sparse, type = "bool")
 
+  assert_single_value(separator, type = "string")
+
+  if (nchar(separator) != 1) {
+    cli::cli_abort(
+      c(
+        "x" = "Separator must be a single character",
+        "i" = "Please provide a valid separator"
+      )
+    )
+  }
+
+  unique_markers <- unique(c(object %>% pull(marker_1), object %>% pull(marker_2)))
+  invalid_markers <- stringr::str_detect(unique_markers, separator)
+  if (sum(invalid_markers) > 0) {
+    cli::cli_abort(
+      c(
+        "x" = "Markers cannot contain the separator {.str {separator}}",
+        "i" = "Invalid marker{?s}: {.str {unique_markers[invalid_markers]}}"
+      )
+    )
+  }
+
   # Cast data.frame to wide format
   col_scores_wide_format <- object %>%
     pivot_wider(
@@ -446,7 +492,7 @@ ProximityScoresToAssay.data.frame <- function(
       values_from = all_of(values_from),
       values_fill = missing_obs
     ) %>%
-    unite(marker_1, marker_2, col = "pair", sep = "/") %>%
+    unite(marker_1, marker_2, col = "pair", sep = separator) %>%
     data.frame(row.names = 1, check.names = FALSE) %>%
     as.matrix()
 
@@ -465,13 +511,15 @@ ProximityScoresToAssay.data.frame <- function(
 #'
 ProximityScoresToAssay.PNAAssay <- function(
   object,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   missing_obs = NA_real_,
   ...
 ) {
   proximity_matrix <- ProximityScores(object) %>%
     ProximityScoresToAssay(
       values_from = values_from,
+      separator = separator,
       missing_obs = missing_obs,
       return_sparse = TRUE
     )
@@ -506,7 +554,8 @@ ProximityScoresToAssay.Seurat <- function(
   object,
   assay = NULL,
   new_assay = NULL,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   missing_obs = NA_real_,
   ...
 ) {
@@ -529,7 +578,7 @@ ProximityScoresToAssay.Seurat <- function(
   pna_assay <- object[[assay]]
 
   # Create new assay
-  proximity_assay <- ProximityScoresToAssay(pna_assay, values_from, missing_obs, ...)
+  proximity_assay <- ProximityScoresToAssay(pna_assay, values_from, separator, missing_obs, ...)
   Key(proximity_assay) <- "proximity_"
 
   # Place new assay in Seurat object

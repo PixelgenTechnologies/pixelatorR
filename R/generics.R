@@ -1164,7 +1164,9 @@ ProximityScores <- function(
 #'
 #' @param object An object with proximity scores
 #' @param values_from A single string defining what column in the proximity score table
-#' to pick values from.
+#' to pick values from. Default is "log2_ratio".
+#' @param separator A character to separate marker names in the row names of the output. Default is ":".
+#' Must be a single character.
 #' @param missing_obs A numeric value or NA to replace missing observations with. Default
 #' is \code{NA_real_}.
 #' @param return_sparse A logical specifying whether to return a sparse matrix (\code{dgCMatrix}).

@@ -12,11 +12,17 @@
 \usage{
 ProximityScoresToAssay(object, ...)
 
-\method{ProximityScoresToAssay}{tbl_lazy}(object, values_from = "join_count_z", ...)
+\method{ProximityScoresToAssay}{tbl_lazy}(
+  object,
+  values_from = "log2_ratio",
+  separator = ":",
+  ...
+)
 
 \method{ProximityScoresToAssay}{data.frame}(
   object,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   missing_obs = NA_real_,
   return_sparse = TRUE,
   ...
@@ -24,14 +30,16 @@ ProximityScoresToAssay(object, ...)
 
 \method{ProximityScoresToAssay}{PNAAssay}(
   object,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   missing_obs = NA_real_,
   ...
 )
 
 \method{ProximityScoresToAssay}{PNAAssay5}(
   object,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   missing_obs = NA_real_,
   ...
 )
@@ -40,7 +48,8 @@ ProximityScoresToAssay(object, ...)
   object,
   assay = NULL,
   new_assay = NULL,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   missing_obs = NA_real_,
   ...
 )
@@ -51,7 +60,10 @@ ProximityScoresToAssay(object, ...)
 \item{...}{Not yet implemented}
 
 \item{values_from}{A single string defining what column in the proximity score table
-to pick values from.}
+to pick values from. Default is "log2_ratio".}
+
+\item{separator}{A character to separate marker names in the row names of the output. Default is ":".
+Must be a single character.}
 
 \item{missing_obs}{A numeric value or NA to replace missing observations with. Default
 is \code{NA_real_}.}
