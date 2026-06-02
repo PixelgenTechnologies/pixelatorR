@@ -63,7 +63,7 @@ ProximityScoresToAssay(object, ...)
 to pick values from. Default is "log2_ratio".}
 
 \item{separator}{A character to separate marker names in the row names of the output. Default is ":".
-Must be a single character.}
+Must be a single character and must not appear in any marker name.}
 
 \item{missing_obs}{A numeric value or NA to replace missing observations with. Default
 is \code{NA_real_}.}

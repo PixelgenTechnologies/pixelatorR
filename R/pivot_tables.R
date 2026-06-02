@@ -402,7 +402,7 @@ ProximityScoresToAssay.tbl_lazy <- function(
   }
 
   unique_markers <- unique(c(object %>% pull(marker_1), object %>% pull(marker_2)))
-  invalid_markers <- stringr::str_detect(unique_markers, separator)
+  invalid_markers <- stringr::str_detect(unique_markers, stringr::coll(separator))
   if (sum(invalid_markers) > 0) {
     cli::cli_abort(
       c(
@@ -578,7 +578,13 @@ ProximityScoresToAssay.Seurat <- function(
   pna_assay <- object[[assay]]
 
   # Create new assay
-  proximity_assay <- ProximityScoresToAssay(pna_assay, values_from, separator, missing_obs, ...)
+  proximity_assay <- ProximityScoresToAssay(
+    object = pna_assay,
+    values_from = values_from,
+    separator = separator,
+    missing_obs = missing_obs,
+    ...
+  )
   Key(proximity_assay) <- "proximity_"
 
   # Place new assay in Seurat object
