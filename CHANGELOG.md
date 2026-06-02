@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - "NaturalBlue" option as a gradient palette in `PixelgenGradient` to use as a natural illuminated color gradient.
 
 ### Updated
+- Changed the default proximity score in `ProximityScoresToAssay` from "join_count_z" to "log2_ratio"
+- `ProximityScoresToAssay` now takes a `separator` argument to specify the character used to separate marker names. The default separator is changed from `/` to `:` to avoid misinterpretation of marker names containing `/`.
 - `approximate_node_saturation`, `approximate_edge_saturation` and `approximate_saturation_curve` now uses the standard definition of saturation (s = 1 - molecules / reads).
 - `ReadPNA_Seurat` will now throw an informative error when reading a file with only a single cell, which would otherwise throw a cryptic error when trying to create the Seurat object.
 
