@@ -75,6 +75,28 @@ test_that("render_rotating_layout works as expected", {
     frames = 2, show_first_frame = FALSE,
     ggplot_theme = ggplot2::theme_classic()
   ))
+
+  # Use illumination mask with ggplot2
+  expect_no_error(render_rotating_layout(xyz, gif_file,
+    frames = 2, show_first_frame = FALSE,
+    use_illumination = TRUE
+  ))
+
+  # Use illumination mask with base R graphics
+  expect_no_error(render_rotating_layout(xyz, gif_file,
+    frames = 2, show_first_frame = FALSE,
+    graphics_use = "base",
+    use_illumination = TRUE
+  ))
+
+  # Use illumination mask with factor node_val
+  xyz_factor <- xyz %>%
+    mutate(node_val = factor(ifelse(node_val > 0.9, "high", "low")))
+  expect_no_error(render_rotating_layout(xyz_factor, gif_file,
+    frames = 2, show_first_frame = FALSE,
+    colors = c("red", "lightgrey"),
+    use_illumination = TRUE
+  ))
 })
 
 
@@ -170,5 +192,15 @@ test_that("render_rotating_layout fails with invalid input", {
   # Invalid graphics_use
   expect_error(
     render_rotating_layout(xyz, gif_file, graphics_use = "Invalid")
+  )
+
+  # Invalid illumination_ambient
+  expect_error(
+    render_rotating_layout(xyz, gif_file, illumination_ambient = -1)
+  )
+
+  # Invalid illumination_sat_boost
+  expect_error(
+    render_rotating_layout(xyz, gif_file, illumination_sat_boost = -1)
   )
 })

@@ -32,7 +32,10 @@ render_rotating_layout(
   graphics_use = c("base", "ggplot2"),
   boomerang = FALSE,
   cl = NULL,
-  keep_frames = FALSE
+  keep_frames = FALSE,
+  use_illumination = FALSE,
+  illumination_ambient = 0.3,
+  illumination_sat_boost = 0.6
 )
 }
 \arguments{
@@ -138,6 +141,15 @@ corresponds to a single-threaded operation (sequential processing).}
 \item{keep_frames}{A logical value indicating whether the png files should
 be kept after rendering the video. This option is useful if you want to
 access to the individual frames later for further processing.}
+
+\item{use_illumination}{A logical value indicating whether to modulate
+\code{node_val} colors with a heuristic illumination mask. Default is \code{FALSE}.}
+
+\item{illumination_ambient}{A numeric value between 0 and 1 specifying the
+minimum brightness floor when blending illumination. Default is \code{0.3}.}
+
+\item{illumination_sat_boost}{A non-negative numeric value controlling
+saturation compensation in shadowed regions. Default is \code{0.6}.}
 }
 \value{
 Exports an animation of a rotating 3D scatter plot.
@@ -199,6 +211,18 @@ The \code{graphics_use} argument can be used to switch between the default
 "base" and the "ggplot2" graphics system. The "base" option is much faster
 but has fewer customization options. For instance, it is currently not possible to
 get row and column labels with the "base" graphics option.
+}
+
+\section{illumination}{
+
+When \code{use_illumination = TRUE}, node colors are derived from \code{node_val}
+and then modulated by a geometry-based illumination mask computed with
+\code{\link{heuristic_illumination}}. This adds depth cues on top of the marker
+color encoding. The \code{illumination_ambient} parameter sets the minimum
+brightness floor in the HSV blend (not the ambient-occlusion weight in
+\code{heuristic_illumination}), and \code{illumination_sat_boost} controls
+saturation compensation in shadowed regions. Illumination pairs well with
+\code{PixelgenGradient(n, "NaturalBlue")} as the \code{colors} palette.
 }
 
 \examples{
