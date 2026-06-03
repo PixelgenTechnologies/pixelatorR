@@ -362,7 +362,7 @@ render_rotating_layout <- function(
   }
 
   if (use_illumination) {
-    # Shading is invariant to z-rotation, so compute once per cell.
+    # Compute shading once per cell.
     xyz_list <- lapply(xyz_list, function(xyz) {
       xyz$illumination <- scales::rescale(heuristic_illumination(xyz), to = c(0, 1))
       xyz
@@ -704,8 +704,7 @@ render_rotating_layout <- function(
   }
 
   if (inherits(df$node_val, "numeric")) {
-    max_abs_val <- max(abs(marker_limits[[marker_id]]))
-    lims <- if (center_zero) c(-max_abs_val, max_abs_val) else c(0, max_abs_val)
+    lims <- .node_val_lims(df$node_val, marker_limits, marker_id, center_zero)
     base_color <- scales::col_numeric(
       palette = colors,
       domain = lims,
@@ -750,6 +749,75 @@ render_rotating_layout <- function(
 }
 
 
+#' Numeric limits for node_val color scales
+#'
+#' @param node_val A numeric vector of node values.
+#' @param marker_limits A list with numeric min/max vectors, or \code{NULL}.
+#' @param marker_id A character string with the marker identifier, or \code{NULL}.
+#' @param center_zero A logical value indicating whether to center the scale at zero.
+#'
+#' @returns A numeric vector of length 2.
+#'
+#' @noRd
+#'
+.node_val_lims <- function(
+  node_val,
+  marker_limits = NULL,
+  marker_id = NULL,
+  center_zero = FALSE
+) {
+  if (!is.null(marker_id) && !is.null(marker_limits)) {
+    lims <- marker_limits[[marker_id]]
+  } else {
+    lims <- range(node_val, na.rm = TRUE)
+  }
+  if (center_zero) {
+    max_abs_val <- max(abs(lims))
+    lims <- c(-max_abs_val, max_abs_val)
+  }
+  lims
+}
+
+
+#' Minimal tibble to drive the node_val color legend when colors are precomputed
+#'
+#' @param node_val A numeric or factor vector of node values.
+#' @param marker_limits A list with numeric vectors of length 2, or \code{NULL}.
+#' @param marker_id A character string with the marker identifier, or \code{NULL}.
+#' @param center_zero A logical value indicating whether to center the scale at zero.
+#'
+#' @returns A tibble with columns \code{node_val}, \code{x}, \code{y}, and \code{z}.
+#'
+#' @noRd
+#'
+.legend_carrier_data <- function(
+  node_val,
+  marker_limits = NULL,
+  marker_id = NULL,
+  center_zero = FALSE
+) {
+  if (inherits(node_val, "numeric")) {
+    lims <- .node_val_lims(node_val, marker_limits, marker_id, center_zero)
+    tibble::tibble(
+      node_val = lims,
+      x = 0,
+      y = 0,
+      z = 0
+    )
+  } else {
+    if (inherits(node_val, "character")) {
+      node_val <- factor(node_val, levels = unique(node_val))
+    }
+    tibble::tibble(
+      node_val = factor(levels(node_val), levels = levels(node_val)),
+      x = 0,
+      y = 0,
+      z = 0
+    )
+  }
+}
+
+
 #' Create a ggplot2 color scale for node values
 #'
 #' @param node_val A numeric or factor vector of node values.
@@ -775,14 +843,12 @@ render_rotating_layout <- function(
   pt_size = 1
 ) {
   if (inherits(node_val, "numeric")) {
-    if (!is.null(marker_id) && !is.null(marker_limits)) {
-      max_abs_val <- max(abs(marker_limits[[marker_id]]))
-    } else {
-      max_abs_val <- max(abs(node_val))
-    }
-    lims <- if (center_zero) c(-max_abs_val, max_abs_val) else c(0, max_abs_val)
+    lims <- .node_val_lims(node_val, marker_limits, marker_id, center_zero)
     scale_color_gradientn(colours = colors, limits = lims)
   } else {
+    if (inherits(node_val, "character")) {
+      node_val <- factor(node_val, levels = unique(node_val))
+    }
     # Colors are precomputed outside aes; override.aes keeps legend keys visible.
     # "legend" is ggplot2's default guide shorthand (same as omitting guide=).
     color_guide <- if (use_illumination) {
@@ -790,7 +856,11 @@ render_rotating_layout <- function(
     } else {
       "legend"
     }
-    scale_color_manual(values = colors, guide = color_guide)
+    scale_color_manual(
+      values = colors,
+      limits = levels(node_val),
+      guide = color_guide
+    )
   }
 }
 
@@ -847,10 +917,20 @@ render_rotating_layout <- function(
       unname() %>%
       bind_rows()
     if (use_illumination) {
-      # Invisible geom maps node_val for the legend only.
+      legend_df <- .legend_carrier_data(
+        xyz_collapsed$node_val,
+        marker_limits,
+        center_zero = center_zero
+      )
       p <- ggplot(xyz_collapsed, aes(x, z, size = y)) +
         geom_point(color = xyz_collapsed$point_color, alpha = pt_opacity) +
-        geom_point(aes(color = node_val), alpha = 0, size = 0) +
+        geom_point(
+          data = legend_df,
+          aes(x, z, color = node_val),
+          inherit.aes = FALSE,
+          alpha = 0,
+          size = 0
+        ) +
         scale_size(range = c(0, pt_size), limits = xyz_limits) +
         coord_fixed() +
         theme_void() +
@@ -908,10 +988,21 @@ render_rotating_layout <- function(
         df <- xyz_list_cell[[marker_id]] %>%
           mutate(row_text = marker_id)
         if (use_illumination) {
-          # Invisible geom maps node_val for the legend only.
+          legend_df <- .legend_carrier_data(
+            df$node_val,
+            marker_limits,
+            marker_id,
+            center_zero
+          )
           p <- ggplot(df, aes(x, z, size = y)) +
             geom_point(color = df$point_color, alpha = pt_opacity) +
-            geom_point(aes(color = node_val), alpha = 0, size = 0) +
+            geom_point(
+              data = legend_df,
+              aes(x, z, color = node_val),
+              inherit.aes = FALSE,
+              alpha = 0,
+              size = 0
+            ) +
             scale_size(range = c(0, pt_size), limits = xyz_limits) +
             coord_fixed() +
             theme_void() +

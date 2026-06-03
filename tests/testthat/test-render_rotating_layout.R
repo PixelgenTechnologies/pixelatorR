@@ -283,6 +283,32 @@ test_that("illumination helpers validate inputs", {
   )
 })
 
+test_that(".node_val_lims works as expected", {
+  expect_equal(
+    pixelatorR:::.node_val_lims(c(-2, 5), center_zero = FALSE),
+    c(-2, 5)
+  )
+  expect_equal(
+    pixelatorR:::.node_val_lims(
+      c(-2, 5),
+      marker_limits = list(marker = c(-3, 4)),
+      marker_id = "marker",
+      center_zero = FALSE
+    ),
+    c(-3, 4)
+  )
+  expect_equal(
+    pixelatorR:::.node_val_lims(c(-2, 5), center_zero = TRUE),
+    c(-5, 5)
+  )
+
+  expect_equal(nrow(pixelatorR:::.legend_carrier_data(runif(1e4))), 2)
+  expect_equal(
+    nrow(pixelatorR:::.legend_carrier_data(factor(rep(c("a", "b"), 5e3)))),
+    2
+  )
+})
+
 test_that(".node_val_color_scale uses visible legend keys with illumination", {
   scale <- pixelatorR:::.node_val_color_scale(
     factor(c("high", "low")),
