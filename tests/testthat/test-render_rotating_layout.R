@@ -89,13 +89,15 @@ test_that("render_rotating_layout works as expected", {
     use_illumination = TRUE
   ))
 
-  # Use illumination mask with factor node_val
+  # Use illumination mask with factor node_val and shadow palette
   xyz_factor <- xyz %>%
     mutate(node_val = factor(ifelse(node_val > 0.9, "high", "low")))
   expect_no_error(render_rotating_layout(xyz_factor, gif_file,
     frames = 2, show_first_frame = FALSE,
-    colors = c("red", "lightgrey"),
-    use_illumination = TRUE
+    graphics_use = "ggplot2",
+    colors = c("red", "gray95"),
+    use_illumination = TRUE,
+    illumination_shadow_colors = PixelgenGradient(100, "NaturalBlue")
   ))
 
   # Use shadow palette blending with ggplot2
@@ -111,16 +113,6 @@ test_that("render_rotating_layout works as expected", {
     graphics_use = "base",
     use_illumination = TRUE,
     illumination_shadow_colors = c("#1F385A", "#C1DBE0")
-  ))
-
-  # Use illumination mask with factor node_val
-  xyz_factor <- xyz %>%
-    mutate(node_val = factor(ifelse(node_val > 0.9, "high", "low")))
-  expect_no_error(render_rotating_layout(xyz_factor, gif_file,
-    frames = 2, show_first_frame = FALSE,
-    colors = c("red", "gray95"),
-    use_illumination = TRUE,
-    illumination_shadow_colors = PixelgenGradient(100, "NaturalBlue")
   ))
 })
 
@@ -289,4 +281,18 @@ test_that("illumination helpers validate inputs", {
     ),
     "same length|length"
   )
+})
+
+test_that(".node_val_color_scale uses visible legend keys with illumination", {
+  scale <- pixelatorR:::.node_val_color_scale(
+    factor(c("high", "low")),
+    colors = c("red", "blue"),
+    center_zero = FALSE,
+    use_illumination = TRUE,
+    pt_size = 2
+  )
+  guide <- scale$guide
+  expect_s3_class(guide, "GuideLegend")
+  expect_equal(scale$guide$params$override.aes$alpha, 1)
+  expect_equal(scale$guide$params$override.aes$size, 2)
 })

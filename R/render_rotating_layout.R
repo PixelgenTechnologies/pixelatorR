@@ -755,6 +755,9 @@ render_rotating_layout <- function(
 #' @param center_zero A logical value indicating whether to center the scale at zero.
 #' @param marker_limits A list with numeric vectors of length 2, or \code{NULL}.
 #' @param marker_id A character string with the marker identifier, or \code{NULL}.
+#' @param use_illumination A logical value indicating whether point colors are
+#' precomputed outside the color aesthetic.
+#' @param pt_size Maximum point size used for legend key sizing.
 #'
 #' @returns A ggplot2 color scale.
 #'
@@ -765,7 +768,9 @@ render_rotating_layout <- function(
   colors,
   center_zero,
   marker_limits = NULL,
-  marker_id = NULL
+  marker_id = NULL,
+  use_illumination = FALSE,
+  pt_size = 1
 ) {
   if (inherits(node_val, "numeric")) {
     if (!is.null(marker_id) && !is.null(marker_limits)) {
@@ -776,7 +781,12 @@ render_rotating_layout <- function(
     lims <- if (center_zero) c(-max_abs_val, max_abs_val) else c(0, max_abs_val)
     scale_color_gradientn(colours = colors, limits = lims)
   } else {
-    scale_color_manual(values = colors)
+    color_guide <- if (use_illumination) {
+      ggplot2::guide_legend(override.aes = list(alpha = 1, size = pt_size))
+    } else {
+      "legend"
+    }
+    scale_color_manual(values = colors, guide = color_guide)
   }
 }
 
@@ -846,7 +856,9 @@ render_rotating_layout <- function(
           xyz_collapsed$node_val,
           colors,
           center_zero,
-          marker_limits = marker_limits
+          marker_limits = marker_limits,
+          use_illumination = use_illumination,
+          pt_size = pt_size
         ) +
         {
           if (flip) {
@@ -868,7 +880,9 @@ render_rotating_layout <- function(
           xyz_collapsed$node_val,
           colors,
           center_zero,
-          marker_limits = marker_limits
+          marker_limits = marker_limits,
+          use_illumination = use_illumination,
+          pt_size = pt_size
         ) +
         {
           if (flip) {
@@ -903,7 +917,9 @@ render_rotating_layout <- function(
               colors,
               center_zero,
               marker_limits = marker_limits,
-              marker_id = marker_id
+              marker_id = marker_id,
+              use_illumination = use_illumination,
+              pt_size = pt_size
             )
         } else {
           p <- ggplot(df, aes(x, z, size = y, color = node_val)) +
@@ -919,7 +935,9 @@ render_rotating_layout <- function(
               colors,
               center_zero,
               marker_limits = marker_limits,
-              marker_id = marker_id
+              marker_id = marker_id,
+              use_illumination = use_illumination,
+              pt_size = pt_size
             )
         }
         return(p)
