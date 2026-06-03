@@ -151,11 +151,12 @@ minimum brightness floor when blending illumination. Default is \code{0.3}.}
 
 \item{illumination_sat_boost}{A non-negative numeric value controlling
 saturation compensation in shadowed regions when using HSV blending.
-Ignored when \code{illumination_shadow_colors} is set. Default is \code{0.6}.}
+Ignored when \code{illumination_shadow_colors} is set. Increase this to increase
+saturation in darker points. Default is \code{0.6}.}
 
 \item{illumination_shadow_colors}{\code{NULL} or a vector of valid colors.
 When \code{NULL} (default), illumination is blended in HSV space. When set,
-each point's illumination is mapped to this palette and linearly interpolated
+each point's illumination is mapped to this palette instead and linearly interpolated
 with the base \code{node_val} color.}
 }
 \value{
