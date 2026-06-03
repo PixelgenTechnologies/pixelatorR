@@ -35,7 +35,8 @@ render_rotating_layout(
   keep_frames = FALSE,
   use_illumination = FALSE,
   illumination_ambient = 0.3,
-  illumination_sat_boost = 0.6
+  illumination_sat_boost = 0.6,
+  illumination_shadow_colors = NULL
 )
 }
 \arguments{
@@ -149,7 +150,13 @@ access to the individual frames later for further processing.}
 minimum brightness floor when blending illumination. Default is \code{0.3}.}
 
 \item{illumination_sat_boost}{A non-negative numeric value controlling
-saturation compensation in shadowed regions. Default is \code{0.6}.}
+saturation compensation in shadowed regions when using HSV blending.
+Ignored when \code{illumination_shadow_colors} is set. Default is \code{0.6}.}
+
+\item{illumination_shadow_colors}{\code{NULL} or a vector of valid colors.
+When \code{NULL} (default), illumination is blended in HSV space. When set,
+each point's illumination is mapped to this palette and linearly interpolated
+with the base \code{node_val} color.}
 }
 \value{
 Exports an animation of a rotating 3D scatter plot.
@@ -218,11 +225,14 @@ get row and column labels with the "base" graphics option.
 When \code{use_illumination = TRUE}, node colors are derived from \code{node_val}
 and then modulated by a geometry-based illumination mask computed with
 \code{\link{heuristic_illumination}}. This adds depth cues on top of the marker
-color encoding. The \code{illumination_ambient} parameter sets the minimum
-brightness floor in the HSV blend (not the ambient-occlusion weight in
-\code{heuristic_illumination}), and \code{illumination_sat_boost} controls
-saturation compensation in shadowed regions. Illumination pairs well with
-\code{PixelgenGradient(n, "NaturalBlue")} as the \code{colors} palette.
+color encoding. By default, shadows are blended in HSV space using
+\code{illumination_ambient} as the minimum brightness floor (not the
+ambient-occlusion weight in \code{heuristic_illumination}) and
+\code{illumination_sat_boost} for saturation compensation in shadowed regions.
+When \code{illumination_shadow_colors} is set, shadows are instead blended
+toward a second color gradient mapped from the illumination mask; in that mode
+\code{illumination_sat_boost} is ignored. \code{PixelgenGradient(n, "NaturalBlue")}
+works well as a shadow palette while \code{colors} carries the marker signal.
 }
 
 \examples{

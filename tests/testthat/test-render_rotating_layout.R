@@ -97,6 +97,31 @@ test_that("render_rotating_layout works as expected", {
     colors = c("red", "lightgrey"),
     use_illumination = TRUE
   ))
+
+  # Use shadow palette blending with ggplot2
+  expect_no_error(render_rotating_layout(xyz, gif_file,
+    frames = 2, show_first_frame = FALSE,
+    use_illumination = TRUE,
+    illumination_shadow_colors = c("#1F385A", "#C1DBE0")
+  ))
+
+  # Use shadow palette blending with base R graphics
+  expect_no_error(render_rotating_layout(xyz, gif_file,
+    frames = 2, show_first_frame = FALSE,
+    graphics_use = "base",
+    use_illumination = TRUE,
+    illumination_shadow_colors = c("#1F385A", "#C1DBE0")
+  ))
+
+  # Use illumination mask with factor node_val
+  xyz_factor <- xyz %>%
+    mutate(node_val = factor(ifelse(node_val > 0.9, "high", "low")))
+  expect_no_error(render_rotating_layout(xyz_factor, gif_file,
+                                         frames = 2, show_first_frame = FALSE,
+                                         colors = c("red", "gray95"),
+                                         use_illumination = TRUE,
+                                         illumination_shadow_colors = PixelgenGradient(100, "NaturalBlue")
+  ))
 })
 
 
@@ -202,5 +227,62 @@ test_that("render_rotating_layout fails with invalid input", {
   # Invalid illumination_sat_boost
   expect_error(
     render_rotating_layout(xyz, gif_file, illumination_sat_boost = -1)
+  )
+
+  # Invalid illumination_shadow_colors
+  expect_error(
+    render_rotating_layout(
+      xyz,
+      gif_file,
+      use_illumination = TRUE,
+      illumination_shadow_colors = c("Invalid")
+    )
+  )
+})
+
+test_that(".apply_palette_illumination blends colors as expected", {
+  base <- "#FF0000"
+  shadow <- "#0000FF"
+
+  full_light <- pixelatorR:::.apply_palette_illumination(
+    base, shadow, illum_mask = 1, ambient_intensity = 0
+  )
+  expect_equal(full_light, base)
+
+  full_shadow <- pixelatorR:::.apply_palette_illumination(
+    base, shadow, illum_mask = 0, ambient_intensity = 0
+  )
+  expect_equal(full_shadow, shadow)
+
+  expect_equal(
+    pixelatorR:::.apply_palette_illumination(
+      rep(base, 9), shadow, illum_mask = seq(0, 1, length.out = 9), ambient_intensity = 0
+    ),
+    c("#0000FF", "#1F00DF", "#3F00BF", "#5F009F", "#7F007F", "#9F005F",
+      "#BF003F", "#DF001F", "#FF0000")
+    )
+
+})
+
+test_that("illumination helpers validate inputs", {
+  expect_error(
+    pixelatorR:::.apply_hsv_illumination("Invalid", 0.5),
+    "valid color|color"
+  )
+  expect_error(
+    pixelatorR:::.apply_hsv_illumination("#FF0000", c(0.5, 0.6)),
+    "same length|length"
+  )
+  expect_error(
+    pixelatorR:::.apply_palette_illumination("#FF0000", "#0000FF", 1.5),
+    "between|range"
+  )
+  expect_error(
+    pixelatorR:::.apply_palette_illumination(
+      c("#FF0000", "#00FF00"),
+      c("#0000FF", "#0000FF", "#0000FF"),
+      c(0.5, 0.5)
+    ),
+    "same length|length"
   )
 })
