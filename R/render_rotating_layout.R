@@ -362,6 +362,7 @@ render_rotating_layout <- function(
   }
 
   if (use_illumination) {
+    # Shading is invariant to z-rotation, so compute once per cell.
     xyz_list <- lapply(xyz_list, function(xyz) {
       xyz$illumination <- scales::rescale(heuristic_illumination(xyz), to = c(0, 1))
       xyz
@@ -408,6 +409,7 @@ render_rotating_layout <- function(
   })
 
   if (use_illumination) {
+    # Precompute colors before the frame loop; only coordinates rotate per frame.
     xyz_list_nested <- lapply(xyz_list_nested, function(xyz_list_cell) {
       lapply(names(xyz_list_cell), function(marker_id) {
         df <- xyz_list_cell[[marker_id]]
@@ -781,6 +783,8 @@ render_rotating_layout <- function(
     lims <- if (center_zero) c(-max_abs_val, max_abs_val) else c(0, max_abs_val)
     scale_color_gradientn(colours = colors, limits = lims)
   } else {
+    # Colors are precomputed outside aes; override.aes keeps legend keys visible.
+    # "legend" is ggplot2's default guide shorthand (same as omitting guide=).
     color_guide <- if (use_illumination) {
       ggplot2::guide_legend(override.aes = list(alpha = 1, size = pt_size))
     } else {
@@ -843,6 +847,7 @@ render_rotating_layout <- function(
       unname() %>%
       bind_rows()
     if (use_illumination) {
+      # Invisible geom maps node_val for the legend only.
       p <- ggplot(xyz_collapsed, aes(x, z, size = y)) +
         geom_point(color = xyz_collapsed$point_color, alpha = pt_opacity) +
         geom_point(aes(color = node_val), alpha = 0, size = 0) +
@@ -903,6 +908,7 @@ render_rotating_layout <- function(
         df <- xyz_list_cell[[marker_id]] %>%
           mutate(row_text = marker_id)
         if (use_illumination) {
+          # Invisible geom maps node_val for the legend only.
           p <- ggplot(df, aes(x, z, size = y)) +
             geom_point(color = df$point_color, alpha = pt_opacity) +
             geom_point(aes(color = node_val), alpha = 0, size = 0) +
