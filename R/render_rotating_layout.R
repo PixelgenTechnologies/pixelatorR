@@ -51,6 +51,21 @@
 #' but has fewer customization options. For instance, it is currently not possible to
 #' get row and column labels with the "base" graphics option.
 #'
+#' @section illumination:
+#' When \code{use_illumination = TRUE}, node colors are derived from \code{node_val}
+#' and then modulated by a geometry-based illumination mask computed with
+#' \code{\link{heuristic_illumination}}. This adds depth cues on top of the marker
+#' color encoding. By default, shadows are blended in HSV space using
+#' \code{illumination_ambient} as the minimum brightness floor (not the
+#' ambient-occlusion weight in \code{heuristic_illumination}) and
+#' \code{illumination_sat_boost} for saturation compensation in shadowed regions.
+#' When \code{illumination_shadow_colors} is set, shadows are instead blended
+#' toward a second color gradient mapped from the illumination mask; in that mode
+#' \code{illumination_sat_boost} is ignored. \code{PixelgenGradient(n, "NaturalBlue")}
+#' works well as a shadow palette while \code{colors} carries the marker signal.
+#' Set \code{normalize_illumination = FALSE} to use raw output from
+#' \code{heuristic_illumination} instead of rescaling the mask to \code{[0, 1]}.
+#'
 #' @param data A tibble (\code{tbl_df}) with columns 'x', 'y', 'z',
 #' and 'node_val'. The 'node_val' column can be either a numeric or a
 #' factor.
@@ -128,6 +143,21 @@
 #' @param keep_frames A logical value indicating whether the png files should
 #' be kept after rendering the video. This option is useful if you want to
 #' access to the individual frames later for further processing.
+#' @param use_illumination A logical value indicating whether to modulate
+#' \code{node_val} colors with a heuristic illumination mask. Default is \code{FALSE}.
+#' @param illumination_ambient A numeric value between 0 and 1 specifying the
+#' minimum brightness floor when blending illumination. Default is \code{0.3}.
+#' @param illumination_sat_boost A non-negative numeric value controlling
+#' saturation compensation in shadowed regions when using HSV blending.
+#' Ignored when \code{illumination_shadow_colors} is set. Increase this to increase
+#' saturation in darker points. Default is \code{0.6}.
+#' @param illumination_shadow_colors \code{NULL} or a vector of valid colors.
+#' When \code{NULL} (default), illumination is blended in HSV space. When set,
+#' each point's illumination is mapped to this palette instead and linearly interpolated
+#' with the base \code{node_val} color.
+#' @param normalize_illumination A logical value indicating whether the
+#' illumination mask should be rescaled to \code{[0, 1]} per cell. Default is
+#' \code{TRUE}.
 #'
 #' @returns Exports an animation of a rotating 3D scatter plot.
 #'
@@ -249,7 +279,12 @@ render_rotating_layout <- function(
   graphics_use = c("base", "ggplot2"),
   boomerang = FALSE,
   cl = NULL,
-  keep_frames = FALSE
+  keep_frames = FALSE,
+  use_illumination = FALSE,
+  illumination_ambient = 0.3,
+  illumination_sat_boost = 0.6,
+  illumination_shadow_colors = NULL,
+  normalize_illumination = TRUE
 ) {
   if (fs::path_ext(file) == "gif") {
     rlang::check_installed("gifski")
@@ -282,7 +317,8 @@ render_rotating_layout <- function(
     frames, pad, show_first_frame, width, height,
     res, delay, ggplot_theme, title, bg,
     label_grid_axes, margin_widths, use_facet_grid,
-    flip, boomerang
+    flip, boomerang, use_illumination, illumination_ambient,
+    illumination_sat_boost, illumination_shadow_colors, normalize_illumination
   )
 
   # Set variables if NULL
@@ -331,6 +367,18 @@ render_rotating_layout <- function(
     })
   }
 
+  if (use_illumination) {
+    # Compute shading once per cell.
+    xyz_list <- lapply(xyz_list, function(xyz) {
+      ill <- heuristic_illumination(xyz)
+      if (normalize_illumination) {
+        ill <- scales::rescale(ill, to = c(0, 1))
+      }
+      xyz$illumination <- ill
+      xyz
+    })
+  }
+
   # Set the axis limits
   padded_max_lim <- 1 + 2 * pad
   xyz_limits <- c(-padded_max_lim, padded_max_lim)
@@ -370,6 +418,29 @@ render_rotating_layout <- function(
     return(xyz_list_cell)
   })
 
+  if (use_illumination) {
+    # Precompute colors before the frame loop; only coordinates rotate per frame.
+    xyz_list_nested <- lapply(xyz_list_nested, function(xyz_list_cell) {
+      lapply(names(xyz_list_cell), function(marker_id) {
+        df <- xyz_list_cell[[marker_id]]
+        df$point_color <- .compute_illuminated_point_colors(
+          df,
+          colors,
+          marker_limits,
+          marker_id,
+          center_zero,
+          illumination_ambient,
+          illumination_sat_boost,
+          illumination_shadow_colors,
+          normalize_illumination
+        )
+        df
+      }) %>%
+        set_names(names(xyz_list_cell))
+    }) %>%
+      set_names(names(xyz_list_nested))
+  }
+
   # Show the first frame if requested
   if (show_first_frame && interactive()) {
     .render_first_frame(
@@ -377,7 +448,7 @@ render_rotating_layout <- function(
       marker_col, cell_col, colors, center_zero, xyz_limits,
       tmp_dir, width, height, res, ggplot_theme, title, bg,
       use_facet_grid, flip, label_grid_axes, margin_widths,
-      graphics_use, dev_png
+      graphics_use, dev_png, use_illumination
     )
   }
 
@@ -419,7 +490,8 @@ render_rotating_layout <- function(
           use_facet_grid,
           flip,
           label_grid_axes,
-          margin_widths
+          margin_widths,
+          use_illumination
         )
         # Add ggplot theme
         if (!is.null(ggplot_theme)) {
@@ -443,7 +515,8 @@ render_rotating_layout <- function(
           pt_opacity,
           pt_size,
           bg,
-          flip
+          flip,
+          use_illumination
         )
         dev.off()
       }
@@ -503,6 +576,316 @@ render_rotating_layout <- function(
 }
 
 
+#' Blend base hex colors with an illumination mask in HSV space
+#'
+#' @param hex_colors A character vector of hex colors.
+#' @param illum_mask A numeric vector of illumination values in `[0, 1]`.
+#' @param ambient_intensity Minimum brightness floor in `[0, 1]`.
+#' @param sat_boost Non-negative saturation boost in shadowed regions.
+#'
+#' @returns A character vector of hex colors.
+#'
+#' @noRd
+#'
+.apply_hsv_illumination <- function(
+  hex_colors,
+  illum_mask,
+  ambient_intensity = 0.1,
+  sat_boost = 0.7,
+  call = caller_env()
+) {
+  assert_valid_color(hex_colors, n = 1, call = call)
+  assert_vector(illum_mask, type = "numeric", n = 1, call = call)
+  assert_vectors_x_y_length_equal(hex_colors, illum_mask, call = call)
+  assert_within_limits(illum_mask, c(0, 1), call = call)
+  assert_single_value(ambient_intensity, type = "numeric", call = call)
+  assert_within_limits(ambient_intensity, c(0, 1), call = call)
+  assert_single_value(sat_boost, type = "numeric", call = call)
+  assert_within_limits(sat_boost, c(0, Inf), call = call)
+
+  rgb_mat <- grDevices::col2rgb(hex_colors)
+  hsv_mat <- grDevices::rgb2hsv(rgb_mat)
+
+  h <- hsv_mat[1, ]
+  s <- hsv_mat[2, ]
+  v <- hsv_mat[3, ]
+
+  light_factor <- ambient_intensity + (illum_mask * (1 - ambient_intensity))
+  v_new <- v * light_factor
+  s_boosted <- s * (1 + (1 - light_factor) * sat_boost)
+  s_new <- pmin(1, s_boosted)
+
+  grDevices::hsv(h = h, s = s_new, v = v_new)
+}
+
+
+#' Blend base hex colors toward shadow colors using RGB interpolation
+#'
+#' @param base_hex A character vector of base hex colors.
+#' @param shadow_hex A character vector of shadow hex colors (length 1 or
+#'   equal to \code{base_hex}).
+#' @param illum_mask A numeric vector of illumination values in `[0, 1]`.
+#' @param ambient_intensity Minimum light factor in `[0, 1]`.
+#'
+#' @returns A character vector of hex colors.
+#'
+#' @noRd
+#'
+.apply_palette_illumination <- function(
+  base_hex,
+  shadow_hex,
+  illum_mask,
+  ambient_intensity = 0.1,
+  call = caller_env()
+) {
+  assert_valid_color(base_hex, n = 1, call = call)
+  assert_valid_color(shadow_hex, n = 1, call = call)
+  assert_vector(illum_mask, type = "numeric", n = 1, call = call)
+  assert_vectors_x_y_length_equal(base_hex, illum_mask, call = call)
+  assert_within_limits(illum_mask, c(0, 1), call = call)
+  if (length(shadow_hex) != 1L) {
+    assert_vectors_x_y_length_equal(base_hex, shadow_hex, call = call)
+  }
+  assert_single_value(ambient_intensity, type = "numeric", call = call)
+  assert_within_limits(ambient_intensity, c(0, 1), call = call)
+
+  rgb_base <- grDevices::col2rgb(base_hex)
+  if (length(shadow_hex) == 1L) {
+    rgb_shadow <- matrix(grDevices::col2rgb(shadow_hex), nrow = 3, ncol = length(base_hex))
+  } else {
+    rgb_shadow <- grDevices::col2rgb(shadow_hex)
+  }
+
+  light_factor <- ambient_intensity + (illum_mask * (1 - ambient_intensity))
+  mask_mat <- matrix(light_factor, nrow = 3, ncol = length(light_factor), byrow = TRUE)
+  inv_mask_mat <- matrix(1 - light_factor, nrow = 3, ncol = length(light_factor), byrow = TRUE)
+
+  rgb_blended <- (rgb_base * mask_mat) + (rgb_shadow * inv_mask_mat)
+
+  grDevices::rgb(
+    red = rgb_blended[1, ],
+    green = rgb_blended[2, ],
+    blue = rgb_blended[3, ],
+    maxColorValue = 255
+  )
+}
+
+
+#' Compute illuminated point colors from node values and illumination
+#'
+#' @param df A tibble with \code{node_val} and \code{illumination} columns.
+#' @param colors A vector of valid colors.
+#' @param marker_limits A list with numeric vectors of length 2, or \code{NULL}.
+#' @param marker_id A character string with the marker identifier.
+#' @param center_zero A logical value indicating whether to center the scale at zero.
+#' @param illumination_ambient Minimum brightness floor in `[0, 1]`.
+#' @param illumination_sat_boost Non-negative saturation boost in shadowed regions.
+#' @param illumination_shadow_colors \code{NULL} or a vector of shadow palette colors.
+#' @param normalize_illumination A logical value indicating whether to rescale
+#' illumination to \code{[0, 1]}.
+#'
+#' @returns A character vector of hex colors.
+#'
+#' @noRd
+#'
+.compute_illuminated_point_colors <- function(
+  df,
+  colors,
+  marker_limits,
+  marker_id,
+  center_zero,
+  illumination_ambient,
+  illumination_sat_boost,
+  illumination_shadow_colors = NULL,
+  normalize_illumination = TRUE,
+  call = caller_env()
+) {
+  assert_class(df, c("data.frame", "tbl_df"), call = call)
+  assert_col_in_data("node_val", df, call = call)
+  assert_col_in_data("illumination", df, call = call)
+  assert_col_class("illumination", df, "numeric", call = call)
+  assert_single_value(marker_id, type = "string", call = call)
+  assert_single_value(center_zero, type = "bool", call = call)
+  assert_single_value(illumination_ambient, "numeric", call = call)
+  assert_within_limits(illumination_ambient, c(0, 1), call = call)
+  assert_single_value(illumination_sat_boost, "numeric", call = call)
+  assert_within_limits(illumination_sat_boost, c(0, Inf), call = call)
+  assert_vector(colors, type = "character", n = 1, call = call)
+  assert_valid_color(colors, n = 1, call = call)
+  assert_valid_color(illumination_shadow_colors, n = 1, allow_null = TRUE, call = call)
+  assert_single_value(normalize_illumination, "bool", call = call)
+
+  if (inherits(df$node_val, "numeric")) {
+    assert_class(marker_limits, "list", call = call)
+    assert_x_in_y(marker_id, names(marker_limits), call = call)
+  }
+
+  if (inherits(df$node_val, "numeric")) {
+    lims <- .node_val_lims(df$node_val, marker_limits, marker_id, center_zero)
+    base_color <- scales::col_numeric(
+      palette = colors,
+      domain = lims,
+      na.color = "transparent"
+    )(df$node_val)
+  } else {
+    node_val <- df$node_val
+    if (inherits(node_val, "character")) {
+      node_val <- factor(node_val, levels = unique(node_val))
+    }
+    base_color <- scales::col_factor(
+      domain = levels(node_val),
+      palette = colors
+    )(node_val)
+  }
+
+  illum_mask <- df$illumination
+
+  if (is.null(illumination_shadow_colors)) {
+    return(.apply_hsv_illumination(
+      base_color,
+      illum_mask,
+      ambient_intensity = illumination_ambient,
+      sat_boost = illumination_sat_boost,
+      call = call
+    ))
+  }
+
+  shadow_color <- scales::col_numeric(
+    palette = illumination_shadow_colors,
+    domain = if (normalize_illumination) {
+      c(0, 1)
+    } else {
+      range(illum_mask, na.rm = TRUE)
+    },
+    na.color = "transparent"
+  )(illum_mask)
+
+  .apply_palette_illumination(
+    base_color,
+    shadow_color,
+    illum_mask,
+    ambient_intensity = illumination_ambient,
+    call = call
+  )
+}
+
+
+#' Numeric limits for node_val color scales
+#'
+#' @param node_val A numeric vector of node values.
+#' @param marker_limits A list with numeric min/max vectors, or \code{NULL}.
+#' @param marker_id A character string with the marker identifier, or \code{NULL}.
+#' @param center_zero A logical value indicating whether to center the scale at zero.
+#'
+#' @returns A numeric vector of length 2.
+#'
+#' @noRd
+#'
+.node_val_lims <- function(
+  node_val,
+  marker_limits = NULL,
+  marker_id = NULL,
+  center_zero = FALSE
+) {
+  if (!is.null(marker_id) && !is.null(marker_limits)) {
+    lims <- marker_limits[[marker_id]]
+  } else {
+    lims <- range(node_val, na.rm = TRUE)
+  }
+  if (center_zero) {
+    max_abs_val <- max(abs(lims))
+    lims <- c(-max_abs_val, max_abs_val)
+  }
+  lims
+}
+
+
+#' Minimal tibble to drive the node_val color legend when colors are precomputed
+#'
+#' @param node_val A numeric or factor vector of node values.
+#' @param marker_limits A list with numeric vectors of length 2, or \code{NULL}.
+#' @param marker_id A character string with the marker identifier, or \code{NULL}.
+#' @param center_zero A logical value indicating whether to center the scale at zero.
+#'
+#' @returns A tibble with columns \code{node_val}, \code{x}, \code{y}, and \code{z}.
+#'
+#' @noRd
+#'
+.legend_carrier_data <- function(
+  node_val,
+  marker_limits = NULL,
+  marker_id = NULL,
+  center_zero = FALSE
+) {
+  if (inherits(node_val, "numeric")) {
+    lims <- .node_val_lims(node_val, marker_limits, marker_id, center_zero)
+    tibble::tibble(
+      node_val = lims,
+      x = 0,
+      y = 0,
+      z = 0
+    )
+  } else {
+    if (inherits(node_val, "character")) {
+      node_val <- factor(node_val, levels = unique(node_val))
+    }
+    tibble::tibble(
+      node_val = factor(levels(node_val), levels = levels(node_val)),
+      x = 0,
+      y = 0,
+      z = 0
+    )
+  }
+}
+
+
+#' Create a ggplot2 color scale for node values
+#'
+#' @param node_val A numeric or factor vector of node values.
+#' @param colors A vector of valid colors.
+#' @param center_zero A logical value indicating whether to center the scale at zero.
+#' @param marker_limits A list with numeric vectors of length 2, or \code{NULL}.
+#' @param marker_id A character string with the marker identifier, or \code{NULL}.
+#' @param use_illumination A logical value indicating whether point colors are
+#' precomputed outside the color aesthetic.
+#' @param pt_size Maximum point size used for legend key sizing.
+#'
+#' @returns A ggplot2 color scale.
+#'
+#' @noRd
+#'
+.node_val_color_scale <- function(
+  node_val,
+  colors,
+  center_zero,
+  marker_limits = NULL,
+  marker_id = NULL,
+  use_illumination = FALSE,
+  pt_size = 1
+) {
+  if (inherits(node_val, "numeric")) {
+    lims <- .node_val_lims(node_val, marker_limits, marker_id, center_zero)
+    scale_color_gradientn(colours = colors, limits = lims)
+  } else {
+    if (inherits(node_val, "character")) {
+      node_val <- factor(node_val, levels = unique(node_val))
+    }
+    # Colors are precomputed outside aes; override.aes keeps legend keys visible.
+    # "legend" is ggplot2's default guide shorthand (same as omitting guide=).
+    color_guide <- if (use_illumination) {
+      ggplot2::guide_legend(override.aes = list(alpha = 1, size = pt_size))
+    } else {
+      "legend"
+    }
+    scale_color_manual(
+      values = colors,
+      limits = levels(node_val),
+      guide = color_guide
+    )
+  }
+}
+
+
 #' Draws a scatter plot with simulated depth
 #'
 #' @param xyz_list_nested A list of tibbles (\code{tbl_df}) with columns 'x',
@@ -525,6 +908,8 @@ render_rotating_layout <- function(
 #' be labeled.
 #' @param margin_widths A numeric vector of length 2 indicating the width of the
 #' margins relative to the plot size.
+#' @param use_illumination A logical value indicating whether precomputed
+#' \code{point_color} values should be used.
 #'
 #' @noRd
 #'
@@ -541,7 +926,8 @@ render_rotating_layout <- function(
   use_facet_grid = FALSE,
   flip = FALSE,
   label_grid_axes = TRUE,
-  margin_widths = c(0.1, 0.1)
+  margin_widths = c(0.1, 0.1),
+  use_illumination = FALSE
 ) {
   if (use_facet_grid) {
     xyz_collapsed <- lapply(xyz_list_nested, function(xyz_cell) {
@@ -551,30 +937,67 @@ render_rotating_layout <- function(
     }) %>%
       unname() %>%
       bind_rows()
-    p <- ggplot(xyz_collapsed, aes(x, z, size = y, color = node_val)) +
-      geom_point(alpha = pt_opacity) +
-      scale_size(range = c(0, pt_size), limits = xyz_limits) +
-      coord_fixed() +
-      theme_void() +
-      guides(size = "none") +
-      scale_x_continuous(limits = xyz_limits, expand = expansion()) +
-      scale_y_continuous(limits = xyz_limits, expand = expansion()) +
-      {
-        if (inherits(xyz_collapsed$node_val, "numeric")) {
-          max_abs_val <- max(abs(xyz_collapsed$node_val))
-          lims <- if (center_zero) c(-max_abs_val, max_abs_val) else c(0, max_abs_val)
-          scale_color_gradientn(colours = colors, limits = lims)
-        } else {
-          scale_color_manual(values = colors)
+    if (use_illumination) {
+      legend_df <- .legend_carrier_data(
+        xyz_collapsed$node_val,
+        marker_limits,
+        center_zero = center_zero
+      )
+      p <- ggplot(xyz_collapsed, aes(x, z, size = y)) +
+        geom_point(color = xyz_collapsed$point_color, alpha = pt_opacity) +
+        geom_point(
+          data = legend_df,
+          aes(x, z, color = node_val),
+          inherit.aes = FALSE,
+          alpha = 0,
+          size = 0
+        ) +
+        scale_size(range = c(0, pt_size), limits = xyz_limits) +
+        coord_fixed() +
+        theme_void() +
+        guides(size = "none") +
+        scale_x_continuous(limits = xyz_limits, expand = expansion()) +
+        scale_y_continuous(limits = xyz_limits, expand = expansion()) +
+        .node_val_color_scale(
+          xyz_collapsed$node_val,
+          colors,
+          center_zero,
+          marker_limits = marker_limits,
+          use_illumination = use_illumination,
+          pt_size = pt_size
+        ) +
+        {
+          if (flip) {
+            facet_grid(reformulate(marker_col, cell_col), switch = "y")
+          } else {
+            facet_grid(reformulate(cell_col, marker_col), switch = "y")
+          }
         }
-      } +
-      {
-        if (flip) {
-          facet_grid(reformulate(marker_col, cell_col), switch = "y")
-        } else {
-          facet_grid(reformulate(cell_col, marker_col), switch = "y")
+    } else {
+      p <- ggplot(xyz_collapsed, aes(x, z, size = y, color = node_val)) +
+        geom_point(alpha = pt_opacity) +
+        scale_size(range = c(0, pt_size), limits = xyz_limits) +
+        coord_fixed() +
+        theme_void() +
+        guides(size = "none") +
+        scale_x_continuous(limits = xyz_limits, expand = expansion()) +
+        scale_y_continuous(limits = xyz_limits, expand = expansion()) +
+        .node_val_color_scale(
+          xyz_collapsed$node_val,
+          colors,
+          center_zero,
+          marker_limits = marker_limits,
+          use_illumination = use_illumination,
+          pt_size = pt_size
+        ) +
+        {
+          if (flip) {
+            facet_grid(reformulate(marker_col, cell_col), switch = "y")
+          } else {
+            facet_grid(reformulate(cell_col, marker_col), switch = "y")
+          }
         }
-      }
+    }
   }
 
   if (!use_facet_grid) {
@@ -583,27 +1006,58 @@ render_rotating_layout <- function(
       xyz_list_cell <- xyz_list_nested[[cell_id]]
       # Create a list of ggplot objects per marker
       marker_plots <- lapply(names(xyz_list_cell), function(marker_id) {
-        p <- ggplot(
-          xyz_list_cell[[marker_id]] %>%
-            mutate(row_text = marker_id),
-          aes(x, z, size = y, color = node_val)
-        ) +
-          geom_point(alpha = pt_opacity) +
-          scale_size(range = c(0, pt_size), limits = xyz_limits) +
-          coord_fixed() +
-          theme_void() +
-          guides(size = "none") +
-          scale_x_continuous(limits = xyz_limits, expand = expansion()) +
-          scale_y_continuous(limits = xyz_limits, expand = expansion()) +
-          {
-            if (inherits(xyz_list_cell[[marker_id]]$node_val, "numeric")) {
-              max_abs_val <- max(abs(marker_limits[[marker_id]]))
-              lims <- if (center_zero) c(-max_abs_val, max_abs_val) else c(0, max_abs_val)
-              scale_color_gradientn(colours = colors, limits = lims)
-            } else {
-              scale_color_manual(values = colors)
-            }
-          }
+        df <- xyz_list_cell[[marker_id]] %>%
+          mutate(row_text = marker_id)
+        if (use_illumination) {
+          legend_df <- .legend_carrier_data(
+            df$node_val,
+            marker_limits,
+            marker_id,
+            center_zero
+          )
+          p <- ggplot(df, aes(x, z, size = y)) +
+            geom_point(color = df$point_color, alpha = pt_opacity) +
+            geom_point(
+              data = legend_df,
+              aes(x, z, color = node_val),
+              inherit.aes = FALSE,
+              alpha = 0,
+              size = 0
+            ) +
+            scale_size(range = c(0, pt_size), limits = xyz_limits) +
+            coord_fixed() +
+            theme_void() +
+            guides(size = "none") +
+            scale_x_continuous(limits = xyz_limits, expand = expansion()) +
+            scale_y_continuous(limits = xyz_limits, expand = expansion()) +
+            .node_val_color_scale(
+              df$node_val,
+              colors,
+              center_zero,
+              marker_limits = marker_limits,
+              marker_id = marker_id,
+              use_illumination = use_illumination,
+              pt_size = pt_size
+            )
+        } else {
+          p <- ggplot(df, aes(x, z, size = y, color = node_val)) +
+            geom_point(alpha = pt_opacity) +
+            scale_size(range = c(0, pt_size), limits = xyz_limits) +
+            coord_fixed() +
+            theme_void() +
+            guides(size = "none") +
+            scale_x_continuous(limits = xyz_limits, expand = expansion()) +
+            scale_y_continuous(limits = xyz_limits, expand = expansion()) +
+            .node_val_color_scale(
+              df$node_val,
+              colors,
+              center_zero,
+              marker_limits = marker_limits,
+              marker_id = marker_id,
+              use_illumination = use_illumination,
+              pt_size = pt_size
+            )
+        }
         return(p)
       })
 
@@ -700,6 +1154,8 @@ render_rotating_layout <- function(
 #' @param pt_size A numeric value indicating the maximum size of the points.
 #' @param bg A valid color indicating the background color.
 #' @param flip A logical value indicating whether the plot should be flipped.
+#' @param use_illumination A logical value indicating whether precomputed
+#' \code{point_color} values should be used.
 #'
 #' @noRd
 #'
@@ -712,7 +1168,8 @@ render_rotating_layout <- function(
   pt_opacity,
   pt_size,
   bg,
-  flip = FALSE
+  flip = FALSE,
+  use_illumination = FALSE
 ) {
   # Save the current par settings
   # and reset when the function exits
@@ -746,7 +1203,9 @@ render_rotating_layout <- function(
       apparent_sizes <- sqrt(1 / (z_norm^2))
 
       # Define node colors based on the type of node_val
-      if (inherits(df$node_val, "numeric")) {
+      if (use_illumination) {
+        cols <- df$point_color
+      } else if (inherits(df$node_val, "numeric")) {
         if (center_zero) {
           max_abs_node_val <- max(abs(marker_limits[[marker_id]]))
           cols <- scales::col_numeric(domain = c(-max_abs_node_val, max_abs_node_val), palette = colors)(df$node_val)
@@ -905,6 +1364,8 @@ scale_layout <- function(
 #' @param graphics_use A character string indicating the graphics library
 #' to use
 #' @param dev_png A valid png device, e.g. \code{ragg::agg_png()}
+#' @param use_illumination A logical value indicating whether precomputed
+#' \code{point_color} values should be used.
 #'
 #' @returns Nothing
 #'
@@ -932,7 +1393,8 @@ scale_layout <- function(
   label_grid_axes,
   margin_widths,
   graphics_use,
-  dev_png
+  dev_png,
+  use_illumination = FALSE
 ) {
   rlang::check_installed("png")
   file <- file.path(tmp_dir, "plot_0000.png")
@@ -952,7 +1414,8 @@ scale_layout <- function(
       use_facet_grid,
       flip,
       label_grid_axes,
-      margin_widths
+      margin_widths,
+      use_illumination
     )
 
     # Add theme
@@ -979,7 +1442,8 @@ scale_layout <- function(
       pt_opacity,
       pt_size,
       bg,
-      flip
+      flip,
+      use_illumination
     )
     dev.off()
   }
@@ -1053,6 +1517,11 @@ scale_layout <- function(
 #' @param use_facet_grid A logical value
 #' @param flip A logical value
 #' @param boomerang A logical value
+#' @param use_illumination A logical value
+#' @param illumination_ambient A numeric value
+#' @param illumination_sat_boost A numeric value
+#' @param illumination_shadow_colors A character vector or \code{NULL}
+#' @param normalize_illumination A logical value
 #'
 #' @returns Nothing
 #'
@@ -1083,6 +1552,11 @@ scale_layout <- function(
   use_facet_grid,
   flip,
   boomerang,
+  use_illumination,
+  illumination_ambient,
+  illumination_sat_boost,
+  illumination_shadow_colors,
+  normalize_illumination,
   call = caller_env()
 ) {
   assert_class(data, "tbl_df", call = call)
@@ -1106,6 +1580,16 @@ scale_layout <- function(
   assert_single_value(use_facet_grid, "bool", call = call)
   assert_single_value(flip, "bool", call = call)
   assert_single_value(boomerang, "bool", call = call)
+  assert_single_value(use_illumination, "bool", call = call)
+  assert_single_value(normalize_illumination, "bool", call = call)
+  assert_single_value(illumination_ambient, "numeric", call = call)
+  assert_within_limits(illumination_ambient, c(0, 1), call = call)
+  assert_single_value(illumination_sat_boost, "numeric", call = call)
+  assert_within_limits(illumination_sat_boost, c(0, Inf), call = call)
+
+  if (isTRUE(use_illumination) && !is.null(illumination_shadow_colors)) {
+    assert_valid_color(illumination_shadow_colors, n = 1, call = call)
+  }
 
   if (!all(.areColors(colors))) {
     cli::cli_abort(

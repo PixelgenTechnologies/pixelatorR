@@ -32,7 +32,12 @@ render_rotating_layout(
   graphics_use = c("base", "ggplot2"),
   boomerang = FALSE,
   cl = NULL,
-  keep_frames = FALSE
+  keep_frames = FALSE,
+  use_illumination = FALSE,
+  illumination_ambient = 0.3,
+  illumination_sat_boost = 0.6,
+  illumination_shadow_colors = NULL,
+  normalize_illumination = TRUE
 )
 }
 \arguments{
@@ -138,6 +143,26 @@ corresponds to a single-threaded operation (sequential processing).}
 \item{keep_frames}{A logical value indicating whether the png files should
 be kept after rendering the video. This option is useful if you want to
 access to the individual frames later for further processing.}
+
+\item{use_illumination}{A logical value indicating whether to modulate
+\code{node_val} colors with a heuristic illumination mask. Default is \code{FALSE}.}
+
+\item{illumination_ambient}{A numeric value between 0 and 1 specifying the
+minimum brightness floor when blending illumination. Default is \code{0.3}.}
+
+\item{illumination_sat_boost}{A non-negative numeric value controlling
+saturation compensation in shadowed regions when using HSV blending.
+Ignored when \code{illumination_shadow_colors} is set. Increase this to increase
+saturation in darker points. Default is \code{0.6}.}
+
+\item{illumination_shadow_colors}{\code{NULL} or a vector of valid colors.
+When \code{NULL} (default), illumination is blended in HSV space. When set,
+each point's illumination is mapped to this palette instead and linearly interpolated
+with the base \code{node_val} color.}
+
+\item{normalize_illumination}{A logical value indicating whether the
+illumination mask should be rescaled to \code{[0, 1]} per cell. Default is
+\code{TRUE}.}
 }
 \value{
 Exports an animation of a rotating 3D scatter plot.
@@ -199,6 +224,23 @@ The \code{graphics_use} argument can be used to switch between the default
 "base" and the "ggplot2" graphics system. The "base" option is much faster
 but has fewer customization options. For instance, it is currently not possible to
 get row and column labels with the "base" graphics option.
+}
+
+\section{illumination}{
+
+When \code{use_illumination = TRUE}, node colors are derived from \code{node_val}
+and then modulated by a geometry-based illumination mask computed with
+\code{\link{heuristic_illumination}}. This adds depth cues on top of the marker
+color encoding. By default, shadows are blended in HSV space using
+\code{illumination_ambient} as the minimum brightness floor (not the
+ambient-occlusion weight in \code{heuristic_illumination}) and
+\code{illumination_sat_boost} for saturation compensation in shadowed regions.
+When \code{illumination_shadow_colors} is set, shadows are instead blended
+toward a second color gradient mapped from the illumination mask; in that mode
+\code{illumination_sat_boost} is ignored. \code{PixelgenGradient(n, "NaturalBlue")}
+works well as a shadow palette while \code{colors} carries the marker signal.
+Set \code{normalize_illumination = FALSE} to use raw output from
+\code{heuristic_illumination} instead of rescaling the mask to \code{[0, 1]}.
 }
 
 \examples{
