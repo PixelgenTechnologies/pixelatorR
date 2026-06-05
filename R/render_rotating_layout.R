@@ -63,6 +63,8 @@
 #' toward a second color gradient mapped from the illumination mask; in that mode
 #' \code{illumination_sat_boost} is ignored. \code{PixelgenGradient(n, "NaturalBlue")}
 #' works well as a shadow palette while \code{colors} carries the marker signal.
+#' Set \code{normalize_illumination = FALSE} to use raw output from
+#' \code{heuristic_illumination} instead of rescaling the mask to \code{[0, 1]}.
 #'
 #' @param data A tibble (\code{tbl_df}) with columns 'x', 'y', 'z',
 #' and 'node_val'. The 'node_val' column can be either a numeric or a
@@ -153,6 +155,9 @@
 #' When \code{NULL} (default), illumination is blended in HSV space. When set,
 #' each point's illumination is mapped to this palette instead and linearly interpolated
 #' with the base \code{node_val} color.
+#' @param normalize_illumination A logical value indicating whether the
+#' illumination mask should be rescaled to \code{[0, 1]} per cell. Default is
+#' \code{TRUE}.
 #'
 #' @returns Exports an animation of a rotating 3D scatter plot.
 #'
@@ -278,7 +283,8 @@ render_rotating_layout <- function(
   use_illumination = FALSE,
   illumination_ambient = 0.3,
   illumination_sat_boost = 0.6,
-  illumination_shadow_colors = NULL
+  illumination_shadow_colors = NULL,
+  normalize_illumination = TRUE
 ) {
   if (fs::path_ext(file) == "gif") {
     rlang::check_installed("gifski")
@@ -312,7 +318,7 @@ render_rotating_layout <- function(
     res, delay, ggplot_theme, title, bg,
     label_grid_axes, margin_widths, use_facet_grid,
     flip, boomerang, use_illumination, illumination_ambient,
-    illumination_sat_boost, illumination_shadow_colors
+    illumination_sat_boost, illumination_shadow_colors, normalize_illumination
   )
 
   # Set variables if NULL
@@ -364,7 +370,11 @@ render_rotating_layout <- function(
   if (use_illumination) {
     # Compute shading once per cell.
     xyz_list <- lapply(xyz_list, function(xyz) {
-      xyz$illumination <- scales::rescale(heuristic_illumination(xyz), to = c(0, 1))
+      ill <- heuristic_illumination(xyz)
+      if (normalize_illumination) {
+        ill <- scales::rescale(ill, to = c(0, 1))
+      }
+      xyz$illumination <- ill
       xyz
     })
   }
@@ -421,7 +431,8 @@ render_rotating_layout <- function(
           center_zero,
           illumination_ambient,
           illumination_sat_boost,
-          illumination_shadow_colors
+          illumination_shadow_colors,
+          normalize_illumination
         )
         df
       }) %>%
@@ -670,6 +681,8 @@ render_rotating_layout <- function(
 #' @param illumination_ambient Minimum brightness floor in `[0, 1]`.
 #' @param illumination_sat_boost Non-negative saturation boost in shadowed regions.
 #' @param illumination_shadow_colors \code{NULL} or a vector of shadow palette colors.
+#' @param normalize_illumination A logical value indicating whether to rescale
+#' illumination to \code{[0, 1]}.
 #'
 #' @returns A character vector of hex colors.
 #'
@@ -684,6 +697,7 @@ render_rotating_layout <- function(
   illumination_ambient,
   illumination_sat_boost,
   illumination_shadow_colors = NULL,
+  normalize_illumination = TRUE,
   call = caller_env()
 ) {
   assert_class(df, c("data.frame", "tbl_df"), call = call)
@@ -692,11 +706,14 @@ render_rotating_layout <- function(
   assert_col_class("illumination", df, "numeric", call = call)
   assert_single_value(marker_id, type = "string", call = call)
   assert_single_value(center_zero, type = "bool", call = call)
+  assert_single_value(illumination_ambient, "numeric", call = call)
   assert_within_limits(illumination_ambient, c(0, 1), call = call)
+  assert_single_value(illumination_sat_boost, "numeric", call = call)
   assert_within_limits(illumination_sat_boost, c(0, Inf), call = call)
   assert_vector(colors, type = "character", n = 1, call = call)
   assert_valid_color(colors, n = 1, call = call)
   assert_valid_color(illumination_shadow_colors, n = 1, allow_null = TRUE, call = call)
+  assert_single_value(normalize_illumination, "bool", call = call)
 
   if (inherits(df$node_val, "numeric")) {
     assert_class(marker_limits, "list", call = call)
@@ -721,7 +738,7 @@ render_rotating_layout <- function(
     )(node_val)
   }
 
-  illum_mask <- scales::rescale(df$illumination, to = c(0, 1))
+  illum_mask <- df$illumination
 
   if (is.null(illumination_shadow_colors)) {
     return(.apply_hsv_illumination(
@@ -735,7 +752,11 @@ render_rotating_layout <- function(
 
   shadow_color <- scales::col_numeric(
     palette = illumination_shadow_colors,
-    domain = c(0, 1),
+    domain = if (normalize_illumination) {
+      c(0, 1)
+    } else {
+      range(illum_mask, na.rm = TRUE)
+    },
     na.color = "transparent"
   )(illum_mask)
 
@@ -1500,6 +1521,7 @@ scale_layout <- function(
 #' @param illumination_ambient A numeric value
 #' @param illumination_sat_boost A numeric value
 #' @param illumination_shadow_colors A character vector or \code{NULL}
+#' @param normalize_illumination A logical value
 #'
 #' @returns Nothing
 #'
@@ -1534,6 +1556,7 @@ scale_layout <- function(
   illumination_ambient,
   illumination_sat_boost,
   illumination_shadow_colors,
+  normalize_illumination,
   call = caller_env()
 ) {
   assert_class(data, "tbl_df", call = call)
@@ -1558,7 +1581,10 @@ scale_layout <- function(
   assert_single_value(flip, "bool", call = call)
   assert_single_value(boomerang, "bool", call = call)
   assert_single_value(use_illumination, "bool", call = call)
+  assert_single_value(normalize_illumination, "bool", call = call)
+  assert_single_value(illumination_ambient, "numeric", call = call)
   assert_within_limits(illumination_ambient, c(0, 1), call = call)
+  assert_single_value(illumination_sat_boost, "numeric", call = call)
   assert_within_limits(illumination_sat_boost, c(0, Inf), call = call)
 
   if (isTRUE(use_illumination) && !is.null(illumination_shadow_colors)) {

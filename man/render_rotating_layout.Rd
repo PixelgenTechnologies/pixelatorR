@@ -36,7 +36,8 @@ render_rotating_layout(
   use_illumination = FALSE,
   illumination_ambient = 0.3,
   illumination_sat_boost = 0.6,
-  illumination_shadow_colors = NULL
+  illumination_shadow_colors = NULL,
+  normalize_illumination = TRUE
 )
 }
 \arguments{
@@ -158,6 +159,10 @@ saturation in darker points. Default is \code{0.6}.}
 When \code{NULL} (default), illumination is blended in HSV space. When set,
 each point's illumination is mapped to this palette instead and linearly interpolated
 with the base \code{node_val} color.}
+
+\item{normalize_illumination}{A logical value indicating whether the
+illumination mask should be rescaled to \code{[0, 1]} per cell. Default is
+\code{TRUE}.}
 }
 \value{
 Exports an animation of a rotating 3D scatter plot.
@@ -234,6 +239,8 @@ When \code{illumination_shadow_colors} is set, shadows are instead blended
 toward a second color gradient mapped from the illumination mask; in that mode
 \code{illumination_sat_boost} is ignored. \code{PixelgenGradient(n, "NaturalBlue")}
 works well as a shadow palette while \code{colors} carries the marker signal.
+Set \code{normalize_illumination = FALSE} to use raw output from
+\code{heuristic_illumination} instead of rescaling the mask to \code{[0, 1]}.
 }
 
 \examples{

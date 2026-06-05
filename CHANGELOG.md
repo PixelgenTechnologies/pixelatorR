@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `heuristic_illumination` to approximate natural illumination of a 3D layout.
 - Illumination masking option in `render_rotating_layout` to modulate `node_val` colors with a heuristic illumination mask.
 - Shadow palette blending in `render_rotating_layout` via `illumination_shadow_colors` for palette-based shadow interpolation.
+- `normalize_illumination` argument in `render_rotating_layout` to optionally disable rescaling of the illumination mask to `[0, 1]`.
 - "NaturalBlue" option as a gradient palette in `PixelgenGradient` to use as a natural illuminated color gradient.
 
 ### Updated

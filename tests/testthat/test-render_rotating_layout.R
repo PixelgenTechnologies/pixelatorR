@@ -82,6 +82,13 @@ test_that("render_rotating_layout works as expected", {
     use_illumination = TRUE
   ))
 
+  # Use illumination without normalizing the mask
+  expect_no_error(render_rotating_layout(xyz, gif_file,
+    frames = 2, show_first_frame = FALSE,
+    use_illumination = TRUE,
+    normalize_illumination = FALSE
+  ))
+
   # Use illumination mask with base R graphics
   expect_no_error(render_rotating_layout(xyz, gif_file,
     frames = 2, show_first_frame = FALSE,
