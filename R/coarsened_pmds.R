@@ -1,4 +1,4 @@
-#' Coarsened pmds
+#' Coarsened pMDS
 #'
 #' This function implements an algorithm to compute a layout on a coarsened version
 #' of the graph. By coarsening the graph, it is possible to process large graphs
@@ -114,7 +114,7 @@ layout_with_coarsened_pmds <- function(
     g_small <- igraph::graph_from_adjacency_matrix(A, mode = "upper") %>%
       as_tbl_graph(directed = FALSE)
 
-    xyz <- layout_with_weighted_pmds(g_small, dim = dim, pivots = min(pivots, length(g_small)))
+    xyz <- layout_with_weighted_pmds(g_small, dim = dim, pivots = min(pivots, length(g_small)), seed = seed)
   }
 
   if (weight_edges_by == "crossing_edges") {

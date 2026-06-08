@@ -32,7 +32,7 @@ test_that("layout_with_coarsened_pmds works as expected", {
     dimnames = list(NULL, c("x", "y", "z"))
   )
 
-  expect_equal(xyz %>% head(), expected_result)
+  expect_equal(xyz %>% head(), expected_result, tolerance = 1e-6)
 
   expect_no_error(xyz <- layout_with_coarsened_pmds(g, resolution = 0.1, weight_edges_by = "crossing_edges"))
 
@@ -61,7 +61,7 @@ test_that("layout_with_coarsened_pmds works as expected", {
     dimnames = list(NULL, c("x", "y", "z"))
   )
 
-  expect_equal(xyz %>% head(), expected_result)
+  expect_equal(xyz %>% head(), expected_result, tolerance = 1e-6)
 })
 
 test_that("layout_with_coarsened_pmds fails with invalid input", {

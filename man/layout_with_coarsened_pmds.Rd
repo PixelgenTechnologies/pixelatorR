@@ -2,7 +2,7 @@
 % Please edit documentation in R/coarsened_pmds.R
 \name{layout_with_coarsened_pmds}
 \alias{layout_with_coarsened_pmds}
-\title{Coarsened pmds}
+\title{Coarsened pMDS}
 \usage{
 layout_with_coarsened_pmds(
   g,
