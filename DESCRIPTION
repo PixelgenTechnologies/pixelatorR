@@ -90,6 +90,7 @@ Collate:
     'analysis-utils.R'
     'annotate.R'
     'cell_count_plot.R'
+    'coarsened_pmds.R'
     'colocalization_heatmap.R'
     'd3_graph_helpers.R'
     'density_scatter_plot.R'
