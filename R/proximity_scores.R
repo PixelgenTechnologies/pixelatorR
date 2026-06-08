@@ -194,7 +194,7 @@ ComputeProximityScores.CellGraph <- function(
       } else {
         .
       }
-    } %>% 
+    } %>%
     select(-row, -col) %>%
     mutate(
       marker_1 = pmin(marker_1_unordered, marker_2_unordered),
