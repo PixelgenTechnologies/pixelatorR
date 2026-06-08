@@ -118,8 +118,8 @@ A tibble with the following columns:
 \item \code{marker_2}: Name of the second marker.
 \item \code{join_count}: Observed join count.
 \item \code{join_count_expected_mean}: Expected mean join count.
-\item \code{join_count_expected_sd}: Expected standard deviation of the join count.
-\item \code{join_count_z}: Z-score for the observed join count. (optional)
+\item \code{join_count_expected_sd}: Expected standard deviation of the join count. (only if k = 1)
+\item \code{join_count_z}: Z-score for the observed join count. (optional for k = 1)
 \item \code{log2_ratio}: Log2 ratio of observed join count to expected mean. (optional)
 \item \code{component}: PNA component name. Only provided for some methods.
 }
