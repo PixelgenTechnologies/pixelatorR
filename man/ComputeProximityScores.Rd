@@ -14,7 +14,7 @@ ComputeProximityScores(object, ...)
 \method{ComputeProximityScores}{CellGraph}(
   object,
   mode = c("analytical", "permutation"),
-  k = NULL,
+  k = 1L,
   iterations = 100L,
   calc_z_score = TRUE,
   calc_log2_ratio = TRUE,
