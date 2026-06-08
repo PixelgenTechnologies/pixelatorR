@@ -54,11 +54,30 @@ test_that("ComputeProximityScores works as expected", {
 
   # list
   expect_no_error(ComputeProximityScores(cg_list, mode = "permutation", iterations = 10))
+  
   # PNAAssay
   expect_no_error(ComputeProximityScores(se[["PNA"]], cells = colnames(se)[1:2], iterations = 10))
 
   # Seurat
   expect_no_error(ComputeProximityScores(se[["PNA"]], cells = colnames(se)[1:2], iterations = 10))
+
+  # k > 1
+  expect_warning(prox_k2 <- ComputeProximityScores(cg, k = 2))
+  expect_equal(
+    structure(
+      list(
+        join_count = c(151, 3),
+        join_count_expected_mean = c(35.3547875309241, 2.25043167447782),
+        marker_1 = c("CD32", "CD32"),
+        marker_2 = c("CD32", "CD45RB"),
+        log2_ratio = c(2.0945710551611, 0.414760737103394)
+      ),
+      row.names = c(NA, -2L),
+      class = c("tbl_df", "tbl", "data.frame")
+    ),
+    head(prox_k2, 2),
+    tolerance = 1e-6
+  )
 })
 
 test_that("ComputeProximityScores fails with invalid input", {
@@ -67,4 +86,6 @@ test_that("ComputeProximityScores fails with invalid input", {
   expect_error(ComputeProximityScores(cg, calc_z_score = "Invalid"))
   expect_error(ComputeProximityScores(cg, calc_log2_ratio = "Invalid"))
   expect_error(ComputeProximityScores(cg, seed = "Invalid"))
+  expect_error(ComputeProximityScores(cg, k = "Invalid"))
+  expect_error(suppressWarnings(ComputeProximityScores(cg, k = 2, mode = "permutation")))
 })

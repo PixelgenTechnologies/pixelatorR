@@ -28,7 +28,7 @@ ComputeProximityScores.CellGraph <- function(
   assert_single_value(k, "integer")
   lifecycle::signal_stage("experimental", "ComputeProximityScores(k = )")
   assert_within_limits(k, c(1L, 6L))
-  if (k > 1L) {
+  if (k > 1L && calc_z_score) {
     cli::cli_warn(
       c(
         "With k > 1, analytical standard deviation and z-scores are not yet implemented. ",
