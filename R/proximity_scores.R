@@ -16,7 +16,7 @@
 ComputeProximityScores.CellGraph <- function(
   object,
   mode = c("analytical", "permutation"),
-  k = NULL,
+  k = 1L,
   iterations = 100L,
   calc_z_score = TRUE,
   calc_log2_ratio = TRUE,
@@ -25,18 +25,16 @@ ComputeProximityScores.CellGraph <- function(
   ...
 ) {
   assert_class(object, "CellGraph")
-  assert_single_value(k, "integer", allow_null = TRUE)
-  if (is.null(k)) {
-    k <- 1L
-  } else {
+  assert_single_value(k, "integer")
+  lifecycle::signal_stage("experimental", "ComputeProximityScores(k = )")
+  assert_within_limits(k, c(1L, 6L))
+  if (k > 1L) {
     cli::cli_warn(
       c(
         "With k > 1, analytical standard deviation and z-scores are not yet implemented. ",
         "Only `join_count`, `join_count_expected_mean` and `log2_ratio` will be returned."
       )
     )
-    lifecycle::signal_stage("experimental", "ComputeProximityScores(k = )")
-    assert_within_limits(k, c(1L, 6L))
   }
   mode <- match.arg(mode, c("analytical", "permutation"))
   if (mode == "permutation") {
@@ -122,9 +120,11 @@ ComputeProximityScores.CellGraph <- function(
     join_count_expected_mean <- join_count_expected_mean[upper.tri(join_count_expected_mean, diag = TRUE)]
 
     join_count_expected_var_func <- function(fA, fB, S1, S2) {
-      (2 * S1 * outer(fA, fB)) +
-      (S2 - (2 * S1)) * (outer(fA, fB) * outer(fA, fB, "+")) +
-      (4 * (S1 - S2) * outer(fA^2, fB^2))
+      (
+        (2 * S1 * outer(fA, fB)) +
+        (S2 - (2 * S1)) * (outer(fA, fB) * outer(fA, fB, "+")) +
+        (4 * (S1 - S2) * outer(fA^2, fB^2))
+      ) / 4
     }
 
     if (k == 1) {
