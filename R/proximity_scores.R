@@ -16,7 +16,7 @@
 ComputeProximityScores.CellGraph <- function(
   object,
   mode = c("analytical", "permutation"),
-  k = NULL,
+  k = 1L,
   iterations = 100L,
   calc_z_score = TRUE,
   calc_log2_ratio = TRUE,
@@ -25,16 +25,25 @@ ComputeProximityScores.CellGraph <- function(
   ...
 ) {
   assert_class(object, "CellGraph")
+  assert_single_value(k, "integer")
+  lifecycle::signal_stage("experimental", "ComputeProximityScores(k = )")
+  assert_within_limits(k, c(1L, 6L))
+  if (k > 1L && calc_z_score) {
+    cli::cli_warn(
+      c(
+        "With k > 1, analytical standard deviation and z-scores are not yet implemented. ",
+        "Only `join_count`, `join_count_expected_mean` and `log2_ratio` will be returned."
+      )
+    )
+  }
   mode <- match.arg(mode, c("analytical", "permutation"))
   if (mode == "permutation") {
     expect_matrixStats()
-  }
-  assert_single_value(k, "integer", allow_null = TRUE)
-  if (is.null(k)) {
-    k <- 1L
-  } else {
-    lifecycle::signal_stage("experimental", "ComputeProximityScores(k = )")
-    assert_within_limits(k, c(1L, 6L))
+    if (k > 1L) {
+      cli::cli_abort(
+        c("x" = "{.str {mode}} mode is not yet implemented for k > 1.")
+      )
+    }
   }
   assert_single_value(iterations, "integer")
   assert_within_limits(iterations, c(1L, 10000L))
@@ -66,7 +75,7 @@ ComputeProximityScores.CellGraph <- function(
   if (k > 1L) {
     A <- igraph::as_adjacency_matrix(g)
     A <- expand_adjacency_matrix(A, k = k)
-    A <- Matrix::triu(A, k = 1)
+    A <- Matrix::triu(A, k = 1) %>% as("dgCMatrix")
   } else {
     A <- igraph::as_adjacency_matrix(g, type = "upper")
   }
@@ -85,27 +94,48 @@ ComputeProximityScores.CellGraph <- function(
   jc_obs <- Matrix::t(counts) %*% A %*% counts
 
   if (mode == "analytical") {
-    N_edges <- sum(A)
+
     fA <- Matrix::colSums(counts[node_types_vector == "umi1", , drop = FALSE]) / nA
     fB <- Matrix::colSums(counts[node_types_vector == "umi2", , drop = FALSE]) / nB
-    join_count_expected_mean <- outer(fA, fB) * N_edges
+
+    if (k > 1) {
+      A_AA <- A[1:nA, 1:nA]
+      A_BB <- A[(nA + 1):(nA + nB), (nA + 1):(nA + nB)]
+      A_AB <- A - Matrix::bdiag(A_AA, A_BB)
+      A_AB <- Matrix::drop0(A_AB)
+      AA_edges <- sum(A_AA)
+      BB_edges <- sum(A_BB)
+      AB_edges <- sum(A_AB)
+      join_count_expected_mean <- (outer(fA, fB) * AB_edges) + (outer(fA, fA) * AA_edges) + (outer(fB, fB) * BB_edges)
+    } else {
+      N_edges <- sum(A)
+      join_count_expected_mean <- outer(fA, fB) * N_edges
+    }
+
+    # Add the transpose to ignore direction, e.g. A/B = B/A
     join_count_expected_mean <- join_count_expected_mean + t(join_count_expected_mean)
+    # Divide the diagonal by 2 to ignore double counting of self-edges, e.g. A/A = A/A
     diag(join_count_expected_mean) <- diag(join_count_expected_mean) / 2
+    # Only keep the upper triangle to avoid double counting, e.g. A/B = B/A
     join_count_expected_mean <- join_count_expected_mean[upper.tri(join_count_expected_mean, diag = TRUE)]
 
-    S1 <- (sum((A + Matrix::t(A))^2)) / 2
-    S2 <- sum((Matrix::colSums(A) + Matrix::rowSums(A))^2)
-
-    join_count_expected_var <- (
-      (2 * S1 * outer(fA, fB)) +
+    join_count_expected_var_func <- function(fA, fB, S1, S2) {
+      (
+        (2 * S1 * outer(fA, fB)) +
         (S2 - (2 * S1)) * (outer(fA, fB) * outer(fA, fB, "+")) +
         (4 * (S1 - S2) * outer(fA^2, fB^2))
-    ) / 4
+      ) / 4
+    }
 
-    join_count_expected_var <- (join_count_expected_var + t(join_count_expected_var))
-    diag(join_count_expected_var) <- diag(join_count_expected_var) / 2
-    join_count_expected_sd <- sqrt(join_count_expected_var)
-    join_count_expected_sd <- join_count_expected_sd[upper.tri(join_count_expected_sd, diag = TRUE)]
+    if (k == 1) {
+      S1 <- (sum((A + Matrix::t(A))^2)) / 2
+      S2 <- sum((Matrix::colSums(A) + Matrix::rowSums(A))^2)
+      join_count_expected_var <- join_count_expected_var_func(fA, fB, S1, S2)
+      join_count_expected_var <- (join_count_expected_var + t(join_count_expected_var))
+      diag(join_count_expected_var) <- diag(join_count_expected_var) / 2
+      join_count_expected_sd <- sqrt(join_count_expected_var)
+      join_count_expected_sd <- join_count_expected_sd[upper.tri(join_count_expected_sd, diag = TRUE)]
+    }
   }
   if (mode == "permutation") {
     set.seed(seed)
@@ -156,9 +186,15 @@ ComputeProximityScores.CellGraph <- function(
       marker_1_unordered = markers[row],
       marker_2_unordered = markers[col],
       join_count = jc_obs,
-      join_count_expected_mean = join_count_expected_mean,
-      join_count_expected_sd = join_count_expected_sd
+      join_count_expected_mean = join_count_expected_mean
     ) %>%
+    {
+      if (k == 1) {
+        mutate(., join_count_expected_sd = join_count_expected_sd)
+      } else {
+        .
+      }
+    } %>%
     select(-row, -col) %>%
     mutate(
       marker_1 = pmin(marker_1_unordered, marker_2_unordered),
@@ -166,7 +202,7 @@ ComputeProximityScores.CellGraph <- function(
     ) %>%
     select(-marker_1_unordered, -marker_2_unordered)
 
-  if (calc_z_score) {
+  if (calc_z_score && (k == 1)) {
     proximity_scores <- proximity_scores %>%
       mutate(join_count_z = (join_count - join_count_expected_mean) / pmax(join_count_expected_sd, 1))
   }

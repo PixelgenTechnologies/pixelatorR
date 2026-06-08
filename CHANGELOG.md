@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - `layout_with_coarsened_pmds` layout method for faster and more accurate PNA cell graph layouts.
-- `ComputeProximityScores` methods to compute global proximity scores for cell graphs.
+- `ComputeProximityScores` methods to compute global proximity scores for cell graphs. The method also enables computing proximity scores for k > 1 neighborhoods (lower spatial resolution), but this option is limited to log2 ratios (no Z scores).
 - `heuristic_illumination` to approximate natural illumination of a 3D layout.
 - Illumination masking option in `render_rotating_layout` to modulate `node_val` colors with a heuristic illumination mask.
 - Shadow palette blending in `render_rotating_layout` via `illumination_shadow_colors` for palette-based shadow interpolation.
