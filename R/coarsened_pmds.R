@@ -68,20 +68,20 @@ layout_with_coarsened_pmds <- function(
   seed = 123,
   verbose = FALSE
 ) {
-  pixelatorR:::assert_class(g, c("tbl_graph", "igraph"))
-  pixelatorR:::assert_single_value(dim, "integer")
-  pixelatorR:::assert_within_limits(dim, c(2, 3))
-  pixelatorR:::assert_single_value(resolution, "numeric")
-  pixelatorR:::assert_within_limits(resolution, c(0.01, 10))
-  pixelatorR:::assert_single_value(pivots, "integer")
-  pixelatorR:::assert_within_limits(pivots, c(10, min(1000, length(g))))
-  pixelatorR:::assert_single_value(n_iter, "integer")
-  pixelatorR:::assert_within_limits(n_iter, c(1, 100))
-  pixelatorR:::assert_single_value(jitter_sd, "numeric")
-  pixelatorR:::assert_within_limits(jitter_sd, c(1e-3, 0.1))
+  assert_class(g, c("tbl_graph", "igraph"))
+  assert_single_value(dim, "integer")
+  assert_within_limits(dim, c(2, 3))
+  assert_single_value(resolution, "numeric")
+  assert_within_limits(resolution, c(0.01, 10))
+  assert_single_value(pivots, "integer")
+  assert_within_limits(pivots, c(10, min(1000, length(g))))
+  assert_single_value(n_iter, "integer")
+  assert_within_limits(n_iter, c(1, 100))
+  assert_single_value(jitter_sd, "numeric")
+  assert_within_limits(jitter_sd, c(1e-3, 0.1))
   weight_edges_by <- match.arg(weight_edges_by, c("tp", "crossing_edges"))
-  pixelatorR:::assert_single_value(seed, "integer")
-  pixelatorR:::assert_single_value(verbose, "bool")
+  assert_single_value(seed, "integer")
+  assert_single_value(verbose, "bool")
   set.seed(seed)
 
   # Normalize resolution parameter to fit PNA graphs
