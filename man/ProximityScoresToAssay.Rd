@@ -63,7 +63,8 @@ to pick values from. Default is "log2_ratio".}
 \item{separator}{A character to separate marker names in the row names of the output. Default is ":".
 Must be a single character and must not appear in any marker name.}
 
-\item{lazy}{Whether to look for proximity scores in the PXL file instead of the \code{PNAAssay}/\code{PNAAssay5} object.}
+\item{lazy}{Whether to look for proximity scores in the PXL file instead of the
+\code{\link[SeuratObject]{Assay}} / \code{\link[SeuratObject]{Assay5}} object.}
 
 \item{assay}{Name of the \code{\link{PNAAssay}} or \code{\link{PNAAssay5}} to
 pull proximity scores from}
@@ -92,7 +93,7 @@ The wide format is an array-like object with dimensions pair x components,
 where pair is defined as the combination of "marker_1" and "marker_2" separated by the \code{separator},
 and where each element in the array is filled with a value for a selected spatial metric.
 
-Note that that observations that are missing from the proximity score table are replaced with 0's.
+Note that observations that are missing from the proximity score table are replaced with 0's.
 Proximity scores can also be 0 (no deviation from random expectations), and it will not be possible
 to distinguish between these two cases in the output.
 
