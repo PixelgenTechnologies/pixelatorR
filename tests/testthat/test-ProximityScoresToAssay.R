@@ -9,49 +9,60 @@ for (assay_version in c("v3", "v5")) {
   expect_no_error(proximity_lazy <- ProximityScores(seur_obj, lazy = TRUE))
 
   test_that("ProximityScoresToAssay works as expected", {
+    
     # tbl_df
     expect_no_error(prox_matrix <- ProximityScoresToAssay(proximity))
     expect_s4_class(prox_matrix, "dgCMatrix")
-    expect_equal(dim(prox_matrix), c(12561, 5))
-    expect_equal(sum(is.na(prox_matrix)), 4109)
-    expect_no_error(prox_matrix <- ProximityScoresToAssay(proximity, missing_obs = 0))
-    expect_equal(sum(is.na(prox_matrix)), 0)
-    expect_no_error(prox_matrix <- ProximityScoresToAssay(proximity, return_sparse = FALSE))
-    expect_type(prox_matrix, "double")
-    expect_true(inherits(prox_matrix, "matrix"))
-    expect_no_error(prox_matrix <- ProximityScoresToAssay(proximity, values_from = "log2_ratio", return_sparse = FALSE))
-    expect_equal(mean(prox_matrix, na.rm = T), -0.05025435, tolerance = 1e-6)
+    expected_result <- new(
+      "dgCMatrix",
+      i = c(0L, 1L, 1L),
+      p = c(0L, 2L, 2L, 2L, 2L, 3L),
+      Dim = c(2L, 5L),
+      Dimnames = list(
+        c("CD56:CD6", "CD56:HLA-ABC"),
+        c(
+          "c3c393e9a17c1981",
+          "d4074c845bb62800",
+          "efe0ed189cb499fc",
+          "0a45497c6bfbfb22",
+          "2708240b908e2eba"
+        )
+      ),
+      x = c(-1.0496307677246, -1.66902676550963, -1.13093086982645),
+      factors = list()
+    )
+    expect_equal(prox_matrix %>% head(2), expected_result)
 
     # tbl_lazy
-    expect_no_error(prox_matrix <- ProximityScoresToAssay(proximity, missing_obs = 0))
+    expect_no_error(prox_matrix <- ProximityScoresToAssay(proximity))
     expect_no_error(prox_matrix_from_lazy <- ProximityScoresToAssay(proximity_lazy))
     expect_s4_class(prox_matrix_from_lazy, "dgCMatrix")
     expect_equal(dim(prox_matrix_from_lazy), c(6057, 5))
     expect_equal(
-      sum(prox_matrix[rownames(prox_matrix_from_lazy), colnames(prox_matrix_from_lazy)] - prox_matrix_from_lazy),
-      0
+      dim(prox_matrix), dim(prox_matrix_from_lazy)
     )
+    expect_equal(sum(prox_matrix) - sum(prox_matrix_from_lazy), 0) # should be 0
 
     # PNAAssay
     expect_no_error(prox_assay <- ProximityScoresToAssay(pna_assay))
     expect_s4_class(prox_assay, "Assay5")
-    expect_equal(dim(prox_assay), c(12561, 5))
+    expect_equal(dim(prox_assay), c(6057, 5))
 
     # Seurat
     expect_no_error(seur_conv <- ProximityScoresToAssay(seur_obj))
     expect_equal(SeuratObject::Assays(seur_conv), c("PNA", "proximity"))
     expect_s4_class(seur_conv, "Seurat")
     DefaultAssay(seur_conv) <- "proximity"
-    expect_equal(dim(seur_conv), c(12561, 5))
+    expect_equal(dim(seur_conv), c(6057, 5))
     expect_equal(
       head(rownames(seur_conv)),
       c(
-        "CD56:CD56",
-        "CD56:mIgG2b",
-        "CD56:CD71",
         "CD56:CD6",
-        "CD56:Siglec-9",
-        "CD56:CD79a"
+        "CD56:HLA-ABC",
+        "CD56:CD80",
+        "CD56:CD9",
+        "CD56:CD59",
+        "CD56:HLA-DR-DP-DQ"
       )
     )
 
@@ -63,18 +74,13 @@ for (assay_version in c("v3", "v5")) {
     # tbl_df
     expect_error(ProximityScoresToAssay("Invalid"))
     expect_error(ProximityScoresToAssay(proximity, values_from = "Invalid"))
-    expect_error(ProximityScoresToAssay(proximity, missing_obs = "Invalid"))
-    expect_error(ProximityScoresToAssay(proximity, return_sparse = "Invalid"))
 
     # PNAAssay
     expect_error(ProximityScoresToAssay(prox_assay, values_from = "Invalid"))
-    expect_error(ProximityScoresToAssay(prox_assay, missing_obs = "Invalid"))
-    expect_error(ProximityScoresToAssay(prox_assay, return_sparse = "Invalid"))
 
     # Seurat
     expect_error(ProximityScoresToAssay("Invalid"))
     expect_error(ProximityScoresToAssay(seur_obj, values_from = "Invalid"))
-    expect_error(ProximityScoresToAssay(seur_obj, missing_obs = "Invalid"))
 
     # separator must be single character
     expect_error(ProximityScoresToAssay(proximity, separator = "Invalid"))
