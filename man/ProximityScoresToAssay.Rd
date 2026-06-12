@@ -63,6 +63,8 @@ to pick values from. Default is "log2_ratio".}
 \item{separator}{A character to separate marker names in the row names of the output. Default is ":".
 Must be a single character and must not appear in any marker name.}
 
+\item{lazy}{Whether to look for proximity scores in the PXL file instead of the \code{PNAAssay}/\code{PNAAssay5} object.}
+
 \item{assay}{Name of the \code{\link{PNAAssay}} or \code{\link{PNAAssay5}} to
 pull proximity scores from}
 

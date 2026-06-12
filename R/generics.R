@@ -1129,7 +1129,7 @@ ProximityScores <- function(
 #' - "marker_1": the name of the first marker in the pair
 #' - "marker_2": the name of the second marker in the pair
 #' - "component": the name of the component
-#' - a column with the proximity scores to be used as values in the wide format 
+#' - a column with the proximity scores to be used as values in the wide format
 #' (defined by the \code{values_from} parameter)
 #'
 #' The wide format is an array-like object with dimensions pair x components,
@@ -1137,7 +1137,7 @@ ProximityScores <- function(
 #' and where each element in the array is filled with a value for a selected spatial metric.
 #'
 #' Note that that observations that are missing from the proximity score table are replaced with 0's.
-#' Proximity scores can also be 0 (no deviation from random expectations), and it will not be possible 
+#' Proximity scores can also be 0 (no deviation from random expectations), and it will not be possible
 #' to distinguish between these two cases in the output.
 #'
 #' Different outputs are returned depending on the input object type:
@@ -1145,17 +1145,17 @@ ProximityScores <- function(
 #' \itemize{
 #'    \item{
 #'      \code{tibble/data.frame}: returns a \code{dgCMatrix} with marker pairs in rows
-#'      and components in columns. The components are not ordered in any particular way 
+#'      and components in columns. The components are not ordered in any particular way
 #'      and should therefore be ordered before placing them in e.g. a Seurat object.
 #'    }
 #'    \item{
 #'      \code{PNAAssay/PNAAssay5}: returns an \code{Assay} or \code{Assay5} with marker
-#'      pairs in rows and components in columns. Columns are ordered according to the order 
+#'      pairs in rows and components in columns. Columns are ordered according to the order
 #'      of the components in the \code{PNAAssay/PNAAssay5}.
 #'    }
 #'    \item{
 #'      \code{Seurat} object: returns the \code{Seurat} object with a new \code{Assay}
-#'      or \code{Assay5} with marker pairs in rows and components in columns. Columns are 
+#'      or \code{Assay5} with marker pairs in rows and components in columns. Columns are
 #'      ordered according to the order of the components in the \code{Seurat} object.
 #'    }
 #' }
@@ -1171,6 +1171,7 @@ ProximityScores <- function(
 #' @param object An object with proximity scores
 #' @param values_from A single string defining what column in the proximity score table
 #' to pick values from. Default is "log2_ratio".
+#' @param lazy Whether to look for proximity scores in the PXL file instead of the `PNAAssay`/`PNAAssay5` object.
 #' @param separator A character to separate marker names in the row names of the output. Default is ":".
 #' Must be a single character and must not appear in any marker name.
 #' @param ... Not yet implemented

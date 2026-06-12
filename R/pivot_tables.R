@@ -428,12 +428,11 @@ ProximityScoresToAssay.data.frame <- function(
 }
 
 #' Utility function to validate separator input for proximity scores pivoting
-#' 
+#'
 #' @return Nothing. Used for its side effects.
-#' 
+#'
 #' @noRd
 .validate_separator <- function(object, separator, call = rlang::caller_env()) {
-
   assert_single_value(separator, type = "string", call = call)
 
   if (nchar(separator) != 1) {
@@ -461,7 +460,7 @@ ProximityScoresToAssay.data.frame <- function(
 
 
 #' Utility function to filter and format proximity scores for pivoting
-#' 
+#'
 #' @noRd
 .prep_proximity_table <- function(
   object,
@@ -470,15 +469,15 @@ ProximityScoresToAssay.data.frame <- function(
 ) {
   # Ignore 0 values and create pair column
   object <- object %>%
-    filter(!!sym(values_from) != 0) %>% 
-    mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>% 
-    select(pair, component, all_of(values_from)) %>% 
+    filter(!!sym(values_from) != 0) %>%
+    mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>%
+    select(pair, component, all_of(values_from)) %>%
     collect()
   return(object)
 }
 
 #' Utility function to cast proximity scores to wide format
-#' 
+#'
 #' @noRd
 .cast_proximity_long_to_wide <- function(object, values_from = "log2_ratio") {
   # Cast values to wide format
@@ -512,7 +511,6 @@ ProximityScoresToAssay.PNAAssay <- function(
   lazy = FALSE,
   ...
 ) {
-
   proximity_scores <- ProximityScores(object, lazy = lazy)
 
   if (inherits(proximity_scores, "tbl_df")) {
