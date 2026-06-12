@@ -511,10 +511,13 @@ ProximityScoresToAssay.PNAAssay <- function(
   lazy = FALSE,
   ...
 ) {
+
+  assert_single_value(lazy, type = "logical")
+
   proximity_scores <- ProximityScores(object, lazy = lazy)
 
-  if (inherits(proximity_scores, "tbl_df")) {
-    if (length(proximity_scores) == 0) {
+  if (!lazy) {
+    if (nrow(proximity_scores) == 0) {
       cli::cli_abort(
         c(
           "x" = "No proximity scores found in {.cls {class(object)}}",
