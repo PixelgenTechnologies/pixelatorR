@@ -1171,7 +1171,7 @@ ProximityScores <- function(
 #' @param object An object with proximity scores
 #' @param values_from A single string defining what column in the proximity score table
 #' to pick values from. Default is "log2_ratio".
-#' @param lazy Whether to look for proximity scores in the PXL file instead of the 
+#' @param lazy Whether to look for proximity scores in the PXL file instead of the
 #' \code{\link[SeuratObject]{Assay}} / \code{\link[SeuratObject]{Assay5}} object.
 #' @param separator A character to separate marker names in the row names of the output. Default is ":".
 #' Must be a single character and must not appear in any marker name.
