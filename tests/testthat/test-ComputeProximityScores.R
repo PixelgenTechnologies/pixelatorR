@@ -54,7 +54,7 @@ test_that("ComputeProximityScores works as expected", {
 
   # list
   expect_no_error(ComputeProximityScores(cg_list, mode = "permutation", iterations = 10))
-  
+
   # PNAAssay
   expect_no_error(ComputeProximityScores(se[["PNA"]], cells = colnames(se)[1:2], iterations = 10))
 

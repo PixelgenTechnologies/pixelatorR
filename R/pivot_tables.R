@@ -393,11 +393,7 @@ ProximityScoresToAssay.tbl_lazy <- function(
   .validate_separator(object, separator)
 
   object <- .prep_proximity_table(object, values_from, separator)
-  prox_wide <- .cast_proximity_long_to_wide(
-    object,
-    values_from,
-    components = components
-  )
+  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
 
   return(prox_wide)
 }
@@ -426,11 +422,7 @@ ProximityScoresToAssay.data.frame <- function(
   .validate_separator(object, separator)
 
   object <- .prep_proximity_table(object, values_from, separator)
-  prox_wide <- .cast_proximity_long_to_wide(
-    object,
-    values_from,
-    components = components
-  )
+  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
 
   return(prox_wide)
 }
@@ -476,8 +468,7 @@ ProximityScoresToAssay.data.frame <- function(
   separator = ":"
 ) {
   # Create pair column
-  object <-
-    object %>%
+  object <- object %>%
     mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>%
     select(pair, component, all_of(values_from)) %>%
     collect()
@@ -487,11 +478,8 @@ ProximityScoresToAssay.data.frame <- function(
 #' Utility function to cast proximity scores to wide format
 #'
 #' @noRd
-.cast_proximity_long_to_wide <- function(
-  object,
-  values_from = "log2_ratio",
-  components = NULL
-) {
+.cast_proximity_long_to_wide <- function(object, values_from = "log2_ratio") {
+  # Cast values to wide format
   pair <- object %>%
     pull(pair) %>%
     factor(levels = unique(.))
