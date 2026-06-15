@@ -513,7 +513,8 @@ ProximityScoresToAssay.data.frame <- function(
   if (length(zero_prox_components) > 0) {
     cli::cli_warn(
       c(
-        "!" = "There are {length(zero_prox_components)} components with only zero proximity scores. E.g.: {.str {head(zero_prox_components, 3)}}",
+        "!" = "There are {length(zero_prox_components)} components with only zero proximity scores.
+        E.g.: {.str {head(zero_prox_components, 3)}}",
         "i" = "Consider removing these components from the assay"
       )
     )
