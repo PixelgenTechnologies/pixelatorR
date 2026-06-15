@@ -546,7 +546,6 @@ ProximityScoresToAssay.PNAAssay <- function(
   lazy = FALSE,
   ...
 ) {
-
   assert_single_value(lazy, type = "bool")
 
   proximity_scores <- ProximityScores(object, lazy = lazy)
