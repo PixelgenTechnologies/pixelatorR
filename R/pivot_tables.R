@@ -392,8 +392,15 @@ ProximityScoresToAssay.tbl_lazy <- function(
 
   .validate_separator(object, separator)
 
+  components <- object %>%
+    pull(component) %>%
+    unique()
   object <- .prep_proximity_table(object, values_from, separator)
-  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
+  prox_wide <- .cast_proximity_long_to_wide(
+    object,
+    values_from,
+    components = components
+  )
 
   return(prox_wide)
 }
@@ -421,8 +428,15 @@ ProximityScoresToAssay.data.frame <- function(
 
   .validate_separator(object, separator)
 
+  components <- object %>%
+    pull(component) %>%
+    unique()
   object <- .prep_proximity_table(object, values_from, separator)
-  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
+  prox_wide <- .cast_proximity_long_to_wide(
+    object,
+    values_from,
+    components = components
+  )
 
   return(prox_wide)
 }
@@ -468,33 +482,36 @@ ProximityScoresToAssay.data.frame <- function(
   separator = ":"
 ) {
   # Ignore 0 values and create pair column
-  object <- object %>%
+  object %>%
     filter(!!sym(values_from) != 0) %>%
     mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>%
     select(pair, component, all_of(values_from)) %>%
     collect()
-  return(object)
 }
 
 #' Utility function to cast proximity scores to wide format
 #'
 #' @noRd
-.cast_proximity_long_to_wide <- function(object, values_from = "log2_ratio") {
-  # Cast values to wide format
+.cast_proximity_long_to_wide <- function(
+  object,
+  values_from = "log2_ratio",
+  components = NULL
+) {
   pair <- object %>%
     pull(pair) %>%
     factor(levels = unique(.))
-  components <- object %>%
-    pull(component) %>%
-    factor(levels = unique(.))
+  if (is.null(components)) {
+    components <- object %>%
+      pull(component) %>%
+      unique()
+  }
+  component <- factor(object %>% pull(component), levels = components)
   prox_wide <- Matrix::sparseMatrix(
     i = as.integer(pair),
-    j = as.integer(components),
+    j = as.integer(component),
     x = object %>% pull(all_of(values_from)),
-    dimnames = list(
-      levels(pair),
-      levels(components)
-    )
+    dims = c(length(levels(pair)), length(components)),
+    dimnames = list(levels(pair), components)
   )
   return(prox_wide)
 }
