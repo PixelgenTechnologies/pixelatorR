@@ -99,9 +99,12 @@ for (assay_version in c("v3", "v5")) {
                 class = c("tbl_df",
                           "tbl", "data.frame"))
 
-    proximity_scores_wide <- ProximityScoresToAssay(
-      proximity_scores,
-      values_from = "log2_ratio"
+    expect_warning(
+      proximity_scores_wide <- ProximityScoresToAssay(
+        proximity_scores,
+        values_from = "log2_ratio"
+      ),
+      "only zero proximity scores"
     )
 
     expect_true(

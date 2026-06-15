@@ -505,6 +505,11 @@ ProximityScoresToAssay.data.frame <- function(
       pull(component) %>%
       unique()
   }
+  if (length(setdiff(components, unique(object$component))) > 0) {
+    cli::cli_warn(
+      "Some components have only zero proximity scores and will be included with value 0."
+    )
+  }
   component <- factor(object %>% pull(component), levels = components)
   prox_wide <- Matrix::sparseMatrix(
     i = as.integer(pair),
