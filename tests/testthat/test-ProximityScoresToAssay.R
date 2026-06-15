@@ -5,8 +5,12 @@ for (assay_version in c("v3", "v5")) {
 
   expect_no_error(seur_obj <- suppressWarnings(ReadPNA_Seurat(pxl_file, verbose = FALSE)))
   expect_no_error(pna_assay <- seur_obj[["PNA"]])
-  expect_no_error(proximity <- ProximityScores(seur_obj))
-  expect_no_error(proximity_lazy <- ProximityScores(seur_obj, lazy = TRUE))
+  expect_no_error(proximity <-
+                    ProximityScores(seur_obj) %>%
+                    filter(log2_ratio != 0))
+  expect_no_error(proximity_lazy <-
+                    ProximityScores(seur_obj, lazy = TRUE) %>%
+                    filter(log2_ratio != 0))
 
   test_that("ProximityScoresToAssay works as expected", {
 
@@ -60,10 +64,10 @@ for (assay_version in c("v3", "v5")) {
         "CD56:CD6",
         "CD56:HLA-ABC",
         "CD56:CD80",
+        "CD56:HLA-DR",
         "CD56:CD9",
-        "CD56:CD59",
-        "CD56:HLA-DR-DP-DQ"
-      )
+        "CD56:CD59"
+        )
     )
 
     # Test separator

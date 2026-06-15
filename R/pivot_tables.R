@@ -392,9 +392,6 @@ ProximityScoresToAssay.tbl_lazy <- function(
 
   .validate_separator(object, separator)
 
-  components <- object %>%
-    pull(component) %>%
-    unique()
   object <- .prep_proximity_table(object, values_from, separator)
   prox_wide <- .cast_proximity_long_to_wide(
     object,
@@ -428,9 +425,6 @@ ProximityScoresToAssay.data.frame <- function(
 
   .validate_separator(object, separator)
 
-  components <- object %>%
-    pull(component) %>%
-    unique()
   object <- .prep_proximity_table(object, values_from, separator)
   prox_wide <- .cast_proximity_long_to_wide(
     object,
@@ -481,12 +475,13 @@ ProximityScoresToAssay.data.frame <- function(
   values_from = "log2_ratio",
   separator = ":"
 ) {
-  # Ignore 0 values and create pair column
-  object %>%
-    filter(!!sym(values_from) != 0) %>%
+  # Create pair column
+  object <-
+    object %>%
     mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>%
     select(pair, component, all_of(values_from)) %>%
     collect()
+  return(object)
 }
 
 #' Utility function to cast proximity scores to wide format
@@ -500,24 +495,42 @@ ProximityScoresToAssay.data.frame <- function(
   pair <- object %>%
     pull(pair) %>%
     factor(levels = unique(.))
-  if (is.null(components)) {
-    components <- object %>%
-      pull(component) %>%
-      unique()
-  }
-  if (length(setdiff(components, unique(object$component))) > 0) {
-    cli::cli_warn(
-      "Some components have only zero proximity scores and will be included with value 0."
-    )
-  }
-  component <- factor(object %>% pull(component), levels = components)
+
+  components <- object %>%
+    pull(component) %>%
+    factor(levels = unique(.))
+
   prox_wide <- Matrix::sparseMatrix(
     i = as.integer(pair),
-    j = as.integer(component),
+    j = as.integer(components),
     x = object %>% pull(all_of(values_from)),
-    dims = c(length(levels(pair)), length(components)),
-    dimnames = list(levels(pair), components)
+    dimnames = list(
+      levels(pair),
+      levels(components)
+    )
   )
+
+  # Drop explicit zeros
+  prox_wide <- Matrix::drop0(prox_wide)
+
+  # Drop marker pairs with all zero proximity scores
+  nonzero_pairs <- Matrix::rowSums(prox_wide != 0) > 0
+  prox_wide <- prox_wide[nonzero_pairs, ]
+
+  # Warn about components with all zero proximity scores
+  zero_prox_components <-
+    which(Matrix::colSums(prox_wide != 0) == nrow(prox_wide)) %>%
+    names()
+
+  if (length(zero_prox_components) > 0) {
+    cli::cli_warn(
+      c(
+        "!" = "There are {length(zero_prox_components)} components with only zero proximity scores. E.g.: {.str {head(zero_prox_components, 3)}}",
+        "i" = "Consider removing these components from the assay"
+      )
+    )
+  }
+
   return(prox_wide)
 }
 
