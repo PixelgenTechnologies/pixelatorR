@@ -6,14 +6,14 @@ NULL
 #' Computes graph layouts for component graphs.
 #'
 #' @param layout_method The method for calculating the graph layout:
-#' weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)
+#' coaresened Pivot MDS (cpmds), weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)
 #' @param dim An integer specifying the dimensions of the layout (2 or 3). Note that
-#' for "pmds" and "wpmds", the x and y coordinates will be identical regardless if
+#' for "cpmds", "pmds" and "wpmds", the x and y coordinates will be identical regardless if
 #' dim is set to 2 or 3.
 #' @param normalize_layout Logical specifying whether the coordinate system
 #' should be centered at origo and the coordinates scaled such that their median
 #' length (euclidean norm) is 1.
-#' @param pivots Only used for "wpmds" and "pmds" layout algorithms.
+#' @param pivots Used for Pivot MDS layout algorithms.
 #' See \code{?layout_with_pmds} for details
 #' @param project_on_unit_sphere Should the resulting layout be projected onto
 #'  a unit sphere?
@@ -37,32 +37,37 @@ NULL
 #' library(pixelatorR)
 #' library(dplyr)
 #'
-#' pxl_file <- minimal_mpx_pxl_file()
+#' pxl_file <- minimal_pna_pxl_file()
 #'
 #' # Load example data
-#' seur <- ReadMPX_Seurat(pxl_file)
+#' seur <- ReadPNA_Seurat(pxl_file)
 #'
 #' # Load 1 cellgraph
 #' seur <- LoadCellGraphs(seur,
-#'   cells = colnames(seur)[1],
+#'   cells = colnames(seur)[4],
 #'   force = TRUE
 #' )
 #'
 #' # Get CellGraph
-#' cg <- CellGraphs(seur)[[colnames(seur)[1]]]
+#' cg <- CellGraphs(seur)[[colnames(seur)[4]]]
 #'
 #' # Get tbl_graph object
 #' tbl_graph <- slot(cg, name = "cellgraph")
 #'
 #' # Compute layout for a tbl_graph
-#' layout <- ComputeLayout(tbl_graph, layout_method = "wpmds")
-#' layout %>% head()
+#' layout <- ComputeLayout(tbl_graph, layout_method = "cpmds")
+#'
+#' # Visualize
+#' plotly::plot_ly(
+#'   data = layout, x = ~x, y = ~y, z = ~z,
+#'   type = "scatter3d", mode = "markers", marker = list(size = 2)
+#' )
 #'
 #' @export
 #'
 ComputeLayout.tbl_graph <- function(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -113,10 +118,11 @@ ComputeLayout.tbl_graph <- function(
     .validate_custom_layout_function_results(layout, dim, n_nodes = length(object))
   } else {
     # Check and select a layout method
-    layout_method <- match.arg(layout_method, choices = c("pmds", "wpmds"))
+    layout_method <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds"))
 
     layout_function <-
       switch(layout_method,
+        "cpmds" = layout_with_coarsened_pmds,
         "wpmds" = layout_with_weighted_pmds,
         "pmds" = {
           # Abort if pmds is selected and graphlayouts isn't installed
@@ -157,13 +163,13 @@ ComputeLayout.tbl_graph <- function(
 #' @examples
 #'
 #' # Compute layout for a CellGraph
-#' cg <- ComputeLayout(cg, layout_method = "wpmds")
+#' cg <- ComputeLayout(cg, layout_method = "cpmds")
 #'
 #' @export
 #'
 ComputeLayout.CellGraph <- function(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -175,7 +181,7 @@ ComputeLayout.CellGraph <- function(
   ...
 ) {
   if (is.null(custom_layout_function) && is.null(layout_name)) {
-    layout_name <- match.arg(layout_method, choices = c("pmds", "wpmds"))
+    layout_name <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds"))
     # Add suffix _3d if dim = 3
     if (dim == 3) {
       layout_name <- paste0(layout_name, "_3d")
@@ -219,16 +225,11 @@ ComputeLayout.CellGraph <- function(
 #' @rdname ComputeLayout
 #' @method ComputeLayout MPXAssay
 #'
-#' @examples
-#'
-#' # Compute layout for a CellGraphAssay
-#' cg_assay <- ComputeLayout(seur[["mpxCells"]], layout_method = "wpmds")
-#'
 #' @export
 #'
 ComputeLayout.MPXAssay <- function(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -299,11 +300,16 @@ ComputeLayout.CellGraphAssay5 <- ComputeLayout.MPXAssay
 #' @rdname ComputeLayout
 #' @method ComputeLayout PNAAssay
 #'
+#' @examples
+#'
+#' # Compute layout for a PNAAssay
+#' cg_assay <- ComputeLayout(seur[["PNA"]], layout_method = "cpmds")
+#'
 #' @export
 #'
 ComputeLayout.PNAAssay <- function(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -369,12 +375,19 @@ ComputeLayout.PNAAssay5 <- ComputeLayout.PNAAssay
 #' @rdname ComputeLayout
 #' @method ComputeLayout Seurat
 #'
+#' @examles
+#' # Seurat method
+#' seur <- ComputeLayout(seur)
+#'
+#' # Visualzie with Plot3DGraph
+#' Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "cpmds_3d")
+#'
 #' @export
 #'
 ComputeLayout.Seurat <- function(
   object,
   assay = NULL,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,

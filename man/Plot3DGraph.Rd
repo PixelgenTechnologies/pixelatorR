@@ -9,7 +9,7 @@ Plot3DGraph(
   cell_id,
   marker = NULL,
   assay = NULL,
-  layout_method = c("wpmds_3d", "pmds_3d"),
+  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d"),
   project = FALSE,
   aspectmode = c("data", "cube"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),

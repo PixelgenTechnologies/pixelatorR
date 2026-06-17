@@ -17,7 +17,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{tbl_graph}(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -30,7 +30,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraph}(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -44,7 +44,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{MPXAssay}(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -60,7 +60,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay}(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -76,7 +76,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay5}(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -92,7 +92,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{PNAAssay}(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -108,7 +108,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{PNAAssay5}(
   object,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -125,7 +125,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{Seurat}(
   object,
   assay = NULL,
-  layout_method = c("pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -145,10 +145,10 @@ ComputeLayout(object, ...)
 \item{...}{Additional parameters passed to other methods}
 
 \item{layout_method}{The method for calculating the graph layout:
-weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)}
+coaresened Pivot MDS (cpmds), weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)}
 
 \item{dim}{An integer specifying the dimensions of the layout (2 or 3). Note that
-for "pmds" and "wpmds", the x and y coordinates will be identical regardless if
+for "cpmds", "pmds" and "wpmds", the x and y coordinates will be identical regardless if
 dim is set to 2 or 3.}
 
 \item{normalize_layout}{Logical specifying whether the coordinate system
@@ -158,7 +158,7 @@ length (euclidean norm) is 1.}
 \item{project_on_unit_sphere}{Should the resulting layout be projected onto
 a unit sphere?}
 
-\item{pivots}{Only used for "wpmds" and "pmds" layout algorithms.
+\item{pivots}{Used for Pivot MDS layout algorithms.
 See \code{?layout_with_pmds} for details}
 
 \item{seed}{Set seed for reproducibility}
@@ -196,34 +196,39 @@ Computes graph layouts for component graphs.
 library(pixelatorR)
 library(dplyr)
 
-pxl_file <- minimal_mpx_pxl_file()
+pxl_file <- minimal_pna_pxl_file()
 
 # Load example data
-seur <- ReadMPX_Seurat(pxl_file)
+seur <- ReadPNA_Seurat(pxl_file)
 
 # Load 1 cellgraph
 seur <- LoadCellGraphs(seur,
-  cells = colnames(seur)[1],
+  cells = colnames(seur)[4],
   force = TRUE
 )
 
 # Get CellGraph
-cg <- CellGraphs(seur)[[colnames(seur)[1]]]
+cg <- CellGraphs(seur)[[colnames(seur)[4]]]
 
 # Get tbl_graph object
 tbl_graph <- slot(cg, name = "cellgraph")
 
 # Compute layout for a tbl_graph
-layout <- ComputeLayout(tbl_graph, layout_method = "wpmds")
-layout \%>\% head()
+layout <- ComputeLayout(tbl_graph, layout_method = "cpmds")
+
+# Visualize
+plotly::plot_ly(
+  data = layout, x = ~x, y = ~y, z = ~z,
+  type = "scatter3d", mode = "markers", marker = list(size = 2)
+)
 
 
 # Compute layout for a CellGraph
-cg <- ComputeLayout(cg, layout_method = "wpmds")
+cg <- ComputeLayout(cg, layout_method = "cpmds")
 
 
-# Compute layout for a CellGraphAssay
-cg_assay <- ComputeLayout(seur[["mpxCells"]], layout_method = "wpmds")
+# Compute layout for a PNAAssay
+cg_assay <- ComputeLayout(seur[["PNA"]], layout_method = "cpmds")
 
 }
 \seealso{
