@@ -527,7 +527,7 @@ Plot3DGraph <- function(
   cell_id,
   marker = NULL,
   assay = NULL,
-  layout_method = c("wpmds_3d", "pmds_3d"),
+  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d"),
   project = FALSE,
   aspectmode = c("data", "cube"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
@@ -591,6 +591,7 @@ Plot3DGraph <- function(
   }
 
 
+  layout_method <- match.arg(layout_method, choices = c("cpmds_3d", "wpmds_3d", "pmds_3d"))
   if (!layout_method %in% names(component_graph@layout)) {
     cli::cli_abort(
       c("x" = "Missing layout {.str {layout_method}} for component '{.val {cell_id}}'")
