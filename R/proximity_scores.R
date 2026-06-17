@@ -94,7 +94,6 @@ ComputeProximityScores.CellGraph <- function(
   jc_obs <- Matrix::t(counts) %*% A %*% counts
 
   if (mode == "analytical") {
-
     fA <- Matrix::colSums(counts[node_types_vector == "umi1", , drop = FALSE]) / nA
     fB <- Matrix::colSums(counts[node_types_vector == "umi2", , drop = FALSE]) / nB
 
@@ -122,8 +121,8 @@ ComputeProximityScores.CellGraph <- function(
     join_count_expected_var_func <- function(fA, fB, S1, S2) {
       (
         (2 * S1 * outer(fA, fB)) +
-        (S2 - (2 * S1)) * (outer(fA, fB) * outer(fA, fB, "+")) +
-        (4 * (S1 - S2) * outer(fA^2, fB^2))
+          (S2 - (2 * S1)) * (outer(fA, fB) * outer(fA, fB, "+")) +
+          (4 * (S1 - S2) * outer(fA^2, fB^2))
       ) / 4
     }
 

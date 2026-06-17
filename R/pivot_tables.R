@@ -467,9 +467,8 @@ ProximityScoresToAssay.data.frame <- function(
   values_from = "log2_ratio",
   separator = ":"
 ) {
-  # Ignore 0 values and create pair column
+  # Create pair column
   object <- object %>%
-    filter(!!sym(values_from) != 0) %>%
     mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>%
     select(pair, component, all_of(values_from)) %>%
     collect()
@@ -484,9 +483,11 @@ ProximityScoresToAssay.data.frame <- function(
   pair <- object %>%
     pull(pair) %>%
     factor(levels = unique(.))
+
   components <- object %>%
     pull(component) %>%
     factor(levels = unique(.))
+
   prox_wide <- Matrix::sparseMatrix(
     i = as.integer(pair),
     j = as.integer(components),
@@ -496,6 +497,29 @@ ProximityScoresToAssay.data.frame <- function(
       levels(components)
     )
   )
+
+  # Drop explicit zeros
+  prox_wide <- Matrix::drop0(prox_wide)
+
+  # Drop marker pairs with all zero proximity scores
+  nonzero_pairs <- Matrix::rowSums(prox_wide != 0) > 0
+  prox_wide <- prox_wide[nonzero_pairs, ]
+
+  # Warn about components with all zero proximity scores
+  zero_prox_components <-
+    which(Matrix::colSums(prox_wide != 0) == nrow(prox_wide)) %>%
+    names()
+
+  if (length(zero_prox_components) > 0) {
+    cli::cli_warn(
+      c(
+        "!" = "There are {length(zero_prox_components)} components with only zero proximity scores.
+        E.g.: {.str {head(zero_prox_components, 3)}}",
+        "i" = "Consider removing these components from the assay"
+      )
+    )
+  }
+
   return(prox_wide)
 }
 
@@ -511,7 +535,6 @@ ProximityScoresToAssay.PNAAssay <- function(
   lazy = FALSE,
   ...
 ) {
-
   assert_single_value(lazy, type = "bool")
 
   proximity_scores <- ProximityScores(object, lazy = lazy)
