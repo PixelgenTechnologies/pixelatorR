@@ -145,7 +145,7 @@ ComputeLayout(object, ...)
 \item{...}{Additional parameters passed to other methods}
 
 \item{layout_method}{The method for calculating the graph layout:
-coaresened Pivot MDS (cpmds), weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)}
+coarsened Pivot MDS (cpmds), weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)}
 
 \item{dim}{An integer specifying the dimensions of the layout (2 or 3). Note that
 for "cpmds", "pmds" and "wpmds", the x and y coordinates will be identical regardless if
@@ -229,6 +229,12 @@ cg <- ComputeLayout(cg, layout_method = "cpmds")
 
 # Compute layout for a PNAAssay
 cg_assay <- ComputeLayout(seur[["PNA"]], layout_method = "cpmds")
+
+# Seurat method
+seur <- ComputeLayout(seur)
+
+# Visualize with Plot3DGraph
+Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "cpmds_3d")
 
 }
 \seealso{

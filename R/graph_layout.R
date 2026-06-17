@@ -6,7 +6,7 @@ NULL
 #' Computes graph layouts for component graphs.
 #'
 #' @param layout_method The method for calculating the graph layout:
-#' coaresened Pivot MDS (cpmds), weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)
+#' coarsened Pivot MDS (cpmds), weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)
 #' @param dim An integer specifying the dimensions of the layout (2 or 3). Note that
 #' for "cpmds", "pmds" and "wpmds", the x and y coordinates will be identical regardless if
 #' dim is set to 2 or 3.
@@ -375,11 +375,11 @@ ComputeLayout.PNAAssay5 <- ComputeLayout.PNAAssay
 #' @rdname ComputeLayout
 #' @method ComputeLayout Seurat
 #'
-#' @examles
+#' @examples
 #' # Seurat method
 #' seur <- ComputeLayout(seur)
 #'
-#' # Visualzie with Plot3DGraph
+#' # Visualize with Plot3DGraph
 #' Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "cpmds_3d")
 #'
 #' @export
