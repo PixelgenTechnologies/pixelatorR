@@ -438,10 +438,11 @@ AnnotateCells <- function(
     # Run NNLS
     proj_expr <- RcppML::project(as(target_data, "dgCMatrix"), W, L1 = 0.01)
 
-    # Cells with a very low total projection across all cell types are labeled as "Unknown" to avoid spurious annotations. 
+    # Cells with a very low total projection across all cell types are labeled
+    # as "Unknown" to avoid spurious annotations.
     failed_cells <- colSums(proj_expr) < 1e-2
 
-    # Add a small value to the scores of failed cells to avoid issues with zero values in downstream calculations. 
+    # Add a small value to the scores of failed cells to avoid issues with zero values in downstream calculations.
     proj_expr[, failed_cells] <- proj_expr[, failed_cells] + 1e-8
 
     # Convert predicted values to proportions
