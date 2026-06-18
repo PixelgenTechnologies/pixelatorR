@@ -8,3 +8,4 @@
 environment_arm.yml
 *.pdf
 .positai
+.cursor
