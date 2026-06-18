@@ -355,7 +355,7 @@ ProximityScores.Seurat <- function(
   proximity_scores <- ProximityScores(pixel_assay, add_marker_counts, add_marker_proportions, lazy, calc_log2ratio, ...)
 
   if (inherits(proximity_scores, "tbl_lazy")) {
-    con <- proximity_scores[[1]]$con
+    con <- proximity_scores$src$con
   } else {
     con <- NULL
   }
