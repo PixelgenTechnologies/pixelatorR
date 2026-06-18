@@ -116,7 +116,7 @@ for (assay_version in c("v3", "v5")) {
   })
 }
 
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>% 
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
   LoadCellGraphs(cells = colnames(.)[1])
 
 test_that("ComputeLayout works with 'cpmds' option", {
