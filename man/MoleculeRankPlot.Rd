@@ -61,7 +61,7 @@ library(pixelatorR)
 # Load example data as a Seurat object
 pxl_file_pna <- minimal_pna_pxl_file()
 
-seur_obj_pna <- ReadMPX_Seurat(pxl_file_pna)
+seur_obj_pna <- ReadPNA_Seurat(pxl_file_pna)
 seur_obj_pna
 
 # Plot with data.frame
