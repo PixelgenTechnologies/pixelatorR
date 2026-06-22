@@ -59,7 +59,7 @@ Plot2DGraph <- function(
   cells,
   marker = NULL,
   assay = NULL,
-  layout_method = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"),
+  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
@@ -86,7 +86,7 @@ Plot2DGraph <- function(
   assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select a layout method
-  layout_method <- match.arg(layout_method, choices = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"))
+  layout_method <- match.arg(layout_method, choices = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"))
   layout_method_ext <-
     switch(layout_method,
       "pmds" = "pivot MDS (pmds)",
@@ -330,7 +330,7 @@ Plot2DGraphM <- function(
   cells,
   markers,
   assay = NULL,
-  layout_method = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"),
+  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,

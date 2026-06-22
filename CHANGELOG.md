@@ -8,8 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixes
+
 - Fixed a bug in `ProximityScores.Seurat` that would (on some systems) throw an error when setting the connection to the lazy table of proximity scores.
 - Fixed bug in `AnnotateCells` (method "nmf") where cells with 0 value prediction scores crashed the function. Such cells are now labeled as "Unknown".
+
+### Changes
+
+- Added `cpmds` option to `Plot2DGraph` and `Plot2DGraphM`.
 
 ## [0.18.2] - 2026-06-17
 
