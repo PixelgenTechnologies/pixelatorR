@@ -315,14 +315,15 @@ Plot2DGraph <- function(
 #' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
-#' seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
-#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "pmds", markers = c("CD20", "CD4"))
+#' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
+#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
 #'
 #' # PNA
 #' pxl_file <- minimal_pna_pxl_file()
 #' seur <- ReadPNA_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[2:3], add_layouts = TRUE)
-#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], markers = c("CD20", "CD4"))
+#' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
+#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
 #'
 #' @export
 #'
