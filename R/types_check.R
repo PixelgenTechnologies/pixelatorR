@@ -224,9 +224,13 @@ assert_pixel_assay <- function(
 assert_within_limits <- function(
   x,
   limits,
+  allow_null = FALSE,
   arg = caller_arg(x),
   call = caller_env()
 ) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
   stopifnot(
     "`x` must be a single numeric value" =
       is.numeric(x),

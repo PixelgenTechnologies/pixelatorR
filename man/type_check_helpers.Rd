@@ -74,7 +74,13 @@ assert_pixel_assay(
   call = caller_env()
 )
 
-assert_within_limits(x, limits, arg = caller_arg(x), call = caller_env())
+assert_within_limits(
+  x,
+  limits,
+  allow_null = FALSE,
+  arg = caller_arg(x),
+  call = caller_env()
+)
 
 assert_function(
   x,

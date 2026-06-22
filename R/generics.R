@@ -135,11 +135,19 @@ RemoveCellGraphs <- function(
   UseMethod(generic = "RemoveCellGraphs", object = object)
 }
 
-#' Edge Rank Plot
+#' Molecule Rank Plot
 #'
-#' Plots the number of edges/molecules per component against the component rank
+#' Plots the number of molecules per component against the molecule rank (descending order).
 #'
 #' @param object A \code{data.frame}-like object or a \code{Seurat} object
+#' @param group_by A character specifying a column to group by. By default, the groups are
+#' assigned a unique color. If `split = TRUE`, the points are not colored.
+#' @param n_umi_min_threshold,n_umi_max_threshold Minimum/maximum number of UMIs to define a component
+#' as "Normal". If provided, the components will be grouped into categories "Low", "Normal" and "High"
+#' based on the number of UMIs and the provided thresholds.
+#' @param highlight_cell_counts Whether to highlight cell counts for categories "Low", "Normal" and "High".
+#' @param rug Whether to add a rug plot on the left side of the plot to highlight the component density.
+#' @param split Whether to split the plot by `group_by` into facets.
 #' @param ... Parameters passed to other methods
 #'
 #' @rdname MoleculeRankPlot

@@ -4,49 +4,73 @@
 \alias{MoleculeRankPlot}
 \alias{MoleculeRankPlot.data.frame}
 \alias{MoleculeRankPlot.Seurat}
-\title{Edge Rank Plot}
+\title{Molecule Rank Plot}
 \usage{
 MoleculeRankPlot(object, ...)
 
-\method{MoleculeRankPlot}{data.frame}(object, group_by = NULL, ...)
+\method{MoleculeRankPlot}{data.frame}(
+  object,
+  group_by = NULL,
+  n_umi_min_threshold = NULL,
+  n_umi_max_threshold = NULL,
+  highlight_cell_counts = TRUE,
+  rug = FALSE,
+  split = FALSE,
+  ...
+)
 
-\method{MoleculeRankPlot}{Seurat}(object, group_by = NULL, ...)
+\method{MoleculeRankPlot}{Seurat}(
+  object,
+  group_by = NULL,
+  n_umi_min_threshold = NULL,
+  n_umi_max_threshold = NULL,
+  highlight_cell_counts = TRUE,
+  rug = FALSE,
+  split = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{data.frame}-like object or a \code{Seurat} object}
 
 \item{...}{Parameters passed to other methods}
 
-\item{group_by}{A character specifying a column to group by}
+\item{group_by}{A character specifying a column to group by. By default, the groups are
+assigned a unique color. If \code{split = TRUE}, the points are not colored.}
+
+\item{n_umi_min_threshold, n_umi_max_threshold}{Minimum/maximum number of UMIs to define a component
+as "Normal". If provided, the components will be grouped into categories "Low", "Normal" and "High"
+based on the number of UMIs and the provided thresholds.}
+
+\item{highlight_cell_counts}{Whether to highlight cell counts for categories "Low", "Normal" and "High".}
+
+\item{rug}{Whether to add a rug plot on the left side of the plot to highlight the component density.}
+
+\item{split}{Whether to split the plot by \code{group_by} into facets.}
 }
 \value{
 A \code{ggplot} object
 }
 \description{
-Plots the number of edges/molecules per component against the component rank
+Plots the number of molecules per component against the molecule rank (descending order).
 }
 \examples{
 
 library(pixelatorR)
 
 # Load example data as a Seurat object
-pxl_file_mpx <- minimal_mpx_pxl_file()
 pxl_file_pna <- minimal_pna_pxl_file()
 
-seur_obj_mpx <- ReadMPX_Seurat(pxl_file_mpx)
-seur_obj_mpx
+seur_obj_pna <- ReadMPX_Seurat(pxl_file_pna)
+seur_obj_pna
 
 # Plot with data.frame
-MoleculeRankPlot(seur_obj_mpx[[]])
+MoleculeRankPlot(seur_obj_pna[[]])
 
 library(pixelatorR)
 
 # Plot with Seurat object
 MoleculeRankPlot(seur_obj_mpx)
-
-# Plot with Seurat object containing PNA data
-seur_obj_pna <- ReadPNA_Seurat(pxl_file_pna)
-MoleculeRankPlot(seur_obj_pna)
 
 }
 \concept{plots}

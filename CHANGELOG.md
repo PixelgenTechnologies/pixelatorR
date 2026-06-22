@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Updates
+- Added option to `MoleculeRankPlot` to highlight results from size filters and to facet plot by groups (`group_by`).
+
 ### Fixes
 - Fixed a bug in `ProximityScores.Seurat` that would (on some systems) throw an error when setting the connection to the lazy table of proximity scores.
 - Fixed bug in `AnnotateCells` (method "nmf") where cells with 0 value prediction scores crashed the function. Such cells are now labeled as "Unknown".
