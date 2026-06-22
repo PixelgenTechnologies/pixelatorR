@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Updates
+- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to avoid bloating the `meta.data` slot. Users can enable loading of detailed meta data by setting `detailed_meta_data = TRUE`.
+
 ### Fixes
 
 - Fixed a bug in `ProximityScores.Seurat` that would (on some systems) throw an error when setting the connection to the lazy table of proximity scores.

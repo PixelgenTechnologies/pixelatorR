@@ -33,6 +33,16 @@ globalVariables(
 )
 
 
+#' Default columns to pull from cell metadata table __adata__obs in PXL files
+#'
+#' @noRd
+CELL_META_COLS <- c(
+  "n_umi", "n_edges", "n_antibodies", "isotype_fraction",
+  "average_k_core", "reads_in_component",
+  "n_umi1", "n_umi2", "sample"
+)
+
+
 #' Check global option for verbosity
 #'
 #' By setting the global option \code{options(pixelatorR.verbose = FALSE)},
