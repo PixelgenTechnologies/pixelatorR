@@ -718,9 +718,6 @@ render_rotating_layout <- function(
   if (inherits(df$node_val, "numeric")) {
     assert_class(marker_limits, "list", call = call)
     assert_x_in_y(marker_id, names(marker_limits), call = call)
-  }
-
-  if (inherits(df$node_val, "numeric")) {
     lims <- .node_val_lims(df$node_val, marker_limits, marker_id, center_zero)
     base_color <- scales::col_numeric(
       palette = colors,
@@ -732,6 +729,14 @@ render_rotating_layout <- function(
     if (inherits(node_val, "character")) {
       node_val <- factor(node_val, levels = unique(node_val))
     }
+
+    if (!is.null(names(colors))) {
+      assert_x_in_y(levels(node_val), names(colors), call = call)
+
+      colors <-
+        colors[match(levels(node_val), names(colors))]
+    }
+
     base_color <- scales::col_factor(
       domain = levels(node_val),
       palette = colors

@@ -9,7 +9,7 @@ Plot2DGraphM(
   cells,
   markers,
   assay = NULL,
-  layout_method = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"),
+  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
@@ -80,14 +80,15 @@ library(pixelatorR)
 pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, load_as = "Anode")
-seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
-Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "pmds", markers = c("CD20", "CD4"))
+seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
+Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
 
 # PNA
 pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[2:3], add_layouts = TRUE)
-Plot2DGraphM(seur, cells = colnames(seur)[2:3], markers = c("CD20", "CD4"))
+seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
+Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
 
 }
 \seealso{

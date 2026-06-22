@@ -329,3 +329,72 @@ test_that(".node_val_color_scale uses visible legend keys with illumination", {
   expect_equal(scale$guide$params$override.aes$alpha, 1)
   expect_equal(scale$guide$params$override.aes$size, 2)
 })
+
+test_that(".compute_illuminated_point_colors works as expected", {
+  # Numeric node_val
+  df <- tibble(
+    node_val = c(-1, 0, 1),
+    illumination = c(0, 0.5, 1),
+    marker = "marker"
+  )
+
+  marker_limits <-
+    list(marker = c(-1, 1))
+
+  expect_no_error(
+    adjusted_colors <-
+      .compute_illuminated_point_colors(
+        df,
+        colors = c("red", "blue"),
+        marker_limits = marker_limits,
+        marker_id = "marker",
+        center_zero = TRUE,
+        illumination_ambient = 0.5,
+        illumination_sat_boost = 0.5
+      )
+  )
+
+  expect_equal(
+    adjusted_colors,
+    c("#800000", "#980066", "#0000FF")
+  )
+
+  # Factor node_val
+  df <- tibble(
+    node_val = factor(c("val1", "val2", "val2", "val3")),
+    illumination = c(0, 0.5, 0.75, 1),
+    marker = "marker"
+  )
+
+  expect_no_error(
+    adjusted_colors <-
+      .compute_illuminated_point_colors(
+        df,
+        colors = c(val1 = "red", val3 = "blue", val2 = "white"),
+        marker_limits = marker_limits,
+        marker_id = "marker",
+        center_zero = TRUE,
+        illumination_ambient = 0.5,
+        illumination_sat_boost = 0.5
+      )
+  )
+
+  expect_equal(
+    adjusted_colors,
+    c("#800000", "#BFBFBF", "#DFDFDF", "#0000FF")
+  )
+
+  # The function fails with missing levels in palette
+  expect_error(
+    adjusted_colors <-
+      .compute_illuminated_point_colors(
+        df,
+        colors = c(val1 = "red", val3 = "blue"),
+        marker_limits = marker_limits,
+        marker_id = "marker",
+        center_zero = TRUE,
+        illumination_ambient = 0.5,
+        illumination_sat_boost = 0.5
+      )
+  )
+})
