@@ -197,7 +197,7 @@ MoleculeRankPlot.data.frame <- function(
           y = y_position,
           label = label_text,
           # Dynamically handle grouping if split is TRUE
-          group = if (split) !!sym(group_by) else NULL
+          group = if (split && !is.null(group_by)) .data[[group_by]] else NULL
         ),
         color = umi_outliers$col,
         hjust = 0, # Left-aligns text at fixed_x
