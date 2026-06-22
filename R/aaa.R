@@ -38,7 +38,7 @@ globalVariables(
 #' @noRd
 CELL_META_COLS <- c(
   "n_umi", "n_edges", "n_antibodies", "isotype_fraction",
-  "average_k_core", "reads_in_component", "tau", "tau_type",
+  "average_k_core", "reads_in_component",
   "n_umi1", "n_umi2", "sample"
 )
 
