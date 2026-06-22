@@ -164,45 +164,44 @@ MoleculeRankPlot.data.frame <- function(
   }
 
   if (highlight_cell_counts) {
-  
     # Define the boundary limits of the 3 zones
     min_val <- min(object$molecules, na.rm = TRUE)
     max_val <- max(object$molecules, na.rm = TRUE)
 
     y_min_thresh <- if (n_umi_min_threshold > 0) n_umi_min_threshold else min_val
     y_max_thresh <- if (is.finite(n_umi_max_threshold)) n_umi_max_threshold else max_val
-    
+
     # Calculate the exact visual center for each zone (Geometric Mean)
     umi_outliers <- umi_outliers %>%
       mutate(
         y_position = case_when(
-          umi_category == "Low"    ~ sqrt(as.numeric(min_val) * as.numeric(y_min_thresh)),
+          umi_category == "Low" ~ sqrt(as.numeric(min_val) * as.numeric(y_min_thresh)),
           umi_category == "Normal" ~ sqrt(as.numeric(y_min_thresh) * as.numeric(y_max_thresh)),
-          umi_category == "High"   ~ sqrt(as.numeric(y_max_thresh) * as.numeric(max_val))
+          umi_category == "High" ~ sqrt(as.numeric(y_max_thresh) * as.numeric(max_val))
         ),
         col = case_when(
           umi_category == "Normal" ~ "#496389",
-          TRUE                     ~ "#f94526"
+          TRUE ~ "#f94526"
         ),
         label_text = paste0(umi_category, ": ", n)
       )
 
     # Define a safe x-position (left-aligned with a bit of padding)
-    fixed_x <- min(object$rank, na.rm = TRUE) * 1.5 
+    fixed_x <- min(object$rank, na.rm = TRUE) * 1.5
 
     cellrank_plot <- cellrank_plot +
       geom_text(
         data = umi_outliers,
         aes(
-          x = fixed_x, 
-          y = y_position, 
+          x = fixed_x,
+          y = y_position,
           label = label_text,
           # Dynamically handle grouping if split is TRUE
-          group = if(split) !!sym(group_by) else NULL 
+          group = if (split) !!sym(group_by) else NULL
         ),
         color = umi_outliers$col,
-        hjust = 0,             # Left-aligns text at fixed_x
-        inherit.aes = FALSE    # Prevents clash with main plot aesthetics
+        hjust = 0, # Left-aligns text at fixed_x
+        inherit.aes = FALSE # Prevents clash with main plot aesthetics
       )
   }
 
