@@ -9,7 +9,7 @@ Plot2DGraphM(
   cells,
   markers,
   assay = NULL,
-  layout_method = c("wpmds_3d", "pmds_3d", "wpmds", "pmds"),
+  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,

@@ -731,6 +731,8 @@ render_rotating_layout <- function(
     }
 
     if (!is.null(names(colors))) {
+      assert_x_in_y(levels(node_val), names(colors), call = call)
+
       colors <-
         colors[match(levels(node_val), names(colors))]
     }

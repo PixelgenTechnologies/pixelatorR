@@ -339,7 +339,7 @@ test_that(".compute_illuminated_point_colors works as expected", {
   )
 
   marker_limits <-
-    list(marker = tibble(min = -1, max = 1))
+    list(marker = c(-1, 1))
 
   expect_no_error(
     adjusted_colors <-
@@ -366,9 +366,6 @@ test_that(".compute_illuminated_point_colors works as expected", {
     marker = "marker"
   )
 
-  marker_limits <-
-    list(marker = tibble(min = -1, max = 1))
-
   expect_no_error(
     adjusted_colors <-
       .compute_illuminated_point_colors(
@@ -385,5 +382,19 @@ test_that(".compute_illuminated_point_colors works as expected", {
   expect_equal(
     adjusted_colors,
     c("#800000", "#BFBFBF", "#DFDFDF", "#0000FF")
+  )
+
+  # The function fails with missing levels in palette
+  expect_error(
+    adjusted_colors <-
+      .compute_illuminated_point_colors(
+        df,
+        colors = c(val1 = "red", val3 = "blue"),
+        marker_limits = marker_limits,
+        marker_id = "marker",
+        center_zero = TRUE,
+        illumination_ambient = 0.5,
+        illumination_sat_boost = 0.5
+      )
   )
 })
