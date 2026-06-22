@@ -165,7 +165,7 @@ ReadPNA_Seurat <- function(
   # Extract meta data
   meta_data <- db$cell_meta()
   if (!detailed_meta_data) {
-    meta_data <- meta_data %>% select(all_of(CELL_META_COLS))
+    meta_data <- meta_data %>% select(any_of(CELL_META_COLS))
   }
 
   if (!all(rownames(meta_data) == colnames(seur_obj))) {
