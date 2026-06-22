@@ -93,14 +93,9 @@ MoleculeRankPlot.data.frame <- function(
 
   object <- object %>%
     mutate(
-      umi_low = molecules < n_umi_min_threshold,
-      umi_high = molecules > n_umi_max_threshold,
-      umi_normal = !(umi_low | umi_high)
-    ) %>%
-    mutate(
       umi_category = case_when(
-        umi_low ~ "Low",
-        umi_high ~ "High",
+        molecules < n_umi_min_threshold ~ "Low",
+        molecules > n_umi_max_threshold ~ "High",
         TRUE ~ "Normal"
       )
     )
@@ -131,13 +126,12 @@ MoleculeRankPlot.data.frame <- function(
         geom_point(size = 0.5)
       }
     } +
-    scale_x_log10() +
+    scale_x_log10(limits = range(object$rank)) +
     scale_y_log10() +
     {
       # Add 1d density on left side if rug is TRUE
       if (rug) {
         geom_rug(
-          aes(x = molecules),
           linewidth = 1,
           sides = "l",
           alpha = 0.05,
@@ -170,44 +164,46 @@ MoleculeRankPlot.data.frame <- function(
   }
 
   if (highlight_cell_counts) {
-    min_y <- max(n_umi_min_threshold - 0.2 * n_umi_min_threshold, 0)
-    max_y <- max(object$molecules)
-    norm_y <- min(
-      max(
-        quantile(object$molecules, 0.2),
-        n_umi_min_threshold + 0.1 * n_umi_min_threshold
-      ),
-      (n_umi_max_threshold + n_umi_min_threshold) / 2
-    )
-    fixed_x <- max(10, min(object$rank))
+  
+    # Define the boundary limits of the 3 zones
+    min_val <- min(object$molecules, na.rm = TRUE)
+    max_val <- max(object$molecules, na.rm = TRUE)
 
+    y_min_thresh <- if (n_umi_min_threshold > 0) n_umi_min_threshold else min_val
+    y_max_thresh <- if (is.finite(n_umi_max_threshold)) n_umi_max_threshold else max_val
+    
+    # Calculate the exact visual center for each zone (Geometric Mean)
     umi_outliers <- umi_outliers %>%
-      mutate(y_position = case_when(
-        umi_category == "Low" ~ min_y,
-        umi_category == "High" ~ max_y,
-        umi_category == "Normal" ~ norm_y
-      )) %>%
-      mutate(col = case_when(
-        umi_category == "Low" ~ "#f94526",
-        umi_category == "High" ~ "#f94526",
-        umi_category == "Normal" ~ "#496389"
-      ))
+      mutate(
+        y_position = case_when(
+          umi_category == "Low"    ~ sqrt(as.numeric(min_val) * as.numeric(y_min_thresh)),
+          umi_category == "Normal" ~ sqrt(as.numeric(y_min_thresh) * as.numeric(y_max_thresh)),
+          umi_category == "High"   ~ sqrt(as.numeric(y_max_thresh) * as.numeric(max_val))
+        ),
+        col = case_when(
+          umi_category == "Normal" ~ "#496389",
+          TRUE                     ~ "#f94526"
+        ),
+        label_text = paste0(umi_category, ": ", n)
+      )
 
-    cellrank_plot <- cellrank_plot + {
-      if (split) {
-        geom_text(
-          data = umi_outliers,
-          aes(x = fixed_x, y = y_position, label = paste0(umi_category, ": ", n), group = !!sym(group_by)),
-          color = umi_outliers$col
-        )
-      } else {
-        geom_text(
-          data = umi_outliers,
-          aes(x = fixed_x, y = y_position, label = paste0(umi_category, ": ", n)),
-          color = umi_outliers$col
-        )
-      }
-    }
+    # Define a safe x-position (left-aligned with a bit of padding)
+    fixed_x <- min(object$rank, na.rm = TRUE) * 1.5 
+
+    cellrank_plot <- cellrank_plot +
+      geom_text(
+        data = umi_outliers,
+        aes(
+          x = fixed_x, 
+          y = y_position, 
+          label = label_text,
+          # Dynamically handle grouping if split is TRUE
+          group = if(split) !!sym(group_by) else NULL 
+        ),
+        color = umi_outliers$col,
+        hjust = 0,             # Left-aligns text at fixed_x
+        inherit.aes = FALSE    # Prevents clash with main plot aesthetics
+      )
   }
 
   if (split) {
