@@ -70,7 +70,7 @@ MoleculeRankPlot(seur_obj_pna[[]])
 library(pixelatorR)
 
 # Plot with Seurat object
-MoleculeRankPlot(seur_obj_mpx)
+MoleculeRankPlot(seur_obj_pna)
 
 }
 \concept{plots}

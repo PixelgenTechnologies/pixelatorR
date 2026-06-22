@@ -58,6 +58,7 @@ MoleculeRankPlot.data.frame <- function(
 
   if (!is.null(group_by)) {
     assert_single_value(group_by, type = "string")
+    assert_col_in_data(group_by, object)
     assert_col_class(group_by, object, classes = c("character", "factor"))
 
     if (!group_by %in% colnames(object)) {
@@ -136,7 +137,7 @@ MoleculeRankPlot.data.frame <- function(
       # Add 1d density on left side if rug is TRUE
       if (rug) {
         geom_rug(
-          aes(x = rank),
+          aes(x = molecules),
           linewidth = 1,
           sides = "l",
           alpha = 0.05,
@@ -178,6 +179,7 @@ MoleculeRankPlot.data.frame <- function(
       ),
       (n_umi_max_threshold + n_umi_min_threshold) / 2
     )
+    fixed_x <- max(10, min(object$rank))
 
     umi_outliers <- umi_outliers %>%
       mutate(y_position = case_when(
@@ -195,13 +197,13 @@ MoleculeRankPlot.data.frame <- function(
       if (split) {
         geom_text(
           data = umi_outliers,
-          aes(x = 10, y = y_position, label = paste0(umi_category, ": ", n), group = !!sym(group_by)),
+          aes(x = fixed_x, y = y_position, label = paste0(umi_category, ": ", n), group = !!sym(group_by)),
           color = umi_outliers$col
         )
       } else {
         geom_text(
           data = umi_outliers,
-          aes(x = 10, y = y_position, label = paste0(umi_category, ": ", n)),
+          aes(x = fixed_x, y = y_position, label = paste0(umi_category, ": ", n)),
           color = umi_outliers$col
         )
       }
@@ -224,7 +226,7 @@ MoleculeRankPlot.data.frame <- function(
 #' library(pixelatorR)
 #'
 #' # Plot with Seurat object
-#' MoleculeRankPlot(seur_obj_mpx)
+#' MoleculeRankPlot(seur_obj_pna)
 #'
 #' @export
 #'
