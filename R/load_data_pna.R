@@ -51,6 +51,10 @@ ReadPNA_counts <- function(
 #' be loaded into the \code{PNAAssay}/\code{PNAAssay5}. If you only intend to analyze
 #' abundance data or PNA graphs, you can set this parameter to \code{FALSE} to use less
 #' memory. This parameter only have an effect if \code{return_pna_assay = TRUE}.
+#' @param detailed_meta_data Logical specifying whether to load detailed meta data.
+#' If \code{FALSE} (default), only a subset of the meta data columns will be loaded,
+#' including those used for quality control. The additional columns are mostly useful
+#' for troubleshooting.
 #' @param ... Additional parameters passed to \code{\link[SeuratObject]{CreateSeuratObject}}
 #' @inheritParams ReadPNA_counts
 #' @inheritParams ReadPNA_proximity
@@ -75,6 +79,7 @@ ReadPNA_Seurat <- function(
   return_pna_assay = TRUE,
   load_proximity_scores = TRUE,
   calc_log2_ratio = TRUE,
+  detailed_meta_data = FALSE,
   verbose = TRUE,
   ...
 ) {
@@ -86,6 +91,7 @@ ReadPNA_Seurat <- function(
   assert_single_value(return_pna_assay, type = "bool")
   assert_single_value(load_proximity_scores, type = "bool")
   assert_single_value(calc_log2_ratio, type = "bool")
+  assert_single_value(detailed_meta_data, type = "bool")
   assert_single_value(verbose, type = "bool")
 
   # Setup connection to PXL file
@@ -158,6 +164,9 @@ ReadPNA_Seurat <- function(
 
   # Extract meta data
   meta_data <- db$cell_meta()
+  if (!detailed_meta_data) {
+    meta_data <- meta_data %>% select(all_of(CELL_META_COLS))
+  }
 
   if (!all(rownames(meta_data) == colnames(seur_obj))) {
     cli::cli_abort(
