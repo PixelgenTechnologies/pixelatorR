@@ -82,8 +82,8 @@ Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "
 pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
-#' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3e")
+seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
+Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3e")
 
 }
 \seealso{
