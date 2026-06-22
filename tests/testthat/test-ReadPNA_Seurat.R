@@ -36,7 +36,7 @@ for (assay_version in c("v3", "v5")) {
 
   test_that("ReadPNA_Seurat fails when X collapses to a vector (1 cell)", {
     # Inject an error by subsetting X to have only one cell
-    trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1]), at = 13, print = FALSE)
+    trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1, drop = FALSE]), at = 14, print = FALSE)
     on.exit(untrace(ReadPNA_Seurat), add = TRUE)
 
     expect_error(
@@ -47,7 +47,7 @@ for (assay_version in c("v3", "v5")) {
 
   test_that("ReadPNA_Seurat fails when X is a 1-column matrix", {
     # Inject an error by subsetting X to have only one cell, keeping it as a matrix
-    trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1, drop = FALSE]), at = 13, print = FALSE)
+    trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1, drop = FALSE]), at = 14, print = FALSE)
     on.exit(untrace(ReadPNA_Seurat), add = TRUE)
 
     expect_error(
