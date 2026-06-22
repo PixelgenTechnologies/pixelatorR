@@ -20,6 +20,10 @@ for (assay_version in c("v3", "v5")) {
 
     expect_no_error(suppressWarnings(seur_obj <- ReadPNA_Seurat(pxl_file, return_pna_assay = FALSE, verbose = FALSE)))
     expect_s4_class(seur_obj[["PNA"]], ifelse(assay_version == "v3", "Assay", "Assay5"))
+
+    # Including detailed meta data
+    expect_no_error(suppressWarnings(seur_obj_detailed_meta <- ReadPNA_Seurat(pxl_file, detailed_meta_data = TRUE, verbose = FALSE)))
+    expect_true(ncol(seur_obj_detailed_meta[[]]) > ncol(seur_obj[[]]))
   })
 
   test_that("ReadPNA_Seurat fails with invalid input", {

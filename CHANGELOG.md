@@ -30,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now use `geom_label` with a semi-transparent background for readability.
 - `segment_cell` for segmenting cell:cell conjugate graphs into two cell-type compartments and optional interface nodes using NMF weights and NNLS projection.
 
+### Updates
+- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to avoid bloating the `meta.data` slot. Users can enable loading of detailed meta data by setting `detailed_meta_data = TRUE`.
+
 ### Fixes
 
 - `CreateCellGraphObject()` now correctly validates the `layout` argument as a
