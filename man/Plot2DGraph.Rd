@@ -75,13 +75,14 @@ library(pixelatorR)
 pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, load_as = "Anode")
-seur <- ComputeLayout(seur, layout_method = "pmds", dim = 2)
-Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "pmds", marker = "CD3E")
+seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
+Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3E")
 
 # PNA
 pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file)
-seur <- LoadCellGraphs(seur, cells = colnames(seur)[1], add_layouts = TRUE)
+seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
+#' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
 Plot2DGraph(seur, cells = colnames(seur)[1], marker = "CD3e")
 
 }
