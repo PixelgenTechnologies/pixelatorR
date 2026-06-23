@@ -1,8 +1,11 @@
 .Rproj.user
 .Rhistory
+.Renviron
 .RData
 **/.DS_Store
 ^default.profraw
 ^pkgdown
 environment_arm.yml
 *.pdf
+.positai
+.cursor

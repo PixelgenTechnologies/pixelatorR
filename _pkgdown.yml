@@ -54,9 +54,11 @@ reference:
     - ReadPNA_proximity
     - ReadPNA_layouts
     - ReadPNA_metadata
+    - read_pbmc_reference
   - subtitle: PXL file database
   - contents:
     - PixelDB
+    - get_duckdb_config
   - subtitle: Visualization
   - contents:
     - CellCountPlot
@@ -72,17 +74,30 @@ reference:
   - contents:
     - ComputeLayout
     - layout_with_weighted_pmds
+    - layout_with_coarsened_pmds
     - center_layout_coordinates
     - normalize_layout_coordinates
     - project_layout_coordinates_on_unit_sphere
     - render_rotating_layout
     - scale_layout
+    - fast_pmds
   - subtitle: Data processing
   - contents:
     - NormalizeMPX
     - KeepLargestComponent
     - RemoveCellGraphs
     - LoadCellGraphs
+    - CalculateDispersion
+    - ComputeProximityScores
+    - SequenceSaturationCurve
+    - approximate_edge_saturation
+    - approximate_node_saturation
+    - approximate_saturation_curve
+    - sequencing_saturation
+    - downsample_to_parquet
+    - lcc_curve
+    - lcc_sizes
+    - isotype_pls
     - cos_dist
     - pack_2bits
   - subtitle: Differential analysis
@@ -92,6 +107,9 @@ reference:
     - RunDCA
     - DifferentialProximityAnalysis
     - ColocalizationHeatmap
+  - subtitle: Cell type annotation
+  - contents:
+    - AnnotateCells
   - subtitle: Proximity scores
   - contents:
     - PolarizationScoresToAssay
@@ -154,6 +172,19 @@ reference:
     - MPXAssay
     - PNAAssay
     - PNAAssay5
+  - subtitle: Colors
+  - contents:
+    - PixelgenAccentColors
+    - PixelgenGradient
+    - PixelgenPalette
+    - Pixelgen_accent_colors
+    - show_accent_colors
+    - color-themes
+    - create_discrete_palette
+    - theme_pixelgen
+    - show_accent_colors
+    - Pixelgen_cell_palette
+    - heuristic_illumination
   - subtitle: Misc
   - contents:
     - pixelatorR_options
@@ -168,6 +199,7 @@ reference:
     - type-checks
     - minimal_mpx_pxl_file
     - minimal_pna_pxl_file
+    - export_plot
 
 footer:
   structure:

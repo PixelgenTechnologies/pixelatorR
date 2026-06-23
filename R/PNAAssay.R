@@ -2,9 +2,9 @@
 #' @importClassesFrom Matrix dgCMatrix
 NULL
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 # Class definition
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 
 #' The PNAAssay class
 #'
@@ -69,10 +69,9 @@ PNAAssay5 <- setClass(
 )
 
 
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 # Create methods
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 
 
 #' Create a PNAAssay object
@@ -229,9 +228,9 @@ CreatePNAAssay5 <- function(
 }
 
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 # Get/set methods
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 
 #' Get and set cellgraphs in a PNAAssay or PNAAssay5 object
 #'
@@ -783,6 +782,8 @@ ProximityScores.PNAAssay5 <- ProximityScores.PNAAssay
 
 #' @param lazy A logical indicating whether to lazy load the edgelist(s)
 #' from the PXL files
+#' @param union A logical indicating whether to return the union of all
+#' edgelists from all PXL files (TRUE) or a list of edgelists (FALSE).
 #'
 #' @method Edgelists PNAAssay
 #' @rdname Edgelists
@@ -800,14 +801,20 @@ ProximityScores.PNAAssay5 <- ProximityScores.PNAAssay
 Edgelists.PNAAssay <- function(
   object,
   lazy = TRUE,
+  union = TRUE,
   ...
 ) {
   fs_map <- FSMap(object)
-  edgelists <- .lazy_load_table(fs_map, "edgelist")
+  edgelists <- .lazy_load_table(fs_map, "edgelist", union = union)
 
   if (!lazy) {
-    con <- edgelists$src$con
-    edgelists <- edgelists %>% collect()
+    if (union) {
+      con <- edgelists$src$con
+      edgelists <- edgelists %>% collect()
+    } else {
+      con <- edgelists[[1]]$src$con
+      edgelists <- edgelists %>% lapply(collect)
+    }
     DBI::dbDisconnect(con)
   }
 
@@ -902,9 +909,9 @@ FSMap.PNAAssay5 <- FSMap.PNAAssay
 }
 
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 # Methods for R-defined generics
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 
 
 #' PNAAssay Methods
@@ -948,9 +955,9 @@ NULL
 NULL
 
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 # Base methods
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------------------------------
 
 
 #' @describeIn PNAAssay-methods Show method for \code{PNAAssay} objects

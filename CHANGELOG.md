@@ -5,7 +5,123 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [Unreleased]
+
+### Updates
+- Added option to `MoleculeRankPlot` to highlight results from size filters and to facet plot by groups (`group_by`).
+
+### Fixes
+
+- Fixed a bug in `ProximityScores.Seurat` that would (on some systems) throw an error when setting the connection to the lazy table of proximity scores.
+- Fixed bug in `AnnotateCells` (method "nmf") where cells with 0 value prediction scores crashed the function. Such cells are now labeled as "Unknown".
+- Fixed a bug in `.compute_illuminated_point_colors` which would scramble colors mappings for factors.
+- Fixed broken tests for `Plot2DGraph` and `Plot2DGraphM`.
+
+### Changes
+
+- Added `cpmds` option to `Plot2DGraph` and `Plot2DGraphM`.
+
+## [0.18.2] - 2026-06-17
+
+### Fixes
+- Fixed an edge case bug in `ProximityScoresToAssay` where components would be dropped if they only have 0 for proximity scores.
+
+### Updates
+- Added `layout_method` "cpmds" (`layout_with_coarsened_pmds`) option to `ComputeLayout`.
+
+## [0.18.1] - 2026-06-12
+
+### Fixes
+- Fixed a bug in the `tbl_lazy` method for `ProximityScoresToAssay` where the proximity scores were incorrectly mapped to protein pairs and components.
+
+### Changes
+- Removed option `return_sparse` from `ProximityScoresToAssay` (`tbl_lazy` and `data.frame` methods). These methods now always return a sparse matrix (`dgCMatrix`).
+- Removed option `missing_obs` from `ProximityScoresToAssay`. Missing observations are now set to 0.
+- Added option `lazy` to `ProximityScoresToAssay` (`PNAAssay` and `Seurat` methods) to enable lazy evaluation of proximity scores.
+
+## [0.18.0] - 2026-06-08
+
+### Added
+- `layout_with_coarsened_pmds` layout method for faster and more accurate PNA cell graph layouts.
+- `ComputeProximityScores` methods to compute global proximity scores for cell graphs. The method also enables computing proximity scores for k > 1 neighborhoods (lower spatial resolution), but this option is limited to log2 ratios (no Z scores).
+- `heuristic_illumination` to approximate natural illumination of a 3D layout.
+- Illumination masking option in `render_rotating_layout` to modulate `node_val` colors with a heuristic illumination mask.
+- Shadow palette blending in `render_rotating_layout` via `illumination_shadow_colors` for palette-based shadow interpolation.
+- `normalize_illumination` argument in `render_rotating_layout` to optionally disable rescaling of the illumination mask to `[0, 1]`.
+- "NaturalBlue" option as a gradient palette in `PixelgenGradient` to use as a natural illuminated color gradient.
+
+### Updated
+- Changed the default proximity score in `ProximityScoresToAssay` from "join_count_z" to "log2_ratio"
+- `ProximityScoresToAssay` now takes a `separator` argument to specify the character used to separate marker names. The default separator is changed from `/` to `:` to avoid misinterpretation of marker names containing `/`.
+- `approximate_node_saturation`, `approximate_edge_saturation` and `approximate_saturation_curve` now uses the standard definition of saturation (s = 1 - molecules / reads).
+- `ReadPNA_Seurat` will now throw an informative error when reading a file with only a single cell, which would otherwise throw a cryptic error when trying to create the Seurat object.
+
+### Fixes
+- Fixed a bug in `SummarizeProximityScores` where the `include_missing_obs` argument was not properly handled when `include_missing_obs = FALSE`.
+- Added an explicit error message in `SummarizeProximityScores` for when there are duplicate rows in the input Proximity Score table.
+
+## [0.17.1] - 2026-04-10
+
+### Updated
+- Added scaling to `isotype_pls` and changed default `layer` to "data" to avoid issues where some markers are missing from the "scale.data" `layer`.
+- `render_rotating_layout` now accepts `max_degree` down to 0 degrees instead of 90 degrees as a minimum. 
+
+### Fixes
+- Fixed a bug where running `AnnotateCells(..., method = "nmf")` could unintentionally propagate normalization changes from an internal temporary `Seurat` object to the returned object.
+- Fixed a bug in `render_rotating_layout` to explicitly use `graphics::layout` to avoid an error being triggered when having `plotly` loaded. 
+
+## [0.17.0] - 2026-03-23
+
+### Added
+
+- Added `CalculateDispersion` method for calculating dispersion of counts across features and cells. Currently "tau" and "gini" dispersion metrics are supported. This method is useful for identifying outliers in the count data, for example to identify cells with an unusual count distribution across markers. 
+- Added a new gradient color palette "BluesGrayCherry" to `PixelgenGradient`.
+
+### Fixes
+- Fixed bug in `FSMap<-` when handling Seurat objects multiple PNA/MPX assays. Previously, FSMap would only update the active assay. Now, the Seurat object is scanned for all PNA/MPX assays and updates them with `value`.
+- Fixed a bug in `SequenceSaturationCurve` that would throw an error when there are `int64` columns in the edgelist.
+
+## [0.16.0] - 2026-02-25
+
+### Updated
+- Added option to ignore low transition probability edges in `expand_adjacency_matrix` when `use_weights = TRUE`. 
+- Switched to using svds from RSpectra to compute MDS in `layout_with_weighted_pmds` for a performance boost
+- Switched to using pattern matrix representation of the adjacency matrix in `expand_adjacency_matrix` for a performance boost
+
+### Added
+- Added reference PBMC dataset and load function `read_pbmc_reference` that can be used for annotation.  
+- Added `isotype_pls` to calculate isotype background score.
+- Added `export_plot` utility function to export ggplot objects to file.
+- Added `create_discrete_palette` to create palettes to color different samples or conditions.
+- Added `Pixelgen_cell_palette`, a named vector of colors assigned to cell types.
+
+### Fixes
+- Fixed bug in `SequenceSaturationCurve` where the node saturation would be calculated as `1 - graph_proteins / (2 * graph_reads)` instead of `1 - graph_proteins / graph_reads`.
+- DuckDB temporary directory can now be set with `PIXELATOR_DUCKDB_TEMP_DIR`
+- Fixed bug in `render_rotating_layout` when `center_zero = TRUE` and the most extreme values were negative. Now the color scale should be centered properly.
+
+## [0.15.0] - 2025-09-15
+
+### Updated 
+
+- `approximate_edge_saturation` and `approximate_node_saturation` now accepts a `components` argument for filtering.
+- Added an argument `union` to control whether tables of lazy tables should be joined or output as a list in `.lazy_load_table` and `Edgelists`.
+- `AnnotateCells` now returns columns named exactly as `reference_groups`
+
+### Added
+- new sequencing saturation and graph stability functions. 
+  - `approximate_edge_saturation` computes edge saturation for components in a PXL file
+  - `approximate_node_saturation` computes node saturation for components in a PXL file
+  - `approximate_saturation_curve` computes node/edge saturation for downsampled components in a PXL file
+  - `downsample_to_parquet` downsamples the edgelist in a PXL file and exports these edgelists to parquet files
+  - `lcc_sizes` computes the largest connected components for cell components in downsampled edgeslists (parquet files)
+  - `lcc_curve` computes LCC for downsampled components in a PXL file using the `duckpgq` DuckDB extension
+- `sequencing_saturation` and `SequenceSaturationCurve` to compute sequencing saturation statistics from an edgelist. 
+
+### Fixes
+- Fixed a bug in `.lazy_load_table` that prevented lazy loading of tables. 
+
+## [0.14.0] - 2025-07-15
 
 ### Added
 - Supervised patch detection implemented in the `patch_detection` function. Added `identify_markers_for_patch_analysis` to identify markers for patch analysis.
@@ -18,6 +134,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FindAnnoyNeighbors` Computes nearest neighbors using the Annoy algorithm.
 - `DensityScatterPlot` now has an argument `equal_axes` to control whether the x and y axes should have a common range. 
 - `return_id` argument to `SimulateDoublets` to output the IDs of cells used to simulate each doublet.
+- `PredictDoublets` can now be run iteratively using the `iter` argument to increase robustness.
+
+### Updated
+- `PredictDoublets` now have `simulation_rate = 1` and  `p_threshold = 0.05` as defaults.
 
 ### Fixes
 - Fixed bug in `ColocalizationHeatmap` where `marker1_col` and `marker2_col` only worked for "marker_1" and "marker_2".

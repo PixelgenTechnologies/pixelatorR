@@ -135,11 +135,19 @@ RemoveCellGraphs <- function(
   UseMethod(generic = "RemoveCellGraphs", object = object)
 }
 
-#' Edge Rank Plot
+#' Molecule Rank Plot
 #'
-#' Plots the number of edges/molecules per component against the component rank
+#' Plots the number of molecules per component against the molecule rank (descending order).
 #'
 #' @param object A \code{data.frame}-like object or a \code{Seurat} object
+#' @param group_by A character specifying a column to group by. By default, the groups are
+#' assigned a unique color. If `split = TRUE`, the points are not colored.
+#' @param n_umi_min_threshold,n_umi_max_threshold Minimum/maximum number of UMIs to define a component
+#' as "Normal". If provided, the components will be grouped into categories "Low", "Normal" and "High"
+#' based on the number of UMIs and the provided thresholds.
+#' @param highlight_cell_counts Whether to highlight cell counts for categories "Low", "Normal" and "High".
+#' @param rug Whether to add a rug plot on the left side of the plot to highlight the component density.
+#' @param split Whether to split the plot by `group_by` into facets.
 #' @param ... Parameters passed to other methods
 #'
 #' @rdname MoleculeRankPlot
@@ -811,7 +819,8 @@ FSMap <- function(
 "FSMap<-" <- function(
   object,
   ...,
-  value) {
+  value
+) {
   UseMethod(generic = "FSMap<-", object = object)
 }
 
@@ -1124,32 +1133,38 @@ ProximityScores <- function(
 #'
 #' Takes an object with PNA proximity scores in long format and returns an
 #' object with proximity scores in a wide format. The proximity score
-#' table contains various spatial metrics along with p-values for each
-#' protein pair and component.
+#' table must contain the following columns:
+#' - "marker_1": the name of the first marker in the pair
+#' - "marker_2": the name of the second marker in the pair
+#' - "component": the name of the component
+#' - a column with the proximity scores to be used as values in the wide format
+#' (defined by the \code{values_from} parameter)
 #'
-#' The wide format is an array-like object with dimensions (markers_1 * marker_2) x components,
-#' where each cell is filled with a value for a selected spatial metric.
+#' The wide format is an array-like object with dimensions pair x components,
+#' where pair is defined as the combination of "marker_1" and "marker_2" separated by the `separator`,
+#' and where each element in the array is filled with a value for a selected spatial metric.
 #'
-#' Note that that observations that are missing from the proximity score table
-#' can be replaced with 0's in the wide array by setting \code{missing_obs_val = 0},
-#' which might be required by various functions in \code{Seurat}. However, this may
-#' not be the desired behavior as a value of 0 usually doesn't mean that the observation
-#' is missing.
+#' Note that observations that are missing from the proximity score table are replaced with 0's.
+#' Proximity scores can also be 0 (no deviation from random expectations), and it will not be possible
+#' to distinguish between these two cases in the output.
 #'
 #' Different outputs are returned depending on the input object type:
 #'
 #' \itemize{
 #'    \item{
-#'      \code{tibble/data.frame}: returns a \code{matrix} with marker pairs in rows
-#'      and components in columns
+#'      \code{tibble/data.frame}: returns a \code{dgCMatrix} with marker pairs in rows
+#'      and components in columns. The components are not ordered in any particular way
+#'      and should therefore be ordered before placing them in e.g. a Seurat object.
 #'    }
 #'    \item{
 #'      \code{PNAAssay/PNAAssay5}: returns an \code{Assay} or \code{Assay5} with marker
-#'      pairs in rows and  components in columns
+#'      pairs in rows and components in columns. Columns are ordered according to the order
+#'      of the components in the \code{PNAAssay/PNAAssay5}.
 #'    }
 #'    \item{
 #'      \code{Seurat} object: returns the \code{Seurat} object with a new \code{Assay}
-#'      or \code{Assay5} with marker pairs in rows and components in columns
+#'      or \code{Assay5} with marker pairs in rows and components in columns. Columns are
+#'      ordered according to the order of the components in the \code{Seurat} object.
 #'    }
 #' }
 #'
@@ -1163,10 +1178,11 @@ ProximityScores <- function(
 #'
 #' @param object An object with proximity scores
 #' @param values_from A single string defining what column in the proximity score table
-#' to pick values from.
-#' @param missing_obs A numeric value or NA to replace missing observations with. Default
-#' is \code{NA_real_}.
-#' @param return_sparse A logical specifying whether to return a sparse matrix (\code{dgCMatrix}).
+#' to pick values from. Default is "log2_ratio".
+#' @param lazy Whether to look for proximity scores in the PXL file instead of the
+#' \code{\link[SeuratObject]{Assay}} / \code{\link[SeuratObject]{Assay5}} object.
+#' @param separator A character to separate marker names in the row names of the output. Default is ":".
+#' Must be a single character and must not appear in any marker name.
 #' @param ... Not yet implemented
 #'
 #' @rdname ProximityScoresToAssay
@@ -1244,10 +1260,30 @@ Edgelists <- function(
 #' @param p_adjust_method The p-value adjustment method to use. Default is "BH".
 #' @param p_threshold The p-value threshold to use. Default is 0.01.
 #' @param seed The seed to use for reproducibility.
+#' @param iter The number of iterations to use for the doublet simulation. Increasing
+#' the number of iterations will increase the robustness of the doublet detection.
+#' @param return_trials Whether to return the result from each iteration (TRUE) or
+#' an aggregated summary of all iterations.
 #' @param assay A character with the name of the assay to use.
 #' @param layer A character with the name of the layer to use. Default is "counts".
 #' @param verbose Print messages.
 #' @param ... Additional arguments. Currently not used.
+#'
+#' @return A tibble with the following columns:
+#'   - \code{trial} Integer or factor indicating the resampling trial. Only returned if
+#'   \code{return_trials = TRUE}.
+#'   - \code{id} Cell ID.
+#'   - \code{doublet_nns} Number of nearest neighbors that are simulated doublets.
+#'   - \code{doublet_nn_rate} Proportion of nearest neighbors that are simulated
+#'   doublets. Only returned if \code{return_trials = FALSE}.
+#'   - \code{doublet_vote} The fraction of iterations where the cell has been classified
+#'   as a doublet. Only returned if \code{return_trials = FALSE}.
+#'   - \code{doublet_p} Raw p-value for the doublet prediction.
+#'   - \code{doublet_p_adj} Adjusted p-value (multiple testing correction) for the
+#'   doublet prediction.
+#'   - \code{logratio} Log2-ratio of observed simulated doublet neighbors compared to
+#'   expectation.
+#'   - \code{doublet_prediction} Predicted doublet status (doublet/singlet).
 #'
 #' @references McGinnis CS, Murrow LM, Gartner ZJ.
 #'             DoubletFinder: Doublet Detection in Single-Cell RNA Sequencing Data
@@ -1351,4 +1387,127 @@ SummarizeProximityScores <- function(
   ...
 ) {
   UseMethod(generic = "SummarizeProximityScores", object = object)
+}
+
+
+#' @title Calculate dispersion of components
+#' @description
+#' Calculate the dispersion of numeric data in a Seurat object or matrix.
+#' The dispersion is calculated as a summary statistic of the distribution of
+#' values (such as counts) across components. The dispersion can be calculated
+#' using the Gini coefficient or the Tau statistic. The Gini and Tau
+#' coefficients are measures of inequality in a distribution, ranging from 0
+#' to 1, where 0 signifies a perfectly equal distribution and 1 signifies
+#' perfectly unequal distribution. In terms of marker counts across different
+#' markers for a component, a low dispersion indicates that the marker counts
+#' are at similar levels across all markers, while a high dispersion indicates
+#' that the marker counts are distributed mostly to one or a few markers. The
+#' dispersion can for example be used as a quantitative metric to assess
+#' whether a component's counts are dispersed between markers at an expected
+#' level. Both a high and low dispersion can indicate that the component is
+#' some kind of an artifact, rather than a real cell.
+#'
+#' @param object A \code{Seurat} object or a count matrix.
+#' @param method The method to use for calculating the dispersion. Can be "gini"
+#'              or "tau". Default is "gini".
+#' @param margin The margin of the object to apply the dispersion calculation on.
+#'              1 indicates rows (typically markers), 2 indicates columns (typically cells).
+#'              Default is 2. If \code{object} is a \code{Seurat} object and the margin is 2,
+#'              a \code{Seurat} object is returned with the dispersion added
+#'              as a metadata column.
+#' @param assay A character with the name of the assay to use.
+#' @param layer A character with the name of the layer to use.
+#' @param metadata_name A character with the name of the metadata column to add.
+#'                      Default is \code{"dispersion_[method]"}.
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @return A \code{Seurat} object with the dispersion added as a metadata column if \code{margin = 2},
+#' otherwise a numeric vector with the dispersion values for each row or column of the input object.
+#'
+#' @rdname CalculateDispersion
+#'
+#' @export
+#'
+CalculateDispersion <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "CalculateDispersion", object = object)
+}
+
+
+#' Compute proximity scores
+#'
+#' This function computes proximity scores for pairs of proteins in a PNA graph.
+#' First, the observed join_counts are calculated. The direction of the join counts
+#' is ignored, meaning that the join_counts are combined for both directions (e.g. A/B = B/A).
+#'
+#' The mean and standard deviations are calculated either from permutations or using analytical formulas.
+#' See details below.
+#'
+#' Finally, two proximity metrics are computed from the resulting join_count statistics.
+#'
+#' @section Analytical proximity score:
+#' The expected mean is calculated as \eqn{p_{umi1,m1} * p_{umi2,m2} * S0}, where \eqn{p_{umi1,m1}}
+#' and \eqn{p_{umi2,m2}}  are the frequencies of the two markers in the graph for umi1 and umi2 nodes,
+#' respectively. \eqn{S0} is the total number of edges in the graph.
+#' The formula for the variance of the join count statistic is given by (eq. 8, Epperson, B. K. 2002):
+#' \deqn{
+#' Var_{m1m2} = \frac{1}{4} \times (2S1p_{umi1,m1}p_{umi2,m2} + (S2 - 2S1)(p_{umi1,m1}p_{umi2,m2}(p_{umi1,m1} +
+#' p_{umi2,m2})) + 4(S1 - S2)(p_{umi1,m1}^2p_{umi2,m2}^2))
+#' }
+#'
+#' where
+#'
+#' \deqn{
+#' S1 = \frac{1}{2} \times (\sum_{i,j} (A_{ij} + A_{ji})^2)
+#' }
+#'
+#' and
+#'
+#' \deqn{
+#' S2 = \sum_{i} \left(\sum_{j} (A_{ij} + A_{ji})^2\right)
+#' }
+#'
+#' @section Permuted proximity score:
+#' The expected mean and standard deviation are calculated from a number of permutations of the graph.
+#' In each permutation, the marker labels of the nodes are shuffled, and the join counts are recalculated.
+#' The expected mean is then calculated as the mean of the join counts across all permutations, and the
+#' expected standard deviation is calculated as the standard deviation of the join counts across all
+#' permutations.
+#'
+#' @param object An object containing PNA graph data.
+#' @param mode Either "analytical" or "permutation". If "analytical", the
+#' expected join counts and standard deviations are calculated using analytical formulas.
+#' If "permutation", the expected join counts and standard deviations are calculated
+#' using permutations.
+#' @param k `r lifecycle::badge("experimental")` The maximum number of steps in the local
+#' neighborhood to consider. Default is to only include immediate neighbors.
+#' @param iterations Number of iterations for permutation. Default is 100.
+#' @param calc_z_score Logical indicating whether to calculate z-scores.
+#' @param calc_log2_ratio Logical indicating whether to calculate log2 ratios.
+#' @param min_marker_count Minimum number of UMI counts required for a protein
+#' to be considered.
+#' @param seed Random seed for reproducibility.
+#' @param ... Additional arguments. Currently not used.
+#'
+#' @return A tibble with the following columns:
+#'  - `marker_1`: Name of the first marker.
+#'  - `marker_2`: Name of the second marker.
+#'  - `join_count`: Observed join count.
+#'  - `join_count_expected_mean`: Expected mean join count.
+#'  - `join_count_expected_sd`: Expected standard deviation of the join count. (only if k = 1)
+#'  - `join_count_z`: Z-score for the observed join count. (optional for k = 1)
+#'  - `log2_ratio`: Log2 ratio of observed join count to expected mean. (optional)
+#'  - `component`: PNA component name. Only provided for some methods.
+#'
+#' @rdname ComputeProximityScores
+#'
+#' @export
+#'
+ComputeProximityScores <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ComputeProximityScores", object = object)
 }

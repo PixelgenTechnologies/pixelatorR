@@ -221,12 +221,14 @@ PredictDoublets.Matrix <- function(
   object,
   ref_cells1 = NULL,
   ref_cells2 = NULL,
-  simulation_rate = 3,
+  simulation_rate = 1,
   n_neighbor = 100,
   npcs = 10,
   p_adjust_method = "BH",
-  p_threshold = 0.01,
+  p_threshold = 0.05,
   seed = 37,
+  iter = 1,
+  return_trials = FALSE,
   verbose = TRUE,
   ...
 ) {
@@ -242,21 +244,20 @@ PredictDoublets.Matrix <- function(
   assert_class(p_threshold, "numeric")
   assert_within_limits(p_threshold, c(0, 1))
   assert_class(seed, "numeric")
+  assert_within_limits(npcs, c(1, ncol(object) * (simulation_rate + 1) - 1))
 
   expect_pcaMethods()
 
   n_cells <-
     ncol(object)
 
-  simulated_doublets <-
-    SimulateDoublets(
-      count_data = object,
-      ref_cells1 = ref_cells1,
-      ref_cells2 = ref_cells2,
-      n_sim = round(simulation_rate * n_cells),
-      seed = seed,
-      method = "sum"
-    )
+  if (verbose && check_global_verbosity()) {
+    cli::cli_alert_info(glue("Predicting doublets using {n_neighbor} nearest neighbors"))
+  }
+
+  if (verbose && check_global_verbosity() && iter > 1) {
+    pb <- cli_progress_bar("Predicting doublets", total = iter, .auto_close = FALSE)
+  }
 
   pca_prep <-
     . %>%
@@ -266,53 +267,92 @@ PredictDoublets.Matrix <- function(
     t() %>%
     scale()
 
-  if (verbose && check_global_verbosity()) {
-    cli::cli_alert_info("Performing PCA on combined data")
-  }
-  pca_scores <-
-    cbind(
-      object,
-      simulated_doublets
-    ) %>%
-    pca_prep() %>%
-    pcaMethods::pca(
-      method = "ppca",
-      nPcs = npcs
-    ) %>%
-    slot("scores")
+  cell_nn_res <-
+    lapply(
+      seq_len(iter),
+      function(i) {
+        if (verbose && check_global_verbosity() && iter > 1) {
+          cli_progress_update(id = pb)
+        }
 
-  if (verbose && check_global_verbosity()) {
-    cli::cli_alert_info(glue("Predicting doublets using {n_neighbor} nearest neighbors"))
-  }
-  cell_nn <-
-    pca_scores %>%
-    FindAnnoyNeighbors(
-      cells = colnames(object),
-      n_nn = n_neighbor + 1
+        simulated_doublets <-
+          SimulateDoublets(
+            count_data = object,
+            ref_cells1 = ref_cells1,
+            ref_cells2 = ref_cells2,
+            n_sim = round(simulation_rate * n_cells),
+            seed = seed + i - 1,
+            method = "sum",
+            verbose = FALSE
+          )
+
+        pca_scores <-
+          cbind(
+            object,
+            simulated_doublets
+          ) %>%
+          pca_prep() %>%
+          pcaMethods::pca(
+            method = "ppca",
+            nPcs = npcs
+          ) %>%
+          slot("scores")
+
+        cell_nn <-
+          pca_scores %>%
+          FindAnnoyNeighbors(
+            cells = colnames(object),
+            n_nn = n_neighbor + 1
+          ) %>%
+          filter(id != neighbor) %>%
+          mutate(simulated = !neighbor %in% colnames(object)) %>%
+          group_by(id) %>%
+          summarise(
+            doublet_nns = sum(simulated),
+            doublet_nn_rate = doublet_nns / n_neighbor,
+            .groups = "drop"
+          )
+      }
     )
+  if (verbose && check_global_verbosity() && iter > 1) {
+    cli_progress_done()
+  }
 
   expected_doublet_rate <- simulation_rate / (1 + simulation_rate)
   expected_doublet_nns <- n_neighbor * expected_doublet_rate
 
-  doublet_prediction <-
-    cell_nn %>%
-    filter(id != neighbor) %>%
-    mutate(simulated = !neighbor %in% colnames(object)) %>%
-    group_by(id) %>%
-    summarise(
-      doublet_nns = sum(simulated),
-      doublet_nn_rate = doublet_nns / n_neighbor,
-      .groups = "drop"
-    ) %>%
+  calc_stats <-
+    . %>%
     mutate(
       doublet_p = stats::pbinom(doublet_nns - 1, n_neighbor, expected_doublet_rate, lower.tail = FALSE),
       doublet_p_adj = p.adjust(doublet_p, p_adjust_method),
-      doublet_prediction = ifelse(doublet_p_adj < p_threshold, "doublet", "singlet")
-    ) %>%
-    column_to_rownames("id")
+      logratio = log2(doublet_nns / expected_doublet_nns),
+      doublet_prediction = ifelse(doublet_p_adj < p_threshold, "doublet", "singlet"),
+    )
+
+  doublet_prediction_trials <-
+    cell_nn_res %>%
+    bind_rows(.id = "trial") %>%
+    mutate(trial = as.numeric(trial)) %>%
+    calc_stats() %>%
+    arrange(
+      factor(id, levels = colnames(object)),
+      trial
+    )
+
+  if (return_trials) {
+    return(doublet_prediction_trials)
+  }
 
   doublet_prediction <-
-    doublet_prediction[colnames(object), ]
+    doublet_prediction_trials %>%
+    group_by(id) %>%
+    summarise(
+      doublet_nns = round(median(doublet_nns), 0),
+      doublet_vote = sum(doublet_prediction == "doublet") / n()
+    ) %>%
+    calc_stats() %>%
+    arrange(factor(id, levels = colnames(object)))
 
   return(doublet_prediction)
 }
@@ -327,12 +367,13 @@ PredictDoublets.Seurat <- function(
   object,
   ref_cells1 = NULL,
   ref_cells2 = NULL,
-  simulation_rate = 3,
+  simulation_rate = 1,
   n_neighbor = 100,
   npcs = 10,
   p_adjust_method = "BH",
-  p_threshold = 0.01,
+  p_threshold = 0.05,
   seed = 37,
+  iter = 1,
   assay = NULL,
   layer = "counts",
   verbose = TRUE,
@@ -352,6 +393,7 @@ PredictDoublets.Seurat <- function(
       p_adjust_method = p_adjust_method,
       p_threshold = p_threshold,
       seed = seed,
+      iter = iter,
       verbose = verbose
     )
 }

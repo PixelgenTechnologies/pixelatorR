@@ -31,6 +31,12 @@ for (assay_version in c("v3", "v5")) {
     expect_true(inherits(el, "tbl_df"))
     expect_equal(dim(el), c(1057188, 7))
 
+    expect_no_error(el <- Edgelists(merged_seurat_obj, lazy = FALSE, union = FALSE))
+    expect_true(inherits(el, "list"))
+    expect_true(inherits(el[[1]], "tbl_df"))
+    expect_equal(length(el), 2)
+    expect_equal(dim(el[[1]]), c(528594, 7))
+
     # NOTE: lazy loading can be problematic in tests because we're opening a connection
     # to the same PXL file(s) multiple times. This should not be a huge issue in practice
     # because one would normally not open multiple connections to the same file. This
@@ -43,6 +49,12 @@ for (assay_version in c("v3", "v5")) {
     expect_true(inherits(el, "tbl_lazy"))
     expect_true("sample_id" %in% colnames(el))
     DBI::dbDisconnect(el$src$con)
+
+    expect_no_error(el <- Edgelists(merged_seurat_obj, union = FALSE))
+    expect_true(inherits(el, "list"))
+    expect_true(inherits(el[[1]], "tbl_lazy"))
+    expect_equal(length(el), 2)
+    DBI::dbDisconnect(el[[1]]$src$con)
   })
 
   test_that("Edgelists method fails with invalid input", {

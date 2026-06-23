@@ -9,11 +9,18 @@
 \usage{
 Edgelists(object, ...)
 
-\method{Edgelists}{PNAAssay}(object, lazy = TRUE, ...)
+\method{Edgelists}{PNAAssay}(object, lazy = TRUE, union = TRUE, ...)
 
-\method{Edgelists}{PNAAssay5}(object, lazy = TRUE, ...)
+\method{Edgelists}{PNAAssay5}(object, lazy = TRUE, union = TRUE, ...)
 
-\method{Edgelists}{Seurat}(object, assay = NULL, meta_data_columns = NULL, lazy = TRUE, ...)
+\method{Edgelists}{Seurat}(
+  object,
+  assay = NULL,
+  meta_data_columns = NULL,
+  lazy = TRUE,
+  union = TRUE,
+  ...
+)
 }
 \arguments{
 \item{object}{An object with polarization scores}
@@ -22,6 +29,9 @@ Edgelists(object, ...)
 
 \item{lazy}{A logical indicating whether to lazy load the edgelist(s)
 from the PXL files}
+
+\item{union}{A logical indicating whether to return the union of all
+edgelists from all PXL files (TRUE) or a list of edgelists (FALSE).}
 
 \item{assay}{Name of a \code{CellGraphAssay}}
 

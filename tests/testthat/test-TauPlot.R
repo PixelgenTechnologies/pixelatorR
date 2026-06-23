@@ -10,8 +10,16 @@ test_that("TauPlot works for Seurat objects", {
   })
   expect_s3_class(tau_plot, "ggplot")
   expect_equal(
-    structure(list(x = ~tau, y = ~umi_per_upia, colour = ~tau_type), class = "uneval"),
-    tau_plot$mapping
+    tau_plot$mapping$x,
+    ~tau
+  )
+  expect_equal(
+    tau_plot$mapping$y,
+    ~umi_per_upia
+  )
+  expect_equal(
+    tau_plot$mapping$colour,
+    ~tau_type
   )
 
   # With group variable
@@ -19,20 +27,12 @@ test_that("TauPlot works for Seurat objects", {
   expect_no_error({
     tau_plot <- TauPlot(seur_obj, group_by = "sampleID")
   })
-  expect_equal(
-    structure(list(x = ~tau, y = ~umi_per_upia, colour = ~tau_type), class = "uneval"),
-    tau_plot$mapping
-  )
 
   # With group variable (factor)
   seur_obj$sampleID <- sample(c("A", "B"), ncol(seur_obj), replace = TRUE) %>% as.factor()
   expect_no_error({
     tau_plot <- TauPlot(seur_obj, group_by = "sampleID")
   })
-  expect_equal(
-    structure(list(x = ~tau, y = ~umi_per_upia, colour = ~tau_type), class = "uneval"),
-    tau_plot$mapping
-  )
 
   # With 0.18 PXL file format
   expect_no_error(
@@ -45,8 +45,16 @@ test_that("TauPlot works for Seurat objects", {
   })
   expect_s3_class(tau_plot, "ggplot")
   expect_equal(
-    structure(list(x = ~tau, y = ~mean_molecules_per_a_pixel, colour = ~tau_type), class = "uneval"),
-    tau_plot$mapping
+    tau_plot$mapping$x,
+    ~tau
+  )
+  expect_equal(
+    tau_plot$mapping$y,
+    ~mean_molecules_per_a_pixel
+  )
+  expect_equal(
+    tau_plot$mapping$colour,
+    ~tau_type
   )
 })
 

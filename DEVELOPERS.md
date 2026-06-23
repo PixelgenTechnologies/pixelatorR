@@ -200,7 +200,6 @@ Error in `my_func()`:
 ✖ x = Inf
 ````
 
-
 # Package website (pkgdown)
 
 The package website is built with `pkgdown` and contains an online reference for all classes, datasets and functions in the package. After a new release, the package website be updated.

@@ -115,3 +115,12 @@ for (assay_version in c("v3", "v5")) {
     expect_error(se_layout <- ComputeLayout(se, custom_layout_function = custom_layout_fkn))
   })
 }
+
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
+  LoadCellGraphs(cells = colnames(.)[1])
+
+test_that("ComputeLayout works with 'cpmds' option", {
+  expect_no_error(se <- se %>% ComputeLayout(layout_method = "cpmds"))
+  expect_true("cpmds_3d" %in% names(CellGraphs(se)[[1]]@layout))
+  expect_equal(c("x", "y", "z"), colnames(CellGraphs(se)[[1]]@layout[["cpmds_3d"]]))
+})

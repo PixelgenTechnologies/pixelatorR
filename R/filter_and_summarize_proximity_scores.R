@@ -214,6 +214,25 @@ SummarizeProximityScores.tbl_lazy <- function(
     }
   }
 
+  # Check for the existence of duplicate rows
+  doublet_rows <- object %>%
+    group_by(across(all_of(c("component", "marker_1", "marker_2", group_vars)))) %>%
+    filter(n() > 1) %>%
+    ungroup() %>%
+    head(1) %>%
+    collect()
+
+  if (nrow(doublet_rows) > 0) {
+    duplicate_key_vars <- c("component", "marker_1", "marker_2", group_vars)
+    cli::cli_abort(
+      c(
+        "!" = "There are duplicate rows for some combinations of {.var {duplicate_key_vars}}",
+        "x" = "Component {.str {doublet_rows$component}} has multiple rows for marker pair
+        {.str {doublet_rows$marker_1}} and {.str {doublet_rows$marker_2}}."
+      )
+    )
+  }
+
   # Set the summary function
   prefix <- ifelse(summary_stat == "median", "median_", "mean_")
   summary_fkn <- switch(summary_stat,
@@ -290,13 +309,15 @@ SummarizeProximityScores.tbl_lazy <- function(
             c(unlist(join_count_expected_mean_list), rep(0, n_cells_missing))
           )
         )
-      } else {
+      } else if (include_missing_obs && !detailed) {
         mutate(
           .,
           !!sym(paste0(proximity_metric, "_list")) := list(
             c(unlist(!!sym(paste0(proximity_metric, "_list"))), rep(0, n_cells_missing))
           )
         )
+      } else {
+        .
       }
     } %>%
     mutate(

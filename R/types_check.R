@@ -209,13 +209,11 @@ assert_pixel_assay <- function(
   if (allow_null && is.null(x)) {
     return(invisible(NULL))
   }
-  if (!inherits(x, c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5"))) {
+  valid_assays <- c("CellGraphAssay", "CellGraphAssay5", "PNAAssay", "PNAAssay5")
+  if (!inherits(x, valid_assays)) {
     cli::cli_abort(
       c(
-        "i" = glue::glue(
-          "The selected Assay must be a {.cls {c('CellGraphAssay', ",
-          "'CellGraphAssay5', 'PNAAssay', 'PNAAssay5')}} object"
-        ),
+        "i" = "The selected Assay must be a {.cls {valid_assays}} object",
         "x" = "Got a {.cls {class(x)}} object."
       )
     )
@@ -226,9 +224,13 @@ assert_pixel_assay <- function(
 assert_within_limits <- function(
   x,
   limits,
+  allow_null = FALSE,
   arg = caller_arg(x),
   call = caller_env()
 ) {
+  if (allow_null && is.null(x)) {
+    return(invisible(NULL))
+  }
   stopifnot(
     "`x` must be a single numeric value" =
       is.numeric(x),
@@ -294,6 +296,12 @@ assert_file_ext <- function(
 ) {
   if (allow_null && is.null(x)) {
     return(invisible(NULL))
+  }
+  if (!allow_null && is.null(x)) {
+    cli::cli_abort(
+      c("x" = "File cannot be NULL"),
+      call = call
+    )
   }
   stopifnot(
     "`ext` must be a string" =

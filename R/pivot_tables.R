@@ -377,7 +377,8 @@ ColocalizationScoresToAssay.Seurat <- function(
 #'
 ProximityScoresToAssay.tbl_lazy <- function(
   object,
-  values_from = "join_count_z",
+  values_from = "log2_ratio",
+  separator = ":",
   ...
 ) {
   # Validate input
@@ -389,27 +390,10 @@ ProximityScoresToAssay.tbl_lazy <- function(
   assert_col_in_data("marker_2", object)
   assert_col_in_data(values_from, object)
 
-  # Ignore 0 values
-  object <- object %>%
-    filter(!!sym(values_from) != 0)
+  .validate_separator(object, separator)
 
-  # Cast values to wide format
-  pair <- object %>%
-    mutate(pair = stringr::str_c(marker_1, "/", marker_2)) %>%
-    pull(pair) %>%
-    factor(levels = unique(.))
-  components <- object %>%
-    pull(component) %>%
-    factor(levels = unique(.))
-  prox_wide <- Matrix::sparseMatrix(
-    i = as.integer(pair),
-    j = as.integer(components),
-    x = object %>% pull(all_of(values_from)),
-    dimnames = list(
-      levels(pair),
-      levels(components)
-    )
-  )
+  object <- .prep_proximity_table(object, values_from, separator)
+  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
 
   return(prox_wide)
 }
@@ -422,9 +406,8 @@ ProximityScoresToAssay.tbl_lazy <- function(
 #'
 ProximityScoresToAssay.data.frame <- function(
   object,
-  values_from = "join_count_z",
-  missing_obs = NA_real_,
-  return_sparse = TRUE,
+  values_from = "log2_ratio",
+  separator = ":",
   ...
 ) {
   # Validate input
@@ -435,28 +418,110 @@ ProximityScoresToAssay.data.frame <- function(
   assert_col_in_data("marker_1", object)
   assert_col_in_data("marker_2", object)
   assert_col_in_data(values_from, object)
-  assert_single_value(missing_obs, type = "numeric")
-  assert_single_value(return_sparse, type = "bool")
 
-  # Cast data.frame to wide format
-  col_scores_wide_format <- object %>%
-    pivot_wider(
-      id_cols = c("marker_1", "marker_2"),
-      names_from = "component",
-      values_from = all_of(values_from),
-      values_fill = missing_obs
-    ) %>%
-    unite(marker_1, marker_2, col = "pair", sep = "/") %>%
-    data.frame(row.names = 1, check.names = FALSE) %>%
-    as.matrix()
+  .validate_separator(object, separator)
 
-  if (return_sparse) {
-    col_scores_wide_format <- as(col_scores_wide_format, "dgCMatrix")
-  }
+  object <- .prep_proximity_table(object, values_from, separator)
+  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
 
-  return(col_scores_wide_format)
+  return(prox_wide)
 }
 
+#' Utility function to validate separator input for proximity scores pivoting
+#'
+#' @return Nothing. Used for its side effects.
+#'
+#' @noRd
+.validate_separator <- function(object, separator, call = rlang::caller_env()) {
+  assert_single_value(separator, type = "string", call = call)
+
+  if (nchar(separator) != 1) {
+    cli::cli_abort(
+      c(
+        "x" = "Separator must be a single character",
+        "i" = "Please provide a valid separator"
+      ),
+      call = call
+    )
+  }
+
+  unique_markers <- unique(c(object %>% pull(marker_1), object %>% pull(marker_2)))
+  invalid_markers <- stringr::str_detect(unique_markers, stringr::coll(separator))
+  if (sum(invalid_markers) > 0) {
+    cli::cli_abort(
+      c(
+        "x" = "Markers cannot contain the separator {.str {separator}}",
+        "i" = "Invalid marker{?s}: {.str {unique_markers[invalid_markers]}}"
+      ),
+      call = call
+    )
+  }
+}
+
+
+#' Utility function to filter and format proximity scores for pivoting
+#'
+#' @noRd
+.prep_proximity_table <- function(
+  object,
+  values_from = "log2_ratio",
+  separator = ":"
+) {
+  # Create pair column
+  object <- object %>%
+    mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>%
+    select(pair, component, all_of(values_from)) %>%
+    collect()
+  return(object)
+}
+
+#' Utility function to cast proximity scores to wide format
+#'
+#' @noRd
+.cast_proximity_long_to_wide <- function(object, values_from = "log2_ratio") {
+  # Cast values to wide format
+  pair <- object %>%
+    pull(pair) %>%
+    factor(levels = unique(.))
+
+  components <- object %>%
+    pull(component) %>%
+    factor(levels = unique(.))
+
+  prox_wide <- Matrix::sparseMatrix(
+    i = as.integer(pair),
+    j = as.integer(components),
+    x = object %>% pull(all_of(values_from)),
+    dimnames = list(
+      levels(pair),
+      levels(components)
+    )
+  )
+
+  # Drop explicit zeros
+  prox_wide <- Matrix::drop0(prox_wide)
+
+  # Drop marker pairs with all zero proximity scores
+  nonzero_pairs <- Matrix::rowSums(prox_wide != 0) > 0
+  prox_wide <- prox_wide[nonzero_pairs, ]
+
+  # Warn about components with all zero proximity scores
+  zero_prox_components <-
+    which(Matrix::colSums(prox_wide != 0) == nrow(prox_wide)) %>%
+    names()
+
+  if (length(zero_prox_components) > 0) {
+    cli::cli_warn(
+      c(
+        "!" = "There are {length(zero_prox_components)} components with only zero proximity scores.
+        E.g.: {.str {head(zero_prox_components, 3)}}",
+        "i" = "Consider removing these components from the assay"
+      )
+    )
+  }
+
+  return(prox_wide)
+}
 
 #' @rdname ProximityScoresToAssay
 #' @method ProximityScoresToAssay PNAAssay
@@ -465,15 +530,30 @@ ProximityScoresToAssay.data.frame <- function(
 #'
 ProximityScoresToAssay.PNAAssay <- function(
   object,
-  values_from = "join_count_z",
-  missing_obs = NA_real_,
+  values_from = "log2_ratio",
+  separator = ":",
+  lazy = FALSE,
   ...
 ) {
-  proximity_matrix <- ProximityScores(object) %>%
+  assert_single_value(lazy, type = "bool")
+
+  proximity_scores <- ProximityScores(object, lazy = lazy)
+
+  if (!lazy) {
+    if (nrow(proximity_scores) == 0) {
+      cli::cli_abort(
+        c(
+          "x" = "No proximity scores found in {.cls {class(object)}}",
+          "i" = "Set `lazy = TRUE` to fetch proximity scores from PXL file(s)"
+        )
+      )
+    }
+  }
+
+  proximity_matrix <- proximity_scores %>%
     ProximityScoresToAssay(
       values_from = values_from,
-      missing_obs = missing_obs,
-      return_sparse = TRUE
+      separator = separator
     )
   proximity_matrix <- proximity_matrix[, colnames(object)]
 
@@ -506,8 +586,9 @@ ProximityScoresToAssay.Seurat <- function(
   object,
   assay = NULL,
   new_assay = NULL,
-  values_from = "join_count_z",
-  missing_obs = NA_real_,
+  values_from = "log2_ratio",
+  separator = ":",
+  lazy = FALSE,
   ...
 ) {
   # Use default assay if assay = NULL
@@ -529,7 +610,13 @@ ProximityScoresToAssay.Seurat <- function(
   pna_assay <- object[[assay]]
 
   # Create new assay
-  proximity_assay <- ProximityScoresToAssay(pna_assay, values_from, missing_obs, ...)
+  proximity_assay <- ProximityScoresToAssay(
+    object = pna_assay,
+    values_from = values_from,
+    separator = separator,
+    lazy = lazy,
+    ...
+  )
   Key(proximity_assay) <- "proximity_"
 
   # Place new assay in Seurat object

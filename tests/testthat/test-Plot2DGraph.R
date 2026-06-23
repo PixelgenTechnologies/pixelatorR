@@ -5,6 +5,7 @@ for (assay_version in c("v3", "v5")) {
   seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
   seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1:2])
   seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds")
+  seur_obj <- ComputeLayout(seur_obj, layout_method = "cpmds")
 
   test_that("Plot2DGraph works as expected", {
     expect_no_error({
@@ -17,6 +18,10 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(layout_plot[[1]]$labels$title, "RCVCMP0000217")
     expect_equal(layout_plot[[1]]$labels$colour, "CD3E\n(log-scaled)")
     expect_equal(dim(layout_plot[[1]]$data), c(2470, 8))
+
+    expect_no_error({
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "cpmds_3d")
+    })
 
     # Test with showBnodes active
     expect_no_error({
@@ -37,22 +42,22 @@ for (assay_version in c("v3", "v5")) {
       layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", colors = "invalid")
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", colors = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", assay = "invalid")
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", assay = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", map_nodes = "invalid")
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", map_nodes = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", map_edges = "invalid")
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", map_edges = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", node_size = "invalid")
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", node_size = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", edge_width = "invalid")
+      layout_plot <- Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", edge_width = "invalid")
     })
   })
 
@@ -62,29 +67,33 @@ for (assay_version in c("v3", "v5")) {
     })
     expect_s3_class(layout_plot, "patchwork")
     expect_equal(layout_plot[[1]]$labels$title, NULL)
+
+    expect_no_error({
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "cpmds_3d", markers = c("HLA-DR"))
+    })
   })
 
-  test_that("Plot2DGraph fails with invalid input", {
+  test_that("Plot2DGraphM fails with invalid input", {
     expect_error({
       layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), colors = "invalid")
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", markers = c("HLA-DR"), colors = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), assay = "invalid")
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", markers = c("HLA-DR"), assay = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), map_nodes = "invalid")
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", markers = c("HLA-DR"), map_nodes = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), map_edges = "invalid")
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", markers = c("HLA-DR"), map_edges = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), node_size = "invalid")
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", markers = c("HLA-DR"), node_size = "invalid")
     })
     expect_error({
-      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds", markers = c("HLA-DR"), edge_width = "invalid")
+      layout_plot <- Plot2DGraphM(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d", markers = c("HLA-DR"), edge_width = "invalid")
     })
   })
 }

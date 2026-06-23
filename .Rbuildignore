@@ -18,3 +18,9 @@
 ^inst/dev
 ^Taskfile.yml
 ^Dockerfile
+^\\.Renviron$
+^\.positai$
+^\.claude$
+^SKILL.md
+^SKILL_USAGE.MD
+

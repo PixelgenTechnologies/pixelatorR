@@ -12,27 +12,33 @@
 \usage{
 ProximityScoresToAssay(object, ...)
 
-\method{ProximityScoresToAssay}{tbl_lazy}(object, values_from = "join_count_z", ...)
+\method{ProximityScoresToAssay}{tbl_lazy}(
+  object,
+  values_from = "log2_ratio",
+  separator = ":",
+  ...
+)
 
 \method{ProximityScoresToAssay}{data.frame}(
   object,
-  values_from = "join_count_z",
-  missing_obs = NA_real_,
-  return_sparse = TRUE,
+  values_from = "log2_ratio",
+  separator = ":",
   ...
 )
 
 \method{ProximityScoresToAssay}{PNAAssay}(
   object,
-  values_from = "join_count_z",
-  missing_obs = NA_real_,
+  values_from = "log2_ratio",
+  separator = ":",
+  lazy = FALSE,
   ...
 )
 
 \method{ProximityScoresToAssay}{PNAAssay5}(
   object,
-  values_from = "join_count_z",
-  missing_obs = NA_real_,
+  values_from = "log2_ratio",
+  separator = ":",
+  lazy = FALSE,
   ...
 )
 
@@ -40,8 +46,9 @@ ProximityScoresToAssay(object, ...)
   object,
   assay = NULL,
   new_assay = NULL,
-  values_from = "join_count_z",
-  missing_obs = NA_real_,
+  values_from = "log2_ratio",
+  separator = ":",
+  lazy = FALSE,
   ...
 )
 }
@@ -51,12 +58,13 @@ ProximityScoresToAssay(object, ...)
 \item{...}{Not yet implemented}
 
 \item{values_from}{A single string defining what column in the proximity score table
-to pick values from.}
+to pick values from. Default is "log2_ratio".}
 
-\item{missing_obs}{A numeric value or NA to replace missing observations with. Default
-is \code{NA_real_}.}
+\item{separator}{A character to separate marker names in the row names of the output. Default is ":".
+Must be a single character and must not appear in any marker name.}
 
-\item{return_sparse}{A logical specifying whether to return a sparse matrix (\code{dgCMatrix}).}
+\item{lazy}{Whether to look for proximity scores in the PXL file instead of the
+\code{\link[SeuratObject]{Assay}} / \code{\link[SeuratObject]{Assay5}} object.}
 
 \item{assay}{Name of the \code{\link{PNAAssay}} or \code{\link{PNAAssay5}} to
 pull proximity scores from}
@@ -72,32 +80,40 @@ Convert proximity score table to an Assay or Assay5
 
 Takes an object with PNA proximity scores in long format and returns an
 object with proximity scores in a wide format. The proximity score
-table contains various spatial metrics along with p-values for each
-protein pair and component.
+table must contain the following columns:
+\itemize{
+\item "marker_1": the name of the first marker in the pair
+\item "marker_2": the name of the second marker in the pair
+\item "component": the name of the component
+\item a column with the proximity scores to be used as values in the wide format
+(defined by the \code{values_from} parameter)
+}
 
-The wide format is an array-like object with dimensions (markers_1 * marker_2) x components,
-where each cell is filled with a value for a selected spatial metric.
+The wide format is an array-like object with dimensions pair x components,
+where pair is defined as the combination of "marker_1" and "marker_2" separated by the \code{separator},
+and where each element in the array is filled with a value for a selected spatial metric.
 
-Note that that observations that are missing from the proximity score table
-can be replaced with 0's in the wide array by setting \code{missing_obs_val = 0},
-which might be required by various functions in \code{Seurat}. However, this may
-not be the desired behavior as a value of 0 usually doesn't mean that the observation
-is missing.
+Note that observations that are missing from the proximity score table are replaced with 0's.
+Proximity scores can also be 0 (no deviation from random expectations), and it will not be possible
+to distinguish between these two cases in the output.
 
 Different outputs are returned depending on the input object type:
 
 \itemize{
 \item{
-\code{tibble/data.frame}: returns a \code{matrix} with marker pairs in rows
-and components in columns
+\code{tibble/data.frame}: returns a \code{dgCMatrix} with marker pairs in rows
+and components in columns. The components are not ordered in any particular way
+and should therefore be ordered before placing them in e.g. a Seurat object.
 }
 \item{
 \code{PNAAssay/PNAAssay5}: returns an \code{Assay} or \code{Assay5} with marker
-pairs in rows and  components in columns
+pairs in rows and components in columns. Columns are ordered according to the order
+of the components in the \code{PNAAssay/PNAAssay5}.
 }
 \item{
 \code{Seurat} object: returns the \code{Seurat} object with a new \code{Assay}
-or \code{Assay5} with marker pairs in rows and components in columns
+or \code{Assay5} with marker pairs in rows and components in columns. Columns are
+ordered according to the order of the components in the \code{Seurat} object.
 }
 }
 
