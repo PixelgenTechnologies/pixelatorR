@@ -90,27 +90,25 @@ DifferentialProximityAnalysis.data.frame <- function(
     group_by(pick(all_of(c("marker_1", "marker_2", contrast_column, group_vars))))
 
   if (min_cells_per_group > 0) {
-
     if (backend == "data.table") {
       test_groups <- dtplyr::lazy_dt(test_groups)
     }
 
-  # Compress the massive table into a tiny count table
-  valid_groups <- test_groups %>%
-    count(name = "cell_count") %>%
-    filter(cell_count >= min_cells_per_group) %>%
-    ungroup(!! sym(contrast_column)) %>%
-    #print(n = 20)
-    mutate(n_groups = n(), ref_present = sum(!! sym(contrast_column) == reference)) %>% 
-    filter(n_groups > 1, ref_present == 1) %>% 
-    select(-n_groups, -ref_present)
+    # Compress the massive table into a tiny count table
+    valid_groups <- test_groups %>%
+      count(name = "cell_count") %>%
+      filter(cell_count >= min_cells_per_group) %>%
+      ungroup(!!sym(contrast_column)) %>%
+      mutate(n_groups = n(), ref_present = sum(!!sym(contrast_column) == reference)) %>%
+      filter(n_groups > 1, ref_present == 1) %>%
+      select(-n_groups, -ref_present)
 
-  # 4. Filter the massive original table using the valid combinations found above
-  test_groups <- test_groups %>%
-    ungroup() %>%
-    semi_join(valid_groups, by = c("marker_1", "marker_2", contrast_column, group_vars)) %>% 
-    as_tibble() %>%
-    group_by(pick(all_of(c("marker_1", "marker_2", contrast_column, group_vars))))
+    # Filter the massive original table using the valid combinations found above
+    test_groups <- test_groups %>%
+      ungroup() %>%
+      semi_join(valid_groups, by = c("marker_1", "marker_2", contrast_column, group_vars)) %>%
+      as_tibble() %>%
+      group_by(pick(all_of(c("marker_1", "marker_2", contrast_column, group_vars))))
     if (nrow(test_groups) == 0) {
       cli::cli_abort(glue(
         "Found no groups with at least {min_cells_per_group} observations."
@@ -222,7 +220,7 @@ DifferentialProximityAnalysis.data.frame <- function(
       ) %>%
       # Formula for two.sided test which is currently the only option
       mutate(z = (z - sign(z) * 0.5) / sigma) %>%
-      mutate(p_val = 2 * pmin(pnorm(z), pnorm(z, lower.tail = FALSE))) %>% 
+      mutate(p_val = 2 * pmin(pnorm(z), pnorm(z, lower.tail = FALSE))) %>%
       collect() %>%
       na.omit()
 
@@ -255,17 +253,17 @@ DifferentialProximityAnalysis.data.frame <- function(
 
 #' @param group_data A data.frame with a column for the contrast and optional group variables.
 #' The rownames of this data.frame should correspond to the columns names of the matrix `object`.
-#' @param diff_trehsold Minimum difference in proximity metric to consider a pair of groups for 
+#' @param diff_trehsold Minimum difference in proximity metric to consider a pair of groups for
 #' testing. Default is 0.1.
-#' 
-#' @param group_data A tibble with a column for the contrast and optional group variables. 
+#'
+#' @param group_data A tibble with a column for the contrast and optional group variables.
 #' The rownames of this tibble should correspond to the columns names of the matrix `object`.
-#' 
+#'
 #' @rdname DifferentialProximityAnalysis
 #' @method DifferentialProximityAnalysis Matrix
-#' 
+#'
 #' @export
-#' 
+#'
 DifferentialProximityAnalysis.Matrix <- function(
   object,
   group_data,
@@ -367,7 +365,7 @@ DifferentialProximityAnalysis.Matrix <- function(
       cells.2 = components_reference,
       logfc.threshold = diff_trehsold,
       test.use = "wilcox",
-      min.pct = 0, 
+      min.pct = 0,
       mean.fxn = sparseMatrixStats::rowMedians,
       fc.name = "difference",
       verbose = FALSE,
@@ -397,17 +395,17 @@ DifferentialProximityAnalysis.Matrix <- function(
 }
 
 
-#' @param method One of "seurat" or "legacy". The former uses the Seurat framework for 
-#' differential testing, while the latter uses a custom implementation. The main difference 
+#' @param method One of "seurat" or "legacy". The former uses the Seurat framework for
+#' differential testing, while the latter uses a custom implementation. The main difference
 #' between the two methods is that missing observations are handled differently. With
-#' the "seurat" method, all missing values are set to 0, while the "legacy" method ignores 
-#' missing values. For the former, this means that the number of observations per group is 
-#' always equal to the number of cells in that group, while for the latter ("legacy"), the 
-#' number of observations per group can be less than the number of cells in that group. Ignoring  
-#' missing values can lead to confusing estimates of group statistics and misses comparisons 
-#' where one of the two test groups have no observations. 
+#' the "seurat" method, all missing values are set to 0, while the "legacy" method ignores
+#' missing values. For the former, this means that the number of observations per group is
+#' always equal to the number of cells in that group, while for the latter ("legacy"), the
+#' number of observations per group can be less than the number of cells in that group. Ignoring
+#' missing values can lead to confusing estimates of group statistics and misses comparisons
+#' where one of the two test groups have no observations.
 #' The "legacy" method is provided for backward compatibility and may be removed in future versions.
-#' 
+#'
 #' @param assay Name of assay to use
 #'
 #' @rdname DifferentialProximityAnalysis
@@ -447,12 +445,12 @@ DifferentialProximityAnalysis.Seurat <- function(
     all = proximity_data,
     self = proximity_data %>% filter(marker_1 == marker_2),
     co = proximity_data %>% filter(marker_1 != marker_2)
-  ) %>% 
+  ) %>%
     filter(join_count >= min_join_count)
   proximity_data <- proximity_data %>% compute()
   if (method == "seurat") {
-    proximity_data <- proximity_data %>% 
-      compute() %>% 
+    proximity_data <- proximity_data %>%
+      compute() %>%
       ProximityScoresToAssay()
     # Add missing columns
     missing_components <- setdiff(colnames(object), colnames(proximity_data))
@@ -472,20 +470,19 @@ DifferentialProximityAnalysis.Seurat <- function(
   # Add group data
   group_data <- .select_group_data(object[[]], contrast_column, group_vars)
   if (method == "seurat") {
-    group_data <- group_data %>% 
+    group_data <- group_data %>%
       column_to_rownames("component")
   }
 
   # Add group data to colocalization table
   if (method == "legacy") {
     proximity_data <- proximity_data %>%
-      left_join(y = group_data, copy = TRUE, by = "component") %>% 
+      left_join(y = group_data, copy = TRUE, by = "component") %>%
       collect()
   }
 
   # Run differential proximity analysis
-  proximity_test_results <- switch(
-    method,
+  proximity_test_results <- switch(method,
     legacy = DifferentialProximityAnalysis(
       object = proximity_data,
       contrast_column = contrast_column,
