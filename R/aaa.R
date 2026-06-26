@@ -135,3 +135,7 @@ expect_matrixStats <- function(...) {
 expect_FNN <- function(...) {
   rlang::check_installed("FNN", ...)
 }
+
+expect_sparseMatrixStats <- function(...) {
+  rlang::check_installed("sparseMatrixStats", ...)
+}

@@ -1043,8 +1043,8 @@ RestorePaths <- function(
 #' If "self", only protein pairs of the same type are considered. If "cross", protein pairs of different
 #' type are considered.
 #' @param backend One of "dplyr" or "data.table". The latter requires the \code{dtplyr} package to be installed.
-#' @param min_n_obs Minimum number of observations allowed in a group. Target groups with less
-#' observations than \code{min_n_obs} will be skipped.
+#' @param min_cells_per_group Minimum number of cells required per group. Target groups with less
+#' observations than \code{min_cells_per_group} will be skipped.
 #' @param p_adjust_method One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 #' (see \code{?p.adjust} for details)
 #' @param verbose Print messages
