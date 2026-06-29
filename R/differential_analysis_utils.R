@@ -199,10 +199,12 @@
 #' @return A single tibble with a \code{p_adj} column inserted after \code{p}.
 #'
 #' @noRd
-.finalize_da_results <- function(res_list, p_adjust_method) {
+.finalize_da_results <- function(res_list, p_adjust_method, group_vars = NULL) {
   bind_rows(res_list) %>%
+    group_by(pick(all_of(c("target", group_vars)))) %>% 
     mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
-    relocate(p_adj, .after = "p")
+    relocate(p_adj, .after = "p") %>% 
+    ungroup()
 }
 
 #' Validate \code{group_data} for matrix-based differential analysis methods

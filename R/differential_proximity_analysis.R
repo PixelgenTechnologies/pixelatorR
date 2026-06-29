@@ -247,7 +247,7 @@ DifferentialProximityAnalysis.data.frame <- function(
     cli_progress_done()
   }
 
-  .finalize_da_results(diff_prox_res, p_adjust_method)
+  .finalize_da_results(diff_prox_res, p_adjust_method, group_vars)
 }
 
 
@@ -359,6 +359,30 @@ DifferentialProximityAnalysis.Matrix <- function(
       data = object
     )
 
+    n_comps_reference <- length(components_reference)
+    n_comps_target <- length(components_target)
+    if (n_comps_reference < min_cells_per_group || n_comps_target < min_cells_per_group) {
+      target <- cur_keys[, contrast_column, drop = TRUE]
+      if (ncol(cur_keys) > 1) {
+        cur_reference <- paste0(reference, " (", paste(cur_keys[, group_vars, drop = TRUE], collapse = ", "), ")")
+        cur_target <- paste0(target, " (", paste(cur_keys[, group_vars, drop = TRUE], collapse = ", "), ")")
+      }
+      if (n_comps_reference < min_cells_per_group && n_comps_target < min_cells_per_group) {
+        cli::cli_warn(
+          "Skipping {cur_target} vs {cur_reference} because both groups have fewer than {.val {min_cells_per_group}} cells."
+        )
+      } else if (n_comps_reference < min_cells_per_group && n_comps_target >= min_cells_per_group) {
+        cli::cli_warn(
+          "Skipping {cur_target} vs {cur_reference} because the reference group has fewer than {.val {min_cells_per_group}} cells."
+        )
+      } else if (n_comps_target < min_cells_per_group && n_comps_reference >= min_cells_per_group) {
+        cli::cli_warn(
+          "Skipping {cur_target} vs {cur_reference} because the target group has fewer than {.val {min_cells_per_group}} cells."
+        )
+      }
+      next
+    }
+
     de_results <- Seurat::FindMarkers(
       object = prox_assay,
       cells.1 = components_target,
@@ -391,7 +415,7 @@ DifferentialProximityAnalysis.Matrix <- function(
     cli_progress_done()
   }
 
-  .finalize_da_results(diff_prox_res, p_adjust_method)
+  .finalize_da_results(diff_prox_res, p_adjust_method, group_vars)
 }
 
 
