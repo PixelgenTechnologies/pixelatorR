@@ -27,6 +27,28 @@ for (assay_version in c("v3", "v5")) {
       )
     })
 
+    # Test multiple targets
+    expect_no_error({
+      de_results_multiple_targets <- DifferentialProximityAnalysis(
+        seur_obj_big,
+        contrast_column = "cell_type",
+        targets = c("CD4T", "CD16+ Mono"),
+        reference = "pDC",
+        verbose = FALSE
+      )
+    })
+    expect_equal(
+      structure(
+        c(CD4T = 773L, `CD16+ Mono` = 878L),
+        dim = 2L,
+        dimnames = list(
+          . = c("CD4T", "CD16+ Mono")
+        ),
+        class = "table"
+      ),
+      de_results_multiple_targets$target %>% table() %>% sort()
+    )
+
     # Test that contrast column can be factor
     prox_scores <-
       ProximityScores(seur_obj_big,
@@ -50,38 +72,31 @@ for (assay_version in c("v3", "v5")) {
           data_type = c("join_count_z", "join_count_z"),
           target = c("CD4T", "CD4T"),
           reference = c("pDC", "pDC"),
-          n_tgt = c(30L, 30L),
-          n_ref = c(10L, 10L),
-          diff_median = c(1.12578767971233, -0.660561539890729),
-          statistic = c(100, 200),
-          auc = c(
-            0.333333333333333,
-            0.666666666666667
-          ),
-          p = c(0.11041579736434, 0.11041579736434),
-          p_adj = c(1, 1),
-          method = c(
-            "Wilcoxon rank-sum test test",
-            "Wilcoxon rank-sum test test"
-          ),
-          alternative = c(
-            "two.sided",
-            "two.sided"
-          ),
-          marker_1 = c("B2M", "B2M"),
-          marker_2 = c(
-            "B2M",
-            "CD10"
-          )
+          n_tgt = c(0, 0),
+          n_ref = c(10, 10),
+          diff_median = c(-0.325941157393986, -0.806975315413949),
+          p = c(4.84076936963803e-10, 4.84076936963803e-10),
+          p_adj = c(3.74191472273019e-07, 3.74191472273019e-07),
+          alternative = c("two.sided", "two.sided"),
+          pair = c("CD50:CD53", "CD29:CD53")
         ),
         row.names = c(NA, -2L),
-        class = c(
-          "tbl_df", "tbl",
-          "data.frame"
-        )
+        class = c("tbl_df", "tbl", "data.frame")
       )
 
     expect_equal(head(de_results1, 2), expected_data)
+
+    # legacy method
+    expect_no_error({
+      de_results1 <- DifferentialProximityAnalysis(
+        seur_obj_big,
+        contrast_column = "cell_type",
+        targets = "CD4T",
+        reference = "pDC",
+        method = "legacy",
+        verbose = FALSE
+      )
+    })
 
     # data.table backend
     expect_no_error({
@@ -90,11 +105,38 @@ for (assay_version in c("v3", "v5")) {
         contrast_column = "cell_type",
         targets = "CD4T",
         reference = "pDC",
+        method = "legacy",
         backend = "data.table",
         verbose = FALSE
       )
     })
     expect_equal(de_results1, de_results2)
+
+    # min_join_count option
+    expect_no_error({
+      de_results_filt <- DifferentialProximityAnalysis(
+        seur_obj_big,
+        contrast_column = "cell_type",
+        targets = "CD4T",
+        reference = "pDC",
+        min_join_count = 50,
+        verbose = FALSE
+      )
+    })
+    expect_equal(dim(de_results_filt), c(268, 10))
+
+    # min_cells_per_group option
+    expect_no_error({
+      de_results_filt <- DifferentialProximityAnalysis(
+        seur_obj_big,
+        contrast_column = "cell_type",
+        targets = "CD4T",
+        reference = "pDC", 
+        min_cells_per_group = 10,
+        verbose = FALSE
+      )
+    })
+    expect_equal(dim(de_results_filt), c(773, 10))
   })
 
   test_that("DifferentialProximityAnalysis fails with invalid input", {

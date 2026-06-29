@@ -98,6 +98,12 @@ testing. Default is 0.1.}
 
 \item{assay}{Name of assay to use}
 
+\item{lazy}{If TRUE, the proximity scores will be loaded lazily and filtered using the
+\code{duckdb} backend.}
+
+\item{min_join_count}{Minimum number of join counts required for a marker pair to be
+included in the analysis. Default is 10.}
+
 \item{method}{One of "seurat" or "legacy". The former uses the Seurat framework for
 differential testing, while the latter uses a custom implementation. The main difference
 between the two methods is that missing observations are handled differently. With
