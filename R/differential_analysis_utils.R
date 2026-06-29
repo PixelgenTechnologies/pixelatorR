@@ -298,7 +298,7 @@
   if (!reference %in% ctrst_vals) {
     cli::cli_abort(
       c(
-        "x" = "Reference group {.val {reference}} must be present 
+        "x" = "Reference group {.val {reference}} must be present
                in the {.val {contrast_column}} column of {.arg group_data}."
       ),
       call = call
@@ -311,7 +311,7 @@
     if (reference %in% targets) {
       cli::cli_abort(
         c(
-          "x" = "All {.arg targets} ({.val {targets}}) must be different 
+          "x" = "All {.arg targets} ({.val {targets}}) must be different
                  from {.arg reference} ({.val {reference}})."
         ),
         call = call
@@ -321,7 +321,7 @@
     if (length(missing_tgt) > 0) {
       cli::cli_abort(
         c(
-          "x" = "Target group(s) {.val {missing_tgt}} not found in the 
+          "x" = "Target group(s) {.val {missing_tgt}} not found in the
                  {.val {contrast_column}} column of {.arg group_data}."
         ),
         call = call

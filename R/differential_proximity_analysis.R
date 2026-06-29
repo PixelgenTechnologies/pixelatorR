@@ -395,9 +395,9 @@ DifferentialProximityAnalysis.Matrix <- function(
 }
 
 
-#' @param lazy If TRUE, the proximity scores will be loaded lazily and filtered using the 
+#' @param lazy If TRUE, the proximity scores will be loaded lazily and filtered using the
 #' `duckdb` backend.
-#' @param min_join_count Minimum number of join counts required for a marker pair to be 
+#' @param min_join_count Minimum number of join counts required for a marker pair to be
 #' included in the analysis. Default is 10.
 #' @param method One of "seurat" or "legacy". The former uses the Seurat framework for
 #' differential testing, while the latter uses a custom implementation. The main difference

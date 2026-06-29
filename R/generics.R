@@ -1025,24 +1025,24 @@ RestorePaths <- function(
 #'    group_vars = "cell_type"
 #' )
 #' }
-#' 
+#'
 #' @section Method details:
 #' By default, the function uses `FindMarkers` under the hood to compute the tests (`method = "Seurat"`).
 #' The proximity scores are stored in long format in a table (either as a table in the Seurat object or
-#' in the associated PXL file). The function reshapes the table to wide format and uses `FindMarkers` to 
+#' in the associated PXL file). The function reshapes the table to wide format and uses `FindMarkers` to
 #' compute the tests.
-#' 
-#' Note that missing observations in the proximity score table are replaced with 0's when reshaping to 
-#' wide format. This means that if a marker pair is not present in a component, it will be treated as 
-#' having a proximity score of 0 for that component. With this strategy, we cannot distinguish between 
-#' a marker pair that is truly absent in a component and a marker pair that is present but has a proximity 
+#'
+#' Note that missing observations in the proximity score table are replaced with 0's when reshaping to
+#' wide format. This means that if a marker pair is not present in a component, it will be treated as
+#' having a proximity score of 0 for that component. With this strategy, we cannot distinguish between
+#' a marker pair that is truly absent in a component and a marker pair that is present but has a proximity
 #' score of 0. Marker pairs rarely have a proximity score of 0, except for extremely low abundant pairs
-#' which are usually filtered out in the pre-processing steps. 
-#' 
-#' With the "legacy" method, the missing observations are ignored and the tests are computed only on the 
-#' marker pairs that are present in both groups. This strategy has two important limitations: 1) it tends 
+#' which are usually filtered out in the pre-processing steps.
+#'
+#' With the "legacy" method, the missing observations are ignored and the tests are computed only on the
+#' marker pairs that are present in both groups. This strategy has two important limitations: 1) it tends
 #' to focus the results on subsets of cells which are not necessarily representative of the entire population
-#' of interest, and 2) if one of the two conditions (target or reference) has no observations for a pair, 
+#' of interest, and 2) if one of the two conditions (target or reference) has no observations for a pair,
 #' that comparison will be skipped.
 #'
 #' @concept DA
