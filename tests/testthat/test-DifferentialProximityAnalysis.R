@@ -131,7 +131,7 @@ for (assay_version in c("v3", "v5")) {
         seur_obj_big,
         contrast_column = "cell_type",
         targets = "CD4T",
-        reference = "pDC", 
+        reference = "pDC",
         min_cells_per_group = 10,
         verbose = FALSE
       )
