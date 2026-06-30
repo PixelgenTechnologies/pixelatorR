@@ -95,7 +95,7 @@
 #' @param reference The reference level.
 #' @param targets Target levels of the contrast column.
 #' @param group_vars Optional grouping variables.
-#' @param verbose Logical. If \code{FALSE}, this function is a no-op.
+#' @param verbose Logical. Whether to print messages.
 #' @param test_label Character. Name of the test, used in messages.
 #'
 #' @noRd
@@ -201,9 +201,9 @@
 #' @noRd
 .finalize_da_results <- function(res_list, p_adjust_method, group_vars = NULL) {
   bind_rows(res_list) %>%
-    group_by(pick(all_of(c("target", group_vars)))) %>% 
+    group_by(pick(all_of(c("target", group_vars)))) %>%
     mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
-    relocate(p_adj, .after = "p") %>% 
+    relocate(p_adj, .after = "p") %>%
     ungroup()
 }
 

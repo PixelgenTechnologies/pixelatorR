@@ -19,7 +19,7 @@ DifferentialProximityAnalysis(object, ...)
   metric_type = c("all", "self", "co"),
   backend = c("dplyr", "data.table"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
-  min_cells_per_group = 3,
+  min_cells_per_group = 10,
   verbose = TRUE,
   ...
 )
@@ -33,8 +33,8 @@ DifferentialProximityAnalysis(object, ...)
   group_vars = NULL,
   proximity_metric = "join_count_z",
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
-  diff_trehsold = 0.1,
-  min_cells_per_group = 3,
+  diff_threshold = 0.01,
+  min_cells_per_group = 10,
   verbose = TRUE,
   ...
 )
@@ -47,8 +47,8 @@ DifferentialProximityAnalysis(object, ...)
   assay = NULL,
   group_vars = NULL,
   lazy = FALSE,
-  min_join_count = 10,
-  min_cells_per_group = 3,
+  min_exp_join_count = 10,
+  min_cells_per_group = 10,
   proximity_metric = "join_count_z",
   metric_type = c("all", "self", "co"),
   method = c("seurat", "legacy"),
@@ -93,7 +93,7 @@ observations than \code{min_cells_per_group} will be skipped.}
 \item{group_data}{A tibble with a column for the contrast and optional group variables.
 The rownames of this tibble should correspond to the columns names of the matrix \code{object}.}
 
-\item{diff_trehsold}{Minimum difference in proximity metric to consider a pair of groups for
+\item{diff_threshold}{Minimum difference in proximity metric to consider a pair of groups for
 testing. Default is 0.1.}
 
 \item{assay}{Name of assay to use}
@@ -101,7 +101,7 @@ testing. Default is 0.1.}
 \item{lazy}{If TRUE, the proximity scores will be loaded lazily and filtered using the
 \code{duckdb} backend.}
 
-\item{min_join_count}{Minimum number of join counts required for a marker pair to be
+\item{min_exp_join_count}{Minimum number of join counts required for a marker pair to be
 included in the analysis. Default is 10.}
 
 \item{method}{One of "seurat" or "legacy". The former uses the Seurat framework for
