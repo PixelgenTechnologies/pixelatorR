@@ -65,7 +65,7 @@ layout_with_coarsened_pmds <- function(
   resolution = 1,
   pivots = 200,
   n_iter = 20,
-  jitter_sd = 1e-2,
+  jitter_sd = 1e-3,
   weight_edges_by = c("crossing_edges", "tp"),
   leiden_iterations = 2,
   leiden_weighted = FALSE,
@@ -82,7 +82,7 @@ layout_with_coarsened_pmds <- function(
   assert_single_value(n_iter, "integer")
   assert_within_limits(n_iter, c(1, 100))
   assert_single_value(jitter_sd, "numeric")
-  assert_within_limits(jitter_sd, c(1e-3, 0.1))
+  assert_within_limits(jitter_sd, c(0, 0.1))
   weight_edges_by <- match.arg(weight_edges_by, c("crossing_edges", "tp"))
   assert_single_value(leiden_iterations, "integer")
   assert_within_limits(leiden_iterations, c(1, 10))
@@ -99,6 +99,7 @@ layout_with_coarsened_pmds <- function(
     g <- g %>% prob_distance_weights(k = 1, min_weight = 0)
     ew <- -log10(igraph::E(g)$bi_prob)
     ew <- ew / mean(ew)
+    ew <- 1 / ew
   } else {
     ew <- NULL
   }
@@ -152,16 +153,11 @@ layout_with_coarsened_pmds <- function(
   # Normalize the layout coordinates
   xyz <- normalize_layout_coordinates(xyz, as_df = FALSE)
 
-  # Create transition probability matrix weighted by within and between clusters
-  Matrix::diag(A_orig) <- 1
-
-  # Compute row sums exactly ONCE up front
+  # Compute row sums and extract triplets
   row_sums_orig <- Matrix::rowSums(A_orig)
-  # Guard against 0 values if any isolated nodes exist (unlikely with self loops, but safe)
-  row_sums_orig <- pmax(row_sums_orig, 1)
-
-  # Extract triplets efficiently
   A_triplets <- Matrix::summary(A_orig)
+
+  # Identify within-cluster edges
   is_within <- cl[A_triplets$i] == cl[A_triplets$j]
 
   # Construct A_within and A_between directly
@@ -179,10 +175,23 @@ layout_with_coarsened_pmds <- function(
     dims = dim(A_orig)
   )
 
-  # Highly optimized fast diagonal multiplication for transition matrix P
-  # Avoids calculating rowSums 3 times and prevents dense vector allocations
-  inv_D <- Matrix::Diagonal(x = 1 / row_sums_orig)
-  P <- inv_D %*% (A_within + A_between)
+  # Compute row sums for separate scaling
+  d_within <- Matrix::rowSums(A_within) * 2
+  d_between <- Matrix::rowSums(A_between) * 2
+
+  # Safeguard against 0 to prevent NaN/Inf during division
+  d_within_safe <- ifelse(d_within == 0, 1, d_within)
+  d_between_safe <- ifelse(d_between == 0, 1, d_between)
+
+  # Scale the rows
+  A_within_scaled <- A_within / d_within_safe
+  A_between_scaled <- A_between / d_between_safe
+
+  # Combine and perform final renormalization
+  # If one was 0, it contributes 0, and the other contributes its normalized profile.
+  # The final rowSums normalization ensures the active one scales up to 1.
+  P <- A_within_scaled + A_between_scaled
+  P <- P / Matrix::rowSums(P)
 
   # Extrapolate points to whole cell
   xyz_full <- xyz[cl, , drop = FALSE]

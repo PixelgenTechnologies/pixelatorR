@@ -9,24 +9,24 @@ test_that("layout_with_coarsened_pmds works as expected", {
 
   expected_result <- structure(
     c(
-      0.0175374496643101,
-      -0.00995572874022552,
-      1.02077048105682,
-      1.07658885150354,
-      -0.42351419724422,
-      -0.470416679970342,
-      0.54984973245313,
-      0.517271714479005,
-      0.312237935798172,
-      0.310466441132375,
-      0.343200818771736,
-      0.328726989744251,
-      -0.401195946972589,
-      -0.455131491839664,
-      -0.0855087613342495,
-      -0.104659414138358,
-      -0.359347957201346,
-      -0.346398097162904
+      0.0301740141572202,
+      -0.0207088590816486,
+      1.03754672607807,
+      1.24723542527862,
+      -0.450040043961243,
+      -0.496178932006319,
+      0.571212032623079,
+      0.510558661645138,
+      0.297938718576735,
+      0.27891625957249,
+      0.329018037294113,
+      0.343419920046724,
+      -0.349764819249835,
+      -0.445393984283404,
+      -0.0818727010144745,
+      -0.127602673448677,
+      -0.378029597271313,
+      -0.332940913185244
     ),
     dim = c(6L, 3L),
     dimnames = list(NULL, c("x", "y", "z"))
@@ -45,7 +45,7 @@ test_that("layout_with_coarsened_pmds fails with invalid input", {
   expect_error(layout_with_coarsened_pmds(g, pivots = "Invalid"))
   expect_error(layout_with_coarsened_pmds(g, n_iter = -1))
   expect_error(layout_with_coarsened_pmds(g, n_iter = "Invalid"))
-  expect_error(layout_with_coarsened_pmds(g, jitter_sd = 0))
+  expect_error(layout_with_coarsened_pmds(g, jitter_sd = 1))
   expect_error(layout_with_coarsened_pmds(g, jitter_sd = "Invalid"))
   expect_error(layout_with_coarsened_pmds(g, weight_edges_by = "Invalid"))
   expect_error(layout_with_coarsened_pmds(g, leiden_iterations = "Invalid"))
