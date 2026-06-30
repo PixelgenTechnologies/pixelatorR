@@ -369,6 +369,9 @@ DifferentialProximityAnalysis.Matrix <- function(
       if (ncol(cur_keys) > 1) {
         cur_reference <- paste0(reference, " (", paste(cur_keys[, group_vars, drop = TRUE], collapse = ", "), ")")
         cur_target <- paste0(target, " (", paste(cur_keys[, group_vars, drop = TRUE], collapse = ", "), ")")
+      } else {
+        cur_reference <- reference
+        cur_target <- target
       }
       if (n_comps_reference < min_cells_per_group && n_comps_target < min_cells_per_group) {
         cli::cli_warn(
@@ -415,6 +418,11 @@ DifferentialProximityAnalysis.Matrix <- function(
 
   if (verbose && check_global_verbosity()) {
     cli_progress_done()
+  }
+
+  valid_results <- sapply(diff_prox_res, function(x) !is.null(x))
+  if (!any(valid_results)) {
+    cli::cli_abort("No valid results were generated. Please check your input data and parameters.")
   }
 
   .finalize_da_results(diff_prox_res, p_adjust_method, group_vars) %>%

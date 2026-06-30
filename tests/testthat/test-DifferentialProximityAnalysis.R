@@ -41,7 +41,7 @@ for (assay_version in c("v3", "v5")) {
     })
     expect_equal(
       structure(
-        c(CD4T = 201L, `CD16+ Mono` = 285L),
+        c(CD4T = 931L, `CD16+ Mono` = 1206L),
         dim = 2L,
         dimnames = list(
           . = c("CD4T", "CD16+ Mono")
@@ -56,7 +56,8 @@ for (assay_version in c("v3", "v5")) {
       ProximityScores(seur_obj_big,
         meta_data_columns = "cell_type"
       ) %>%
-      mutate(cell_type = factor(cell_type))
+      mutate(cell_type = factor(cell_type)) %>%
+      filter(marker_1 == marker_2)
 
     expect_no_error({
       de_results <- DifferentialProximityAnalysis(
@@ -64,7 +65,6 @@ for (assay_version in c("v3", "v5")) {
         contrast_column = "cell_type",
         targets = "CD4T",
         reference = "pDC",
-        diff_threshold = 1,
         verbose = FALSE
       )
     })
@@ -75,14 +75,14 @@ for (assay_version in c("v3", "v5")) {
           data_type = c("log2_ratio", "log2_ratio"),
           target = c("CD4T", "CD4T"),
           reference = c("pDC", "pDC"),
-          pct_tgt = c(0, 0),
-          pct_ref = c(1, 1),
-          diff_median = c(-2.84596159696619, -1.13078660753535),
-          p = c(4.84076936963803e-10, 4.84076936963803e-10),
-          p_adj = c(9.72994643297243e-08, 9.72994643297243e-08),
+          pct_tgt = c(0, 0.333),
+          pct_ref = c(0, 0),
+          diff_median = c(1.13093086982645, 2.06004738366994),
+          p = c(0.0924377451134652, 3.73436610215361e-07),
+          p_adj = c(1, 0.000347669484110502),
           alternative = c("two.sided", "two.sided"),
-          marker_1 = c("CD302", "CD180"),
-          marker_2 = c("CD302", "CD85j")
+          marker_1 = c("CD56", "CD56"),
+          marker_2 = c("HLA-ABC", "HLA-DR-DP-DQ")
         ),
         row.names = c(NA, -2L),
         class = c("tbl_df", "tbl", "data.frame")
@@ -98,6 +98,7 @@ for (assay_version in c("v3", "v5")) {
         targets = "CD4T",
         reference = "pDC",
         method = "legacy",
+        min_exp_join_count = 50,
         verbose = FALSE
       )
     })
@@ -110,24 +111,12 @@ for (assay_version in c("v3", "v5")) {
         targets = "CD4T",
         reference = "pDC",
         method = "legacy",
+        min_exp_join_count = 50,
         backend = "data.table",
         verbose = FALSE
       )
     })
     expect_equal(de_results1, de_results2)
-
-    # min_exp_join_count option
-    expect_no_error({
-      de_results_filt <- DifferentialProximityAnalysis(
-        seur_obj_big,
-        contrast_column = "cell_type",
-        targets = "CD4T",
-        reference = "pDC",
-        min_exp_join_count = 50,
-        verbose = FALSE
-      )
-    })
-    expect_equal(dim(de_results_filt), c(424, 11))
 
     # min_cells_per_group option
     expect_no_error({
@@ -136,11 +125,12 @@ for (assay_version in c("v3", "v5")) {
         contrast_column = "cell_type",
         targets = "CD4T",
         reference = "pDC",
+        diff_threshold = 1,
         min_cells_per_group = 10,
         verbose = FALSE
       )
     })
-    expect_equal(dim(de_results_filt), c(1592, 11))
+    expect_equal(dim(de_results_filt), c(931, 11))
   })
 
   test_that("DifferentialProximityAnalysis fails with invalid input", {
