@@ -23,6 +23,7 @@ for (assay_version in c("v3", "v5")) {
         contrast_column = "cell_type",
         targets = "CD4T",
         reference = "pDC",
+        diff_threshold = 1,
         verbose = FALSE
       )
     })
@@ -34,12 +35,13 @@ for (assay_version in c("v3", "v5")) {
         contrast_column = "cell_type",
         targets = c("CD4T", "CD16+ Mono"),
         reference = "pDC",
+        diff_threshold = 1,
         verbose = FALSE
       )
     })
     expect_equal(
       structure(
-        c(CD4T = 773L, `CD16+ Mono` = 878L),
+        c(CD4T = 201L, `CD16+ Mono` = 285L),
         dim = 2L,
         dimnames = list(
           . = c("CD4T", "CD16+ Mono")
@@ -57,11 +59,12 @@ for (assay_version in c("v3", "v5")) {
       mutate(cell_type = factor(cell_type))
 
     expect_no_error({
-      DifferentialProximityAnalysis(
+      de_results <- DifferentialProximityAnalysis(
         prox_scores,
         contrast_column = "cell_type",
         targets = "CD4T",
         reference = "pDC",
+        diff_threshold = 1,
         verbose = FALSE
       )
     })
@@ -69,16 +72,17 @@ for (assay_version in c("v3", "v5")) {
     expected_data <-
       structure(
         list(
-          data_type = c("join_count_z", "join_count_z"),
+          data_type = c("log2_ratio", "log2_ratio"),
           target = c("CD4T", "CD4T"),
           reference = c("pDC", "pDC"),
-          n_tgt = c(0, 0),
-          n_ref = c(10, 10),
-          diff_median = c(-0.325941157393986, -0.806975315413949),
+          pct_tgt = c(0, 0),
+          pct_ref = c(1, 1),
+          diff_median = c(-2.84596159696619, -1.13078660753535),
           p = c(4.84076936963803e-10, 4.84076936963803e-10),
-          p_adj = c(3.74191472273019e-07, 3.74191472273019e-07),
+          p_adj = c(9.72994643297243e-08, 9.72994643297243e-08),
           alternative = c("two.sided", "two.sided"),
-          pair = c("CD50:CD53", "CD29:CD53")
+          marker_1 = c("CD302", "CD180"),
+          marker_2 = c("CD302", "CD85j")
         ),
         row.names = c(NA, -2L),
         class = c("tbl_df", "tbl", "data.frame")
@@ -112,18 +116,18 @@ for (assay_version in c("v3", "v5")) {
     })
     expect_equal(de_results1, de_results2)
 
-    # min_join_count option
+    # min_exp_join_count option
     expect_no_error({
       de_results_filt <- DifferentialProximityAnalysis(
         seur_obj_big,
         contrast_column = "cell_type",
         targets = "CD4T",
         reference = "pDC",
-        min_join_count = 50,
+        min_exp_join_count = 50,
         verbose = FALSE
       )
     })
-    expect_equal(dim(de_results_filt), c(268, 10))
+    expect_equal(dim(de_results_filt), c(424, 11))
 
     # min_cells_per_group option
     expect_no_error({
@@ -136,7 +140,7 @@ for (assay_version in c("v3", "v5")) {
         verbose = FALSE
       )
     })
-    expect_equal(dim(de_results_filt), c(773, 10))
+    expect_equal(dim(de_results_filt), c(1592, 11))
   })
 
   test_that("DifferentialProximityAnalysis fails with invalid input", {
