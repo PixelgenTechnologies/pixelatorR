@@ -272,27 +272,24 @@ prob_distance_weights <- function(
 
   # Remove pre-existing attributes if they exist to prevent duplicates
   if ("bi_prob" %in% igraph::edge_attr_names(g)) g <- igraph::delete_edge_attr(g, "bi_prob")
-  if ("scores" %in% igraph::edge_attr_names(g))  g <- igraph::delete_edge_attr(g, "scores")
+  if ("scores" %in% igraph::edge_attr_names(g)) g <- igraph::delete_edge_attr(g, "scores")
 
   # Prepare the vertex pairs vector for igraph mapping: c(from1, to1, from2, to2, ...)
   # Interleave the 'i' and 'j' coordinates
-  vp_pairs <- P_triplets %>% select(i, j) #as.vector(rbind(P_triplets$i, P_triplets$j))
+  vp_pairs <- P_triplets %>% select(i, j)
 
   # Fast lookup of edge IDs corresponding to these vertex pairs
   # multi = FALSE prevents issues if duplicate edge pairs exist
   edge_ids <- igraph::get_edge_ids(g, vp = vp_pairs, directed = FALSE)
 
-  # Filter out pairs that evaluated to 0 (meaning no actual edge exists in the graph)
-  #valid_indices <- edge_ids > 0
-  
   # Assign attributes directly to the matched edges using vector indexing
-  # Initialize vectors of NA or default values to fill 
+  # Initialize vectors of NA or default values to fill
   bi_prob_vector <- rep(NA_real_, igraph::ecount(g))
   bi_prob_vector[edge_ids] <- P_triplets$x[edge_ids]
-  
+
   # Assign to graph edge attributes
   igraph::E(g)$bi_prob <- bi_prob_vector
-  igraph::E(g)$scores  <- -log(bi_prob_vector)
+  igraph::E(g)$scores <- -log(bi_prob_vector)
 
   return(g)
 }

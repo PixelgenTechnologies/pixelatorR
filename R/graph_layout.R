@@ -583,7 +583,7 @@ center_layout_coordinates <- function(
 
   # Center layout coordinates
   layout <- scale(layout, center = TRUE, scale = FALSE)
-  
+
   if (inherits(layout, what = "matrix") && as_tibble) {
     layout <- as_tibble(layout)
   }

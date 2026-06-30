@@ -120,9 +120,9 @@ layout_with_coarsened_pmds <- function(
 
   # Create a cluster-level adjacency matrix cleanly
   mm <- Matrix::sparseMatrix(
-    i = seq_along(cl), 
-    j = cl, 
-    x = 1, 
+    i = seq_along(cl),
+    j = cl,
+    x = 1,
     dims = c(length(cl), length(unique(cl))),
     giveCsparse = TRUE
   )
@@ -158,7 +158,7 @@ layout_with_coarsened_pmds <- function(
   # Compute row sums exactly ONCE up front
   row_sums_orig <- Matrix::rowSums(A_orig)
   # Guard against 0 values if any isolated nodes exist (unlikely with self loops, but safe)
-  row_sums_orig <- pmax(row_sums_orig, 1) 
+  row_sums_orig <- pmax(row_sums_orig, 1)
 
   # Extract triplets efficiently
   A_triplets <- Matrix::summary(A_orig)
@@ -197,8 +197,8 @@ layout_with_coarsened_pmds <- function(
     xyz_full <- xyz_full + rnorm(total_elements, mean = 0, sd = jitter_sd)
     xyz_full <- P %*% xyz_full
   }
-  
-  # Ensure array typing remains raw matrix 
+
+  # Ensure array typing remains raw matrix
   if (!is.matrix(xyz_full)) xyz_full <- as.matrix(xyz_full)
 
   # Renormalize coordinates after smoothing

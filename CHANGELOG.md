@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Updates
+- Updated default parameter settings for `layout_with_coarsened_pmds`. Also added options `leiden_weighted` and `leiden_iterations` to get more fine tuning control.
 - Added option to `MoleculeRankPlot` to highlight results from size filters and to facet plot by groups (`group_by`).
 
 ### Fixes
