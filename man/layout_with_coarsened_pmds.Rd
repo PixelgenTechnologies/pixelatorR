@@ -9,9 +9,11 @@ layout_with_coarsened_pmds(
   dim = 3,
   resolution = 1,
   pivots = 200,
-  n_iter = 10,
+  n_iter = 20,
   jitter_sd = 0.01,
-  weight_edges_by = c("tp", "crossing_edges"),
+  weight_edges_by = c("crossing_edges", "tp"),
+  leiden_iterations = 2,
+  leiden_weighted = FALSE,
   seed = 123,
   verbose = FALSE
 )
@@ -35,6 +37,10 @@ PMDS layout. "tp" uses bidirectional transition probabilities for 5-step
 random walks using the \code{layout_with_weighted_pmds} function. "crossing_edges"
 uses 1 divided by the number of edges crossing between communities (from the
 coarsening step) as weights.}
+
+\item{leiden_iterations}{Number of iterations for the Leiden community detection algorithm.}
+
+\item{leiden_weighted}{Whether to use weighted edges for the Leiden community detection.}
 
 \item{seed}{Random seed for reproducibility.}
 

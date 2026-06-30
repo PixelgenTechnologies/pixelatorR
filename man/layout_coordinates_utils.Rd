@@ -7,9 +7,9 @@
 \alias{project_layout_coordinates_on_unit_sphere}
 \title{Layout Coordinates Utility Functions}
 \usage{
-center_layout_coordinates(layout)
+center_layout_coordinates(layout, as_tibble = TRUE)
 
-normalize_layout_coordinates(layout)
+normalize_layout_coordinates(layout, as_tibble = TRUE)
 
 project_layout_coordinates_on_unit_sphere(layout)
 }
