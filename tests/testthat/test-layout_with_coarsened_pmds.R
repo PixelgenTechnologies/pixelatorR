@@ -48,4 +48,6 @@ test_that("layout_with_coarsened_pmds fails with invalid input", {
   expect_error(layout_with_coarsened_pmds(g, jitter_sd = 0))
   expect_error(layout_with_coarsened_pmds(g, jitter_sd = "Invalid"))
   expect_error(layout_with_coarsened_pmds(g, weight_edges_by = "Invalid"))
+  expect_error(layout_with_coarsened_pmds(g, leiden_iterations = "Invalid"))
+  expect_error(layout_with_coarsened_pmds(g, leiden_weighted = "Invalid"))
 })
