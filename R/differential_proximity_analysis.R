@@ -47,7 +47,7 @@ DifferentialProximityAnalysis.data.frame <- function(
   metric_type = c("all", "self", "co"),
   backend = c("dplyr", "data.table"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
-  min_cells_per_group = 3,
+  min_cells_per_group = 10,
   verbose = TRUE,
   ...
 ) {
@@ -253,7 +253,7 @@ DifferentialProximityAnalysis.data.frame <- function(
 
 #' @param group_data A data.frame with a column for the contrast and optional group variables.
 #' The rownames of this data.frame should correspond to the columns names of the matrix `object`.
-#' @param diff_trehsold Minimum difference in proximity metric to consider a pair of groups for
+#' @param diff_threshold Minimum difference in proximity metric to consider a pair of groups for
 #' testing. Default is 0.1.
 #'
 #' @param group_data A tibble with a column for the contrast and optional group variables.
@@ -273,8 +273,8 @@ DifferentialProximityAnalysis.Matrix <- function(
   group_vars = NULL,
   proximity_metric = "join_count_z",
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
-  diff_trehsold = 0.1,
-  min_cells_per_group = 3,
+  diff_threshold = 0.01,
+  min_cells_per_group = 10,
   verbose = TRUE,
   ...
 ) {
@@ -286,6 +286,12 @@ DifferentialProximityAnalysis.Matrix <- function(
     reference = reference,
     targets = targets,
     group_vars = group_vars
+  )
+
+  # Create full assay to use for differential testing
+  prox_assay <- CreateAssay5Object(
+    counts = object,
+    data = object
   )
 
   # Define targets as all groups except the reference if not specified
@@ -354,11 +360,6 @@ DifferentialProximityAnalysis.Matrix <- function(
       filter(!!sym(contrast_column) != reference) %>%
       pull(component)
 
-    prox_assay <- CreateAssay5Object(
-      counts = object,
-      data = object
-    )
-
     n_comps_reference <- length(components_reference)
     n_comps_target <- length(components_target)
     if (n_comps_reference < min_cells_per_group || n_comps_target < min_cells_per_group) {
@@ -369,15 +370,18 @@ DifferentialProximityAnalysis.Matrix <- function(
       }
       if (n_comps_reference < min_cells_per_group && n_comps_target < min_cells_per_group) {
         cli::cli_warn(
-          "Skipping {cur_target} vs {cur_reference} because both groups have fewer than {.val {min_cells_per_group}} cells."
+          "Skipping {cur_target} vs {cur_reference} because both
+           groups have fewer than {.val {min_cells_per_group}} cells."
         )
       } else if (n_comps_reference < min_cells_per_group && n_comps_target >= min_cells_per_group) {
         cli::cli_warn(
-          "Skipping {cur_target} vs {cur_reference} because the reference group has fewer than {.val {min_cells_per_group}} cells."
+          "Skipping {cur_target} vs {cur_reference} because the reference
+           group has fewer than {.val {min_cells_per_group}} cells."
         )
       } else if (n_comps_target < min_cells_per_group && n_comps_reference >= min_cells_per_group) {
         cli::cli_warn(
-          "Skipping {cur_target} vs {cur_reference} because the target group has fewer than {.val {min_cells_per_group}} cells."
+          "Skipping {cur_target} vs {cur_reference} because the target group
+           has fewer than {.val {min_cells_per_group}} cells."
         )
       }
       next
@@ -387,7 +391,7 @@ DifferentialProximityAnalysis.Matrix <- function(
       object = prox_assay,
       cells.1 = components_target,
       cells.2 = components_reference,
-      logfc.threshold = diff_trehsold,
+      logfc.threshold = diff_threshold,
       test.use = "wilcox",
       min.pct = 0,
       mean.fxn = sparseMatrixStats::rowMedians,
@@ -421,7 +425,7 @@ DifferentialProximityAnalysis.Matrix <- function(
 
 #' @param lazy If TRUE, the proximity scores will be loaded lazily and filtered using the
 #' `duckdb` backend.
-#' @param min_join_count Minimum number of join counts required for a marker pair to be
+#' @param min_exp_join_count Minimum number of join counts required for a marker pair to be
 #' included in the analysis. Default is 10.
 #' @param method One of "seurat" or "legacy". The former uses the Seurat framework for
 #' differential testing, while the latter uses a custom implementation. The main difference
@@ -449,8 +453,8 @@ DifferentialProximityAnalysis.Seurat <- function(
   assay = NULL,
   group_vars = NULL,
   lazy = FALSE,
-  min_join_count = 10,
-  min_cells_per_group = 3,
+  min_exp_join_count = 10,
+  min_cells_per_group = 10,
   proximity_metric = "join_count_z",
   metric_type = c("all", "self", "co"),
   method = c("seurat", "legacy"),
@@ -474,7 +478,7 @@ DifferentialProximityAnalysis.Seurat <- function(
     self = proximity_data %>% filter(marker_1 == marker_2),
     co = proximity_data %>% filter(marker_1 != marker_2)
   ) %>%
-    filter(join_count >= min_join_count)
+    filter(join_count_expected_mean >= min_exp_join_count)
   proximity_data <- proximity_data %>% compute()
   if (method == "seurat") {
     proximity_data <- proximity_data %>%
