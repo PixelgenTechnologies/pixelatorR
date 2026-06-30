@@ -97,7 +97,7 @@ layout_with_coarsened_pmds <- function(
   # Run Leiden community detection
   if (leiden_weighted) {
     g <- g %>% prob_distance_weights(k = 1, min_weight = 0)
-    ew <- -log10(E(g)$bi_prob)
+    ew <- -log10(igraph::E(g)$bi_prob)
     ew <- ew / mean(ew)
   } else {
     ew <- NULL
@@ -150,7 +150,7 @@ layout_with_coarsened_pmds <- function(
   }
 
   # Normalize the layout coordinates
-  xyz <- normalize_layout_coordinates(xyz, as_tibble = FALSE)
+  xyz <- normalize_layout_coordinates(xyz, as_df = FALSE)
 
   # Create transition probability matrix weighted by within and between clusters
   Matrix::diag(A_orig) <- 1
@@ -202,7 +202,7 @@ layout_with_coarsened_pmds <- function(
   if (!is.matrix(xyz_full)) xyz_full <- as.matrix(xyz_full)
 
   # Renormalize coordinates after smoothing
-  xyz_full <- normalize_layout_coordinates(xyz_full, as_tibble = FALSE)
+  xyz_full <- normalize_layout_coordinates(xyz_full, as_df = FALSE)
   colnames(xyz_full) <- c("x", "y", "z")[seq_len(dim)]
 
   return(xyz_full)

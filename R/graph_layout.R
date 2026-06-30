@@ -512,6 +512,7 @@ ComputeLayout.Seurat <- function(
 #' Centers each axis of the layout coordinates around their means.
 #'
 #' @param layout A matrix-like object with layout coordinates
+#' @param as_df Logical indicating whether the output should be a \code{tbl_df} object
 #'
 #' @name layout coordinates utils
 #' @rdname layout_coordinates_utils
@@ -565,10 +566,10 @@ ComputeLayout.Seurat <- function(
 #'
 center_layout_coordinates <- function(
   layout,
-  as_tibble = TRUE
+  as_df = TRUE
 ) {
   assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
-  assert_single_value(as_tibble, type = "bool")
+  assert_single_value(as_df, type = "bool")
   if (!(ncol(layout) %in% c(2, 3))) {
     cli::cli_abort(
       c(
@@ -584,7 +585,7 @@ center_layout_coordinates <- function(
   # Center layout coordinates
   layout <- scale(layout, center = TRUE, scale = FALSE)
 
-  if (inherits(layout, what = "matrix") && as_tibble) {
+  if (inherits(layout, what = "matrix") && as_df) {
     layout <- as_tibble(layout)
   }
 
@@ -605,10 +606,10 @@ center_layout_coordinates <- function(
 #'
 normalize_layout_coordinates <- function(
   layout,
-  as_tibble = TRUE
+  as_df = TRUE
 ) {
   assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
-  assert_single_value(as_tibble, type = "bool")
+  assert_single_value(as_df, type = "bool")
   if (!(ncol(layout) %in% c(2, 3))) {
     cli::cli_abort(
       c(
@@ -618,7 +619,7 @@ normalize_layout_coordinates <- function(
     )
   }
 
-  layout <- center_layout_coordinates(layout, as_tibble = as_tibble)
+  layout <- center_layout_coordinates(layout, as_df = as_df)
 
   radii <- sqrt(rowSums(layout^2))
 
@@ -628,7 +629,7 @@ normalize_layout_coordinates <- function(
   layout <- sweep(layout, 1, median_radius, FUN = "/")
   # nolint end
 
-  if (as_tibble) {
+  if (as_df) {
     layout <- as_tibble(layout)
   }
 
