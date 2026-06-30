@@ -15,7 +15,7 @@ DifferentialProximityAnalysis(object, ...)
   reference,
   targets = NULL,
   group_vars = NULL,
-  proximity_metric = "join_count_z",
+  proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
   backend = c("dplyr", "data.table"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -31,9 +31,11 @@ DifferentialProximityAnalysis(object, ...)
   reference,
   targets = NULL,
   group_vars = NULL,
-  proximity_metric = "join_count_z",
+  proximity_metric = "log2_ratio",
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
   min_cells_per_group = 10,
   verbose = TRUE,
   ...
@@ -47,9 +49,12 @@ DifferentialProximityAnalysis(object, ...)
   assay = NULL,
   group_vars = NULL,
   lazy = FALSE,
-  min_exp_join_count = 10,
+  min_exp_join_count = 0,
   min_cells_per_group = 10,
-  proximity_metric = "join_count_z",
+  diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
+  proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
   method = c("seurat", "legacy"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -94,7 +99,15 @@ observations than \code{min_cells_per_group} will be skipped.}
 The rownames of this tibble should correspond to the columns names of the matrix \code{object}.}
 
 \item{diff_threshold}{Minimum difference in proximity metric to consider a pair of groups for
-testing. Default is 0.1.}
+testing. Default is 0.1. This parameter is only used when the \code{method} argument is set to "seurat".}
+
+\item{min_pct}{Minimum percentage of cells in either group that must express a marker pair for it
+to be considered for testing. Default is 0. This parameter is only used when the \code{method} argument
+is set to "seurat".}
+
+\item{min_diff_pct}{Minimum difference in percentage of cells expressing a marker pair between the
+two groups for it to be considered for testing. Default is -Inf. This parameter is only used when
+the \code{method} argument is set to "seurat".}
 
 \item{assay}{Name of assay to use}
 
@@ -102,7 +115,7 @@ testing. Default is 0.1.}
 \code{duckdb} backend.}
 
 \item{min_exp_join_count}{Minimum number of join counts required for a marker pair to be
-included in the analysis. Default is 10.}
+included in the analysis.}
 
 \item{method}{One of "seurat" or "legacy". The former uses the Seurat framework for
 differential testing, while the latter uses a custom implementation. The main difference

@@ -43,7 +43,7 @@ DifferentialProximityAnalysis.data.frame <- function(
   reference,
   targets = NULL,
   group_vars = NULL,
-  proximity_metric = "join_count_z",
+  proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
   backend = c("dplyr", "data.table"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -254,7 +254,13 @@ DifferentialProximityAnalysis.data.frame <- function(
 #' @param group_data A data.frame with a column for the contrast and optional group variables.
 #' The rownames of this data.frame should correspond to the columns names of the matrix `object`.
 #' @param diff_threshold Minimum difference in proximity metric to consider a pair of groups for
-#' testing. Default is 0.1.
+#' testing. Default is 0.1. This parameter is only used when the `method` argument is set to "seurat".
+#' @param min_pct Minimum percentage of cells in either group that must express a marker pair for it
+#' to be considered for testing. Default is 0. This parameter is only used when the `method` argument
+#' is set to "seurat".
+#' @param min_diff_pct Minimum difference in percentage of cells expressing a marker pair between the
+#' two groups for it to be considered for testing. Default is -Inf. This parameter is only used when
+#' the `method` argument is set to "seurat".
 #'
 #' @param group_data A tibble with a column for the contrast and optional group variables.
 #' The rownames of this tibble should correspond to the columns names of the matrix `object`.
@@ -271,9 +277,11 @@ DifferentialProximityAnalysis.Matrix <- function(
   reference,
   targets = NULL,
   group_vars = NULL,
-  proximity_metric = "join_count_z",
+  proximity_metric = "log2_ratio",
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
   min_cells_per_group = 10,
   verbose = TRUE,
   ...
@@ -286,12 +294,6 @@ DifferentialProximityAnalysis.Matrix <- function(
     reference = reference,
     targets = targets,
     group_vars = group_vars
-  )
-
-  # Create full assay to use for differential testing
-  prox_assay <- CreateAssay5Object(
-    counts = object,
-    data = object
   )
 
   # Define targets as all groups except the reference if not specified
@@ -387,17 +389,13 @@ DifferentialProximityAnalysis.Matrix <- function(
       next
     }
 
-    de_results <- Seurat::FindMarkers(
-      object = prox_assay,
-      cells.1 = components_target,
-      cells.2 = components_reference,
-      logfc.threshold = diff_threshold,
-      test.use = "wilcox",
-      min.pct = 0,
-      mean.fxn = sparseMatrixStats::rowMedians,
-      fc.name = "difference",
-      verbose = FALSE,
-      min.cells.group = min_cells_per_group
+    de_results <- .wilcox_de_test(
+      object,
+      cells_1 = components_target,
+      cells_2 = components_reference,
+      min_diff = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct
     )
 
     # Tidy up the results
@@ -405,8 +403,8 @@ DifferentialProximityAnalysis.Matrix <- function(
       data_type = proximity_metric,
       target = cur_keys[, contrast_column, drop = TRUE],
       reference = reference,
-      n_tgt = round(de_results$pct.1 * length(components_target)),
-      n_ref = round(de_results$pct.2 * length(components_reference)),
+      pct_tgt = de_results$pct_1,
+      pct_ref = de_results$pct_2,
       diff_median = de_results$difference,
       p = de_results$p_val,
       alternative = "two.sided",
@@ -419,14 +417,15 @@ DifferentialProximityAnalysis.Matrix <- function(
     cli_progress_done()
   }
 
-  .finalize_da_results(diff_prox_res, p_adjust_method, group_vars)
+  .finalize_da_results(diff_prox_res, p_adjust_method, group_vars) %>%
+    tidyr::separate(pair, into = c("marker_1", "marker_2"), sep = ":")
 }
 
 
 #' @param lazy If TRUE, the proximity scores will be loaded lazily and filtered using the
 #' `duckdb` backend.
 #' @param min_exp_join_count Minimum number of join counts required for a marker pair to be
-#' included in the analysis. Default is 10.
+#' included in the analysis.
 #' @param method One of "seurat" or "legacy". The former uses the Seurat framework for
 #' differential testing, while the latter uses a custom implementation. The main difference
 #' between the two methods is that missing observations are handled differently. With
@@ -453,9 +452,12 @@ DifferentialProximityAnalysis.Seurat <- function(
   assay = NULL,
   group_vars = NULL,
   lazy = FALSE,
-  min_exp_join_count = 10,
+  min_exp_join_count = 0,
   min_cells_per_group = 10,
-  proximity_metric = "join_count_z",
+  diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
+  proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
   method = c("seurat", "legacy"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -535,12 +537,147 @@ DifferentialProximityAnalysis.Seurat <- function(
       targets = targets,
       group_vars = group_vars,
       proximity_metric = proximity_metric,
+      diff_threshold = diff_threshold,
       p_adjust_method = p_adjust_method,
       min_cells_per_group = min_cells_per_group,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
       verbose = verbose,
       ...
     )
   )
 
   return(proximity_test_results)
+}
+
+#' Utility function to compute the median difference and percentage
+#' of cells expressing a feature in two groups.
+#'
+#' @param object A matrix where rows are features (e.g. marker pairs) and columns are cells.
+#' @param cells_1 A vector of cell names for group 1
+#' @param cells_2 A vector of cell names for group 2
+#'
+#' @noRd
+.median_difference <- function(object, cells_1, cells_2) {
+  pct_1 <- round(
+    Matrix::rowSums(object[, cells_1, drop = FALSE] > 0) /
+      length(x = cells_1),
+    digits = 3
+  )
+  pct_2 <- round(
+    Matrix::rowSums(object[, cells_2, drop = FALSE] > 0) /
+      length(x = cells_2),
+    digits = 3
+  )
+  data_1 <- sparseMatrixStats::rowMedians(object[, cells_1, drop = FALSE])
+  data_2 <- sparseMatrixStats::rowMedians(object[, cells_2, drop = FALSE])
+  med_diff <- (data_1 - data_2)
+  fc_results <- as.data.frame(x = cbind(med_diff, pct_1, pct_2))
+  colnames(fc_results) <- c("difference", "pct_1", "pct_2")
+  return(fc_results)
+}
+
+#' Utility function to perform Wilcoxon rank-sum test on two groups of cells.
+#'
+#' This function is adapted from Seurat::FindMarkers, mainly to avoid overhead
+#' costs associated with pbsapply.
+#'
+#' @param data_use A matrix where rows are features (e.g. marker pairs) and columns are cells.
+#' @param cells_1 A vector of cell names for group 1
+#' @param cells_2 A vector of cell names for group 2
+#' @param min_diff Minimum difference in median expression between the two groups to consider a feature
+#' @param min_pct Minimum percentage of cells expressing a feature in either group to consider it
+#' @param min_diff_pct Minimum difference in percentage of cells expressing a feature between the two
+#'
+#' @noRd
+.wilcox_de_test <- function(
+  data_use,
+  cells_1,
+  cells_2,
+  min_diff = 0.01,
+  min_pct = 0.01,
+  min_diff_pct = -Inf
+) {
+  fc_results <- .median_difference(
+    object = data_use,
+    cells_1 = cells_1,
+    cells_2 = cells_2
+  )
+
+  alpha_min <- pmax(fc_results$pct_1, fc_results$pct_2)
+  names(alpha_min) <- rownames(fc_results)
+  features <- names(which(alpha_min >= min_pct))
+
+  if (length(features) == 0) {
+    cli::cli_warn(
+      "No features pass min_pct threshold; returning empty data.frame"
+    )
+    return(fc_results[features, ])
+  }
+
+  alpha_diff <- alpha_min - pmin(fc_results$pct_1, fc_results$pct_2)
+  features <- names(which(alpha_min >= min_pct & alpha_diff >= min_diff_pct))
+  if (length(features) == 0) {
+    cli::cli_warn(
+      "No features pass min_diff_pct threshold; returning empty data.frame"
+    )
+    return(fc_results[features, ])
+  }
+
+  total_diff <- fc_results[, 1]
+  names(total_diff) <- rownames(fc_results)
+  features_diff <- names(which(abs(total_diff) >= min_diff))
+
+  features <- intersect(features, features_diff)
+  if (length(features) == 0) {
+    warning("No features pass min_diff threshold; returning empty data.frame")
+    return(fc_results[features, ])
+  }
+
+  data_use <- data_use[features, c(cells_1, cells_2), drop = FALSE]
+
+  group_info <- data.frame(
+    row.names = c(cells_1, cells_2),
+    group = factor(c(
+      rep("Group1", length(cells_1)),
+      rep("Group2", length(cells_2))
+    ))
+  )
+
+  presto_check <- requireNamespace("presto", quietly = TRUE)
+  if (presto_check[1]) {
+    data_use <- data_use[, rownames(group_info), drop = FALSE]
+    res <- presto::wilcoxauc(
+      X = data_use,
+      y = group_info[
+        ,
+        "group"
+      ]
+    )
+    res <- res[1:(nrow(x = res) / 2), ]
+    p_val <- res$pval
+  } else {
+    rlang::inform(
+      c(
+        "i" = "For a faster implementation of the Wilcoxon Rank Sum Test,
+      please install the presto package: pak::pak('immunogenomics/presto'",
+        "v" = "This message will only appear once per R session."
+      ),
+      .frequency = "once",
+      .frequency_id = "presto_not_installed"
+    )
+    j <- seq_along(cells_1)
+    data_use <- data_use[, rownames(group_info), drop = FALSE]
+    p_val <- sapply(seq_len(nrow(data_use)), function(x) {
+      return(min(2 * min(limma::rankSumTestWithCorrelation(
+        index = j,
+        statistics = data_use[x, ]
+      )), 1))
+    })
+  }
+  de_results <- cbind(
+    data.frame(p_val, row.names = rownames(data_use)),
+    fc_results[rownames(data_use), ]
+  )
+  return(de_results)
 }

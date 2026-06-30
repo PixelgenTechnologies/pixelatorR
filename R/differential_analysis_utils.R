@@ -201,7 +201,7 @@
 #' @noRd
 .finalize_da_results <- function(res_list, p_adjust_method, group_vars = NULL) {
   bind_rows(res_list) %>%
-    group_by(pick(all_of(c("target", group_vars)))) %>%
+    group_by(pick(all_of(group_vars))) %>%
     mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
     relocate(p_adj, .after = "p") %>%
     ungroup()
