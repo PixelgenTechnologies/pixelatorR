@@ -77,7 +77,10 @@ Suggests:
     RSpectra,
     pls,
     matrixStats,
-    FNN
+    sparseMatrixStats,
+    FNN,
+    presto
+Remotes: immunogenomics/presto
 Collate: 
     'generics.R'
     'CellGraph.R'
