@@ -10,7 +10,7 @@ layout_with_coarsened_pmds(
   resolution = 1,
   pivots = 200,
   n_iter = 20,
-  jitter_sd = 0.01,
+  jitter_sd = 0.001,
   weight_edges_by = c("crossing_edges", "tp"),
   leiden_iterations = 2,
   leiden_weighted = FALSE,
