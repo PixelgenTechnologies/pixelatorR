@@ -512,6 +512,7 @@ ComputeLayout.Seurat <- function(
 #' Centers each axis of the layout coordinates around their means.
 #'
 #' @param layout A matrix-like object with layout coordinates
+#' @param as_df Logical indicating whether the output should be a \code{tbl_df} object
 #'
 #' @name layout coordinates utils
 #' @rdname layout_coordinates_utils
@@ -564,9 +565,11 @@ ComputeLayout.Seurat <- function(
 #' @export
 #'
 center_layout_coordinates <- function(
-  layout
+  layout,
+  as_df = TRUE
 ) {
   assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
+  assert_single_value(as_df, type = "bool")
   if (!(ncol(layout) %in% c(2, 3))) {
     cli::cli_abort(
       c(
@@ -578,13 +581,13 @@ center_layout_coordinates <- function(
 
   # Force rename columns to x, y, z
   colnames(layout) <- c("x", "y", "z")[seq_len(ncol(layout))]
-  if (inherits(layout, what = "matrix")) {
-    layout <- as_tibble(layout)
-  }
 
   # Center layout coordinates
-  layout <- layout %>%
-    mutate(across(contains(c("x", "y", "z")), ~ .x - mean(.x)))
+  layout <- scale(layout, center = TRUE, scale = FALSE)
+
+  if (inherits(layout, what = "matrix") && as_df) {
+    layout <- as_tibble(layout)
+  }
 
   return(layout)
 }
@@ -602,9 +605,11 @@ center_layout_coordinates <- function(
 #' @export
 #'
 normalize_layout_coordinates <- function(
-  layout
+  layout,
+  as_df = TRUE
 ) {
   assert_non_empty_object(layout, classes = c("matrix", "data.frame"))
+  assert_single_value(as_df, type = "bool")
   if (!(ncol(layout) %in% c(2, 3))) {
     cli::cli_abort(
       c(
@@ -614,17 +619,19 @@ normalize_layout_coordinates <- function(
     )
   }
 
-  layout <- center_layout_coordinates(layout)
+  layout <- center_layout_coordinates(layout, as_df = as_df)
 
-  radii <- layout %>%
-    mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
-    rowSums()
-  radii <- sqrt(radii)
+  radii <- sqrt(rowSums(layout^2))
+
   # nolint start
   median_radius <- median(radii)
-  layout <- layout %>%
-    mutate(across(contains(c("x", "y", "z")), ~ .x / median_radius))
+  # Divide each coordinate by the median radius to normalize the layout
+  layout <- sweep(layout, 1, median_radius, FUN = "/")
   # nolint end
+
+  if (as_df) {
+    layout <- as_tibble(layout)
+  }
 
   return(layout)
 }

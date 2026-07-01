@@ -92,7 +92,7 @@ layout_with_weighted_pmds <- function(
     g <- cos_distance_weights(g, pivots)
   }
 
-  scores <- g %E>% pull(scores)
+  scores <- igraph::E(g)$scores
   scores[!is.finite(scores)] <- max(scores, na.rm = TRUE)
 
   if (pow != 1) {
@@ -259,7 +259,7 @@ prob_distance_weights <- function(
   k = 5,
   min_weight = 0.001
 ) {
-  assert_class(g, classes = "tbl_graph")
+  assert_class(g, classes = c("igraph", "tbl_graph"))
 
   A <- as_adjacency_matrix(g)
 
@@ -268,17 +268,28 @@ prob_distance_weights <- function(
   P_steps_bidirectional <- P_steps * Matrix::t(P_steps)
 
   # Extract edge scores and place in graph edge table
-  r_ids <- P_steps_bidirectional@i + 1
-  c_ids <- findInterval(seq(P_steps_bidirectional@x) - 1, P_steps_bidirectional@p[-1]) + 1
-  map_vals <- tibble(
-    from = r_ids,
-    to = c_ids,
-    bi_prob = P_steps_bidirectional@x
-  )
-  g <- g %E>%
-    select(-any_of(c("bi_prob", "scores"))) %>%
-    left_join(y = map_vals, by = c("from", "to"))
-  g <- g %E>% mutate(scores = -log(bi_prob))
+  P_triplets <- Matrix::summary(P_steps_bidirectional)
+
+  # Remove pre-existing attributes if they exist to prevent duplicates
+  if ("bi_prob" %in% igraph::edge_attr_names(g)) g <- igraph::delete_edge_attr(g, "bi_prob")
+  if ("scores" %in% igraph::edge_attr_names(g)) g <- igraph::delete_edge_attr(g, "scores")
+
+  # Prepare the vertex pairs vector for igraph mapping: c(from1, to1, from2, to2, ...)
+  # Interleave the 'i' and 'j' coordinates
+  vp_pairs <- P_triplets %>% select(i, j)
+
+  # Fast lookup of edge IDs corresponding to these vertex pairs
+  # multi = FALSE prevents issues if duplicate edge pairs exist
+  edge_ids <- igraph::get_edge_ids(g, vp = vp_pairs, directed = FALSE)
+
+  # Assign attributes directly to the matched edges using vector indexing
+  # Initialize vectors of NA or default values to fill
+  bi_prob_vector <- rep(NA_real_, igraph::ecount(g))
+  bi_prob_vector[edge_ids] <- P_triplets$x[edge_ids]
+
+  # Assign to graph edge attributes
+  igraph::E(g)$bi_prob <- bi_prob_vector
+  igraph::E(g)$scores <- -log(bi_prob_vector)
 
   return(g)
 }

@@ -7,14 +7,16 @@
 \alias{project_layout_coordinates_on_unit_sphere}
 \title{Layout Coordinates Utility Functions}
 \usage{
-center_layout_coordinates(layout)
+center_layout_coordinates(layout, as_df = TRUE)
 
-normalize_layout_coordinates(layout)
+normalize_layout_coordinates(layout, as_df = TRUE)
 
 project_layout_coordinates_on_unit_sphere(layout)
 }
 \arguments{
 \item{layout}{A matrix-like object with layout coordinates}
+
+\item{as_df}{Logical indicating whether the output should be a \code{tbl_df} object}
 }
 \value{
 A \code{tbl_df} object with adjusted layout coordinates

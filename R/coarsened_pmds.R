@@ -31,6 +31,8 @@
 #' random walks using the `layout_with_weighted_pmds` function. "crossing_edges"
 #' uses 1 divided by the number of edges crossing between communities (from the
 #' coarsening step) as weights.
+#' @param leiden_iterations Number of iterations for the Leiden community detection algorithm.
+#' @param leiden_weighted Whether to use weighted edges for the Leiden community detection.
 #' @param seed Random seed for reproducibility.
 #' @param verbose Whether to print messages about the coarsening process.
 #'
@@ -62,9 +64,11 @@ layout_with_coarsened_pmds <- function(
   dim = 3,
   resolution = 1,
   pivots = 200,
-  n_iter = 10,
-  jitter_sd = 1e-2,
-  weight_edges_by = c("tp", "crossing_edges"),
+  n_iter = 20,
+  jitter_sd = 1e-3,
+  weight_edges_by = c("crossing_edges", "tp"),
+  leiden_iterations = 2,
+  leiden_weighted = FALSE,
   seed = 123,
   verbose = FALSE
 ) {
@@ -72,24 +76,40 @@ layout_with_coarsened_pmds <- function(
   assert_single_value(dim, "integer")
   assert_within_limits(dim, c(2, 3))
   assert_single_value(resolution, "numeric")
-  assert_within_limits(resolution, c(0.01, 10))
+  assert_within_limits(resolution, c(0.1, 10))
   assert_single_value(pivots, "integer")
   assert_within_limits(pivots, c(10, min(1000, length(g))))
   assert_single_value(n_iter, "integer")
   assert_within_limits(n_iter, c(1, 100))
   assert_single_value(jitter_sd, "numeric")
-  assert_within_limits(jitter_sd, c(1e-3, 0.1))
-  weight_edges_by <- match.arg(weight_edges_by, c("tp", "crossing_edges"))
+  assert_within_limits(jitter_sd, c(0, 0.1))
+  weight_edges_by <- match.arg(weight_edges_by, c("crossing_edges", "tp"))
+  assert_single_value(leiden_iterations, "integer")
+  assert_within_limits(leiden_iterations, c(1, 10))
+  assert_single_value(leiden_weighted, "bool")
   assert_single_value(seed, "integer")
   assert_single_value(verbose, "bool")
   set.seed(seed)
 
   # Normalize resolution parameter to fit PNA graphs
-  # Here we use the number of edges to scale the resolution parameter
-  res <- resolution * igraph::gsize(g) / 1000
+  res <- resolution * igraph::gsize(g) / 2000
 
   # Run Leiden community detection
-  cl <- igraph::cluster_leiden(g, resolution = res, objective_function = "modularity")$membership
+  if (leiden_weighted) {
+    g <- g %>% prob_distance_weights(k = 1, min_weight = 0)
+    ew <- -log10(igraph::E(g)$bi_prob)
+    ew <- ew / mean(ew)
+    ew <- 1 / ew
+  } else {
+    ew <- NULL
+  }
+  cl <- igraph::cluster_leiden(
+    g,
+    resolution = res,
+    objective_function = "modularity",
+    n_iterations = leiden_iterations,
+    weights = ew
+  )$membership
   if (verbose) {
     cli::cli_alert_info("Graph size: {length(g)} nodes, {igraph::gsize(g)} edges.")
     cli::cli_alert_info("Detected {length(unique(cl))} communities.")
@@ -99,30 +119,30 @@ layout_with_coarsened_pmds <- function(
   # Fetch adjacency matrix
   A_orig <- igraph::as_adjacency_matrix(g)
 
-  # Create a cluster-level adjacency matrix by summing connections between clusters
-  mm <- Matrix::sparse.model.matrix(~ 0 + factor(cl)) %>% as("dgCMatrix")
+  # Create a cluster-level adjacency matrix cleanly
+  mm <- Matrix::sparseMatrix(
+    i = seq_along(cl),
+    j = cl,
+    x = 1,
+    dims = c(length(cl), length(unique(cl))),
+    giveCsparse = TRUE
+  )
   cl_counts <- Matrix::t(mm) %*% A_orig %*% mm
 
   # Remove internal cluster connections by setting the diagonal to zero
   Matrix::diag(cl_counts) <- 0
   cl_counts <- Matrix::drop0(cl_counts, tol = 0)
 
-  if (weight_edges_by == "tp") {
-    # When using transition probabilities, we need to set the edge weights to 1
-    A <- cl_counts
-    A@x <- rep(1, length(A@x))
-    g_small <- igraph::graph_from_adjacency_matrix(A, mode = "upper") %>%
-      as_tbl_graph(directed = FALSE)
+  # Drop tidygraph cast: Keep as raw igraph for speed
+  g_small <- igraph::graph_from_adjacency_matrix(cl_counts, mode = "upper", weighted = TRUE)
+  igraph::E(g_small)$inverse_weight <- 1 / igraph::E(g_small)$weight
 
+  if (weight_edges_by == "tp") {
     xyz <- layout_with_weighted_pmds(g_small, dim = dim, pivots = min(pivots, length(g_small)), seed = seed)
   }
 
   if (weight_edges_by == "crossing_edges") {
-    # When using crossing edges, we set the edge weights to 1 divided by the number
-    # of edges crossing between communities
-    g_small <- igraph::graph_from_adjacency_matrix(cl_counts, mode = "upper", weighted = "weight") %>%
-      as_tbl_graph(directed = FALSE)
-    w <- 1 / (g_small %E>% pull(weight))
+    w <- igraph::E(g_small)$inverse_weight
     xyz <- fast_pmds(g_small, dim = dim, pivots = min(pivots, length(g_small)), weights = w)
   }
 
@@ -130,57 +150,68 @@ layout_with_coarsened_pmds <- function(
     cli::cli_alert_info("Coarsened graph size: {length(g_small)} nodes, {igraph::gsize(g_small)} edges.")
   }
 
-  # Normalize the layout coordinates such that the median radius is 1
-  xyz <- xyz %>%
-    normalize_layout_coordinates() %>%
-    as.matrix()
+  # Normalize the layout coordinates
+  xyz <- normalize_layout_coordinates(xyz, as_df = FALSE)
 
-  # Create transition probability matrix weighted by within and between clusters
-  Matrix::diag(A_orig) <- 1
+  # Compute row sums and extract triplets
+  row_sums_orig <- Matrix::rowSums(A_orig)
+  A_triplets <- Matrix::summary(A_orig)
 
-  # Get the row and column index for every non-zero element
-  rows <- A_orig@i + 1
-  cols <- rep(seq_len(ncol(A_orig)), diff(A_orig@p))
+  # Identify within-cluster edges
+  is_within <- cl[A_triplets$i] == cl[A_triplets$j]
 
-  # Identify which of these non-zero elements connect within communities
-  keep <- cl[rows] == cl[cols]
+  # Construct A_within and A_between directly
+  A_within <- Matrix::sparseMatrix(
+    i = A_triplets$i[is_within],
+    j = A_triplets$j[is_within],
+    x = A_triplets$x[is_within],
+    dims = dim(A_orig)
+  )
 
-  # Filter the adjacency matrix to keep only within-community connections
-  A_within <- A_orig
-  A_within@x <- A_within@x * keep
+  A_between <- Matrix::sparseMatrix(
+    i = A_triplets$i[!is_within],
+    j = A_triplets$j[!is_within],
+    x = A_triplets$x[!is_within],
+    dims = dim(A_orig)
+  )
 
-  # Drop the now-zeroed entries to maintain sparsity
-  A_within <- Matrix::drop0(A_within)
+  # Compute row sums for separate scaling
+  d_within <- Matrix::rowSums(A_within) * 2
+  d_between <- Matrix::rowSums(A_between) * 2
 
-  # Calculate the between-community adjacency matrix by subtracting the
-  # within-community matrix from the original adjacency matrix
-  A_between <- Matrix::drop0(A_orig - A_within)
+  # Safeguard against 0 to prevent NaN/Inf during division
+  d_within_safe <- ifelse(d_within == 0, 1, d_within)
+  d_between_safe <- ifelse(d_between == 0, 1, d_between)
 
-  # Normalize the within and between adjacency matrices to create transition probabilities
-  # Use pmax to avoid division by zero for rows that have no connections
-  P_between <- A_between / pmax(Matrix::rowSums(A_between), 1)
-  P_within <- (A_within / pmax(Matrix::rowSums(A_within), 1))
+  # Scale the rows
+  A_within_scaled <- A_within / d_within_safe
+  A_between_scaled <- A_between / d_between_safe
 
-  # Combine the within and between transition probabilities and renormalize to ensure rows sum to 1
-  P <- P_within + P_between
+  # Combine and perform final renormalization
+  # If one was 0, it contributes 0, and the other contributes its normalized profile.
+  # The final rowSums normalization ensures the active one scales up to 1.
+  P <- A_within_scaled + A_between_scaled
   P <- P / Matrix::rowSums(P)
 
   # Extrapolate points to whole cell
-  # Repeat xyz such that each cl$membership is matched
-  xyz_full <- xyz[cl, ]
+  xyz_full <- xyz[cl, , drop = FALSE]
 
-  for (i in 1:n_iter) {
-    # Add noise
-    xyz_full <- xyz_full + matrix(rnorm(prod(dim(xyz_full)), sd = jitter_sd), nrow = nrow(xyz_full))
-    # Apply smoothing
-    xyz_full <- (P %*% xyz_full)
+  n_rows <- nrow(xyz_full)
+  n_cols <- ncol(xyz_full)
+  total_elements <- n_rows * n_cols
+
+  # Pre-allocation strategy for smoothing
+  for (i in seq_len(n_iter)) {
+    # Inline vector addition bypasses dense matrix creation over loops
+    xyz_full <- xyz_full + rnorm(total_elements, mean = 0, sd = jitter_sd)
+    xyz_full <- P %*% xyz_full
   }
-  xyz_full <- as.matrix(xyz_full)
+
+  # Ensure array typing remains raw matrix
+  if (!is.matrix(xyz_full)) xyz_full <- as.matrix(xyz_full)
 
   # Renormalize coordinates after smoothing
-  xyz_full <- xyz_full %>%
-    normalize_layout_coordinates() %>%
-    as.matrix()
+  xyz_full <- normalize_layout_coordinates(xyz_full, as_df = FALSE)
   colnames(xyz_full) <- c("x", "y", "z")[seq_len(dim)]
 
   return(xyz_full)
