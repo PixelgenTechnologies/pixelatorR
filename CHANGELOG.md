@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changes
 
 - Added `cpmds` option to `Plot2DGraph` and `Plot2DGraphM`.
+- Updated Credits section in the README to cite both the Proximity Network Assay and Molecular Pixelation papers.
 
 ## [0.18.2] - 2026-06-17
 

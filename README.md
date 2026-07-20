@@ -70,9 +70,13 @@ You can also email the development team at [developers@pixelgen.com](mailto:deve
 
 pixelatorR is developed and maintained by the [developers](https://github.com/PixelgenTechnologies) at [Pixelgen Technologies](https://pixelgen.com).
 
-When using pixelatorR in your research, please cite the following publication:
+When using pixelatorR in your research, please cite the following publication if you are working with Proximity Network Assay data:
 
-> Karlsson, F., Kallas, T., Thiagarajan, D. et al. Molecular pixelation: spatial proteomics of single cells by sequencing. Nat Methods (2024). https://doi.org/10.1038/s41592-024-02268-9
+> Filip Karlsson, Michele Simonetti, Christina Galonska, Max Karlsson, Hanna van Ooijen, Tomasz Kallas, Divya Thiagarajan, _et al._. "Single-Cell Protein Interactomes by the Proximity Network Assay". bioRxiv 2025.06.19.660329; doi: https://doi.org/10.1101/2025.06.19.660329
+
+And for Molecular Pixelation data, please cite:
+
+> Karlsson, Filip, Tomasz Kallas, Divya Thiagarajan, Max Karlsson, Maud Schweitzer, Jose Fernandez Navarro, Louise Leijonancker, _et al._ "Molecular pixelation: spatial proteomics of single cells by sequencing." Nature Methods, May 8, 2024. https://doi.org/10.1038/s41592-024-02268-9.
 
 Main developers:
 
