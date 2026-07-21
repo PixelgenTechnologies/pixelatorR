@@ -747,7 +747,7 @@ WriteMPX_pxl_file <- function(
     merged_layouts <- lapply(names(layouts), function(layout_type) {
       layout_tbl <- layouts[[layout_type]]
       # If the layout only has x,y columns, add a third z column of NAs
-      if (ncol(layout_tbl) == 2 & !"z" %in% names(layout_tbl)) {
+      if (ncol(layout_tbl) == 2 && !"z" %in% names(layout_tbl)) {
         layout_tbl <- layout_tbl %>% mutate(z = NA_real_)
       }
       layout_tbl <- layout_tbl %>% select(all_of(c("name", "x", "y", "z")))
