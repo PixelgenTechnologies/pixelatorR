@@ -36,27 +36,14 @@ CellGraphData(object, slot = "cellgraph") <- value
 
 library(pixelatorR)
 library(dplyr)
-#> 
-#> Attaching package: ‘dplyr’
-#> The following objects are masked from ‘package:stats’:
-#> 
-#>     filter, lag
-#> The following objects are masked from ‘package:base’:
-#> 
-#>     intersect, setdiff, setequal, union
 library(tidygraph)
-#> 
-#> Attaching package: ‘tidygraph’
-#> The following object is masked from ‘package:stats’:
-#> 
-#>     filter
 
 edge_list <-
   ReadMPX_item(
     minimal_mpx_pxl_file(),
     items = "edgelist"
   )
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHJMV20/temp_libpath17d2257665c68/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/Temp/RtmpszaM22/temp_libpath71507ecc7035/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 bipart_graph <-

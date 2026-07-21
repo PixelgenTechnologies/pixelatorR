@@ -35,7 +35,6 @@ library(pixelatorR)
 # Load example data
 pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
-#> ℹ Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHJMV20/temp_libpath17d2257665c68/pixelatorR/extdata/five_cells/five_cells.pxl
 counts[1:5, 1:5]
 #>       RCVCMP0000217 RCVCMP0000118 RCVCMP0000487 RCVCMP0000655 RCVCMP0000263
 #> CD274            18             6             9            23            22

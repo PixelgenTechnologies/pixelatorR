@@ -337,31 +337,31 @@ render_rotating_layout(
 #> 
 #> ── Creating video... 
 #> ✔ The video has been saved to:
-#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpemhbYW/filea21a6774b99f.gif
+#> C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc55f96eb2.gif
 magick::image_read(temp_gif)
 #> # A tibble: 20 × 7
 #>    format width height colorspace matte filesize density
 #>    <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-#>  1 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  2 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  3 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  4 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  5 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  6 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  7 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  8 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  9 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 10 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 11 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 12 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 13 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 14 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 15 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 16 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 17 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 18 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 19 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 20 GIF      500    500 sRGB       TRUE         0 +72x+72
+#>  1 GIF      500    500 sRGB       TRUE         0 72x72  
+#>  2 GIF      500    500 sRGB       TRUE         0 72x72  
+#>  3 GIF      500    500 sRGB       TRUE         0 72x72  
+#>  4 GIF      500    500 sRGB       TRUE         0 72x72  
+#>  5 GIF      500    500 sRGB       TRUE         0 72x72  
+#>  6 GIF      500    500 sRGB       TRUE         0 72x72  
+#>  7 GIF      500    500 sRGB       TRUE         0 72x72  
+#>  8 GIF      500    500 sRGB       TRUE         0 72x72  
+#>  9 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 10 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 11 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 12 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 13 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 14 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 15 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 16 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 17 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 18 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 19 GIF      500    500 sRGB       TRUE         0 72x72  
+#> 20 GIF      500    500 sRGB       TRUE         0 72x72  
 
 if (FALSE) { # \dontrun{
 # Include multiple facets

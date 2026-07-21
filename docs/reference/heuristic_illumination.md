@@ -115,5 +115,5 @@ render_rotating_layout(
 #> 
 #> ── Creating video... 
 #> ✔ The video has been saved to:
-#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpemhbYW/filea21a4ef05ae5.gif
+#> C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc737466fa.gif
 ```

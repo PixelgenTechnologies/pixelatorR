@@ -219,9 +219,6 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Load polarization scores
 polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHJMV20/temp_libpath17d2257665c68/pixelatorR/extdata/five_cells/five_cells.pxl
-#> →   Loading polarization data
-#> ✔ Returning a 'tbl_df' object
 polarization_table1$sample <- "Sample1"
 polarization_table2$sample <- "Sample2"
 polarization_table_merged <- bind_rows(polarization_table1, polarization_table2)
@@ -231,10 +228,6 @@ dpa_markers <- RunDPA(polarization_table_merged,
   contrast_column = "sample",
   targets = "Sample1", reference = "Sample2"
 )
-#> ℹ Splitting data by: marker
-#> ℹ Polarity metric: 'morans_z'
-#> ℹ Running 80 tests for the following comparison:
-#>   - Sample1 vs Sample2
 #> Warning: Got the following message when running wilcox.test test for marker 'ACTB': Sample1 vs Sample2
 #>   cannot compute exact confidence intervals with ties
 #> Warning: Got the following message when running wilcox.test test for marker 'B2M': Sample1 vs Sample2
@@ -415,7 +408,7 @@ dpa_markers
 
 # Seurat objects
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
-#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc705a2eb4.h5ad
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
@@ -425,10 +418,6 @@ dpa_markers <- RunDPA(seur_merged,
   contrast_column = "sample",
   targets = "Sample1", reference = "Sample2"
 )
-#> ℹ Splitting data by: marker
-#> ℹ Polarity metric: 'morans_z'
-#> ℹ Running 80 tests for the following comparison:
-#>   - Sample1 vs Sample2
 #> Warning: Got the following message when running wilcox.test test for marker 'ACTB': Sample1 vs Sample2
 #>   cannot compute exact confidence intervals with ties
 #> Warning: Got the following message when running wilcox.test test for marker 'B2M': Sample1 vs Sample2

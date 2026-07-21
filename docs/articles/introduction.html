@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.3</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -99,7 +99,7 @@ installed. However, <code>pixelatorR</code> is currently only available
 on GitHub and can be install via <code>remotes</code> or
 <code>devtools</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu">install_github</span><span class="op">(</span><span class="st">"PixelgenTechnologies/pixelatorR"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"PixelgenTechnologies/pixelatorR"</span><span class="op">)</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="getting-started">Getting started<a class="anchor" aria-label="anchor" href="#getting-started"></a>
@@ -118,6 +118,7 @@ you can download a PXL file and load it as a Seurat object:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">seur</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="st">"PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">477</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span></span></code></pre>
+<pre><code><span><span class="co">## <span style="color: #BBBB00;">!</span> Failed to remove temporary file <span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/RtmpasFgCQ/fileb28391bb54.h5ad</span></span></span></code></pre>
 </div>
 <div class="section level2">
 <h2 id="seurat-v5">Seurat v5<a class="anchor" aria-label="anchor" href="#seurat-v5"></a>

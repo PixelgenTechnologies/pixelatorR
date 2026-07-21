@@ -94,7 +94,7 @@ options(Seurat.object.assay.version = "v5")
 # Create Seurat object
 pxl_file <- minimal_mpx_pxl_file()
 se <- ReadMPX_Seurat(pxl_file)
-#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bcb064d8c.h5ad
 
 se_merged <- merge(se, list(se, se, se))
 #> Warning: Some cell names are duplicated across objects provided. Renaming to enforce unique cell names.
@@ -125,12 +125,12 @@ WriteMPX_pxl_file(se_merged, pxl_file)
 #> ✔ Exported merged edge list
 #> ✔ Exported merged meta data
 #> ✔ Exported anndata file
-#> ℹ Saving PXL file to /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpemhbYW/small.pxl
+#> ℹ Saving PXL file to C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/small.pxl
 #> ✔ Finished!
 
 # Read the new PXL file
 se_merged <- ReadMPX_Seurat(pxl_file)
-#> ✔ Created a 'Seurat' object with 20 cells and 80 targeted surface proteins
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc45385912.h5ad
 
 # Reset global option
 options(Seurat.object.assay.version = "v3")

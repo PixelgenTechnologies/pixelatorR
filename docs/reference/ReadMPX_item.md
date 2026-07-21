@@ -55,9 +55,6 @@ library(pixelatorR)
 # Load example data
 pxl_file <- minimal_mpx_pxl_file()
 polarization <- ReadMPX_item(pxl_file, items = "polarization")
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHJMV20/temp_libpath17d2257665c68/pixelatorR/extdata/five_cells/five_cells.pxl
-#> →   Loading polarization data
-#> ✔ Returning a 'tbl_df' object
 polarization
 #> # A tibble: 380 × 6
 #>    morans_i morans_p_value morans_p_adjusted morans_z marker component    
@@ -76,7 +73,4 @@ polarization
 
 # Alternative 2
 polarization <- ReadMPX_polarization(pxl_file)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHJMV20/temp_libpath17d2257665c68/pixelatorR/extdata/five_cells/five_cells.pxl
-#> →   Loading polarization data
-#> ✔ Returning a 'tbl_df' object
 ```

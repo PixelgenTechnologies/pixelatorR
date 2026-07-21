@@ -147,6 +147,7 @@ first.
 library(pixelatorR)
 library(dplyr)
 library(ggplot2)
+#> Warning: package 'ggplot2' was built under R version 4.5.3
 
 # Create a table with artificial DCA results
 # for the example

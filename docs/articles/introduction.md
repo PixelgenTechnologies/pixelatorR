@@ -71,6 +71,8 @@ seur <- ReadMPX_Seurat("PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl"
 
     ## ✔ Created a 'Seurat' object with 477 cells and 80 targeted surface proteins
 
+    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpasFgCQ/fileb28391bb54.h5ad
+
 ## Seurat v5
 
 In Seurat v5, a new Assay type was introduced called Assay5. Users can

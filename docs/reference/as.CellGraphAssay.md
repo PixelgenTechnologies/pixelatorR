@@ -56,14 +56,36 @@ A `CellGraphAssay` object
 
 library(pixelatorR)
 library(SeuratObject)
+#> Warning: package 'SeuratObject' was built under R version 4.5.3
+#> Loading required package: sp
+#> Warning: package 'sp' was built under R version 4.5.3
+#> 
+#> Attaching package: 'SeuratObject'
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, t
 library(dplyr)
+#> Warning: package 'dplyr' was built under R version 4.5.3
+#> 
+#> Attaching package: 'dplyr'
+#> The following objects are masked from 'package:stats':
+#> 
+#>     filter, lag
+#> The following objects are masked from 'package:base':
+#> 
+#>     intersect, setdiff, setequal, union
 library(tidygraph)
+#> 
+#> Attaching package: 'tidygraph'
+#> The following object is masked from 'package:stats':
+#> 
+#>     filter
 
 pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
-#> ℹ Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHJMV20/temp_libpath17d2257665c68/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading count data from C:/Users/max/AppData/Local/Temp/RtmpszaM22/temp_libpath71507ecc7035/pixelatorR/extdata/five_cells/five_cells.pxl
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHJMV20/temp_libpath17d2257665c68/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/Temp/RtmpszaM22/temp_libpath71507ecc7035/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 components <- colnames(counts)

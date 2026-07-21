@@ -36,6 +36,7 @@ library(pixelatorR)
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
 #> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc26652d3b.h5ad
 seur_obj
 #> An object of class Seurat 
 #> 80 features across 5 samples within 1 assay 

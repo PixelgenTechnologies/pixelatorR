@@ -114,7 +114,7 @@ library(SeuratObject)
 # Load example data as a Seurat object
 pxl_file <- minimal_mpx_pxl_file()
 col_scores <- ReadMPX_colocalization(pxl_file)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHJMV20/temp_libpath17d2257665c68/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/Temp/RtmpszaM22/temp_libpath71507ecc7035/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading colocalization data
 #> ✔ Returning a 'tbl_df' object
 
@@ -135,6 +135,7 @@ col_scores_mat[1:4, 1:5]
 # Create a Seurat object
 seur <- ReadMPX_Seurat(pxl_file)
 #> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc8fc3b31.h5ad
 
 # Fetch CellGraphAssay and create new polarization
 # scores Assay

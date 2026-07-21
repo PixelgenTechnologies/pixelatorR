@@ -90,37 +90,10 @@ library(dplyr)
 
 pxl_file <- minimal_pna_pxl_file()
 se <- ReadPNA_Seurat(pxl_file)
-#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 proximity_table <- ProximityScores(se)
 
 # Default method uses mean
 SummarizeProximityScores(proximity_table) %>% head()
-#> # A tibble: 6 × 7
-#>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
-#>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
-#> 1 CD56     HLA-ABC                 4       5               1          0.8
-#> 2 CD56     IgD                     4       5               1          0.8
-#> 3 CD56     CD9                     4       5               1          0.8
-#> 4 CD366    CD37                    5       5               0          1  
-#> 5 CD366    IgM                     5       5               0          1  
-#> 6 CD366    TCRva7.2                5       5               0          1  
-#> # ℹ 1 more variable: mean_log2_ratio <dbl>
-
-# Switch to median
-SummarizeProximityScores(proximity_table, summary_stat = "median") %>% head()
-#> # A tibble: 6 × 7
-#>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
-#>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
-#> 1 CD56     CD82                    4       5               1          0.8
-#> 2 CD56     TCRab                   4       5               1          0.8
-#> 3 CD366    CD4                     5       5               0          1  
-#> 4 CD366    CD50                    5       5               0          1  
-#> 5 CD366    CD47                    5       5               0          1  
-#> 6 CD366    CD45RA                  5       5               0          1  
-#> # ℹ 1 more variable: median_log2_ratio <dbl>
-
-# Ignore missing values
-SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) %>% head()
 #> # A tibble: 6 × 7
 #>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
 #>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
@@ -130,6 +103,32 @@ SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) %>% head(
 #> 4 CD56     VISTA                   4       5               1          0.8
 #> 5 CD56     TCRVd2                  3       5               2          0.6
 #> 6 CD366    CD93                    5       5               0          1  
+#> # ℹ 1 more variable: mean_log2_ratio <dbl>
+
+# Switch to median
+SummarizeProximityScores(proximity_table, summary_stat = "median") %>% head()
+#> # A tibble: 6 × 7
+#>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
+#>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
+#> 1 CD56     Siglec-9                4       5               1          0.8
+#> 2 CD56     CD79a                   4       5               1          0.8
+#> 3 CD56     GPR56                   3       5               2          0.6
+#> 4 CD366    CD71                    5       5               0          1  
+#> 5 CD366    CD44                    5       5               0          1  
+#> 6 CD366    CD59                    5       5               0          1  
+#> # ℹ 1 more variable: median_log2_ratio <dbl>
+
+# Ignore missing values
+SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) %>% head()
+#> # A tibble: 6 × 7
+#>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
+#>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
+#> 1 CD56     TCRgd                   3       5               2          0.6
+#> 2 CD366    CD41                    5       5               0          1  
+#> 3 CD366    CD49D                   5       5               0          1  
+#> 4 CD366    CD81                    5       5               0          1  
+#> 5 CD366    CD369                   4       5               1          0.8
+#> 6 CD366    CD64                    5       5               0          1  
 #> # ℹ 1 more variable: mean_log2_ratio <dbl>
 
 # Return lists which can be used to compute custom summary statistics

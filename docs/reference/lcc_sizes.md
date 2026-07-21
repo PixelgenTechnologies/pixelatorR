@@ -30,7 +30,7 @@ lcc_sizes(df, mc_cores = 1)
 
   Number of cores to use for parallel processing. Default is 1
   (sequential processing). Values \> 1 use
-  [`parallel::mclapply`](https://rdrr.io/r/parallel/mclapply.html).
+  [`parallel::mclapply`](https://rdrr.io/r/parallel/mcdummies.html).
 
 ## Value
 

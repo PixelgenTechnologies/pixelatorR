@@ -219,7 +219,7 @@ library(dplyr)
 pxl_file <- minimal_mpx_pxl_file()
 # Seurat objects
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
-#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc472f6079.h5ad
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
@@ -237,9 +237,6 @@ dca_markers <- RunDCA(seur_merged,
   contrast_column = "sample",
   target = "Sample1", reference = "Sample2"
 )
-#> ℹ Splitting data by: marker_1, marker_2
-#> ℹ Running 10 tests for the following comparison:
-#>   - Sample1 vs Sample2
 #> Warning: Got the following message when running wilcox.test test for marker 'CD19/CD20': Sample1 vs Sample2
 #>   cannot compute exact confidence intervals with ties
 #> Warning: Got the following message when running wilcox.test test for marker 'CD19/CD4': Sample1 vs Sample2

@@ -171,7 +171,7 @@ library(SeuratObject)
 pxl_file <- minimal_mpx_pxl_file()
 # Seurat objects
 se <- ReadMPX_Seurat(pxl_file)
-#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
+#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc2716a15.h5ad
 se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
 se$sample <- c("T", "C", "C", "C", "C") %>% rep(times = 10)
 se <- Seurat::NormalizeData(se %>% JoinLayers(), normalization.method = "CLR", margin = 2)

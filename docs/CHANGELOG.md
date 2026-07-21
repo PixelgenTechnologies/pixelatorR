@@ -6,10 +6,13 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[Unreleased\]
+## \[0.18.3\] - 2026-07-21
 
 ### Updates
 
+- Updated default parameter settings for `layout_with_coarsened_pmds`.
+  Also added options `leiden_weighted` and `leiden_iterations` to get
+  more fine tuning control.
 - Added option to `MoleculeRankPlot` to highlight results from size
   filters and to facet plot by groups (`group_by`).
 
@@ -28,6 +31,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Changes
 
 - Added `cpmds` option to `Plot2DGraph` and `Plot2DGraphM`.
+- Updated Credits section in the README to cite both the Proximity
+  Network Assay and Molecular Pixelation papers.
 
 ## \[0.18.2\] - 2026-06-17
 

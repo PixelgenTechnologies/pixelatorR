@@ -45,7 +45,7 @@ lcc_curve(
 
   Number of cores for parallel processing. Default is 1 (sequential).
   Values \> 1 use
-  [`parallel::mclapply`](https://rdrr.io/r/parallel/mclapply.html).
+  [`parallel::mclapply`](https://rdrr.io/r/parallel/mcdummies.html).
 
 - verbose:
 
