@@ -92,6 +92,7 @@ Collate:
     'cell_count_plot.R'
     'coarsened_pmds.R'
     'colocalization_heatmap.R'
+    'interaction_databases.R'
     'd3_graph_helpers.R'
     'density_scatter_plot.R'
     'differential_analysis_utils.R'
