@@ -32,10 +32,10 @@
 #' @return Character path under \code{tools::R_user_dir("pixelatorR", "cache")}.
 #' @export
 interaction_database_cache_dir <- function() {
-  file.path(
+  return(file.path(
     tools::R_user_dir("pixelatorR", which = "cache"),
     "interaction_databases"
-  )
+  ))
 }
 
 #' Normalise an edge table to the canonical interaction-database schema
@@ -57,20 +57,22 @@ normalise_interaction_edges <- function(
   resource,
   resource_version
 ) {
-  edges <- as.data.frame(edges)
-  if (!all(c(a_col, b_col) %in% names(edges))) {
-    cli::cli_abort(
-      c(
-        "i" = "Missing UniProt columns {.val {a_col}} / {.val {b_col}}."
-      )
-    )
-  }
+  assert_class(edges, c("data.frame", "tbl_df"))
+  assert_single_value(a_col, type = "string")
+  assert_single_value(b_col, type = "string")
+  assert_single_value(score_col, type = "string", allow_null = TRUE)
+  assert_single_value(evidence_col, type = "string", allow_null = TRUE)
+  assert_single_value(resource, type = "string")
+  assert_single_value(resource_version, type = "string")
+  assert_col_in_data(a_col, edges)
+  assert_col_in_data(b_col, edges)
+
   a <- trimws(as.character(edges[[a_col]]))
   b <- trimws(as.character(edges[[b_col]]))
   keep <- !is.na(a) & !is.na(b) & a != "" & b != ""
   a <- a[keep]
   b <- b[keep]
-  unique(tibble(
+  return(unique(tibble(
     uniprot_a = pmin(a, b),
     uniprot_b = pmax(a, b),
     score = if (!is.null(score_col) && score_col %in% names(edges)) {
@@ -83,13 +85,13 @@ normalise_interaction_edges <- function(
     } else {
       NA_character_
     },
-    resource = as.character(resource),
-    resource_version = as.character(resource_version),
+    resource = resource,
+    resource_version = resource_version,
     built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
-  ))
+  )))
 }
 
-#' Write a slim interaction database RDS + manifest entry
+#' Write a slim interaction database RDS
 #'
 #' @param edges Canonical edge tibble.
 #' @param database Database key.
@@ -102,14 +104,21 @@ normalise_interaction_edges <- function(
 #' @export
 save_interaction_database <- function(
   edges,
-  database,
+  database = .interaction_databases,
   version,
   cache_dir = interaction_database_cache_dir(),
   source_url = NULL,
   license = NULL,
   citation = NULL
 ) {
-  database <- match.arg(database, .interaction_databases)
+  database <- match.arg(database, choices = .interaction_databases)
+  assert_class(edges, c("data.frame", "tbl_df"))
+  assert_single_value(version, type = "string")
+  assert_single_value(cache_dir, type = "string")
+  assert_single_value(source_url, type = "string", allow_null = TRUE)
+  assert_single_value(license, type = "string", allow_null = TRUE)
+  assert_single_value(citation, type = "string", allow_null = TRUE)
+
   dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
   path <- .interaction_database_rds_path(database, version, cache_dir)
   meta <- list(
@@ -125,37 +134,33 @@ save_interaction_database <- function(
   saveRDS(list(edges = edges, meta = meta), path)
   latest <- .interaction_database_rds_path(database, "latest", cache_dir)
   file.copy(path, latest, overwrite = TRUE)
-  path
+  return(path)
 }
 
 #' Load a slim interaction database
 #'
-#' @param database One of string, biogrid, corum, omnipath, alphafold.
+#' @param database One of \code{.interaction_databases}.
 #' @param version Version label or \code{"latest"}.
 #' @param cache_dir Cache directory.
 #' @return List with \code{edges} (tibble) and \code{meta}.
 #' @export
 load_interaction_database <- function(
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = .interaction_databases,
   version = "latest",
   cache_dir = interaction_database_cache_dir()
 ) {
-  database <- match.arg(database)
+  database <- match.arg(database, choices = .interaction_databases)
+  assert_single_value(version, type = "string")
+  assert_single_value(cache_dir, type = "string")
+
   path <- .interaction_database_rds_path(database, version, cache_dir)
-  if (!file.exists(path)) {
-    builder <- paste0("build_", database, "_database")
-    cli::cli_abort(
-      c(
-        "i" = "Interaction database not found: {.path {path}}",
-        "i" = "Build it with {.fn {builder}}."
-      )
-    )
-  }
+  assert_file_exists(path)
   obj <- readRDS(path)
-  if (!is.list(obj) || is.null(obj$edges)) {
+  assert_class(obj, "list")
+  if (is.null(obj$edges)) {
     cli::cli_abort("Invalid interaction database object at {.path {path}}.")
   }
-  obj
+  return(obj)
 }
 
 #' Extract known database interactions for a marker panel
@@ -166,7 +171,7 @@ load_interaction_database <- function(
 #'
 #' @param markers Character vector of panel marker names.
 #' @param database Interaction database key.
-#' @param marker_uniprot_map Data frame with columns \code{marker} and
+#' @param marker_uniprot_map Data frame/tibble with columns \code{marker} and
 #'   \code{uniprot_id} (long form; multiple rows per marker allowed).
 #' @param score_threshold Minimum score (STRING uses the classic 0–1000 scale).
 #' @param string_network For STRING: \code{"physical"} or \code{"full"}.
@@ -177,13 +182,6 @@ load_interaction_database <- function(
 #'   \code{score}, \code{evidence}, \code{resource}, \code{resource_version}.
 #'   Pass \code{marker_1}/\code{marker_2} columns to
 #'   \code{ColocalizationHeatmap(highlight_pairs = ...)}.
-#'
-#' @section Licensing and attribution:
-#' Slim edge tables redistributed from public resources must retain attribution.
-#' Defaults: STRING physical network with score >= 400; BioGRID physical;
-#' CORUM co-membership; OmniPath commercial-filtered builds; AlphaFold DB
-#' complexes prefiltered at build time. Prefer slim UniProt edge tables over
-#' full third-party dumps. Cite the source version in cache metadata.
 #'
 #' @examples
 #' \dontrun{
@@ -204,38 +202,33 @@ load_interaction_database <- function(
 #' @export
 extract_panel_interactions <- function(
   markers,
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = .interaction_databases,
   marker_uniprot_map,
   score_threshold = 400,
   string_network = c("physical", "full"),
   cache_dir = interaction_database_cache_dir(),
   version = "latest"
 ) {
-  database <- match.arg(database)
-  string_network <- match.arg(string_network)
+  database <- match.arg(database, choices = .interaction_databases)
+  string_network <- match.arg(string_network, choices = c("physical", "full"))
+  assert_vector(markers, type = "character", n = 1)
+  assert_class(marker_uniprot_map, c("data.frame", "tbl_df"))
+  assert_col_in_data("marker", marker_uniprot_map)
+  assert_col_in_data("uniprot_id", marker_uniprot_map)
+  assert_col_class("marker", marker_uniprot_map, classes = "character")
+  assert_col_class("uniprot_id", marker_uniprot_map, classes = "character")
+  assert_single_value(score_threshold, type = "numeric", allow_null = TRUE)
+  assert_single_value(cache_dir, type = "string")
+  assert_single_value(version, type = "string")
 
-  if (missing(marker_uniprot_map) || is.null(marker_uniprot_map)) {
-    cli::cli_abort(
-      "{.arg marker_uniprot_map} is required (columns: marker, uniprot_id)."
-    )
-  }
-  map <- as.data.frame(marker_uniprot_map)
-  if (!all(c("marker", "uniprot_id") %in% names(map))) {
-    cli::cli_abort(
-      "{.arg marker_uniprot_map} must contain columns {.val marker} and {.val uniprot_id}."
-    )
-  }
-
-  markers <- unique(as.character(markers))
-  map <- map[
-    as.character(map$marker) %in% markers &
-      !is.na(map$uniprot_id) &
-      as.character(map$uniprot_id) != "",
-    ,
-    drop = FALSE
-  ]
-  map$marker <- as.character(map$marker)
-  map$uniprot_id <- trimws(as.character(map$uniprot_id))
+  markers <- unique(markers)
+  map <- marker_uniprot_map %>%
+    filter(
+      marker %in% markers,
+      !is.na(uniprot_id),
+      uniprot_id != ""
+    ) %>%
+    mutate(uniprot_id = trimws(uniprot_id))
   if (nrow(map) == 0) {
     return(.empty_panel_interactions())
   }
@@ -245,7 +238,7 @@ extract_panel_interactions <- function(
     version = version,
     cache_dir = cache_dir
   )
-  edges <- as.data.frame(db$edges)
+  edges <- db$edges
 
   if (database == "string") {
     if ("evidence" %in% names(edges)) {
@@ -285,11 +278,11 @@ extract_panel_interactions <- function(
   )
   names(m_ab)[names(m_ab) == "marker"] <- "marker_2"
 
-  tibble(
-    marker_1 = pmin(as.character(m_ab$marker_1), as.character(m_ab$marker_2)),
-    marker_2 = pmax(as.character(m_ab$marker_1), as.character(m_ab$marker_2)),
-    uniprot_a = as.character(m_ab$uniprot_a),
-    uniprot_b = as.character(m_ab$uniprot_b),
+  out <- tibble(
+    marker_1 = pmin(m_ab$marker_1, m_ab$marker_2),
+    marker_2 = pmax(m_ab$marker_1, m_ab$marker_2),
+    uniprot_a = m_ab$uniprot_a,
+    uniprot_b = m_ab$uniprot_b,
     in_db = TRUE,
     score = if ("score" %in% names(m_ab)) as.numeric(m_ab$score) else NA_real_,
     evidence = if ("evidence" %in% names(m_ab)) {
@@ -320,6 +313,7 @@ extract_panel_interactions <- function(
       .groups = "drop"
     ) %>%
     mutate(score = ifelse(is.infinite(score), NA_real_, score))
+  return(out)
 }
 
 #' Build STRING physical / full link database (human)
@@ -424,7 +418,7 @@ build_string_database <- function(
   }
   edges <- bind_rows(phys, full)
 
-  save_interaction_database(
+  return(save_interaction_database(
     edges = edges,
     database = "string",
     version = version,
@@ -432,7 +426,7 @@ build_string_database <- function(
     source_url = "https://string-db.org/cgi/download",
     license = "CC BY 4.0",
     citation = "Szklarczyk et al.; STRING database (see string-db.org)"
-  )
+  ))
 }
 
 #' Build BioGRID physical interaction database (human)
@@ -451,9 +445,7 @@ build_biogrid_database <- function(
   cache_dir = interaction_database_cache_dir()
 ) {
   rlang::check_installed("data.table")
-  if (!file.exists(raw_file)) {
-    cli::cli_abort("Missing BioGRID file: {.path {raw_file}}.")
-  }
+  assert_file_exists(raw_file)
   dt <- data.table::fread(raw_file, sep = "\t", quote = "", showProgress = FALSE)
   a_col <- grep(
     "SWISS-PROT.*Interactor A|SWISS-PROT Accessions Interactor A",
@@ -502,7 +494,7 @@ build_biogrid_database <- function(
     resource_version = version
   )
 
-  save_interaction_database(
+  return(save_interaction_database(
     edges = edges,
     database = "biogrid",
     version = version,
@@ -510,7 +502,7 @@ build_biogrid_database <- function(
     source_url = "https://downloads.thebiogrid.org/",
     license = "MIT",
     citation = "Stark et al., Nucleic Acids Res. 2006; BioGRID"
-  )
+  ))
 }
 
 #' Build CORUM co-membership database (human)
@@ -531,9 +523,7 @@ build_corum_database <- function(
   cache_dir = interaction_database_cache_dir()
 ) {
   rlang::check_installed("data.table")
-  if (!file.exists(corum_file)) {
-    cli::cli_abort("Missing CORUM complexes file: {.path {corum_file}}.")
-  }
+  assert_file_exists(corum_file)
   first <- readLines(corum_file, n = 5, warn = FALSE)
   if (any(grepl("<!DOCTYPE html|<html", first, ignore.case = TRUE))) {
     cli::cli_abort("CORUM file looks like HTML, not data: {.path {corum_file}}.")
@@ -584,7 +574,7 @@ build_corum_database <- function(
     resource_version = version
   )
 
-  save_interaction_database(
+  return(save_interaction_database(
     edges = edges,
     database = "corum",
     version = version,
@@ -595,7 +585,7 @@ build_corum_database <- function(
     ),
     license = "CC BY 4.0 (CORUM); see OmniPath source licenses if via OmniPath",
     citation = "CORUM; Tsitsiridis et al. / CORUM release papers"
-  )
+  ))
 }
 
 #' Build OmniPath interaction database
@@ -614,7 +604,7 @@ build_omnipath_database <- function(
   license = c("commercial", "academic", "unknown")
 ) {
   rlang::check_installed("data.table")
-  license <- match.arg(license)
+  license <- match.arg(license, choices = c("commercial", "academic", "unknown"))
   if (is.null(interactions_file)) {
     interactions_file <- file.path(
       .default_raw_cache(), "omnipath",
@@ -677,7 +667,7 @@ build_omnipath_database <- function(
     resource_version = paste0(version, "_", license)
   )
 
-  save_interaction_database(
+  return(save_interaction_database(
     edges = edges,
     database = "omnipath",
     version = paste0(version, "_", license),
@@ -685,7 +675,7 @@ build_omnipath_database <- function(
     source_url = "https://omnipathdb.org/",
     license = paste0("OmniPath per-source; filter=", license),
     citation = "Türei et al.; OmniPath + contributing resources"
-  )
+  ))
 }
 
 #' Build AlphaFold DB high-confidence complex database
@@ -779,7 +769,7 @@ build_alphafold_database <- function(
     resource_version = version
   )
 
-  save_interaction_database(
+  return(save_interaction_database(
     edges = edges,
     database = "alphafold",
     version = version,
@@ -787,7 +777,7 @@ build_alphafold_database <- function(
     source_url = "https://alphafold.ebi.ac.uk/",
     license = "CC BY 4.0",
     citation = "AlphaFold DB / NVIDIA complexes; Jumper et al. Nature 2021"
-  )
+  ))
 }
 
 #' Build all five interaction databases from local raw caches
@@ -801,7 +791,7 @@ build_alphafold_database <- function(
 build_all_interaction_databases <- function(
   cache_dir = interaction_database_cache_dir()
 ) {
-  list(
+  return(list(
     string = build_string_database(cache_dir = cache_dir),
     biogrid = build_biogrid_database(cache_dir = cache_dir),
     corum = build_corum_database(cache_dir = cache_dir),
@@ -810,5 +800,5 @@ build_all_interaction_databases <- function(
       license = "commercial"
     ),
     alphafold = build_alphafold_database(cache_dir = cache_dir)
-  )
+  ))
 }

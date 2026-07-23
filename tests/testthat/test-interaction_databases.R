@@ -61,19 +61,16 @@ test_that("normalise_interaction_edges works as expected", {
     resource_version = "v1"
   )
 
-  expect_true(inherits(edges, "tbl_df"))
   expect_equal(
-    names(edges),
-    c(
-      "uniprot_a", "uniprot_b", "score", "evidence",
-      "resource", "resource_version", "built_at"
-    )
+    edges %>%
+      select(-built_at),
+    structure(list(uniprot_a = c("A", "A"), uniprot_b = c("B", "C"
+    ), score = c(1, 3), evidence = c("x", "z"), resource = c("test",
+                                                             "test"),
+    resource_version = c("v1", "v1")),
+    row.names = c(NA, -2L), class = c("tbl_df",
+                                      "tbl", "data.frame"))
   )
-  # Undirected order + drop empty accessions + unique identical rows
-  expect_equal(nrow(edges), 2)
-  expect_true(all(edges$uniprot_a <= edges$uniprot_b))
-  expect_equal(sort(paste(edges$uniprot_a, edges$uniprot_b, sep = "|")), c("A|B", "A|C"))
-  expect_equal(unique(edges$resource), "test")
 })
 
 test_that("normalise_interaction_edges fails with invalid input", {
@@ -198,6 +195,14 @@ test_that("extract_panel_interactions fails with invalid input", {
     extract_panel_interactions(
       markers = c("A", "B"),
       database = "not_a_db",
+      marker_uniprot_map = marker_map,
+      cache_dir = cache_dir
+    )
+  )
+  expect_error(
+    extract_panel_interactions(
+      markers = c(1, 2),
+      database = "string",
       marker_uniprot_map = marker_map,
       cache_dir = cache_dir
     )
