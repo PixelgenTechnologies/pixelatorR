@@ -254,11 +254,10 @@ extract_panel_interactions <- function(
   }
 
   panel_uniprot <- unique(map$uniprot_id)
-  edges <- edges[
-    edges$uniprot_a %in% panel_uniprot & edges$uniprot_b %in% panel_uniprot,
-    ,
-    drop = FALSE
-  ]
+  edges <- edges %>%
+    filter(uniprot_a %in% panel_uniprot,
+           uniprot_b %in% panel_uniprot)
+
   if (nrow(edges) == 0) {
     return(.empty_panel_interactions())
   }
