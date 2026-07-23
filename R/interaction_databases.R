@@ -1,9 +1,5 @@
-#' Interaction database helpers (slim UniProt edge tables)
-#'
-#' Canonical edge schema:
-#' \code{uniprot_a}, \code{uniprot_b} (undirected, a <= b), optional
-#' \code{score}, \code{evidence}, plus \code{resource}, \code{resource_version},
-#' \code{built_at}.
+# Canonical edge schema: uniprot_a, uniprot_b (undirected, a <= b), optional
+# score, evidence, plus resource, resource_version, built_at.
 
 .interaction_databases <- c(
   "string", "biogrid", "corum", "omnipath", "alphafold"
@@ -15,22 +11,6 @@
 
 .interaction_database_rds_path <- function(database, version, cache_dir) {
   file.path(cache_dir, paste0(database, "_", version, ".rds"))
-}
-
-.interaction_database_manifest_path <- function(cache_dir) {
-  file.path(cache_dir, "MANIFEST.json")
-}
-
-.update_interaction_database_manifest <- function(cache_dir, entry) {
-  path <- .interaction_database_manifest_path(cache_dir)
-  dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
-  man <- list()
-  if (file.exists(path)) {
-    man <- jsonlite::fromJSON(path, simplifyVector = FALSE)
-  }
-  man[[entry$database]] <- entry
-  jsonlite::write_json(man, path, auto_unbox = TRUE, pretty = TRUE)
-  invisible(path)
 }
 
 .empty_panel_interactions <- function() {
@@ -49,29 +29,13 @@
 
 #' Default cache directory for interaction databases
 #'
-#' @param cache_dir Optional override. If \code{NULL}, uses
-#'   \code{tools::R_user_dir("pixelatorR", "cache")/interaction_databases}.
-#' @return Character path.
+#' @return Character path under \code{tools::R_user_dir("pixelatorR", "cache")}.
 #' @export
-interaction_database_cache_dir <- function(cache_dir = NULL) {
-  if (!is.null(cache_dir)) {
-    return(cache_dir)
-  }
+interaction_database_cache_dir <- function() {
   file.path(
     tools::R_user_dir("pixelatorR", which = "cache"),
     "interaction_databases"
   )
-}
-
-#' Make an undirected UniProt pair key
-#'
-#' @param a,b Character vectors of UniProt accessions.
-#' @return Character vector of keys \code{"A|B"} with A <= B.
-#' @export
-undirected_uniprot_pair_key <- function(a, b) {
-  a <- as.character(a)
-  b <- as.character(b)
-  paste(pmin(a, b), pmax(a, b), sep = "|")
 }
 
 #' Normalise an edge table to the canonical interaction-database schema
@@ -159,7 +123,6 @@ save_interaction_database <- function(
     file = basename(path)
   )
   saveRDS(list(edges = edges, meta = meta), path)
-  .update_interaction_database_manifest(cache_dir, meta)
   latest <- .interaction_database_rds_path(database, "latest", cache_dir)
   file.copy(path, latest, overwrite = TRUE)
   path
@@ -207,10 +170,6 @@ load_interaction_database <- function(
 #'   \code{uniprot_id} (long form; multiple rows per marker allowed).
 #' @param score_threshold Minimum score (STRING uses the classic 0–1000 scale).
 #' @param string_network For STRING: \code{"physical"} or \code{"full"}.
-#' @param omnipath_license Documented license filter for the OmniPath database
-#'   (must match the built version suffix when using versioned files).
-#' @param alphafold_ipsae_min,alphafold_pdockq2_min Reserved for AFDB filtering
-#'   when scores are present (caches are typically pre-filtered).
 #' @param cache_dir Interaction database cache directory.
 #' @param version Database version label (\code{"latest"} or a built version).
 #' @return A tibble of panel edges with \code{marker_1}, \code{marker_2},
@@ -221,12 +180,10 @@ load_interaction_database <- function(
 #'
 #' @section Licensing and attribution:
 #' Slim edge tables redistributed from public resources must retain attribution.
-#' Defaults used here: STRING physical network with score >= 400; BioGRID
-#' physical interactions; CORUM complex co-membership; OmniPath with
-#' \code{omnipath_license = "commercial"}; AlphaFold DB complexes with
-#' ipSAE >= 0.6 and pDockQ2 >= 0.23. Prefer redistributing derived slim UniProt
-#' edge tables (not full third-party dumps). Cite the source database version
-#' recorded in cache metadata when publishing.
+#' Defaults: STRING physical network with score >= 400; BioGRID physical;
+#' CORUM co-membership; OmniPath commercial-filtered builds; AlphaFold DB
+#' complexes prefiltered at build time. Prefer slim UniProt edge tables over
+#' full third-party dumps. Cite the source version in cache metadata.
 #'
 #' @examples
 #' \dontrun{
@@ -251,15 +208,11 @@ extract_panel_interactions <- function(
   marker_uniprot_map,
   score_threshold = 400,
   string_network = c("physical", "full"),
-  omnipath_license = c("commercial", "academic"),
-  alphafold_ipsae_min = 0.6,
-  alphafold_pdockq2_min = 0.23,
   cache_dir = interaction_database_cache_dir(),
   version = "latest"
 ) {
   database <- match.arg(database)
   string_network <- match.arg(string_network)
-  omnipath_license <- match.arg(omnipath_license)
 
   if (missing(marker_uniprot_map) || is.null(marker_uniprot_map)) {
     cli::cli_abort(
@@ -272,8 +225,6 @@ extract_panel_interactions <- function(
       "{.arg marker_uniprot_map} must contain columns {.val marker} and {.val uniprot_id}."
     )
   }
-  # omnipath_license documents which cached OmniPath build to expect
-  invisible(omnipath_license)
 
   markers <- unique(as.character(markers))
   map <- map[
@@ -298,14 +249,7 @@ extract_panel_interactions <- function(
 
   if (database == "string") {
     if ("evidence" %in% names(edges)) {
-      edges <- edges[
-        edges$evidence == string_network |
-          edges$resource == paste0("string_", string_network),
-        ,
-        drop = FALSE
-      ]
-    } else if ("resource" %in% names(edges)) {
-      edges <- edges[grepl(string_network, edges$resource), , drop = FALSE]
+      edges <- edges[edges$evidence == string_network, , drop = FALSE]
     }
     if ("score" %in% names(edges) && !is.null(score_threshold)) {
       edges <- edges[
@@ -314,11 +258,6 @@ extract_panel_interactions <- function(
         drop = FALSE
       ]
     }
-  }
-  if (database == "alphafold" && "score" %in% names(edges)) {
-    keep <- is.na(edges$score) |
-      edges$score >= min(alphafold_ipsae_min, alphafold_pdockq2_min)
-    edges <- edges[keep, , drop = FALSE]
   }
 
   panel_uniprot <- unique(map$uniprot_id)
@@ -405,13 +344,8 @@ build_string_database <- function(
   rlang::check_installed("data.table")
 
   .find_string_file <- function(fname) {
-    candidates <- c(
-      file.path(raw_dir, fname),
-      file.path(.default_raw_cache(), "string", fname),
-      file.path(.default_raw_cache(), "alphafold_interactions", fname)
-    )
-    hit <- candidates[file.exists(candidates)]
-    if (length(hit)) hit[[1]] else NA_character_
+    path <- file.path(raw_dir, fname)
+    if (file.exists(path)) path else NA_character_
   }
 
   aliases_gz <- .find_string_file(
@@ -863,12 +797,6 @@ build_alphafold_database <- function(
 #'
 #' @param cache_dir Output interaction database cache.
 #' @return Named list of RDS paths.
-#'
-#' @section Licensing and attribution:
-#' See \code{\link{extract_panel_interactions}} for resource licenses and
-#' attribution guidance. Pin \code{resource_version} and record source URL in
-#' the cache manifest when redistributing slim edge tables.
-#'
 #' @export
 build_all_interaction_databases <- function(
   cache_dir = interaction_database_cache_dir()

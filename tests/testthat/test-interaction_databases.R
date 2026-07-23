@@ -44,17 +44,6 @@ marker_map <- tibble(
   uniprot_id = c("P12345", "Q67890", "P99999", "Q11111")
 )
 
-test_that("undirected_uniprot_pair_key works as expected", {
-  expect_equal(
-    undirected_uniprot_pair_key("B", "A"),
-    "A|B"
-  )
-  expect_equal(
-    undirected_uniprot_pair_key(c("B", "A"), c("A", "B")),
-    c("A|B", "A|B")
-  )
-})
-
 test_that("normalise_interaction_edges works as expected", {
   edges <- normalise_interaction_edges(
     data.frame(
@@ -100,8 +89,6 @@ test_that("normalise_interaction_edges fails with invalid input", {
 })
 
 test_that("interaction_database_cache_dir works as expected", {
-  custom <- file.path(tempdir(), "custom_idb")
-  expect_equal(interaction_database_cache_dir(custom), custom)
   expect_true(grepl("interaction_databases$", interaction_database_cache_dir()))
 })
 
@@ -112,7 +99,6 @@ test_that("save_interaction_database and load_interaction_database work as expec
   expect_no_error(path <- .setup_string_cache(cache_dir))
   expect_true(file.exists(path))
   expect_true(file.exists(file.path(cache_dir, "string_latest.rds")))
-  expect_true(file.exists(file.path(cache_dir, "MANIFEST.json")))
 
   expect_no_error(db <- load_interaction_database("string", "latest", cache_dir = cache_dir))
   expect_true(is.list(db))
