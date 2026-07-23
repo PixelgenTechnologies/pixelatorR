@@ -286,16 +286,62 @@ test_that("build_corum_database fails with invalid input", {
 
   cache_dir <- tempfile("corum_bad_")
   dir.create(cache_dir)
-  expect_error(
-    build_corum_database(
-      corum_file = file.path(tempdir(), "missing_corum.tsv"),
-      cache_dir = cache_dir
-    )
-  )
 
   html_file <- tempfile(fileext = ".tsv")
   writeLines("<!DOCTYPE html><html></html>", html_file)
   expect_error(
     build_corum_database(corum_file = html_file, cache_dir = cache_dir)
   )
+})
+
+test_that(".download_if_missing reuses cached files and errors on bad URLs", {
+  dest <- tempfile(fileext = ".txt")
+  writeLines("cached", dest)
+  expect_identical(
+    .download_if_missing("https://example.invalid/should-not-fetch", dest),
+    dest
+  )
+  expect_equal(readLines(dest, warn = FALSE), "cached")
+
+  bad_dest <- tempfile(fileext = ".txt")
+  expect_error(
+    .download_if_missing("https://example.invalid/missing.bin", bad_dest)
+  )
+})
+
+test_that("build_alphafold_database accepts NVIDIA directional score columns", {
+  raw_dir <- tempfile("afdb_nvda_")
+  cache_dir <- tempfile("afdb_nvda_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+
+  utils::write.csv(
+    data.frame(
+      uniprot_ac_1 = c("P12345", "P12345"),
+      uniprot_ac_2 = c("Q67890", "P99999"),
+      tax_id_1 = c(9606, 9606),
+      tax_id_2 = c(9606, 10090),
+      ipSAE_AB = c(0.9, 0.95),
+      ipSAE_BA = c(0.7, 0.95),
+      pDockQ2_AB = c(0.4, 0.5),
+      pDockQ2_BA = c(0.3, 0.5),
+      stringsAsFactors = FALSE
+    ),
+    file.path(raw_dir, "heterodimer_metadata.csv"),
+    row.names = FALSE
+  )
+
+  path <- build_alphafold_database(
+    heterodimer_file = file.path(raw_dir, "missing.csv"),
+    raw_dir = raw_dir,
+    version = "test_nvda",
+    cache_dir = cache_dir,
+    ipsae_min = 0.6,
+    pdockq2_min = 0.23
+  )
+  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
+  expect_equal(nrow(db$edges), 1)
+  expect_equal(db$edges$uniprot_a[[1]], "P12345")
+  expect_equal(db$edges$uniprot_b[[1]], "Q67890")
+  expect_true(file.exists(path))
 })

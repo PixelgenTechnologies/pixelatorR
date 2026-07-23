@@ -13,6 +13,76 @@
   file.path(cache_dir, paste0(database, "_", version, ".rds"))
 }
 
+#' Download a file if it is missing or empty
+#' @noRd
+.download_if_missing <- function(url, dest_file) {
+  if (file.exists(dest_file) && isTRUE(file.info(dest_file)$size > 0)) {
+    return(dest_file)
+  }
+  dir.create(dirname(dest_file), recursive = TRUE, showWarnings = FALSE)
+  cli::cli_inform(c("i" = "Downloading {.url {url}}"))
+  status <- tryCatch(
+    utils::download.file(url, destfile = dest_file, mode = "wb", quiet = TRUE),
+    error = function(e) {
+      cli::cli_abort(c(
+        "x" = "Failed to download {.url {url}}",
+        "i" = conditionMessage(e)
+      ))
+    }
+  )
+  if (!identical(as.integer(status), 0L) ||
+      !file.exists(dest_file) ||
+      !isTRUE(file.info(dest_file)$size > 0)) {
+    cli::cli_abort("Download failed or produced an empty file: {.url {url}}")
+  }
+  return(dest_file)
+}
+
+#' Download a zip archive and return the first extracted file matching pattern
+#' @noRd
+.download_zip_extract <- function(url, dest_dir, pattern) {
+  dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+  existing <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
+  if (length(existing) > 0) {
+    return(existing[[1]])
+  }
+  zip_path <- file.path(dest_dir, basename(sub("[?].*$", "", url)))
+  if (!grepl("[.]zip$", zip_path, ignore.case = TRUE)) {
+    zip_path <- paste0(zip_path, ".zip")
+  }
+  .download_if_missing(url, zip_path)
+  utils::unzip(zip_path, exdir = dest_dir)
+  extracted <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
+  if (length(extracted) < 1) {
+    cli::cli_abort(
+      "No file matching {.val {pattern}} found after unzipping {.path {zip_path}}."
+    )
+  }
+  return(extracted[[1]])
+}
+
+.string_download_url <- function(fname, version, network = c("aliases", "physical", "full")) {
+  network <- match.arg(network)
+  prefix <- switch(
+    network,
+    aliases = paste0("protein.aliases.v", version),
+    physical = paste0("protein.physical.links.v", version),
+    full = paste0("protein.links.v", version)
+  )
+  paste0("https://stringdb-downloads.org/download/", prefix, "/", fname)
+}
+
+.ensure_string_file <- function(raw_dir, fname, version, network) {
+  path <- file.path(raw_dir, fname)
+  if (file.exists(path) && isTRUE(file.info(path)$size > 0)) {
+    return(path)
+  }
+  return(.download_if_missing(
+    .string_download_url(fname, version, network),
+    path
+  ))
+}
+
 .empty_panel_interactions <- function() {
   tibble(
     marker_1 = character(),
@@ -308,10 +378,11 @@ extract_panel_interactions <- function(
 
 #' Build STRING physical / full link database (human)
 #'
-#' Maintainer helper: reads local STRING release files and writes a slim
-#' UniProt edge cache via \code{\link{save_interaction_database}}.
+#' Maintainer helper: reads STRING release files (downloading them into
+#' \code{raw_dir} when missing) and writes a slim UniProt edge cache via
+#' \code{\link{save_interaction_database}}.
 #'
-#' @param raw_dir Directory containing STRING download files (links + aliases).
+#' @param raw_dir Directory for STRING download files (links + aliases).
 #' @param version STRING version label (default \code{"12.0"}).
 #' @param cache_dir Output interaction database cache.
 #' @param species NCBI taxon (default human 9606).
@@ -326,24 +397,25 @@ build_string_database <- function(
   include_full = FALSE
 ) {
   rlang::check_installed("data.table")
+  dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 
-  .find_string_file <- function(fname) {
-    path <- file.path(raw_dir, fname)
+  aliases_fname <- sprintf("%s.protein.aliases.v%s.txt.gz", species, version)
+  physical_fname <- sprintf(
+    "%s.protein.physical.links.v%s.txt.gz", species, version
+  )
+  full_fname <- sprintf("%s.protein.links.v%s.txt.gz", species, version)
+
+  aliases_gz <- .ensure_string_file(
+    raw_dir, aliases_fname, version, "aliases"
+  )
+  physical_gz <- .ensure_string_file(
+    raw_dir, physical_fname, version, "physical"
+  )
+  full_gz <- if (isTRUE(include_full)) {
+    .ensure_string_file(raw_dir, full_fname, version, "full")
+  } else {
+    path <- file.path(raw_dir, full_fname)
     if (file.exists(path)) path else NA_character_
-  }
-
-  aliases_gz <- .find_string_file(
-    sprintf("%s.protein.aliases.v%s.txt.gz", species, version)
-  )
-  physical_gz <- .find_string_file(
-    sprintf("%s.protein.physical.links.v%s.txt.gz", species, version)
-  )
-  full_gz <- .find_string_file(
-    sprintf("%s.protein.links.v%s.txt.gz", species, version)
-  )
-
-  if (is.na(aliases_gz)) {
-    cli::cli_abort("Missing STRING aliases under {.path {raw_dir}}.")
   }
 
   aliases <- data.table::fread(
@@ -368,7 +440,7 @@ build_string_database <- function(
   ]
 
   read_links <- function(path, network_label) {
-    if (is.na(path) || !file.exists(path)) {
+    if (length(path) != 1 || is.na(path) || !file.exists(path)) {
       return(NULL)
     }
     links <- data.table::fread(path, header = TRUE, sep = " ", showProgress = FALSE)
@@ -416,21 +488,36 @@ build_string_database <- function(
 
 #' Build BioGRID physical interaction database (human)
 #'
+#' Downloads \code{BIOGRID-MV-Physical-LATEST.tab3.zip} into the BioGRID raw
+#' cache when \code{raw_file} is missing.
+#'
 #' @param raw_file Path to BioGRID MV-Physical or organism tab3 file.
-#' @param version BioGRID release label.
+#'   If \code{NULL} or missing on disk, the latest release is downloaded.
+#' @param version BioGRID release label (default \code{"latest"} when downloading).
 #' @param cache_dir Output interaction database cache.
 #' @return Path to saved RDS.
 #' @export
 build_biogrid_database <- function(
-  raw_file = file.path(
-    .default_raw_cache(), "biogrid",
-    "BIOGRID-MV-Physical-5.0.259.tab3.txt"
-  ),
-  version = "5.0.259",
+  raw_file = NULL,
+  version = "latest",
   cache_dir = interaction_database_cache_dir()
 ) {
   rlang::check_installed("data.table")
-  assert_file_exists(raw_file)
+  raw_dir <- file.path(.default_raw_cache(), "biogrid")
+  if (is.null(raw_file)) {
+    existing <- list.files(raw_dir, pattern = "[.]tab3[.]txt$", full.names = TRUE)
+    raw_file <- if (length(existing) > 0) existing[[1]] else NA_character_
+  }
+  if (length(raw_file) != 1 || is.na(raw_file) || !file.exists(raw_file)) {
+    raw_file <- .download_zip_extract(
+      url = paste0(
+        "https://downloads.thebiogrid.org/Download/BioGRID/",
+        "Latest-Release/BIOGRID-MV-Physical-LATEST.tab3.zip"
+      ),
+      dest_dir = raw_dir,
+      pattern = "[.]tab3[.]txt$"
+    )
+  }
   dt <- data.table::fread(raw_file, sep = "\t", quote = "", showProgress = FALSE)
   a_col <- grep(
     "SWISS-PROT.*Interactor A|SWISS-PROT Accessions Interactor A",
@@ -492,8 +579,8 @@ build_biogrid_database <- function(
 
 #' Build CORUM co-membership database (human)
 #'
-#' Uses OmniPath-served CORUM complexes when the official CORUM zip is
-#' unavailable. Prefer an official CORUM file when present.
+#' Downloads OmniPath-served CORUM complexes when \code{corum_file} is missing.
+#' Prefer an official CORUM file when present.
 #'
 #' @param corum_file Path to OmniPath CORUM complexes TSV or official coreComplexes.
 #' @param version Version label.
@@ -508,7 +595,12 @@ build_corum_database <- function(
   cache_dir = interaction_database_cache_dir()
 ) {
   rlang::check_installed("data.table")
-  assert_file_exists(corum_file)
+  if (!file.exists(corum_file)) {
+    .download_if_missing(
+      "https://omnipathdb.org/complexes?databases=CORUM",
+      corum_file
+    )
+  }
   first <- readLines(corum_file, n = 5, warn = FALSE)
   if (any(grepl("<!DOCTYPE html|<html", first, ignore.case = TRUE))) {
     cli::cli_abort("CORUM file looks like HTML, not data: {.path {corum_file}}.")
@@ -516,7 +608,12 @@ build_corum_database <- function(
 
   dt <- data.table::fread(corum_file, sep = "\t", quote = "", showProgress = FALSE)
   comp_col <- intersect(
-    c("components", "subunits_uniprot_id", "subunits"),
+    c(
+      "components",
+      "subunits_uniprot_id",
+      "subunits",
+      "subunits(UniProt IDs)"
+    ),
     colnames(dt)
   )
   if (length(comp_col) < 1) {
@@ -619,8 +716,7 @@ build_omnipath_database <- function(
       "datasets=omnipath&fields=sources,references,curation_effort&genesymbols=1",
       "&license=", license
     )
-    dir.create(dirname(interactions_file), recursive = TRUE, showWarnings = FALSE)
-    utils::download.file(url, interactions_file, mode = "wb", quiet = TRUE)
+    .download_if_missing(url, interactions_file)
   }
   dt <- data.table::fread(
     interactions_file,
@@ -663,10 +759,22 @@ build_omnipath_database <- function(
   ))
 }
 
+#' Max of two directional score columns, ignoring NA on one side
+#' @noRd
+.max_directional_score <- function(x, y) {
+  x <- as.numeric(x)
+  y <- as.numeric(y)
+  ifelse(is.na(x), y, ifelse(is.na(y), x, pmax(x, y)))
+}
+
 #' Build AlphaFold DB high-confidence complex database
 #'
+#' When no local CSVs are present, downloads the NVIDIA/AFDB heterodimer
+#' metadata table from EBI FTP (~2 GB) into \code{raw_dir}.
+#'
 #' @param heterodimer_file Optional FTP-derived heterodimer metadata CSV.
-#'   If absent, uses panel API cache CSVs under \code{raw_dir}.
+#'   If absent, uses panel API cache CSVs under \code{raw_dir}, then downloads
+#'   the full heterodimer metadata dump if needed.
 #' @param raw_dir Directory with AFDB cache files.
 #' @param version Version label.
 #' @param cache_dir Output interaction database cache.
@@ -689,55 +797,89 @@ build_alphafold_database <- function(
     heterodimer_file,
     file.path(raw_dir, "afdb_api_complexes_panel.csv"),
     file.path(raw_dir, "afdb_heterodimers_panel_pairs.csv"),
-    file.path(raw_dir, "afdb_homodimers_human_panel.csv")
+    file.path(raw_dir, "afdb_homodimers_human_panel.csv"),
+    file.path(raw_dir, "heterodimer_metadata.csv")
   ))
   files <- files[file.exists(files)]
   if (length(files) < 1) {
-    cli::cli_abort("No AFDB complex CSVs found under {.path {raw_dir}}.")
+    hetero_dest <- file.path(raw_dir, "heterodimer_metadata.csv")
+    cli::cli_inform(c(
+      "i" = paste(
+        "No local AFDB CSVs found; downloading NVIDIA heterodimer metadata",
+        "(large file, ~2 GB)."
+      )
+    ))
+    .download_if_missing(
+      paste0(
+        "https://ftp.ebi.ac.uk/pub/databases/alphafold/",
+        "collaborations/nvda/heterodimer_metadata.csv"
+      ),
+      hetero_dest
+    )
+    files <- hetero_dest
   }
 
   pieces <- lapply(files, function(f) {
     df <- utils::read.csv(f, stringsAsFactors = FALSE, check.names = FALSE)
+    if (all(c("tax_id_1", "tax_id_2") %in% names(df))) {
+      df <- df[
+        as.character(df$tax_id_1) == "9606" &
+          as.character(df$tax_id_2) == "9606",
+        ,
+        drop = FALSE
+      ]
+    }
     a <- if ("uniprot_ac_1" %in% names(df)) {
       df$uniprot_ac_1
     } else if ("uniprot_a" %in% names(df)) {
       df$uniprot_a
-    } else {
+    } else if ("a" %in% names(df)) {
       df$a
+    } else {
+      NULL
     }
     b <- if ("uniprot_ac_2" %in% names(df)) {
       df$uniprot_ac_2
     } else if ("uniprot_b" %in% names(df)) {
       df$uniprot_b
-    } else {
+    } else if ("b" %in% names(df)) {
       df$b
+    } else {
+      NULL
     }
-    if (is.null(a) || is.null(b)) {
+    if (is.null(a) || is.null(b) || length(a) < 1) {
       return(NULL)
     }
     ipsae <- if ("ipSAE" %in% names(df)) {
-      df$ipSAE
+      as.numeric(df$ipSAE)
     } else if ("ipsae" %in% names(df)) {
-      df$ipsae
+      as.numeric(df$ipsae)
+    } else if (all(c("ipSAE_AB", "ipSAE_BA") %in% names(df))) {
+      .max_directional_score(df$ipSAE_AB, df$ipSAE_BA)
     } else {
-      NA_real_
+      rep(NA_real_, length(a))
     }
     pdq <- if ("pDockQ2" %in% names(df)) {
-      df$pDockQ2
+      as.numeric(df$pDockQ2)
     } else if ("pdockq2" %in% names(df)) {
-      df$pdockq2
+      as.numeric(df$pdockq2)
+    } else if (all(c("pDockQ2_AB", "pDockQ2_BA") %in% names(df))) {
+      .max_directional_score(df$pDockQ2_AB, df$pDockQ2_BA)
     } else {
-      NA_real_
+      rep(NA_real_, length(a))
     }
     data.frame(
       uniprot_a = as.character(a),
       uniprot_b = as.character(b),
-      ipSAE = as.numeric(ipsae),
-      pDockQ2 = as.numeric(pdq),
+      ipSAE = ipsae,
+      pDockQ2 = pdq,
       stringsAsFactors = FALSE
     )
   })
   pairs <- bind_rows(pieces)
+  if (nrow(pairs) < 1) {
+    cli::cli_abort("No usable AFDB pairs found in {.path {raw_dir}}.")
+  }
   keep <- (
     (is.na(pairs$ipSAE) & is.na(pairs$pDockQ2)) |
       ((!is.na(pairs$ipSAE) & pairs$ipSAE >= ipsae_min) |
@@ -759,16 +901,20 @@ build_alphafold_database <- function(
     database = "alphafold",
     version = version,
     cache_dir = cache_dir,
-    source_url = "https://alphafold.ebi.ac.uk/",
+    source_url = paste0(
+      "https://ftp.ebi.ac.uk/pub/databases/alphafold/",
+      "collaborations/nvda/"
+    ),
     license = "CC BY 4.0",
     citation = "AlphaFold DB / NVIDIA complexes; Jumper et al. Nature 2021"
   ))
 }
 
-#' Build all five interaction databases from local raw caches
+#' Build all five interaction databases
 #'
-#' Maintainer helper that runs each \code{build_*_database()} writer. OmniPath
-#' defaults to the commercial license filter.
+#' Maintainer helper that runs each \code{build_*_database()} writer. Missing
+#' raw dumps are downloaded into the package raw cache. OmniPath defaults to
+#' the commercial license filter.
 #'
 #' @param cache_dir Output interaction database cache.
 #' @return Named list of RDS paths.
