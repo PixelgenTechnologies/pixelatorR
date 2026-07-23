@@ -53,6 +53,12 @@
 #' data. If a value is outside this range, it is set to the closest
 #' legend range limit.
 #' @param legend_title The title of the legend
+#' @param highlight_pairs Optional \code{tbl_df}/data.frame with columns
+#' \code{marker_1} and \code{marker_2} naming pairs to outline with a cell
+#' border. Pairs whose markers are absent from \code{data} are ignored.
+#' \code{NULL} disables highlighting.
+#' @param highlight_color Border colour for highlighted cells.
+#' @param highlight_stroke Border line width for highlighted cells.
 #' @param ... Parameters passed to \code{pheatmap}
 #'
 #' @return A \code{Heatmap} object/plot if \code{type = "tiles"} or a \code{ggplot}
@@ -91,6 +97,17 @@
 #'   }
 #' ) &
 #'   labs(size = "-log10p(p_adj)")
+#'
+#' # Outline selected marker pairs
+#' ColocalizationHeatmap(
+#'   dca_markers,
+#'   type = "dots",
+#'   size_range = c(1, 10),
+#'   highlight_pairs = tibble(
+#'     marker_1 = c("M1", "M3"),
+#'     marker_2 = c("M2", "M5")
+#'   )
+#' )
 #'
 #' # We can specify the order of the markers with factor levels
 #' # but we need to turn off the clustering
@@ -154,6 +171,9 @@ ColocalizationHeatmap <- function(
   symmetrise = TRUE,
   legend_range = NULL,
   legend_title = "",
+  highlight_pairs = NULL,
+  highlight_color = "black",
+  highlight_stroke = 1.2,
   ...
 ) {
   # Check if pheatmap is installed
@@ -170,6 +190,8 @@ ColocalizationHeatmap <- function(
   assert_single_value(return_plot_data, type = "bool")
   assert_single_value(symmetrise, type = "bool")
   assert_single_value(legend_title, "string")
+  assert_single_value(highlight_color, "string")
+  assert_single_value(highlight_stroke, type = "numeric")
   assert_class(size_range, "numeric")
   assert_length(size_range, 2)
   if (any(size_range[1] < 0)) {
@@ -184,6 +206,9 @@ ColocalizationHeatmap <- function(
     assert_class(legend_range, c("numeric", "integer"))
     assert_length(legend_range, 2)
   }
+  assert_class(highlight_pairs, c("tbl_df", "data.frame"), allow_null = TRUE)
+  assert_col_in_data("marker_1", highlight_pairs, allow_null = TRUE)
+  assert_col_in_data("marker_2", highlight_pairs, allow_null = TRUE)
 
   # Check if the data is grouped
   if (is.grouped_df(data)) {
@@ -194,11 +219,9 @@ ColocalizationHeatmap <- function(
   }
 
   cols_keep <- c(marker1_col, marker2_col, value_col)
-  numeric_cols <- value_col
   if (type == "dots") {
     assert_col_in_data(size_col, data)
     cols_keep <- c(cols_keep, size_col)
-    numeric_cols <- c(numeric_cols, size_col)
   }
   plot_data <-
     data %>%
@@ -237,6 +260,19 @@ ColocalizationHeatmap <- function(
           !!sym(marker2_col) := !!sym(marker1_col)
         )) %>%
       distinct()
+  }
+
+  # Keep only highlight pairs whose markers appear in the plot
+  if (!is.null(highlight_pairs) && nrow(highlight_pairs) > 0) {
+    plot_markers <- unique(c(
+      plot_data[[marker1_col]],
+      plot_data[[marker2_col]]
+    ))
+    highlight_pairs <- highlight_pairs %>%
+      filter(
+        marker_1 %in% plot_markers,
+        marker_2 %in% plot_markers
+      )
   }
 
   # Set range for heatmap legend
@@ -318,7 +354,38 @@ ColocalizationHeatmap <- function(
         fill = !!sym(value_col),
         size = !!sym(size_col)
       )
-    ) +
+    )
+
+    if (!is.null(highlight_pairs) && nrow(highlight_pairs) > 0) {
+      highlight_cells <- highlight_pairs %>%
+        mutate(
+          !!sym(marker1_col) := marker_1,
+          !!sym(marker2_col) := marker_2
+        ) %>%
+        select(all_of(c(marker1_col, marker2_col)))
+      if (symmetrise) {
+        highlight_cells <- bind_rows(
+          highlight_cells,
+          highlight_cells %>%
+            rename(
+              !!sym(marker1_col) := !!sym(marker2_col),
+              !!sym(marker2_col) := !!sym(marker1_col)
+            )
+        ) %>%
+          distinct()
+      }
+      p <- p +
+        geom_tile(
+          data = highlight_cells,
+          aes(!!sym(marker1_col), !!sym(marker2_col)),
+          fill = NA,
+          colour = highlight_color,
+          linewidth = highlight_stroke,
+          inherit.aes = FALSE
+        )
+    }
+
+    p <- p +
       geom_point(shape = 21) +
       scale_size(range = size_range) +
       scale_y_discrete(limits = rev) +
@@ -329,18 +396,80 @@ ColocalizationHeatmap <- function(
       coord_fixed() +
       labs(size = size_col_label)
   } else {
-    p <- plot_data_wide %>%
-      ComplexHeatmap::pheatmap(
-        breaks = seq(legend_range[1], legend_range[2], length.out = 101),
-        color = colorRampPalette(colors)(100),
-        heatmap_legend_param = list(title = legend_title),
-        cluster_rows = cluster_rows,
-        cluster_cols = cluster_cols,
-        clustering_distance_rows = clustering_distance_rows,
-        clustering_distance_cols = clustering_distance_cols,
-        clustering_method = clustering_method,
-        ...
+    pheatmap_args <- list(...)
+    if (!is.null(highlight_pairs) && nrow(highlight_pairs) > 0) {
+      highlight_mat <- matrix(
+        FALSE,
+        nrow = nrow(plot_data_wide),
+        ncol = ncol(plot_data_wide),
+        dimnames = dimnames(plot_data_wide)
       )
+      rn <- rownames(plot_data_wide)
+      cn <- colnames(plot_data_wide)
+      for (i in seq_len(nrow(highlight_pairs))) {
+        a <- as.character(highlight_pairs$marker_1[i])
+        b <- as.character(highlight_pairs$marker_2[i])
+        if (a %in% rn && b %in% cn) {
+          highlight_mat[a, b] <- TRUE
+        }
+        if (b %in% rn && a %in% cn) {
+          highlight_mat[b, a] <- TRUE
+        }
+      }
+
+      user_cell_fun <- pheatmap_args$cell_fun
+      pheatmap_args$cell_fun <- NULL
+      cell_fun <- function(j, i, x, y, width, height, fill, ...) {
+        if (!is.null(user_cell_fun)) {
+          user_cell_fun(j, i, x, y, width, height, fill, ...)
+        }
+        if (isTRUE(highlight_mat[i, j])) {
+          grid::grid.rect(
+            x = x,
+            y = y,
+            width = width,
+            height = height,
+            gp = grid::gpar(
+              col = highlight_color,
+              fill = NA,
+              lwd = highlight_stroke
+            )
+          )
+        }
+      }
+
+      p <- do.call(
+        ComplexHeatmap::pheatmap,
+        c(
+          list(
+            mat = plot_data_wide,
+            breaks = seq(legend_range[1], legend_range[2], length.out = 101),
+            color = colorRampPalette(colors)(100),
+            heatmap_legend_param = list(title = legend_title),
+            cluster_rows = cluster_rows,
+            cluster_cols = cluster_cols,
+            clustering_distance_rows = clustering_distance_rows,
+            clustering_distance_cols = clustering_distance_cols,
+            clustering_method = clustering_method,
+            cell_fun = cell_fun
+          ),
+          pheatmap_args
+        )
+      )
+    } else {
+      p <- plot_data_wide %>%
+        ComplexHeatmap::pheatmap(
+          breaks = seq(legend_range[1], legend_range[2], length.out = 101),
+          color = colorRampPalette(colors)(100),
+          heatmap_legend_param = list(title = legend_title),
+          cluster_rows = cluster_rows,
+          cluster_cols = cluster_cols,
+          clustering_distance_rows = clustering_distance_rows,
+          clustering_distance_cols = clustering_distance_cols,
+          clustering_method = clustering_method,
+          ...
+        )
+    }
   }
 
   return(p)

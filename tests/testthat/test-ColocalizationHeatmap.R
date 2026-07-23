@@ -28,6 +28,32 @@ test_that("ColocalizationHeatmap works as expected", {
   expect_true(is.factor(p$data$marker_1))
   expect_true(is.factor(p$data$marker_2))
   expect_true(!identical(p$data$marker_1 %>% levels(), p$data$marker_2 %>% levels()))
+
+  # highlight_pairs = NULL is a no-op
+  expect_no_error(ColocalizationHeatmap(prox_summarized, highlight_pairs = NULL))
+
+  # Outline selected pairs (dots + tiles)
+  markers <- unique(c(prox_summarized$marker_1, prox_summarized$marker_2))
+  highlight_pairs <- tibble(
+    marker_1 = markers[1],
+    marker_2 = markers[min(2, length(markers))]
+  )
+  expect_no_error(
+    p <- ColocalizationHeatmap(
+      prox_summarized,
+      type = "dots",
+      size_col = "mean_log2_ratio",
+      highlight_pairs = highlight_pairs
+    )
+  )
+  expect_true(any(vapply(p$layers, function(l) inherits(l$geom, "GeomTile"), logical(1))))
+  expect_no_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      type = "tiles",
+      highlight_pairs = highlight_pairs
+    )
+  )
 })
 
 test_that("ColocalizationHeatmap fails with invalid input", {
@@ -42,4 +68,10 @@ test_that("ColocalizationHeatmap fails with invalid input", {
   expect_error(ColocalizationHeatmap(prox_summarized, cluster_rows = "Invalid"))
   expect_error(ColocalizationHeatmap(prox_summarized, cluster_cols = "Invalid"))
   expect_error(ColocalizationHeatmap(prox_summarized, type = "Invalid"))
+  expect_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      highlight_pairs = tibble(a = 1, b = 2)
+    )
+  )
 })
