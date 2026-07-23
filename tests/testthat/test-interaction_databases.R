@@ -133,11 +133,12 @@ test_that("extract_panel_interactions works as expected", {
       cache_dir = cache_dir
     )
   )
-  expect_equal(nrow(out), 1)
-  expect_equal(out$marker_1, "A")
-  expect_equal(out$marker_2, "B")
-  expect_true(out$in_db)
-  expect_equal(out$score, 500)
+  expect_equal(out,
+               structure(list(marker_1 = "A", marker_2 = "B", uniprot_a = "P12345",
+                              uniprot_b = "Q67890", in_db = TRUE, score = 500, evidence = "physical",
+                              resource = "string_physical", resource_version = "test"), row.names = c(NA,
+                                                                                                      -1L), class = c("tbl_df", "tbl", "data.frame"))
+               )
 
   # Lower threshold keeps the weaker physical edge A-C
   expect_no_error(
