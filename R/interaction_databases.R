@@ -262,20 +262,11 @@ extract_panel_interactions <- function(
     return(.empty_panel_interactions())
   }
 
-  m_a <- merge(
-    edges,
-    map,
-    by.x = "uniprot_a",
-    by.y = "uniprot_id"
-  )
-  names(m_a)[names(m_a) == "marker"] <- "marker_1"
-  m_ab <- merge(
-    m_a,
-    map,
-    by.x = "uniprot_b",
-    by.y = "uniprot_id"
-  )
-  names(m_ab)[names(m_ab) == "marker"] <- "marker_2"
+  m_ab <- edges %>%
+    left_join(map, by = c("uniprot_a" = "uniprot_id")) %>%
+    rename(marker_1 = marker) %>%
+    left_join(map, by = c("uniprot_b" = "uniprot_id")) %>%
+    rename(marker_2 = marker)
 
   out <- tibble(
     marker_1 = pmin(m_ab$marker_1, m_ab$marker_2),
@@ -385,16 +376,11 @@ build_string_database <- function(
     if (!all(c("protein1", "protein2", "combined_score") %in% names(links))) {
       cli::cli_abort("Unexpected STRING links columns in {.path {path}}.")
     }
-    m1 <- merge(
-      links, up,
-      by.x = "protein1", by.y = "string_protein_id"
-    )
-    data.table::setnames(m1, "uniprot", "uniprot_a")
-    m2 <- merge(
-      m1, up,
-      by.x = "protein2", by.y = "string_protein_id"
-    )
-    data.table::setnames(m2, "uniprot", "uniprot_b")
+    m2 <- as_tibble(links) %>%
+      left_join(as_tibble(up), by = c("protein1" = "string_protein_id")) %>%
+      rename(uniprot_a = uniprot) %>%
+      left_join(as_tibble(up), by = c("protein2" = "string_protein_id")) %>%
+      rename(uniprot_b = uniprot)
     edges <- normalise_interaction_edges(
       m2,
       a_col = "uniprot_a",
