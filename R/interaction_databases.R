@@ -14,15 +14,24 @@
 }
 
 #' Download a file if it is missing or empty
+#'
+#' Raises \code{options(timeout)} for the transfer (see \code{?download.file})
+#' and restores the previous value on exit.
+#'
+#' @param min_timeout Minimum timeout in seconds. Defaults to 300; large dumps
+#'   (e.g. AlphaFold heterodimer metadata) should pass a higher floor.
 #' @noRd
-.download_if_missing <- function(url, dest_file) {
+.download_if_missing <- function(url, dest_file, min_timeout = 300) {
   if (file.exists(dest_file) && isTRUE(file.info(dest_file)$size > 0)) {
     return(dest_file)
   }
   dir.create(dirname(dest_file), recursive = TRUE, showWarnings = FALSE)
+  old_timeout <- getOption("timeout")
+  on.exit(options(timeout = old_timeout), add = TRUE)
+  options(timeout = max(min_timeout, old_timeout))
   cli::cli_inform(c("i" = "Downloading {.url {url}}"))
   status <- tryCatch(
-    utils::download.file(url, destfile = dest_file, mode = "wb", quiet = TRUE),
+    utils::download.file(url, destfile = dest_file, mode = "wb", quiet = FALSE),
     error = function(e) {
       cli::cli_abort(c(
         "x" = "Failed to download {.url {url}}",
@@ -814,7 +823,8 @@ build_alphafold_database <- function(
         "https://ftp.ebi.ac.uk/pub/databases/alphafold/",
         "collaborations/nvda/heterodimer_metadata.csv"
       ),
-      hetero_dest
+      hetero_dest,
+      min_timeout = 7200
     )
     files <- hetero_dest
   }
