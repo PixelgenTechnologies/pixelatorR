@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Interaction-database helpers for building, caching, and querying protein–protein
+  interaction resources against a marker panel:
+  - `interaction_database_cache_dir()`, `normalise_interaction_edges()`,
+    `save_interaction_database()`, and `load_interaction_database()` for a slim
+    UniProt edge cache (STRING, BioGRID, CORUM, OmniPath, AlphaFold DB).
+  - `extract_panel_interactions()` to return known marker pairs from a cached
+    database for use with `ColocalizationHeatmap(highlight_pairs = ...)`.
+  - Maintainer builders `build_string_database()`, `build_biogrid_database()`,
+    `build_corum_database()`, `build_omnipath_database()`,
+    `build_alphafold_database()`, and `build_all_interaction_databases()`.
+    Missing raw dumps are downloaded into the package cache automatically
+    (with an increased download timeout suitable for large files).
+- `ColocalizationHeatmap` options `highlight_pairs`, `highlight_color`, and
+  `highlight_stroke` to outline selected marker pairs on tile and dot heatmaps.
+
 ## [0.18.3] - 2026-07-21
 
 ### Updates
