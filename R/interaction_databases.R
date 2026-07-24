@@ -510,9 +510,18 @@ build_string_database <- function(
     database = "string",
     version = version,
     cache_dir = cache_dir,
-    source_url = "https://string-db.org/cgi/download",
-    license = "CC BY 4.0",
-    citation = "Szklarczyk et al.; STRING database (see string-db.org)"
+    source_url = "https://stringdb-downloads.org/download/",
+    license = paste(
+      "Creative Commons Attribution 4.0 International (CC BY 4.0);",
+      "attribution required"
+    ),
+    citation = paste(
+      "Szklarczyk D, Kirsch R, Koutrouli M, et al. (2023).",
+      "The STRING database in 2023: protein-protein association networks",
+      "and functional enrichment analyses for any sequenced genome of",
+      "interest. Nucleic Acids Research 51(D1):D638-D646.",
+      "https://doi.org/10.1093/nar/gkac1000"
+    )
   ))
 }
 
@@ -626,9 +635,18 @@ build_biogrid_database <- function(
     database = "biogrid",
     version = version,
     cache_dir = cache_dir,
-    source_url = "https://downloads.thebiogrid.org/",
-    license = "MIT",
-    citation = "Stark et al., Nucleic Acids Res. 2006; BioGRID"
+    source_url = "https://downloads.thebiogrid.org/BioGRID/Latest-Release/",
+    license = paste(
+      "MIT License; retain the copyright and permission notices from",
+      "BioGRID's LICENSE.txt"
+    ),
+    citation = paste(
+      "Stark C, Breitkreutz BJ, Reguly T, Boucher L, Breitkreutz A,",
+      "Tyers M. (2006). BioGRID: a general repository for interaction",
+      "datasets. Nucleic Acids Research 34(Database issue):D535-D539.",
+      "https://doi.org/10.1093/nar/gkj109; also cite original",
+      "contributing publications where applicable"
+    )
   ))
 }
 
@@ -719,11 +737,19 @@ build_corum_database <- function(
     version = version,
     cache_dir = cache_dir,
     source_url = paste(
-      "https://omnipathdb.org/ (CORUM complexes) /",
+      "https://omnipathdb.org/complexes?databases=CORUM;",
       "https://mips.helmholtz-muenchen.de/corum/"
     ),
-    license = "CC BY 4.0",
-    citation = "CORUM; Tsitsiridis et al. / CORUM release papers"
+    license = paste(
+      "Creative Commons Attribution 4.0 International (CC BY 4.0);",
+      "attribution required"
+    ),
+    citation = paste(
+      "Steinkamp R, Tsitsiridis G, Brauner B, Montrone C, Fobo G,",
+      "Frishman G, Avram S, Oprea TI, Ruepp A. (2025). CORUM in 2024:",
+      "protein complexes as drug targets. Nucleic Acids Research",
+      "53(D1):D651-D657. https://doi.org/10.1093/nar/gkae1033"
+    )
   ))
 }
 
@@ -752,14 +778,12 @@ build_omnipath_database <- function(
     fallback <- file.path(
       .default_raw_cache(), "omnipath", "interactions_omnipath.tsv"
     )
-    if (!file.exists(interactions_file) && file.exists(fallback)) {
+    if (
+      license == "unknown" &&
+        !file.exists(interactions_file) &&
+        file.exists(fallback)
+    ) {
       interactions_file <- fallback
-      if (license != "unknown") {
-        cli::cli_inform(c(
-          "i" = "Using cached OmniPath file without re-download: {.path {interactions_file}}",
-          "i" = "Requested license filter: {.val {license}}"
-        ))
-      }
     }
   }
   if (!file.exists(interactions_file)) {
@@ -810,9 +834,19 @@ build_omnipath_database <- function(
     database = "omnipath",
     version = paste0(version, "_", license),
     cache_dir = cache_dir,
-    source_url = "https://omnipathdb.org/",
-    license = paste0("OmniPath per-source; filter=", license),
-    citation = "Türei et al.; OmniPath + contributing resources"
+    source_url = "https://omnipathdb.org/interactions",
+    license = paste0(
+      "No single OmniPath data license; contributing-resource licenses ",
+      "apply; web-service license filter=", license,
+      ". Cite and comply with each contributing resource"
+    ),
+    citation = paste(
+      "Türei D, Valdeolivas A, Gul L, et al. (2021). Integrated intra-",
+      "and intercellular signaling knowledge for multicellular omics",
+      "analysis. Molecular Systems Biology 17:e9923.",
+      "https://doi.org/10.15252/msb.20209923; also cite the contributing",
+      "resources identified in the evidence/sources fields"
+    )
   ))
 }
 
@@ -952,8 +986,20 @@ build_alphafold_database <- function(
       "https://ftp.ebi.ac.uk/pub/databases/alphafold/",
       "collaborations/nvda/"
     ),
-    license = "CC BY 4.0",
-    citation = "AlphaFold DB / NVIDIA complexes; Jumper et al. Nature 2021"
+    license = paste(
+      "Creative Commons Attribution 4.0 International (CC BY 4.0);",
+      "academic and commercial use permitted with attribution;",
+      "EMBL-EBI Terms of Use also apply"
+    ),
+    citation = paste(
+      "Bertoni D, Tsenkov MI, Magaña P, et al. (2026). AlphaFold Protein",
+      "Structure Database 2025: a redesigned interface and updated",
+      "structural coverage. Nucleic Acids Research 54(D1):D358-D362.",
+      "https://doi.org/10.1093/nar/gkaf1226; Han Y, Tsenkov MI,",
+      "Venanzi NAE, et al. (2026). AlphaFold Database expands to",
+      "proteome-scale quaternary structures. bioRxiv 2026.03.27.714458.",
+      "https://doi.org/10.64898/2026.03.27.714458"
+    )
   ))
 }
 
