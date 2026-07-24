@@ -70,79 +70,6 @@
   return(dest_file)
 }
 
-#' Download a zip archive and return the first extracted matching file
-#'
-#' Reuses an already-extracted file under \code{dest_dir} when present.
-#' Otherwise downloads \code{url}, unzips into \code{dest_dir}, and returns
-#' the first path matching \code{pattern}.
-#'
-#' @param url Remote zip URL.
-#' @param dest_dir Directory for the zip and extracted contents.
-#' @param pattern Regex passed to \code{list.files} to find the extracted file.
-#'
-#' @return Character path to the first matching extracted file.
-#' @noRd
-.download_zip_extract <- function(url, dest_dir, pattern) {
-  dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
-  existing <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
-  if (length(existing) > 0) {
-    return(existing[[1]])
-  }
-  zip_path <- file.path(dest_dir, basename(sub("[?].*$", "", url)))
-  if (!grepl("[.]zip$", zip_path, ignore.case = TRUE)) {
-    zip_path <- paste0(zip_path, ".zip")
-  }
-  .download_if_missing(url, zip_path)
-  utils::unzip(zip_path, exdir = dest_dir)
-  extracted <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
-  if (length(extracted) < 1) {
-    cli::cli_abort(
-      "No file matching {.val {pattern}} found after unzipping {.path {zip_path}}."
-    )
-  }
-  return(extracted[[1]])
-}
-
-#' Build a STRING download URL for a release file
-#'
-#' @param fname Basename of the STRING file
-#'   (e.g. \code{"9606.protein.aliases.v12.0.txt.gz"}).
-#' @param version STRING release label (e.g. \code{"12.0"}).
-#' @param network One of \code{"aliases"}, \code{"physical"}, or \code{"full"}.
-#'
-#' @return Character URL under \code{https://stringdb-downloads.org/download/}.
-#' @noRd
-.string_download_url <- function(fname, version, network = c("aliases", "physical", "full")) {
-  network <- match.arg(network)
-  prefix <- switch(
-    network,
-    aliases = paste0("protein.aliases.v", version),
-    physical = paste0("protein.physical.links.v", version),
-    full = paste0("protein.links.v", version)
-  )
-  paste0("https://stringdb-downloads.org/download/", prefix, "/", fname)
-}
-
-#' Ensure a STRING release file exists under \code{raw_dir}
-#'
-#' Thin wrapper around \code{.download_if_missing} using
-#' \code{.string_download_url}.
-#'
-#' @param raw_dir Local STRING raw-cache directory.
-#' @param fname Basename of the STRING file.
-#' @param version STRING release label.
-#' @param network One of \code{"aliases"}, \code{"physical"}, or \code{"full"}.
-#'
-#' @return Character path to the local file.
-#' @noRd
-.ensure_string_file <- function(raw_dir, fname, version, network) {
-  path <- file.path(raw_dir, fname)
-  return(.download_if_missing(
-    .string_download_url(fname, version, network),
-    path
-  ))
-}
-
 #' First matching column name among candidates (exact or regex)
 #'
 #' @param df Data frame or tibble.
@@ -169,45 +96,6 @@
     return(NA_character_)
   }
   return(hit[[1]])
-}
-
-#' Values from the first present column among candidates, or NULL
-#'
-#' Exact name matching only (no regex). Useful for alias ladders such as
-#' \code{c("uniprot_ac_1", "uniprot_a", "a")}.
-#'
-#' @param df Data frame or tibble.
-#' @param candidates Character vector of column names in preference order.
-#'
-#' @return The column vector, or \code{NULL} if none of the candidates exist.
-#' @noRd
-.coalesce_col <- function(df, candidates) {
-  col <- .first_present_col(df, candidates, regex = FALSE)
-  if (is.na(col)) {
-    return(NULL)
-  }
-  return(df[[col]])
-}
-
-#' Empty result tibble for \code{extract_panel_interactions}
-#'
-#' Defines the canonical column set and types returned when there are no
-#' panel edges to report.
-#'
-#' @return Zero-row tibble with marker / UniProt / score columns.
-#' @noRd
-.empty_panel_interactions <- function() {
-  tibble(
-    marker_1 = character(),
-    marker_2 = character(),
-    uniprot_a = character(),
-    uniprot_b = character(),
-    in_db = logical(),
-    score = numeric(),
-    evidence = character(),
-    resource = character(),
-    resource_version = character()
-  )
 }
 
 #' Default cache directory for interaction databases
@@ -405,6 +293,21 @@ extract_panel_interactions <- function(
   assert_single_value(cache_dir, type = "string")
   assert_single_value(version, type = "string")
 
+  # Zero-row result with the canonical extract_panel_interactions columns.
+  empty_panel_interactions <- function() {
+    tibble(
+      marker_1 = character(),
+      marker_2 = character(),
+      uniprot_a = character(),
+      uniprot_b = character(),
+      in_db = logical(),
+      score = numeric(),
+      evidence = character(),
+      resource = character(),
+      resource_version = character()
+    )
+  }
+
   markers <- unique(markers)
   map <- marker_uniprot_map %>%
     filter(
@@ -415,7 +318,7 @@ extract_panel_interactions <- function(
     select(marker, uniprot_id) %>%
     mutate(uniprot_id = trimws(uniprot_id))
   if (nrow(map) == 0) {
-    return(.empty_panel_interactions())
+    return(empty_panel_interactions())
   }
 
   db <- load_interaction_database(
@@ -440,7 +343,7 @@ extract_panel_interactions <- function(
            uniprot_b %in% panel_uniprot)
 
   if (nrow(edges) == 0) {
-    return(.empty_panel_interactions())
+    return(empty_panel_interactions())
   }
 
   out <- edges %>%
@@ -500,20 +403,33 @@ build_string_database <- function(
   rlang::check_installed("data.table")
   dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
 
+  string_download_url <- function(fname, network = c("aliases", "physical", "full")) {
+    network <- match.arg(network)
+    prefix <- switch(
+      network,
+      aliases = paste0("protein.aliases.v", version),
+      physical = paste0("protein.physical.links.v", version),
+      full = paste0("protein.links.v", version)
+    )
+    paste0("https://stringdb-downloads.org/download/", prefix, "/", fname)
+  }
+
+  # Download a STRING release file into raw_dir when missing.
+  ensure_string_file <- function(fname, network) {
+    path <- file.path(raw_dir, fname)
+    .download_if_missing(string_download_url(fname, network), path)
+  }
+
   aliases_fname <- sprintf("%s.protein.aliases.v%s.txt.gz", species, version)
   physical_fname <- sprintf(
     "%s.protein.physical.links.v%s.txt.gz", species, version
   )
   full_fname <- sprintf("%s.protein.links.v%s.txt.gz", species, version)
 
-  aliases_gz <- .ensure_string_file(
-    raw_dir, aliases_fname, version, "aliases"
-  )
-  physical_gz <- .ensure_string_file(
-    raw_dir, physical_fname, version, "physical"
-  )
+  aliases_gz <- ensure_string_file(aliases_fname, "aliases")
+  physical_gz <- ensure_string_file(physical_fname, "physical")
   full_gz <- if (isTRUE(include_full)) {
-    .ensure_string_file(raw_dir, full_fname, version, "full")
+    ensure_string_file(full_fname, "full")
   } else {
     NULL
   }
@@ -604,12 +520,35 @@ build_biogrid_database <- function(
 ) {
   rlang::check_installed("data.table")
   raw_dir <- file.path(.default_raw_cache(), "biogrid")
+
+  # Download a zip and return the first extracted file matching pattern.
+  download_zip_extract <- function(url, dest_dir, pattern) {
+    dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
+    existing <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
+    if (length(existing) > 0) {
+      return(existing[[1]])
+    }
+    zip_path <- file.path(dest_dir, basename(sub("[?].*$", "", url)))
+    if (!grepl("[.]zip$", zip_path, ignore.case = TRUE)) {
+      zip_path <- paste0(zip_path, ".zip")
+    }
+    .download_if_missing(url, zip_path)
+    utils::unzip(zip_path, exdir = dest_dir)
+    extracted <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
+    if (length(extracted) < 1) {
+      cli::cli_abort(
+        "No file matching {.val {pattern}} found after unzipping {.path {zip_path}}."
+      )
+    }
+    return(extracted[[1]])
+  }
+
   if (is.null(raw_file)) {
     existing <- list.files(raw_dir, pattern = "[.]tab3[.]txt$", full.names = TRUE)
     raw_file <- if (length(existing) > 0) existing[[1]] else NA_character_
   }
   if (length(raw_file) != 1 || is.na(raw_file) || !file.exists(raw_file)) {
-    raw_file <- .download_zip_extract(
+    raw_file <- download_zip_extract(
       url = paste0(
         "https://downloads.thebiogrid.org/Download/BioGRID/",
         "Latest-Release/BIOGRID-MV-Physical-LATEST.tab3.zip"
@@ -863,22 +802,6 @@ build_omnipath_database <- function(
   ))
 }
 
-#' Max of two directional score columns, ignoring NA on one side
-#'
-#' Used for NVIDIA/AFDB heterodimer metadata where scores are reported as
-#' \code{*_AB} and \code{*_BA}. If only one side is non-missing, that value
-#' is kept; if both are present, returns \code{pmax}.
-#'
-#' @param x,y Numeric (or coercible) score vectors of equal length.
-#'
-#' @return Numeric vector of the same length as \code{x}.
-#' @noRd
-.max_directional_score <- function(x, y) {
-  x <- as.numeric(x)
-  y <- as.numeric(y)
-  ifelse(is.na(x), y, ifelse(is.na(y), x, pmax(x, y)))
-}
-
 #' Build AlphaFold DB high-confidence complex database
 #'
 #' When no local CSVs are present, downloads the NVIDIA/AFDB heterodimer
@@ -905,6 +828,22 @@ build_alphafold_database <- function(
   ipsae_min = 0.6,
   pdockq2_min = 0.23
 ) {
+  # First matching column's values among exact name candidates, or NULL.
+  coalesce_col <- function(df, candidates) {
+    col <- .first_present_col(df, candidates, regex = FALSE)
+    if (is.na(col)) {
+      return(NULL)
+    }
+    return(df[[col]])
+  }
+
+  # Max of directional *_AB / *_BA scores, keeping a non-missing single side.
+  max_directional_score <- function(x, y) {
+    x <- as.numeric(x)
+    y <- as.numeric(y)
+    ifelse(is.na(x), y, ifelse(is.na(y), x, pmax(x, y)))
+  }
+
   files <- unique(c(
     heterodimer_file,
     file.path(raw_dir, "afdb_api_complexes_panel.csv"),
@@ -942,24 +881,24 @@ build_alphafold_database <- function(
         drop = FALSE
       ]
     }
-    a <- .coalesce_col(df, c("uniprot_ac_1", "uniprot_a", "a"))
-    b <- .coalesce_col(df, c("uniprot_ac_2", "uniprot_b", "b"))
+    a <- coalesce_col(df, c("uniprot_ac_1", "uniprot_a", "a"))
+    b <- coalesce_col(df, c("uniprot_ac_2", "uniprot_b", "b"))
     if (is.null(a) || is.null(b) || length(a) < 1) {
       return(NULL)
     }
-    ipsae <- .coalesce_col(df, c("ipSAE", "ipsae"))
+    ipsae <- coalesce_col(df, c("ipSAE", "ipsae"))
     if (!is.null(ipsae)) {
       ipsae <- as.numeric(ipsae)
     } else if (all(c("ipSAE_AB", "ipSAE_BA") %in% names(df))) {
-      ipsae <- .max_directional_score(df$ipSAE_AB, df$ipSAE_BA)
+      ipsae <- max_directional_score(df$ipSAE_AB, df$ipSAE_BA)
     } else {
       ipsae <- rep(NA_real_, length(a))
     }
-    pdq <- .coalesce_col(df, c("pDockQ2", "pdockq2"))
+    pdq <- coalesce_col(df, c("pDockQ2", "pdockq2"))
     if (!is.null(pdq)) {
       pdq <- as.numeric(pdq)
     } else if (all(c("pDockQ2_AB", "pDockQ2_BA") %in% names(df))) {
-      pdq <- .max_directional_score(df$pDockQ2_AB, df$pDockQ2_BA)
+      pdq <- max_directional_score(df$pDockQ2_AB, df$pDockQ2_BA)
     } else {
       pdq <- rep(NA_real_, length(a))
     }
