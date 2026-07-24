@@ -105,6 +105,18 @@ test_that("save_interaction_database and load_interaction_database work as expec
 
   expect_no_error(db_ver <- load_interaction_database("string", "test", cache_dir = cache_dir))
   expect_equal(db_ver$meta$version, "test")
+
+  # version "latest" writes only one file; must not file.copy onto itself
+  expect_no_error(
+    latest_path <- save_interaction_database(
+      edges = db$edges,
+      database = "string",
+      version = "latest",
+      cache_dir = cache_dir
+    )
+  )
+  expect_equal(basename(latest_path), "string_latest.rds")
+  expect_true(file.exists(latest_path))
 })
 
 test_that("load_interaction_database fails with invalid input", {

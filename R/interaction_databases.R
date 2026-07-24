@@ -212,7 +212,9 @@ save_interaction_database <- function(
   )
   saveRDS(list(edges = edges, meta = meta), path)
   latest <- .interaction_database_rds_path(database, "latest", cache_dir)
-  file.copy(path, latest, overwrite = TRUE)
+  if (!identical(path, latest)) {
+    file.copy(path, latest, overwrite = TRUE)
+  }
   return(path)
 }
 
@@ -307,6 +309,7 @@ extract_panel_interactions <- function(
       !is.na(uniprot_id),
       uniprot_id != ""
     ) %>%
+    select(marker, uniprot_id) %>%
     mutate(uniprot_id = trimws(uniprot_id))
   if (nrow(map) == 0) {
     return(.empty_panel_interactions())
@@ -320,15 +323,11 @@ extract_panel_interactions <- function(
   edges <- db$edges
 
   if (database == "string") {
-    if ("evidence" %in% names(edges)) {
-      edges <- edges[edges$evidence == string_network, , drop = FALSE]
-    }
-    if ("score" %in% names(edges) && !is.null(score_threshold)) {
-      edges <- edges[
-        !is.na(edges$score) & edges$score >= score_threshold,
-        ,
-        drop = FALSE
-      ]
+    edges <- edges %>%
+      filter(evidence == string_network)
+    if (!is.null(score_threshold)) {
+      edges <- edges %>%
+        filter(!is.na(score), score >= score_threshold)
     }
   }
 
@@ -341,47 +340,37 @@ extract_panel_interactions <- function(
     return(.empty_panel_interactions())
   }
 
-  m_ab <- edges %>%
+  out <- edges %>%
     left_join(map, by = c("uniprot_a" = "uniprot_id")) %>%
     rename(marker_1 = marker) %>%
     left_join(map, by = c("uniprot_b" = "uniprot_id")) %>%
-    rename(marker_2 = marker)
-
-  out <- tibble(
-    marker_1 = pmin(m_ab$marker_1, m_ab$marker_2),
-    marker_2 = pmax(m_ab$marker_1, m_ab$marker_2),
-    uniprot_a = m_ab$uniprot_a,
-    uniprot_b = m_ab$uniprot_b,
-    in_db = TRUE,
-    score = if ("score" %in% names(m_ab)) as.numeric(m_ab$score) else NA_real_,
-    evidence = if ("evidence" %in% names(m_ab)) {
-      as.character(m_ab$evidence)
-    } else {
-      NA_character_
-    },
-    resource = if ("resource" %in% names(m_ab)) {
-      as.character(m_ab$resource)
-    } else {
-      database
-    },
-    resource_version = if ("resource_version" %in% names(m_ab)) {
-      as.character(m_ab$resource_version)
-    } else {
-      NA_character_
-    }
-  ) %>%
+    rename(marker_2 = marker) %>%
+    mutate(
+      marker_1_ordered = pmin(marker_1, marker_2),
+      marker_2_ordered = pmax(marker_1, marker_2)
+    ) %>%
+    select(
+      marker_1 = marker_1_ordered,
+      marker_2 = marker_2_ordered,
+      uniprot_a,
+      uniprot_b,
+      score,
+      evidence,
+      resource,
+      resource_version
+    ) %>%
     group_by(marker_1, marker_2) %>%
     summarise(
-      uniprot_a = uniprot_a[1],
-      uniprot_b = uniprot_b[1],
+      uniprot_a = uniprot_a[[1]],
+      uniprot_b = uniprot_b[[1]],
       in_db = TRUE,
       score = suppressWarnings(max(score, na.rm = TRUE)),
-      evidence = evidence[1],
-      resource = resource[1],
-      resource_version = resource_version[1],
+      evidence = evidence[[1]],
+      resource = resource[[1]],
+      resource_version = resource_version[[1]],
       .groups = "drop"
     ) %>%
-    mutate(score = ifelse(is.infinite(score), NA_real_, score))
+    mutate(score = if_else(is.infinite(score), NA_real_, score))
   return(out)
 }
 
