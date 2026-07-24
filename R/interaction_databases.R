@@ -674,7 +674,7 @@ build_corum_database <- function(
       "https://omnipathdb.org/ (CORUM complexes) /",
       "https://mips.helmholtz-muenchen.de/corum/"
     ),
-    license = "CC BY 4.0 (CORUM); see OmniPath source licenses if via OmniPath",
+    license = "CC BY 4.0",
     citation = "CORUM; Tsitsiridis et al. / CORUM release papers"
   ))
 }
