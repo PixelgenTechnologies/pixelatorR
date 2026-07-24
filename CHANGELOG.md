@@ -16,11 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     UniProt edge cache (STRING, BioGRID, CORUM, OmniPath, AlphaFold DB).
   - `extract_panel_interactions()` to return known marker pairs from a cached
     database for use with `ColocalizationHeatmap(highlight_pairs = ...)`.
+    UniProt homodimers are retained; false self-pairs from hetero joins are not.
+  - `create_marker_uniprot_map()` to build a long-form marker–UniProt map from
+    Seurat / PNA assay feature metadata (`uniprot_id`, semicolon-separated).
   - Maintainer builders `build_string_database()`, `build_biogrid_database()`,
     `build_corum_database()`, `build_omnipath_database()`,
     `build_alphafold_database()`, and `build_all_interaction_databases()`.
     Missing raw dumps are downloaded into the package cache automatically
     (with an increased download timeout suitable for large files).
+    AlphaFold combines hetero- and homodimer NVIDIA metadata; CORUM emits
+    U–U edges for single-accession (homomer) complexes.
 - `ColocalizationHeatmap` options `highlight_pairs`, `highlight_color`, and
   `highlight_stroke` to outline selected marker pairs on tile and dot heatmaps.
 

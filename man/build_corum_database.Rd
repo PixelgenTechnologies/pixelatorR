@@ -22,5 +22,6 @@ Path to saved RDS.
 }
 \description{
 Downloads OmniPath-served CORUM complexes when \code{corum_file} is missing.
-Prefer an official CORUM file when present.
+Prefer an official CORUM file when present. Complexes with a single UniProt
+accession become homomer edges (\code{uniprot_a == uniprot_b}).
 }

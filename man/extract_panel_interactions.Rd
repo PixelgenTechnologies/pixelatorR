@@ -6,7 +6,7 @@
 \usage{
 extract_panel_interactions(
   markers,
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = .interaction_databases,
   marker_uniprot_map,
   score_threshold = 400,
   string_network = c("physical", "full"),
@@ -20,7 +20,8 @@ extract_panel_interactions(
 \item{database}{Interaction database key.}
 
 \item{marker_uniprot_map}{Data frame/tibble with columns \code{marker} and
-\code{uniprot_id} (long form; multiple rows per marker allowed).}
+\code{uniprot_id} (long form; multiple rows per marker allowed). Build with
+\code{\link{create_marker_uniprot_map}}.}
 
 \item{score_threshold}{Minimum score (STRING uses the classic 0–1000 scale).}
 
@@ -40,12 +41,15 @@ Pass \code{marker_1}/\code{marker_2} columns to
 \description{
 Maps panel markers to UniProt accessions, loads a slim interaction database,
 and returns undirected marker pairs with a registered database entry after
-optional score / network filters.
+optional score / network filters. UniProt homodimers (\code{uniprot_a ==
+uniprot_b}) are kept as self-pairs; false self-pairs from hetero Cartesian
+joins are dropped.
 }
 \examples{
 \dontrun{
+marker_map <- create_marker_uniprot_map(pg_data, assay = "PNA")
 highlight_pairs <- extract_panel_interactions(
-  markers = c("CD3E", "CD4", "CD8A"),
+  markers = c("CD3e", "CD4", "CD8"),
   database = "string",
   marker_uniprot_map = marker_map,
   score_threshold = 400
@@ -61,6 +65,7 @@ ColocalizationHeatmap(
 }
 \seealso{
 \code{\link{ColocalizationHeatmap}},
+\code{\link{create_marker_uniprot_map}},
 \code{\link{load_interaction_database}},
 \code{\link{build_all_interaction_databases}}
 }

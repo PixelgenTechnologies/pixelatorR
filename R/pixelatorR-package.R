@@ -222,6 +222,7 @@
 #' @importFrom tidyr crossing
 #' @importFrom tidyr pivot_longer
 #' @importFrom tidyr pivot_wider
+#' @importFrom tidyr separate_rows
 #' @importFrom tidyr unite
 #' @importFrom utils capture.output
 #' @importFrom utils head

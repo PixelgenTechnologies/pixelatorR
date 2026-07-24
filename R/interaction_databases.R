@@ -177,7 +177,7 @@ normalise_interaction_edges <- function(
 #' @export
 save_interaction_database <- function(
   edges,
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = .interaction_databases,
   version,
   cache_dir = interaction_database_cache_dir(),
   source_url = NULL,
@@ -223,7 +223,7 @@ save_interaction_database <- function(
 #'   \code{\link{extract_panel_interactions}}
 #' @export
 load_interaction_database <- function(
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = .interaction_databases,
   version = "latest",
   cache_dir = interaction_database_cache_dir()
 ) {
@@ -252,16 +252,81 @@ load_interaction_database <- function(
   return(obj)
 }
 
+#' Create a marker–UniProt map from a Seurat / PNA object
+#'
+#' Reads feature metadata from a PNA (or other) assay and expands
+#' semicolon-separated UniProt accessions to long form for use with
+#' \code{\link{extract_panel_interactions}}.
+#'
+#' Equivalent to:
+#' \preformatted{
+#' object[[assay]][[]] %>%
+#'   as_tibble(rownames = "marker") %>%
+#'   select(marker, uniprot_id) %>%
+#'   separate_rows(uniprot_id, sep = ";")
+#' }
+#'
+#' @param object A \code{Seurat} object with feature metadata on the chosen assay.
+#' @param assay Assay name. Defaults to \code{DefaultAssay(object)}.
+#' @param uniprot_col Feature-metadata column with UniProt accessions
+#'   (semicolon-separated values are expanded).
+#' @return A tibble with columns \code{marker} and \code{uniprot_id}.
+#'
+#' @seealso \code{\link{extract_panel_interactions}}
+#'
+#' @examples
+#' \dontrun{
+#' marker_map <- create_marker_uniprot_map(pg_data, assay = "PNA")
+#' }
+#' @export
+create_marker_uniprot_map <- function(
+  object,
+  assay = NULL,
+  uniprot_col = "uniprot_id"
+) {
+  assert_class(object, "Seurat")
+  assert_single_value(assay, type = "string", allow_null = TRUE)
+  assert_single_value(uniprot_col, type = "string")
+
+  assay <- assay %||% DefaultAssay(object)
+  if (!assay %in% Assays(object)) {
+    cli::cli_abort("Assay {.val {assay}} not found in {.cls Seurat} object.")
+  }
+
+  feat_meta <- object[[assay]][[]]
+  if (!uniprot_col %in% colnames(feat_meta)) {
+    cli::cli_abort(c(
+      "x" = "Feature metadata for assay {.val {assay}} lacks column {.val {uniprot_col}}."
+    ))
+  }
+
+  return(
+    as_tibble(feat_meta, rownames = "marker") %>%
+      select(marker, uniprot_id = all_of(uniprot_col)) %>%
+      mutate(
+        marker = as.character(marker),
+        uniprot_id = as.character(uniprot_id)
+      ) %>%
+      separate_rows(uniprot_id, sep = ";") %>%
+      mutate(uniprot_id = trimws(uniprot_id)) %>%
+      filter(!is.na(uniprot_id), uniprot_id != "") %>%
+      distinct(marker, uniprot_id)
+  )
+}
+
 #' Extract known database interactions for a marker panel
 #'
 #' Maps panel markers to UniProt accessions, loads a slim interaction database,
 #' and returns undirected marker pairs with a registered database entry after
-#' optional score / network filters.
+#' optional score / network filters. UniProt homodimers (\code{uniprot_a ==
+#' uniprot_b}) are kept as self-pairs; false self-pairs from hetero Cartesian
+#' joins are dropped.
 #'
 #' @param markers Character vector of panel marker names.
 #' @param database Interaction database key.
 #' @param marker_uniprot_map Data frame/tibble with columns \code{marker} and
-#'   \code{uniprot_id} (long form; multiple rows per marker allowed).
+#'   \code{uniprot_id} (long form; multiple rows per marker allowed). Build with
+#'   \code{\link{create_marker_uniprot_map}}.
 #' @param score_threshold Minimum score (STRING uses the classic 0–1000 scale).
 #' @param string_network For STRING: \code{"physical"} or \code{"full"}.
 #' @param cache_dir Interaction database cache directory.
@@ -273,13 +338,15 @@ load_interaction_database <- function(
 #'   \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 #'
 #' @seealso \code{\link{ColocalizationHeatmap}},
+#'   \code{\link{create_marker_uniprot_map}},
 #'   \code{\link{load_interaction_database}},
 #'   \code{\link{build_all_interaction_databases}}
 #'
 #' @examples
 #' \dontrun{
+#' marker_map <- create_marker_uniprot_map(pg_data, assay = "PNA")
 #' highlight_pairs <- extract_panel_interactions(
-#'   markers = c("CD3E", "CD4", "CD8A"),
+#'   markers = c("CD3e", "CD4", "CD8"),
 #'   database = "string",
 #'   marker_uniprot_map = marker_map,
 #'   score_threshold = 400
@@ -295,7 +362,7 @@ load_interaction_database <- function(
 #' @export
 extract_panel_interactions <- function(
   markers,
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = .interaction_databases,
   marker_uniprot_map,
   score_threshold = 400,
   string_network = c("physical", "full"),
@@ -373,7 +440,8 @@ extract_panel_interactions <- function(
   out <- edges %>%
     inner_join(map_a, by = c("uniprot_a" = "uniprot_id")) %>%
     inner_join(map_b, by = c("uniprot_b" = "uniprot_id")) %>%
-    filter(marker_1 != marker_2) %>%
+    # Keep UniProt homodimers (a == b); drop false self-pairs from hetero joins
+    filter(marker_1 != marker_2 | uniprot_a == uniprot_b) %>%
     mutate(
       marker_1_ordered = pmin(marker_1, marker_2),
       marker_2_ordered = pmax(marker_1, marker_2)
@@ -688,7 +756,8 @@ build_biogrid_database <- function(
 #' Build CORUM co-membership database (human)
 #'
 #' Downloads OmniPath-served CORUM complexes when \code{corum_file} is missing.
-#' Prefer an official CORUM file when present.
+#' Prefer an official CORUM file when present. Complexes with a single UniProt
+#' accession become homomer edges (\code{uniprot_a == uniprot_b}).
 #'
 #' @param corum_file Path to OmniPath CORUM complexes TSV or official coreComplexes.
 #' @param version Version label.
@@ -744,18 +813,27 @@ build_corum_database <- function(
         "[_;,]"
       ))))
       ids <- ids[ids != "" & !is.na(ids)]
-      if (length(ids) < 2) {
+      evid <- if (!is.na(name_col)) {
+        as.character(dt[[name_col]][[i]])
+      } else {
+        NA_character_
+      }
+      if (length(ids) < 1) {
         return(NULL)
+      }
+      # Single-accession complexes (homomers) become U–U edges
+      if (length(ids) == 1) {
+        return(tibble(
+          uniprot_a = ids,
+          uniprot_b = ids,
+          evidence = evid
+        ))
       }
       grid <- utils::combn(ids, 2)
       tibble(
         uniprot_a = grid[1, ],
         uniprot_b = grid[2, ],
-        evidence = if (!is.na(name_col)) {
-          as.character(dt[[name_col]][[i]])
-        } else {
-          NA_character_
-        }
+        evidence = evid
       )
     })
   )
@@ -887,12 +965,17 @@ build_omnipath_database <- function(
 
 #' Build AlphaFold DB high-confidence complex database
 #'
-#' When no local CSVs are present, downloads the NVIDIA/AFDB heterodimer
-#' metadata table from EBI FTP (~2 GB) into \code{raw_dir}.
+#' Combines heterodimer and homodimer predictions. When no local CSVs are
+#' present, downloads both NVIDIA/AFDB metadata tables from EBI FTP into
+#' \code{raw_dir} (heterodimer ~2 GB, homodimer ~6 GB).
+#'
+#' Homodimer metadata uses columns \code{uniprotAccession} and \code{taxId};
+#' heterodimers use \code{uniprot_ac_1}/\code{uniprot_ac_2} and
+#' \code{tax_id_1}/\code{tax_id_2}.
 #'
 #' @param heterodimer_file Optional FTP-derived heterodimer metadata CSV.
 #'   If absent, uses panel API cache CSVs under \code{raw_dir}, then downloads
-#'   the full heterodimer metadata dump if needed.
+#'   the official heterodimer and homodimer metadata dumps if needed.
 #' @param raw_dir Directory with AFDB cache files.
 #' @param version Version label.
 #' @param cache_dir Output interaction database cache.
@@ -927,45 +1010,27 @@ build_alphafold_database <- function(
     ifelse(is.na(x), y, ifelse(is.na(y), x, pmax(x, y)))
   }
 
-  files <- unique(c(
-    heterodimer_file,
-    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
-    file.path(raw_dir, "afdb_heterodimers_panel_pairs.csv"),
-    file.path(raw_dir, "afdb_homodimers_human_panel.csv"),
-    file.path(raw_dir, "heterodimer_metadata.csv")
-  ))
-  files <- files[file.exists(files)]
-  if (length(files) < 1) {
-    hetero_dest <- file.path(raw_dir, "heterodimer_metadata.csv")
-    cli::cli_inform(c(
-      "i" = paste(
-        "No local AFDB CSVs found; downloading NVIDIA heterodimer metadata",
-        "(large file, ~2 GB)."
-      )
-    ))
-    .download_if_missing(
-      paste0(
-        "https://ftp.ebi.ac.uk/pub/databases/alphafold/",
-        "collaborations/nvda/heterodimer_metadata.csv"
-      ),
-      hetero_dest,
-      min_timeout = 7200
-    )
-    files <- hetero_dest
-  }
-
-  pieces <- lapply(files, function(f) {
+  parse_afdb_file <- function(f) {
     df <- utils::read.csv(f, stringsAsFactors = FALSE, check.names = FALSE)
-    if (all(c("tax_id_1", "tax_id_2") %in% names(df))) {
-      df <- df[
-        as.character(df$tax_id_1) == "9606" &
-          as.character(df$tax_id_2) == "9606",
-        ,
-        drop = FALSE
-      ]
+    # Homodimer NVIDIA schema: single UniProt + taxId
+    if ("uniprotAccession" %in% names(df)) {
+      if ("taxId" %in% names(df)) {
+        df <- df[as.character(df$taxId) == "9606", , drop = FALSE]
+      }
+      a <- as.character(df$uniprotAccession)
+      b <- a
+    } else {
+      if (all(c("tax_id_1", "tax_id_2") %in% names(df))) {
+        df <- df[
+          as.character(df$tax_id_1) == "9606" &
+            as.character(df$tax_id_2) == "9606",
+          ,
+          drop = FALSE
+        ]
+      }
+      a <- coalesce_col(df, c("uniprot_ac_1", "uniprot_a", "a"))
+      b <- coalesce_col(df, c("uniprot_ac_2", "uniprot_b", "b"))
     }
-    a <- coalesce_col(df, c("uniprot_ac_1", "uniprot_a", "a"))
-    b <- coalesce_col(df, c("uniprot_ac_2", "uniprot_b", "b"))
     if (is.null(a) || is.null(b) || length(a) < 1) {
       return(NULL)
     }
@@ -992,7 +1057,48 @@ build_alphafold_database <- function(
       pDockQ2 = pdq,
       stringsAsFactors = FALSE
     )
-  })
+  }
+
+  hetero_dest <- file.path(raw_dir, "heterodimer_metadata.csv")
+  homo_dest <- file.path(raw_dir, "homodimer_metadata.csv")
+  nvda_base <- paste0(
+    "https://ftp.ebi.ac.uk/pub/databases/alphafold/",
+    "collaborations/nvda/"
+  )
+
+  files <- unique(c(
+    heterodimer_file,
+    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
+    file.path(raw_dir, "afdb_heterodimers_panel_pairs.csv"),
+    file.path(raw_dir, "afdb_homodimers_human_panel.csv"),
+    hetero_dest,
+    homo_dest
+  ))
+  files <- files[file.exists(files)]
+
+  # Only download official dumps when nothing local is present. Do not fetch
+  # a missing counterpart when a small panel CSV / fixture is already in use.
+  if (length(files) < 1) {
+    cli::cli_inform(c(
+      "i" = paste(
+        "No local AFDB CSVs found; downloading NVIDIA heterodimer (~2 GB)",
+        "and homodimer (~6 GB) metadata."
+      )
+    ))
+    .download_if_missing(
+      paste0(nvda_base, "heterodimer_metadata.csv"),
+      hetero_dest,
+      min_timeout = 7200
+    )
+    .download_if_missing(
+      paste0(nvda_base, "homodimer_metadata.csv"),
+      homo_dest,
+      min_timeout = 14400
+    )
+    files <- c(hetero_dest, homo_dest)
+  }
+
+  pieces <- lapply(files, parse_afdb_file)
   pairs <- bind_rows(pieces)
   if (nrow(pairs) < 1) {
     cli::cli_abort("No usable AFDB pairs found in {.path {raw_dir}}.")
@@ -1017,10 +1123,7 @@ build_alphafold_database <- function(
     database = "alphafold",
     version = version,
     cache_dir = cache_dir,
-    source_url = paste0(
-      "https://ftp.ebi.ac.uk/pub/databases/alphafold/",
-      "collaborations/nvda/"
-    ),
+    source_url = nvda_base,
     license = paste(
       "Creative Commons Attribution 4.0 International (CC BY 4.0);",
       "academic and commercial use permitted with attribution;",

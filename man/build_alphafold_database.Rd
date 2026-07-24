@@ -17,7 +17,7 @@ build_alphafold_database(
 \arguments{
 \item{heterodimer_file}{Optional FTP-derived heterodimer metadata CSV.
 If absent, uses panel API cache CSVs under \code{raw_dir}, then downloads
-the full heterodimer metadata dump if needed.}
+the official heterodimer and homodimer metadata dumps if needed.}
 
 \item{raw_dir}{Directory with AFDB cache files.}
 
@@ -33,6 +33,12 @@ the full heterodimer metadata dump if needed.}
 Path to saved RDS.
 }
 \description{
-When no local CSVs are present, downloads the NVIDIA/AFDB heterodimer
-metadata table from EBI FTP (~2 GB) into \code{raw_dir}.
+Combines heterodimer and homodimer predictions. When no local CSVs are
+present, downloads both NVIDIA/AFDB metadata tables from EBI FTP into
+\code{raw_dir} (heterodimer ~2 GB, homodimer ~6 GB).
+}
+\details{
+Homodimer metadata uses columns \code{uniprotAccession} and \code{taxId};
+heterodimers use \code{uniprot_ac_1}/\code{uniprot_ac_2} and
+\code{tax_id_1}/\code{tax_id_2}.
 }

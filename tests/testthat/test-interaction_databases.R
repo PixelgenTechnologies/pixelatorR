@@ -223,6 +223,72 @@ test_that("extract_panel_interactions works as expected", {
   expect_false(any(overlap_out$marker_1 == overlap_out$marker_2))
 })
 
+test_that("extract_panel_interactions keeps UniProt homodimers", {
+  cache_dir <- tempfile("idb_homo_")
+  dir.create(cache_dir)
+
+  homo <- normalise_interaction_edges(
+    data.frame(
+      uniprot_a = c("P12345", "P12345"),
+      uniprot_b = c("P12345", "Q67890"),
+      score = c(900, 500),
+      stringsAsFactors = FALSE
+    ),
+    score_col = "score",
+    resource = "string_physical",
+    resource_version = "test"
+  )
+  homo$evidence <- "physical"
+  save_interaction_database(
+    edges = homo,
+    database = "string",
+    version = "test",
+    cache_dir = cache_dir
+  )
+
+  out <- extract_panel_interactions(
+    markers = c("A", "B"),
+    database = "string",
+    marker_uniprot_map = marker_map,
+    score_threshold = 400,
+    string_network = "physical",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out), 2)
+  expect_true(any(out$marker_1 == out$marker_2 & out$uniprot_a == out$uniprot_b))
+  self <- out %>% filter(marker_1 == marker_2)
+  expect_equal(nrow(self), 1)
+  expect_equal(self$marker_1[[1]], "A")
+  expect_equal(self$uniprot_a[[1]], "P12345")
+})
+
+test_that("create_marker_uniprot_map works as expected", {
+  counts <- matrix(
+    1:6,
+    nrow = 3,
+    dimnames = list(c("CD3e", "CD4", "CD8"), paste0("c", 1:2))
+  )
+  seur <- SeuratObject::CreateSeuratObject(counts = counts, assay = "PNA")
+  seur[["PNA"]][[]] <- data.frame(
+    uniprot_id = c("P07766", "P01730;P01732", "P01732"),
+    row.names = c("CD3e", "CD4", "CD8"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_no_error(
+    map <- create_marker_uniprot_map(seur, assay = "PNA")
+  )
+  expect_equal(names(map), c("marker", "uniprot_id"))
+  expect_equal(nrow(map), 4)
+  expect_true(all(c("CD3e", "CD4", "CD8") %in% map$marker))
+  expect_equal(sum(map$marker == "CD4"), 2)
+  expect_true(all(c("P01730", "P01732") %in% map$uniprot_id[map$marker == "CD4"]))
+
+  expect_error(create_marker_uniprot_map(seur, assay = "missing"))
+  seur2 <- SeuratObject::CreateSeuratObject(counts = counts, assay = "PNA")
+  expect_error(create_marker_uniprot_map(seur2, assay = "PNA"))
+})
+
 test_that("extract_panel_interactions fails with invalid input", {
   cache_dir <- tempfile("idb_extract_bad_")
   dir.create(cache_dir)
@@ -330,8 +396,9 @@ test_that("build_corum_database works as expected", {
   expect_true(file.exists(path))
 
   db <- load_interaction_database("corum", "latest", cache_dir = cache_dir)
-  # 3 subunits -> 3 undirected pairs
-  expect_equal(nrow(db$edges), 3)
+  # 3 subunits -> 3 pairs; single-accession complex_2 -> 1 homomer edge
+  expect_equal(nrow(db$edges), 4)
+  expect_true(any(db$edges$uniprot_a == "A00001" & db$edges$uniprot_b == "A00001"))
 })
 
 test_that("build_corum_database fails with invalid input", {
@@ -461,4 +528,51 @@ test_that("build_alphafold_database accepts NVIDIA directional score columns", {
   expect_equal(db$edges$uniprot_a[[1]], "P12345")
   expect_equal(db$edges$uniprot_b[[1]], "Q67890")
   expect_true(file.exists(path))
+})
+
+test_that("build_alphafold_database parses homodimer NVIDIA schema", {
+  raw_dir <- tempfile("afdb_homo_")
+  cache_dir <- tempfile("afdb_homo_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+
+  utils::write.csv(
+    data.frame(
+      uniprot_ac_1 = "P12345",
+      uniprot_ac_2 = "Q67890",
+      ipSAE = 0.8,
+      pDockQ2 = 0.5,
+      stringsAsFactors = FALSE
+    ),
+    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
+    row.names = FALSE
+  )
+  utils::write.csv(
+    data.frame(
+      uniprotAccession = c("P99999", "A00001"),
+      taxId = c(9606, 10090),
+      ipSAE_AB = c(0.9, 0.95),
+      ipSAE_BA = c(0.85, 0.95),
+      pDockQ2_AB = c(0.4, 0.5),
+      pDockQ2_BA = c(0.35, 0.5),
+      stringsAsFactors = FALSE
+    ),
+    file.path(raw_dir, "afdb_homodimers_human_panel.csv"),
+    row.names = FALSE
+  )
+
+  path <- build_alphafold_database(
+    heterodimer_file = file.path(raw_dir, "missing.csv"),
+    raw_dir = raw_dir,
+    version = "test_af_homo",
+    cache_dir = cache_dir,
+    ipsae_min = 0.6,
+    pdockq2_min = 0.23
+  )
+  expect_true(file.exists(path))
+  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
+  # hetero P12345-Q67890 + human homodimer P99999-P99999; mouse A00001 dropped
+  expect_equal(nrow(db$edges), 2)
+  expect_true(any(db$edges$uniprot_a == "P99999" & db$edges$uniprot_b == "P99999"))
+  expect_false(any(db$edges$uniprot_a == "A00001"))
 })
