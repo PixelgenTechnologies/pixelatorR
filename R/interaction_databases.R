@@ -270,7 +270,7 @@ load_interaction_database <- function(
 #' @examples
 #' \dontrun{
 #' highlight_pairs <- extract_panel_interactions(
-#'   markers = c("CD3E", "CD4", "CD8A"),
+#'   markers = c("CD3e", "CD4", "CD8"),
 #'   database = "string",
 #'   marker_uniprot_map = marker_map,
 #'   score_threshold = 400
@@ -456,18 +456,44 @@ build_string_database <- function(
     showProgress = FALSE
   )
   data.table::setnames(aliases, c("string_protein_id", "alias", "source"))
-  .pick_uniprot <- function(aliases_vec) {
-    swiss <- aliases_vec[grepl("^[OPQ][0-9][A-Z0-9]{3}[0-9]$", aliases_vec)]
-    if (length(swiss)) {
-      return(swiss[[1]])
-    }
-    aliases_vec[[1]]
-  }
-  up <- aliases[
-    source == "UniProt_AC",
-    .(uniprot = .pick_uniprot(alias)),
-    by = string_protein_id
+  # One UniProt per STRING protein: prefer the primary Swiss-Prot accession.
+  # UniProt_AC alone includes secondaries (often listed first, e.g. O43746 before
+  # P20701 for ITGAL). Expanding all ACs is correct but ~20x slower; prefer
+  # Ensembl_HGNC_uniprot_ids / neXtProt primary, then classic Swiss-Prot AC.
+  ac <- aliases[
+    source == "UniProt_AC" & !is.na(alias) & alias != "",
+    .(string_protein_id, uniprot = alias)
   ]
+  preferred <- unique(rbind(
+    aliases[
+      source == "Ensembl_HGNC_uniprot_ids" & !is.na(alias) & alias != "",
+      .(string_protein_id, uniprot = alias)
+    ],
+    aliases[
+      source == "UniProt_DR_neXtProt" & grepl("^NX_", alias),
+      .(string_protein_id, uniprot = sub("^NX_", "", alias))
+    ]
+  ))
+  primary <- unique(merge(
+    ac,
+    preferred,
+    by = c("string_protein_id", "uniprot")
+  ))
+  primary <- primary[, .(uniprot = uniprot[[1]]), by = string_protein_id]
+  fallback_ids <- setdiff(unique(ac$string_protein_id), primary$string_protein_id)
+  if (length(fallback_ids) > 0) {
+    fallback <- ac[string_protein_id %in% fallback_ids][
+      ,
+      {
+        swiss <- uniprot[grepl("^[OPQ][0-9][A-Z0-9]{3}[0-9]$", uniprot)]
+        .(uniprot = if (length(swiss)) swiss[[1]] else uniprot[[1]])
+      },
+      by = string_protein_id
+    ]
+    up <- rbind(primary, fallback)
+  } else {
+    up <- primary
+  }
 
   read_links <- function(path, network_label) {
     if (length(path) != 1 || is.na(path) || !file.exists(path)) {
@@ -479,9 +505,9 @@ build_string_database <- function(
       cli::cli_abort("Unexpected STRING links columns in {.path {path}}.")
     }
     m2 <- as_tibble(links) %>%
-      left_join(as_tibble(up), by = c("protein1" = "string_protein_id")) %>%
+      inner_join(as_tibble(up), by = c("protein1" = "string_protein_id")) %>%
       rename(uniprot_a = uniprot) %>%
-      left_join(as_tibble(up), by = c("protein2" = "string_protein_id")) %>%
+      inner_join(as_tibble(up), by = c("protein2" = "string_protein_id")) %>%
       rename(uniprot_b = uniprot)
     edges <- normalise_interaction_edges(
       m2,

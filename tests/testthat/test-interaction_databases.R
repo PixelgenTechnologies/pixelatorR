@@ -347,6 +347,70 @@ test_that("build_corum_database fails with invalid input", {
   )
 })
 
+test_that("build_string_database prefers primary UniProt over secondary AC order", {
+  skip_if_not_installed("data.table")
+
+  raw_dir <- tempfile("string_raw_")
+  cache_dir <- tempfile("string_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+
+  # ITGAL-like: secondary AC O43746 precedes primary P20701; HGNC marks primary
+  aliases_path <- file.path(raw_dir, "9606.protein.aliases.v12.0.txt.gz")
+  phys_path <- file.path(raw_dir, "9606.protein.physical.links.v12.0.txt.gz")
+  con <- gzfile(aliases_path, "wt")
+  writeLines(
+    c(
+      "#string_protein_id\talias\tsource",
+      "9606.ENSP00000349252\tO43746\tUniProt_AC",
+      "9606.ENSP00000349252\tP20701\tUniProt_AC",
+      "9606.ENSP00000349252\tP20701\tEnsembl_HGNC_uniprot_ids",
+      "9606.ENSP00000380948\tP05107\tUniProt_AC",
+      "9606.ENSP00000380948\tP05107\tEnsembl_HGNC_uniprot_ids"
+    ),
+    con
+  )
+  close(con)
+  con <- gzfile(phys_path, "wt")
+  writeLines(
+    c(
+      "protein1 protein2 combined_score",
+      "9606.ENSP00000349252 9606.ENSP00000380948 999"
+    ),
+    con
+  )
+  close(con)
+
+  path <- build_string_database(
+    raw_dir = raw_dir,
+    version = "12.0",
+    cache_dir = cache_dir,
+    species = 9606,
+    include_full = FALSE
+  )
+  expect_true(file.exists(path))
+  db <- load_interaction_database("string", "latest", cache_dir = cache_dir)
+  pair_ids <- paste(db$edges$uniprot_a, db$edges$uniprot_b, sep = "-")
+  expect_true("P05107-P20701" %in% pair_ids)
+  expect_false("O43746-P05107" %in% pair_ids)
+
+  out <- extract_panel_interactions(
+    markers = c("CD11a", "CD18"),
+    database = "string",
+    marker_uniprot_map = tibble(
+      marker = c("CD11a", "CD18"),
+      uniprot_id = c("P20701", "P05107")
+    ),
+    score_threshold = 400,
+    string_network = "physical",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out), 1)
+  expect_equal(out$marker_1[[1]], "CD11a")
+  expect_equal(out$marker_2[[1]], "CD18")
+  expect_equal(out$score[[1]], 999)
+})
+
 test_that(".download_if_missing reuses cached files and errors on bad URLs", {
   dest <- tempfile(fileext = ".txt")
   writeLines("cached", dest)
