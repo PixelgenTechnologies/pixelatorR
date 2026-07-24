@@ -70,6 +70,22 @@ test_that("normalise_interaction_edges works as expected", {
     row.names = c(NA, -2L), class = c("tbl_df",
                                       "tbl", "data.frame"))
   )
+
+  # Factor scores must decode via labels, not internal codes
+  factor_edges <- normalise_interaction_edges(
+    data.frame(
+      a = "A",
+      b = "B",
+      score = factor("500", levels = c("100", "500")),
+      stringsAsFactors = FALSE
+    ),
+    a_col = "a",
+    b_col = "b",
+    score_col = "score",
+    resource = "test",
+    resource_version = "v1"
+  )
+  expect_equal(factor_edges$score[[1]], 500)
 })
 
 test_that("normalise_interaction_edges fails with invalid input", {
@@ -127,6 +143,12 @@ test_that("load_interaction_database fails with invalid input", {
   bad_path <- file.path(cache_dir, "string_latest.rds")
   saveRDS(list(not_edges = 1), bad_path)
   expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
+
+  saveRDS(
+    list(edges = data.frame(x = 1), meta = list()),
+    bad_path
+  )
+  expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
 })
 
 test_that("extract_panel_interactions works as expected", {
@@ -181,6 +203,24 @@ test_that("extract_panel_interactions works as expected", {
       "score", "evidence", "resource", "resource_version"
     )
   )
+
+  # Overlapping UniProt mappings must not invent self-pairs via a Cartesian join
+  overlap_map <- tibble(
+    marker = c("A", "B", "A", "B"),
+    uniprot_id = c("P12345", "Q67890", "Q67890", "P12345")
+  )
+  overlap_out <- extract_panel_interactions(
+    markers = c("A", "B"),
+    database = "string",
+    marker_uniprot_map = overlap_map,
+    score_threshold = 400,
+    string_network = "physical",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(overlap_out), 1)
+  expect_equal(overlap_out$marker_1[[1]], "A")
+  expect_equal(overlap_out$marker_2[[1]], "B")
+  expect_false(any(overlap_out$marker_1 == overlap_out$marker_2))
 })
 
 test_that("extract_panel_interactions fails with invalid input", {
@@ -252,8 +292,10 @@ test_that("build_alphafold_database works as expected", {
   expect_true(file.exists(path))
 
   db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
-  # High-confidence pair + NA-score prefiltered pair; low-score pair dropped
-  expect_equal(nrow(db$edges), 2)
+  # Only the high-confidence pair; low-score and unscored pairs dropped
+  expect_equal(nrow(db$edges), 1)
+  expect_equal(db$edges$uniprot_a[[1]], "P12345")
+  expect_equal(db$edges$uniprot_b[[1]], "Q67890")
   expect_true(all(db$edges$uniprot_a <= db$edges$uniprot_b))
 })
 

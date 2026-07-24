@@ -147,7 +147,8 @@ normalise_interaction_edges <- function(
     uniprot_a = pmin(a, b),
     uniprot_b = pmax(a, b),
     score = if (!is.null(score_col) && score_col %in% names(edges)) {
-      as.numeric(edges[[score_col]][keep])
+      # as.character first so factor scores are not silently converted to codes
+      as.numeric(as.character(edges[[score_col]][keep]))
     } else {
       NA_real_
     },
@@ -231,6 +232,17 @@ load_interaction_database <- function(
   assert_class(obj, "list")
   if (is.null(obj$edges)) {
     cli::cli_abort("Invalid interaction database object at {.path {path}}.")
+  }
+  assert_class(obj$edges, c("data.frame", "tbl_df"))
+  required_cols <- c(
+    "uniprot_a", "uniprot_b", "score", "evidence", "resource", "resource_version"
+  )
+  missing_cols <- setdiff(required_cols, names(obj$edges))
+  if (length(missing_cols) > 0) {
+    cli::cli_abort(c(
+      "x" = "Invalid interaction database edges at {.path {path}}.",
+      "i" = "Missing required columns: {.val {missing_cols}}"
+    ))
   }
   return(obj)
 }
@@ -316,7 +328,8 @@ extract_panel_interactions <- function(
       uniprot_id != ""
     ) %>%
     select(marker, uniprot_id) %>%
-    mutate(uniprot_id = trimws(uniprot_id))
+    mutate(uniprot_id = trimws(uniprot_id)) %>%
+    distinct(marker, uniprot_id)
   if (nrow(map) == 0) {
     return(empty_panel_interactions())
   }
@@ -346,11 +359,12 @@ extract_panel_interactions <- function(
     return(empty_panel_interactions())
   }
 
+  map_a <- map %>% rename(marker_1 = marker)
+  map_b <- map %>% rename(marker_2 = marker)
   out <- edges %>%
-    left_join(map, by = c("uniprot_a" = "uniprot_id")) %>%
-    rename(marker_1 = marker) %>%
-    left_join(map, by = c("uniprot_b" = "uniprot_id")) %>%
-    rename(marker_2 = marker) %>%
+    inner_join(map_a, by = c("uniprot_a" = "uniprot_id")) %>%
+    inner_join(map_b, by = c("uniprot_b" = "uniprot_id")) %>%
+    filter(marker_1 != marker_2) %>%
     mutate(
       marker_1_ordered = pmin(marker_1, marker_2),
       marker_2_ordered = pmax(marker_1, marker_2)
@@ -915,9 +929,8 @@ build_alphafold_database <- function(
     cli::cli_abort("No usable AFDB pairs found in {.path {raw_dir}}.")
   }
   keep <- (
-    (is.na(pairs$ipSAE) & is.na(pairs$pDockQ2)) |
-      ((!is.na(pairs$ipSAE) & pairs$ipSAE >= ipsae_min) |
-        (!is.na(pairs$pDockQ2) & pairs$pDockQ2 >= pdockq2_min))
+    (!is.na(pairs$ipSAE) & pairs$ipSAE >= ipsae_min) |
+      (!is.na(pairs$pDockQ2) & pairs$pDockQ2 >= pdockq2_min)
   )
   pairs <- pairs[keep, , drop = FALSE]
   pairs$score <- ifelse(!is.na(pairs$ipSAE), pairs$ipSAE, pairs$pDockQ2)

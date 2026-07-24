@@ -29,7 +29,8 @@ test_that("ColocalizationHeatmap works as expected", {
   expect_true(is.factor(p$data$marker_2))
   expect_true(!identical(p$data$marker_1 %>% levels(), p$data$marker_2 %>% levels()))
 
-  # highlight_pairs = NULL is a no-op
+  # highlight_pairs = NULL is a no-op (including default)
+  expect_no_error(ColocalizationHeatmap(prox_summarized))
   expect_no_error(ColocalizationHeatmap(prox_summarized, highlight_pairs = NULL))
 
   # Outline selected pairs (dots + tiles)
@@ -51,6 +52,21 @@ test_that("ColocalizationHeatmap works as expected", {
     ColocalizationHeatmap(
       prox_summarized,
       type = "tiles",
+      highlight_pairs = highlight_pairs
+    )
+  )
+
+  # Factor marker columns must still match character highlight_pairs
+  prox_factor <- prox_summarized %>%
+    mutate(
+      marker_1 = factor(marker_1),
+      marker_2 = factor(marker_2)
+    )
+  expect_no_error(
+    ColocalizationHeatmap(
+      prox_factor,
+      type = "dots",
+      size_col = "mean_log2_ratio",
       highlight_pairs = highlight_pairs
     )
   )

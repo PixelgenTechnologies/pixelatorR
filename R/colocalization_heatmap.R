@@ -207,8 +207,10 @@ ColocalizationHeatmap <- function(
     assert_length(legend_range, 2)
   }
   assert_class(highlight_pairs, c("tbl_df", "data.frame"), allow_null = TRUE)
-  assert_col_in_data("marker_1", highlight_pairs, allow_null = TRUE)
-  assert_col_in_data("marker_2", highlight_pairs, allow_null = TRUE)
+  if (!is.null(highlight_pairs)) {
+    assert_col_in_data("marker_1", highlight_pairs)
+    assert_col_in_data("marker_2", highlight_pairs)
+  }
 
   # Check if the data is grouped
   if (is.grouped_df(data)) {
@@ -265,10 +267,14 @@ ColocalizationHeatmap <- function(
   # Keep only highlight pairs whose markers appear in the plot
   if (!is.null(highlight_pairs) && nrow(highlight_pairs) > 0) {
     plot_markers <- unique(c(
-      plot_data[[marker1_col]],
-      plot_data[[marker2_col]]
+      as.character(plot_data[[marker1_col]]),
+      as.character(plot_data[[marker2_col]])
     ))
     highlight_pairs <- highlight_pairs %>%
+      mutate(
+        marker_1 = as.character(marker_1),
+        marker_2 = as.character(marker_2)
+      ) %>%
       filter(
         marker_1 %in% plot_markers,
         marker_2 %in% plot_markers
