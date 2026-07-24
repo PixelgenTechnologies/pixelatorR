@@ -1,14 +1,32 @@
 # Canonical edge schema: uniprot_a, uniprot_b (undirected, a <= b), optional
 # score, evidence, plus resource, resource_version.
 
+#' Supported interaction-database keys
+#'
+#' @noRd
 .interaction_databases <- c(
   "string", "biogrid", "corum", "omnipath", "alphafold"
 )
 
+#' Default cache directory for raw interaction-database dumps
+#'
+#' Under \code{tools::R_user_dir("pixelatorR", "cache")/db_raw}. Builders
+#' download missing source files here before writing slim RDS caches.
+#'
+#' @return Character path.
+#' @noRd
 .default_raw_cache <- function() {
   file.path(tools::R_user_dir("pixelatorR", which = "cache"), "db_raw")
 }
 
+#' Path to a slim interaction-database RDS file
+#'
+#' @param database Database key (e.g. \code{"string"}).
+#' @param version Version label used in the filename (e.g. \code{"latest"}).
+#' @param cache_dir Directory containing slim RDS caches.
+#'
+#' @return Character path \code{cache_dir/<database>_<version>.rds}.
+#' @noRd
 .interaction_database_rds_path <- function(database, version, cache_dir) {
   file.path(cache_dir, paste0(database, "_", version, ".rds"))
 }
@@ -16,10 +34,15 @@
 #' Download a file if it is missing or empty
 #'
 #' Raises \code{options(timeout)} for the transfer (see \code{?download.file})
-#' and restores the previous value on exit.
+#' and restores the previous value on exit. Uses \code{mode = "wb"} and shows
+#' a progress bar (\code{quiet = FALSE}).
 #'
+#' @param url Remote URL to download.
+#' @param dest_file Local destination path.
 #' @param min_timeout Minimum timeout in seconds. Defaults to 300; large dumps
 #'   (e.g. AlphaFold heterodimer metadata) should pass a higher floor.
+#'
+#' @return \code{dest_file} (existing or freshly downloaded).
 #' @noRd
 .download_if_missing <- function(url, dest_file, min_timeout = 300) {
   if (file.exists(dest_file) && isTRUE(file.info(dest_file)$size > 0)) {
@@ -47,7 +70,17 @@
   return(dest_file)
 }
 
-#' Download a zip archive and return the first extracted file matching pattern
+#' Download a zip archive and return the first extracted matching file
+#'
+#' Reuses an already-extracted file under \code{dest_dir} when present.
+#' Otherwise downloads \code{url}, unzips into \code{dest_dir}, and returns
+#' the first path matching \code{pattern}.
+#'
+#' @param url Remote zip URL.
+#' @param dest_dir Directory for the zip and extracted contents.
+#' @param pattern Regex passed to \code{list.files} to find the extracted file.
+#'
+#' @return Character path to the first matching extracted file.
 #' @noRd
 .download_zip_extract <- function(url, dest_dir, pattern) {
   dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
@@ -70,6 +103,15 @@
   return(extracted[[1]])
 }
 
+#' Build a STRING download URL for a release file
+#'
+#' @param fname Basename of the STRING file
+#'   (e.g. \code{"9606.protein.aliases.v12.0.txt.gz"}).
+#' @param version STRING release label (e.g. \code{"12.0"}).
+#' @param network One of \code{"aliases"}, \code{"physical"}, or \code{"full"}.
+#'
+#' @return Character URL under \code{https://stringdb-downloads.org/download/}.
+#' @noRd
 .string_download_url <- function(fname, version, network = c("aliases", "physical", "full")) {
   network <- match.arg(network)
   prefix <- switch(
@@ -81,6 +123,18 @@
   paste0("https://stringdb-downloads.org/download/", prefix, "/", fname)
 }
 
+#' Ensure a STRING release file exists under \code{raw_dir}
+#'
+#' Thin wrapper around \code{.download_if_missing} using
+#' \code{.string_download_url}.
+#'
+#' @param raw_dir Local STRING raw-cache directory.
+#' @param fname Basename of the STRING file.
+#' @param version STRING release label.
+#' @param network One of \code{"aliases"}, \code{"physical"}, or \code{"full"}.
+#'
+#' @return Character path to the local file.
+#' @noRd
 .ensure_string_file <- function(raw_dir, fname, version, network) {
   path <- file.path(raw_dir, fname)
   return(.download_if_missing(
@@ -90,6 +144,14 @@
 }
 
 #' First matching column name among candidates (exact or regex)
+#'
+#' @param df Data frame or tibble.
+#' @param candidates Character vector of exact names, or regex patterns when
+#'   \code{regex = TRUE}.
+#' @param regex If \code{TRUE}, treat each candidate as a case-insensitive
+#'   regex against \code{names(df)}.
+#'
+#' @return A single column name, or \code{NA_character_} if none match.
 #' @noRd
 .first_present_col <- function(df, candidates, regex = FALSE) {
   nms <- names(df)
@@ -110,6 +172,14 @@
 }
 
 #' Values from the first present column among candidates, or NULL
+#'
+#' Exact name matching only (no regex). Useful for alias ladders such as
+#' \code{c("uniprot_ac_1", "uniprot_a", "a")}.
+#'
+#' @param df Data frame or tibble.
+#' @param candidates Character vector of column names in preference order.
+#'
+#' @return The column vector, or \code{NULL} if none of the candidates exist.
 #' @noRd
 .coalesce_col <- function(df, candidates) {
   col <- .first_present_col(df, candidates, regex = FALSE)
@@ -119,6 +189,13 @@
   return(df[[col]])
 }
 
+#' Empty result tibble for \code{extract_panel_interactions}
+#'
+#' Defines the canonical column set and types returned when there are no
+#' panel edges to report.
+#'
+#' @return Zero-row tibble with marker / UniProt / score columns.
+#' @noRd
 .empty_panel_interactions <- function() {
   tibble(
     marker_1 = character(),
@@ -787,6 +864,14 @@ build_omnipath_database <- function(
 }
 
 #' Max of two directional score columns, ignoring NA on one side
+#'
+#' Used for NVIDIA/AFDB heterodimer metadata where scores are reported as
+#' \code{*_AB} and \code{*_BA}. If only one side is non-missing, that value
+#' is kept; if both are present, returns \code{pmax}.
+#'
+#' @param x,y Numeric (or coercible) score vectors of equal length.
+#'
+#' @return Numeric vector of the same length as \code{x}.
 #' @noRd
 .max_directional_score <- function(x, y) {
   x <- as.numeric(x)
