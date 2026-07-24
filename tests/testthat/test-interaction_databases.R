@@ -62,8 +62,7 @@ test_that("normalise_interaction_edges works as expected", {
   )
 
   expect_equal(
-    edges %>%
-      select(-built_at),
+    edges,
     structure(list(uniprot_a = c("A", "A"), uniprot_b = c("B", "C"
     ), score = c(1, 3), evidence = c("x", "z"), resource = c("test",
                                                              "test"),

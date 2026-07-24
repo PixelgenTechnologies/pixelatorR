@@ -1,5 +1,5 @@
 # Canonical edge schema: uniprot_a, uniprot_b (undirected, a <= b), optional
-# score, evidence, plus resource, resource_version, built_at.
+# score, evidence, plus resource, resource_version.
 
 .interaction_databases <- c(
   "string", "biogrid", "corum", "omnipath", "alphafold"
@@ -83,13 +83,40 @@
 
 .ensure_string_file <- function(raw_dir, fname, version, network) {
   path <- file.path(raw_dir, fname)
-  if (file.exists(path) && isTRUE(file.info(path)$size > 0)) {
-    return(path)
-  }
   return(.download_if_missing(
     .string_download_url(fname, version, network),
     path
   ))
+}
+
+#' First matching column name among candidates (exact or regex)
+#' @noRd
+.first_present_col <- function(df, candidates, regex = FALSE) {
+  nms <- names(df)
+  if (isTRUE(regex)) {
+    for (pat in candidates) {
+      hits <- grep(pat, nms, value = TRUE, ignore.case = TRUE)
+      if (length(hits) > 0) {
+        return(hits[[1]])
+      }
+    }
+    return(NA_character_)
+  }
+  hit <- intersect(candidates, nms)
+  if (length(hit) < 1) {
+    return(NA_character_)
+  }
+  return(hit[[1]])
+}
+
+#' Values from the first present column among candidates, or NULL
+#' @noRd
+.coalesce_col <- function(df, candidates) {
+  col <- .first_present_col(df, candidates, regex = FALSE)
+  if (is.na(col)) {
+    return(NULL)
+  }
+  return(df[[col]])
 }
 
 .empty_panel_interactions <- function() {
@@ -165,8 +192,7 @@ normalise_interaction_edges <- function(
       NA_character_
     },
     resource = resource,
-    resource_version = resource_version,
-    built_at = format(Sys.time(), "%Y-%m-%dT%H:%M:%SZ", tz = "UTC")
+    resource_version = resource_version
   )))
 }
 
@@ -412,8 +438,7 @@ build_string_database <- function(
   full_gz <- if (isTRUE(include_full)) {
     .ensure_string_file(raw_dir, full_fname, version, "full")
   } else {
-    path <- file.path(raw_dir, full_fname)
-    if (file.exists(path)) path else NA_character_
+    NULL
   }
 
   aliases <- data.table::fread(
@@ -517,26 +542,28 @@ build_biogrid_database <- function(
     )
   }
   dt <- data.table::fread(raw_file, sep = "\t", quote = "", showProgress = FALSE)
-  a_col <- grep(
-    "SWISS-PROT.*Interactor A|SWISS-PROT Accessions Interactor A",
-    colnames(dt),
-    value = TRUE,
-    ignore.case = TRUE
+  a_col <- .first_present_col(
+    dt,
+    c(
+      "SWISS-PROT.*Interactor A",
+      "SWISS-PROT Accessions Interactor A"
+    ),
+    regex = TRUE
   )
-  b_col <- grep(
-    "SWISS-PROT.*Interactor B|SWISS-PROT Accessions Interactor B",
-    colnames(dt),
-    value = TRUE,
-    ignore.case = TRUE
+  b_col <- .first_present_col(
+    dt,
+    c(
+      "SWISS-PROT.*Interactor B",
+      "SWISS-PROT Accessions Interactor B"
+    ),
+    regex = TRUE
   )
-  org_a <- grep("Organism ID Interactor A", colnames(dt), value = TRUE)[1]
-  org_b <- grep("Organism ID Interactor B", colnames(dt), value = TRUE)[1]
-  exp_col <- grep("^Experimental System$", colnames(dt), value = TRUE)[1]
-  if (length(a_col) < 1 || length(b_col) < 1) {
+  org_a <- .first_present_col(dt, "Organism ID Interactor A", regex = TRUE)
+  org_b <- .first_present_col(dt, "Organism ID Interactor B", regex = TRUE)
+  exp_col <- .first_present_col(dt, "^Experimental System$", regex = TRUE)
+  if (is.na(a_col) || is.na(b_col)) {
     cli::cli_abort("Could not find SWISS-PROT columns in {.path {raw_file}}.")
   }
-  a_col <- a_col[1]
-  b_col <- b_col[1]
 
   if (!is.na(org_a) && !is.na(org_b)) {
     dt <- dt[as.character(dt[[org_a]]) == "9606" & as.character(dt[[org_b]]) == "9606"]
@@ -605,47 +632,49 @@ build_corum_database <- function(
   }
 
   dt <- data.table::fread(corum_file, sep = "\t", quote = "", showProgress = FALSE)
-  comp_col <- intersect(
+  comp_col <- .first_present_col(
+    dt,
     c(
       "components",
       "subunits_uniprot_id",
       "subunits",
       "subunits(UniProt IDs)"
-    ),
-    colnames(dt)
+    )
   )
-  if (length(comp_col) < 1) {
+  if (is.na(comp_col)) {
     cli::cli_abort("No components column in {.path {corum_file}}.")
   }
-  comp_col <- comp_col[1]
-  name_col <- intersect(c("name", "complex_name", "ComplexName"), colnames(dt))
-  name_col <- if (length(name_col)) name_col[1] else NULL
+  name_col <- .first_present_col(
+    dt,
+    c("name", "complex_name", "ComplexName")
+  )
 
-  pairs_a <- character()
-  pairs_b <- character()
-  evid <- character()
-  comps <- as.character(dt[[comp_col]])
-  names_vec <- if (!is.null(name_col)) {
-    as.character(dt[[name_col]])
-  } else {
-    rep(NA_character_, length(comps))
-  }
-  for (i in seq_along(comps)) {
-    ids <- unique(trimws(unlist(strsplit(comps[i], "[_;,]"))))
-    ids <- ids[ids != "" & !is.na(ids)]
-    if (length(ids) < 2) {
-      next
-    }
-    grid <- utils::combn(ids, 2)
-    pairs_a <- c(pairs_a, grid[1, ])
-    pairs_b <- c(pairs_b, grid[2, ])
-    evid <- c(evid, rep(names_vec[i], ncol(grid)))
-  }
-  pairs <- data.frame(
-    uniprot_a = pairs_a,
-    uniprot_b = pairs_b,
-    evidence = evid,
-    stringsAsFactors = FALSE
+  pairs <- bind_rows(
+    tibble(
+      uniprot_a = character(),
+      uniprot_b = character(),
+      evidence = character()
+    ),
+    lapply(seq_len(nrow(dt)), function(i) {
+      ids <- unique(trimws(unlist(strsplit(
+        as.character(dt[[comp_col]][[i]]),
+        "[_;,]"
+      ))))
+      ids <- ids[ids != "" & !is.na(ids)]
+      if (length(ids) < 2) {
+        return(NULL)
+      }
+      grid <- utils::combn(ids, 2)
+      tibble(
+        uniprot_a = grid[1, ],
+        uniprot_b = grid[2, ],
+        evidence = if (!is.na(name_col)) {
+          as.character(dt[[name_col]][[i]])
+        } else {
+          NA_character_
+        }
+      )
+    })
   )
   edges <- normalise_interaction_edges(
     pairs,
@@ -722,8 +751,8 @@ build_omnipath_database <- function(
     quote = "",
     showProgress = FALSE
   )
-  src <- intersect(c("source", "uniprot_a"), colnames(dt))[1]
-  tgt <- intersect(c("target", "uniprot_b"), colnames(dt))[1]
+  src <- .first_present_col(dt, c("source", "uniprot_a"))
+  tgt <- .first_present_col(dt, c("target", "uniprot_b"))
   if (is.na(src) || is.na(tgt)) {
     cli::cli_abort("Could not find source/target UniProt columns.")
   }
@@ -828,44 +857,26 @@ build_alphafold_database <- function(
         drop = FALSE
       ]
     }
-    a <- if ("uniprot_ac_1" %in% names(df)) {
-      df$uniprot_ac_1
-    } else if ("uniprot_a" %in% names(df)) {
-      df$uniprot_a
-    } else if ("a" %in% names(df)) {
-      df$a
-    } else {
-      NULL
-    }
-    b <- if ("uniprot_ac_2" %in% names(df)) {
-      df$uniprot_ac_2
-    } else if ("uniprot_b" %in% names(df)) {
-      df$uniprot_b
-    } else if ("b" %in% names(df)) {
-      df$b
-    } else {
-      NULL
-    }
+    a <- .coalesce_col(df, c("uniprot_ac_1", "uniprot_a", "a"))
+    b <- .coalesce_col(df, c("uniprot_ac_2", "uniprot_b", "b"))
     if (is.null(a) || is.null(b) || length(a) < 1) {
       return(NULL)
     }
-    ipsae <- if ("ipSAE" %in% names(df)) {
-      as.numeric(df$ipSAE)
-    } else if ("ipsae" %in% names(df)) {
-      as.numeric(df$ipsae)
+    ipsae <- .coalesce_col(df, c("ipSAE", "ipsae"))
+    if (!is.null(ipsae)) {
+      ipsae <- as.numeric(ipsae)
     } else if (all(c("ipSAE_AB", "ipSAE_BA") %in% names(df))) {
-      .max_directional_score(df$ipSAE_AB, df$ipSAE_BA)
+      ipsae <- .max_directional_score(df$ipSAE_AB, df$ipSAE_BA)
     } else {
-      rep(NA_real_, length(a))
+      ipsae <- rep(NA_real_, length(a))
     }
-    pdq <- if ("pDockQ2" %in% names(df)) {
-      as.numeric(df$pDockQ2)
-    } else if ("pdockq2" %in% names(df)) {
-      as.numeric(df$pdockq2)
+    pdq <- .coalesce_col(df, c("pDockQ2", "pdockq2"))
+    if (!is.null(pdq)) {
+      pdq <- as.numeric(pdq)
     } else if (all(c("pDockQ2_AB", "pDockQ2_BA") %in% names(df))) {
-      .max_directional_score(df$pDockQ2_AB, df$pDockQ2_BA)
+      pdq <- .max_directional_score(df$pDockQ2_AB, df$pDockQ2_BA)
     } else {
-      rep(NA_real_, length(a))
+      pdq <- rep(NA_real_, length(a))
     }
     data.frame(
       uniprot_a = as.character(a),
