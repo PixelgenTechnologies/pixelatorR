@@ -24,6 +24,9 @@ ColocalizationHeatmap(
   symmetrise = TRUE,
   legend_range = NULL,
   legend_title = "",
+  highlight_pairs = NULL,
+  highlight_color = "black",
+  highlight_stroke = 1.2,
   ...
 )
 }
@@ -81,6 +84,15 @@ data. If a value is outside this range, it is set to the closest
 legend range limit.}
 
 \item{legend_title}{The title of the legend}
+
+\item{highlight_pairs}{Optional \code{tbl_df}/data.frame with columns
+\code{marker_1} and \code{marker_2} naming pairs to outline with a cell
+border. Pairs whose markers are absent from \code{data} are ignored.
+\code{NULL} disables highlighting.}
+
+\item{highlight_color}{Border colour for highlighted cells.}
+
+\item{highlight_stroke}{Border line width for highlighted cells.}
 
 \item{...}{Parameters passed to \code{pheatmap}}
 }
@@ -141,6 +153,17 @@ ColocalizationHeatmap(
 ) &
   labs(size = "-log10p(p_adj)")
 
+# Outline selected marker pairs
+ColocalizationHeatmap(
+  dca_markers,
+  type = "dots",
+  size_range = c(1, 10),
+  highlight_pairs = tibble(
+    marker_1 = c("M1", "M3"),
+    marker_2 = c("M2", "M5")
+  )
+)
+
 # We can specify the order of the markers with factor levels
 # but we need to turn off the clustering
 ColocalizationHeatmap(
@@ -178,4 +201,7 @@ ColocalizationHeatmap(
     filter(target == "stim1")
 )
 
+}
+\seealso{
+\code{\link{extract_panel_interactions}}
 }

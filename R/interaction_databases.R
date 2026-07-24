@@ -172,10 +172,12 @@ normalise_interaction_edges <- function(
 #' @param license Optional license string.
 #' @param citation Optional citation string.
 #' @return Path to the written RDS.
+#' @seealso \code{\link{load_interaction_database}},
+#'   \code{\link{build_all_interaction_databases}}
 #' @export
 save_interaction_database <- function(
   edges,
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version,
   cache_dir = interaction_database_cache_dir(),
   source_url = NULL,
@@ -212,13 +214,16 @@ save_interaction_database <- function(
 
 #' Load a slim interaction database
 #'
-#' @param database One of \code{.interaction_databases}.
+#' @param database One of \code{"string"}, \code{"biogrid"}, \code{"corum"},
+#'   \code{"omnipath"}, or \code{"alphafold"}.
 #' @param version Version label or \code{"latest"}.
 #' @param cache_dir Cache directory.
 #' @return List with \code{edges} (tibble) and \code{meta}.
+#' @seealso \code{\link{save_interaction_database}},
+#'   \code{\link{extract_panel_interactions}}
 #' @export
 load_interaction_database <- function(
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version = "latest",
   cache_dir = interaction_database_cache_dir()
 ) {
@@ -267,10 +272,14 @@ load_interaction_database <- function(
 #'   Pass \code{marker_1}/\code{marker_2} columns to
 #'   \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 #'
+#' @seealso \code{\link{ColocalizationHeatmap}},
+#'   \code{\link{load_interaction_database}},
+#'   \code{\link{build_all_interaction_databases}}
+#'
 #' @examples
 #' \dontrun{
 #' highlight_pairs <- extract_panel_interactions(
-#'   markers = c("CD3e", "CD4", "CD8"),
+#'   markers = c("CD3E", "CD4", "CD8A"),
 #'   database = "string",
 #'   marker_uniprot_map = marker_map,
 #'   score_threshold = 400
@@ -286,7 +295,7 @@ load_interaction_database <- function(
 #' @export
 extract_panel_interactions <- function(
   markers,
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   marker_uniprot_map,
   score_threshold = 400,
   string_network = c("physical", "full"),
@@ -1037,6 +1046,12 @@ build_alphafold_database <- function(
 #'
 #' @param cache_dir Output interaction database cache.
 #' @return Named list of RDS paths.
+#' @seealso \code{\link{build_string_database}},
+#'   \code{\link{build_biogrid_database}},
+#'   \code{\link{build_corum_database}},
+#'   \code{\link{build_omnipath_database}},
+#'   \code{\link{build_alphafold_database}},
+#'   \code{\link{extract_panel_interactions}}
 #' @export
 build_all_interaction_databases <- function(
   cache_dir = interaction_database_cache_dir()

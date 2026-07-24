@@ -64,6 +64,8 @@
 #' @return A \code{Heatmap} object/plot if \code{type = "tiles"} or a \code{ggplot}
 #' object/plot if \code{type = "dots"}.
 #'
+#' @seealso \code{\link{extract_panel_interactions}}
+#'
 #' @examples
 #' library(pixelatorR)
 #' library(dplyr)
