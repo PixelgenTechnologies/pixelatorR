@@ -42,8 +42,9 @@ Pass \code{marker_1}/\code{marker_2} columns to
 Maps panel markers to UniProt accessions, loads a slim interaction database,
 and returns undirected marker pairs with a registered database entry after
 optional score / network filters. UniProt homodimers (\code{uniprot_a ==
-uniprot_b}) are kept as self-pairs; false self-pairs from hetero Cartesian
-joins are dropped.
+uniprot_b}) are kept only as marker self-pairs; false hetero pairs from
+shared-accession homodimer joins and false self-pairs from hetero Cartesian
+joins are dropped. Marker lexical order and UniProt columns stay aligned.
 }
 \examples{
 \dontrun{

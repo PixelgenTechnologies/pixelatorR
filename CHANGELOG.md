@@ -16,7 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     UniProt edge cache (STRING, BioGRID, CORUM, OmniPath, AlphaFold DB).
   - `extract_panel_interactions()` to return known marker pairs from a cached
     database for use with `ColocalizationHeatmap(highlight_pairs = ...)`.
-    UniProt homodimers are retained; false self-pairs from hetero joins are not.
+    UniProt homodimers are retained as marker self-pairs only; false hetero
+    pairs from shared-accession homodimer joins and false self-pairs from
+    hetero joins are dropped. Marker and UniProt columns stay aligned after
+    lexical reordering.
   - `create_marker_uniprot_map()` to build a long-form marker–UniProt map from
     Seurat / PNA assay feature metadata (`uniprot_id`, semicolon-separated).
   - Maintainer builders `build_string_database()`, `build_biogrid_database()`,

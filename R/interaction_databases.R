@@ -50,11 +50,23 @@
   }
   dir.create(dirname(dest_file), recursive = TRUE, showWarnings = FALSE)
   old_timeout <- getOption("timeout")
-  on.exit(options(timeout = old_timeout), add = TRUE)
+  # Write to a sibling temp file first so a failed download cannot leave a
+  # truncated dest_file that later runs would treat as a valid cache.
+  tmp_file <- tempfile(
+    pattern = paste0(".", basename(dest_file), "."),
+    tmpdir = dirname(dest_file),
+    fileext = ".part"
+  )
+  on.exit({
+    options(timeout = old_timeout)
+    if (file.exists(tmp_file)) {
+      unlink(tmp_file)
+    }
+  }, add = FALSE)
   options(timeout = max(min_timeout, old_timeout))
   cli::cli_inform(c("i" = "Downloading {.url {url}}"))
   status <- tryCatch(
-    utils::download.file(url, destfile = dest_file, mode = "wb", quiet = FALSE),
+    utils::download.file(url, destfile = tmp_file, mode = "wb", quiet = FALSE),
     error = function(e) {
       cli::cli_abort(c(
         "x" = "Failed to download {.url {url}}",
@@ -63,9 +75,15 @@
     }
   )
   if (!identical(as.integer(status), 0L) ||
-      !file.exists(dest_file) ||
-      !isTRUE(file.info(dest_file)$size > 0)) {
+      !file.exists(tmp_file) ||
+      !isTRUE(file.info(tmp_file)$size > 0)) {
     cli::cli_abort("Download failed or produced an empty file: {.url {url}}")
+  }
+  if (!isTRUE(file.rename(tmp_file, dest_file))) {
+    if (!isTRUE(file.copy(tmp_file, dest_file, overwrite = TRUE))) {
+      cli::cli_abort("Downloaded {.url {url}} but failed to move it to {.path {dest_file}}")
+    }
+    unlink(tmp_file)
   }
   return(dest_file)
 }
@@ -318,9 +336,13 @@ create_marker_uniprot_map <- function(
 #'
 #' Maps panel markers to UniProt accessions, loads a slim interaction database,
 #' and returns undirected marker pairs with a registered database entry after
-#' optional score / network filters. UniProt homodimers (\code{uniprot_a ==
-#' uniprot_b}) are kept as self-pairs; false self-pairs from hetero Cartesian
-#' joins are dropped.
+#' optional score / network filters. 
+#' UniProt self-interactions are returned only as marker self-pairs. When
+#' multiple marker names map to the same UniProt accession, a self-interaction
+#' does not create interactions between those different marker names.
+#' Conversely, interactions between different UniProt accessions are not
+#' returned as marker self-pairs. Marker names are ordered alphabetically, and
+#' the corresponding UniProt accessions are reordered with them.
 #'
 #' @param markers Character vector of panel marker names.
 #' @param database Interaction database key.
@@ -440,17 +462,23 @@ extract_panel_interactions <- function(
   out <- edges %>%
     inner_join(map_a, by = c("uniprot_a" = "uniprot_id")) %>%
     inner_join(map_b, by = c("uniprot_b" = "uniprot_id")) %>%
-    # Keep UniProt homodimers (a == b); drop false self-pairs from hetero joins
-    filter(marker_1 != marker_2 | uniprot_a == uniprot_b) %>%
+    # Homodimers -> marker self-pairs only; hetero edges -> distinct markers only
+    filter(
+      (uniprot_a == uniprot_b & marker_1 == marker_2) |
+        (uniprot_a != uniprot_b & marker_1 != marker_2)
+    ) %>%
     mutate(
-      marker_1_ordered = pmin(marker_1, marker_2),
-      marker_2_ordered = pmax(marker_1, marker_2)
+      swap = marker_1 > marker_2,
+      marker_1_ordered = if_else(swap, marker_2, marker_1),
+      marker_2_ordered = if_else(swap, marker_1, marker_2),
+      uniprot_a_ordered = if_else(swap, uniprot_b, uniprot_a),
+      uniprot_b_ordered = if_else(swap, uniprot_a, uniprot_b)
     ) %>%
     select(
       marker_1 = marker_1_ordered,
       marker_2 = marker_2_ordered,
-      uniprot_a,
-      uniprot_b,
+      uniprot_a = uniprot_a_ordered,
+      uniprot_b = uniprot_b_ordered,
       score,
       evidence,
       resource,

@@ -262,6 +262,91 @@ test_that("extract_panel_interactions keeps UniProt homodimers", {
   expect_equal(self$uniprot_a[[1]], "P12345")
 })
 
+test_that("extract_panel_interactions does not invent hetero pairs from homodimers", {
+  cache_dir <- tempfile("idb_homo_false_")
+  dir.create(cache_dir)
+
+  homo <- normalise_interaction_edges(
+    data.frame(
+      uniprot_a = "P12345",
+      uniprot_b = "P12345",
+      score = 900,
+      stringsAsFactors = FALSE
+    ),
+    score_col = "score",
+    resource = "string_physical",
+    resource_version = "test"
+  )
+  homo$evidence <- "physical"
+  save_interaction_database(
+    edges = homo,
+    database = "string",
+    version = "test",
+    cache_dir = cache_dir
+  )
+
+  shared_map <- tibble(
+    marker = c("A", "B"),
+    uniprot_id = c("P12345", "P12345")
+  )
+  out <- extract_panel_interactions(
+    markers = c("A", "B"),
+    database = "string",
+    marker_uniprot_map = shared_map,
+    score_threshold = 400,
+    string_network = "physical",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out), 2)
+  expect_true(all(out$marker_1 == out$marker_2))
+  expect_false(any(out$marker_1 != out$marker_2))
+  expect_setequal(out$marker_1, c("A", "B"))
+})
+
+test_that("extract_panel_interactions keeps UniProt columns aligned with markers", {
+  cache_dir <- tempfile("idb_align_")
+  dir.create(cache_dir)
+
+  edges <- normalise_interaction_edges(
+    data.frame(
+      uniprot_a = "P12345",
+      uniprot_b = "Q67890",
+      score = 700,
+      stringsAsFactors = FALSE
+    ),
+    score_col = "score",
+    resource = "string_physical",
+    resource_version = "test"
+  )
+  edges$evidence <- "physical"
+  save_interaction_database(
+    edges = edges,
+    database = "string",
+    version = "test",
+    cache_dir = cache_dir
+  )
+
+  # Join yields marker_1=B (P12345), marker_2=A (Q67890); lexical reorder to A,B
+  # must swap UniProt columns with the markers.
+  swapped_map <- tibble(
+    marker = c("B", "A"),
+    uniprot_id = c("P12345", "Q67890")
+  )
+  out <- extract_panel_interactions(
+    markers = c("A", "B"),
+    database = "string",
+    marker_uniprot_map = swapped_map,
+    score_threshold = 400,
+    string_network = "physical",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out), 1)
+  expect_equal(out$marker_1[[1]], "A")
+  expect_equal(out$marker_2[[1]], "B")
+  expect_equal(out$uniprot_a[[1]], "Q67890")
+  expect_equal(out$uniprot_b[[1]], "P12345")
+})
+
 test_that("create_marker_uniprot_map works as expected", {
   counts <- matrix(
     1:6,
@@ -487,10 +572,14 @@ test_that(".download_if_missing reuses cached files and errors on bad URLs", {
   )
   expect_equal(readLines(dest, warn = FALSE), "cached")
 
-  bad_dest <- tempfile(fileext = ".txt")
+  dl_dir <- tempfile("idb_dl_")
+  dir.create(dl_dir)
+  bad_dest <- file.path(dl_dir, "missing.bin")
   expect_error(
     .download_if_missing("https://example.invalid/missing.bin", bad_dest)
   )
+  expect_false(file.exists(bad_dest))
+  expect_equal(length(list.files(dl_dir, all.files = TRUE, no.. = TRUE)), 0)
 })
 
 test_that("build_alphafold_database accepts NVIDIA directional score columns", {

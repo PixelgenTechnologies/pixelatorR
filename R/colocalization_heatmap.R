@@ -420,7 +420,8 @@ ColocalizationHeatmap <- function(
         if (a %in% rn && b %in% cn) {
           highlight_mat[a, b] <- TRUE
         }
-        if (b %in% rn && a %in% cn) {
+        # Match dots: only mirror when symmetrise = TRUE
+        if (symmetrise && b %in% rn && a %in% cn) {
           highlight_mat[b, a] <- TRUE
         }
       }

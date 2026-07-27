@@ -48,10 +48,30 @@ test_that("ColocalizationHeatmap works as expected", {
     )
   )
   expect_true(any(vapply(p$layers, function(l) inherits(l$geom, "GeomTile"), logical(1))))
+  # With symmetrise = FALSE, dots outline only the given orientation
+  expect_no_error(
+    p_asym <- ColocalizationHeatmap(
+      prox_summarized,
+      type = "dots",
+      size_col = "mean_log2_ratio",
+      symmetrise = FALSE,
+      highlight_pairs = highlight_pairs
+    )
+  )
+  tile_layer <- which(vapply(p_asym$layers, function(l) inherits(l$geom, "GeomTile"), logical(1)))[1]
+  expect_equal(nrow(p_asym$layers[[tile_layer]]$data), 1)
   expect_no_error(
     ColocalizationHeatmap(
       prox_summarized,
       type = "tiles",
+      highlight_pairs = highlight_pairs
+    )
+  )
+  expect_no_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      type = "tiles",
+      symmetrise = FALSE,
       highlight_pairs = highlight_pairs
     )
   )
