@@ -9,6 +9,7 @@ save_interaction_database(
   database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version,
   cache_dir = interaction_database_cache_dir(),
+  score_columns = NULL,
   source_url = NULL,
   license = NULL,
   citation = NULL
@@ -22,6 +23,10 @@ save_interaction_database(
 \item{version}{Version label used in the filename.}
 
 \item{cache_dir}{Cache directory.}
+
+\item{score_columns}{Character vector of numeric score column names present
+in \code{edges}. Use \code{NULL} or \code{character(0)} when the database
+has no scores.}
 
 \item{source_url}{Optional provenance URL.}
 

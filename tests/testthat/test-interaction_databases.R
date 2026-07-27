@@ -10,7 +10,7 @@ library(tibble)
       score = c(500, 200),
       stringsAsFactors = FALSE
     ),
-    score_col = "score",
+    score_cols = "score",
     resource = "string_physical",
     resource_version = "test"
   )
@@ -23,7 +23,7 @@ library(tibble)
       score = 800,
       stringsAsFactors = FALSE
     ),
-    score_col = "score",
+    score_cols = "score",
     resource = "string_full",
     resource_version = "test"
   )
@@ -34,6 +34,7 @@ library(tibble)
     database = "string",
     version = "test",
     cache_dir = cache_dir,
+    score_columns = "score",
     source_url = "https://example.com",
     license = "CC BY 4.0"
   )
@@ -49,13 +50,14 @@ test_that("normalise_interaction_edges works as expected", {
     data.frame(
       a = c("B", "A", "A", ""),
       b = c("A", "B", "C", "D"),
-      score = c(1, 1, 3, 4),
+      primary_score = c(1, 1, 3, 4),
+      secondary_score = c(0.1, 0.1, 0.3, 0.4),
       evid = c("x", "x", "z", "w"),
       stringsAsFactors = FALSE
     ),
     a_col = "a",
     b_col = "b",
-    score_col = "score",
+    score_cols = c("primary_score", "secondary_score"),
     evidence_col = "evid",
     resource = "test",
     resource_version = "v1"
@@ -65,7 +67,9 @@ test_that("normalise_interaction_edges works as expected", {
     edges,
     structure(
       list(
-        uniprot_a = c("A", "A"), uniprot_b = c("B", "C"), score = c(1, 3), evidence = c("x", "z"), resource = c(
+        uniprot_a = c("A", "A"), uniprot_b = c("B", "C"),
+        primary_score = c(1, 3), secondary_score = c(0.1, 0.3),
+        evidence = c("x", "z"), resource = c(
           "test",
           "test"
         ),
@@ -88,7 +92,7 @@ test_that("normalise_interaction_edges works as expected", {
     ),
     a_col = "a",
     b_col = "b",
-    score_col = "score",
+    score_cols = "score",
     resource = "test",
     resource_version = "v1"
   )
@@ -101,6 +105,16 @@ test_that("normalise_interaction_edges fails with invalid input", {
       data.frame(x = 1, y = 2),
       a_col = "a",
       b_col = "b",
+      resource = "test",
+      resource_version = "v1"
+    )
+  )
+  expect_error(
+    normalise_interaction_edges(
+      data.frame(a = "A", b = "B"),
+      a_col = "a",
+      b_col = "b",
+      score_cols = "missing_score",
       resource = "test",
       resource_version = "v1"
     )
@@ -123,6 +137,7 @@ test_that("save_interaction_database and load_interaction_database work as expec
   expect_true(is.list(db))
   expect_true(inherits(db$edges, "tbl_df") || is.data.frame(db$edges))
   expect_equal(db$meta$database, "string")
+  expect_equal(db$meta$score_columns, "score")
   expect_equal(nrow(db$edges), 3)
 
   expect_no_error(db_ver <- load_interaction_database("string", "test", cache_dir = cache_dir))
@@ -134,11 +149,34 @@ test_that("save_interaction_database and load_interaction_database work as expec
       edges = db$edges,
       database = "string",
       version = "latest",
-      cache_dir = cache_dir
+      cache_dir = cache_dir,
+      score_columns = db$meta$score_columns
     )
   )
   expect_equal(basename(latest_path), "string_latest.rds")
   expect_true(file.exists(latest_path))
+
+  # Non-score annotation columns are allowed when score_columns is explicit
+  annotated <- db$edges
+  annotated$note <- "keep"
+  expect_no_error(
+    save_interaction_database(
+      edges = annotated,
+      database = "string",
+      version = "annotated",
+      cache_dir = cache_dir,
+      score_columns = "score"
+    )
+  )
+  expect_error(
+    save_interaction_database(
+      edges = annotated,
+      database = "string",
+      version = "bad_scores",
+      cache_dir = cache_dir,
+      score_columns = "note"
+    )
+  )
 })
 
 test_that("load_interaction_database fails with invalid input", {
@@ -153,6 +191,32 @@ test_that("load_interaction_database fails with invalid input", {
 
   saveRDS(
     list(edges = data.frame(x = 1), meta = list()),
+    bad_path
+  )
+  expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
+
+  bad_edges <- data.frame(
+    uniprot_a = "A",
+    uniprot_b = "B",
+    evidence = NA_character_,
+    resource = "test",
+    resource_version = "v1"
+  )
+  saveRDS(
+    list(
+      edges = bad_edges,
+      meta = list(score_columns = "missing_score")
+    ),
+    bad_path
+  )
+  expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
+
+  bad_edges$bad_score <- "high"
+  saveRDS(
+    list(
+      edges = bad_edges,
+      meta = list(score_columns = "bad_score")
+    ),
     bad_path
   )
   expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
@@ -246,7 +310,7 @@ test_that("extract_panel_interactions keeps UniProt homodimers", {
       score = c(900, 500),
       stringsAsFactors = FALSE
     ),
-    score_col = "score",
+    score_cols = "score",
     resource = "string_physical",
     resource_version = "test"
   )
@@ -255,7 +319,8 @@ test_that("extract_panel_interactions keeps UniProt homodimers", {
     edges = homo,
     database = "string",
     version = "test",
-    cache_dir = cache_dir
+    cache_dir = cache_dir,
+    score_columns = "score"
   )
 
   out <- extract_panel_interactions(
@@ -285,7 +350,7 @@ test_that("extract_panel_interactions does not invent hetero pairs from homodime
       score = 900,
       stringsAsFactors = FALSE
     ),
-    score_col = "score",
+    score_cols = "score",
     resource = "string_physical",
     resource_version = "test"
   )
@@ -294,7 +359,8 @@ test_that("extract_panel_interactions does not invent hetero pairs from homodime
     edges = homo,
     database = "string",
     version = "test",
-    cache_dir = cache_dir
+    cache_dir = cache_dir,
+    score_columns = "score"
   )
 
   shared_map <- tibble(
@@ -326,7 +392,7 @@ test_that("extract_panel_interactions keeps UniProt columns aligned with markers
       score = 700,
       stringsAsFactors = FALSE
     ),
-    score_col = "score",
+    score_cols = "score",
     resource = "string_physical",
     resource_version = "test"
   )
@@ -335,7 +401,8 @@ test_that("extract_panel_interactions keeps UniProt columns aligned with markers
     edges = edges,
     database = "string",
     version = "test",
-    cache_dir = cache_dir
+    cache_dir = cache_dir,
+    score_columns = "score"
   )
 
   # Join yields marker_1=B (P12345), marker_2=A (Q67890); lexical reorder to A,B

@@ -127,7 +127,7 @@ interaction_database_cache_dir <- function() {
 #'
 #' @param edges Data frame with at least two UniProt columns.
 #' @param a_col,b_col Column names for the two ends.
-#' @param score_col Optional score column.
+#' @param score_cols Optional character vector of score columns to retain.
 #' @param evidence_col Optional evidence column.
 #' @param resource Resource name.
 #' @param resource_version Version string.
@@ -137,7 +137,7 @@ normalise_interaction_edges <- function(
   edges,
   a_col = "uniprot_a",
   b_col = "uniprot_b",
-  score_col = NULL,
+  score_cols = NULL,
   evidence_col = NULL,
   resource,
   resource_version
@@ -145,27 +145,43 @@ normalise_interaction_edges <- function(
   assert_class(edges, c("data.frame", "tbl_df"))
   assert_single_value(a_col, type = "string")
   assert_single_value(b_col, type = "string")
-  assert_single_value(score_col, type = "string", allow_null = TRUE)
+  assert_vector(
+    score_cols,
+    type = "character",
+    n = 1,
+    allow_null = TRUE
+  )
   assert_single_value(evidence_col, type = "string", allow_null = TRUE)
   assert_single_value(resource, type = "string")
   assert_single_value(resource_version, type = "string")
   assert_col_in_data(a_col, edges)
   assert_col_in_data(b_col, edges)
+  if (!is.null(score_cols)) {
+    missing_score_cols <- setdiff(score_cols, names(edges))
+    if (length(missing_score_cols) > 0) {
+      cli::cli_abort(
+        "Missing score columns: {.val {missing_score_cols}}."
+      )
+    }
+  }
 
   a <- trimws(as.character(edges[[a_col]]))
   b <- trimws(as.character(edges[[b_col]]))
   keep <- !is.na(a) & !is.na(b) & a != "" & b != ""
   a <- a[keep]
   b <- b[keep]
-  return(unique(tibble(
+  output <- tibble(
     uniprot_a = pmin(a, b),
-    uniprot_b = pmax(a, b),
-    score = if (!is.null(score_col) && score_col %in% names(edges)) {
+    uniprot_b = pmax(a, b)
+  )
+  if (!is.null(score_cols)) {
+    scores <- lapply(edges[keep, score_cols, drop = FALSE], function(score) {
       # as.character first so factor scores are not silently converted to codes
-      as.numeric(as.character(edges[[score_col]][keep]))
-    } else {
-      NA_real_
-    },
+      as.numeric(as.character(score))
+    })
+    output <- bind_cols(output, as_tibble(scores))
+  }
+  output <- bind_cols(output, tibble(
     evidence = if (!is.null(evidence_col) && evidence_col %in% names(edges)) {
       as.character(edges[[evidence_col]][keep])
     } else {
@@ -173,7 +189,8 @@ normalise_interaction_edges <- function(
     },
     resource = resource,
     resource_version = resource_version
-  )))
+  ))
+  return(unique(output))
 }
 
 #' Write a slim interaction database RDS
@@ -182,6 +199,9 @@ normalise_interaction_edges <- function(
 #' @param database Database key.
 #' @param version Version label used in the filename.
 #' @param cache_dir Cache directory.
+#' @param score_columns Character vector of numeric score column names present
+#'   in \code{edges}. Use \code{NULL} or \code{character(0)} when the database
+#'   has no scores.
 #' @param source_url Optional provenance URL.
 #' @param license Optional license string.
 #' @param citation Optional citation string.
@@ -194,6 +214,7 @@ save_interaction_database <- function(
   database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version,
   cache_dir = interaction_database_cache_dir(),
+  score_columns = NULL,
   source_url = NULL,
   license = NULL,
   citation = NULL
@@ -206,12 +227,57 @@ save_interaction_database <- function(
   assert_single_value(license, type = "string", allow_null = TRUE)
   assert_single_value(citation, type = "string", allow_null = TRUE)
 
+  required_cols <- c(
+    "uniprot_a", "uniprot_b", "evidence", "resource", "resource_version"
+  )
+  missing_cols <- setdiff(required_cols, names(edges))
+  if (length(missing_cols) > 0) {
+    cli::cli_abort(c(
+      "x" = "Invalid interaction database edges.",
+      "i" = "Missing required columns: {.val {missing_cols}}"
+    ))
+  }
+  if (is.null(score_columns)) {
+    score_columns <- character()
+  } else if (length(score_columns) > 0) {
+    assert_vector(score_columns, type = "character", n = 1)
+  } else if (!is.character(score_columns)) {
+    cli::cli_abort("{.arg score_columns} must be a character vector or NULL.")
+  }
+  if (anyDuplicated(score_columns)) {
+    cli::cli_abort("{.arg score_columns} must not contain duplicates.")
+  }
+  reserved_scores <- intersect(score_columns, required_cols)
+  if (length(reserved_scores) > 0) {
+    cli::cli_abort(c(
+      "x" = "{.arg score_columns} collides with required columns.",
+      "i" = "Invalid names: {.val {reserved_scores}}"
+    ))
+  }
+  missing_score_cols <- setdiff(score_columns, names(edges))
+  if (length(missing_score_cols) > 0) {
+    cli::cli_abort(
+      "Missing score columns: {.val {missing_score_cols}}."
+    )
+  }
+  if (length(score_columns) > 0) {
+    non_numeric_scores <- score_columns[
+      !vapply(edges[score_columns], is.numeric, logical(1))
+    ]
+    if (length(non_numeric_scores) > 0) {
+      cli::cli_abort(
+        "Score columns must be numeric: {.val {non_numeric_scores}}."
+      )
+    }
+  }
+
   dir.create(cache_dir, recursive = TRUE, showWarnings = FALSE)
   path <- .interaction_database_rds_path(database, version, cache_dir)
   meta <- list(
     database = database,
     version = version,
     n_edges = nrow(edges),
+    score_columns = score_columns,
     source_url = source_url,
     license = license,
     citation = citation,
@@ -254,7 +320,7 @@ load_interaction_database <- function(
   }
   assert_class(obj$edges, c("data.frame", "tbl_df"))
   required_cols <- c(
-    "uniprot_a", "uniprot_b", "score", "evidence", "resource", "resource_version"
+    "uniprot_a", "uniprot_b", "evidence", "resource", "resource_version"
   )
   missing_cols <- setdiff(required_cols, names(obj$edges))
   if (length(missing_cols) > 0) {
@@ -263,6 +329,32 @@ load_interaction_database <- function(
       "i" = "Missing required columns: {.val {missing_cols}}"
     ))
   }
+  score_columns <- obj$meta$score_columns %||% character()
+  if (!is.character(score_columns)) {
+    cli::cli_abort(c(
+      "x" = "Invalid interaction database meta at {.path {path}}.",
+      "i" = "{.field score_columns} must be a character vector."
+    ))
+  }
+  missing_score_cols <- setdiff(score_columns, names(obj$edges))
+  if (length(missing_score_cols) > 0) {
+    cli::cli_abort(c(
+      "x" = "Invalid interaction database edges at {.path {path}}.",
+      "i" = "Missing declared score columns: {.val {missing_score_cols}}"
+    ))
+  }
+  if (length(score_columns) > 0) {
+    non_numeric_scores <- score_columns[
+      !vapply(obj$edges[score_columns], is.numeric, logical(1))
+    ]
+    if (length(non_numeric_scores) > 0) {
+      cli::cli_abort(c(
+        "x" = "Invalid interaction database edges at {.path {path}}.",
+        "i" = "Score columns must be numeric: {.val {non_numeric_scores}}"
+      ))
+    }
+  }
+  obj$meta$score_columns <- score_columns
   return(obj)
 }
 
@@ -617,7 +709,7 @@ build_string_database <- function(
       m2,
       a_col = "uniprot_a",
       b_col = "uniprot_b",
-      score_col = "combined_score",
+      score_cols = "combined_score",
       evidence_col = NULL,
       resource = paste0("string_", network_label),
       resource_version = version
@@ -640,6 +732,7 @@ build_string_database <- function(
     database = "string",
     version = version,
     cache_dir = cache_dir,
+    score_columns = "combined_score",
     source_url = "https://stringdb-downloads.org/download/",
     license = paste(
       "Creative Commons Attribution 4.0 International (CC BY 4.0);",
@@ -765,6 +858,7 @@ build_biogrid_database <- function(
     database = "biogrid",
     version = version,
     cache_dir = cache_dir,
+    score_columns = NULL,
     source_url = "https://downloads.thebiogrid.org/BioGRID/Latest-Release/",
     license = paste(
       "MIT License; retain the copyright and permission notices from",
@@ -876,6 +970,7 @@ build_corum_database <- function(
     database = "corum",
     version = version,
     cache_dir = cache_dir,
+    score_columns = NULL,
     source_url = paste(
       "https://omnipathdb.org/complexes?databases=CORUM;",
       "https://mips.helmholtz-muenchen.de/corum/"
@@ -974,6 +1069,7 @@ build_omnipath_database <- function(
     database = "omnipath",
     version = paste0(version, "_", license),
     cache_dir = cache_dir,
+    score_columns = NULL,
     source_url = "https://omnipathdb.org/interactions",
     license = paste0(
       "No single OmniPath data license; contributing-resource licenses ",
@@ -1149,7 +1245,7 @@ build_alphafold_database <- function(
   pairs$evidence <- sprintf("ipSAE=%s;pDockQ2=%s", pairs$ipSAE, pairs$pDockQ2)
   edges <- normalise_interaction_edges(
     pairs,
-    score_col = "score",
+    score_cols = "score",
     evidence_col = "evidence",
     resource = "alphafold",
     resource_version = version
@@ -1160,6 +1256,7 @@ build_alphafold_database <- function(
     database = "alphafold",
     version = version,
     cache_dir = cache_dir,
+    score_columns = "score",
     source_url = nvda_base,
     license = paste(
       "Creative Commons Attribution 4.0 International (CC BY 4.0);",

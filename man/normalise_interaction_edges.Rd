@@ -8,7 +8,7 @@ normalise_interaction_edges(
   edges,
   a_col = "uniprot_a",
   b_col = "uniprot_b",
-  score_col = NULL,
+  score_cols = NULL,
   evidence_col = NULL,
   resource,
   resource_version
@@ -19,7 +19,7 @@ normalise_interaction_edges(
 
 \item{a_col, b_col}{Column names for the two ends.}
 
-\item{score_col}{Optional score column.}
+\item{score_cols}{Optional character vector of score columns to retain.}
 
 \item{evidence_col}{Optional evidence column.}
 
