@@ -522,6 +522,9 @@ create_marker_uniprot_map <- function(
 #' Conversely, interactions between different UniProt accessions are not
 #' returned as marker self-pairs. Marker names are ordered alphabetically, and
 #' the corresponding UniProt accessions are reordered with them.
+#' When multiple UniProt edges collapse to the same marker pair, the row with
+#' the highest score envelope is kept so UniProt IDs and evidence stay aligned
+#' with the reported scores.
 #'
 #' @param markers Character vector of panel marker names.
 #' @param database Interaction database key.
@@ -712,7 +715,7 @@ extract_panel_interactions <- function(
 
   map_a <- map %>% rename(marker_1 = marker)
   map_b <- map %>% rename(marker_2 = marker)
-  out <- edges %>%
+  joined <- edges %>%
     inner_join(map_a, by = c("uniprot_a" = "uniprot_id")) %>%
     inner_join(map_b, by = c("uniprot_b" = "uniprot_id")) %>%
     # Homodimers -> marker self-pairs only; hetero edges -> distinct markers only
@@ -736,28 +739,30 @@ extract_panel_interactions <- function(
       evidence,
       resource,
       resource_version
-    ) %>%
-    group_by(marker_1, marker_2) %>%
-    summarise(
-      uniprot_a = uniprot_a[[1]],
-      uniprot_b = uniprot_b[[1]],
-      in_db = TRUE,
-      across(
-        all_of(score_cols),
-        ~ suppressWarnings(max(.x, na.rm = TRUE))
-      ),
-      evidence = evidence[[1]],
-      resource = resource[[1]],
-      resource_version = resource_version[[1]],
-      .groups = "drop"
     )
-  if (length(score_cols) > 0) {
-    out <- out %>%
-      mutate(across(
-        all_of(score_cols),
-        ~ if_else(is.infinite(.x), NA_real_, .x)
-      ))
+
+  # Collapse duplicate marker pairs to one representative edge. When scores
+  # exist, keep the row with the highest score envelope so UniProt / evidence
+  # stay aligned with the reported scores.
+  if (length(score_cols) > 0 && nrow(joined) > 0) {
+    score_mat <- as.matrix(joined[score_cols])
+    joined$.score_rank <- apply(score_mat, 1, function(r) {
+      if (all(is.na(r))) {
+        -Inf
+      } else {
+        max(r, na.rm = TRUE)
+      }
+    })
+  } else {
+    joined$.score_rank <- 0
   }
+  out <- joined %>%
+    group_by(marker_1, marker_2) %>%
+    slice_max(order_by = .score_rank, n = 1, with_ties = FALSE) %>%
+    ungroup() %>%
+    select(-.score_rank) %>%
+    mutate(in_db = TRUE) %>%
+    relocate(in_db, .after = uniprot_b)
   return(out)
 }
 
@@ -920,12 +925,20 @@ build_string_database <- function(
 
 #' Build BioGRID physical interaction database (human)
 #'
-#' Downloads \code{BIOGRID-MV-Physical-LATEST.tab3.zip} into the BioGRID raw
-#' cache when \code{raw_file} is missing.
+#' Downloads the BioGRID multi-validated physical (MV-Physical) tab3 dump for
+#' a real release id. \code{version = "latest"} fetches
+#' \code{BIOGRID-MV-Physical-LATEST.tab3.zip} and resolves the concrete release
+#' from the extracted \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} filename.
+#' A concrete \code{version} such as \code{"5.0.259"} downloads that release
+#' from the BioGRID Release Archive.
 #'
-#' @param raw_file Path to BioGRID MV-Physical or organism tab3 file.
-#'   If \code{NULL} or missing on disk, the latest release is downloaded.
-#' @param version BioGRID release label (default \code{"latest"} when downloading).
+#' The slim RDS is always saved under the resolved BioGRID release id (and
+#' copied to \code{biogrid_latest.rds}).
+#'
+#' @param raw_file Optional path to a local
+#'   \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. When \code{NULL}, the
+#'   release is downloaded into the BioGRID raw cache.
+#' @param version BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.
 #' @param cache_dir Output interaction database cache.
 #' @return Path to saved RDS.
 #' @export
@@ -935,44 +948,98 @@ build_biogrid_database <- function(
   cache_dir = interaction_database_cache_dir()
 ) {
   rlang::check_installed("data.table")
+  assert_single_value(version, type = "string")
+  if (!identical(version, "latest") &&
+    !grepl("^[0-9]+\\.[0-9]+\\.[0-9]+$", version)) {
+    cli::cli_abort(c(
+      "x" = "{.arg version} must be {.val latest} or a BioGRID release id like {.val 5.0.259}.",
+      "i" = "Got {.val {version}}."
+    ))
+  }
+
   raw_dir <- file.path(.default_raw_cache(), "biogrid")
+  dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
+  tab3_name_re <- "^BIOGRID-MV-Physical-([0-9]+\\.[0-9]+\\.[0-9]+)\\.tab3\\.txt$"
 
-  # Download a zip and return the first extracted file matching pattern.
-  download_zip_extract <- function(url, dest_dir, pattern) {
-    dir.create(dest_dir, recursive = TRUE, showWarnings = FALSE)
-    existing <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
-    if (length(existing) > 0) {
-      return(existing[[1]])
+  version_from_tab3_name <- function(path) {
+    bn <- basename(path)
+    if (!grepl(tab3_name_re, bn, ignore.case = TRUE)) {
+      return(NA_character_)
     }
-    zip_path <- file.path(dest_dir, basename(sub("[?].*$", "", url)))
-    if (!grepl("[.]zip$", zip_path, ignore.case = TRUE)) {
-      zip_path <- paste0(zip_path, ".zip")
+    return(sub(tab3_name_re, "\\1", bn, ignore.case = TRUE))
+  }
+
+  if (!is.null(raw_file)) {
+    assert_single_value(raw_file, type = "string")
+    if (!file.exists(raw_file)) {
+      cli::cli_abort("BioGRID raw file not found: {.path {raw_file}}.")
     }
-    .download_if_missing(url, zip_path)
-    utils::unzip(zip_path, exdir = dest_dir)
-    extracted <- list.files(dest_dir, pattern = pattern, full.names = TRUE)
-    if (length(extracted) < 1) {
-      cli::cli_abort(
-        "No file matching {.val {pattern}} found after unzipping {.path {zip_path}}."
+    parsed <- version_from_tab3_name(raw_file)
+    if (identical(version, "latest")) {
+      if (is.na(parsed)) {
+        cli::cli_abort(c(
+          "x" = "When {.arg version} is {.val latest}, {.arg raw_file} must be named like {.val BIOGRID-MV-Physical-5.0.259.tab3.txt}.",
+          "i" = "Got {.path {raw_file}}."
+        ))
+      }
+      version <- parsed
+    } else if (!is.na(parsed) && !identical(parsed, version)) {
+      cli::cli_abort(c(
+        "x" = "{.arg raw_file} release {.val {parsed}} does not match {.arg version} {.val {version}}.",
+        "i" = "Path: {.path {raw_file}}"
+      ))
+    }
+  } else {
+    if (identical(version, "latest")) {
+      zip_path <- file.path(raw_dir, "BIOGRID-MV-Physical-LATEST.tab3.zip")
+      .download_if_missing(
+        paste0(
+          "https://downloads.thebiogrid.org/Download/BioGRID/",
+          "Latest-Release/BIOGRID-MV-Physical-LATEST.tab3.zip"
+        ),
+        zip_path
       )
+      utils::unzip(zip_path, exdir = raw_dir)
+      members <- basename(utils::unzip(zip_path, list = TRUE)$Name)
+      hit <- members[grepl(tab3_name_re, members, ignore.case = TRUE)]
+      if (length(hit) != 1) {
+        cli::cli_abort(c(
+          "x" = "Expected exactly one versioned MV-Physical tab3 in {.path {zip_path}}.",
+          "i" = "Found {length(hit)} matching member{?s}."
+        ))
+      }
+      raw_file <- file.path(raw_dir, hit[[1]])
+      version <- version_from_tab3_name(raw_file)
+      if (is.na(version)) {
+        cli::cli_abort(
+          "Could not parse BioGRID release id from {.path {raw_file}}."
+        )
+      }
+    } else {
+      raw_file <- file.path(
+        raw_dir,
+        paste0("BIOGRID-MV-Physical-", version, ".tab3.txt")
+      )
+      if (!file.exists(raw_file) || !isTRUE(file.info(raw_file)$size > 0)) {
+        zip_path <- file.path(
+          raw_dir,
+          paste0("BIOGRID-MV-Physical-", version, ".tab3.zip")
+        )
+        .download_if_missing(
+          paste0(
+            "https://downloads.thebiogrid.org/File/BioGRID/Release-Archive/",
+            "BIOGRID-", version, "/BIOGRID-MV-Physical-", version, ".tab3.zip"
+          ),
+          zip_path
+        )
+        utils::unzip(zip_path, exdir = raw_dir)
+      }
     }
-    return(extracted[[1]])
+    if (!file.exists(raw_file) || !isTRUE(file.info(raw_file)$size > 0)) {
+      cli::cli_abort("Missing BioGRID MV-Physical file {.path {raw_file}}.")
+    }
   }
 
-  if (is.null(raw_file)) {
-    existing <- list.files(raw_dir, pattern = "[.]tab3[.]txt$", full.names = TRUE)
-    raw_file <- if (length(existing) > 0) existing[[1]] else NA_character_
-  }
-  if (length(raw_file) != 1 || is.na(raw_file) || !file.exists(raw_file)) {
-    raw_file <- download_zip_extract(
-      url = paste0(
-        "https://downloads.thebiogrid.org/Download/BioGRID/",
-        "Latest-Release/BIOGRID-MV-Physical-LATEST.tab3.zip"
-      ),
-      dest_dir = raw_dir,
-      pattern = "[.]tab3[.]txt$"
-    )
-  }
   dt <- data.table::fread(raw_file, sep = "\t", quote = "", showProgress = FALSE)
   a_col <- .first_present_col(
     dt,
@@ -1029,7 +1096,10 @@ build_biogrid_database <- function(
     version = version,
     cache_dir = cache_dir,
     score_columns = NULL,
-    source_url = "https://downloads.thebiogrid.org/BioGRID/Latest-Release/",
+    source_url = paste0(
+      "https://downloads.thebiogrid.org/File/BioGRID/Release-Archive/",
+      "BIOGRID-", version, "/"
+    ),
     license = paste(
       "MIT License; retain the copyright and permission notices from",
       "BioGRID's LICENSE.txt"

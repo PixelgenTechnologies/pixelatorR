@@ -31,6 +31,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `build_alphafold_database()`, and `build_all_interaction_databases()`.
     Missing raw dumps are downloaded into the package cache automatically
     (with an increased download timeout suitable for large files).
+    `build_biogrid_database(version=)` downloads a real BioGRID MV-Physical
+    release (`X.Y.Z` from the Release Archive, or `"latest"` which resolves
+    to the concrete id in `BIOGRID-MV-Physical-X.Y.Z.tab3.txt`).
     AlphaFold combines hetero- and homodimer NVIDIA metadata; CORUM emits
     U-U edges for single-accession (homomer) complexes.
     `build_all_interaction_databases()` includes the STRING full network.

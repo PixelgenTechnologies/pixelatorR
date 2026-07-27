@@ -300,6 +300,122 @@ test_that("extract_panel_interactions works as expected", {
   expect_false(any(overlap_out$marker_1 == overlap_out$marker_2))
 })
 
+test_that("extract_panel_interactions aligns UniProt with max score row", {
+  cache_dir <- tempfile("idb_align_")
+  dir.create(cache_dir)
+
+  # Two UniProt edges for the same marker pair; lower score listed first so a
+  # first-row summarise would pick the wrong UniProt / evidence.
+  edges <- normalise_interaction_edges(
+    data.frame(
+      uniprot_a = c("P11111", "P22222"),
+      uniprot_b = c("Q11111", "Q22222"),
+      combined_score = c(100, 900),
+      stringsAsFactors = FALSE
+    ),
+    score_cols = "combined_score",
+    resource = "string_physical",
+    resource_version = "test"
+  )
+  edges$evidence <- "physical"
+  save_interaction_database(
+    edges = edges,
+    database = "string",
+    version = "test",
+    cache_dir = cache_dir,
+    score_columns = "combined_score"
+  )
+
+  map <- tibble(
+    marker = c("A", "A", "B", "B"),
+    uniprot_id = c("P11111", "P22222", "Q11111", "Q22222")
+  )
+  out <- extract_panel_interactions(
+    markers = c("A", "B"),
+    database = "string",
+    marker_uniprot_map = map,
+    string_network = "physical",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out), 1)
+  expect_equal(out$uniprot_a[[1]], "P22222")
+  expect_equal(out$uniprot_b[[1]], "Q22222")
+  expect_equal(out$combined_score[[1]], 900)
+})
+
+test_that("build_biogrid_database uses real version from raw_file", {
+  raw_dir <- tempfile("biogrid_raw_")
+  cache_dir <- tempfile("biogrid_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+  raw_file <- file.path(raw_dir, "BIOGRID-MV-Physical-5.0.259.tab3.txt")
+  utils::write.table(
+    data.frame(
+      `SWISS-PROT Accessions Interactor A` = c("P12345", "P99999"),
+      `SWISS-PROT Accessions Interactor B` = c("Q67890", "P99999"),
+      `Organism ID Interactor A` = c(9606, 9606),
+      `Organism ID Interactor B` = c(9606, 10090),
+      `Experimental System` = c("Two-hybrid", "Affinity Capture"),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    ),
+    raw_file,
+    sep = "\t",
+    quote = FALSE,
+    row.names = FALSE
+  )
+
+  path <- build_biogrid_database(
+    raw_file = raw_file,
+    version = "5.0.259",
+    cache_dir = cache_dir
+  )
+  expect_true(file.exists(path))
+  db <- load_interaction_database("biogrid", "5.0.259", cache_dir = cache_dir)
+  expect_equal(db$meta$version, "5.0.259")
+  expect_equal(nrow(db$edges), 1)
+  expect_equal(db$edges$uniprot_a[[1]], "P12345")
+  expect_true(file.exists(
+    file.path(cache_dir, "biogrid_latest.rds")
+  ))
+
+  expect_error(
+    build_biogrid_database(
+      raw_file = raw_file,
+      version = "test",
+      cache_dir = cache_dir
+    )
+  )
+  custom <- file.path(raw_dir, "custom_dump.tab3.txt")
+  file.copy(raw_file, custom)
+  expect_error(
+    build_biogrid_database(
+      raw_file = custom,
+      version = "latest",
+      cache_dir = cache_dir
+    )
+  )
+  expect_error(
+    build_biogrid_database(
+      raw_file = raw_file,
+      version = "4.4.238",
+      cache_dir = cache_dir
+    )
+  )
+  # latest + properly named raw_file resolves version from basename
+  path_latest <- build_biogrid_database(
+    raw_file = raw_file,
+    version = "latest",
+    cache_dir = cache_dir
+  )
+  db_latest <- load_interaction_database(
+    "biogrid", "latest",
+    cache_dir = cache_dir
+  )
+  expect_equal(db_latest$meta$version, "5.0.259")
+  expect_true(file.exists(path_latest))
+})
+
 test_that("extract_panel_interactions keeps UniProt homodimers", {
   cache_dir <- tempfile("idb_homo_")
   dir.create(cache_dir)
