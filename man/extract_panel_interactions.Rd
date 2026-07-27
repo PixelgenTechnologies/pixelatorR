@@ -41,10 +41,13 @@ Pass \code{marker_1}/\code{marker_2} columns to
 \description{
 Maps panel markers to UniProt accessions, loads a slim interaction database,
 and returns undirected marker pairs with a registered database entry after
-optional score / network filters. UniProt homodimers (\code{uniprot_a ==
-uniprot_b}) are kept only as marker self-pairs; false hetero pairs from
-shared-accession homodimer joins and false self-pairs from hetero Cartesian
-joins are dropped. Marker lexical order and UniProt columns stay aligned.
+optional score / network filters.
+UniProt self-interactions are returned only as marker self-pairs. When
+multiple marker names map to the same UniProt accession, a self-interaction
+does not create interactions between those different marker names.
+Conversely, interactions between different UniProt accessions are not
+returned as marker self-pairs. Marker names are ordered alphabetically, and
+the corresponding UniProt accessions are reordered with them.
 }
 \examples{
 \dontrun{

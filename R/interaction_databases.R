@@ -57,12 +57,15 @@
     tmpdir = dirname(dest_file),
     fileext = ".part"
   )
-  on.exit({
-    options(timeout = old_timeout)
-    if (file.exists(tmp_file)) {
-      unlink(tmp_file)
-    }
-  }, add = FALSE)
+  on.exit(
+    {
+      options(timeout = old_timeout)
+      if (file.exists(tmp_file)) {
+        unlink(tmp_file)
+      }
+    },
+    add = FALSE
+  )
   options(timeout = max(min_timeout, old_timeout))
   cli::cli_inform(c("i" = "Downloading {.url {url}}"))
   status <- tryCatch(
@@ -75,8 +78,8 @@
     }
   )
   if (!identical(as.integer(status), 0L) ||
-      !file.exists(tmp_file) ||
-      !isTRUE(file.info(tmp_file)$size > 0)) {
+    !file.exists(tmp_file) ||
+    !isTRUE(file.info(tmp_file)$size > 0)) {
     cli::cli_abort("Download failed or produced an empty file: {.url {url}}")
   }
   if (!isTRUE(file.rename(tmp_file, dest_file))) {
@@ -336,7 +339,7 @@ create_marker_uniprot_map <- function(
 #'
 #' Maps panel markers to UniProt accessions, loads a slim interaction database,
 #' and returns undirected marker pairs with a registered database entry after
-#' optional score / network filters. 
+#' optional score / network filters.
 #' UniProt self-interactions are returned only as marker self-pairs. When
 #' multiple marker names map to the same UniProt accession, a self-interaction
 #' does not create interactions between those different marker names.
@@ -450,8 +453,10 @@ extract_panel_interactions <- function(
 
   panel_uniprot <- unique(map$uniprot_id)
   edges <- edges %>%
-    filter(uniprot_a %in% panel_uniprot,
-           uniprot_b %in% panel_uniprot)
+    filter(
+      uniprot_a %in% panel_uniprot,
+      uniprot_b %in% panel_uniprot
+    )
 
   if (nrow(edges) == 0) {
     return(empty_panel_interactions())
@@ -524,8 +529,7 @@ build_string_database <- function(
 
   string_download_url <- function(fname, network = c("aliases", "physical", "full")) {
     network <- match.arg(network)
-    prefix <- switch(
-      network,
+    prefix <- switch(network,
       aliases = paste0("protein.aliases.v", version),
       physical = paste0("protein.physical.links.v", version),
       full = paste0("protein.links.v", version)
@@ -1051,8 +1055,7 @@ build_alphafold_database <- function(
       if (all(c("tax_id_1", "tax_id_2") %in% names(df))) {
         df <- df[
           as.character(df$tax_id_1) == "9606" &
-            as.character(df$tax_id_2) == "9606",
-          ,
+            as.character(df$tax_id_2) == "9606", ,
           drop = FALSE
         ]
       }

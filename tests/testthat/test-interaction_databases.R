@@ -63,12 +63,19 @@ test_that("normalise_interaction_edges works as expected", {
 
   expect_equal(
     edges,
-    structure(list(uniprot_a = c("A", "A"), uniprot_b = c("B", "C"
-    ), score = c(1, 3), evidence = c("x", "z"), resource = c("test",
-                                                             "test"),
-    resource_version = c("v1", "v1")),
-    row.names = c(NA, -2L), class = c("tbl_df",
-                                      "tbl", "data.frame"))
+    structure(
+      list(
+        uniprot_a = c("A", "A"), uniprot_b = c("B", "C"), score = c(1, 3), evidence = c("x", "z"), resource = c(
+          "test",
+          "test"
+        ),
+        resource_version = c("v1", "v1")
+      ),
+      row.names = c(NA, -2L), class = c(
+        "tbl_df",
+        "tbl", "data.frame"
+      )
+    )
   )
 
   # Factor scores must decode via labels, not internal codes
@@ -166,12 +173,17 @@ test_that("extract_panel_interactions works as expected", {
       cache_dir = cache_dir
     )
   )
-  expect_equal(out,
-               structure(list(marker_1 = "A", marker_2 = "B", uniprot_a = "P12345",
-                              uniprot_b = "Q67890", in_db = TRUE, score = 500, evidence = "physical",
-                              resource = "string_physical", resource_version = "test"), row.names = c(NA,
-                                                                                                      -1L), class = c("tbl_df", "tbl", "data.frame"))
-               )
+  expect_equal(
+    out,
+    structure(list(
+      marker_1 = "A", marker_2 = "B", uniprot_a = "P12345",
+      uniprot_b = "Q67890", in_db = TRUE, score = 500, evidence = "physical",
+      resource = "string_physical", resource_version = "test"
+    ), row.names = c(
+      NA,
+      -1L
+    ), class = c("tbl_df", "tbl", "data.frame"))
+  )
 
   # Lower threshold keeps the weaker physical edge A-C
   expect_no_error(
