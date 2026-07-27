@@ -1,5 +1,5 @@
 # Canonical edge schema: uniprot_a, uniprot_b (undirected, a <= b), optional
-# score, evidence, plus resource, resource_version.
+# native score columns, evidence, resource, resource_version.
 
 #' Default cache directory for raw interaction-database dumps
 #'
@@ -544,6 +544,58 @@ create_marker_uniprot_map <- function(
 #'   columns from the database, plus \code{evidence}, \code{resource}, and
 #'   \code{resource_version}. Pass \code{marker_1}/\code{marker_2} columns to
 #'   \code{ColocalizationHeatmap(highlight_pairs = ...)}.
+#'
+#' @section Score filtering:
+#' Slim caches keep native score columns rather than a single synthetic
+#' \code{score}. Discover them with
+#' \code{load_interaction_database(...)$meta$score_columns}:
+#'
+#' | Database | Score columns |
+#' | --- | --- |
+#' | STRING | \code{combined_score} (classic 0-1000 scale) |
+#' | AlphaFold | \code{ipSAE}, \code{pDockQ2} (typically 0-1) |
+#' | BioGRID, CORUM, OmniPath | none |
+#'
+#' - \code{score_min}: keep rows where \code{column >= value}
+#' - \code{score_max}: keep rows where \code{column < value}
+#' - Same column in both: \code{(x >= min) & (x < max)}
+#' - \code{score_combine}: how predicates **across columns** combine
+#'   (\code{"any"} = OR, \code{"all"} = AND)
+#' - Both args must be fully named numeric vectors when non-\code{NULL}
+#' - Non-\code{NULL} thresholds on a database with no score columns error
+#'
+#' Examples:
+#'
+#' ```r
+#' # STRING medium confidence
+#' extract_panel_interactions(
+#'   markers, "string", marker_map,
+#'   score_min = c(combined_score = 400)
+#' )
+#'
+#' # AlphaFold: keep if ipSAE >= 0.6 OR pDockQ2 >= 0.23
+#' extract_panel_interactions(
+#'   markers, "alphafold", marker_map,
+#'   score_min = c(ipSAE = 0.6, pDockQ2 = 0.23),
+#'   score_combine = "any"
+#' )
+#'
+#' # AlphaFold: both minima must pass
+#' extract_panel_interactions(
+#'   markers, "alphafold", marker_map,
+#'   score_min = c(ipSAE = 0.6, pDockQ2 = 0.23),
+#'   score_combine = "all"
+#' )
+#'
+#' # Range on ipSAE AND min on pDockQ2:
+#' # (ipSAE >= 0.6 & ipSAE < 0.99) & (pDockQ2 >= 0.23)
+#' extract_panel_interactions(
+#'   markers, "alphafold", marker_map,
+#'   score_min = c(ipSAE = 0.6, pDockQ2 = 0.23),
+#'   score_max = c(ipSAE = 0.99),
+#'   score_combine = "all"
+#' )
+#' ```
 #'
 #' @seealso \code{\link{ColocalizationHeatmap}},
 #'   \code{\link{create_marker_uniprot_map}},

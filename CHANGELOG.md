@@ -9,18 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Interaction-database helpers for building, caching, and querying protein–protein
+- Interaction-database helpers for building, caching, and querying protein-protein
   interaction resources against a marker panel:
   - `interaction_database_cache_dir()`, `normalise_interaction_edges()`,
     `save_interaction_database()`, and `load_interaction_database()` for a slim
     UniProt edge cache (STRING, BioGRID, CORUM, OmniPath, AlphaFold DB).
+    Caches store native score columns declared in `meta$score_columns`
+    (STRING: `combined_score`; AlphaFold: `ipSAE`, `pDockQ2`; others: none).
+    Rebuild slim RDS caches after upgrading so edge schemas stay current.
   - `extract_panel_interactions()` to return known marker pairs from a cached
     database for use with `ColocalizationHeatmap(highlight_pairs = ...)`.
     UniProt homodimers are retained as marker self-pairs only; false hetero
     pairs from shared-accession homodimer joins and false self-pairs from
     hetero joins are dropped. Marker and UniProt columns stay aligned after
-    lexical reordering. `score_threshold` defaults to `NULL` and applies to
-    every database when set (STRING classic 0-1000; AlphaFold typically 0-1).
+    lexical reordering. Score filtering uses named `score_min` (`>=`) and
+    `score_max` (`<`) with `score_combine` (`"any"` / `"all"`) across columns.
   - `create_marker_uniprot_map()` to build a long-form marker-UniProt map from
     Seurat / PNA assay feature metadata (`uniprot_id`, semicolon-separated).
   - Maintainer builders `build_string_database()`, `build_biogrid_database()`,

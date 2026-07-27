@@ -60,6 +60,60 @@ Conversely, interactions between different UniProt accessions are not
 returned as marker self-pairs. Marker names are ordered alphabetically, and
 the corresponding UniProt accessions are reordered with them.
 }
+\section{Score filtering}{
+
+Slim caches keep native score columns rather than a single synthetic
+\code{score}. Discover them with
+\code{load_interaction_database(...)$meta$score_columns}:\tabular{ll}{
+   Database \tab Score columns \cr
+   STRING \tab \code{combined_score} (classic 0-1000 scale) \cr
+   AlphaFold \tab \code{ipSAE}, \code{pDockQ2} (typically 0-1) \cr
+   BioGRID, CORUM, OmniPath \tab none \cr
+}
+
+\itemize{
+\item \code{score_min}: keep rows where \code{column >= value}
+\item \code{score_max}: keep rows where \code{column < value}
+\item Same column in both: \code{(x >= min) & (x < max)}
+\item \code{score_combine}: how predicates \strong{across columns} combine
+(\code{"any"} = OR, \code{"all"} = AND)
+\item Both args must be fully named numeric vectors when non-\code{NULL}
+\item Non-\code{NULL} thresholds on a database with no score columns error
+}
+
+Examples:
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{# STRING medium confidence
+extract_panel_interactions(
+  markers, "string", marker_map,
+  score_min = c(combined_score = 400)
+)
+
+# AlphaFold: keep if ipSAE >= 0.6 OR pDockQ2 >= 0.23
+extract_panel_interactions(
+  markers, "alphafold", marker_map,
+  score_min = c(ipSAE = 0.6, pDockQ2 = 0.23),
+  score_combine = "any"
+)
+
+# AlphaFold: both minima must pass
+extract_panel_interactions(
+  markers, "alphafold", marker_map,
+  score_min = c(ipSAE = 0.6, pDockQ2 = 0.23),
+  score_combine = "all"
+)
+
+# Range on ipSAE AND min on pDockQ2:
+# (ipSAE >= 0.6 & ipSAE < 0.99) & (pDockQ2 >= 0.23)
+extract_panel_interactions(
+  markers, "alphafold", marker_map,
+  score_min = c(ipSAE = 0.6, pDockQ2 = 0.23),
+  score_max = c(ipSAE = 0.99),
+  score_combine = "all"
+)
+}\if{html}{\out{</div>}}
+}
+
 \examples{
 \dontrun{
 marker_map <- create_marker_uniprot_map(pg_data, assay = "PNA")
