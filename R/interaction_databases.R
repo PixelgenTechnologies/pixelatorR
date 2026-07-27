@@ -1230,23 +1230,9 @@ build_alphafold_database <- function(
       (!is.na(pairs$pDockQ2) & pairs$pDockQ2 >= pdockq2_min)
   )
   pairs <- pairs[keep, , drop = FALSE]
-  # Score = best metric that met its cutoff (not a low ipSAE that failed)
-  score_ip <- ifelse(
-    !is.na(pairs$ipSAE) & pairs$ipSAE >= ipsae_min,
-    pairs$ipSAE,
-    NA_real_
-  )
-  score_pd <- ifelse(
-    !is.na(pairs$pDockQ2) & pairs$pDockQ2 >= pdockq2_min,
-    pairs$pDockQ2,
-    NA_real_
-  )
-  pairs$score <- pmax(score_ip, score_pd, na.rm = TRUE)
-  pairs$evidence <- sprintf("ipSAE=%s;pDockQ2=%s", pairs$ipSAE, pairs$pDockQ2)
   edges <- normalise_interaction_edges(
     pairs,
-    score_cols = "score",
-    evidence_col = "evidence",
+    score_cols = c("ipSAE", "pDockQ2"),
     resource = "alphafold",
     resource_version = version
   )
@@ -1256,7 +1242,7 @@ build_alphafold_database <- function(
     database = "alphafold",
     version = version,
     cache_dir = cache_dir,
-    score_columns = "score",
+    score_columns = c("ipSAE", "pDockQ2"),
     source_url = nvda_base,
     license = paste(
       "Creative Commons Attribution 4.0 International (CC BY 4.0);",

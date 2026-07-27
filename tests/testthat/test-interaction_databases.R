@@ -527,10 +527,14 @@ test_that("build_alphafold_database works as expected", {
   expect_equal(db$edges$uniprot_a[[1]], "P12345")
   expect_equal(db$edges$uniprot_b[[1]], "Q67890")
   expect_true(all(db$edges$uniprot_a <= db$edges$uniprot_b))
-  expect_equal(db$edges$score[[1]], 0.8)
+  expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
+  expect_equal(db$edges$ipSAE[[1]], 0.8)
+  expect_equal(db$edges$pDockQ2[[1]], 0.5)
+  expect_true(is.na(db$edges$evidence[[1]]))
+  expect_false("score" %in% names(db$edges))
 })
 
-test_that("build_alphafold_database score uses qualifying pDockQ2", {
+test_that("build_alphafold_database keeps native scores when kept via pDockQ2", {
   raw_dir <- tempfile("afdb_pdq_")
   cache_dir <- tempfile("afdb_pdq_cache_")
   dir.create(raw_dir)
@@ -559,24 +563,10 @@ test_that("build_alphafold_database score uses qualifying pDockQ2", {
   )
   db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
   expect_equal(nrow(db$edges), 1)
-  expect_equal(db$edges$score[[1]], 0.5)
-
-  out <- extract_panel_interactions(
-    markers = c("A", "B"),
-    database = "alphafold",
-    marker_uniprot_map = marker_map,
-    score_threshold = 0.45,
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out), 1)
-  out_hi <- extract_panel_interactions(
-    markers = c("A", "B"),
-    database = "alphafold",
-    marker_uniprot_map = marker_map,
-    score_threshold = 0.6,
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out_hi), 0)
+  expect_equal(db$edges$ipSAE[[1]], 0.4)
+  expect_equal(db$edges$pDockQ2[[1]], 0.5)
+  expect_true(is.na(db$edges$evidence[[1]]))
+  expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
 })
 
 test_that("build_corum_database works as expected", {
