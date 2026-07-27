@@ -6,9 +6,9 @@
 \usage{
 extract_panel_interactions(
   markers,
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   marker_uniprot_map,
-  score_threshold = 400,
+  score_threshold = NULL,
   string_network = c("physical", "full"),
   cache_dir = interaction_database_cache_dir(),
   version = "latest"
@@ -23,7 +23,9 @@ extract_panel_interactions(
 \code{uniprot_id} (long form; multiple rows per marker allowed). Build with
 \code{\link{create_marker_uniprot_map}}.}
 
-\item{score_threshold}{Minimum score (STRING uses the classic 0–1000 scale).}
+\item{score_threshold}{Minimum score, or \code{NULL} to skip score filtering.
+Applied to every database. STRING uses the classic 0-1000 scale; AlphaFold
+scores are typically in 0-1.}
 
 \item{string_network}{For STRING: \code{"physical"} or \code{"full"}.}
 

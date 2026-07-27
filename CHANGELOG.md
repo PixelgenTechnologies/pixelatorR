@@ -19,8 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     UniProt homodimers are retained as marker self-pairs only; false hetero
     pairs from shared-accession homodimer joins and false self-pairs from
     hetero joins are dropped. Marker and UniProt columns stay aligned after
-    lexical reordering.
-  - `create_marker_uniprot_map()` to build a long-form marker–UniProt map from
+    lexical reordering. `score_threshold` defaults to `NULL` and applies to
+    every database when set (STRING classic 0-1000; AlphaFold typically 0-1).
+  - `create_marker_uniprot_map()` to build a long-form marker-UniProt map from
     Seurat / PNA assay feature metadata (`uniprot_id`, semicolon-separated).
   - Maintainer builders `build_string_database()`, `build_biogrid_database()`,
     `build_corum_database()`, `build_omnipath_database()`,
@@ -28,7 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     Missing raw dumps are downloaded into the package cache automatically
     (with an increased download timeout suitable for large files).
     AlphaFold combines hetero- and homodimer NVIDIA metadata; CORUM emits
-    U–U edges for single-accession (homomer) complexes.
+    U-U edges for single-accession (homomer) complexes.
+    `build_all_interaction_databases()` includes the STRING full network.
 - `ColocalizationHeatmap` options `highlight_pairs`, `highlight_color`, and
   `highlight_stroke` to outline selected marker pairs on tile and dot heatmaps.
 

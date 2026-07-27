@@ -1,13 +1,6 @@
 # Canonical edge schema: uniprot_a, uniprot_b (undirected, a <= b), optional
 # score, evidence, plus resource, resource_version.
 
-#' Supported interaction-database keys
-#'
-#' @noRd
-.interaction_databases <- c(
-  "string", "biogrid", "corum", "omnipath", "alphafold"
-)
-
 #' Default cache directory for raw interaction-database dumps
 #'
 #' Under \code{tools::R_user_dir("pixelatorR", "cache")/db_raw}. Builders
@@ -198,14 +191,14 @@ normalise_interaction_edges <- function(
 #' @export
 save_interaction_database <- function(
   edges,
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version,
   cache_dir = interaction_database_cache_dir(),
   source_url = NULL,
   license = NULL,
   citation = NULL
 ) {
-  database <- match.arg(database, choices = .interaction_databases)
+  database <- match.arg(database)
   assert_class(edges, c("data.frame", "tbl_df"))
   assert_single_value(version, type = "string")
   assert_single_value(cache_dir, type = "string")
@@ -244,11 +237,11 @@ save_interaction_database <- function(
 #'   \code{\link{extract_panel_interactions}}
 #' @export
 load_interaction_database <- function(
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version = "latest",
   cache_dir = interaction_database_cache_dir()
 ) {
-  database <- match.arg(database, choices = .interaction_databases)
+  database <- match.arg(database)
   assert_single_value(version, type = "string")
   assert_single_value(cache_dir, type = "string")
 
@@ -273,7 +266,7 @@ load_interaction_database <- function(
   return(obj)
 }
 
-#' Create a marker–UniProt map from a Seurat / PNA object
+#' Create a marker-UniProt map from a Seurat / PNA object
 #'
 #' Reads feature metadata from a PNA (or other) assay and expands
 #' semicolon-separated UniProt accessions to long form for use with
@@ -352,7 +345,9 @@ create_marker_uniprot_map <- function(
 #' @param marker_uniprot_map Data frame/tibble with columns \code{marker} and
 #'   \code{uniprot_id} (long form; multiple rows per marker allowed). Build with
 #'   \code{\link{create_marker_uniprot_map}}.
-#' @param score_threshold Minimum score (STRING uses the classic 0–1000 scale).
+#' @param score_threshold Minimum score, or \code{NULL} to skip score filtering.
+#'   Applied to every database. STRING uses the classic 0-1000 scale; AlphaFold
+#'   scores are typically in 0-1.
 #' @param string_network For STRING: \code{"physical"} or \code{"full"}.
 #' @param cache_dir Interaction database cache directory.
 #' @param version Database version label (\code{"latest"} or a built version).
@@ -387,15 +382,15 @@ create_marker_uniprot_map <- function(
 #' @export
 extract_panel_interactions <- function(
   markers,
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   marker_uniprot_map,
-  score_threshold = 400,
+  score_threshold = NULL,
   string_network = c("physical", "full"),
   cache_dir = interaction_database_cache_dir(),
   version = "latest"
 ) {
-  database <- match.arg(database, choices = .interaction_databases)
-  string_network <- match.arg(string_network, choices = c("physical", "full"))
+  database <- match.arg(database)
+  string_network <- match.arg(string_network)
   assert_vector(markers, type = "character", n = 1)
   assert_class(marker_uniprot_map, c("data.frame", "tbl_df"))
   assert_col_in_data("marker", marker_uniprot_map)
@@ -445,10 +440,10 @@ extract_panel_interactions <- function(
   if (database == "string") {
     edges <- edges %>%
       filter(evidence == string_network)
-    if (!is.null(score_threshold)) {
-      edges <- edges %>%
-        filter(!is.na(score), score >= score_threshold)
-    }
+  }
+  if (!is.null(score_threshold)) {
+    edges <- edges %>%
+      filter(!is.na(score), score >= score_threshold)
   }
 
   panel_uniprot <- unique(map$uniprot_id)
@@ -853,7 +848,7 @@ build_corum_database <- function(
       if (length(ids) < 1) {
         return(NULL)
       }
-      # Single-accession complexes (homomers) become U–U edges
+      # Single-accession complexes (homomers) become U-U edges
       if (length(ids) == 1) {
         return(tibble(
           uniprot_a = ids,
@@ -914,7 +909,7 @@ build_omnipath_database <- function(
   license = c("commercial", "academic", "unknown")
 ) {
   rlang::check_installed("data.table")
-  license <- match.arg(license, choices = c("commercial", "academic", "unknown"))
+  license <- match.arg(license)
   if (is.null(interactions_file)) {
     interactions_file <- file.path(
       .default_raw_cache(), "omnipath",
@@ -986,7 +981,7 @@ build_omnipath_database <- function(
       ". Cite and comply with each contributing resource"
     ),
     citation = paste(
-      "Türei D, Valdeolivas A, Gul L, et al. (2021). Integrated intra-",
+      "T\u00fcrei D, Valdeolivas A, Gul L, et al. (2021). Integrated intra-",
       "and intercellular signaling knowledge for multicellular omics",
       "analysis. Molecular Systems Biology 17:e9923.",
       "https://doi.org/10.15252/msb.20209923; also cite the contributing",
@@ -1139,7 +1134,18 @@ build_alphafold_database <- function(
       (!is.na(pairs$pDockQ2) & pairs$pDockQ2 >= pdockq2_min)
   )
   pairs <- pairs[keep, , drop = FALSE]
-  pairs$score <- ifelse(!is.na(pairs$ipSAE), pairs$ipSAE, pairs$pDockQ2)
+  # Score = best metric that met its cutoff (not a low ipSAE that failed)
+  score_ip <- ifelse(
+    !is.na(pairs$ipSAE) & pairs$ipSAE >= ipsae_min,
+    pairs$ipSAE,
+    NA_real_
+  )
+  score_pd <- ifelse(
+    !is.na(pairs$pDockQ2) & pairs$pDockQ2 >= pdockq2_min,
+    pairs$pDockQ2,
+    NA_real_
+  )
+  pairs$score <- pmax(score_ip, score_pd, na.rm = TRUE)
   pairs$evidence <- sprintf("ipSAE=%s;pDockQ2=%s", pairs$ipSAE, pairs$pDockQ2)
   edges <- normalise_interaction_edges(
     pairs,
@@ -1161,7 +1167,7 @@ build_alphafold_database <- function(
       "EMBL-EBI Terms of Use also apply"
     ),
     citation = paste(
-      "Bertoni D, Tsenkov MI, Magaña P, et al. (2026). AlphaFold Protein",
+      "Bertoni D, Tsenkov MI, Maga\u00f1a P, et al. (2026). AlphaFold Protein",
       "Structure Database 2025: a redesigned interface and updated",
       "structural coverage. Nucleic Acids Research 54(D1):D358-D362.",
       "https://doi.org/10.1093/nar/gkaf1226; Han Y, Tsenkov MI,",
@@ -1175,8 +1181,9 @@ build_alphafold_database <- function(
 #' Build all five interaction databases
 #'
 #' Maintainer helper that runs each \code{build_*_database()} writer. Missing
-#' raw dumps are downloaded into the package raw cache. OmniPath defaults to
-#' the commercial license filter.
+#' raw dumps are downloaded into the package raw cache. STRING is built with
+#' both physical and full networks (\code{include_full = TRUE}). OmniPath
+#' defaults to the commercial license filter.
 #'
 #' @param cache_dir Output interaction database cache.
 #' @return Named list of RDS paths.
@@ -1191,7 +1198,10 @@ build_all_interaction_databases <- function(
   cache_dir = interaction_database_cache_dir()
 ) {
   return(list(
-    string = build_string_database(cache_dir = cache_dir),
+    string = build_string_database(
+      cache_dir = cache_dir,
+      include_full = TRUE
+    ),
     biogrid = build_biogrid_database(cache_dir = cache_dir),
     corum = build_corum_database(cache_dir = cache_dir),
     omnipath = build_omnipath_database(

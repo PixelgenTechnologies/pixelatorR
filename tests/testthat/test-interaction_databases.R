@@ -460,6 +460,56 @@ test_that("build_alphafold_database works as expected", {
   expect_equal(db$edges$uniprot_a[[1]], "P12345")
   expect_equal(db$edges$uniprot_b[[1]], "Q67890")
   expect_true(all(db$edges$uniprot_a <= db$edges$uniprot_b))
+  expect_equal(db$edges$score[[1]], 0.8)
+})
+
+test_that("build_alphafold_database score uses qualifying pDockQ2", {
+  raw_dir <- tempfile("afdb_pdq_")
+  cache_dir <- tempfile("afdb_pdq_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+
+  # ipSAE below cutoff but present; kept only via pDockQ2
+  utils::write.csv(
+    data.frame(
+      uniprot_ac_1 = "P12345",
+      uniprot_ac_2 = "Q67890",
+      ipSAE = 0.4,
+      pDockQ2 = 0.5,
+      stringsAsFactors = FALSE
+    ),
+    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
+    row.names = FALSE
+  )
+
+  build_alphafold_database(
+    heterodimer_file = file.path(raw_dir, "missing.csv"),
+    raw_dir = raw_dir,
+    version = "test_af_pdq",
+    cache_dir = cache_dir,
+    ipsae_min = 0.6,
+    pdockq2_min = 0.23
+  )
+  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
+  expect_equal(nrow(db$edges), 1)
+  expect_equal(db$edges$score[[1]], 0.5)
+
+  out <- extract_panel_interactions(
+    markers = c("A", "B"),
+    database = "alphafold",
+    marker_uniprot_map = marker_map,
+    score_threshold = 0.45,
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out), 1)
+  out_hi <- extract_panel_interactions(
+    markers = c("A", "B"),
+    database = "alphafold",
+    marker_uniprot_map = marker_map,
+    score_threshold = 0.6,
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out_hi), 0)
 })
 
 test_that("build_corum_database works as expected", {

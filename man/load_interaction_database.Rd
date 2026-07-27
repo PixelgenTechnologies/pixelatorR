@@ -5,7 +5,7 @@
 \title{Load a slim interaction database}
 \usage{
 load_interaction_database(
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version = "latest",
   cache_dir = interaction_database_cache_dir()
 )

@@ -6,7 +6,7 @@
 \usage{
 save_interaction_database(
   edges,
-  database = .interaction_databases,
+  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version,
   cache_dir = interaction_database_cache_dir(),
   source_url = NULL,

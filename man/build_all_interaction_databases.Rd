@@ -14,8 +14,9 @@ Named list of RDS paths.
 }
 \description{
 Maintainer helper that runs each \code{build_*_database()} writer. Missing
-raw dumps are downloaded into the package raw cache. OmniPath defaults to
-the commercial license filter.
+raw dumps are downloaded into the package raw cache. STRING is built with
+both physical and full networks (\code{include_full = TRUE}). OmniPath
+defaults to the commercial license filter.
 }
 \seealso{
 \code{\link{build_string_database}},

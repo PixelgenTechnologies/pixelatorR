@@ -2,7 +2,7 @@
 % Please edit documentation in R/interaction_databases.R
 \name{create_marker_uniprot_map}
 \alias{create_marker_uniprot_map}
-\title{Create a marker–UniProt map from a Seurat / PNA object}
+\title{Create a marker-UniProt map from a Seurat / PNA object}
 \usage{
 create_marker_uniprot_map(object, assay = NULL, uniprot_col = "uniprot_id")
 }
