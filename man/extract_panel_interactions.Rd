@@ -8,7 +8,9 @@ extract_panel_interactions(
   markers,
   database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   marker_uniprot_map,
-  score_threshold = NULL,
+  score_min = NULL,
+  score_max = NULL,
+  score_combine = c("any", "all"),
   string_network = c("physical", "full"),
   cache_dir = interaction_database_cache_dir(),
   version = "latest"
@@ -23,9 +25,16 @@ extract_panel_interactions(
 \code{uniprot_id} (long form; multiple rows per marker allowed). Build with
 \code{\link{create_marker_uniprot_map}}.}
 
-\item{score_threshold}{Minimum score, or \code{NULL} to skip score filtering.
-Applied to every database. STRING uses the classic 0-1000 scale; AlphaFold
-scores are typically in 0-1.}
+\item{score_min}{Named numeric vector of inclusive lower bounds
+(\code{column >= value}), or \code{NULL} to skip. Names must match score
+columns in the loaded database (see \code{meta$score_columns}).}
+
+\item{score_max}{Named numeric vector of exclusive upper bounds
+(\code{column < value}), or \code{NULL} to skip.}
+
+\item{score_combine}{How to combine predicates across score columns:
+\code{"any"} (OR, default) or \code{"all"} (AND). Bounds on the same
+column are always ANDed into one per-column predicate.}
 
 \item{string_network}{For STRING: \code{"physical"} or \code{"full"}.}
 
@@ -35,9 +44,9 @@ scores are typically in 0-1.}
 }
 \value{
 A tibble of panel edges with \code{marker_1}, \code{marker_2},
-\code{uniprot_a}, \code{uniprot_b}, \code{in_db = TRUE}, and optional
-\code{score}, \code{evidence}, \code{resource}, \code{resource_version}.
-Pass \code{marker_1}/\code{marker_2} columns to
+\code{uniprot_a}, \code{uniprot_b}, \code{in_db = TRUE}, native score
+columns from the database, plus \code{evidence}, \code{resource}, and
+\code{resource_version}. Pass \code{marker_1}/\code{marker_2} columns to
 \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 }
 \description{
@@ -58,7 +67,7 @@ highlight_pairs <- extract_panel_interactions(
   markers = c("CD3e", "CD4", "CD8"),
   database = "string",
   marker_uniprot_map = marker_map,
-  score_threshold = 400
+  score_min = c(combined_score = 400)
 ) \%>\%
   select(marker_1, marker_2)
 

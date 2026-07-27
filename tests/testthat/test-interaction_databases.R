@@ -7,10 +7,10 @@ library(tibble)
     data.frame(
       uniprot_a = c("P12345", "P12345"),
       uniprot_b = c("Q67890", "P99999"),
-      score = c(500, 200),
+      combined_score = c(500, 200),
       stringsAsFactors = FALSE
     ),
-    score_cols = "score",
+    score_cols = "combined_score",
     resource = "string_physical",
     resource_version = "test"
   )
@@ -20,10 +20,10 @@ library(tibble)
     data.frame(
       uniprot_a = "Q11111",
       uniprot_b = "R22222",
-      score = 800,
+      combined_score = 800,
       stringsAsFactors = FALSE
     ),
-    score_cols = "score",
+    score_cols = "combined_score",
     resource = "string_full",
     resource_version = "test"
   )
@@ -34,7 +34,7 @@ library(tibble)
     database = "string",
     version = "test",
     cache_dir = cache_dir,
-    score_columns = "score",
+    score_columns = "combined_score",
     source_url = "https://example.com",
     license = "CC BY 4.0"
   )
@@ -137,7 +137,7 @@ test_that("save_interaction_database and load_interaction_database work as expec
   expect_true(is.list(db))
   expect_true(inherits(db$edges, "tbl_df") || is.data.frame(db$edges))
   expect_equal(db$meta$database, "string")
-  expect_equal(db$meta$score_columns, "score")
+  expect_equal(db$meta$score_columns, "combined_score")
   expect_equal(nrow(db$edges), 3)
 
   expect_no_error(db_ver <- load_interaction_database("string", "test", cache_dir = cache_dir))
@@ -165,7 +165,7 @@ test_that("save_interaction_database and load_interaction_database work as expec
       database = "string",
       version = "annotated",
       cache_dir = cache_dir,
-      score_columns = "score"
+      score_columns = "combined_score"
     )
   )
   expect_error(
@@ -232,7 +232,7 @@ test_that("extract_panel_interactions works as expected", {
       markers = c("A", "B", "C"),
       database = "string",
       marker_uniprot_map = marker_map,
-      score_threshold = 400,
+      score_min = c(combined_score = 400),
       string_network = "physical",
       cache_dir = cache_dir
     )
@@ -241,8 +241,9 @@ test_that("extract_panel_interactions works as expected", {
     out,
     structure(list(
       marker_1 = "A", marker_2 = "B", uniprot_a = "P12345",
-      uniprot_b = "Q67890", in_db = TRUE, score = 500, evidence = "physical",
-      resource = "string_physical", resource_version = "test"
+      uniprot_b = "Q67890", in_db = TRUE, combined_score = 500,
+      evidence = "physical", resource = "string_physical",
+      resource_version = "test"
     ), row.names = c(
       NA,
       -1L
@@ -255,14 +256,14 @@ test_that("extract_panel_interactions works as expected", {
       markers = c("A", "B", "C"),
       database = "string",
       marker_uniprot_map = marker_map,
-      score_threshold = 100,
+      score_min = c(combined_score = 100),
       string_network = "physical",
       cache_dir = cache_dir
     )
   )
   expect_equal(nrow(out_low), 2)
 
-  # Markers with no UniProt overlap return an empty table
+  # Markers with no UniProt overlap return an empty table with score schema
   expect_no_error(
     empty <- extract_panel_interactions(
       markers = "Z",
@@ -276,7 +277,7 @@ test_that("extract_panel_interactions works as expected", {
     names(empty),
     c(
       "marker_1", "marker_2", "uniprot_a", "uniprot_b", "in_db",
-      "score", "evidence", "resource", "resource_version"
+      "combined_score", "evidence", "resource", "resource_version"
     )
   )
 
@@ -289,7 +290,7 @@ test_that("extract_panel_interactions works as expected", {
     markers = c("A", "B"),
     database = "string",
     marker_uniprot_map = overlap_map,
-    score_threshold = 400,
+    score_min = c(combined_score = 400),
     string_network = "physical",
     cache_dir = cache_dir
   )
@@ -307,10 +308,10 @@ test_that("extract_panel_interactions keeps UniProt homodimers", {
     data.frame(
       uniprot_a = c("P12345", "P12345"),
       uniprot_b = c("P12345", "Q67890"),
-      score = c(900, 500),
+      combined_score = c(900, 500),
       stringsAsFactors = FALSE
     ),
-    score_cols = "score",
+    score_cols = "combined_score",
     resource = "string_physical",
     resource_version = "test"
   )
@@ -320,14 +321,14 @@ test_that("extract_panel_interactions keeps UniProt homodimers", {
     database = "string",
     version = "test",
     cache_dir = cache_dir,
-    score_columns = "score"
+    score_columns = "combined_score"
   )
 
   out <- extract_panel_interactions(
     markers = c("A", "B"),
     database = "string",
     marker_uniprot_map = marker_map,
-    score_threshold = 400,
+    score_min = c(combined_score = 400),
     string_network = "physical",
     cache_dir = cache_dir
   )
@@ -347,10 +348,10 @@ test_that("extract_panel_interactions does not invent hetero pairs from homodime
     data.frame(
       uniprot_a = "P12345",
       uniprot_b = "P12345",
-      score = 900,
+      combined_score = 900,
       stringsAsFactors = FALSE
     ),
-    score_cols = "score",
+    score_cols = "combined_score",
     resource = "string_physical",
     resource_version = "test"
   )
@@ -360,7 +361,7 @@ test_that("extract_panel_interactions does not invent hetero pairs from homodime
     database = "string",
     version = "test",
     cache_dir = cache_dir,
-    score_columns = "score"
+    score_columns = "combined_score"
   )
 
   shared_map <- tibble(
@@ -371,7 +372,7 @@ test_that("extract_panel_interactions does not invent hetero pairs from homodime
     markers = c("A", "B"),
     database = "string",
     marker_uniprot_map = shared_map,
-    score_threshold = 400,
+    score_min = c(combined_score = 400),
     string_network = "physical",
     cache_dir = cache_dir
   )
@@ -389,10 +390,10 @@ test_that("extract_panel_interactions keeps UniProt columns aligned with markers
     data.frame(
       uniprot_a = "P12345",
       uniprot_b = "Q67890",
-      score = 700,
+      combined_score = 700,
       stringsAsFactors = FALSE
     ),
-    score_cols = "score",
+    score_cols = "combined_score",
     resource = "string_physical",
     resource_version = "test"
   )
@@ -402,7 +403,7 @@ test_that("extract_panel_interactions keeps UniProt columns aligned with markers
     database = "string",
     version = "test",
     cache_dir = cache_dir,
-    score_columns = "score"
+    score_columns = "combined_score"
   )
 
   # Join yields marker_1=B (P12345), marker_2=A (Q67890); lexical reorder to A,B
@@ -415,7 +416,7 @@ test_that("extract_panel_interactions keeps UniProt columns aligned with markers
     markers = c("A", "B"),
     database = "string",
     marker_uniprot_map = swapped_map,
-    score_threshold = 400,
+    score_min = c(combined_score = 400),
     string_network = "physical",
     cache_dir = cache_dir
   )
@@ -486,6 +487,185 @@ test_that("extract_panel_interactions fails with invalid input", {
       markers = c(1, 2),
       database = "string",
       marker_uniprot_map = marker_map,
+      cache_dir = cache_dir
+    )
+  )
+  expect_error(
+    extract_panel_interactions(
+      markers = c("A", "B"),
+      database = "string",
+      marker_uniprot_map = marker_map,
+      score_min = 400,
+      cache_dir = cache_dir
+    )
+  )
+  expect_error(
+    extract_panel_interactions(
+      markers = c("A", "B"),
+      database = "string",
+      marker_uniprot_map = marker_map,
+      score_min = c(combined_score = 400, combined_score = 500),
+      cache_dir = cache_dir
+    )
+  )
+  expect_error(
+    extract_panel_interactions(
+      markers = c("A", "B"),
+      database = "string",
+      marker_uniprot_map = marker_map,
+      score_min = c(missing_score = 400),
+      cache_dir = cache_dir
+    )
+  )
+  expect_error(
+    extract_panel_interactions(
+      markers = c("A", "B"),
+      database = "string",
+      marker_uniprot_map = marker_map,
+      score_min = c(combined_score = 500),
+      score_max = c(combined_score = 400),
+      cache_dir = cache_dir
+    )
+  )
+})
+
+test_that("extract_panel_interactions score_min and score_max filter as expected", {
+  cache_dir <- tempfile("idb_score_filt_")
+  dir.create(cache_dir)
+  .setup_string_cache(cache_dir)
+
+  # score_max alone: keep combined_score < 400 -> A-C (200) only among A/B/C physical
+  out_max <- extract_panel_interactions(
+    markers = c("A", "B", "C"),
+    database = "string",
+    marker_uniprot_map = marker_map,
+    score_max = c(combined_score = 400),
+    string_network = "physical",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out_max), 1)
+  expect_equal(out_max$marker_1[[1]], "A")
+  expect_equal(out_max$marker_2[[1]], "C")
+  expect_equal(out_max$combined_score[[1]], 200)
+
+  # Same-column range: 100 <= score < 400
+  out_range <- extract_panel_interactions(
+    markers = c("A", "B", "C"),
+    database = "string",
+    marker_uniprot_map = marker_map,
+    score_min = c(combined_score = 100),
+    score_max = c(combined_score = 400),
+    string_network = "physical",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out_range), 1)
+  expect_equal(out_range$combined_score[[1]], 200)
+})
+
+test_that("extract_panel_interactions score_combine works for AlphaFold", {
+  raw_dir <- tempfile("afdb_combine_")
+  cache_dir <- tempfile("afdb_combine_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+
+  utils::write.csv(
+    data.frame(
+      uniprot_ac_1 = c("P12345", "P12345", "P99999"),
+      uniprot_ac_2 = c("Q67890", "P99999", "Q67890"),
+      ipSAE = c(0.8, 0.4, 0.7),
+      pDockQ2 = c(0.1, 0.5, 0.4),
+      stringsAsFactors = FALSE
+    ),
+    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
+    row.names = FALSE
+  )
+  build_alphafold_database(
+    heterodimer_file = file.path(raw_dir, "missing.csv"),
+    raw_dir = raw_dir,
+    version = "test_combine",
+    cache_dir = cache_dir,
+    ipsae_min = 0.1,
+    pdockq2_min = 0.1
+  )
+
+  af_map <- tibble(
+    marker = c("A", "B", "C"),
+    uniprot_id = c("P12345", "Q67890", "P99999")
+  )
+
+  # OR: keep A-B (ipSAE 0.8) and A-C (pDockQ2 0.5); drop B-C if both below?
+  # B-C: P99999-Q67890 ipSAE=0.7 pDockQ2=0.4 -> both pass mins with any
+  out_any <- extract_panel_interactions(
+    markers = c("A", "B", "C"),
+    database = "alphafold",
+    marker_uniprot_map = af_map,
+    score_min = c(ipSAE = 0.6, pDockQ2 = 0.45),
+    score_combine = "any",
+    cache_dir = cache_dir
+  )
+  # A-B: ipSAE 0.8 (>=0.6) -> keep
+  # A-C: ipSAE 0.4, pDockQ2 0.5 (>=0.45) -> keep
+  # B-C: ipSAE 0.7 (>=0.6) -> keep
+  expect_equal(nrow(out_any), 3)
+
+  out_all <- extract_panel_interactions(
+    markers = c("A", "B", "C"),
+    database = "alphafold",
+    marker_uniprot_map = af_map,
+    score_min = c(ipSAE = 0.6, pDockQ2 = 0.45),
+    score_combine = "all",
+    cache_dir = cache_dir
+  )
+  # None have both ipSAE>=0.6 and pDockQ2>=0.45
+  expect_equal(nrow(out_all), 0)
+
+  # Range on ipSAE AND min on pDockQ2 for A-C only
+  out_range <- extract_panel_interactions(
+    markers = c("A", "B", "C"),
+    database = "alphafold",
+    marker_uniprot_map = af_map,
+    score_min = c(ipSAE = 0.3, pDockQ2 = 0.45),
+    score_max = c(ipSAE = 0.5),
+    score_combine = "all",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out_range), 1)
+  expect_equal(out_range$marker_1[[1]], "A")
+  expect_equal(out_range$marker_2[[1]], "C")
+  expect_equal(out_range$ipSAE[[1]], 0.4)
+  expect_equal(out_range$pDockQ2[[1]], 0.5)
+})
+
+test_that("extract_panel_interactions errors when scores are absent", {
+  skip_if_not_installed("data.table")
+
+  raw_dir <- tempfile("corum_noscore_")
+  cache_dir <- tempfile("corum_noscore_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+  corum_file <- file.path(raw_dir, "omnipath_complexes_corum.tsv")
+  utils::write.table(
+    data.frame(
+      name = "complex_1",
+      components = "P12345_Q67890",
+      stringsAsFactors = FALSE
+    ),
+    corum_file,
+    sep = "\t",
+    row.names = FALSE,
+    quote = FALSE
+  )
+  build_corum_database(
+    corum_file = corum_file,
+    version = "test_corum",
+    cache_dir = cache_dir
+  )
+  expect_error(
+    extract_panel_interactions(
+      markers = c("A", "B"),
+      database = "corum",
+      marker_uniprot_map = marker_map,
+      score_min = c(combined_score = 1),
       cache_dir = cache_dir
     )
   )
@@ -672,14 +852,14 @@ test_that("build_string_database prefers primary UniProt over secondary AC order
       marker = c("CD11a", "CD18"),
       uniprot_id = c("P20701", "P05107")
     ),
-    score_threshold = 400,
+    score_min = c(combined_score = 400),
     string_network = "physical",
     cache_dir = cache_dir
   )
   expect_equal(nrow(out), 1)
   expect_equal(out$marker_1[[1]], "CD11a")
   expect_equal(out$marker_2[[1]], "CD18")
-  expect_equal(out$score[[1]], 999)
+  expect_equal(out$combined_score[[1]], 999)
 })
 
 test_that(".download_if_missing reuses cached files and errors on bad URLs", {

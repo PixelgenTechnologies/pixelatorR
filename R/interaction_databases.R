@@ -112,6 +112,97 @@
   return(hit[[1]])
 }
 
+#' Validate a named numeric score-bound vector
+#'
+#' @param x Named numeric vector or NULL.
+#' @param arg_name Argument name for errors.
+#' @param available Available score column names.
+#'
+#' @return \code{x} unchanged, or \code{NULL}.
+#' @noRd
+.validate_named_score_bounds <- function(x, arg_name, available) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  if (!is.numeric(x) || length(x) < 1) {
+    cli::cli_abort("{.arg {arg_name}} must be a fully named numeric vector.")
+  }
+  nms <- names(x)
+  if (is.null(nms) || anyNA(nms) || any(nms == "")) {
+    cli::cli_abort("{.arg {arg_name}} must be a fully named numeric vector.")
+  }
+  if (anyDuplicated(nms)) {
+    cli::cli_abort("{.arg {arg_name}} must not contain duplicate names.")
+  }
+  if (length(available) < 1) {
+    cli::cli_abort(c(
+      "x" = "This database has no score columns.",
+      "i" = "Cannot use {.arg {arg_name}}."
+    ))
+  }
+  unknown <- setdiff(nms, available)
+  if (length(unknown) > 0) {
+    cli::cli_abort(c(
+      "x" = "Unknown score column{?s} in {.arg {arg_name}}: {.val {unknown}}.",
+      "i" = "Available score columns: {.val {available}}."
+    ))
+  }
+  return(x)
+}
+
+#' Filter interaction edges by named score bounds
+#'
+#' @param edges Edge tibble.
+#' @param score_min Named numeric minima (\code{>=}), or NULL.
+#' @param score_max Named numeric maxima (\code{<}), or NULL.
+#' @param score_combine \code{"any"} or \code{"all"}.
+#' @param available Available score column names.
+#'
+#' @return Filtered \code{edges}.
+#' @noRd
+.filter_edges_by_scores <- function(
+  edges,
+  score_min,
+  score_max,
+  score_combine,
+  available
+) {
+  score_min <- .validate_named_score_bounds(score_min, "score_min", available)
+  score_max <- .validate_named_score_bounds(score_max, "score_max", available)
+  if (is.null(score_min) && is.null(score_max)) {
+    return(edges)
+  }
+
+  cols <- union(names(score_min), names(score_max))
+  shared <- intersect(names(score_min), names(score_max))
+  for (col in shared) {
+    if (score_min[[col]] >= score_max[[col]]) {
+      cli::cli_abort(c(
+        "x" = "Invalid score range for {.val {col}}.",
+        "i" = "{.arg score_min} ({score_min[[col]]}) must be < {.arg score_max} ({score_max[[col]]})."
+      ))
+    }
+  }
+
+  preds <- lapply(cols, function(col) {
+    values <- edges[[col]]
+    keep <- !is.na(values)
+    if (!is.null(score_min) && col %in% names(score_min)) {
+      keep <- keep & (values >= score_min[[col]])
+    }
+    if (!is.null(score_max) && col %in% names(score_max)) {
+      keep <- keep & (values < score_max[[col]])
+    }
+    keep
+  })
+  keep_rows <- if (identical(score_combine, "any")) {
+    Reduce(`|`, preds)
+  } else {
+    Reduce(`&`, preds)
+  }
+  return(edges[keep_rows, , drop = FALSE])
+}
+
 #' Default cache directory for interaction databases
 #'
 #' @return Character path under \code{tools::R_user_dir("pixelatorR", "cache")}.
@@ -437,16 +528,21 @@ create_marker_uniprot_map <- function(
 #' @param marker_uniprot_map Data frame/tibble with columns \code{marker} and
 #'   \code{uniprot_id} (long form; multiple rows per marker allowed). Build with
 #'   \code{\link{create_marker_uniprot_map}}.
-#' @param score_threshold Minimum score, or \code{NULL} to skip score filtering.
-#'   Applied to every database. STRING uses the classic 0-1000 scale; AlphaFold
-#'   scores are typically in 0-1.
+#' @param score_min Named numeric vector of inclusive lower bounds
+#'   (\code{column >= value}), or \code{NULL} to skip. Names must match score
+#'   columns in the loaded database (see \code{meta$score_columns}).
+#' @param score_max Named numeric vector of exclusive upper bounds
+#'   (\code{column < value}), or \code{NULL} to skip.
+#' @param score_combine How to combine predicates across score columns:
+#'   \code{"any"} (OR, default) or \code{"all"} (AND). Bounds on the same
+#'   column are always ANDed into one per-column predicate.
 #' @param string_network For STRING: \code{"physical"} or \code{"full"}.
 #' @param cache_dir Interaction database cache directory.
 #' @param version Database version label (\code{"latest"} or a built version).
 #' @return A tibble of panel edges with \code{marker_1}, \code{marker_2},
-#'   \code{uniprot_a}, \code{uniprot_b}, \code{in_db = TRUE}, and optional
-#'   \code{score}, \code{evidence}, \code{resource}, \code{resource_version}.
-#'   Pass \code{marker_1}/\code{marker_2} columns to
+#'   \code{uniprot_a}, \code{uniprot_b}, \code{in_db = TRUE}, native score
+#'   columns from the database, plus \code{evidence}, \code{resource}, and
+#'   \code{resource_version}. Pass \code{marker_1}/\code{marker_2} columns to
 #'   \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 #'
 #' @seealso \code{\link{ColocalizationHeatmap}},
@@ -461,7 +557,7 @@ create_marker_uniprot_map <- function(
 #'   markers = c("CD3e", "CD4", "CD8"),
 #'   database = "string",
 #'   marker_uniprot_map = marker_map,
-#'   score_threshold = 400
+#'   score_min = c(combined_score = 400)
 #' ) %>%
 #'   select(marker_1, marker_2)
 #'
@@ -476,12 +572,15 @@ extract_panel_interactions <- function(
   markers,
   database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   marker_uniprot_map,
-  score_threshold = NULL,
+  score_min = NULL,
+  score_max = NULL,
+  score_combine = c("any", "all"),
   string_network = c("physical", "full"),
   cache_dir = interaction_database_cache_dir(),
   version = "latest"
 ) {
   database <- match.arg(database)
+  score_combine <- match.arg(score_combine)
   string_network <- match.arg(string_network)
   assert_vector(markers, type = "character", n = 1)
   assert_class(marker_uniprot_map, c("data.frame", "tbl_df"))
@@ -489,23 +588,37 @@ extract_panel_interactions <- function(
   assert_col_in_data("uniprot_id", marker_uniprot_map)
   assert_col_class("marker", marker_uniprot_map, classes = "character")
   assert_col_class("uniprot_id", marker_uniprot_map, classes = "character")
-  assert_single_value(score_threshold, type = "numeric", allow_null = TRUE)
   assert_single_value(cache_dir, type = "string")
   assert_single_value(version, type = "string")
 
-  # Zero-row result with the canonical extract_panel_interactions columns.
+  db <- load_interaction_database(
+    database = database,
+    version = version,
+    cache_dir = cache_dir
+  )
+  edges <- db$edges
+  score_cols <- db$meta$score_columns %||% character()
+
+  # Zero-row result matching the loaded database score schema.
   empty_panel_interactions <- function() {
-    tibble(
-      marker_1 = character(),
-      marker_2 = character(),
-      uniprot_a = character(),
-      uniprot_b = character(),
-      in_db = logical(),
-      score = numeric(),
-      evidence = character(),
-      resource = character(),
-      resource_version = character()
+    score_tbl <- as_tibble(
+      setNames(rep(list(numeric()), length(score_cols)), score_cols)
     )
+    return(bind_cols(
+      tibble(
+        marker_1 = character(),
+        marker_2 = character(),
+        uniprot_a = character(),
+        uniprot_b = character(),
+        in_db = logical()
+      ),
+      score_tbl,
+      tibble(
+        evidence = character(),
+        resource = character(),
+        resource_version = character()
+      )
+    ))
   }
 
   markers <- unique(markers)
@@ -522,21 +635,17 @@ extract_panel_interactions <- function(
     return(empty_panel_interactions())
   }
 
-  db <- load_interaction_database(
-    database = database,
-    version = version,
-    cache_dir = cache_dir
-  )
-  edges <- db$edges
-
   if (database == "string") {
     edges <- edges %>%
       filter(evidence == string_network)
   }
-  if (!is.null(score_threshold)) {
-    edges <- edges %>%
-      filter(!is.na(score), score >= score_threshold)
-  }
+  edges <- .filter_edges_by_scores(
+    edges = edges,
+    score_min = score_min,
+    score_max = score_max,
+    score_combine = score_combine,
+    available = score_cols
+  )
 
   panel_uniprot <- unique(map$uniprot_id)
   edges <- edges %>%
@@ -571,7 +680,7 @@ extract_panel_interactions <- function(
       marker_2 = marker_2_ordered,
       uniprot_a = uniprot_a_ordered,
       uniprot_b = uniprot_b_ordered,
-      score,
+      all_of(score_cols),
       evidence,
       resource,
       resource_version
@@ -581,13 +690,22 @@ extract_panel_interactions <- function(
       uniprot_a = uniprot_a[[1]],
       uniprot_b = uniprot_b[[1]],
       in_db = TRUE,
-      score = suppressWarnings(max(score, na.rm = TRUE)),
+      across(
+        all_of(score_cols),
+        ~ suppressWarnings(max(.x, na.rm = TRUE))
+      ),
       evidence = evidence[[1]],
       resource = resource[[1]],
       resource_version = resource_version[[1]],
       .groups = "drop"
-    ) %>%
-    mutate(score = if_else(is.infinite(score), NA_real_, score))
+    )
+  if (length(score_cols) > 0) {
+    out <- out %>%
+      mutate(across(
+        all_of(score_cols),
+        ~ if_else(is.infinite(.x), NA_real_, .x)
+      ))
+  }
   return(out)
 }
 
