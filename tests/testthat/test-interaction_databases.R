@@ -1018,6 +1018,21 @@ test_that("build_alphafold_database accepts NVIDIA directional score columns", {
     file.path(raw_dir, "heterodimer_metadata.csv"),
     row.names = FALSE
   )
+  # Both official dumps must be present offline; otherwise the builder would
+  # attempt to fetch the missing multi-GB counterpart.
+  utils::write.csv(
+    data.frame(
+      uniprotAccession = "A00001",
+      taxId = 10090,
+      ipSAE_AB = 0.9,
+      ipSAE_BA = 0.9,
+      pDockQ2_AB = 0.5,
+      pDockQ2_BA = 0.5,
+      stringsAsFactors = FALSE
+    ),
+    file.path(raw_dir, "homodimer_metadata.csv"),
+    row.names = FALSE
+  )
 
   path <- build_alphafold_database(
     heterodimer_file = file.path(raw_dir, "missing.csv"),
@@ -1032,6 +1047,63 @@ test_that("build_alphafold_database accepts NVIDIA directional score columns", {
   expect_equal(db$edges$uniprot_a[[1]], "P12345")
   expect_equal(db$edges$uniprot_b[[1]], "Q67890")
   expect_true(file.exists(path))
+})
+
+test_that("build_alphafold_database fetches missing official dump counterpart", {
+  raw_dir <- tempfile("afdb_partial_")
+  cache_dir <- tempfile("afdb_partial_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+
+  utils::write.csv(
+    data.frame(
+      uniprot_ac_1 = "P12345",
+      uniprot_ac_2 = "Q67890",
+      tax_id_1 = 9606,
+      tax_id_2 = 9606,
+      ipSAE = 0.9,
+      pDockQ2 = 0.5,
+      stringsAsFactors = FALSE
+    ),
+    file.path(raw_dir, "heterodimer_metadata.csv"),
+    row.names = FALSE
+  )
+
+  downloaded <- character()
+  testthat::local_mocked_bindings(
+    .download_if_missing = function(url, dest_file, min_timeout = 300) {
+      downloaded <<- c(downloaded, basename(dest_file))
+      if (!file.exists(dest_file)) {
+        utils::write.csv(
+          data.frame(
+            uniprotAccession = "P99999",
+            taxId = 9606,
+            ipSAE_AB = 0.8,
+            ipSAE_BA = 0.8,
+            pDockQ2_AB = 0.4,
+            pDockQ2_BA = 0.4,
+            stringsAsFactors = FALSE
+          ),
+          dest_file,
+          row.names = FALSE
+        )
+      }
+      dest_file
+    },
+    .package = "pixelatorR"
+  )
+
+  build_alphafold_database(
+    heterodimer_file = file.path(raw_dir, "missing.csv"),
+    raw_dir = raw_dir,
+    version = "test_partial",
+    cache_dir = cache_dir,
+    ipsae_min = 0.6,
+    pdockq2_min = 0.23
+  )
+  expect_true("homodimer_metadata.csv" %in% downloaded)
+  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
+  expect_true(any(db$edges$uniprot_a == "P99999" & db$edges$uniprot_b == "P99999"))
 })
 
 test_that("build_alphafold_database parses homodimer NVIDIA schema", {

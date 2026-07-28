@@ -983,7 +983,7 @@ build_biogrid_database <- function(
     if (identical(version, "latest")) {
       if (is.na(parsed)) {
         cli::cli_abort(c(
-          "x" = "When {.arg version} is {.val latest}, {.arg raw_file} must be named like 
+          "x" = "When {.arg version} is {.val latest}, {.arg raw_file} must be named like
           {.val BIOGRID-MV-Physical-5.0.259.tab3.txt}.",
           "i" = "Got {.path {raw_file}}."
         ))
@@ -1435,23 +1435,27 @@ build_alphafold_database <- function(
     "collaborations/nvda/"
   )
 
-  files <- unique(c(
+  panel_files <- unique(c(
     heterodimer_file,
     file.path(raw_dir, "afdb_api_complexes_panel.csv"),
     file.path(raw_dir, "afdb_heterodimers_panel_pairs.csv"),
-    file.path(raw_dir, "afdb_homodimers_human_panel.csv"),
-    hetero_dest,
-    homo_dest
+    file.path(raw_dir, "afdb_homodimers_human_panel.csv")
   ))
-  files <- files[file.exists(files)]
+  panel_files <- panel_files[file.exists(panel_files)]
+  has_panel <- length(panel_files) > 0
+  has_both_official <- file.exists(hetero_dest) &&
+    isTRUE(file.info(hetero_dest)$size > 0) &&
+    file.exists(homo_dest) &&
+    isTRUE(file.info(homo_dest)$size > 0)
 
-  # Only download official dumps when nothing local is present. Do not fetch
-  # a missing counterpart when a small panel CSV / fixture is already in use.
-  if (length(files) < 1) {
+  # Panel/fixture CSVs: use them and do not pull multi-GB FTP dumps.
+  # Otherwise ensure both official NVIDIA dumps are present (a single leftover
+  # dump must not skip its counterpart after a partial download).
+  if (!has_panel && !has_both_official) {
     cli::cli_inform(c(
       "i" = paste(
-        "No local AFDB CSVs found; downloading NVIDIA heterodimer (~2 GB)",
-        "and homodimer (~6 GB) metadata."
+        "Downloading NVIDIA AFDB heterodimer (~2 GB) and/or",
+        "homodimer (~6 GB) metadata as needed."
       )
     ))
     .download_if_missing(
@@ -1464,8 +1468,13 @@ build_alphafold_database <- function(
       homo_dest,
       min_timeout = 14400
     )
-    files <- c(hetero_dest, homo_dest)
   }
+
+  official <- c(hetero_dest, homo_dest)
+  official_ok <- vapply(official, function(path) {
+    file.exists(path) && isTRUE(file.info(path)$size > 0)
+  }, logical(1))
+  files <- unique(c(panel_files, official[official_ok]))
 
   pieces <- lapply(files, parse_afdb_file)
   pairs <- bind_rows(pieces)
