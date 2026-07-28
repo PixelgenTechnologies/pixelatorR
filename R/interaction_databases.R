@@ -524,7 +524,8 @@ create_marker_uniprot_map <- function(
 #' the corresponding UniProt accessions are reordered with them.
 #' When multiple UniProt edges collapse to the same marker pair, the row with
 #' the highest score envelope is kept so UniProt IDs and evidence stay aligned
-#' with the reported scores.
+#' with the reported scores. For databases without score columns, the first
+#' remaining edge for that marker pair is kept.
 #'
 #' @param markers Character vector of panel marker names.
 #' @param database Interaction database key.
@@ -743,7 +744,7 @@ extract_panel_interactions <- function(
 
   # Collapse duplicate marker pairs to one representative edge. When scores
   # exist, keep the row with the highest score envelope so UniProt / evidence
-  # stay aligned with the reported scores.
+  # stay aligned with the reported scores; otherwise keep the first edge.
   if (length(score_cols) > 0 && nrow(joined) > 0) {
     score_mat <- as.matrix(joined[score_cols])
     joined$.score_rank <- apply(score_mat, 1, function(r) {
@@ -753,14 +754,18 @@ extract_panel_interactions <- function(
         max(r, na.rm = TRUE)
       }
     })
+    out <- joined %>%
+      group_by(marker_1, marker_2) %>%
+      slice_max(order_by = .score_rank, n = 1, with_ties = FALSE) %>%
+      ungroup() %>%
+      select(-.score_rank)
   } else {
-    joined$.score_rank <- 0
+    out <- joined %>%
+      group_by(marker_1, marker_2) %>%
+      slice_head(n = 1) %>%
+      ungroup()
   }
-  out <- joined %>%
-    group_by(marker_1, marker_2) %>%
-    slice_max(order_by = .score_rank, n = 1, with_ties = FALSE) %>%
-    ungroup() %>%
-    select(-.score_rank) %>%
+  out <- out %>%
     mutate(in_db = TRUE) %>%
     relocate(in_db, .after = uniprot_b)
   return(out)
@@ -1000,8 +1005,9 @@ build_biogrid_database <- function(
         zip_path
       )
       utils::unzip(zip_path, exdir = raw_dir)
-      members <- basename(utils::unzip(zip_path, list = TRUE)$Name)
-      hit <- members[grepl(tab3_name_re, members, ignore.case = TRUE)]
+      # Keep zip member paths (not basename) so nested archive layouts resolve.
+      members <- utils::unzip(zip_path, list = TRUE)$Name
+      hit <- members[grepl(tab3_name_re, basename(members), ignore.case = TRUE)]
       if (length(hit) != 1) {
         cli::cli_abort(c(
           "x" = "Expected exactly one versioned MV-Physical tab3 in {.path {zip_path}}.",
