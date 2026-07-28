@@ -983,7 +983,8 @@ build_biogrid_database <- function(
     if (identical(version, "latest")) {
       if (is.na(parsed)) {
         cli::cli_abort(c(
-          "x" = "When {.arg version} is {.val latest}, {.arg raw_file} must be named like {.val BIOGRID-MV-Physical-5.0.259.tab3.txt}.",
+          "x" = "When {.arg version} is {.val latest}, {.arg raw_file} must be named like 
+          {.val BIOGRID-MV-Physical-5.0.259.tab3.txt}.",
           "i" = "Got {.path {raw_file}}."
         ))
       }
