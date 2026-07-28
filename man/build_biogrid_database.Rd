@@ -11,10 +11,11 @@ build_biogrid_database(
 )
 }
 \arguments{
-\item{raw_file}{Path to BioGRID MV-Physical or organism tab3 file.
-If \code{NULL} or missing on disk, the latest release is downloaded.}
+\item{raw_file}{Optional path to a local
+\code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. When \code{NULL}, the
+release is downloaded into the BioGRID raw cache.}
 
-\item{version}{BioGRID release label (default \code{"latest"} when downloading).}
+\item{version}{BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.}
 
 \item{cache_dir}{Output interaction database cache.}
 }
@@ -22,6 +23,14 @@ If \code{NULL} or missing on disk, the latest release is downloaded.}
 Path to saved RDS.
 }
 \description{
-Downloads \code{BIOGRID-MV-Physical-LATEST.tab3.zip} into the BioGRID raw
-cache when \code{raw_file} is missing.
+Downloads the BioGRID multi-validated physical (MV-Physical) tab3 dump for
+a real release id. \code{version = "latest"} fetches
+\code{BIOGRID-MV-Physical-LATEST.tab3.zip} and resolves the concrete release
+from the extracted \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} filename.
+A concrete \code{version} such as \code{"5.0.259"} downloads that release
+from the BioGRID Release Archive.
+}
+\details{
+The slim RDS is always saved under the resolved BioGRID release id (and
+copied to \code{biogrid_latest.rds}).
 }

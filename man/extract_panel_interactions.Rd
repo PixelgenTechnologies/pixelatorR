@@ -59,6 +59,10 @@ does not create interactions between those different marker names.
 Conversely, interactions between different UniProt accessions are not
 returned as marker self-pairs. Marker names are ordered alphabetically, and
 the corresponding UniProt accessions are reordered with them.
+When multiple UniProt edges collapse to the same marker pair, the row with
+the highest score envelope is kept so UniProt IDs and evidence stay aligned
+with the reported scores. For databases without score columns, the first
+remaining edge for that marker pair is kept.
 }
 \section{Score filtering}{
 
