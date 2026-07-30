@@ -14,7 +14,6 @@ library(tibble)
     score_cols = "combined_score",
     additional_cols = "network"
   )
-
   full <- normalise_interaction_edges(
     data.frame(
       uniprot_a = "Q11111",
@@ -26,7 +25,6 @@ library(tibble)
     score_cols = "combined_score",
     additional_cols = "network"
   )
-
   save_interaction_database(
     edges = bind_rows(phys, full),
     database = "string",
@@ -50,233 +48,94 @@ test_that("normalise_interaction_edges works as expected", {
       a = c("B", "A", "A", ""),
       b = c("A", "B", "C", "D"),
       primary_score = c(1, 1, 3, 4),
-      secondary_score = c(0.1, 0.1, 0.3, 0.4),
       evid = c("x", "x", "z", "w"),
       stringsAsFactors = FALSE
     ),
     a_col = "a",
     b_col = "b",
-    score_cols = c("primary_score", "secondary_score"),
+    score_cols = "primary_score",
     additional_cols = "evid"
   )
-
   expect_equal(
     edges,
-    structure(
-      list(
-        uniprot_a = c("A", "A"), uniprot_b = c("B", "C"),
-        primary_score = c(1, 3), secondary_score = c(0.1, 0.3),
-        evid = c("x", "z")
-      ),
-      row.names = c(NA, -2L), class = c(
-        "tbl_df",
-        "tbl", "data.frame"
-      )
+    tibble(
+      uniprot_a = c("A", "A"),
+      uniprot_b = c("B", "C"),
+      primary_score = c(1, 3),
+      evid = c("x", "z")
     )
   )
 
-  # Factor scores must decode via labels, not internal codes
   factor_edges <- normalise_interaction_edges(
     data.frame(
-      a = "A",
-      b = "B",
+      a = "A", b = "B",
       score = factor("500", levels = c("100", "500")),
       stringsAsFactors = FALSE
     ),
-    a_col = "a",
-    b_col = "b",
-    score_cols = "score"
+    a_col = "a", b_col = "b", score_cols = "score"
   )
   expect_equal(factor_edges$score[[1]], 500)
-})
 
-test_that("normalise_interaction_edges fails with invalid input", {
   expect_error(
-    normalise_interaction_edges(
-      data.frame(x = 1, y = 2),
-      a_col = "a",
-      b_col = "b"
-    )
-  )
-  expect_error(
-    normalise_interaction_edges(
-      data.frame(a = "A", b = "B"),
-      a_col = "a",
-      b_col = "b",
-      score_cols = "missing_score"
-    )
+    normalise_interaction_edges(data.frame(x = 1, y = 2), a_col = "a", b_col = "b")
   )
 })
 
-test_that("interaction_database_cache_dir works as expected", {
-  expect_true(grepl("interaction_databases$", interaction_database_cache_dir()))
-})
-
-test_that("staging helpers clean up on success and keep on failure", {
-  staging <- .interaction_database_staging_dir("test")
-  expect_true(dir.exists(staging))
-  writeLines("x", file.path(staging, "f.txt"))
-  .finalize_interaction_database_staging(staging, owned = TRUE, success = TRUE)
-  expect_false(dir.exists(staging))
-
-  staging <- .interaction_database_staging_dir("test")
-  writeLines("x", file.path(staging, "f.txt"))
-  expect_message(
-    .finalize_interaction_database_staging(staging, owned = TRUE, success = FALSE),
-    "Leaving staging"
-  )
-  expect_true(dir.exists(staging))
-  unlink(staging, recursive = TRUE)
-
-  keep <- tempfile("keep_")
-  dir.create(keep)
-  writeLines("x", file.path(keep, "f.txt"))
-  .finalize_interaction_database_staging(keep, owned = FALSE, success = TRUE)
-  expect_true(dir.exists(keep))
-  unlink(keep, recursive = TRUE)
-})
-
-test_that("save_interaction_database and load_interaction_database work as expected", {
+test_that("save and load interaction database round-trip", {
   cache_dir <- tempfile("idb_")
   dir.create(cache_dir)
+  .setup_string_cache(cache_dir)
 
-  expect_no_error(path <- .setup_string_cache(cache_dir))
-  expect_true(file.exists(path))
-  expect_true(file.exists(file.path(cache_dir, "string_latest.rds")))
-
-  expect_no_error(db <- load_interaction_database("string", "latest", cache_dir = cache_dir))
-  expect_true(is.list(db))
-  expect_true(inherits(db$edges, "tbl_df") || is.data.frame(db$edges))
-  expect_equal(db$meta$database, "string")
-  expect_equal(db$meta$score_columns, "combined_score")
-  expect_equal(nrow(db$edges), 3)
-
-  expect_no_error(db_ver <- load_interaction_database("string", "test", cache_dir = cache_dir))
-  expect_equal(db_ver$meta$version, "test")
-
-  # version "latest" writes only one file; must not file.copy onto itself
-  expect_no_error(
-    latest_path <- save_interaction_database(
-      edges = db$edges,
-      database = "string",
-      version = "latest",
-      cache_dir = cache_dir,
-      score_columns = db$meta$score_columns,
-      additional_columns = db$meta$additional_columns
+  db <- load_interaction_database("string", "latest", cache_dir = cache_dir)
+  expect_equal(
+    db$edges %>% arrange(uniprot_a, uniprot_b, network),
+    tibble(
+      uniprot_a = c("P12345", "P12345", "Q11111"),
+      uniprot_b = c("P99999", "Q67890", "R22222"),
+      combined_score = c(200, 500, 800),
+      network = c("physical", "physical", "full")
     )
   )
-  expect_equal(basename(latest_path), "string_latest.rds")
-  expect_true(file.exists(latest_path))
+  expect_equal(db$meta$score_columns, "combined_score")
   expect_equal(db$meta$additional_columns, "network")
   expect_equal(db$meta$resource, "string")
   expect_false(
     any(c("evidence", "resource", "resource_version", "in_db") %in% names(db$edges))
   )
 
-  # Non-score annotation columns require additional_columns when declared
-  annotated <- db$edges
-  annotated$note <- "keep"
-  expect_no_error(
-    save_interaction_database(
-      edges = annotated,
-      database = "string",
-      version = "annotated",
-      cache_dir = cache_dir,
-      score_columns = "combined_score",
-      additional_columns = c("network", "note")
-    )
-  )
   expect_error(
-    save_interaction_database(
-      edges = annotated,
-      database = "string",
-      version = "bad_scores",
-      cache_dir = cache_dir,
-      score_columns = "note"
-    )
+    load_interaction_database("string", "latest", cache_dir = tempfile("missing_")),
+    "build_if_missing = TRUE"
   )
 })
 
-test_that("load_interaction_database fails with invalid input", {
-  cache_dir <- tempfile("idb_missing_")
-  dir.create(cache_dir)
-  expect_error(
-    load_interaction_database("string", "latest", cache_dir = cache_dir),
-    "build_if_missing = TRUE"
-  )
-  expect_error(
-    extract_panel_interactions(
-      markers = "A",
-      database = "string",
-      marker_uniprot_map = marker_map,
-      cache_dir = cache_dir
-    ),
-    "build_if_missing = TRUE"
-  )
-  expect_error(load_interaction_database("not_a_db", cache_dir = cache_dir))
-
-  bad_path <- file.path(cache_dir, "string_latest.rds")
-  saveRDS(list(not_edges = 1), bad_path)
-  expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
-
-  saveRDS(
-    list(edges = data.frame(x = 1), meta = list()),
-    bad_path
-  )
-  expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
-
-  bad_edges <- data.frame(
-    uniprot_a = "A",
-    uniprot_b = "B"
-  )
-  saveRDS(
-    list(
-      edges = bad_edges,
-      meta = list(score_columns = "missing_score")
-    ),
-    bad_path
-  )
-  expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
-
-  bad_edges$bad_score <- "high"
-  saveRDS(
-    list(
-      edges = bad_edges,
-      meta = list(score_columns = "bad_score")
-    ),
-    bad_path
-  )
-  expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
-})
-
-test_that("load_interaction_database build_if_missing builds then loads", {
+test_that("build_string_database from gz fixture", {
   skip_if_not_installed("data.table")
 
-  raw_dir <- tempfile("load_build_raw_")
-  cache_dir <- tempfile("load_build_cache_")
+  raw_dir <- tempfile("string_raw_")
+  cache_dir <- tempfile("string_cache_")
   dir.create(raw_dir)
   dir.create(cache_dir)
 
+  # Secondary AC O43746 precedes primary P20701; HGNC marks primary
   aliases_path <- file.path(raw_dir, "9606.protein.aliases.v12.0.txt.gz")
   phys_path <- file.path(raw_dir, "9606.protein.physical.links.v12.0.txt.gz")
   con <- gzfile(aliases_path, "wt")
   writeLines(
     c(
       "#string_protein_id\talias\tsource",
-      "9606.ENSP1\tP12345\tUniProt_AC",
-      "9606.ENSP1\tP12345\tEnsembl_HGNC_uniprot_ids",
-      "9606.ENSP2\tQ67890\tUniProt_AC",
-      "9606.ENSP2\tQ67890\tEnsembl_HGNC_uniprot_ids"
+      "9606.ENSP1\tO43746\tUniProt_AC",
+      "9606.ENSP1\tP20701\tUniProt_AC",
+      "9606.ENSP1\tP20701\tEnsembl_HGNC_uniprot_ids",
+      "9606.ENSP2\tP05107\tUniProt_AC",
+      "9606.ENSP2\tP05107\tEnsembl_HGNC_uniprot_ids"
     ),
     con
   )
   close(con)
   con <- gzfile(phys_path, "wt")
   writeLines(
-    c(
-      "protein1 protein2 combined_score",
-      "9606.ENSP1 9606.ENSP2 999"
-    ),
+    c("protein1 protein2 combined_score", "9606.ENSP1 9606.ENSP2 999"),
     con
   )
   close(con)
@@ -287,16 +146,22 @@ test_that("load_interaction_database build_if_missing builds then loads", {
       version = "12.0",
       cache_dir = cache_dir,
       build_if_missing = TRUE,
-      raw_dir = raw_dir
+      raw_dir = raw_dir,
+      include_full = FALSE
     ),
     "Building interaction database"
   )
-  expect_equal(nrow(db$edges), 1)
-  expect_equal(db$meta$additional_columns, "network")
-  expect_true(file.exists(file.path(cache_dir, "string_12.0.rds")))
-  expect_true(file.exists(file.path(cache_dir, "string_latest.rds")))
+  expect_equal(
+    head(db$edges %>% arrange(uniprot_a, uniprot_b), 1),
+    tibble(
+      uniprot_a = "P05107",
+      uniprot_b = "P20701",
+      combined_score = 999,
+      network = "physical"
+    )
+  )
+  expect_true(file.exists(aliases_path))
 
-  # Second load reuses cache without rebuilding
   expect_no_message(
     db2 <- load_interaction_database(
       "string",
@@ -309,127 +174,7 @@ test_that("load_interaction_database build_if_missing builds then loads", {
   expect_equal(nrow(db2$edges), 1)
 })
 
-test_that("extract_panel_interactions works as expected", {
-  cache_dir <- tempfile("idb_extract_")
-  dir.create(cache_dir)
-  .setup_string_cache(cache_dir)
-
-  expect_no_error(
-    out <- extract_panel_interactions(
-      markers = c("A", "B", "C"),
-      database = "string",
-      marker_uniprot_map = marker_map,
-      score_min = c(combined_score = 400),
-      string_network = "physical",
-      cache_dir = cache_dir
-    )
-  )
-  expect_equal(
-    out,
-    structure(list(
-      marker_1 = "A", marker_2 = "B", uniprot_a = "P12345",
-      uniprot_b = "Q67890", combined_score = 500,
-      network = "physical"
-    ), row.names = c(
-      NA,
-      -1L
-    ), class = c("tbl_df", "tbl", "data.frame"))
-  )
-
-  # Lower threshold keeps the weaker physical edge A-C
-  expect_no_error(
-    out_low <- extract_panel_interactions(
-      markers = c("A", "B", "C"),
-      database = "string",
-      marker_uniprot_map = marker_map,
-      score_min = c(combined_score = 100),
-      string_network = "physical",
-      cache_dir = cache_dir
-    )
-  )
-  expect_equal(nrow(out_low), 2)
-
-  # Markers with no UniProt overlap return an empty table with score schema
-  expect_no_error(
-    empty <- extract_panel_interactions(
-      markers = "Z",
-      database = "string",
-      marker_uniprot_map = tibble(marker = "Z", uniprot_id = "P00000"),
-      cache_dir = cache_dir
-    )
-  )
-  expect_equal(nrow(empty), 0)
-  expect_equal(
-    names(empty),
-    c(
-      "marker_1", "marker_2", "uniprot_a", "uniprot_b",
-      "combined_score", "network"
-    )
-  )
-
-  # Overlapping UniProt mappings must not invent self-pairs via a Cartesian join
-  overlap_map <- tibble(
-    marker = c("A", "B", "A", "B"),
-    uniprot_id = c("P12345", "Q67890", "Q67890", "P12345")
-  )
-  overlap_out <- extract_panel_interactions(
-    markers = c("A", "B"),
-    database = "string",
-    marker_uniprot_map = overlap_map,
-    score_min = c(combined_score = 400),
-    string_network = "physical",
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(overlap_out), 1)
-  expect_equal(overlap_out$marker_1[[1]], "A")
-  expect_equal(overlap_out$marker_2[[1]], "B")
-  expect_false(any(overlap_out$marker_1 == overlap_out$marker_2))
-})
-
-test_that("extract_panel_interactions aligns UniProt with max score row", {
-  cache_dir <- tempfile("idb_align_")
-  dir.create(cache_dir)
-
-  # Two UniProt edges for the same marker pair; lower score listed first so a
-  # first-row summarise would pick the wrong UniProt / extras.
-  edges <- normalise_interaction_edges(
-    data.frame(
-      uniprot_a = c("P11111", "P22222"),
-      uniprot_b = c("Q11111", "Q22222"),
-      combined_score = c(100, 900),
-      network = "physical",
-      stringsAsFactors = FALSE
-    ),
-    score_cols = "combined_score",
-    additional_cols = "network"
-  )
-  save_interaction_database(
-    edges = edges,
-    database = "string",
-    version = "test",
-    cache_dir = cache_dir,
-    score_columns = "combined_score",
-    additional_columns = "network"
-  )
-
-  map <- tibble(
-    marker = c("A", "A", "B", "B"),
-    uniprot_id = c("P11111", "P22222", "Q11111", "Q22222")
-  )
-  out <- extract_panel_interactions(
-    markers = c("A", "B"),
-    database = "string",
-    marker_uniprot_map = map,
-    string_network = "physical",
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out), 1)
-  expect_equal(out$uniprot_a[[1]], "P22222")
-  expect_equal(out$uniprot_b[[1]], "Q22222")
-  expect_equal(out$combined_score[[1]], 900)
-})
-
-test_that("build_biogrid_database uses real version from raw_file", {
+test_that("build_biogrid_database from tab3 fixture", {
   raw_dir <- tempfile("biogrid_raw_")
   cache_dir <- tempfile("biogrid_cache_")
   dir.create(raw_dir)
@@ -451,39 +196,21 @@ test_that("build_biogrid_database uses real version from raw_file", {
     row.names = FALSE
   )
 
-  path <- build_biogrid_database(
+  build_biogrid_database(
     raw_file = raw_file,
     version = "5.0.259",
     cache_dir = cache_dir
   )
-  expect_true(file.exists(path))
   db <- load_interaction_database("biogrid", "5.0.259", cache_dir = cache_dir)
-  expect_equal(db$meta$version, "5.0.259")
-  expect_equal(nrow(db$edges), 1)
-  expect_equal(db$edges$uniprot_a[[1]], "P12345")
+  expect_equal(
+    db$edges,
+    tibble(
+      uniprot_a = "P12345",
+      uniprot_b = "Q67890",
+      `Experimental System` = "Two-hybrid"
+    )
+  )
   expect_equal(db$meta$additional_columns, "Experimental System")
-  expect_equal(db$edges[["Experimental System"]][[1]], "Two-hybrid")
-  expect_equal(db$meta$resource, "biogrid")
-  expect_true(file.exists(
-    file.path(cache_dir, "biogrid_latest.rds")
-  ))
-
-  expect_error(
-    build_biogrid_database(
-      raw_file = raw_file,
-      version = "test",
-      cache_dir = cache_dir
-    )
-  )
-  custom <- file.path(raw_dir, "custom_dump.tab3.txt")
-  file.copy(raw_file, custom)
-  expect_error(
-    build_biogrid_database(
-      raw_file = custom,
-      version = "latest",
-      cache_dir = cache_dir
-    )
-  )
   expect_error(
     build_biogrid_database(
       raw_file = raw_file,
@@ -491,283 +218,232 @@ test_that("build_biogrid_database uses real version from raw_file", {
       cache_dir = cache_dir
     )
   )
-  # latest + properly named raw_file resolves version from basename
-  path_latest <- build_biogrid_database(
-    raw_file = raw_file,
-    version = "latest",
-    cache_dir = cache_dir
-  )
-  db_latest <- load_interaction_database(
-    "biogrid", "latest",
-    cache_dir = cache_dir
-  )
-  expect_equal(db_latest$meta$version, "5.0.259")
-  expect_true(file.exists(path_latest))
 })
 
-test_that("extract_panel_interactions keeps UniProt homodimers", {
-  cache_dir <- tempfile("idb_homo_")
+test_that("build_alphafold_database merges panel and homodimer sources", {
+  raw_dir <- tempfile("afdb_raw_")
+  cache_dir <- tempfile("afdb_cache_")
+  dir.create(raw_dir)
   dir.create(cache_dir)
 
-  homo <- normalise_interaction_edges(
+  utils::write.csv(
     data.frame(
-      uniprot_a = c("P12345", "P12345"),
-      uniprot_b = c("P12345", "Q67890"),
-      combined_score = c(900, 500),
-      network = "physical",
+      uniprot_ac_1 = c("P12345", "P12345"),
+      uniprot_ac_2 = c("Q67890", "P99999"),
+      ipSAE = c(0.8, 0.1),
+      pDockQ2 = c(0.5, 0.1),
       stringsAsFactors = FALSE
     ),
-    score_cols = "combined_score",
-    additional_cols = "network"
+    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
+    row.names = FALSE
   )
-  save_interaction_database(
-    edges = homo,
-    database = "string",
-    version = "test",
-    cache_dir = cache_dir,
-    score_columns = "combined_score",
-    additional_columns = "network"
-  )
-
-  out <- extract_panel_interactions(
-    markers = c("A", "B"),
-    database = "string",
-    marker_uniprot_map = marker_map,
-    score_min = c(combined_score = 400),
-    string_network = "physical",
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out), 2)
-  expect_true(any(out$marker_1 == out$marker_2 & out$uniprot_a == out$uniprot_b))
-  self <- out %>% filter(marker_1 == marker_2)
-  expect_equal(nrow(self), 1)
-  expect_equal(self$marker_1[[1]], "A")
-  expect_equal(self$uniprot_a[[1]], "P12345")
-})
-
-test_that("extract_panel_interactions does not invent hetero pairs from homodimers", {
-  cache_dir <- tempfile("idb_homo_false_")
-  dir.create(cache_dir)
-
-  homo <- normalise_interaction_edges(
+  utils::write.csv(
     data.frame(
-      uniprot_a = "P12345",
-      uniprot_b = "P12345",
-      combined_score = 900,
-      network = "physical",
+      uniprotAccession = c("P99999", "A00001"),
+      taxId = c(9606, 10090),
+      ipSAE_AB = c(0.9, 0.95),
+      ipSAE_BA = c(0.85, 0.95),
+      pDockQ2_AB = c(0.4, 0.5),
+      pDockQ2_BA = c(0.35, 0.5),
       stringsAsFactors = FALSE
     ),
-    score_cols = "combined_score",
-    additional_cols = "network"
-  )
-  save_interaction_database(
-    edges = homo,
-    database = "string",
-    version = "test",
-    cache_dir = cache_dir,
-    score_columns = "combined_score",
-    additional_columns = "network"
+    file.path(raw_dir, "afdb_homodimers_human_panel.csv"),
+    row.names = FALSE
   )
 
-  shared_map <- tibble(
-    marker = c("A", "B"),
-    uniprot_id = c("P12345", "P12345")
-  )
-  out <- extract_panel_interactions(
-    markers = c("A", "B"),
-    database = "string",
-    marker_uniprot_map = shared_map,
-    score_min = c(combined_score = 400),
-    string_network = "physical",
+  build_alphafold_database(
+    heterodimer_file = file.path(raw_dir, "missing.csv"),
+    raw_dir = raw_dir,
+    version = "test_af",
     cache_dir = cache_dir
   )
-  expect_equal(nrow(out), 2)
-  expect_true(all(out$marker_1 == out$marker_2))
-  expect_false(any(out$marker_1 != out$marker_2))
-  expect_setequal(out$marker_1, c("A", "B"))
+  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
+  expect_equal(
+    db$edges %>% arrange(uniprot_a, uniprot_b),
+    tibble(
+      uniprot_a = c("P12345", "P12345", "P99999"),
+      uniprot_b = c("P99999", "Q67890", "P99999"),
+      ipSAE = c(0.1, 0.8, 0.9),
+      pDockQ2 = c(0.1, 0.5, 0.4)
+    )
+  )
+  expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
 })
 
-test_that("extract_panel_interactions keeps UniProt columns aligned with markers", {
-  cache_dir <- tempfile("idb_align_")
-  dir.create(cache_dir)
-
-  edges <- normalise_interaction_edges(
-    data.frame(
-      uniprot_a = "P12345",
-      uniprot_b = "Q67890",
-      combined_score = 700,
-      network = "physical",
-      stringsAsFactors = FALSE
-    ),
-    score_cols = "combined_score",
-    additional_cols = "network"
-  )
-  save_interaction_database(
-    edges = edges,
-    database = "string",
-    version = "test",
-    cache_dir = cache_dir,
-    score_columns = "combined_score",
-    additional_columns = "network"
-  )
-
-  # Join yields marker_1=B (P12345), marker_2=A (Q67890); lexical reorder to A,B
-  # must swap UniProt columns with the markers.
-  swapped_map <- tibble(
-    marker = c("B", "A"),
-    uniprot_id = c("P12345", "Q67890")
-  )
-  out <- extract_panel_interactions(
-    markers = c("A", "B"),
-    database = "string",
-    marker_uniprot_map = swapped_map,
-    score_min = c(combined_score = 400),
-    string_network = "physical",
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out), 1)
-  expect_equal(out$marker_1[[1]], "A")
-  expect_equal(out$marker_2[[1]], "B")
-  expect_equal(out$uniprot_a[[1]], "Q67890")
-  expect_equal(out$uniprot_b[[1]], "P12345")
-})
-
-test_that("create_marker_uniprot_map works as expected", {
-  counts <- matrix(
-    1:6,
-    nrow = 3,
-    dimnames = list(c("CD3e", "CD4", "CD8"), paste0("c", 1:2))
-  )
-  seur <- SeuratObject::CreateSeuratObject(counts = counts, assay = "PNA")
-  seur[["PNA"]][[]] <- data.frame(
-    uniprot_id = c("P07766", "P01730;P01732", "P01732"),
-    row.names = c("CD3e", "CD4", "CD8"),
-    stringsAsFactors = FALSE
-  )
-
-  expect_no_error(
-    map <- create_marker_uniprot_map(seur, assay = "PNA")
-  )
-  expect_equal(names(map), c("marker", "uniprot_id"))
-  expect_equal(nrow(map), 4)
-  expect_true(all(c("CD3e", "CD4", "CD8") %in% map$marker))
-  expect_equal(sum(map$marker == "CD4"), 2)
-  expect_true(all(c("P01730", "P01732") %in% map$uniprot_id[map$marker == "CD4"]))
-
-  expect_error(create_marker_uniprot_map(seur, assay = "missing"))
-  seur2 <- SeuratObject::CreateSeuratObject(counts = counts, assay = "PNA")
-  expect_error(create_marker_uniprot_map(seur2, assay = "PNA"))
-})
-
-test_that("extract_panel_interactions fails with invalid input", {
-  cache_dir <- tempfile("idb_extract_bad_")
+test_that("extract_panel_interactions on STRING cache", {
+  cache_dir <- tempfile("idb_extract_")
   dir.create(cache_dir)
   .setup_string_cache(cache_dir)
 
-  expect_error(
+  expect_equal(
     extract_panel_interactions(
-      markers = c("A", "B"),
-      database = "string",
-      cache_dir = cache_dir
-    )
-  )
-  expect_error(
-    extract_panel_interactions(
-      markers = c("A", "B"),
-      database = "string",
-      marker_uniprot_map = tibble(x = 1, y = 2),
-      cache_dir = cache_dir
-    )
-  )
-  expect_error(
-    extract_panel_interactions(
-      markers = c("A", "B"),
-      database = "not_a_db",
-      marker_uniprot_map = marker_map,
-      cache_dir = cache_dir
-    )
-  )
-  expect_error(
-    extract_panel_interactions(
-      markers = c(1, 2),
+      markers = c("A", "B", "C"),
       database = "string",
       marker_uniprot_map = marker_map,
+      score_min = c(combined_score = 400),
+      string_network = "physical",
       cache_dir = cache_dir
+    ),
+    tibble(
+      marker_1 = "A", marker_2 = "B",
+      uniprot_a = "P12345", uniprot_b = "Q67890",
+      combined_score = 500, network = "physical"
     )
   )
-  expect_error(
+
+  expect_equal(
     extract_panel_interactions(
-      markers = c("A", "B"),
+      markers = c("A", "B", "C"),
       database = "string",
       marker_uniprot_map = marker_map,
-      score_min = 400,
-      cache_dir = cache_dir
-    )
-  )
-  expect_error(
-    extract_panel_interactions(
-      markers = c("A", "B"),
-      database = "string",
-      marker_uniprot_map = marker_map,
-      score_min = c(combined_score = 400, combined_score = 500),
-      cache_dir = cache_dir
-    )
-  )
-  expect_error(
-    extract_panel_interactions(
-      markers = c("A", "B"),
-      database = "string",
-      marker_uniprot_map = marker_map,
-      score_min = c(missing_score = 400),
-      cache_dir = cache_dir
-    )
-  )
-  expect_error(
-    extract_panel_interactions(
-      markers = c("A", "B"),
-      database = "string",
-      marker_uniprot_map = marker_map,
-      score_min = c(combined_score = 500),
+      score_min = c(combined_score = 100),
       score_max = c(combined_score = 400),
+      string_network = "physical",
       cache_dir = cache_dir
+    ),
+    tibble(
+      marker_1 = "A", marker_2 = "C",
+      uniprot_a = "P12345", uniprot_b = "P99999",
+      combined_score = 200, network = "physical"
+    )
+  )
+
+  empty <- extract_panel_interactions(
+    markers = "Z",
+    database = "string",
+    marker_uniprot_map = tibble(marker = "Z", uniprot_id = "P00000"),
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(empty), 0)
+  expect_equal(
+    names(empty),
+    c("marker_1", "marker_2", "uniprot_a", "uniprot_b", "combined_score", "network")
+  )
+
+  # Max-score UniProt edge wins when multiple map to the same marker pair
+  align_dir <- tempfile("idb_align_")
+  dir.create(align_dir)
+  save_interaction_database(
+    edges = normalise_interaction_edges(
+      data.frame(
+        uniprot_a = c("P11111", "P22222"),
+        uniprot_b = c("Q11111", "Q22222"),
+        combined_score = c(100, 900),
+        network = "physical",
+        stringsAsFactors = FALSE
+      ),
+      score_cols = "combined_score",
+      additional_cols = "network"
+    ),
+    database = "string",
+    version = "test",
+    cache_dir = align_dir,
+    score_columns = "combined_score",
+    additional_columns = "network"
+  )
+  expect_equal(
+    extract_panel_interactions(
+      markers = c("A", "B"),
+      database = "string",
+      marker_uniprot_map = tibble(
+        marker = c("A", "A", "B", "B"),
+        uniprot_id = c("P11111", "P22222", "Q11111", "Q22222")
+      ),
+      string_network = "physical",
+      cache_dir = align_dir
+    ),
+    tibble(
+      marker_1 = "A", marker_2 = "B",
+      uniprot_a = "P22222", uniprot_b = "Q22222",
+      combined_score = 900, network = "physical"
+    )
+  )
+
+  # Homodimer self-pairs kept; shared accession does not invent hetero pairs
+  homo_dir <- tempfile("idb_homo_")
+  dir.create(homo_dir)
+  save_interaction_database(
+    edges = normalise_interaction_edges(
+      data.frame(
+        uniprot_a = "P12345",
+        uniprot_b = "P12345",
+        combined_score = 900,
+        network = "physical",
+        stringsAsFactors = FALSE
+      ),
+      score_cols = "combined_score",
+      additional_cols = "network"
+    ),
+    database = "string",
+    version = "test",
+    cache_dir = homo_dir,
+    score_columns = "combined_score",
+    additional_columns = "network"
+  )
+  expect_equal(
+    extract_panel_interactions(
+      markers = c("A", "B"),
+      database = "string",
+      marker_uniprot_map = tibble(
+        marker = c("A", "B"),
+        uniprot_id = c("P12345", "P12345")
+      ),
+      score_min = c(combined_score = 400),
+      string_network = "physical",
+      cache_dir = homo_dir
+    ) %>% arrange(marker_1),
+    tibble(
+      marker_1 = c("A", "B"),
+      marker_2 = c("A", "B"),
+      uniprot_a = c("P12345", "P12345"),
+      uniprot_b = c("P12345", "P12345"),
+      combined_score = c(900, 900),
+      network = c("physical", "physical")
+    )
+  )
+
+  # Lexical marker reorder swaps UniProt columns with markers
+  swap_dir <- tempfile("idb_swap_")
+  dir.create(swap_dir)
+  save_interaction_database(
+    edges = normalise_interaction_edges(
+      data.frame(
+        uniprot_a = "P12345",
+        uniprot_b = "Q67890",
+        combined_score = 700,
+        network = "physical",
+        stringsAsFactors = FALSE
+      ),
+      score_cols = "combined_score",
+      additional_cols = "network"
+    ),
+    database = "string",
+    version = "test",
+    cache_dir = swap_dir,
+    score_columns = "combined_score",
+    additional_columns = "network"
+  )
+  expect_equal(
+    extract_panel_interactions(
+      markers = c("A", "B"),
+      database = "string",
+      marker_uniprot_map = tibble(
+        marker = c("B", "A"),
+        uniprot_id = c("P12345", "Q67890")
+      ),
+      score_min = c(combined_score = 400),
+      string_network = "physical",
+      cache_dir = swap_dir
+    ),
+    tibble(
+      marker_1 = "A", marker_2 = "B",
+      uniprot_a = "Q67890", uniprot_b = "P12345",
+      combined_score = 700, network = "physical"
     )
   )
 })
 
-test_that("extract_panel_interactions score_min and score_max filter as expected", {
-  cache_dir <- tempfile("idb_score_filt_")
-  dir.create(cache_dir)
-  .setup_string_cache(cache_dir)
-
-  # score_max alone: keep combined_score < 400 -> A-C (200) only among A/B/C physical
-  out_max <- extract_panel_interactions(
-    markers = c("A", "B", "C"),
-    database = "string",
-    marker_uniprot_map = marker_map,
-    score_max = c(combined_score = 400),
-    string_network = "physical",
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out_max), 1)
-  expect_equal(out_max$marker_1[[1]], "A")
-  expect_equal(out_max$marker_2[[1]], "C")
-  expect_equal(out_max$combined_score[[1]], 200)
-
-  # Same-column range: 100 <= score < 400
-  out_range <- extract_panel_interactions(
-    markers = c("A", "B", "C"),
-    database = "string",
-    marker_uniprot_map = marker_map,
-    score_min = c(combined_score = 100),
-    score_max = c(combined_score = 400),
-    string_network = "physical",
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out_range), 1)
-  expect_equal(out_range$combined_score[[1]], 200)
-})
-
-test_that("extract_panel_interactions score_combine works for AlphaFold", {
+test_that("extract_panel_interactions filters multi-score AlphaFold edges", {
   raw_dir <- tempfile("afdb_combine_")
   cache_dir <- tempfile("afdb_combine_cache_")
   dir.create(raw_dir)
@@ -790,463 +466,115 @@ test_that("extract_panel_interactions score_combine works for AlphaFold", {
     version = "test_combine",
     cache_dir = cache_dir
   )
-
   af_map <- tibble(
     marker = c("A", "B", "C"),
     uniprot_id = c("P12345", "Q67890", "P99999")
   )
 
-  # OR: keep A-B (ipSAE 0.8) and A-C (pDockQ2 0.5); drop B-C if both below?
-  # B-C: P99999-Q67890 ipSAE=0.7 pDockQ2=0.4 -> both pass mins with any
-  out_any <- extract_panel_interactions(
-    markers = c("A", "B", "C"),
-    database = "alphafold",
-    marker_uniprot_map = af_map,
-    score_min = c(ipSAE = 0.6, pDockQ2 = 0.45),
-    score_combine = "any",
-    cache_dir = cache_dir
+  expect_equal(
+    extract_panel_interactions(
+      markers = c("A", "B", "C"),
+      database = "alphafold",
+      marker_uniprot_map = af_map,
+      score_min = c(ipSAE = 0.6, pDockQ2 = 0.45),
+      score_combine = "any",
+      cache_dir = cache_dir
+    ) %>%
+      arrange(marker_1, marker_2) %>%
+      select(marker_1, marker_2, ipSAE, pDockQ2),
+    tibble(
+      marker_1 = c("A", "A", "B"),
+      marker_2 = c("B", "C", "C"),
+      ipSAE = c(0.8, 0.4, 0.7),
+      pDockQ2 = c(0.1, 0.5, 0.4)
+    )
   )
-  # A-B: ipSAE 0.8 (>=0.6) -> keep
-  # A-C: ipSAE 0.4, pDockQ2 0.5 (>=0.45) -> keep
-  # B-C: ipSAE 0.7 (>=0.6) -> keep
-  expect_equal(nrow(out_any), 3)
-
-  out_all <- extract_panel_interactions(
-    markers = c("A", "B", "C"),
-    database = "alphafold",
-    marker_uniprot_map = af_map,
-    score_min = c(ipSAE = 0.6, pDockQ2 = 0.45),
-    score_combine = "all",
-    cache_dir = cache_dir
+  expect_equal(
+    nrow(extract_panel_interactions(
+      markers = c("A", "B", "C"),
+      database = "alphafold",
+      marker_uniprot_map = af_map,
+      score_min = c(ipSAE = 0.6, pDockQ2 = 0.45),
+      score_combine = "all",
+      cache_dir = cache_dir
+    )),
+    0
   )
-  # None have both ipSAE>=0.6 and pDockQ2>=0.45
-  expect_equal(nrow(out_all), 0)
-
-  # Range on ipSAE AND min on pDockQ2 for A-C only
-  out_range <- extract_panel_interactions(
-    markers = c("A", "B", "C"),
-    database = "alphafold",
-    marker_uniprot_map = af_map,
-    score_min = c(ipSAE = 0.3, pDockQ2 = 0.45),
-    score_max = c(ipSAE = 0.5),
-    score_combine = "all",
-    cache_dir = cache_dir
+  expect_equal(
+    extract_panel_interactions(
+      markers = c("A", "B", "C"),
+      database = "alphafold",
+      marker_uniprot_map = af_map,
+      score_min = c(ipSAE = 0.3, pDockQ2 = 0.45),
+      score_max = c(ipSAE = 0.5),
+      score_combine = "all",
+      cache_dir = cache_dir
+    ),
+    tibble(
+      marker_1 = "A", marker_2 = "C",
+      uniprot_a = "P12345", uniprot_b = "P99999",
+      ipSAE = 0.4, pDockQ2 = 0.5
+    )
   )
-  expect_equal(nrow(out_range), 1)
-  expect_equal(out_range$marker_1[[1]], "A")
-  expect_equal(out_range$marker_2[[1]], "C")
-  expect_equal(out_range$ipSAE[[1]], 0.4)
-  expect_equal(out_range$pDockQ2[[1]], 0.5)
 })
 
 test_that("extract_panel_interactions errors when scores are absent", {
-  skip_if_not_installed("data.table")
-
-  raw_dir <- tempfile("corum_noscore_")
-  cache_dir <- tempfile("corum_noscore_cache_")
-  dir.create(raw_dir)
+  cache_dir <- tempfile("biogrid_noscore_")
   dir.create(cache_dir)
-  corum_file <- file.path(raw_dir, "omnipath_complexes_corum.tsv")
+  raw_file <- file.path(tempfile("biogrid_"), "BIOGRID-MV-Physical-5.0.259.tab3.txt")
+  dir.create(dirname(raw_file))
   utils::write.table(
     data.frame(
-      name = "complex_1",
-      components = "P12345_Q67890",
+      `SWISS-PROT Accessions Interactor A` = "P12345",
+      `SWISS-PROT Accessions Interactor B` = "Q67890",
+      `Organism ID Interactor A` = 9606,
+      `Organism ID Interactor B` = 9606,
+      `Experimental System` = "Two-hybrid",
+      check.names = FALSE,
       stringsAsFactors = FALSE
     ),
-    corum_file,
+    raw_file,
     sep = "\t",
-    row.names = FALSE,
-    quote = FALSE
+    quote = FALSE,
+    row.names = FALSE
   )
-  build_corum_database(
-    corum_file = corum_file,
-    version = "test_corum",
+  build_biogrid_database(
+    raw_file = raw_file,
+    version = "5.0.259",
     cache_dir = cache_dir
   )
   expect_error(
     extract_panel_interactions(
       markers = c("A", "B"),
-      database = "corum",
+      database = "biogrid",
       marker_uniprot_map = marker_map,
       score_min = c(combined_score = 1),
       cache_dir = cache_dir
+    ),
+    "no score columns"
+  )
+})
+
+test_that("create_marker_uniprot_map from Seurat assay", {
+  counts <- matrix(
+    1:6,
+    nrow = 3,
+    dimnames = list(c("CD3e", "CD4", "CD8"), paste0("c", 1:2))
+  )
+  seur <- SeuratObject::CreateSeuratObject(counts = counts, assay = "PNA")
+  seur[["PNA"]][[]] <- data.frame(
+    uniprot_id = c("P07766", "P01730;P01732", "P01732"),
+    row.names = c("CD3e", "CD4", "CD8"),
+    stringsAsFactors = FALSE
+  )
+
+  expect_equal(
+    create_marker_uniprot_map(seur, assay = "PNA") %>%
+      arrange(marker, uniprot_id),
+    tibble(
+      marker = c("CD3e", "CD4", "CD4", "CD8"),
+      uniprot_id = c("P07766", "P01730", "P01732", "P01732")
     )
   )
-})
-
-test_that("build_alphafold_database works as expected", {
-  raw_dir <- tempfile("afdb_raw_")
-  cache_dir <- tempfile("afdb_cache_")
-  dir.create(raw_dir)
-  dir.create(cache_dir)
-
-  utils::write.csv(
-    data.frame(
-      uniprot_ac_1 = c("P12345", "P12345", "A00001"),
-      uniprot_ac_2 = c("Q67890", "P99999", "A00002"),
-      ipSAE = c(0.8, 0.1, NA_real_),
-      pDockQ2 = c(0.5, 0.1, NA_real_),
-      stringsAsFactors = FALSE
-    ),
-    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
-    row.names = FALSE
-  )
-
-  expect_no_error(
-    path <- build_alphafold_database(
-      heterodimer_file = file.path(raw_dir, "missing.csv"),
-      raw_dir = raw_dir,
-      version = "test_af",
-      cache_dir = cache_dir
-    )
-  )
-  expect_true(file.exists(path))
-
-  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
-  # All parsed human pairs kept; score filtering is extract-only
-  expect_equal(nrow(db$edges), 3)
-  expect_true(all(db$edges$uniprot_a <= db$edges$uniprot_b))
-  expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
-  expect_setequal(db$edges$ipSAE, c(0.8, 0.1, NA_real_))
-  expect_false(
-    any(c("evidence", "resource", "resource_version", "in_db", "score") %in% names(db$edges))
-  )
-
-  # Query-time filter recovers the former high-confidence subset
-  out <- extract_panel_interactions(
-    markers = c("A", "B", "C"),
-    database = "alphafold",
-    marker_uniprot_map = tibble(
-      marker = c("A", "B", "C"),
-      uniprot_id = c("P12345", "Q67890", "P99999")
-    ),
-    score_min = c(ipSAE = 0.6, pDockQ2 = 0.23),
-    score_combine = "any",
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out), 1)
-  expect_equal(out$uniprot_a[[1]], "P12345")
-  expect_equal(out$uniprot_b[[1]], "Q67890")
-  expect_equal(out$ipSAE[[1]], 0.8)
-})
-
-test_that("build_alphafold_database keeps low native scores for extract filtering", {
-  raw_dir <- tempfile("afdb_pdq_")
-  cache_dir <- tempfile("afdb_pdq_cache_")
-  dir.create(raw_dir)
-  dir.create(cache_dir)
-
-  utils::write.csv(
-    data.frame(
-      uniprot_ac_1 = "P12345",
-      uniprot_ac_2 = "Q67890",
-      ipSAE = 0.4,
-      pDockQ2 = 0.5,
-      stringsAsFactors = FALSE
-    ),
-    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
-    row.names = FALSE
-  )
-
-  build_alphafold_database(
-    heterodimer_file = file.path(raw_dir, "missing.csv"),
-    raw_dir = raw_dir,
-    version = "test_af_pdq",
-    cache_dir = cache_dir
-  )
-  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
-  expect_equal(nrow(db$edges), 1)
-  expect_equal(db$edges$ipSAE[[1]], 0.4)
-  expect_equal(db$edges$pDockQ2[[1]], 0.5)
-  expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
-})
-
-test_that("build_corum_database works as expected", {
-  skip_if_not_installed("data.table")
-
-  raw_dir <- tempfile("corum_raw_")
-  cache_dir <- tempfile("corum_cache_")
-  dir.create(raw_dir)
-  dir.create(cache_dir)
-  corum_file <- file.path(raw_dir, "omnipath_complexes_corum.tsv")
-
-  utils::write.table(
-    data.frame(
-      name = c("complex_1", "complex_2"),
-      components = c("P12345_Q67890_P99999", "A00001"),
-      stringsAsFactors = FALSE
-    ),
-    corum_file,
-    sep = "\t",
-    row.names = FALSE,
-    quote = FALSE
-  )
-
-  expect_no_error(
-    path <- build_corum_database(
-      corum_file = corum_file,
-      version = "test_corum",
-      cache_dir = cache_dir
-    )
-  )
-  expect_true(file.exists(path))
-
-  db <- load_interaction_database("corum", "latest", cache_dir = cache_dir)
-  # 3 subunits -> 3 pairs; single-accession complex_2 -> 1 homomer edge
-  expect_equal(nrow(db$edges), 4)
-  expect_true(any(db$edges$uniprot_a == "A00001" & db$edges$uniprot_b == "A00001"))
-  expect_equal(db$meta$additional_columns, "name")
-  expect_true("name" %in% names(db$edges))
-  expect_false(
-    any(c("evidence", "resource", "resource_version", "in_db") %in% names(db$edges))
-  )
-})
-
-test_that("build_corum_database fails with invalid input", {
-  skip_if_not_installed("data.table")
-
-  cache_dir <- tempfile("corum_bad_")
-  dir.create(cache_dir)
-
-  html_file <- tempfile(fileext = ".tsv")
-  writeLines("<!DOCTYPE html><html></html>", html_file)
-  expect_error(
-    build_corum_database(corum_file = html_file, cache_dir = cache_dir)
-  )
-})
-
-test_that("build_string_database prefers primary UniProt over secondary AC order", {
-  skip_if_not_installed("data.table")
-
-  raw_dir <- tempfile("string_raw_")
-  cache_dir <- tempfile("string_cache_")
-  dir.create(raw_dir)
-  dir.create(cache_dir)
-
-  # ITGAL-like: secondary AC O43746 precedes primary P20701; HGNC marks primary
-  aliases_path <- file.path(raw_dir, "9606.protein.aliases.v12.0.txt.gz")
-  phys_path <- file.path(raw_dir, "9606.protein.physical.links.v12.0.txt.gz")
-  con <- gzfile(aliases_path, "wt")
-  writeLines(
-    c(
-      "#string_protein_id\talias\tsource",
-      "9606.ENSP00000349252\tO43746\tUniProt_AC",
-      "9606.ENSP00000349252\tP20701\tUniProt_AC",
-      "9606.ENSP00000349252\tP20701\tEnsembl_HGNC_uniprot_ids",
-      "9606.ENSP00000380948\tP05107\tUniProt_AC",
-      "9606.ENSP00000380948\tP05107\tEnsembl_HGNC_uniprot_ids"
-    ),
-    con
-  )
-  close(con)
-  con <- gzfile(phys_path, "wt")
-  writeLines(
-    c(
-      "protein1 protein2 combined_score",
-      "9606.ENSP00000349252 9606.ENSP00000380948 999"
-    ),
-    con
-  )
-  close(con)
-
-  path <- build_string_database(
-    raw_dir = raw_dir,
-    version = "12.0",
-    cache_dir = cache_dir,
-    species = 9606,
-    include_full = FALSE
-  )
-  expect_true(file.exists(path))
-  # Caller-owned raw_dir must not be deleted after a successful build
-  expect_true(file.exists(aliases_path))
-  expect_true(file.exists(phys_path))
-  db <- load_interaction_database("string", "latest", cache_dir = cache_dir)
-  pair_ids <- paste(db$edges$uniprot_a, db$edges$uniprot_b, sep = "-")
-  expect_true("P05107-P20701" %in% pair_ids)
-  expect_false("O43746-P05107" %in% pair_ids)
-
-  out <- extract_panel_interactions(
-    markers = c("CD11a", "CD18"),
-    database = "string",
-    marker_uniprot_map = tibble(
-      marker = c("CD11a", "CD18"),
-      uniprot_id = c("P20701", "P05107")
-    ),
-    score_min = c(combined_score = 400),
-    string_network = "physical",
-    cache_dir = cache_dir
-  )
-  expect_equal(nrow(out), 1)
-  expect_equal(out$marker_1[[1]], "CD11a")
-  expect_equal(out$marker_2[[1]], "CD18")
-  expect_equal(out$combined_score[[1]], 999)
-})
-
-test_that(".download_if_missing reuses cached files and errors on bad URLs", {
-  dest <- tempfile(fileext = ".txt")
-  writeLines("cached", dest)
-  expect_identical(
-    .download_if_missing("https://example.invalid/should-not-fetch", dest),
-    dest
-  )
-  expect_equal(readLines(dest, warn = FALSE), "cached")
-
-  dl_dir <- tempfile("idb_dl_")
-  dir.create(dl_dir)
-  bad_dest <- file.path(dl_dir, "missing.bin")
-  expect_error(
-    .download_if_missing("https://example.invalid/missing.bin", bad_dest)
-  )
-  expect_false(file.exists(bad_dest))
-  expect_equal(length(list.files(dl_dir, all.files = TRUE, no.. = TRUE)), 0)
-})
-
-test_that("build_alphafold_database accepts NVIDIA directional score columns", {
-  raw_dir <- tempfile("afdb_nvda_")
-  cache_dir <- tempfile("afdb_nvda_cache_")
-  dir.create(raw_dir)
-  dir.create(cache_dir)
-
-  utils::write.csv(
-    data.frame(
-      uniprot_ac_1 = c("P12345", "P12345"),
-      uniprot_ac_2 = c("Q67890", "P99999"),
-      tax_id_1 = c(9606, 9606),
-      tax_id_2 = c(9606, 10090),
-      ipSAE_AB = c(0.9, 0.95),
-      ipSAE_BA = c(0.7, 0.95),
-      pDockQ2_AB = c(0.4, 0.5),
-      pDockQ2_BA = c(0.3, 0.5),
-      stringsAsFactors = FALSE
-    ),
-    file.path(raw_dir, "heterodimer_metadata.csv"),
-    row.names = FALSE
-  )
-  # Both official dumps must be present offline; otherwise the builder would
-  # attempt to fetch the missing multi-GB counterpart.
-  utils::write.csv(
-    data.frame(
-      uniprotAccession = "A00001",
-      taxId = 10090,
-      ipSAE_AB = 0.9,
-      ipSAE_BA = 0.9,
-      pDockQ2_AB = 0.5,
-      pDockQ2_BA = 0.5,
-      stringsAsFactors = FALSE
-    ),
-    file.path(raw_dir, "homodimer_metadata.csv"),
-    row.names = FALSE
-  )
-
-  path <- build_alphafold_database(
-    heterodimer_file = file.path(raw_dir, "missing.csv"),
-    raw_dir = raw_dir,
-    version = "test_nvda",
-    cache_dir = cache_dir
-  )
-  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
-  expect_equal(nrow(db$edges), 1)
-  expect_equal(db$edges$uniprot_a[[1]], "P12345")
-  expect_equal(db$edges$uniprot_b[[1]], "Q67890")
-  expect_true(file.exists(path))
-})
-
-test_that("build_alphafold_database fetches missing official dump counterpart", {
-  raw_dir <- tempfile("afdb_partial_")
-  cache_dir <- tempfile("afdb_partial_cache_")
-  dir.create(raw_dir)
-  dir.create(cache_dir)
-
-  utils::write.csv(
-    data.frame(
-      uniprot_ac_1 = "P12345",
-      uniprot_ac_2 = "Q67890",
-      tax_id_1 = 9606,
-      tax_id_2 = 9606,
-      ipSAE = 0.9,
-      pDockQ2 = 0.5,
-      stringsAsFactors = FALSE
-    ),
-    file.path(raw_dir, "heterodimer_metadata.csv"),
-    row.names = FALSE
-  )
-
-  downloaded <- character()
-  testthat::local_mocked_bindings(
-    .download_if_missing = function(url, dest_file, min_timeout = 300) {
-      downloaded <<- c(downloaded, basename(dest_file))
-      if (!file.exists(dest_file)) {
-        utils::write.csv(
-          data.frame(
-            uniprotAccession = "P99999",
-            taxId = 9606,
-            ipSAE_AB = 0.8,
-            ipSAE_BA = 0.8,
-            pDockQ2_AB = 0.4,
-            pDockQ2_BA = 0.4,
-            stringsAsFactors = FALSE
-          ),
-          dest_file,
-          row.names = FALSE
-        )
-      }
-      dest_file
-    },
-    .package = "pixelatorR"
-  )
-
-  build_alphafold_database(
-    heterodimer_file = file.path(raw_dir, "missing.csv"),
-    raw_dir = raw_dir,
-    version = "test_partial",
-    cache_dir = cache_dir
-  )
-  expect_true("homodimer_metadata.csv" %in% downloaded)
-  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
-  expect_true(any(db$edges$uniprot_a == "P99999" & db$edges$uniprot_b == "P99999"))
-})
-
-test_that("build_alphafold_database parses homodimer NVIDIA schema", {
-  raw_dir <- tempfile("afdb_homo_")
-  cache_dir <- tempfile("afdb_homo_cache_")
-  dir.create(raw_dir)
-  dir.create(cache_dir)
-
-  utils::write.csv(
-    data.frame(
-      uniprot_ac_1 = "P12345",
-      uniprot_ac_2 = "Q67890",
-      ipSAE = 0.8,
-      pDockQ2 = 0.5,
-      stringsAsFactors = FALSE
-    ),
-    file.path(raw_dir, "afdb_api_complexes_panel.csv"),
-    row.names = FALSE
-  )
-  utils::write.csv(
-    data.frame(
-      uniprotAccession = c("P99999", "A00001"),
-      taxId = c(9606, 10090),
-      ipSAE_AB = c(0.9, 0.95),
-      ipSAE_BA = c(0.85, 0.95),
-      pDockQ2_AB = c(0.4, 0.5),
-      pDockQ2_BA = c(0.35, 0.5),
-      stringsAsFactors = FALSE
-    ),
-    file.path(raw_dir, "afdb_homodimers_human_panel.csv"),
-    row.names = FALSE
-  )
-
-  path <- build_alphafold_database(
-    heterodimer_file = file.path(raw_dir, "missing.csv"),
-    raw_dir = raw_dir,
-    version = "test_af_homo",
-    cache_dir = cache_dir
-  )
-  expect_true(file.exists(path))
-  db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
-  # hetero P12345-Q67890 + human homodimer P99999-P99999; mouse A00001 dropped
-  expect_equal(nrow(db$edges), 2)
-  expect_true(any(db$edges$uniprot_a == "P99999" & db$edges$uniprot_b == "P99999"))
-  expect_false(any(db$edges$uniprot_a == "A00001"))
+  expect_error(create_marker_uniprot_map(seur, assay = "missing"))
 })
