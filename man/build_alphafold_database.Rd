@@ -13,11 +13,12 @@ build_alphafold_database(
 }
 \arguments{
 \item{heterodimer_file}{Optional local heterodimer metadata CSV. Ignored when
-missing; panel CSVs under \code{raw_dir} are tried next.}
+missing; panel CSVs under \code{raw_dir} are tried next. Expected columns:
+\code{uniprot_ac_1}/\code{uniprot_ac_2}, \code{tax_id_1}/\code{tax_id_2}.}
 
-\item{raw_dir}{Directory for AFDB panel CSVs and/or official dumps. When
-\code{NULL} (default), a temporary staging directory is used and removed
-after a successful build. Caller-supplied paths are left untouched.}
+\item{raw_dir}{Directory for AFDB panel CSVs and/or official dumps. If
+\code{NULL}, downloads to a temp directory removed after a successful
+build. Homodimer files use \code{uniprotAccession} and \code{taxId}.}
 
 \item{version}{Version label.}
 
@@ -27,16 +28,7 @@ after a successful build. Caller-supplied paths are left untouched.}
 Path to saved RDS.
 }
 \description{
-Combines heterodimer and homodimer predictions. When no local CSVs are
-present, downloads both NVIDIA/AFDB metadata tables from EBI FTP into
-ephemeral staging (heterodimer ~2 GB, homodimer ~6 GB), writes an edge RDS
-with all parsed human edges and native scores, then deletes owned staging
-on success. Apply confidence cuts at query time with
-\code{\link{extract_panel_interactions}} (\code{score_min} /
-\code{score_max}).
-}
-\details{
-Homodimer metadata uses columns \code{uniprotAccession} and \code{taxId};
-heterodimers use \code{uniprot_ac_1}/\code{uniprot_ac_2} and
-\code{tax_id_1}/\code{tax_id_2}.
+Build a cached AlphaFold complex interaction database from local CSVs or
+EBI FTP downloads (~2-8 GB total). Filter by confidence with
+\code{\link{extract_panel_interactions}}.
 }

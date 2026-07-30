@@ -13,10 +13,8 @@ build_string_database(
 )
 }
 \arguments{
-\item{raw_dir}{Directory for STRING download files (links + aliases).
-When \code{NULL} (default), files are downloaded into a temporary staging
-directory that is removed after a successful build. Caller-supplied paths
-are left untouched.}
+\item{raw_dir}{Directory for STRING download files. If \code{NULL}, downloads
+to a temp directory removed after a successful build.}
 
 \item{version}{STRING version label (default \code{"12.0"}).}
 
@@ -30,8 +28,6 @@ are left untouched.}
 Path to saved RDS.
 }
 \description{
-Maintainer helper: downloads STRING release files into ephemeral staging
-(or reads an existing \code{raw_dir}), writes an edge RDS via
-\code{\link{save_interaction_database}}, then deletes owned staging on
-success.
+Download STRING release files and write a cached interaction-database RDS
+(human by default).
 }

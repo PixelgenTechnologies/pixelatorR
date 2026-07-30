@@ -19,9 +19,8 @@ normalise_interaction_edges(
 
 \item{score_cols}{Optional character vector of numeric score columns to retain.}
 
-\item{additional_cols}{Optional character vector of extra columns to copy
-through under their native names (non-score metadata such as
-\code{network} or \code{Experimental System}).}
+\item{additional_cols}{Extra non-score columns to retain (e.g. \code{network},
+\code{Experimental System}).}
 }
 \value{
 Tibble with canonical columns.

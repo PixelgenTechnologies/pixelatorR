@@ -12,26 +12,17 @@ build_biogrid_database(
 }
 \arguments{
 \item{raw_file}{Optional path to a local
-\code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. When \code{NULL}, the
-release is downloaded into ephemeral staging.}
+\code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. If \code{NULL}, the
+release is downloaded to a temp directory removed after a successful build.}
 
-\item{version}{BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.}
+\item{version}{BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.
+\code{"latest"} resolves the release from the downloaded filename.}
 
 \item{cache_dir}{Output interaction database cache.}
 }
 \value{
-Path to saved RDS.
+Path to saved RDS (release id and \code{biogrid_latest.rds}).
 }
 \description{
-Downloads the BioGRID multi-validated physical (MV-Physical) tab3 dump for
-a real release id. \code{version = "latest"} fetches
-\code{BIOGRID-MV-Physical-LATEST.tab3.zip} and resolves the concrete release
-from the extracted \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} filename.
-A concrete \code{version} such as \code{"5.0.259"} downloads that release
-from the BioGRID Release Archive.
-}
-\details{
-The edge RDS is always saved under the resolved BioGRID release id (and
-copied to \code{biogrid_latest.rds}). Owned staging downloads are deleted
-after a successful build.
+Download BioGRID MV-Physical tab3 data and write a cached RDS.
 }

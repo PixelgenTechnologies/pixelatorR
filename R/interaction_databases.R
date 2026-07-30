@@ -248,9 +248,7 @@
 
 #' Default cache directory for interaction databases
 #'
-#' Sole persistent store for built edge RDS files. Builders download raw vendor
-#' dumps into ephemeral staging, write an RDS here, then delete the staging
-#' files on success.
+#' Directory where built interaction-database RDS files are cached.
 #'
 #' @return Character path under \code{tools::R_user_dir("pixelatorR", "cache")}.
 #' @export
@@ -266,9 +264,8 @@ interaction_database_cache_dir <- function() {
 #' @param edges Data frame with at least two UniProt columns.
 #' @param a_col,b_col Column names for the two ends.
 #' @param score_cols Optional character vector of numeric score columns to retain.
-#' @param additional_cols Optional character vector of extra columns to copy
-#'   through under their native names (non-score metadata such as
-#'   \code{network} or \code{Experimental System}).
+#' @param additional_cols Extra non-score columns to retain (e.g. \code{network},
+#'   \code{Experimental System}).
 #' @return Tibble with canonical columns.
 #' @export
 normalise_interaction_edges <- function(
@@ -489,10 +486,9 @@ save_interaction_database <- function(
 #'   \code{"alphafold"}.
 #' @param version Version label or \code{"latest"}.
 #' @param cache_dir Cache directory.
-#' @param build_if_missing If \code{TRUE} and the edge RDS is missing, run the
-#'   matching \code{build_*_database()} (download into ephemeral staging, write
-#'   RDS, delete staging) then load. Defaults to \code{FALSE} so loads never
-#'   surprise-download. Extra builder arguments can be passed via \code{...}.
+#' @param build_if_missing If \code{TRUE} and the RDS is missing, build the
+#'   database first, then load. Default \code{FALSE}. Extra builder arguments
+#'   go via \code{...}.
 #' @param ... Forwarded to \code{build_*_database()} when
 #'   \code{build_if_missing = TRUE}.
 #' @return List with \code{edges} (tibble) and \code{meta}.
@@ -680,19 +676,8 @@ create_marker_uniprot_map <- function(
 
 #' Extract known database interactions for a marker panel
 #'
-#' Maps panel markers to UniProt accessions, loads an interaction database,
-#' and returns undirected marker pairs with a registered database entry after
-#' optional score / network filters.
-#' UniProt self-interactions are returned only as marker self-pairs. When
-#' multiple marker names map to the same UniProt accession, a self-interaction
-#' does not create interactions between those different marker names.
-#' Conversely, interactions between different UniProt accessions are not
-#' returned as marker self-pairs. Marker names are ordered alphabetically, and
-#' the corresponding UniProt accessions are reordered with them.
-#' When multiple UniProt edges collapse to the same marker pair, the row with
-#' the highest score envelope is kept so UniProt IDs and additional columns
-#' stay aligned with the reported scores. For databases without score columns,
-#' the first remaining edge for that marker pair is kept.
+#' Return undirected marker-marker pairs from an interaction database, after
+#' optional score/network filters.
 #'
 #' @param markers Character vector of panel marker names.
 #' @param database Interaction database key.
@@ -714,30 +699,34 @@ create_marker_uniprot_map <- function(
 #' @param build_if_missing Passed to \code{\link{load_interaction_database}}.
 #'   Defaults to \code{FALSE}.
 #' @return A tibble of panel edges with \code{marker_1}, \code{marker_2},
-#'   \code{uniprot_a}, \code{uniprot_b}, native score columns, and any
-#'   \code{additional_columns} from the database. Pass
-#'   \code{marker_1}/\code{marker_2} columns to
+#'   \code{uniprot_a}, \code{uniprot_b}, score columns, and any extra metadata
+#'   columns from the database. Pass \code{marker_1}/\code{marker_2} columns to
 #'   \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 #'
+#' @section Pair mapping:
+#' \itemize{
+#'   \item UniProt self-interactions become marker self-pairs only. Shared
+#'     UniProt accessions across markers do not invent hetero pairs from a
+#'     homodimer edge; hetero UniProt edges do not become marker self-pairs.
+#'   \item Marker names are ordered alphabetically; UniProt columns are
+#'     reordered with them.
+#'   \item Duplicate marker pairs keep the row with the highest score (or the
+#'     first edge when the database has no scores).
+#' }
+#'
 #' @section Score filtering:
-#' Edge RDS files keep native score columns rather than a single synthetic
-#' \code{score}. Discover them with
+#' Score columns depend on the database. List them with
 #' \code{load_interaction_database(...)$meta$score_columns}:
 #'
 #' | Database | Score columns |
 #' | --- | --- |
-#' | STRING | \code{combined_score} (classic 0-1000 scale) |
+#' | STRING | \code{combined_score} (0-1000) |
 #' | AlphaFold | \code{ipSAE}, \code{pDockQ2} (typically 0-1) |
 #' | BioGRID | none |
 #'
-#' - \code{score_min}: keep rows where \code{column >= value}
-#' - \code{score_max}: keep rows where \code{column < value}
-#' - Same column in both: \code{(x >= min) & (x < max)}
-#' - \code{score_combine}: how predicates **across columns** combine
-#'   (\code{"any"} = OR, \code{"all"} = AND)
-#' - Both \code{score_min} and \code{score_max} must be fully named numeric
-#'   vectors when non-\code{NULL}
-#' - Non-\code{NULL} thresholds on a database with no score columns error
+#' \code{score_min} and \code{score_max} must be fully named numeric vectors
+#' when non-\code{NULL}. Thresholds error when the database has no score
+#' columns.
 #'
 #' Examples:
 #'
@@ -958,15 +947,11 @@ extract_panel_interactions <- function(
 
 #' Build STRING physical / full link database (human)
 #'
-#' Maintainer helper: downloads STRING release files into ephemeral staging
-#' (or reads an existing \code{raw_dir}), writes an edge RDS via
-#' \code{\link{save_interaction_database}}, then deletes owned staging on
-#' success.
+#' Download STRING release files and write a cached interaction-database RDS
+#' (human by default).
 #'
-#' @param raw_dir Directory for STRING download files (links + aliases).
-#'   When \code{NULL} (default), files are downloaded into a temporary staging
-#'   directory that is removed after a successful build. Caller-supplied paths
-#'   are left untouched.
+#' @param raw_dir Directory for STRING download files. If \code{NULL}, downloads
+#'   to a temp directory removed after a successful build.
 #' @param version STRING version label (default \code{"12.0"}).
 #' @param cache_dir Output interaction database cache.
 #' @param species NCBI taxon (default human 9606).
@@ -1130,23 +1115,15 @@ build_string_database <- function(
 
 #' Build BioGRID physical interaction database (human)
 #'
-#' Downloads the BioGRID multi-validated physical (MV-Physical) tab3 dump for
-#' a real release id. \code{version = "latest"} fetches
-#' \code{BIOGRID-MV-Physical-LATEST.tab3.zip} and resolves the concrete release
-#' from the extracted \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} filename.
-#' A concrete \code{version} such as \code{"5.0.259"} downloads that release
-#' from the BioGRID Release Archive.
-#'
-#' The edge RDS is always saved under the resolved BioGRID release id (and
-#' copied to \code{biogrid_latest.rds}). Owned staging downloads are deleted
-#' after a successful build.
+#' Download BioGRID MV-Physical tab3 data and write a cached RDS.
 #'
 #' @param raw_file Optional path to a local
-#'   \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. When \code{NULL}, the
-#'   release is downloaded into ephemeral staging.
+#'   \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. If \code{NULL}, the
+#'   release is downloaded to a temp directory removed after a successful build.
 #' @param version BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.
+#'   \code{"latest"} resolves the release from the downloaded filename.
 #' @param cache_dir Output interaction database cache.
-#' @return Path to saved RDS.
+#' @return Path to saved RDS (release id and \code{biogrid_latest.rds}).
 #' @export
 build_biogrid_database <- function(
   raw_file = NULL,
@@ -1338,23 +1315,16 @@ build_biogrid_database <- function(
 
 #' Build AlphaFold DB complex database
 #'
-#' Combines heterodimer and homodimer predictions. When no local CSVs are
-#' present, downloads both NVIDIA/AFDB metadata tables from EBI FTP into
-#' ephemeral staging (heterodimer ~2 GB, homodimer ~6 GB), writes an edge RDS
-#' with all parsed human edges and native scores, then deletes owned staging
-#' on success. Apply confidence cuts at query time with
-#' \code{\link{extract_panel_interactions}} (\code{score_min} /
-#' \code{score_max}).
-#'
-#' Homodimer metadata uses columns \code{uniprotAccession} and \code{taxId};
-#' heterodimers use \code{uniprot_ac_1}/\code{uniprot_ac_2} and
-#' \code{tax_id_1}/\code{tax_id_2}.
+#' Build a cached AlphaFold complex interaction database from local CSVs or
+#' EBI FTP downloads (~2-8 GB total). Filter by confidence with
+#' \code{\link{extract_panel_interactions}}.
 #'
 #' @param heterodimer_file Optional local heterodimer metadata CSV. Ignored when
-#'   missing; panel CSVs under \code{raw_dir} are tried next.
-#' @param raw_dir Directory for AFDB panel CSVs and/or official dumps. When
-#'   \code{NULL} (default), a temporary staging directory is used and removed
-#'   after a successful build. Caller-supplied paths are left untouched.
+#'   missing; panel CSVs under \code{raw_dir} are tried next. Expected columns:
+#'   \code{uniprot_ac_1}/\code{uniprot_ac_2}, \code{tax_id_1}/\code{tax_id_2}.
+#' @param raw_dir Directory for AFDB panel CSVs and/or official dumps. If
+#'   \code{NULL}, downloads to a temp directory removed after a successful
+#'   build. Homodimer files use \code{uniprotAccession} and \code{taxId}.
 #' @param version Version label.
 #' @param cache_dir Output interaction database cache.
 #' @return Path to saved RDS.
@@ -1529,10 +1499,8 @@ build_alphafold_database <- function(
 
 #' Build all three interaction databases
 #'
-#' Maintainer helper that runs each \code{build_*_database()} writer. Missing
-#' raw dumps are downloaded into ephemeral staging and removed after each
-#' successful build. STRING is built with both physical and full networks
-#' (\code{include_full = TRUE}).
+#' Build STRING, BioGRID, and AlphaFold databases into the cache. STRING
+#' includes physical and full networks (\code{include_full = TRUE}).
 #'
 #' @param cache_dir Output interaction database cache.
 #' @return Named list of RDS paths.

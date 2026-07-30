@@ -49,47 +49,41 @@ Defaults to \code{FALSE}.}
 }
 \value{
 A tibble of panel edges with \code{marker_1}, \code{marker_2},
-\code{uniprot_a}, \code{uniprot_b}, native score columns, and any
-\code{additional_columns} from the database. Pass
-\code{marker_1}/\code{marker_2} columns to
+\code{uniprot_a}, \code{uniprot_b}, score columns, and any extra metadata
+columns from the database. Pass \code{marker_1}/\code{marker_2} columns to
 \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 }
 \description{
-Maps panel markers to UniProt accessions, loads an interaction database,
-and returns undirected marker pairs with a registered database entry after
-optional score / network filters.
-UniProt self-interactions are returned only as marker self-pairs. When
-multiple marker names map to the same UniProt accession, a self-interaction
-does not create interactions between those different marker names.
-Conversely, interactions between different UniProt accessions are not
-returned as marker self-pairs. Marker names are ordered alphabetically, and
-the corresponding UniProt accessions are reordered with them.
-When multiple UniProt edges collapse to the same marker pair, the row with
-the highest score envelope is kept so UniProt IDs and additional columns
-stay aligned with the reported scores. For databases without score columns,
-the first remaining edge for that marker pair is kept.
+Return undirected marker-marker pairs from an interaction database, after
+optional score/network filters.
 }
+\section{Pair mapping}{
+
+\itemize{
+\item UniProt self-interactions become marker self-pairs only. Shared
+UniProt accessions across markers do not invent hetero pairs from a
+homodimer edge; hetero UniProt edges do not become marker self-pairs.
+\item Marker names are ordered alphabetically; UniProt columns are
+reordered with them.
+\item Duplicate marker pairs keep the row with the highest score (or the
+first edge when the database has no scores).
+}
+}
+
 \section{Score filtering}{
 
-Edge RDS files keep native score columns rather than a single synthetic
-\code{score}. Discover them with
+Score columns depend on the database. List them with
 \code{load_interaction_database(...)$meta$score_columns}:\tabular{ll}{
    Database \tab Score columns \cr
-   STRING \tab \code{combined_score} (classic 0-1000 scale) \cr
+   STRING \tab \code{combined_score} (0-1000) \cr
    AlphaFold \tab \code{ipSAE}, \code{pDockQ2} (typically 0-1) \cr
    BioGRID \tab none \cr
 }
 
-\itemize{
-\item \code{score_min}: keep rows where \code{column >= value}
-\item \code{score_max}: keep rows where \code{column < value}
-\item Same column in both: \code{(x >= min) & (x < max)}
-\item \code{score_combine}: how predicates \strong{across columns} combine
-(\code{"any"} = OR, \code{"all"} = AND)
-\item Both \code{score_min} and \code{score_max} must be fully named numeric
-vectors when non-\code{NULL}
-\item Non-\code{NULL} thresholds on a database with no score columns error
-}
+
+\code{score_min} and \code{score_max} must be fully named numeric vectors
+when non-\code{NULL}. Thresholds error when the database has no score
+columns.
 
 Examples:
 

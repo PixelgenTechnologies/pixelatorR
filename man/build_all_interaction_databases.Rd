@@ -13,10 +13,8 @@ build_all_interaction_databases(cache_dir = interaction_database_cache_dir())
 Named list of RDS paths.
 }
 \description{
-Maintainer helper that runs each \code{build_*_database()} writer. Missing
-raw dumps are downloaded into ephemeral staging and removed after each
-successful build. STRING is built with both physical and full networks
-(\code{include_full = TRUE}).
+Build STRING, BioGRID, and AlphaFold databases into the cache. STRING
+includes physical and full networks (\code{include_full = TRUE}).
 }
 \seealso{
 \code{\link{build_string_database}},

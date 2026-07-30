@@ -20,10 +20,9 @@ load_interaction_database(
 
 \item{cache_dir}{Cache directory.}
 
-\item{build_if_missing}{If \code{TRUE} and the edge RDS is missing, run the
-matching \code{build_*_database()} (download into ephemeral staging, write
-RDS, delete staging) then load. Defaults to \code{FALSE} so loads never
-surprise-download. Extra builder arguments can be passed via \code{...}.}
+\item{build_if_missing}{If \code{TRUE} and the RDS is missing, build the
+database first, then load. Default \code{FALSE}. Extra builder arguments
+go via \code{...}.}
 
 \item{...}{Forwarded to \code{build_*_database()} when
 \code{build_if_missing = TRUE}.}

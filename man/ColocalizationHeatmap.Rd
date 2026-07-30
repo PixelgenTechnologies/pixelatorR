@@ -64,13 +64,9 @@ to use for clustering rows and columns. Can be any method accepted by \code{dist
 \item{clustering_method}{The clustering method to use. Can be any method
 accepted by \code{hclust}.}
 
-\item{type}{The type of plot to draw. Can be \code{"tiles"} for a typical
-heatmap where each marker pair corresponds to a filled tile or \code{"dots"}
-for a "dot plot". In the latter, the sizes of the dots are scaled by the
-\code{size_col} column. This representation has the added advantage that
-size differences can be used to highlight other important information,
-such as significance. The dot plot is a \code{ggplot} object which can
-be easily modified to customize the style.}
+\item{type}{Plot type: \code{"tiles"} for a filled-tile heatmap, or
+\code{"dots"} for a dot plot where size maps to \code{size_col}. Dot plots
+return a \code{ggplot} object.}
 
 \item{return_plot_data}{Return data formatted for plotting instead of drawing
 the heatmap.}
@@ -93,19 +89,15 @@ border. Pairs whose markers are absent from \code{data} are ignored.
 \code{highlight_color_col} when mapping border colours for
 \code{type = "dots"}.}
 
-\item{highlight_colors}{Border colour(s) for highlighted cells. When
-\code{highlight_color_col} is \code{NULL}, must be a single colour string
-(default \code{"black"}; used for both tiles and dots). When
-\code{highlight_color_col} is set (\code{type = "dots"} only), pass a
-colour palette: unnamed for
-\code{\link[ggplot2]{scale_color_gradientn}} (numeric column) or named /
-unnamed for \code{\link[ggplot2]{scale_color_manual}} (character/factor).}
+\item{highlight_colors}{Border colour(s) for highlighted cells. Single colour
+when \code{highlight_color_col} is \code{NULL} (default \code{"black"};
+tiles and dots). With \code{highlight_color_col} (\code{type = "dots"} only):
+a named vector for discrete values, or two or more colours for numeric
+values.}
 
-\item{highlight_color_col}{Optional column in \code{highlight_pairs} used to
-map border colours via \code{highlight_colors}. Supported only for
-\code{type = "dots"}; setting it with \code{type = "tiles"} errors.
-Numeric columns use a continuous colour scale; character/factor columns
-use a discrete scale. \code{NULL} (default) draws a constant border colour.}
+\item{highlight_color_col}{Column in \code{highlight_pairs} used to colour
+borders (\code{type = "dots"} only; errors with \code{"tiles"}).
+\code{NULL} (default) draws a constant border colour.}
 
 \item{highlight_stroke}{Border line width for highlighted cells.}
 
@@ -116,9 +108,8 @@ A \code{Heatmap} object/plot if \code{type = "tiles"} or a \code{ggplot}
 object/plot if \code{type = "dots"}.
 }
 \description{
-Draws a heatmap of some summary statistic between marker pairs stored in a
-\code{tbl_df}. A typical use case is to show the estimates of a differential
-colocalization analysis test (\code{\link{RunDCA}}).
+Heatmap of a summary statistic between marker pairs (e.g. DCA from
+\code{\link{RunDCA}}).
 }
 \section{Input}{
 
