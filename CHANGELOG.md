@@ -9,58 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Interaction-database helpers for building, caching, and querying protein-protein
-  interaction resources against a marker panel:
-  - `interaction_database_cache_dir()`, `normalise_interaction_edges()`,
-    `save_interaction_database()`, and `load_interaction_database()` for a
-    UniProt edge RDS cache (STRING, BioGRID, CORUM, OmniPath, AlphaFold DB).
-    Caches store native score columns declared in `meta$score_columns`
-    (STRING: `combined_score`; AlphaFold: `ipSAE`, `pDockQ2`; others: none)
-    and optional native `additional_columns` (STRING: `network`; BioGRID:
-    experimental system; CORUM: complex name; OmniPath: `sources` /
-    `references`). Edge rows no longer carry `evidence`, `resource`,
-    `resource_version`, or `in_db`; provenance is in `meta` only
-    (`meta$resource`, `meta$version`, …). Rebuild edge RDS caches after
-    upgrading so edge schemas stay current.
-    Raw vendor dumps are downloaded into ephemeral staging during
-    `build_*_database()` and removed after a successful build; only the edge
-    RDS under `interaction_database_cache_dir()` is kept.
-  - `extract_panel_interactions()` to return known marker pairs from a cached
-    database for use with `ColocalizationHeatmap(highlight_pairs = ...)`.
-    UniProt homodimers are retained as marker self-pairs only; false hetero
-    pairs from shared-accession homodimer joins and false self-pairs from
-    hetero joins are dropped. Marker and UniProt columns stay aligned after
-    lexical reordering. Score filtering uses named `score_min` (`>=`) and
-    `score_max` (`<`) with `score_combine` (`"any"` / `"all"`) across columns.
-    Missing caches error with a pointer to
-    `load_interaction_database(..., build_if_missing = TRUE)` /
-    `build_*_database()` (no auto-build by default).
-  - `load_interaction_database(build_if_missing = TRUE)` to build a missing
-    edge RDS on demand (forwards `...` to `build_*_database()`). Also available
-    on `extract_panel_interactions(build_if_missing = ...)`.
-  - `create_marker_uniprot_map()` to build a long-form marker-UniProt map from
-    Seurat / PNA assay feature metadata (`uniprot_id`, semicolon-separated).
-  - Maintainer builders `build_string_database()`, `build_biogrid_database()`,
-    `build_corum_database()`, `build_omnipath_database()`,
-    `build_alphafold_database()`, and `build_all_interaction_databases()`.
-    Missing raw dumps are downloaded into ephemeral staging automatically
-    (with an increased download timeout suitable for large files) and removed
-    after a successful build.
-    `build_biogrid_database(version=)` downloads a real BioGRID MV-Physical
-    release (`X.Y.Z` from the Release Archive, or `"latest"` which resolves
-    to the concrete id in `BIOGRID-MV-Physical-X.Y.Z.tab3.txt`).
-    AlphaFold combines hetero- and homodimer NVIDIA metadata and completes a
-    missing official dump counterpart after a partial download; all parsed
-    human edges and native scores are kept in the edge RDS (filter at extract
-    with `score_min` / `score_max`). CORUM emits U-U edges for
-    single-accession (homomer) complexes.
-    `build_all_interaction_databases()` includes the STRING full network.
-- `ColocalizationHeatmap` options `highlight_pairs`, `highlight_colors`
-  (renamed from `highlight_color`), `highlight_color_col`, and
-  `highlight_stroke` to outline selected marker pairs. Constant border
-  colour works for tiles and dots; per-pair colour mapping via
-  `highlight_color_col` is dots-only (numeric → `scale_color_gradientn`,
-  character/factor → `scale_color_manual`).
+- Interaction-database helpers for STRING, BioGRID, and AlphaFold DB:
+  - Cache/load/save (`interaction_database_cache_dir()`,
+    `normalise_interaction_edges()`, `save_interaction_database()`,
+    `load_interaction_database(build_if_missing = …)`) storing UniProt edges
+    with native `score_columns` and optional `additional_columns` (STRING:
+    `network`; BioGRID: experimental system). Raw dumps stage ephemerally
+    during `build_*_database()`; only the edge RDS is kept.
+  - `extract_panel_interactions()` for panel marker pairs (homodimer-safe
+    joins; named `score_min` / `score_max` with `score_combine`).
+  - `create_marker_uniprot_map()` from Seurat / PNA assay metadata.
+  - Builders: `build_string_database()`, `build_biogrid_database()`,
+    `build_alphafold_database()`, `build_all_interaction_databases()`.
+- `ColocalizationHeatmap` highlight options: `highlight_pairs`,
+  `highlight_colors`, `highlight_color_col` (dots-only mapping),
+  `highlight_stroke`.
 
 ## [0.18.3] - 2026-07-21
 
