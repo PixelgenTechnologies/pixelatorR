@@ -25,7 +25,8 @@ ColocalizationHeatmap(
   legend_range = NULL,
   legend_title = "",
   highlight_pairs = NULL,
-  highlight_color = "black",
+  highlight_colors = "black",
+  highlight_color_col = NULL,
   highlight_stroke = 1.2,
   ...
 )
@@ -88,9 +89,23 @@ legend range limit.}
 \item{highlight_pairs}{Optional \code{tbl_df}/data.frame with columns
 \code{marker_1} and \code{marker_2} naming pairs to outline with a cell
 border. Pairs whose markers are absent from \code{data} are ignored.
-\code{NULL} disables highlighting.}
+\code{NULL} disables highlighting. May also carry a column named by
+\code{highlight_color_col} when mapping border colours for
+\code{type = "dots"}.}
 
-\item{highlight_color}{Border colour for highlighted cells.}
+\item{highlight_colors}{Border colour(s) for highlighted cells. When
+\code{highlight_color_col} is \code{NULL}, must be a single colour string
+(default \code{"black"}; used for both tiles and dots). When
+\code{highlight_color_col} is set (\code{type = "dots"} only), pass a
+colour palette: unnamed for
+\code{\link[ggplot2]{scale_color_gradientn}} (numeric column) or named /
+unnamed for \code{\link[ggplot2]{scale_color_manual}} (character/factor).}
+
+\item{highlight_color_col}{Optional column in \code{highlight_pairs} used to
+map border colours via \code{highlight_colors}. Supported only for
+\code{type = "dots"}; setting it with \code{type = "tiles"} errors.
+Numeric columns use a continuous colour scale; character/factor columns
+use a discrete scale. \code{NULL} (default) draws a constant border colour.}
 
 \item{highlight_stroke}{Border line width for highlighted cells.}
 
@@ -153,7 +168,7 @@ ColocalizationHeatmap(
 ) &
   labs(size = "-log10p(p_adj)")
 
-# Outline selected marker pairs
+# Outline selected marker pairs (constant colour)
 ColocalizationHeatmap(
   dca_markers,
   type = "dots",
@@ -161,7 +176,22 @@ ColocalizationHeatmap(
   highlight_pairs = tibble(
     marker_1 = c("M1", "M3"),
     marker_2 = c("M2", "M5")
-  )
+  ),
+  highlight_colors = "black"
+)
+
+# Map border colours from a column in highlight_pairs (dots only)
+ColocalizationHeatmap(
+  dca_markers,
+  type = "dots",
+  size_range = c(1, 10),
+  highlight_pairs = tibble(
+    marker_1 = c("M1", "M3"),
+    marker_2 = c("M2", "M5"),
+    database = c("string", "alphafold")
+  ),
+  highlight_color_col = "database",
+  highlight_colors = c(string = "#C0392B", alphafold = "#6C3483")
 )
 
 # We can specify the order of the markers with factor levels

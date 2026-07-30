@@ -44,7 +44,8 @@ test_that("ColocalizationHeatmap works as expected", {
       prox_summarized,
       type = "dots",
       size_col = "mean_log2_ratio",
-      highlight_pairs = highlight_pairs
+      highlight_pairs = highlight_pairs,
+      highlight_colors = "black"
     )
   )
   expect_true(any(vapply(p$layers, function(l) inherits(l$geom, "GeomTile"), logical(1))))
@@ -64,7 +65,8 @@ test_that("ColocalizationHeatmap works as expected", {
     ColocalizationHeatmap(
       prox_summarized,
       type = "tiles",
-      highlight_pairs = highlight_pairs
+      highlight_pairs = highlight_pairs,
+      highlight_colors = "#C0392B"
     )
   )
   expect_no_error(
@@ -75,6 +77,40 @@ test_that("ColocalizationHeatmap works as expected", {
       highlight_pairs = highlight_pairs
     )
   )
+
+  # Discrete border colours from highlight_color_col (dots)
+  highlight_disc <- highlight_pairs %>%
+    mutate(database = "string")
+  expect_no_error(
+    p_disc <- ColocalizationHeatmap(
+      prox_summarized,
+      type = "dots",
+      size_col = "mean_log2_ratio",
+      highlight_pairs = highlight_disc,
+      highlight_color_col = "database",
+      highlight_colors = c(string = "#C0392B", alphafold = "#6C3483")
+    )
+  )
+  expect_true(any(vapply(p_disc$scales$scales, function(s) {
+    inherits(s, "ScaleDiscrete") && "colour" %in% s$aesthetics
+  }, logical(1))))
+
+  # Continuous border colours from highlight_color_col (dots)
+  highlight_cont <- highlight_pairs %>%
+    mutate(score = 0.8)
+  expect_no_error(
+    p_cont <- ColocalizationHeatmap(
+      prox_summarized,
+      type = "dots",
+      size_col = "mean_log2_ratio",
+      highlight_pairs = highlight_cont,
+      highlight_color_col = "score",
+      highlight_colors = c("#FEE5D9", "#A50F15")
+    )
+  )
+  expect_true(any(vapply(p_cont$scales$scales, function(s) {
+    inherits(s, "ScaleContinuous") && "colour" %in% s$aesthetics
+  }, logical(1))))
 
   # Factor marker columns must still match character highlight_pairs
   prox_factor <- prox_summarized %>%
@@ -109,5 +145,52 @@ test_that("ColocalizationHeatmap fails with invalid input", {
       prox_summarized,
       highlight_pairs = tibble(a = 1, b = 2)
     )
+  )
+
+  markers <- unique(c(prox_summarized$marker_1, prox_summarized$marker_2))
+  highlight_pairs <- tibble(
+    marker_1 = markers[1],
+    marker_2 = markers[min(2, length(markers))],
+    database = "string",
+    score = 0.5
+  )
+  expect_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      highlight_colors = c("black", "red")
+    ),
+    "highlight_color_col"
+  )
+  expect_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      type = "tiles",
+      highlight_pairs = highlight_pairs,
+      highlight_color_col = "database",
+      highlight_colors = c(string = "black")
+    ),
+    "dots"
+  )
+  expect_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      type = "dots",
+      size_col = "mean_log2_ratio",
+      highlight_pairs = highlight_pairs,
+      highlight_color_col = "database",
+      highlight_colors = c(alphafold = "#6C3483")
+    ),
+    "missing named colours"
+  )
+  expect_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      type = "dots",
+      size_col = "mean_log2_ratio",
+      highlight_pairs = highlight_pairs,
+      highlight_color_col = "score",
+      highlight_colors = "red"
+    ),
+    "scale_color_gradientn"
   )
 })
