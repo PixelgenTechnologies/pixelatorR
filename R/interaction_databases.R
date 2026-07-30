@@ -709,7 +709,7 @@ create_marker_uniprot_map <- function(
 #'   (\code{column < value}), or \code{NULL} to skip.
 #' @param score_combine How to combine predicates across score columns:
 #'   \code{"any"} (OR, default) or \code{"all"} (AND). Bounds on the same
-#'   column are always ANDed into one per-column predicate.
+#'   column are always combined with AND into one per-column predicate.
 #' @param string_network For STRING: \code{"physical"} or \code{"full"}
 #'   (filters the \code{network} additional column).
 #' @param cache_dir Interaction database cache directory.
@@ -738,7 +738,8 @@ create_marker_uniprot_map <- function(
 #' - Same column in both: \code{(x >= min) & (x < max)}
 #' - \code{score_combine}: how predicates **across columns** combine
 #'   (\code{"any"} = OR, \code{"all"} = AND)
-#' - Both args must be fully named numeric vectors when non-\code{NULL}
+#' - Both \code{score_min} and \code{score_max} must be fully named numeric
+#'   vectors when non-\code{NULL}
 #' - Non-\code{NULL} thresholds on a database with no score columns error
 #'
 #' Examples:

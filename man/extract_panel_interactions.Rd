@@ -35,7 +35,7 @@ columns in the loaded database (see \code{meta$score_columns}).}
 
 \item{score_combine}{How to combine predicates across score columns:
 \code{"any"} (OR, default) or \code{"all"} (AND). Bounds on the same
-column are always ANDed into one per-column predicate.}
+column are always combined with AND into one per-column predicate.}
 
 \item{string_network}{For STRING: \code{"physical"} or \code{"full"}
 (filters the \code{network} additional column).}
@@ -86,7 +86,8 @@ Edge RDS files keep native score columns rather than a single synthetic
 \item Same column in both: \code{(x >= min) & (x < max)}
 \item \code{score_combine}: how predicates \strong{across columns} combine
 (\code{"any"} = OR, \code{"all"} = AND)
-\item Both args must be fully named numeric vectors when non-\code{NULL}
+\item Both \code{score_min} and \code{score_max} must be fully named numeric
+vectors when non-\code{NULL}
 \item Non-\code{NULL} thresholds on a database with no score columns error
 }
 

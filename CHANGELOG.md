@@ -55,11 +55,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     with `score_min` / `score_max`). CORUM emits U-U edges for
     single-accession (homomer) complexes.
     `build_all_interaction_databases()` includes the STRING full network.
-- `ColocalizationHeatmap` options `highlight_pairs`, `highlight_colors`,
-  `highlight_color_col`, and `highlight_stroke` to outline selected marker
-  pairs. Constant border colour works for tiles and dots; per-pair colour
-  mapping via `highlight_color_col` is dots-only (numeric →
-  `scale_color_gradientn`, character/factor → `scale_color_manual`).
+- `ColocalizationHeatmap` options `highlight_pairs`, `highlight_colors`
+  (renamed from `highlight_color`), `highlight_color_col`, and
+  `highlight_stroke` to outline selected marker pairs. Constant border
+  colour works for tiles and dots; per-pair colour mapping via
+  `highlight_color_col` is dots-only (numeric → `scale_color_gradientn`,
+  character/factor → `scale_color_manual`).
 
 ## [0.18.3] - 2026-07-21
 

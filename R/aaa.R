@@ -20,7 +20,7 @@ globalVariables(
     "p.value", "p1", "p2", "pair", "patch", "pct.1", "pct.2", "pearson_z",
     "png", "pxl_file", "quadrant", "r", "read_count", "reads",
     "reads_in_component", "receiver_freq", "receiver_unmixed_freq", "ref_n",
-    "references", "rn", "rs_ref", "rs_tgt", "score", "sigma",
+    "references", "rn", "rs_ref", "rs_tgt", "score", ".score_rank", "sigma",
     "simulated", "size", "sources", "string_protein_id", "swap", "target_freq",
     "target_n", "target_unmixed_freq", "tau", "tau_type", "text_color",
     "theoretical_max_edges", "theoretical_max_nodes", "to", "total", "tp",

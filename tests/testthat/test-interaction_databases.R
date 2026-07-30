@@ -169,6 +169,9 @@ test_that("save_interaction_database and load_interaction_database work as expec
   expect_true(file.exists(latest_path))
   expect_equal(db$meta$additional_columns, "network")
   expect_equal(db$meta$resource, "string")
+  expect_false(
+    any(c("evidence", "resource", "resource_version", "in_db") %in% names(db$edges))
+  )
 
   # Non-score annotation columns require additional_columns when declared
   annotated <- db$edges
@@ -905,8 +908,9 @@ test_that("build_alphafold_database works as expected", {
   expect_true(all(db$edges$uniprot_a <= db$edges$uniprot_b))
   expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
   expect_setequal(db$edges$ipSAE, c(0.8, 0.1, NA_real_))
-  expect_false("evidence" %in% names(db$edges))
-  expect_false("score" %in% names(db$edges))
+  expect_false(
+    any(c("evidence", "resource", "resource_version", "in_db", "score") %in% names(db$edges))
+  )
 
   # Query-time filter recovers the former high-confidence subset
   out <- extract_panel_interactions(
@@ -993,7 +997,9 @@ test_that("build_corum_database works as expected", {
   expect_true(any(db$edges$uniprot_a == "A00001" & db$edges$uniprot_b == "A00001"))
   expect_equal(db$meta$additional_columns, "name")
   expect_true("name" %in% names(db$edges))
-  expect_false("evidence" %in% names(db$edges))
+  expect_false(
+    any(c("evidence", "resource", "resource_version", "in_db") %in% names(db$edges))
+  )
 })
 
 test_that("build_corum_database fails with invalid input", {
