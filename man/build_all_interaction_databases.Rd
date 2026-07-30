@@ -2,7 +2,7 @@
 % Please edit documentation in R/interaction_databases.R
 \name{build_all_interaction_databases}
 \alias{build_all_interaction_databases}
-\title{Build all five interaction databases}
+\title{Build all three interaction databases}
 \usage{
 build_all_interaction_databases(cache_dir = interaction_database_cache_dir())
 }
@@ -16,14 +16,11 @@ Named list of RDS paths.
 Maintainer helper that runs each \code{build_*_database()} writer. Missing
 raw dumps are downloaded into ephemeral staging and removed after each
 successful build. STRING is built with both physical and full networks
-(\code{include_full = TRUE}). OmniPath defaults to the commercial license
-filter.
+(\code{include_full = TRUE}).
 }
 \seealso{
 \code{\link{build_string_database}},
 \code{\link{build_biogrid_database}},
-\code{\link{build_corum_database}},
-\code{\link{build_omnipath_database}},
 \code{\link{build_alphafold_database}},
 \code{\link{extract_panel_interactions}}
 }

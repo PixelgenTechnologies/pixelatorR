@@ -8,7 +8,6 @@ BluesCherry
 BluesGrayCherry
 CLR
 CMD
-CORUM
 CellGraph
 CellGraphAssay
 CellGraphs
@@ -46,7 +45,6 @@ Mulè
 Normalise
 NxD
 ORCID
-OmniPath
 Ord
 PBMC
 PBMCs
@@ -98,7 +96,6 @@ codecov
 colocalization
 colour
 combined_score
-coreComplexes
 covary
 cyans
 deduplicated

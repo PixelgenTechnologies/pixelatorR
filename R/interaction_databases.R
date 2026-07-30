@@ -373,7 +373,7 @@ normalise_interaction_edges <- function(
 #' @export
 save_interaction_database <- function(
   edges,
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = c("string", "biogrid", "alphafold"),
   version,
   cache_dir = interaction_database_cache_dir(),
   score_columns = NULL,
@@ -485,8 +485,8 @@ save_interaction_database <- function(
 
 #' Load an interaction database edge RDS
 #'
-#' @param database One of \code{"string"}, \code{"biogrid"}, \code{"corum"},
-#'   \code{"omnipath"}, or \code{"alphafold"}.
+#' @param database One of \code{"string"}, \code{"biogrid"}, or
+#'   \code{"alphafold"}.
 #' @param version Version label or \code{"latest"}.
 #' @param cache_dir Cache directory.
 #' @param build_if_missing If \code{TRUE} and the edge RDS is missing, run the
@@ -501,7 +501,7 @@ save_interaction_database <- function(
 #'   \code{\link{build_all_interaction_databases}}
 #' @export
 load_interaction_database <- function(
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = c("string", "biogrid", "alphafold"),
   version = "latest",
   cache_dir = interaction_database_cache_dir(),
   build_if_missing = FALSE,
@@ -541,8 +541,6 @@ load_interaction_database <- function(
     switch(database,
       string = do.call(build_string_database, builder_args),
       biogrid = do.call(build_biogrid_database, builder_args),
-      corum = do.call(build_corum_database, builder_args),
-      omnipath = do.call(build_omnipath_database, builder_args),
       alphafold = do.call(build_alphafold_database, builder_args)
     )
     if (!file.exists(path) || !isTRUE(file.info(path)$size > 0)) {
@@ -730,7 +728,7 @@ create_marker_uniprot_map <- function(
 #' | --- | --- |
 #' | STRING | \code{combined_score} (classic 0-1000 scale) |
 #' | AlphaFold | \code{ipSAE}, \code{pDockQ2} (typically 0-1) |
-#' | BioGRID, CORUM, OmniPath | none |
+#' | BioGRID | none |
 #'
 #' - \code{score_min}: keep rows where \code{column >= value}
 #' - \code{score_max}: keep rows where \code{column < value}
@@ -800,7 +798,7 @@ create_marker_uniprot_map <- function(
 #' @export
 extract_panel_interactions <- function(
   markers,
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = c("string", "biogrid", "alphafold"),
   marker_uniprot_map,
   score_min = NULL,
   score_max = NULL,
@@ -1338,244 +1336,6 @@ build_biogrid_database <- function(
   return(path)
 }
 
-#' Build CORUM co-membership database (human)
-#'
-#' Downloads OmniPath-served CORUM complexes when \code{corum_file} is missing.
-#' Prefer an official CORUM file when present. Complexes with a single UniProt
-#' accession become homomer edges (\code{uniprot_a == uniprot_b}). Owned staging
-#' downloads are deleted after a successful build.
-#'
-#' @param corum_file Path to OmniPath CORUM complexes TSV or official
-#'   coreComplexes. When \code{NULL} (default), the file is downloaded into
-#'   ephemeral staging.
-#' @param version Version label.
-#' @param cache_dir Output interaction database cache.
-#' @return Path to saved RDS.
-#' @export
-build_corum_database <- function(
-  corum_file = NULL,
-  version = "omnipath_corum",
-  cache_dir = interaction_database_cache_dir()
-) {
-  rlang::check_installed("data.table")
-  owned_staging <- is.null(corum_file)
-  staging_dir <- NULL
-  if (owned_staging) {
-    staging_dir <- .interaction_database_staging_dir("corum")
-    corum_file <- file.path(staging_dir, "omnipath_complexes_corum.tsv")
-  } else {
-    assert_single_value(corum_file, type = "string")
-  }
-  success <- FALSE
-  on.exit(
-    .finalize_interaction_database_staging(staging_dir, owned_staging, success),
-    add = TRUE
-  )
-  if (!file.exists(corum_file)) {
-    .download_if_missing(
-      "https://omnipathdb.org/complexes?databases=CORUM",
-      corum_file
-    )
-  }
-  first <- readLines(corum_file, n = 5, warn = FALSE)
-  if (any(grepl("<!DOCTYPE html|<html", first, ignore.case = TRUE))) {
-    cli::cli_abort("CORUM file looks like HTML, not data: {.path {corum_file}}.")
-  }
-
-  dt <- data.table::fread(corum_file, sep = "\t", quote = "", showProgress = FALSE)
-  comp_col <- .first_present_col(
-    dt,
-    c(
-      "components",
-      "subunits_uniprot_id",
-      "subunits",
-      "subunits(UniProt IDs)"
-    )
-  )
-  if (is.na(comp_col)) {
-    cli::cli_abort("No components column in {.path {corum_file}}.")
-  }
-  name_col <- .first_present_col(
-    dt,
-    c("name", "complex_name", "ComplexName")
-  )
-
-  pieces <- lapply(seq_len(nrow(dt)), function(i) {
-    ids <- unique(trimws(unlist(strsplit(
-      as.character(dt[[comp_col]][[i]]),
-      "[_;,]"
-    ))))
-    ids <- ids[ids != "" & !is.na(ids)]
-    if (length(ids) < 1) {
-      return(NULL)
-    }
-    # Single-accession complexes (homomers) become U-U edges
-    if (length(ids) == 1) {
-      row <- tibble(uniprot_a = ids, uniprot_b = ids)
-    } else {
-      grid <- utils::combn(ids, 2)
-      row <- tibble(
-        uniprot_a = grid[1, ],
-        uniprot_b = grid[2, ]
-      )
-    }
-    if (!is.na(name_col)) {
-      row[[name_col]] <- as.character(dt[[name_col]][[i]])
-    }
-    row
-  })
-  pieces <- pieces[!vapply(pieces, is.null, logical(1))]
-  if (length(pieces) < 1) {
-    pairs <- tibble(uniprot_a = character(), uniprot_b = character())
-  } else {
-    pairs <- bind_rows(pieces)
-  }
-  additional_cols <- if (!is.na(name_col) && name_col %in% names(pairs)) {
-    name_col
-  } else {
-    NULL
-  }
-  edges <- normalise_interaction_edges(
-    pairs,
-    additional_cols = additional_cols
-  )
-
-  path <- save_interaction_database(
-    edges = edges,
-    database = "corum",
-    version = version,
-    cache_dir = cache_dir,
-    score_columns = NULL,
-    additional_columns = additional_cols,
-    source_url = paste(
-      "https://omnipathdb.org/complexes?databases=CORUM;",
-      "https://mips.helmholtz-muenchen.de/corum/"
-    ),
-    license = paste(
-      "Creative Commons Attribution 4.0 International (CC BY 4.0);",
-      "attribution required"
-    ),
-    citation = paste(
-      "Steinkamp R, Tsitsiridis G, Brauner B, Montrone C, Fobo G,",
-      "Frishman G, Avram S, Oprea TI, Ruepp A. (2025). CORUM in 2024:",
-      "protein complexes as drug targets. Nucleic Acids Research",
-      "53(D1):D651-D657. https://doi.org/10.1093/nar/gkae1033"
-    )
-  )
-  success <- TRUE
-  return(path)
-}
-
-#' Build OmniPath interaction database
-#'
-#' Downloads OmniPath interactions into ephemeral staging when
-#' \code{interactions_file} is \code{NULL}. Owned staging is deleted after a
-#' successful build.
-#'
-#' @param interactions_file Path to OmniPath interactions TSV. When
-#'   \code{NULL}, downloaded into ephemeral staging (not for
-#'   \code{license = "unknown"}, which requires a local file).
-#' @param version Version label.
-#' @param cache_dir Output interaction database cache.
-#' @param license OmniPath license filter used when the file was downloaded
-#'   (\code{"commercial"} recommended for product builds).
-#' @return Path to saved RDS.
-#' @export
-build_omnipath_database <- function(
-  interactions_file = NULL,
-  version = "webservice",
-  cache_dir = interaction_database_cache_dir(),
-  license = c("commercial", "academic", "unknown")
-) {
-  rlang::check_installed("data.table")
-  license <- match.arg(license)
-  owned_staging <- is.null(interactions_file)
-  staging_dir <- NULL
-  if (owned_staging) {
-    if (identical(license, "unknown")) {
-      cli::cli_abort(c(
-        "x" = "Missing OmniPath interactions file.",
-        "i" = paste(
-          "Pass {.arg interactions_file} when {.arg license} is {.val unknown}."
-        )
-      ))
-    }
-    staging_dir <- .interaction_database_staging_dir("omnipath")
-    interactions_file <- file.path(
-      staging_dir,
-      paste0("interactions_omnipath_", license, ".tsv")
-    )
-  } else {
-    assert_single_value(interactions_file, type = "string")
-  }
-  success <- FALSE
-  on.exit(
-    .finalize_interaction_database_staging(staging_dir, owned_staging, success),
-    add = TRUE
-  )
-  if (!file.exists(interactions_file)) {
-    if (license == "unknown") {
-      cli::cli_abort(
-        "Missing OmniPath interactions file: {.path {interactions_file}}."
-      )
-    }
-    url <- paste0(
-      "https://omnipathdb.org/interactions?",
-      "datasets=omnipath&fields=sources,references,curation_effort&genesymbols=1",
-      "&license=", license
-    )
-    .download_if_missing(url, interactions_file)
-  }
-  dt <- data.table::fread(
-    interactions_file,
-    sep = "\t",
-    quote = "",
-    showProgress = FALSE
-  )
-  src <- .first_present_col(dt, c("source", "uniprot_a"))
-  tgt <- .first_present_col(dt, c("target", "uniprot_b"))
-  if (is.na(src) || is.na(tgt)) {
-    cli::cli_abort("Could not find source/target UniProt columns.")
-  }
-  pairs <- data.frame(
-    uniprot_a = as.character(dt[[src]]),
-    uniprot_b = as.character(dt[[tgt]]),
-    stringsAsFactors = FALSE
-  )
-  additional_cols <- intersect(c("sources", "references"), colnames(dt))
-  for (col in additional_cols) {
-    pairs[[col]] <- as.character(dt[[col]])
-  }
-  edges <- normalise_interaction_edges(
-    pairs,
-    additional_cols = if (length(additional_cols)) additional_cols else NULL
-  )
-
-  path <- save_interaction_database(
-    edges = edges,
-    database = "omnipath",
-    version = paste0(version, "_", license),
-    cache_dir = cache_dir,
-    score_columns = NULL,
-    additional_columns = if (length(additional_cols)) additional_cols else NULL,
-    source_url = "https://omnipathdb.org/interactions",
-    license = paste0(
-      "No single OmniPath data license; contributing-resource licenses ",
-      "apply; web-service license filter=", license,
-      ". Cite and comply with each contributing resource"
-    ),
-    citation = paste(
-      "T\u00fcrei D, Valdeolivas A, Gul L, et al. (2021). Integrated intra-",
-      "and intercellular signaling knowledge for multicellular omics",
-      "analysis. Molecular Systems Biology 17:e9923.",
-      "https://doi.org/10.15252/msb.20209923; also cite the contributing",
-      "resources identified in the sources/references fields"
-    )
-  )
-  success <- TRUE
-  return(path)
-}
-
 #' Build AlphaFold DB complex database
 #'
 #' Combines heterodimer and homodimer predictions. When no local CSVs are
@@ -1767,20 +1527,17 @@ build_alphafold_database <- function(
   return(path)
 }
 
-#' Build all five interaction databases
+#' Build all three interaction databases
 #'
 #' Maintainer helper that runs each \code{build_*_database()} writer. Missing
 #' raw dumps are downloaded into ephemeral staging and removed after each
 #' successful build. STRING is built with both physical and full networks
-#' (\code{include_full = TRUE}). OmniPath defaults to the commercial license
-#' filter.
+#' (\code{include_full = TRUE}).
 #'
 #' @param cache_dir Output interaction database cache.
 #' @return Named list of RDS paths.
 #' @seealso \code{\link{build_string_database}},
 #'   \code{\link{build_biogrid_database}},
-#'   \code{\link{build_corum_database}},
-#'   \code{\link{build_omnipath_database}},
 #'   \code{\link{build_alphafold_database}},
 #'   \code{\link{extract_panel_interactions}}
 #' @export
@@ -1793,11 +1550,6 @@ build_all_interaction_databases <- function(
       include_full = TRUE
     ),
     biogrid = build_biogrid_database(cache_dir = cache_dir),
-    corum = build_corum_database(cache_dir = cache_dir),
-    omnipath = build_omnipath_database(
-      cache_dir = cache_dir,
-      license = "commercial"
-    ),
     alphafold = build_alphafold_database(cache_dir = cache_dir)
   ))
 }

@@ -6,7 +6,7 @@
 \usage{
 extract_panel_interactions(
   markers,
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = c("string", "biogrid", "alphafold"),
   marker_uniprot_map,
   score_min = NULL,
   score_max = NULL,
@@ -77,7 +77,7 @@ Edge RDS files keep native score columns rather than a single synthetic
    Database \tab Score columns \cr
    STRING \tab \code{combined_score} (classic 0-1000 scale) \cr
    AlphaFold \tab \code{ipSAE}, \code{pDockQ2} (typically 0-1) \cr
-   BioGRID, CORUM, OmniPath \tab none \cr
+   BioGRID \tab none \cr
 }
 
 \itemize{

@@ -5,7 +5,7 @@
 \title{Load an interaction database edge RDS}
 \usage{
 load_interaction_database(
-  database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
+  database = c("string", "biogrid", "alphafold"),
   version = "latest",
   cache_dir = interaction_database_cache_dir(),
   build_if_missing = FALSE,
@@ -13,8 +13,8 @@ load_interaction_database(
 )
 }
 \arguments{
-\item{database}{One of \code{"string"}, \code{"biogrid"}, \code{"corum"},
-\code{"omnipath"}, or \code{"alphafold"}.}
+\item{database}{One of \code{"string"}, \code{"biogrid"}, or
+\code{"alphafold"}.}
 
 \item{version}{Version label or \code{"latest"}.}
 
