@@ -27,8 +27,5 @@ through under their native names (non-score metadata such as
 Tibble with canonical columns.
 }
 \description{
-Returns undirected UniProt pairs (\code{uniprot_a <= uniprot_b}) with
-optional numeric score columns and optional extra columns under their
-native names. Resource / version provenance belongs in RDS
-\code{meta}, not on every edge.
+Normalise an edge table to the canonical interaction-database schema
 }

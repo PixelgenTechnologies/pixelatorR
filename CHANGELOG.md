@@ -44,8 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     release (`X.Y.Z` from the Release Archive, or `"latest"` which resolves
     to the concrete id in `BIOGRID-MV-Physical-X.Y.Z.tab3.txt`).
     AlphaFold combines hetero- and homodimer NVIDIA metadata and completes a
-    missing official dump counterpart after a partial cache; CORUM emits
-    U-U edges for single-accession (homomer) complexes.
+    missing official dump counterpart after a partial download; all parsed
+    human edges and native scores are kept in the edge RDS (filter at extract
+    with `score_min` / `score_max`). CORUM emits U-U edges for
+    single-accession (homomer) complexes.
     `build_all_interaction_databases()` includes the STRING full network.
 - `ColocalizationHeatmap` options `highlight_pairs`, `highlight_color`, and
   `highlight_stroke` to outline selected marker pairs on tile and dot heatmaps.

@@ -713,9 +713,7 @@ test_that("extract_panel_interactions score_combine works for AlphaFold", {
     heterodimer_file = file.path(raw_dir, "missing.csv"),
     raw_dir = raw_dir,
     version = "test_combine",
-    cache_dir = cache_dir,
-    ipsae_min = 0.1,
-    pdockq2_min = 0.1
+    cache_dir = cache_dir
   )
 
   af_map <- tibble(
@@ -824,33 +822,44 @@ test_that("build_alphafold_database works as expected", {
       heterodimer_file = file.path(raw_dir, "missing.csv"),
       raw_dir = raw_dir,
       version = "test_af",
-      cache_dir = cache_dir,
-      ipsae_min = 0.6,
-      pdockq2_min = 0.23
+      cache_dir = cache_dir
     )
   )
   expect_true(file.exists(path))
 
   db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
-  # Only the high-confidence pair; low-score and unscored pairs dropped
-  expect_equal(nrow(db$edges), 1)
-  expect_equal(db$edges$uniprot_a[[1]], "P12345")
-  expect_equal(db$edges$uniprot_b[[1]], "Q67890")
+  # All parsed human pairs kept; score filtering is extract-only
+  expect_equal(nrow(db$edges), 3)
   expect_true(all(db$edges$uniprot_a <= db$edges$uniprot_b))
   expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
-  expect_equal(db$edges$ipSAE[[1]], 0.8)
-  expect_equal(db$edges$pDockQ2[[1]], 0.5)
+  expect_setequal(db$edges$ipSAE, c(0.8, 0.1, NA_real_))
   expect_false("evidence" %in% names(db$edges))
   expect_false("score" %in% names(db$edges))
+
+  # Query-time filter recovers the former high-confidence subset
+  out <- extract_panel_interactions(
+    markers = c("A", "B", "C"),
+    database = "alphafold",
+    marker_uniprot_map = tibble(
+      marker = c("A", "B", "C"),
+      uniprot_id = c("P12345", "Q67890", "P99999")
+    ),
+    score_min = c(ipSAE = 0.6, pDockQ2 = 0.23),
+    score_combine = "any",
+    cache_dir = cache_dir
+  )
+  expect_equal(nrow(out), 1)
+  expect_equal(out$uniprot_a[[1]], "P12345")
+  expect_equal(out$uniprot_b[[1]], "Q67890")
+  expect_equal(out$ipSAE[[1]], 0.8)
 })
 
-test_that("build_alphafold_database keeps native scores when kept via pDockQ2", {
+test_that("build_alphafold_database keeps low native scores for extract filtering", {
   raw_dir <- tempfile("afdb_pdq_")
   cache_dir <- tempfile("afdb_pdq_cache_")
   dir.create(raw_dir)
   dir.create(cache_dir)
 
-  # ipSAE below cutoff but present; kept only via pDockQ2
   utils::write.csv(
     data.frame(
       uniprot_ac_1 = "P12345",
@@ -867,15 +876,12 @@ test_that("build_alphafold_database keeps native scores when kept via pDockQ2", 
     heterodimer_file = file.path(raw_dir, "missing.csv"),
     raw_dir = raw_dir,
     version = "test_af_pdq",
-    cache_dir = cache_dir,
-    ipsae_min = 0.6,
-    pdockq2_min = 0.23
+    cache_dir = cache_dir
   )
   db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
   expect_equal(nrow(db$edges), 1)
   expect_equal(db$edges$ipSAE[[1]], 0.4)
   expect_equal(db$edges$pDockQ2[[1]], 0.5)
-  expect_false("evidence" %in% names(db$edges))
   expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
 })
 
@@ -1058,9 +1064,7 @@ test_that("build_alphafold_database accepts NVIDIA directional score columns", {
     heterodimer_file = file.path(raw_dir, "missing.csv"),
     raw_dir = raw_dir,
     version = "test_nvda",
-    cache_dir = cache_dir,
-    ipsae_min = 0.6,
-    pdockq2_min = 0.23
+    cache_dir = cache_dir
   )
   db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
   expect_equal(nrow(db$edges), 1)
@@ -1117,9 +1121,7 @@ test_that("build_alphafold_database fetches missing official dump counterpart", 
     heterodimer_file = file.path(raw_dir, "missing.csv"),
     raw_dir = raw_dir,
     version = "test_partial",
-    cache_dir = cache_dir,
-    ipsae_min = 0.6,
-    pdockq2_min = 0.23
+    cache_dir = cache_dir
   )
   expect_true("homodimer_metadata.csv" %in% downloaded)
   db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)
@@ -1161,9 +1163,7 @@ test_that("build_alphafold_database parses homodimer NVIDIA schema", {
     heterodimer_file = file.path(raw_dir, "missing.csv"),
     raw_dir = raw_dir,
     version = "test_af_homo",
-    cache_dir = cache_dir,
-    ipsae_min = 0.6,
-    pdockq2_min = 0.23
+    cache_dir = cache_dir
   )
   expect_true(file.exists(path))
   db <- load_interaction_database("alphafold", "latest", cache_dir = cache_dir)

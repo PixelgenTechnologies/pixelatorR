@@ -2,15 +2,13 @@
 % Please edit documentation in R/interaction_databases.R
 \name{build_alphafold_database}
 \alias{build_alphafold_database}
-\title{Build AlphaFold DB high-confidence complex database}
+\title{Build AlphaFold DB complex database}
 \usage{
 build_alphafold_database(
   heterodimer_file = NULL,
   raw_dir = NULL,
-  version = "afdb_nvda_highconf",
-  cache_dir = interaction_database_cache_dir(),
-  ipsae_min = 0.6,
-  pdockq2_min = 0.23
+  version = "afdb_nvda",
+  cache_dir = interaction_database_cache_dir()
 )
 }
 \arguments{
@@ -24,10 +22,6 @@ after a successful build. Caller-supplied paths are left untouched.}
 \item{version}{Version label.}
 
 \item{cache_dir}{Output interaction database cache.}
-
-\item{ipsae_min}{Minimum ipSAE.}
-
-\item{pdockq2_min}{Minimum pDockQ2.}
 }
 \value{
 Path to saved RDS.
@@ -35,8 +29,11 @@ Path to saved RDS.
 \description{
 Combines heterodimer and homodimer predictions. When no local CSVs are
 present, downloads both NVIDIA/AFDB metadata tables from EBI FTP into
-ephemeral staging (heterodimer ~2 GB, homodimer ~6 GB), writes an edge RDS,
-then deletes owned staging on success.
+ephemeral staging (heterodimer ~2 GB, homodimer ~6 GB), writes an edge RDS
+with all parsed human edges and native scores, then deletes owned staging
+on success. Apply confidence cuts at query time with
+\code{\link{extract_panel_interactions}} (\code{score_min} /
+\code{score_max}).
 }
 \details{
 Homodimer metadata uses columns \code{uniprotAccession} and \code{taxId};

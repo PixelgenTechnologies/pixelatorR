@@ -1514,12 +1514,15 @@ build_omnipath_database <- function(
   return(path)
 }
 
-#' Build AlphaFold DB high-confidence complex database
+#' Build AlphaFold DB complex database
 #'
 #' Combines heterodimer and homodimer predictions. When no local CSVs are
 #' present, downloads both NVIDIA/AFDB metadata tables from EBI FTP into
-#' ephemeral staging (heterodimer ~2 GB, homodimer ~6 GB), writes an edge RDS,
-#' then deletes owned staging on success.
+#' ephemeral staging (heterodimer ~2 GB, homodimer ~6 GB), writes an edge RDS
+#' with all parsed human edges and native scores, then deletes owned staging
+#' on success. Apply confidence cuts at query time with
+#' \code{\link{extract_panel_interactions}} (\code{score_min} /
+#' \code{score_max}).
 #'
 #' Homodimer metadata uses columns \code{uniprotAccession} and \code{taxId};
 #' heterodimers use \code{uniprot_ac_1}/\code{uniprot_ac_2} and
@@ -1532,17 +1535,13 @@ build_omnipath_database <- function(
 #'   after a successful build. Caller-supplied paths are left untouched.
 #' @param version Version label.
 #' @param cache_dir Output interaction database cache.
-#' @param ipsae_min Minimum ipSAE.
-#' @param pdockq2_min Minimum pDockQ2.
 #' @return Path to saved RDS.
 #' @export
 build_alphafold_database <- function(
   heterodimer_file = NULL,
   raw_dir = NULL,
-  version = "afdb_nvda_highconf",
-  cache_dir = interaction_database_cache_dir(),
-  ipsae_min = 0.6,
-  pdockq2_min = 0.23
+  version = "afdb_nvda",
+  cache_dir = interaction_database_cache_dir()
 ) {
   owned_staging <- is.null(raw_dir)
   if (owned_staging) {
@@ -1674,11 +1673,6 @@ build_alphafold_database <- function(
   if (nrow(pairs) < 1) {
     cli::cli_abort("No usable AFDB pairs found in {.path {raw_dir}}.")
   }
-  keep <- (
-    (!is.na(pairs$ipSAE) & pairs$ipSAE >= ipsae_min) |
-      (!is.na(pairs$pDockQ2) & pairs$pDockQ2 >= pdockq2_min)
-  )
-  pairs <- pairs[keep, , drop = FALSE]
   edges <- normalise_interaction_edges(
     pairs,
     score_cols = c("ipSAE", "pDockQ2")
