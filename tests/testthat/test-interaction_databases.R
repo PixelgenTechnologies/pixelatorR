@@ -125,6 +125,30 @@ test_that("interaction_database_cache_dir works as expected", {
   expect_true(grepl("interaction_databases$", interaction_database_cache_dir()))
 })
 
+test_that("staging helpers clean up on success and keep on failure", {
+  staging <- .interaction_database_staging_dir("test")
+  expect_true(dir.exists(staging))
+  writeLines("x", file.path(staging, "f.txt"))
+  .finalize_interaction_database_staging(staging, owned = TRUE, success = TRUE)
+  expect_false(dir.exists(staging))
+
+  staging <- .interaction_database_staging_dir("test")
+  writeLines("x", file.path(staging, "f.txt"))
+  expect_message(
+    .finalize_interaction_database_staging(staging, owned = TRUE, success = FALSE),
+    "Leaving staging"
+  )
+  expect_true(dir.exists(staging))
+  unlink(staging, recursive = TRUE)
+
+  keep <- tempfile("keep_")
+  dir.create(keep)
+  writeLines("x", file.path(keep, "f.txt"))
+  .finalize_interaction_database_staging(keep, owned = FALSE, success = TRUE)
+  expect_true(dir.exists(keep))
+  unlink(keep, recursive = TRUE)
+})
+
 test_that("save_interaction_database and load_interaction_database work as expected", {
   cache_dir <- tempfile("idb_")
   dir.create(cache_dir)
@@ -956,6 +980,9 @@ test_that("build_string_database prefers primary UniProt over secondary AC order
     include_full = FALSE
   )
   expect_true(file.exists(path))
+  # Caller-owned raw_dir must not be deleted after a successful build
+  expect_true(file.exists(aliases_path))
+  expect_true(file.exists(phys_path))
   db <- load_interaction_database("string", "latest", cache_dir = cache_dir)
   pair_ids <- paste(db$edges$uniprot_a, db$edges$uniprot_b, sep = "-")
   expect_true("P05107-P20701" %in% pair_ids)

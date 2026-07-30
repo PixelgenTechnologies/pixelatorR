@@ -5,13 +5,15 @@
 \title{Build CORUM co-membership database (human)}
 \usage{
 build_corum_database(
-  corum_file = file.path(.default_raw_cache(), "corum", "omnipath_complexes_corum.tsv"),
+  corum_file = NULL,
   version = "omnipath_corum",
   cache_dir = interaction_database_cache_dir()
 )
 }
 \arguments{
-\item{corum_file}{Path to OmniPath CORUM complexes TSV or official coreComplexes.}
+\item{corum_file}{Path to OmniPath CORUM complexes TSV or official
+coreComplexes. When \code{NULL} (default), the file is downloaded into
+ephemeral staging.}
 
 \item{version}{Version label.}
 
@@ -23,5 +25,6 @@ Path to saved RDS.
 \description{
 Downloads OmniPath-served CORUM complexes when \code{corum_file} is missing.
 Prefer an official CORUM file when present. Complexes with a single UniProt
-accession become homomer edges (\code{uniprot_a == uniprot_b}).
+accession become homomer edges (\code{uniprot_a == uniprot_b}). Owned staging
+downloads are deleted after a successful build.
 }

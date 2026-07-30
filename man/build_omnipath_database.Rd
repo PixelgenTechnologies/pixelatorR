@@ -12,7 +12,9 @@ build_omnipath_database(
 )
 }
 \arguments{
-\item{interactions_file}{Path to OmniPath interactions TSV.}
+\item{interactions_file}{Path to OmniPath interactions TSV. When
+\code{NULL}, downloaded into ephemeral staging (not for
+\code{license = "unknown"}, which requires a local file).}
 
 \item{version}{Version label.}
 
@@ -25,5 +27,7 @@ build_omnipath_database(
 Path to saved RDS.
 }
 \description{
-Build OmniPath interaction database
+Downloads OmniPath interactions into ephemeral staging when
+\code{interactions_file} is \code{NULL}. Owned staging is deleted after a
+successful build.
 }

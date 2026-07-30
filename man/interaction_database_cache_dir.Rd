@@ -10,5 +10,7 @@ interaction_database_cache_dir()
 Character path under \code{tools::R_user_dir("pixelatorR", "cache")}.
 }
 \description{
-Default cache directory for interaction databases
+Sole persistent store for built edge RDS files. Builders download raw vendor
+dumps into ephemeral staging, write an RDS here, then delete the staging
+files on success.
 }

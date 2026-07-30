@@ -13,7 +13,7 @@ build_biogrid_database(
 \arguments{
 \item{raw_file}{Optional path to a local
 \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. When \code{NULL}, the
-release is downloaded into the BioGRID raw cache.}
+release is downloaded into ephemeral staging.}
 
 \item{version}{BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.}
 
@@ -31,6 +31,7 @@ A concrete \code{version} such as \code{"5.0.259"} downloads that release
 from the BioGRID Release Archive.
 }
 \details{
-The slim RDS is always saved under the resolved BioGRID release id (and
-copied to \code{biogrid_latest.rds}).
+The edge RDS is always saved under the resolved BioGRID release id (and
+copied to \code{biogrid_latest.rds}). Owned staging downloads are deleted
+after a successful build.
 }

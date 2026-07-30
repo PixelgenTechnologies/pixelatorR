@@ -5,7 +5,7 @@
 \title{Build STRING physical / full link database (human)}
 \usage{
 build_string_database(
-  raw_dir = file.path(.default_raw_cache(), "string"),
+  raw_dir = NULL,
   version = "12.0",
   cache_dir = interaction_database_cache_dir(),
   species = 9606,
@@ -13,7 +13,10 @@ build_string_database(
 )
 }
 \arguments{
-\item{raw_dir}{Directory for STRING download files (links + aliases).}
+\item{raw_dir}{Directory for STRING download files (links + aliases).
+When \code{NULL} (default), files are downloaded into a temporary staging
+directory that is removed after a successful build. Caller-supplied paths
+are left untouched.}
 
 \item{version}{STRING version label (default \code{"12.0"}).}
 
@@ -27,7 +30,8 @@ build_string_database(
 Path to saved RDS.
 }
 \description{
-Maintainer helper: reads STRING release files (downloading them into
-\code{raw_dir} when missing) and writes a slim UniProt edge cache via
-\code{\link{save_interaction_database}}.
+Maintainer helper: downloads STRING release files into ephemeral staging
+(or reads an existing \code{raw_dir}), writes an edge RDS via
+\code{\link{save_interaction_database}}, then deletes owned staging on
+success.
 }

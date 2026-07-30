@@ -1,22 +1,64 @@
 # Canonical edge schema: uniprot_a, uniprot_b (undirected, a <= b), optional
 # native score columns, evidence, resource, resource_version.
+# Persistent cache is the edge RDS under interaction_database_cache_dir() only;
+# raw vendor dumps are ephemeral staging during build_*_database().
 
-#' Default cache directory for raw interaction-database dumps
+#' Create an ephemeral staging directory for raw interaction-database dumps
 #'
-#' Under \code{tools::R_user_dir("pixelatorR", "cache")/db_raw}. Builders
-#' download missing source files here before writing slim RDS caches.
+#' Used when builders download vendor files. Callers that pass their own
+#' \code{raw_dir} / \code{raw_file} own those paths and they are not deleted.
 #'
-#' @return Character path.
+#' @param source Short source key (e.g. \code{"string"}).
+#' @return Character path to a newly created empty directory under
+#'   \code{tempdir()}.
 #' @noRd
-.default_raw_cache <- function() {
-  file.path(tools::R_user_dir("pixelatorR", which = "cache"), "db_raw")
+.interaction_database_staging_dir <- function(source) {
+  assert_single_value(source, type = "string")
+  staging <- tempfile(paste0("pixelatorR_", source, "_staging_"))
+  dir.create(staging, recursive = TRUE, showWarnings = FALSE)
+  return(staging)
 }
 
-#' Path to a slim interaction-database RDS file
+#' Finalize a raw staging directory after a build attempt
+#'
+#' On success with an owned staging dir, deletes it. On failure, leaves it and
+#' informs so a retry can reuse the download. Never deletes caller-owned paths.
+#'
+#' @param staging_dir Directory path (may be \code{NULL}).
+#' @param owned If \code{TRUE}, this package created \code{staging_dir}.
+#' @param success If \code{TRUE}, the edge RDS was written successfully.
+#' @return \code{NULL}, invisibly.
+#' @noRd
+.finalize_interaction_database_staging <- function(
+  staging_dir,
+  owned,
+  success
+) {
+  if (!isTRUE(owned) || is.null(staging_dir) || !nzchar(staging_dir)) {
+    return(invisible(NULL))
+  }
+  if (isTRUE(success)) {
+    if (dir.exists(staging_dir)) {
+      unlink(staging_dir, recursive = TRUE)
+    }
+    return(invisible(NULL))
+  }
+  if (dir.exists(staging_dir)) {
+    cli::cli_inform(c(
+      "i" = paste(
+        "Leaving staging raw files at {.path {staging_dir}} for retry/debug.",
+        "They are removed automatically after a successful rebuild."
+      )
+    ))
+  }
+  return(invisible(NULL))
+}
+
+#' Path to an interaction-database edge RDS file
 #'
 #' @param database Database key (e.g. \code{"string"}).
 #' @param version Version label used in the filename (e.g. \code{"latest"}).
-#' @param cache_dir Directory containing slim RDS caches.
+#' @param cache_dir Directory containing edge RDS caches.
 #'
 #' @return Character path \code{cache_dir/<database>_<version>.rds}.
 #' @noRd
@@ -205,6 +247,10 @@
 
 #' Default cache directory for interaction databases
 #'
+#' Sole persistent store for built edge RDS files. Builders download raw vendor
+#' dumps into ephemeral staging, write an RDS here, then delete the staging
+#' files on success.
+#'
 #' @return Character path under \code{tools::R_user_dir("pixelatorR", "cache")}.
 #' @export
 interaction_database_cache_dir <- function() {
@@ -284,7 +330,7 @@ normalise_interaction_edges <- function(
   return(unique(output))
 }
 
-#' Write a slim interaction database RDS
+#' Write an interaction database edge RDS
 #'
 #' @param edges Canonical edge tibble.
 #' @param database Database key.
@@ -383,7 +429,7 @@ save_interaction_database <- function(
   return(path)
 }
 
-#' Load a slim interaction database
+#' Load an interaction database edge RDS
 #'
 #' @param database One of \code{"string"}, \code{"biogrid"}, \code{"corum"},
 #'   \code{"omnipath"}, or \code{"alphafold"}.
@@ -513,7 +559,7 @@ create_marker_uniprot_map <- function(
 
 #' Extract known database interactions for a marker panel
 #'
-#' Maps panel markers to UniProt accessions, loads a slim interaction database,
+#' Maps panel markers to UniProt accessions, loads an interaction database,
 #' and returns undirected marker pairs with a registered database entry after
 #' optional score / network filters.
 #' UniProt self-interactions are returned only as marker self-pairs. When
@@ -550,7 +596,7 @@ create_marker_uniprot_map <- function(
 #'   \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 #'
 #' @section Score filtering:
-#' Slim caches keep native score columns rather than a single synthetic
+#' Edge RDS files keep native score columns rather than a single synthetic
 #' \code{score}. Discover them with
 #' \code{load_interaction_database(...)$meta$score_columns}:
 #'
@@ -773,11 +819,15 @@ extract_panel_interactions <- function(
 
 #' Build STRING physical / full link database (human)
 #'
-#' Maintainer helper: reads STRING release files (downloading them into
-#' \code{raw_dir} when missing) and writes a slim UniProt edge cache via
-#' \code{\link{save_interaction_database}}.
+#' Maintainer helper: downloads STRING release files into ephemeral staging
+#' (or reads an existing \code{raw_dir}), writes an edge RDS via
+#' \code{\link{save_interaction_database}}, then deletes owned staging on
+#' success.
 #'
 #' @param raw_dir Directory for STRING download files (links + aliases).
+#'   When \code{NULL} (default), files are downloaded into a temporary staging
+#'   directory that is removed after a successful build. Caller-supplied paths
+#'   are left untouched.
 #' @param version STRING version label (default \code{"12.0"}).
 #' @param cache_dir Output interaction database cache.
 #' @param species NCBI taxon (default human 9606).
@@ -785,14 +835,25 @@ extract_panel_interactions <- function(
 #' @return Path to saved RDS.
 #' @export
 build_string_database <- function(
-  raw_dir = file.path(.default_raw_cache(), "string"),
+  raw_dir = NULL,
   version = "12.0",
   cache_dir = interaction_database_cache_dir(),
   species = 9606,
   include_full = FALSE
 ) {
   rlang::check_installed("data.table")
-  dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
+  owned_staging <- is.null(raw_dir)
+  if (owned_staging) {
+    raw_dir <- .interaction_database_staging_dir("string")
+  } else {
+    assert_single_value(raw_dir, type = "string")
+    dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  success <- FALSE
+  on.exit(
+    .finalize_interaction_database_staging(raw_dir, owned_staging, success),
+    add = TRUE
+  )
 
   string_download_url <- function(fname, network = c("aliases", "physical", "full")) {
     network <- match.arg(network)
@@ -907,7 +968,7 @@ build_string_database <- function(
   }
   edges <- bind_rows(phys, full)
 
-  return(save_interaction_database(
+  path <- save_interaction_database(
     edges = edges,
     database = "string",
     version = version,
@@ -925,7 +986,9 @@ build_string_database <- function(
       "interest. Nucleic Acids Research 51(D1):D638-D646.",
       "https://doi.org/10.1093/nar/gkac1000"
     )
-  ))
+  )
+  success <- TRUE
+  return(path)
 }
 
 #' Build BioGRID physical interaction database (human)
@@ -937,12 +1000,13 @@ build_string_database <- function(
 #' A concrete \code{version} such as \code{"5.0.259"} downloads that release
 #' from the BioGRID Release Archive.
 #'
-#' The slim RDS is always saved under the resolved BioGRID release id (and
-#' copied to \code{biogrid_latest.rds}).
+#' The edge RDS is always saved under the resolved BioGRID release id (and
+#' copied to \code{biogrid_latest.rds}). Owned staging downloads are deleted
+#' after a successful build.
 #'
 #' @param raw_file Optional path to a local
 #'   \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. When \code{NULL}, the
-#'   release is downloaded into the BioGRID raw cache.
+#'   release is downloaded into ephemeral staging.
 #' @param version BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.
 #' @param cache_dir Output interaction database cache.
 #' @return Path to saved RDS.
@@ -962,8 +1026,17 @@ build_biogrid_database <- function(
     ))
   }
 
-  raw_dir <- file.path(.default_raw_cache(), "biogrid")
-  dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
+  owned_staging <- is.null(raw_file)
+  raw_dir <- if (owned_staging) {
+    .interaction_database_staging_dir("biogrid")
+  } else {
+    NULL
+  }
+  success <- FALSE
+  on.exit(
+    .finalize_interaction_database_staging(raw_dir, owned_staging, success),
+    add = TRUE
+  )
   tab3_name_re <- "^BIOGRID-MV-Physical-([0-9]+\\.[0-9]+\\.[0-9]+)\\.tab3\\.txt$"
 
   version_from_tab3_name <- function(path) {
@@ -1097,7 +1170,7 @@ build_biogrid_database <- function(
     resource_version = version
   )
 
-  return(save_interaction_database(
+  path <- save_interaction_database(
     edges = edges,
     database = "biogrid",
     version = version,
@@ -1118,28 +1191,44 @@ build_biogrid_database <- function(
       "https://doi.org/10.1093/nar/gkj109; also cite original",
       "contributing publications where applicable"
     )
-  ))
+  )
+  success <- TRUE
+  return(path)
 }
 
 #' Build CORUM co-membership database (human)
 #'
 #' Downloads OmniPath-served CORUM complexes when \code{corum_file} is missing.
 #' Prefer an official CORUM file when present. Complexes with a single UniProt
-#' accession become homomer edges (\code{uniprot_a == uniprot_b}).
+#' accession become homomer edges (\code{uniprot_a == uniprot_b}). Owned staging
+#' downloads are deleted after a successful build.
 #'
-#' @param corum_file Path to OmniPath CORUM complexes TSV or official coreComplexes.
+#' @param corum_file Path to OmniPath CORUM complexes TSV or official
+#'   coreComplexes. When \code{NULL} (default), the file is downloaded into
+#'   ephemeral staging.
 #' @param version Version label.
 #' @param cache_dir Output interaction database cache.
 #' @return Path to saved RDS.
 #' @export
 build_corum_database <- function(
-  corum_file = file.path(
-    .default_raw_cache(), "corum", "omnipath_complexes_corum.tsv"
-  ),
+  corum_file = NULL,
   version = "omnipath_corum",
   cache_dir = interaction_database_cache_dir()
 ) {
   rlang::check_installed("data.table")
+  owned_staging <- is.null(corum_file)
+  staging_dir <- NULL
+  if (owned_staging) {
+    staging_dir <- .interaction_database_staging_dir("corum")
+    corum_file <- file.path(staging_dir, "omnipath_complexes_corum.tsv")
+  } else {
+    assert_single_value(corum_file, type = "string")
+  }
+  success <- FALSE
+  on.exit(
+    .finalize_interaction_database_staging(staging_dir, owned_staging, success),
+    add = TRUE
+  )
   if (!file.exists(corum_file)) {
     .download_if_missing(
       "https://omnipathdb.org/complexes?databases=CORUM",
@@ -1212,7 +1301,7 @@ build_corum_database <- function(
     resource_version = version
   )
 
-  return(save_interaction_database(
+  path <- save_interaction_database(
     edges = edges,
     database = "corum",
     version = version,
@@ -1232,12 +1321,20 @@ build_corum_database <- function(
       "protein complexes as drug targets. Nucleic Acids Research",
       "53(D1):D651-D657. https://doi.org/10.1093/nar/gkae1033"
     )
-  ))
+  )
+  success <- TRUE
+  return(path)
 }
 
 #' Build OmniPath interaction database
 #'
-#' @param interactions_file Path to OmniPath interactions TSV.
+#' Downloads OmniPath interactions into ephemeral staging when
+#' \code{interactions_file} is \code{NULL}. Owned staging is deleted after a
+#' successful build.
+#'
+#' @param interactions_file Path to OmniPath interactions TSV. When
+#'   \code{NULL}, downloaded into ephemeral staging (not for
+#'   \code{license = "unknown"}, which requires a local file).
 #' @param version Version label.
 #' @param cache_dir Output interaction database cache.
 #' @param license OmniPath license filter used when the file was downloaded
@@ -1252,22 +1349,30 @@ build_omnipath_database <- function(
 ) {
   rlang::check_installed("data.table")
   license <- match.arg(license)
-  if (is.null(interactions_file)) {
+  owned_staging <- is.null(interactions_file)
+  staging_dir <- NULL
+  if (owned_staging) {
+    if (identical(license, "unknown")) {
+      cli::cli_abort(c(
+        "x" = "Missing OmniPath interactions file.",
+        "i" = paste(
+          "Pass {.arg interactions_file} when {.arg license} is {.val unknown}."
+        )
+      ))
+    }
+    staging_dir <- .interaction_database_staging_dir("omnipath")
     interactions_file <- file.path(
-      .default_raw_cache(), "omnipath",
+      staging_dir,
       paste0("interactions_omnipath_", license, ".tsv")
     )
-    fallback <- file.path(
-      .default_raw_cache(), "omnipath", "interactions_omnipath.tsv"
-    )
-    if (
-      license == "unknown" &&
-        !file.exists(interactions_file) &&
-        file.exists(fallback)
-    ) {
-      interactions_file <- fallback
-    }
+  } else {
+    assert_single_value(interactions_file, type = "string")
   }
+  success <- FALSE
+  on.exit(
+    .finalize_interaction_database_staging(staging_dir, owned_staging, success),
+    add = TRUE
+  )
   if (!file.exists(interactions_file)) {
     if (license == "unknown") {
       cli::cli_abort(
@@ -1311,7 +1416,7 @@ build_omnipath_database <- function(
     resource_version = paste0(version, "_", license)
   )
 
-  return(save_interaction_database(
+  path <- save_interaction_database(
     edges = edges,
     database = "omnipath",
     version = paste0(version, "_", license),
@@ -1330,23 +1435,27 @@ build_omnipath_database <- function(
       "https://doi.org/10.15252/msb.20209923; also cite the contributing",
       "resources identified in the evidence/sources fields"
     )
-  ))
+  )
+  success <- TRUE
+  return(path)
 }
 
 #' Build AlphaFold DB high-confidence complex database
 #'
 #' Combines heterodimer and homodimer predictions. When no local CSVs are
 #' present, downloads both NVIDIA/AFDB metadata tables from EBI FTP into
-#' \code{raw_dir} (heterodimer ~2 GB, homodimer ~6 GB).
+#' ephemeral staging (heterodimer ~2 GB, homodimer ~6 GB), writes an edge RDS,
+#' then deletes owned staging on success.
 #'
 #' Homodimer metadata uses columns \code{uniprotAccession} and \code{taxId};
 #' heterodimers use \code{uniprot_ac_1}/\code{uniprot_ac_2} and
 #' \code{tax_id_1}/\code{tax_id_2}.
 #'
-#' @param heterodimer_file Optional FTP-derived heterodimer metadata CSV.
-#'   If absent, uses panel API cache CSVs under \code{raw_dir}, then downloads
-#'   the official heterodimer and homodimer metadata dumps if needed.
-#' @param raw_dir Directory with AFDB cache files.
+#' @param heterodimer_file Optional local heterodimer metadata CSV. Ignored when
+#'   missing; panel CSVs under \code{raw_dir} are tried next.
+#' @param raw_dir Directory for AFDB panel CSVs and/or official dumps. When
+#'   \code{NULL} (default), a temporary staging directory is used and removed
+#'   after a successful build. Caller-supplied paths are left untouched.
 #' @param version Version label.
 #' @param cache_dir Output interaction database cache.
 #' @param ipsae_min Minimum ipSAE.
@@ -1354,16 +1463,26 @@ build_omnipath_database <- function(
 #' @return Path to saved RDS.
 #' @export
 build_alphafold_database <- function(
-  heterodimer_file = file.path(
-    .default_raw_cache(), "alphafold_interactions",
-    "afdb_heterodimers_human_panel_any.csv"
-  ),
-  raw_dir = file.path(.default_raw_cache(), "alphafold_interactions"),
+  heterodimer_file = NULL,
+  raw_dir = NULL,
   version = "afdb_nvda_highconf",
   cache_dir = interaction_database_cache_dir(),
   ipsae_min = 0.6,
   pdockq2_min = 0.23
 ) {
+  owned_staging <- is.null(raw_dir)
+  if (owned_staging) {
+    raw_dir <- .interaction_database_staging_dir("alphafold")
+  } else {
+    assert_single_value(raw_dir, type = "string")
+    dir.create(raw_dir, recursive = TRUE, showWarnings = FALSE)
+  }
+  success <- FALSE
+  on.exit(
+    .finalize_interaction_database_staging(raw_dir, owned_staging, success),
+    add = TRUE
+  )
+
   # First matching column's values among exact name candidates, or NULL.
   coalesce_col <- function(df, candidates) {
     col <- .first_present_col(df, candidates, regex = FALSE)
@@ -1435,13 +1554,13 @@ build_alphafold_database <- function(
     "collaborations/nvda/"
   )
 
-  panel_files <- unique(c(
-    heterodimer_file,
+  panel_files <- c(
+    if (!is.null(heterodimer_file)) heterodimer_file else character(),
     file.path(raw_dir, "afdb_api_complexes_panel.csv"),
     file.path(raw_dir, "afdb_heterodimers_panel_pairs.csv"),
     file.path(raw_dir, "afdb_homodimers_human_panel.csv")
-  ))
-  panel_files <- panel_files[file.exists(panel_files)]
+  )
+  panel_files <- unique(panel_files[file.exists(panel_files)])
   has_panel <- length(panel_files) > 0
   has_both_official <- file.exists(hetero_dest) &&
     isTRUE(file.info(hetero_dest)$size > 0) &&
@@ -1493,7 +1612,7 @@ build_alphafold_database <- function(
     resource_version = version
   )
 
-  return(save_interaction_database(
+  path <- save_interaction_database(
     edges = edges,
     database = "alphafold",
     version = version,
@@ -1514,15 +1633,18 @@ build_alphafold_database <- function(
       "proteome-scale quaternary structures. bioRxiv 2026.03.27.714458.",
       "https://doi.org/10.64898/2026.03.27.714458"
     )
-  ))
+  )
+  success <- TRUE
+  return(path)
 }
 
 #' Build all five interaction databases
 #'
 #' Maintainer helper that runs each \code{build_*_database()} writer. Missing
-#' raw dumps are downloaded into the package raw cache. STRING is built with
-#' both physical and full networks (\code{include_full = TRUE}). OmniPath
-#' defaults to the commercial license filter.
+#' raw dumps are downloaded into ephemeral staging and removed after each
+#' successful build. STRING is built with both physical and full networks
+#' (\code{include_full = TRUE}). OmniPath defaults to the commercial license
+#' filter.
 #'
 #' @param cache_dir Output interaction database cache.
 #' @return Named list of RDS paths.

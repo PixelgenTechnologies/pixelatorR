@@ -5,9 +5,8 @@
 \title{Build AlphaFold DB high-confidence complex database}
 \usage{
 build_alphafold_database(
-  heterodimer_file = file.path(.default_raw_cache(), "alphafold_interactions",
-    "afdb_heterodimers_human_panel_any.csv"),
-  raw_dir = file.path(.default_raw_cache(), "alphafold_interactions"),
+  heterodimer_file = NULL,
+  raw_dir = NULL,
   version = "afdb_nvda_highconf",
   cache_dir = interaction_database_cache_dir(),
   ipsae_min = 0.6,
@@ -15,11 +14,12 @@ build_alphafold_database(
 )
 }
 \arguments{
-\item{heterodimer_file}{Optional FTP-derived heterodimer metadata CSV.
-If absent, uses panel API cache CSVs under \code{raw_dir}, then downloads
-the official heterodimer and homodimer metadata dumps if needed.}
+\item{heterodimer_file}{Optional local heterodimer metadata CSV. Ignored when
+missing; panel CSVs under \code{raw_dir} are tried next.}
 
-\item{raw_dir}{Directory with AFDB cache files.}
+\item{raw_dir}{Directory for AFDB panel CSVs and/or official dumps. When
+\code{NULL} (default), a temporary staging directory is used and removed
+after a successful build. Caller-supplied paths are left untouched.}
 
 \item{version}{Version label.}
 
@@ -35,7 +35,8 @@ Path to saved RDS.
 \description{
 Combines heterodimer and homodimer predictions. When no local CSVs are
 present, downloads both NVIDIA/AFDB metadata tables from EBI FTP into
-\code{raw_dir} (heterodimer ~2 GB, homodimer ~6 GB).
+ephemeral staging (heterodimer ~2 GB, homodimer ~6 GB), writes an edge RDS,
+then deletes owned staging on success.
 }
 \details{
 Homodimer metadata uses columns \code{uniprotAccession} and \code{taxId};

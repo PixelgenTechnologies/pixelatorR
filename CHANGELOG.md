@@ -12,11 +12,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interaction-database helpers for building, caching, and querying protein-protein
   interaction resources against a marker panel:
   - `interaction_database_cache_dir()`, `normalise_interaction_edges()`,
-    `save_interaction_database()`, and `load_interaction_database()` for a slim
-    UniProt edge cache (STRING, BioGRID, CORUM, OmniPath, AlphaFold DB).
+    `save_interaction_database()`, and `load_interaction_database()` for a
+    UniProt edge RDS cache (STRING, BioGRID, CORUM, OmniPath, AlphaFold DB).
     Caches store native score columns declared in `meta$score_columns`
     (STRING: `combined_score`; AlphaFold: `ipSAE`, `pDockQ2`; others: none).
-    Rebuild slim RDS caches after upgrading so edge schemas stay current.
+    Rebuild edge RDS caches after upgrading so edge schemas stay current.
+    Raw vendor dumps are downloaded into ephemeral staging during
+    `build_*_database()` and removed after a successful build; only the edge
+    RDS under `interaction_database_cache_dir()` is kept.
   - `extract_panel_interactions()` to return known marker pairs from a cached
     database for use with `ColocalizationHeatmap(highlight_pairs = ...)`.
     UniProt homodimers are retained as marker self-pairs only; false hetero
@@ -29,8 +32,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Maintainer builders `build_string_database()`, `build_biogrid_database()`,
     `build_corum_database()`, `build_omnipath_database()`,
     `build_alphafold_database()`, and `build_all_interaction_databases()`.
-    Missing raw dumps are downloaded into the package cache automatically
-    (with an increased download timeout suitable for large files).
+    Missing raw dumps are downloaded into ephemeral staging automatically
+    (with an increased download timeout suitable for large files) and removed
+    after a successful build.
     `build_biogrid_database(version=)` downloads a real BioGRID MV-Physical
     release (`X.Y.Z` from the Release Archive, or `"latest"` which resolves
     to the concrete id in `BIOGRID-MV-Physical-X.Y.Z.tab3.txt`).

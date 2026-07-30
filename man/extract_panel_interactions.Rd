@@ -50,7 +50,7 @@ columns from the database, plus \code{evidence}, \code{resource}, and
 \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 }
 \description{
-Maps panel markers to UniProt accessions, loads a slim interaction database,
+Maps panel markers to UniProt accessions, loads an interaction database,
 and returns undirected marker pairs with a registered database entry after
 optional score / network filters.
 UniProt self-interactions are returned only as marker self-pairs. When
@@ -66,7 +66,7 @@ remaining edge for that marker pair is kept.
 }
 \section{Score filtering}{
 
-Slim caches keep native score columns rather than a single synthetic
+Edge RDS files keep native score columns rather than a single synthetic
 \code{score}. Discover them with
 \code{load_interaction_database(...)$meta$score_columns}:\tabular{ll}{
    Database \tab Score columns \cr

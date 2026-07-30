@@ -2,7 +2,7 @@
 % Please edit documentation in R/interaction_databases.R
 \name{load_interaction_database}
 \alias{load_interaction_database}
-\title{Load a slim interaction database}
+\title{Load an interaction database edge RDS}
 \usage{
 load_interaction_database(
   database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
@@ -22,7 +22,7 @@ load_interaction_database(
 List with \code{edges} (tibble) and \code{meta}.
 }
 \description{
-Load a slim interaction database
+Load an interaction database edge RDS
 }
 \seealso{
 \code{\link{save_interaction_database}},

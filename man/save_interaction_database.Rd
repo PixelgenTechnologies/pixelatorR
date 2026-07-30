@@ -2,7 +2,7 @@
 % Please edit documentation in R/interaction_databases.R
 \name{save_interaction_database}
 \alias{save_interaction_database}
-\title{Write a slim interaction database RDS}
+\title{Write an interaction database edge RDS}
 \usage{
 save_interaction_database(
   edges,
@@ -38,7 +38,7 @@ has no scores.}
 Path to the written RDS.
 }
 \description{
-Write a slim interaction database RDS
+Write an interaction database edge RDS
 }
 \seealso{
 \code{\link{load_interaction_database}},
