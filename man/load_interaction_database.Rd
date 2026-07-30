@@ -7,7 +7,9 @@
 load_interaction_database(
   database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version = "latest",
-  cache_dir = interaction_database_cache_dir()
+  cache_dir = interaction_database_cache_dir(),
+  build_if_missing = FALSE,
+  ...
 )
 }
 \arguments{
@@ -17,6 +19,14 @@ load_interaction_database(
 \item{version}{Version label or \code{"latest"}.}
 
 \item{cache_dir}{Cache directory.}
+
+\item{build_if_missing}{If \code{TRUE} and the edge RDS is missing, run the
+matching \code{build_*_database()} (download into ephemeral staging, write
+RDS, delete staging) then load. Defaults to \code{FALSE} so loads never
+surprise-download. Extra builder arguments can be passed via \code{...}.}
+
+\item{...}{Forwarded to \code{build_*_database()} when
+\code{build_if_missing = TRUE}.}
 }
 \value{
 List with \code{edges} (tibble) and \code{meta}.
@@ -26,5 +36,6 @@ Load an interaction database edge RDS
 }
 \seealso{
 \code{\link{save_interaction_database}},
-\code{\link{extract_panel_interactions}}
+\code{\link{extract_panel_interactions}},
+\code{\link{build_all_interaction_databases}}
 }

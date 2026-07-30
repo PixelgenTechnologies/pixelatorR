@@ -32,6 +32,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     hetero joins are dropped. Marker and UniProt columns stay aligned after
     lexical reordering. Score filtering uses named `score_min` (`>=`) and
     `score_max` (`<`) with `score_combine` (`"any"` / `"all"`) across columns.
+    Missing caches error with a pointer to
+    `load_interaction_database(..., build_if_missing = TRUE)` /
+    `build_*_database()` (no auto-build by default).
+  - `load_interaction_database(build_if_missing = TRUE)` to build a missing
+    edge RDS on demand (forwards `...` to `build_*_database()`). Also available
+    on `extract_panel_interactions(build_if_missing = ...)`.
   - `create_marker_uniprot_map()` to build a long-form marker-UniProt map from
     Seurat / PNA assay feature metadata (`uniprot_id`, semicolon-separated).
   - Maintainer builders `build_string_database()`, `build_biogrid_database()`,

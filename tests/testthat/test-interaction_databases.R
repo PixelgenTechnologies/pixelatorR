@@ -197,7 +197,19 @@ test_that("save_interaction_database and load_interaction_database work as expec
 test_that("load_interaction_database fails with invalid input", {
   cache_dir <- tempfile("idb_missing_")
   dir.create(cache_dir)
-  expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
+  expect_error(
+    load_interaction_database("string", "latest", cache_dir = cache_dir),
+    "build_if_missing = TRUE"
+  )
+  expect_error(
+    extract_panel_interactions(
+      markers = "A",
+      database = "string",
+      marker_uniprot_map = marker_map,
+      cache_dir = cache_dir
+    ),
+    "build_if_missing = TRUE"
+  )
   expect_error(load_interaction_database("not_a_db", cache_dir = cache_dir))
 
   bad_path <- file.path(cache_dir, "string_latest.rds")
@@ -232,6 +244,66 @@ test_that("load_interaction_database fails with invalid input", {
     bad_path
   )
   expect_error(load_interaction_database("string", "latest", cache_dir = cache_dir))
+})
+
+test_that("load_interaction_database build_if_missing builds then loads", {
+  skip_if_not_installed("data.table")
+
+  raw_dir <- tempfile("load_build_raw_")
+  cache_dir <- tempfile("load_build_cache_")
+  dir.create(raw_dir)
+  dir.create(cache_dir)
+
+  aliases_path <- file.path(raw_dir, "9606.protein.aliases.v12.0.txt.gz")
+  phys_path <- file.path(raw_dir, "9606.protein.physical.links.v12.0.txt.gz")
+  con <- gzfile(aliases_path, "wt")
+  writeLines(
+    c(
+      "#string_protein_id\talias\tsource",
+      "9606.ENSP1\tP12345\tUniProt_AC",
+      "9606.ENSP1\tP12345\tEnsembl_HGNC_uniprot_ids",
+      "9606.ENSP2\tQ67890\tUniProt_AC",
+      "9606.ENSP2\tQ67890\tEnsembl_HGNC_uniprot_ids"
+    ),
+    con
+  )
+  close(con)
+  con <- gzfile(phys_path, "wt")
+  writeLines(
+    c(
+      "protein1 protein2 combined_score",
+      "9606.ENSP1 9606.ENSP2 999"
+    ),
+    con
+  )
+  close(con)
+
+  expect_message(
+    db <- load_interaction_database(
+      "string",
+      version = "12.0",
+      cache_dir = cache_dir,
+      build_if_missing = TRUE,
+      raw_dir = raw_dir
+    ),
+    "Building interaction database"
+  )
+  expect_equal(nrow(db$edges), 1)
+  expect_equal(db$meta$additional_columns, "network")
+  expect_true(file.exists(file.path(cache_dir, "string_12.0.rds")))
+  expect_true(file.exists(file.path(cache_dir, "string_latest.rds")))
+
+  # Second load reuses cache without rebuilding
+  expect_no_message(
+    db2 <- load_interaction_database(
+      "string",
+      version = "12.0",
+      cache_dir = cache_dir,
+      build_if_missing = TRUE,
+      raw_dir = raw_dir
+    )
+  )
+  expect_equal(nrow(db2$edges), 1)
 })
 
 test_that("extract_panel_interactions works as expected", {

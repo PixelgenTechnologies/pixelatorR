@@ -489,21 +489,77 @@ save_interaction_database <- function(
 #'   \code{"omnipath"}, or \code{"alphafold"}.
 #' @param version Version label or \code{"latest"}.
 #' @param cache_dir Cache directory.
+#' @param build_if_missing If \code{TRUE} and the edge RDS is missing, run the
+#'   matching \code{build_*_database()} (download into ephemeral staging, write
+#'   RDS, delete staging) then load. Defaults to \code{FALSE} so loads never
+#'   surprise-download. Extra builder arguments can be passed via \code{...}.
+#' @param ... Forwarded to \code{build_*_database()} when
+#'   \code{build_if_missing = TRUE}.
 #' @return List with \code{edges} (tibble) and \code{meta}.
 #' @seealso \code{\link{save_interaction_database}},
-#'   \code{\link{extract_panel_interactions}}
+#'   \code{\link{extract_panel_interactions}},
+#'   \code{\link{build_all_interaction_databases}}
 #' @export
 load_interaction_database <- function(
   database = c("string", "biogrid", "corum", "omnipath", "alphafold"),
   version = "latest",
-  cache_dir = interaction_database_cache_dir()
+  cache_dir = interaction_database_cache_dir(),
+  build_if_missing = FALSE,
+  ...
 ) {
   database <- match.arg(database)
   assert_single_value(version, type = "string")
   assert_single_value(cache_dir, type = "string")
+  assert_single_value(build_if_missing, type = "bool")
 
   path <- .interaction_database_rds_path(database, version, cache_dir)
-  assert_file_exists(path)
+  if (!file.exists(path) || !isTRUE(file.info(path)$size > 0)) {
+    if (!isTRUE(build_if_missing)) {
+      build_fun <- paste0("build_", database, "_database")
+      cli::cli_abort(c(
+        "x" = paste(
+          "Interaction database {.val {database}} (version {.val {version}})",
+          "not found at {.path {path}}."
+        ),
+        "i" = paste(
+          "Run {.code load_interaction_database(\"{database}\", build_if_missing = TRUE)}",
+          "or {.code {build_fun}()}."
+        )
+      ))
+    }
+
+    cli::cli_inform(c(
+      "i" = paste(
+        "Building interaction database {.val {database}}",
+        "(version {.val {version}}) under {.path {cache_dir}}."
+      )
+    ))
+    builder_args <- list(cache_dir = cache_dir, ...)
+    if (!identical(version, "latest") && !"version" %in% names(builder_args)) {
+      builder_args$version <- version
+    }
+    switch(
+      database,
+      string = do.call(build_string_database, builder_args),
+      biogrid = do.call(build_biogrid_database, builder_args),
+      corum = do.call(build_corum_database, builder_args),
+      omnipath = do.call(build_omnipath_database, builder_args),
+      alphafold = do.call(build_alphafold_database, builder_args)
+    )
+    if (!file.exists(path) || !isTRUE(file.info(path)$size > 0)) {
+      cli::cli_abort(c(
+        "x" = paste(
+          "Build finished but {.val {database}} (version {.val {version}})",
+          "is still missing at {.path {path}}."
+        ),
+        "i" = paste(
+          "The builder may have written a different version label;",
+          "check {.path {cache_dir}} or pass the concrete {.arg version}."
+        )
+      ))
+    }
+  }
+
   obj <- readRDS(path)
   assert_class(obj, "list")
   if (is.null(obj$edges)) {
@@ -658,6 +714,8 @@ create_marker_uniprot_map <- function(
 #'   (filters the \code{network} additional column).
 #' @param cache_dir Interaction database cache directory.
 #' @param version Database version label (\code{"latest"} or a built version).
+#' @param build_if_missing Passed to \code{\link{load_interaction_database}}.
+#'   Defaults to \code{FALSE}.
 #' @return A tibble of panel edges with \code{marker_1}, \code{marker_2},
 #'   \code{uniprot_a}, \code{uniprot_b}, native score columns, and any
 #'   \code{additional_columns} from the database. Pass
@@ -728,7 +786,8 @@ create_marker_uniprot_map <- function(
 #'   markers = c("CD3e", "CD4", "CD8"),
 #'   database = "string",
 #'   marker_uniprot_map = marker_map,
-#'   score_min = c(combined_score = 400)
+#'   score_min = c(combined_score = 400),
+#'   build_if_missing = TRUE
 #' ) %>%
 #'   select(marker_1, marker_2)
 #'
@@ -748,7 +807,8 @@ extract_panel_interactions <- function(
   score_combine = c("any", "all"),
   string_network = c("physical", "full"),
   cache_dir = interaction_database_cache_dir(),
-  version = "latest"
+  version = "latest",
+  build_if_missing = FALSE
 ) {
   database <- match.arg(database)
   score_combine <- match.arg(score_combine)
@@ -761,11 +821,13 @@ extract_panel_interactions <- function(
   assert_col_class("uniprot_id", marker_uniprot_map, classes = "character")
   assert_single_value(cache_dir, type = "string")
   assert_single_value(version, type = "string")
+  assert_single_value(build_if_missing, type = "bool")
 
   db <- load_interaction_database(
     database = database,
     version = version,
-    cache_dir = cache_dir
+    cache_dir = cache_dir,
+    build_if_missing = build_if_missing
   )
   edges <- db$edges
   score_cols <- db$meta$score_columns %||% character()

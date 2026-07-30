@@ -13,7 +13,8 @@ extract_panel_interactions(
   score_combine = c("any", "all"),
   string_network = c("physical", "full"),
   cache_dir = interaction_database_cache_dir(),
-  version = "latest"
+  version = "latest",
+  build_if_missing = FALSE
 )
 }
 \arguments{
@@ -42,6 +43,9 @@ column are always ANDed into one per-column predicate.}
 \item{cache_dir}{Interaction database cache directory.}
 
 \item{version}{Database version label (\code{"latest"} or a built version).}
+
+\item{build_if_missing}{Passed to \code{\link{load_interaction_database}}.
+Defaults to \code{FALSE}.}
 }
 \value{
 A tibble of panel edges with \code{marker_1}, \code{marker_2},
@@ -126,7 +130,8 @@ highlight_pairs <- extract_panel_interactions(
   markers = c("CD3e", "CD4", "CD8"),
   database = "string",
   marker_uniprot_map = marker_map,
-  score_min = c(combined_score = 400)
+  score_min = c(combined_score = 400),
+  build_if_missing = TRUE
 ) \%>\%
   select(marker_1, marker_2)
 
