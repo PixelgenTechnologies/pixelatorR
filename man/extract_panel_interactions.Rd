@@ -36,7 +36,8 @@ columns in the loaded database (see \code{meta$score_columns}).}
 \code{"any"} (OR, default) or \code{"all"} (AND). Bounds on the same
 column are always ANDed into one per-column predicate.}
 
-\item{string_network}{For STRING: \code{"physical"} or \code{"full"}.}
+\item{string_network}{For STRING: \code{"physical"} or \code{"full"}
+(filters the \code{network} additional column).}
 
 \item{cache_dir}{Interaction database cache directory.}
 
@@ -44,9 +45,9 @@ column are always ANDed into one per-column predicate.}
 }
 \value{
 A tibble of panel edges with \code{marker_1}, \code{marker_2},
-\code{uniprot_a}, \code{uniprot_b}, \code{in_db = TRUE}, native score
-columns from the database, plus \code{evidence}, \code{resource}, and
-\code{resource_version}. Pass \code{marker_1}/\code{marker_2} columns to
+\code{uniprot_a}, \code{uniprot_b}, native score columns, and any
+\code{additional_columns} from the database. Pass
+\code{marker_1}/\code{marker_2} columns to
 \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 }
 \description{
@@ -60,9 +61,9 @@ Conversely, interactions between different UniProt accessions are not
 returned as marker self-pairs. Marker names are ordered alphabetically, and
 the corresponding UniProt accessions are reordered with them.
 When multiple UniProt edges collapse to the same marker pair, the row with
-the highest score envelope is kept so UniProt IDs and evidence stay aligned
-with the reported scores. For databases without score columns, the first
-remaining edge for that marker pair is kept.
+the highest score envelope is kept so UniProt IDs and additional columns
+stay aligned with the reported scores. For databases without score columns,
+the first remaining edge for that marker pair is kept.
 }
 \section{Score filtering}{
 

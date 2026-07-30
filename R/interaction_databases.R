@@ -1,5 +1,6 @@
 # Canonical edge schema: uniprot_a, uniprot_b (undirected, a <= b), optional
-# native score columns, evidence, resource, resource_version.
+# native score columns and optional additional_columns. Provenance (resource,
+# version, license, …) lives in meta only.
 # Persistent cache is the edge RDS under interaction_database_cache_dir() only;
 # raw vendor dumps are ephemeral staging during build_*_database().
 
@@ -264,10 +265,10 @@ interaction_database_cache_dir <- function() {
 #'
 #' @param edges Data frame with at least two UniProt columns.
 #' @param a_col,b_col Column names for the two ends.
-#' @param score_cols Optional character vector of score columns to retain.
-#' @param evidence_col Optional evidence column.
-#' @param resource Resource name.
-#' @param resource_version Version string.
+#' @param score_cols Optional character vector of numeric score columns to retain.
+#' @param additional_cols Optional character vector of extra columns to copy
+#'   through under their native names (non-score metadata such as
+#'   \code{network} or \code{Experimental System}).
 #' @return Tibble with canonical columns.
 #' @export
 normalise_interaction_edges <- function(
@@ -275,9 +276,7 @@ normalise_interaction_edges <- function(
   a_col = "uniprot_a",
   b_col = "uniprot_b",
   score_cols = NULL,
-  evidence_col = NULL,
-  resource,
-  resource_version
+  additional_cols = NULL
 ) {
   assert_class(edges, c("data.frame", "tbl_df"))
   assert_single_value(a_col, type = "string")
@@ -288,9 +287,12 @@ normalise_interaction_edges <- function(
     n = 1,
     allow_null = TRUE
   )
-  assert_single_value(evidence_col, type = "string", allow_null = TRUE)
-  assert_single_value(resource, type = "string")
-  assert_single_value(resource_version, type = "string")
+  assert_vector(
+    additional_cols,
+    type = "character",
+    n = 1,
+    allow_null = TRUE
+  )
   assert_col_in_data(a_col, edges)
   assert_col_in_data(b_col, edges)
   if (!is.null(score_cols)) {
@@ -299,6 +301,24 @@ normalise_interaction_edges <- function(
       cli::cli_abort(
         "Missing score columns: {.val {missing_score_cols}}."
       )
+    }
+  }
+  if (!is.null(additional_cols)) {
+    if (anyDuplicated(additional_cols)) {
+      cli::cli_abort("{.arg additional_cols} must not contain duplicates.")
+    }
+    missing_add_cols <- setdiff(additional_cols, names(edges))
+    if (length(missing_add_cols) > 0) {
+      cli::cli_abort(
+        "Missing additional columns: {.val {missing_add_cols}}."
+      )
+    }
+    overlap <- intersect(score_cols %||% character(), additional_cols)
+    if (length(overlap) > 0) {
+      cli::cli_abort(c(
+        "x" = "{.arg additional_cols} overlaps {.arg score_cols}.",
+        "i" = "Shared names: {.val {overlap}}"
+      ))
     }
   }
 
@@ -311,22 +331,25 @@ normalise_interaction_edges <- function(
     uniprot_a = pmin(a, b),
     uniprot_b = pmax(a, b)
   )
-  if (!is.null(score_cols)) {
+  if (!is.null(score_cols) && length(score_cols) > 0) {
     scores <- lapply(edges[keep, score_cols, drop = FALSE], function(score) {
       # as.character first so factor scores are not silently converted to codes
       as.numeric(as.character(score))
     })
     output <- bind_cols(output, as_tibble(scores))
   }
-  output <- bind_cols(output, tibble(
-    evidence = if (!is.null(evidence_col) && evidence_col %in% names(edges)) {
-      as.character(edges[[evidence_col]][keep])
-    } else {
-      NA_character_
-    },
-    resource = resource,
-    resource_version = resource_version
-  ))
+  if (!is.null(additional_cols) && length(additional_cols) > 0) {
+    extras <- edges[keep, additional_cols, drop = FALSE]
+    # Character-coerce factors so unique() / joins stay stable
+    extras[] <- lapply(extras, function(col) {
+      if (is.factor(col) || is.character(col)) {
+        as.character(col)
+      } else {
+        col
+      }
+    })
+    output <- bind_cols(output, as_tibble(extras))
+  }
   return(unique(output))
 }
 
@@ -339,6 +362,8 @@ normalise_interaction_edges <- function(
 #' @param score_columns Character vector of numeric score column names present
 #'   in \code{edges}. Use \code{NULL} or \code{character(0)} when the database
 #'   has no scores.
+#' @param additional_columns Character vector of extra non-score column names
+#'   present in \code{edges}. Use \code{NULL} or \code{character(0)} when none.
 #' @param source_url Optional provenance URL.
 #' @param license Optional license string.
 #' @param citation Optional citation string.
@@ -352,6 +377,7 @@ save_interaction_database <- function(
   version,
   cache_dir = interaction_database_cache_dir(),
   score_columns = NULL,
+  additional_columns = NULL,
   source_url = NULL,
   license = NULL,
   citation = NULL
@@ -364,9 +390,7 @@ save_interaction_database <- function(
   assert_single_value(license, type = "string", allow_null = TRUE)
   assert_single_value(citation, type = "string", allow_null = TRUE)
 
-  required_cols <- c(
-    "uniprot_a", "uniprot_b", "evidence", "resource", "resource_version"
-  )
+  required_cols <- c("uniprot_a", "uniprot_b")
   missing_cols <- setdiff(required_cols, names(edges))
   if (length(missing_cols) > 0) {
     cli::cli_abort(c(
@@ -384,17 +408,45 @@ save_interaction_database <- function(
   if (anyDuplicated(score_columns)) {
     cli::cli_abort("{.arg score_columns} must not contain duplicates.")
   }
-  reserved_scores <- intersect(score_columns, required_cols)
-  if (length(reserved_scores) > 0) {
+  if (is.null(additional_columns)) {
+    additional_columns <- character()
+  } else if (length(additional_columns) > 0) {
+    assert_vector(additional_columns, type = "character", n = 1)
+  } else if (!is.character(additional_columns)) {
+    cli::cli_abort(
+      "{.arg additional_columns} must be a character vector or NULL."
+    )
+  }
+  if (anyDuplicated(additional_columns)) {
+    cli::cli_abort("{.arg additional_columns} must not contain duplicates.")
+  }
+  reserved <- intersect(
+    c(score_columns, additional_columns),
+    required_cols
+  )
+  if (length(reserved) > 0) {
     cli::cli_abort(c(
-      "x" = "{.arg score_columns} collides with required columns.",
-      "i" = "Invalid names: {.val {reserved_scores}}"
+      "x" = "Score/additional columns collide with required columns.",
+      "i" = "Invalid names: {.val {reserved}}"
+    ))
+  }
+  overlap <- intersect(score_columns, additional_columns)
+  if (length(overlap) > 0) {
+    cli::cli_abort(c(
+      "x" = "{.arg additional_columns} overlaps {.arg score_columns}.",
+      "i" = "Shared names: {.val {overlap}}"
     ))
   }
   missing_score_cols <- setdiff(score_columns, names(edges))
   if (length(missing_score_cols) > 0) {
     cli::cli_abort(
       "Missing score columns: {.val {missing_score_cols}}."
+    )
+  }
+  missing_add_cols <- setdiff(additional_columns, names(edges))
+  if (length(missing_add_cols) > 0) {
+    cli::cli_abort(
+      "Missing additional columns: {.val {missing_add_cols}}."
     )
   }
   if (length(score_columns) > 0) {
@@ -412,9 +464,11 @@ save_interaction_database <- function(
   path <- .interaction_database_rds_path(database, version, cache_dir)
   meta <- list(
     database = database,
+    resource = database,
     version = version,
     n_edges = nrow(edges),
     score_columns = score_columns,
+    additional_columns = additional_columns,
     source_url = source_url,
     license = license,
     citation = citation,
@@ -456,9 +510,7 @@ load_interaction_database <- function(
     cli::cli_abort("Invalid interaction database object at {.path {path}}.")
   }
   assert_class(obj$edges, c("data.frame", "tbl_df"))
-  required_cols <- c(
-    "uniprot_a", "uniprot_b", "evidence", "resource", "resource_version"
-  )
+  required_cols <- c("uniprot_a", "uniprot_b")
   missing_cols <- setdiff(required_cols, names(obj$edges))
   if (length(missing_cols) > 0) {
     cli::cli_abort(c(
@@ -473,11 +525,25 @@ load_interaction_database <- function(
       "i" = "{.field score_columns} must be a character vector."
     ))
   }
+  additional_columns <- obj$meta$additional_columns %||% character()
+  if (!is.character(additional_columns)) {
+    cli::cli_abort(c(
+      "x" = "Invalid interaction database meta at {.path {path}}.",
+      "i" = "{.field additional_columns} must be a character vector."
+    ))
+  }
   missing_score_cols <- setdiff(score_columns, names(obj$edges))
   if (length(missing_score_cols) > 0) {
     cli::cli_abort(c(
       "x" = "Invalid interaction database edges at {.path {path}}.",
       "i" = "Missing declared score columns: {.val {missing_score_cols}}"
+    ))
+  }
+  missing_add_cols <- setdiff(additional_columns, names(obj$edges))
+  if (length(missing_add_cols) > 0) {
+    cli::cli_abort(c(
+      "x" = "Invalid interaction database edges at {.path {path}}.",
+      "i" = "Missing declared additional columns: {.val {missing_add_cols}}"
     ))
   }
   if (length(score_columns) > 0) {
@@ -492,6 +558,8 @@ load_interaction_database <- function(
     }
   }
   obj$meta$score_columns <- score_columns
+  obj$meta$additional_columns <- additional_columns
+  obj$meta$resource <- obj$meta$resource %||% obj$meta$database %||% database
   return(obj)
 }
 
@@ -569,9 +637,9 @@ create_marker_uniprot_map <- function(
 #' returned as marker self-pairs. Marker names are ordered alphabetically, and
 #' the corresponding UniProt accessions are reordered with them.
 #' When multiple UniProt edges collapse to the same marker pair, the row with
-#' the highest score envelope is kept so UniProt IDs and evidence stay aligned
-#' with the reported scores. For databases without score columns, the first
-#' remaining edge for that marker pair is kept.
+#' the highest score envelope is kept so UniProt IDs and additional columns
+#' stay aligned with the reported scores. For databases without score columns,
+#' the first remaining edge for that marker pair is kept.
 #'
 #' @param markers Character vector of panel marker names.
 #' @param database Interaction database key.
@@ -586,13 +654,14 @@ create_marker_uniprot_map <- function(
 #' @param score_combine How to combine predicates across score columns:
 #'   \code{"any"} (OR, default) or \code{"all"} (AND). Bounds on the same
 #'   column are always ANDed into one per-column predicate.
-#' @param string_network For STRING: \code{"physical"} or \code{"full"}.
+#' @param string_network For STRING: \code{"physical"} or \code{"full"}
+#'   (filters the \code{network} additional column).
 #' @param cache_dir Interaction database cache directory.
 #' @param version Database version label (\code{"latest"} or a built version).
 #' @return A tibble of panel edges with \code{marker_1}, \code{marker_2},
-#'   \code{uniprot_a}, \code{uniprot_b}, \code{in_db = TRUE}, native score
-#'   columns from the database, plus \code{evidence}, \code{resource}, and
-#'   \code{resource_version}. Pass \code{marker_1}/\code{marker_2} columns to
+#'   \code{uniprot_a}, \code{uniprot_b}, native score columns, and any
+#'   \code{additional_columns} from the database. Pass
+#'   \code{marker_1}/\code{marker_2} columns to
 #'   \code{ColocalizationHeatmap(highlight_pairs = ...)}.
 #'
 #' @section Score filtering:
@@ -700,26 +769,35 @@ extract_panel_interactions <- function(
   )
   edges <- db$edges
   score_cols <- db$meta$score_columns %||% character()
+  add_cols <- db$meta$additional_columns %||% character()
 
-  # Zero-row result matching the loaded database score schema.
+  # Zero-row result matching the loaded database score / additional schema.
   empty_panel_interactions <- function() {
-    score_tbl <- as_tibble(
-      setNames(rep(list(numeric()), length(score_cols)), score_cols)
-    )
+    empty_like <- function(cols) {
+      lapply(cols, function(col) {
+        if (col %in% names(edges)) {
+          x <- edges[[col]]
+          if (is.numeric(x)) {
+            return(numeric())
+          }
+          if (is.logical(x)) {
+            return(logical())
+          }
+        }
+        character()
+      }) %>%
+        setNames(cols) %>%
+        as_tibble()
+    }
     return(bind_cols(
       tibble(
         marker_1 = character(),
         marker_2 = character(),
         uniprot_a = character(),
-        uniprot_b = character(),
-        in_db = logical()
+        uniprot_b = character()
       ),
-      score_tbl,
-      tibble(
-        evidence = character(),
-        resource = character(),
-        resource_version = character()
-      )
+      empty_like(score_cols),
+      empty_like(add_cols)
     ))
   }
 
@@ -738,8 +816,14 @@ extract_panel_interactions <- function(
   }
 
   if (database == "string") {
+    if (!"network" %in% names(edges)) {
+      cli::cli_abort(c(
+        "x" = "STRING edge table lacks a {.val network} column.",
+        "i" = "Rebuild the STRING database with the current builders."
+      ))
+    }
     edges <- edges %>%
-      filter(evidence == string_network)
+      filter(network == string_network)
   }
   edges <- .filter_edges_by_scores(
     edges = edges,
@@ -783,13 +867,11 @@ extract_panel_interactions <- function(
       uniprot_a = uniprot_a_ordered,
       uniprot_b = uniprot_b_ordered,
       all_of(score_cols),
-      evidence,
-      resource,
-      resource_version
+      all_of(add_cols)
     )
 
   # Collapse duplicate marker pairs to one representative edge. When scores
-  # exist, keep the row with the highest score envelope so UniProt / evidence
+  # exist, keep the row with the highest score envelope so UniProt / extras
   # stay aligned with the reported scores; otherwise keep the first edge.
   if (length(score_cols) > 0 && nrow(joined) > 0) {
     score_mat <- as.matrix(joined[score_cols])
@@ -811,9 +893,6 @@ extract_panel_interactions <- function(
       slice_head(n = 1) %>%
       ungroup()
   }
-  out <- out %>%
-    mutate(in_db = TRUE) %>%
-    relocate(in_db, .after = uniprot_b)
   return(out)
 }
 
@@ -945,18 +1024,15 @@ build_string_database <- function(
       inner_join(as_tibble(up), by = c("protein1" = "string_protein_id")) %>%
       rename(uniprot_a = uniprot) %>%
       inner_join(as_tibble(up), by = c("protein2" = "string_protein_id")) %>%
-      rename(uniprot_b = uniprot)
-    edges <- normalise_interaction_edges(
+      rename(uniprot_b = uniprot) %>%
+      mutate(network = network_label)
+    normalise_interaction_edges(
       m2,
       a_col = "uniprot_a",
       b_col = "uniprot_b",
       score_cols = "combined_score",
-      evidence_col = NULL,
-      resource = paste0("string_", network_label),
-      resource_version = version
+      additional_cols = "network"
     )
-    edges$evidence <- network_label
-    edges
   }
 
   phys <- read_links(physical_gz, "physical")
@@ -974,6 +1050,7 @@ build_string_database <- function(
     version = version,
     cache_dir = cache_dir,
     score_columns = "combined_score",
+    additional_columns = "network",
     source_url = "https://stringdb-downloads.org/download/",
     license = paste(
       "Creative Commons Attribution 4.0 International (CC BY 4.0);",
@@ -1153,21 +1230,23 @@ build_biogrid_database <- function(
     v[v == "-" | v == ""] <- NA_character_
     v
   }
-  evidence <- if (!is.na(exp_col)) as.character(dt[[exp_col]]) else NA_character_
+  evidence <- if (!is.na(exp_col)) as.character(dt[[exp_col]]) else NULL
   pairs <- data.frame(
     uniprot_a = first_ac(dt[[a_col]]),
     uniprot_b = first_ac(dt[[b_col]]),
-    evidence = evidence,
     stringsAsFactors = FALSE
   )
+  additional_cols <- character()
+  if (!is.null(evidence) && !is.na(exp_col)) {
+    pairs[[exp_col]] <- evidence
+    additional_cols <- exp_col
+  }
   pairs <- pairs[!is.na(pairs$uniprot_a) & !is.na(pairs$uniprot_b), , drop = FALSE]
   edges <- normalise_interaction_edges(
     pairs,
     a_col = "uniprot_a",
     b_col = "uniprot_b",
-    evidence_col = "evidence",
-    resource = "biogrid",
-    resource_version = version
+    additional_cols = if (length(additional_cols)) additional_cols else NULL
   )
 
   path <- save_interaction_database(
@@ -1176,6 +1255,7 @@ build_biogrid_database <- function(
     version = version,
     cache_dir = cache_dir,
     score_columns = NULL,
+    additional_columns = if (length(additional_cols)) additional_cols else NULL,
     source_url = paste0(
       "https://downloads.thebiogrid.org/File/BioGRID/Release-Archive/",
       "BIOGRID-", version, "/"
@@ -1258,47 +1338,44 @@ build_corum_database <- function(
     c("name", "complex_name", "ComplexName")
   )
 
-  pairs <- bind_rows(
-    tibble(
-      uniprot_a = character(),
-      uniprot_b = character(),
-      evidence = character()
-    ),
-    lapply(seq_len(nrow(dt)), function(i) {
-      ids <- unique(trimws(unlist(strsplit(
-        as.character(dt[[comp_col]][[i]]),
-        "[_;,]"
-      ))))
-      ids <- ids[ids != "" & !is.na(ids)]
-      evid <- if (!is.na(name_col)) {
-        as.character(dt[[name_col]][[i]])
-      } else {
-        NA_character_
-      }
-      if (length(ids) < 1) {
-        return(NULL)
-      }
-      # Single-accession complexes (homomers) become U-U edges
-      if (length(ids) == 1) {
-        return(tibble(
-          uniprot_a = ids,
-          uniprot_b = ids,
-          evidence = evid
-        ))
-      }
+  pieces <- lapply(seq_len(nrow(dt)), function(i) {
+    ids <- unique(trimws(unlist(strsplit(
+      as.character(dt[[comp_col]][[i]]),
+      "[_;,]"
+    ))))
+    ids <- ids[ids != "" & !is.na(ids)]
+    if (length(ids) < 1) {
+      return(NULL)
+    }
+    # Single-accession complexes (homomers) become U-U edges
+    if (length(ids) == 1) {
+      row <- tibble(uniprot_a = ids, uniprot_b = ids)
+    } else {
       grid <- utils::combn(ids, 2)
-      tibble(
+      row <- tibble(
         uniprot_a = grid[1, ],
-        uniprot_b = grid[2, ],
-        evidence = evid
+        uniprot_b = grid[2, ]
       )
-    })
-  )
+    }
+    if (!is.na(name_col)) {
+      row[[name_col]] <- as.character(dt[[name_col]][[i]])
+    }
+    row
+  })
+  pieces <- pieces[!vapply(pieces, is.null, logical(1))]
+  if (length(pieces) < 1) {
+    pairs <- tibble(uniprot_a = character(), uniprot_b = character())
+  } else {
+    pairs <- bind_rows(pieces)
+  }
+  additional_cols <- if (!is.na(name_col) && name_col %in% names(pairs)) {
+    name_col
+  } else {
+    NULL
+  }
   edges <- normalise_interaction_edges(
     pairs,
-    evidence_col = "evidence",
-    resource = "corum",
-    resource_version = version
+    additional_cols = additional_cols
   )
 
   path <- save_interaction_database(
@@ -1307,6 +1384,7 @@ build_corum_database <- function(
     version = version,
     cache_dir = cache_dir,
     score_columns = NULL,
+    additional_columns = additional_cols,
     source_url = paste(
       "https://omnipathdb.org/complexes?databases=CORUM;",
       "https://mips.helmholtz-muenchen.de/corum/"
@@ -1397,23 +1475,18 @@ build_omnipath_database <- function(
   if (is.na(src) || is.na(tgt)) {
     cli::cli_abort("Could not find source/target UniProt columns.")
   }
-  evid_col <- intersect(c("sources", "references"), colnames(dt))
-  evid <- if (length(evid_col)) {
-    apply(dt[, evid_col, with = FALSE], 1, function(x) paste(x, collapse = "|"))
-  } else {
-    NA_character_
-  }
   pairs <- data.frame(
     uniprot_a = as.character(dt[[src]]),
     uniprot_b = as.character(dt[[tgt]]),
-    evidence = evid,
     stringsAsFactors = FALSE
   )
+  additional_cols <- intersect(c("sources", "references"), colnames(dt))
+  for (col in additional_cols) {
+    pairs[[col]] <- as.character(dt[[col]])
+  }
   edges <- normalise_interaction_edges(
     pairs,
-    evidence_col = "evidence",
-    resource = "omnipath",
-    resource_version = paste0(version, "_", license)
+    additional_cols = if (length(additional_cols)) additional_cols else NULL
   )
 
   path <- save_interaction_database(
@@ -1422,6 +1495,7 @@ build_omnipath_database <- function(
     version = paste0(version, "_", license),
     cache_dir = cache_dir,
     score_columns = NULL,
+    additional_columns = if (length(additional_cols)) additional_cols else NULL,
     source_url = "https://omnipathdb.org/interactions",
     license = paste0(
       "No single OmniPath data license; contributing-resource licenses ",
@@ -1433,7 +1507,7 @@ build_omnipath_database <- function(
       "and intercellular signaling knowledge for multicellular omics",
       "analysis. Molecular Systems Biology 17:e9923.",
       "https://doi.org/10.15252/msb.20209923; also cite the contributing",
-      "resources identified in the evidence/sources fields"
+      "resources identified in the sources/references fields"
     )
   )
   success <- TRUE
@@ -1607,9 +1681,7 @@ build_alphafold_database <- function(
   pairs <- pairs[keep, , drop = FALSE]
   edges <- normalise_interaction_edges(
     pairs,
-    score_cols = c("ipSAE", "pDockQ2"),
-    resource = "alphafold",
-    resource_version = version
+    score_cols = c("ipSAE", "pDockQ2")
   )
 
   path <- save_interaction_database(
@@ -1618,6 +1690,7 @@ build_alphafold_database <- function(
     version = version,
     cache_dir = cache_dir,
     score_columns = c("ipSAE", "pDockQ2"),
+    additional_columns = NULL,
     source_url = nvda_base,
     license = paste(
       "Creative Commons Attribution 4.0 International (CC BY 4.0);",

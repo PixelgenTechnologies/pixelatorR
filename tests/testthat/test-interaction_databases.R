@@ -8,26 +8,24 @@ library(tibble)
       uniprot_a = c("P12345", "P12345"),
       uniprot_b = c("Q67890", "P99999"),
       combined_score = c(500, 200),
+      network = "physical",
       stringsAsFactors = FALSE
     ),
     score_cols = "combined_score",
-    resource = "string_physical",
-    resource_version = "test"
+    additional_cols = "network"
   )
-  phys$evidence <- "physical"
 
   full <- normalise_interaction_edges(
     data.frame(
       uniprot_a = "Q11111",
       uniprot_b = "R22222",
       combined_score = 800,
+      network = "full",
       stringsAsFactors = FALSE
     ),
     score_cols = "combined_score",
-    resource = "string_full",
-    resource_version = "test"
+    additional_cols = "network"
   )
-  full$evidence <- "full"
 
   save_interaction_database(
     edges = bind_rows(phys, full),
@@ -35,6 +33,7 @@ library(tibble)
     version = "test",
     cache_dir = cache_dir,
     score_columns = "combined_score",
+    additional_columns = "network",
     source_url = "https://example.com",
     license = "CC BY 4.0"
   )
@@ -58,9 +57,7 @@ test_that("normalise_interaction_edges works as expected", {
     a_col = "a",
     b_col = "b",
     score_cols = c("primary_score", "secondary_score"),
-    evidence_col = "evid",
-    resource = "test",
-    resource_version = "v1"
+    additional_cols = "evid"
   )
 
   expect_equal(
@@ -69,11 +66,7 @@ test_that("normalise_interaction_edges works as expected", {
       list(
         uniprot_a = c("A", "A"), uniprot_b = c("B", "C"),
         primary_score = c(1, 3), secondary_score = c(0.1, 0.3),
-        evidence = c("x", "z"), resource = c(
-          "test",
-          "test"
-        ),
-        resource_version = c("v1", "v1")
+        evid = c("x", "z")
       ),
       row.names = c(NA, -2L), class = c(
         "tbl_df",
@@ -92,9 +85,7 @@ test_that("normalise_interaction_edges works as expected", {
     ),
     a_col = "a",
     b_col = "b",
-    score_cols = "score",
-    resource = "test",
-    resource_version = "v1"
+    score_cols = "score"
   )
   expect_equal(factor_edges$score[[1]], 500)
 })
@@ -104,9 +95,7 @@ test_that("normalise_interaction_edges fails with invalid input", {
     normalise_interaction_edges(
       data.frame(x = 1, y = 2),
       a_col = "a",
-      b_col = "b",
-      resource = "test",
-      resource_version = "v1"
+      b_col = "b"
     )
   )
   expect_error(
@@ -114,9 +103,7 @@ test_that("normalise_interaction_edges fails with invalid input", {
       data.frame(a = "A", b = "B"),
       a_col = "a",
       b_col = "b",
-      score_cols = "missing_score",
-      resource = "test",
-      resource_version = "v1"
+      score_cols = "missing_score"
     )
   )
 })
@@ -174,13 +161,16 @@ test_that("save_interaction_database and load_interaction_database work as expec
       database = "string",
       version = "latest",
       cache_dir = cache_dir,
-      score_columns = db$meta$score_columns
+      score_columns = db$meta$score_columns,
+      additional_columns = db$meta$additional_columns
     )
   )
   expect_equal(basename(latest_path), "string_latest.rds")
   expect_true(file.exists(latest_path))
+  expect_equal(db$meta$additional_columns, "network")
+  expect_equal(db$meta$resource, "string")
 
-  # Non-score annotation columns are allowed when score_columns is explicit
+  # Non-score annotation columns require additional_columns when declared
   annotated <- db$edges
   annotated$note <- "keep"
   expect_no_error(
@@ -189,7 +179,8 @@ test_that("save_interaction_database and load_interaction_database work as expec
       database = "string",
       version = "annotated",
       cache_dir = cache_dir,
-      score_columns = "combined_score"
+      score_columns = "combined_score",
+      additional_columns = c("network", "note")
     )
   )
   expect_error(
@@ -221,10 +212,7 @@ test_that("load_interaction_database fails with invalid input", {
 
   bad_edges <- data.frame(
     uniprot_a = "A",
-    uniprot_b = "B",
-    evidence = NA_character_,
-    resource = "test",
-    resource_version = "v1"
+    uniprot_b = "B"
   )
   saveRDS(
     list(
@@ -265,9 +253,8 @@ test_that("extract_panel_interactions works as expected", {
     out,
     structure(list(
       marker_1 = "A", marker_2 = "B", uniprot_a = "P12345",
-      uniprot_b = "Q67890", in_db = TRUE, combined_score = 500,
-      evidence = "physical", resource = "string_physical",
-      resource_version = "test"
+      uniprot_b = "Q67890", combined_score = 500,
+      network = "physical"
     ), row.names = c(
       NA,
       -1L
@@ -300,8 +287,8 @@ test_that("extract_panel_interactions works as expected", {
   expect_equal(
     names(empty),
     c(
-      "marker_1", "marker_2", "uniprot_a", "uniprot_b", "in_db",
-      "combined_score", "evidence", "resource", "resource_version"
+      "marker_1", "marker_2", "uniprot_a", "uniprot_b",
+      "combined_score", "network"
     )
   )
 
@@ -329,25 +316,25 @@ test_that("extract_panel_interactions aligns UniProt with max score row", {
   dir.create(cache_dir)
 
   # Two UniProt edges for the same marker pair; lower score listed first so a
-  # first-row summarise would pick the wrong UniProt / evidence.
+  # first-row summarise would pick the wrong UniProt / extras.
   edges <- normalise_interaction_edges(
     data.frame(
       uniprot_a = c("P11111", "P22222"),
       uniprot_b = c("Q11111", "Q22222"),
       combined_score = c(100, 900),
+      network = "physical",
       stringsAsFactors = FALSE
     ),
     score_cols = "combined_score",
-    resource = "string_physical",
-    resource_version = "test"
+    additional_cols = "network"
   )
-  edges$evidence <- "physical"
   save_interaction_database(
     edges = edges,
     database = "string",
     version = "test",
     cache_dir = cache_dir,
-    score_columns = "combined_score"
+    score_columns = "combined_score",
+    additional_columns = "network"
   )
 
   map <- tibble(
@@ -399,6 +386,9 @@ test_that("build_biogrid_database uses real version from raw_file", {
   expect_equal(db$meta$version, "5.0.259")
   expect_equal(nrow(db$edges), 1)
   expect_equal(db$edges$uniprot_a[[1]], "P12345")
+  expect_equal(db$meta$additional_columns, "Experimental System")
+  expect_equal(db$edges[["Experimental System"]][[1]], "Two-hybrid")
+  expect_equal(db$meta$resource, "biogrid")
   expect_true(file.exists(
     file.path(cache_dir, "biogrid_latest.rds")
   ))
@@ -449,19 +439,19 @@ test_that("extract_panel_interactions keeps UniProt homodimers", {
       uniprot_a = c("P12345", "P12345"),
       uniprot_b = c("P12345", "Q67890"),
       combined_score = c(900, 500),
+      network = "physical",
       stringsAsFactors = FALSE
     ),
     score_cols = "combined_score",
-    resource = "string_physical",
-    resource_version = "test"
+    additional_cols = "network"
   )
-  homo$evidence <- "physical"
   save_interaction_database(
     edges = homo,
     database = "string",
     version = "test",
     cache_dir = cache_dir,
-    score_columns = "combined_score"
+    score_columns = "combined_score",
+    additional_columns = "network"
   )
 
   out <- extract_panel_interactions(
@@ -489,19 +479,19 @@ test_that("extract_panel_interactions does not invent hetero pairs from homodime
       uniprot_a = "P12345",
       uniprot_b = "P12345",
       combined_score = 900,
+      network = "physical",
       stringsAsFactors = FALSE
     ),
     score_cols = "combined_score",
-    resource = "string_physical",
-    resource_version = "test"
+    additional_cols = "network"
   )
-  homo$evidence <- "physical"
   save_interaction_database(
     edges = homo,
     database = "string",
     version = "test",
     cache_dir = cache_dir,
-    score_columns = "combined_score"
+    score_columns = "combined_score",
+    additional_columns = "network"
   )
 
   shared_map <- tibble(
@@ -531,19 +521,19 @@ test_that("extract_panel_interactions keeps UniProt columns aligned with markers
       uniprot_a = "P12345",
       uniprot_b = "Q67890",
       combined_score = 700,
+      network = "physical",
       stringsAsFactors = FALSE
     ),
     score_cols = "combined_score",
-    resource = "string_physical",
-    resource_version = "test"
+    additional_cols = "network"
   )
-  edges$evidence <- "physical"
   save_interaction_database(
     edges = edges,
     database = "string",
     version = "test",
     cache_dir = cache_dir,
-    score_columns = "combined_score"
+    score_columns = "combined_score",
+    additional_columns = "network"
   )
 
   # Join yields marker_1=B (P12345), marker_2=A (Q67890); lexical reorder to A,B
@@ -850,7 +840,7 @@ test_that("build_alphafold_database works as expected", {
   expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
   expect_equal(db$edges$ipSAE[[1]], 0.8)
   expect_equal(db$edges$pDockQ2[[1]], 0.5)
-  expect_true(is.na(db$edges$evidence[[1]]))
+  expect_false("evidence" %in% names(db$edges))
   expect_false("score" %in% names(db$edges))
 })
 
@@ -885,7 +875,7 @@ test_that("build_alphafold_database keeps native scores when kept via pDockQ2", 
   expect_equal(nrow(db$edges), 1)
   expect_equal(db$edges$ipSAE[[1]], 0.4)
   expect_equal(db$edges$pDockQ2[[1]], 0.5)
-  expect_true(is.na(db$edges$evidence[[1]]))
+  expect_false("evidence" %in% names(db$edges))
   expect_equal(db$meta$score_columns, c("ipSAE", "pDockQ2"))
 })
 
@@ -923,6 +913,9 @@ test_that("build_corum_database works as expected", {
   # 3 subunits -> 3 pairs; single-accession complex_2 -> 1 homomer edge
   expect_equal(nrow(db$edges), 4)
   expect_true(any(db$edges$uniprot_a == "A00001" & db$edges$uniprot_b == "A00001"))
+  expect_equal(db$meta$additional_columns, "name")
+  expect_true("name" %in% names(db$edges))
+  expect_false("evidence" %in% names(db$edges))
 })
 
 test_that("build_corum_database fails with invalid input", {

@@ -15,8 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `save_interaction_database()`, and `load_interaction_database()` for a
     UniProt edge RDS cache (STRING, BioGRID, CORUM, OmniPath, AlphaFold DB).
     Caches store native score columns declared in `meta$score_columns`
-    (STRING: `combined_score`; AlphaFold: `ipSAE`, `pDockQ2`; others: none).
-    Rebuild edge RDS caches after upgrading so edge schemas stay current.
+    (STRING: `combined_score`; AlphaFold: `ipSAE`, `pDockQ2`; others: none)
+    and optional native `additional_columns` (STRING: `network`; BioGRID:
+    experimental system; CORUM: complex name; OmniPath: `sources` /
+    `references`). Edge rows no longer carry `evidence`, `resource`,
+    `resource_version`, or `in_db`; provenance is in `meta` only
+    (`meta$resource`, `meta$version`, …). Rebuild edge RDS caches after
+    upgrading so edge schemas stay current.
     Raw vendor dumps are downloaded into ephemeral staging during
     `build_*_database()` and removed after a successful build; only the edge
     RDS under `interaction_database_cache_dir()` is kept.

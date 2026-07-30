@@ -9,9 +9,7 @@ normalise_interaction_edges(
   a_col = "uniprot_a",
   b_col = "uniprot_b",
   score_cols = NULL,
-  evidence_col = NULL,
-  resource,
-  resource_version
+  additional_cols = NULL
 )
 }
 \arguments{
@@ -19,17 +17,18 @@ normalise_interaction_edges(
 
 \item{a_col, b_col}{Column names for the two ends.}
 
-\item{score_cols}{Optional character vector of score columns to retain.}
+\item{score_cols}{Optional character vector of numeric score columns to retain.}
 
-\item{evidence_col}{Optional evidence column.}
-
-\item{resource}{Resource name.}
-
-\item{resource_version}{Version string.}
+\item{additional_cols}{Optional character vector of extra columns to copy
+through under their native names (non-score metadata such as
+\code{network} or \code{Experimental System}).}
 }
 \value{
 Tibble with canonical columns.
 }
 \description{
-Normalise an edge table to the canonical interaction-database schema
+Returns undirected UniProt pairs (\code{uniprot_a <= uniprot_b}) with
+optional numeric score columns and optional extra columns under their
+native names. Resource / version provenance belongs in RDS
+\code{meta}, not on every edge.
 }
