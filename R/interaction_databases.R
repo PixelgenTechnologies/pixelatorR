@@ -538,8 +538,7 @@ load_interaction_database <- function(
     if (!identical(version, "latest") && !"version" %in% names(builder_args)) {
       builder_args$version <- version
     }
-    switch(
-      database,
+    switch(database,
       string = do.call(build_string_database, builder_args),
       biogrid = do.call(build_biogrid_database, builder_args),
       corum = do.call(build_corum_database, builder_args),
