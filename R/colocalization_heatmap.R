@@ -63,6 +63,10 @@
 #' borders (\code{type = "dots"} only; errors with \code{"tiles"}).
 #' \code{NULL} (default) draws a constant border colour.
 #' @param highlight_stroke Border line width for highlighted cells.
+#' @param highlight_shrink Fraction by which to reduce the width and height of
+#' highlighted cell borders. Must be at least 0 and less than 1. The default
+#' \code{0.1} leaves a small gap between adjacent highlights; \code{0} uses the
+#' full cell size.
 #' @param ... Parameters passed to \code{pheatmap}
 #'
 #' @return A \code{Heatmap} object/plot if \code{type = "tiles"} or a \code{ggplot}
@@ -127,7 +131,8 @@
 #'     database = c("string", "alphafold")
 #'   ),
 #'   highlight_color_col = "database",
-#'   highlight_colors = c(string = "#C0392B", alphafold = "#6C3483")
+#'   highlight_colors = c(string = "#C0392B", alphafold = "#6C3483"),
+#'   highlight_shrink = 0.15
 #' )
 #'
 #' # We can specify the order of the markers with factor levels
@@ -196,6 +201,7 @@ ColocalizationHeatmap <- function(
   highlight_colors = "black",
   highlight_color_col = NULL,
   highlight_stroke = 1.2,
+  highlight_shrink = 0.1,
   ...
 ) {
   # Check if pheatmap is installed
@@ -215,6 +221,16 @@ ColocalizationHeatmap <- function(
   assert_vector(highlight_colors, type = "character", n = 1)
   assert_single_value(highlight_color_col, "string", allow_null = TRUE)
   assert_single_value(highlight_stroke, type = "numeric")
+  assert_single_value(highlight_shrink, type = "numeric")
+  if (
+    !is.finite(highlight_shrink) ||
+      highlight_shrink < 0 ||
+      highlight_shrink >= 1
+  ) {
+    cli::cli_abort(
+      "{.arg highlight_shrink} must be at least 0 and less than 1."
+    )
+  }
   assert_class(size_range, "numeric")
   assert_length(size_range, 2)
   if (any(size_range[1] < 0)) {
@@ -494,6 +510,8 @@ ColocalizationHeatmap <- function(
             fill = NA,
             colour = highlight_colors,
             linewidth = highlight_stroke,
+            width = 1 - highlight_shrink,
+            height = 1 - highlight_shrink,
             inherit.aes = FALSE
           )
       } else {
@@ -507,6 +525,8 @@ ColocalizationHeatmap <- function(
             ),
             fill = NA,
             linewidth = highlight_stroke,
+            width = 1 - highlight_shrink,
+            height = 1 - highlight_shrink,
             inherit.aes = FALSE
           )
         if (is.numeric(highlight_pairs[[highlight_color_col]])) {
@@ -568,8 +588,8 @@ ColocalizationHeatmap <- function(
           grid::grid.rect(
             x = x,
             y = y,
-            width = width,
-            height = height,
+            width = width * (1 - highlight_shrink),
+            height = height * (1 - highlight_shrink),
             gp = grid::gpar(
               col = highlight_colors,
               fill = NA,

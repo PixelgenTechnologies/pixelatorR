@@ -23,7 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `build_alphafold_database()`, `build_all_interaction_databases()`.
 - `ColocalizationHeatmap` highlight options: `highlight_pairs`,
   `highlight_colors`, `highlight_color_col` (dots-only mapping),
-  `highlight_stroke`.
+  `highlight_stroke`, `highlight_shrink`.
 
 ## [0.18.3] - 2026-07-21
 

@@ -28,6 +28,7 @@ ColocalizationHeatmap(
   highlight_colors = "black",
   highlight_color_col = NULL,
   highlight_stroke = 1.2,
+  highlight_shrink = 0.1,
   ...
 )
 }
@@ -100,6 +101,11 @@ borders (\code{type = "dots"} only; errors with \code{"tiles"}).
 \code{NULL} (default) draws a constant border colour.}
 
 \item{highlight_stroke}{Border line width for highlighted cells.}
+
+\item{highlight_shrink}{Fraction by which to reduce the width and height of
+highlighted cell borders. Must be at least 0 and less than 1. The default
+\code{0.1} leaves a small gap between adjacent highlights; \code{0} uses the
+full cell size.}
 
 \item{...}{Parameters passed to \code{pheatmap}}
 }
@@ -182,7 +188,8 @@ ColocalizationHeatmap(
     database = c("string", "alphafold")
   ),
   highlight_color_col = "database",
-  highlight_colors = c(string = "#C0392B", alphafold = "#6C3483")
+  highlight_colors = c(string = "#C0392B", alphafold = "#6C3483"),
+  highlight_shrink = 0.15
 )
 
 # We can specify the order of the markers with factor levels

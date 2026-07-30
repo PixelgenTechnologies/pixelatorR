@@ -49,6 +49,33 @@ test_that("ColocalizationHeatmap works as expected", {
     )
   )
   expect_true(any(vapply(p$layers, function(l) inherits(l$geom, "GeomTile"), logical(1))))
+  tile_layer <- which(vapply(
+    p$layers,
+    function(l) inherits(l$geom, "GeomTile"),
+    logical(1)
+  ))[1]
+  tile_data <- ggplot_build(p)$data[[tile_layer]]
+  expect_equal(unique(round(tile_data$xmax - tile_data$xmin, 10)), 0.9)
+  expect_equal(unique(round(tile_data$ymax - tile_data$ymin, 10)), 0.9)
+
+  expect_no_error(
+    p_shrunk <- ColocalizationHeatmap(
+      prox_summarized,
+      type = "dots",
+      size_col = "mean_log2_ratio",
+      highlight_pairs = highlight_pairs,
+      highlight_shrink = 0.25
+    )
+  )
+  tile_layer <- which(vapply(
+    p_shrunk$layers,
+    function(l) inherits(l$geom, "GeomTile"),
+    logical(1)
+  ))[1]
+  tile_data <- ggplot_build(p_shrunk)$data[[tile_layer]]
+  expect_equal(unique(round(tile_data$xmax - tile_data$xmin, 10)), 0.75)
+  expect_equal(unique(round(tile_data$ymax - tile_data$ymin, 10)), 0.75)
+
   # With symmetrise = FALSE, dots outline only the given orientation
   expect_no_error(
     p_asym <- ColocalizationHeatmap(
@@ -145,6 +172,27 @@ test_that("ColocalizationHeatmap fails with invalid input", {
       prox_summarized,
       highlight_pairs = tibble(a = 1, b = 2)
     )
+  )
+  expect_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      highlight_shrink = -0.1
+    ),
+    "at least 0 and less than 1"
+  )
+  expect_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      highlight_shrink = 1
+    ),
+    "at least 0 and less than 1"
+  )
+  expect_error(
+    ColocalizationHeatmap(
+      prox_summarized,
+      highlight_shrink = NA_real_
+    ),
+    "at least 0 and less than 1"
   )
 
   markers <- unique(c(prox_summarized$marker_1, prox_summarized$marker_2))
