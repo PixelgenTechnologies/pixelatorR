@@ -111,6 +111,7 @@ Collate:
     'graph_layout.R'
     'graph_layout_visualization.R'
     'inspect_pxl_file.R'
+    'interaction_databases.R'
     'isotype_analysis.R'
     'join_layers.R'
     'keep_largest_component.R'

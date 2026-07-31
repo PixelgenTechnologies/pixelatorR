@@ -1,6 +1,9 @@
 ACGT
 ADT
+AFDB
+AlphaFold
 BH
+BioGRID
 BluesCherry
 BluesGrayCherry
 CLR
@@ -17,6 +20,7 @@ DoubletFinder
 Downsample
 Downsampling
 DuckDB
+EBI
 Edgelist
 Epub
 FS
@@ -35,8 +39,10 @@ LogNormalize
 MDS
 MPX
 MPXAssay
+MV
 McGinnis
 Mulè
+Normalise
 NxD
 ORCID
 Ord
@@ -59,6 +65,7 @@ RSpectra
 SCSP
 SeuratObject
 Syst
+TSV
 Thiagarajan
 Tsang
 UEIs
@@ -67,6 +74,7 @@ UMAPs
 UMI
 UMIs
 UPIa
+UniProt
 Uropod
 ZJ
 adata
@@ -86,6 +94,8 @@ cels
 clr
 codecov
 colocalization
+colour
+combined_score
 covary
 cyans
 deduplicated
@@ -114,11 +124,16 @@ ggplot
 gi
 gini
 gstari
+heterodimer
+homodimer
+Homodimer
+homomer
 hjust
 hochberg
 holm
 hommel
 https
+ipSAE
 isotype
 json
 kmers
@@ -137,6 +152,8 @@ nn
 omics
 origo
 pDC
+pDockQ
+pDockQ2
 pMDS
 parallelization
 pearson

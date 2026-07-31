@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Interaction-database helpers for STRING, BioGRID, and AlphaFold DB:
+  - Cache/load/save (`interaction_database_cache_dir()`,
+    `normalise_interaction_edges()`, `save_interaction_database()`,
+    `load_interaction_database(build_if_missing = …)`) storing UniProt edges
+    with native `score_columns` and optional `additional_columns` (STRING:
+    `network`; BioGRID: experimental system). Raw dumps stage ephemerally
+    during `build_*_database()`; only the edge RDS is kept.
+  - `extract_panel_interactions()` for panel marker pairs (homodimer-safe
+    joins; named `score_min` / `score_max` with `score_combine`).
+  - `create_marker_uniprot_map()` from Seurat / PNA assay metadata.
+  - Builders: `build_string_database()`, `build_biogrid_database()`,
+    `build_alphafold_database()`, `build_all_interaction_databases()`.
+- `ColocalizationHeatmap` highlight options: `highlight_pairs`,
+  `highlight_colors`, `highlight_color_col` (dots-only mapping),
+  `highlight_stroke`, `highlight_shrink`.
+
 ## [0.18.3] - 2026-07-21
 
 ### Updates
