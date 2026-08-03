@@ -14,8 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `normalise_interaction_edges()`, `save_interaction_database()`,
     `load_interaction_database(build_if_missing = …)`) storing UniProt edges
     with native `score_columns` and optional `additional_columns` (STRING:
-    `network`; BioGRID: experimental system). Raw dumps stage ephemerally
-    during `build_*_database()`; only the edge RDS is kept.
+    `network`; BioGRID: experimental system from the full human physical
+    dataset). Raw dumps stage ephemerally during `build_*_database()`; only the
+    edge RDS is kept.
   - `extract_panel_interactions()` for panel marker pairs (homodimer-safe
     joins; named `score_min` / `score_max` with `score_combine`).
   - `create_marker_uniprot_map()` from Seurat / PNA assay metadata.

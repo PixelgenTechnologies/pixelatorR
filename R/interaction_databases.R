@@ -1115,11 +1115,13 @@ build_string_database <- function(
 
 #' Build BioGRID physical interaction database (human)
 #'
-#' Download BioGRID MV-Physical tab3 data and write a cached RDS.
+#' Download the full BioGRID human organism tab3 data, retain physical
+#' interactions, and write a cached RDS.
 #'
 #' @param raw_file Optional path to a local
-#'   \code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. If \code{NULL}, the
-#'   release is downloaded to a temp directory removed after a successful build.
+#'   \code{BIOGRID-ORGANISM-Homo_sapiens-X.Y.Z.tab3.txt} file. If \code{NULL},
+#'   the organism archive is downloaded to a temp directory removed after a
+#'   successful build.
 #' @param version BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.
 #'   \code{"latest"} resolves the release from the downloaded filename.
 #' @param cache_dir Output interaction database cache.
@@ -1151,7 +1153,10 @@ build_biogrid_database <- function(
     .finalize_interaction_database_staging(raw_dir, owned_staging, success),
     add = TRUE
   )
-  tab3_name_re <- "^BIOGRID-MV-Physical-([0-9]+\\.[0-9]+\\.[0-9]+)\\.tab3\\.txt$"
+  tab3_name_re <- paste0(
+    "^BIOGRID-ORGANISM-Homo_sapiens-",
+    "([0-9]+\\.[0-9]+\\.[0-9]+)\\.tab3\\.txt$"
+  )
 
   version_from_tab3_name <- function(path) {
     bn <- basename(path)
@@ -1171,7 +1176,7 @@ build_biogrid_database <- function(
       if (is.na(parsed)) {
         cli::cli_abort(c(
           "x" = "When {.arg version} is {.val latest}, {.arg raw_file} must be named like
-          {.val BIOGRID-MV-Physical-5.0.259.tab3.txt}.",
+          {.val BIOGRID-ORGANISM-Homo_sapiens-5.0.259.tab3.txt}.",
           "i" = "Got {.path {raw_file}}."
         ))
       }
@@ -1184,53 +1189,49 @@ build_biogrid_database <- function(
     }
   } else {
     if (identical(version, "latest")) {
-      zip_path <- file.path(raw_dir, "BIOGRID-MV-Physical-LATEST.tab3.zip")
-      .download_if_missing(
-        paste0(
-          "https://downloads.thebiogrid.org/Download/BioGRID/",
-          "Latest-Release/BIOGRID-MV-Physical-LATEST.tab3.zip"
-        ),
-        zip_path
+      archive_version <- "LATEST"
+      download_url <- paste0(
+        "https://downloads.thebiogrid.org/Download/BioGRID/",
+        "Latest-Release/BIOGRID-ORGANISM-LATEST.tab3.zip"
       )
-      utils::unzip(zip_path, exdir = raw_dir)
-      # Keep zip member paths (not basename) so nested archive layouts resolve.
-      members <- utils::unzip(zip_path, list = TRUE)$Name
-      hit <- members[grepl(tab3_name_re, basename(members), ignore.case = TRUE)]
-      if (length(hit) != 1) {
-        cli::cli_abort(c(
-          "x" = "Expected exactly one versioned MV-Physical tab3 in {.path {zip_path}}.",
-          "i" = "Found {length(hit)} matching member{?s}."
-        ))
-      }
-      raw_file <- file.path(raw_dir, hit[[1]])
-      version <- version_from_tab3_name(raw_file)
-      if (is.na(version)) {
-        cli::cli_abort(
-          "Could not parse BioGRID release id from {.path {raw_file}}."
-        )
-      }
     } else {
-      raw_file <- file.path(
-        raw_dir,
-        paste0("BIOGRID-MV-Physical-", version, ".tab3.txt")
+      archive_version <- version
+      download_url <- paste0(
+        "https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive/",
+        "BIOGRID-", version, "/BIOGRID-ORGANISM-", version, ".tab3.zip"
       )
-      if (!file.exists(raw_file) || !isTRUE(file.info(raw_file)$size > 0)) {
-        zip_path <- file.path(
-          raw_dir,
-          paste0("BIOGRID-MV-Physical-", version, ".tab3.zip")
-        )
-        .download_if_missing(
-          paste0(
-            "https://downloads.thebiogrid.org/File/BioGRID/Release-Archive/",
-            "BIOGRID-", version, "/BIOGRID-MV-Physical-", version, ".tab3.zip"
-          ),
-          zip_path
-        )
-        utils::unzip(zip_path, exdir = raw_dir)
-      }
     }
+    zip_path <- file.path(
+      raw_dir,
+      paste0("BIOGRID-ORGANISM-", archive_version, ".tab3.zip")
+    )
+    .download_if_missing(download_url, zip_path)
+    # Extract only the human member; the archive contains every organism.
+    members <- utils::unzip(zip_path, list = TRUE)$Name
+    hit <- members[grepl(tab3_name_re, basename(members), ignore.case = TRUE)]
+    if (length(hit) != 1) {
+      cli::cli_abort(c(
+        "x" = "Expected exactly one human organism tab3 in {.path {zip_path}}.",
+        "i" = "Found {length(hit)} matching member{?s}."
+      ))
+    }
+    utils::unzip(zip_path, files = hit, exdir = raw_dir)
+    raw_file <- file.path(raw_dir, hit[[1]])
+    parsed <- version_from_tab3_name(raw_file)
+    if (is.na(parsed)) {
+      cli::cli_abort(
+        "Could not parse BioGRID release id from {.path {raw_file}}."
+      )
+    }
+    if (!identical(version, "latest") && !identical(parsed, version)) {
+      cli::cli_abort(c(
+        "x" = "Downloaded BioGRID release {.val {parsed}}, expected {.val {version}}.",
+        "i" = "Path: {.path {raw_file}}"
+      ))
+    }
+    version <- parsed
     if (!file.exists(raw_file) || !isTRUE(file.info(raw_file)$size > 0)) {
-      cli::cli_abort("Missing BioGRID MV-Physical file {.path {raw_file}}.")
+      cli::cli_abort("Missing BioGRID human organism file {.path {raw_file}}.")
     }
   }
 
@@ -1254,13 +1255,24 @@ build_biogrid_database <- function(
   org_a <- .first_present_col(dt, "Organism ID Interactor A", regex = TRUE)
   org_b <- .first_present_col(dt, "Organism ID Interactor B", regex = TRUE)
   exp_col <- .first_present_col(dt, "^Experimental System$", regex = TRUE)
+  exp_type_col <- .first_present_col(
+    dt,
+    "^Experimental System Type$",
+    regex = TRUE
+  )
   if (is.na(a_col) || is.na(b_col)) {
     cli::cli_abort("Could not find SWISS-PROT columns in {.path {raw_file}}.")
+  }
+  if (is.na(exp_type_col)) {
+    cli::cli_abort(
+      "Could not find the Experimental System Type column in {.path {raw_file}}."
+    )
   }
 
   if (!is.na(org_a) && !is.na(org_b)) {
     dt <- dt[as.character(dt[[org_a]]) == "9606" & as.character(dt[[org_b]]) == "9606"]
   }
+  dt <- dt[as.character(dt[[exp_type_col]]) == "physical"]
 
   first_ac <- function(x) {
     v <- trimws(sub("\\|.*$", "", as.character(x)))
@@ -1294,8 +1306,8 @@ build_biogrid_database <- function(
     score_columns = NULL,
     additional_columns = if (length(additional_cols)) additional_cols else NULL,
     source_url = paste0(
-      "https://downloads.thebiogrid.org/File/BioGRID/Release-Archive/",
-      "BIOGRID-", version, "/"
+      "https://downloads.thebiogrid.org/Download/BioGRID/Release-Archive/",
+      "BIOGRID-", version, "/BIOGRID-ORGANISM-", version, ".tab3.zip"
     ),
     license = paste(
       "MIT License; retain the copyright and permission notices from",

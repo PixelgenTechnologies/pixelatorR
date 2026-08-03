@@ -179,14 +179,24 @@ test_that("build_biogrid_database from tab3 fixture", {
   cache_dir <- tempfile("biogrid_cache_")
   dir.create(raw_dir)
   dir.create(cache_dir)
-  raw_file <- file.path(raw_dir, "BIOGRID-MV-Physical-5.0.259.tab3.txt")
+  raw_file <- file.path(
+    raw_dir,
+    "BIOGRID-ORGANISM-Homo_sapiens-5.0.259.tab3.txt"
+  )
   utils::write.table(
     data.frame(
-      `SWISS-PROT Accessions Interactor A` = c("P12345", "P99999"),
-      `SWISS-PROT Accessions Interactor B` = c("Q67890", "P99999"),
-      `Organism ID Interactor A` = c(9606, 9606),
-      `Organism ID Interactor B` = c(9606, 10090),
-      `Experimental System` = c("Two-hybrid", "Affinity Capture"),
+      `SWISS-PROT Accessions Interactor A` = c(
+        "P12345", "P11111", "P99999"
+      ),
+      `SWISS-PROT Accessions Interactor B` = c(
+        "Q67890", "Q22222", "P99999"
+      ),
+      `Organism ID Interactor A` = c(9606, 9606, 9606),
+      `Organism ID Interactor B` = c(9606, 9606, 10090),
+      `Experimental System` = c(
+        "Two-hybrid", "Synthetic Lethality", "Affinity Capture"
+      ),
+      `Experimental System Type` = c("physical", "genetic", "physical"),
       check.names = FALSE,
       stringsAsFactors = FALSE
     ),
@@ -521,7 +531,10 @@ test_that("extract_panel_interactions filters multi-score AlphaFold edges", {
 test_that("extract_panel_interactions errors when scores are absent", {
   cache_dir <- tempfile("biogrid_noscore_")
   dir.create(cache_dir)
-  raw_file <- file.path(tempfile("biogrid_"), "BIOGRID-MV-Physical-5.0.259.tab3.txt")
+  raw_file <- file.path(
+    tempfile("biogrid_"),
+    "BIOGRID-ORGANISM-Homo_sapiens-5.0.259.tab3.txt"
+  )
   dir.create(dirname(raw_file))
   utils::write.table(
     data.frame(
@@ -530,6 +543,7 @@ test_that("extract_panel_interactions errors when scores are absent", {
       `Organism ID Interactor A` = 9606,
       `Organism ID Interactor B` = 9606,
       `Experimental System` = "Two-hybrid",
+      `Experimental System Type` = "physical",
       check.names = FALSE,
       stringsAsFactors = FALSE
     ),
