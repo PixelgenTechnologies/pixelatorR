@@ -1,7 +1,7 @@
 # Declarations used in package check
 globalVariables(
   names = c("node_type"),
-  package = "pixelatorRinternal",
+  package = "pixelatorR",
   add = TRUE
 )
 
@@ -168,16 +168,16 @@ local_proximity <- function(
   seed = 123,
   ...
 ) {
-  pixelatorR:::assert_class(object, "CellGraph")
-  pixelatorR:::assert_single_value(iterations, "integer")
-  pixelatorR:::assert_vector(markers, "character", n = 1L)
+  assert_class(object, "CellGraph")
+  assert_single_value(iterations, "integer")
+  assert_vector(markers, "character", n = 1L)
   method <- match.arg(method, choices = c("analytical", "permutation"))
   mode <- match.arg(mode, choices = c("all", "any", "self-clustering"))
-  pixelatorR:::assert_within_limits(iterations, c(1L, 10000L))
-  pixelatorR:::assert_single_value(k, "integer")
-  pixelatorR:::assert_within_limits(k, c(2L, 10L))
-  pixelatorR:::assert_single_value(seed, "integer")
-  pixelatorR:::assert_class(A_k, classes = "dgCMatrix", allow_null = TRUE)
+  assert_within_limits(iterations, c(1L, 10000L))
+  assert_single_value(k, "integer")
+  assert_within_limits(k, c(2L, 10L))
+  assert_single_value(seed, "integer")
+  assert_class(A_k, classes = "dgCMatrix", allow_null = TRUE)
   set.seed(seed)
 
   if (mode == "self-clustering" && method == "permutation") {
@@ -211,7 +211,7 @@ local_proximity <- function(
   counts <- object@counts[g %>% pull(name), , drop = FALSE]
 
   # Validate markers
-  pixelatorR:::assert_x_in_y(markers, colnames(counts))
+  assert_x_in_y(markers, colnames(counts))
 
   # Get adjacency matrix and expand it to desired neighborhood size
   if (is.null(A_k)) {
