@@ -61,7 +61,7 @@ globalVariables(
 
 #' \deqn{LNE_{i,m} = log2(\frac{O_{i,m}}{E_{i,m}})}
 #'
-#' A higher `k` will results in a more global proximity score, while a
+#' A higher `k` will result in a more global proximity score, while a
 #' lower `k` will result in a more local proximity score. Hence, `k` determines
 #' the "spatial resolution".
 #'
@@ -178,7 +178,9 @@ local_proximity <- function(
   assert_within_limits(k, c(2L, 10L))
   assert_single_value(seed, "integer")
   assert_class(A_k, classes = "dgCMatrix", allow_null = TRUE)
-  set.seed(seed)
+  if (method == "permutation") {
+    set.seed(seed)
+  }
 
   if (mode == "self-clustering" && method == "permutation") {
     cli::cli_abort(
@@ -282,7 +284,7 @@ local_proximity <- function(
   if (!exists("freq1")) {
     freq1 <- (counts[1:nA, , drop = FALSE] %>% Matrix::colSums()) / nA
   }
-  if (!mode == "self-clustering") {
+  if (mode != "self-clustering") {
     if (mode == "all") {
       freq1 <- freq1 %>% min()
     }
@@ -296,7 +298,7 @@ local_proximity <- function(
   if (!exists("freq2")) {
     freq2 <- (counts[(nA + 1):(nA + nB), , drop = FALSE] %>% Matrix::colSums()) / nB
   }
-  if (!mode == "self-clustering") {
+  if (mode != "self-clustering") {
     if (mode == "all") {
       freq2 <- freq2 %>% min()
     }
@@ -327,12 +329,9 @@ local_proximity <- function(
   # by permuting the node marker labels, computing the neighborhood marker
   # node counts and averaging across all iterations.  UMI1/UMI2 are handled
   # separately since they have different frequencies.
-  local_stat_perm <- matrix(
-    data = NA_integer_,
-    nrow = nrow(x),
-    ncol = iterations,
-    dimnames = list(rownames(x))
-  )
+  # Accumulate a running sum to avoid storing an n_nodes x iterations matrix.
+  local_stat_sum <- numeric(nrow(x))
+  names(local_stat_sum) <- rownames(x)
 
   # Permute the counts matrix and compute statistic
   for (i in 1L:iterations) {
@@ -340,14 +339,14 @@ local_proximity <- function(
     x_shuffled <- x[c(sample.int(nA), sample.int(nB) + nA), ]
     if (mode == "all") {
       jcs <- as.data.frame(as.matrix(A_k %*% x_shuffled))
-      local_stat_perm[, i] <- do.call(pmin, jcs)
+      local_stat_sum <- local_stat_sum + do.call(pmin, jcs)
     }
     if (mode == "any") {
-      local_stat_perm[, i] <- Matrix::rowSums(A_k %*% x_shuffled)
+      local_stat_sum <- local_stat_sum + Matrix::rowSums(A_k %*% x_shuffled)
     }
   }
 
   # Compute expected statistic
-  local_stat_exp <- rowMeans(local_stat_perm)
+  local_stat_exp <- local_stat_sum / iterations
   return(local_stat_exp)
 }

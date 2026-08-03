@@ -108,7 +108,7 @@ for node \eqn{i}.
 The local proximity score for node \eqn{i} is then computed as:
 \deqn{LNE_{i,m} = log2(\frac{O_{i,m}}{E_{i,m}})}
 
-A higher \code{k} will results in a more global proximity score, while a
+A higher \code{k} will result in a more global proximity score, while a
 lower \code{k} will result in a more local proximity score. Hence, \code{k} determines
 the "spatial resolution".
 
