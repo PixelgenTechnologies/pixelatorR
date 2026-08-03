@@ -12,8 +12,9 @@ build_biogrid_database(
 }
 \arguments{
 \item{raw_file}{Optional path to a local
-\code{BIOGRID-MV-Physical-X.Y.Z.tab3.txt} file. If \code{NULL}, the
-release is downloaded to a temp directory removed after a successful build.}
+\code{BIOGRID-ORGANISM-Homo_sapiens-X.Y.Z.tab3.txt} file. If \code{NULL},
+the organism archive is downloaded to a temp directory removed after a
+successful build.}
 
 \item{version}{BioGRID release id (\code{X.Y.Z}) or \code{"latest"}.
 \code{"latest"} resolves the release from the downloaded filename.}
@@ -24,5 +25,6 @@ release is downloaded to a temp directory removed after a successful build.}
 Path to saved RDS (release id and \code{biogrid_latest.rds}).
 }
 \description{
-Download BioGRID MV-Physical tab3 data and write a cached RDS.
+Download the full BioGRID human organism tab3 data, retain physical
+interactions, and write a cached RDS.
 }
