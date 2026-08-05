@@ -431,7 +431,6 @@ PixelDB <- R6Class(
     #' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
     #' a \code{tbl_lazy} object is returned.
     #' @param include_all_columns Logical specifying whether to include all columns in the output.
-    #' If \code{FALSE}, the \code{read_count} and \code{uei_count} columns are dropped.
     #'
     #' @examples
     #' # Fetch edgelists

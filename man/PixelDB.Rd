@@ -601,8 +601,7 @@ character vectors be specifying the \code{umi_data_type}.
 \item{\code{lazy}}{A logical specifying whether to load the data lazily. If \code{TRUE},
 a \code{tbl_lazy} object is returned.}
 
-\item{\code{include_all_columns}}{Logical specifying whether to include all columns in the output.
-If \code{FALSE}, the \code{read_count} and \code{uei_count} columns are dropped.}
+\item{\code{include_all_columns}}{Logical specifying whether to include all columns in the output.}
 }
 \if{html}{\out{</div>}}
 }
