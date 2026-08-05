@@ -38,6 +38,26 @@ test_that("ReadPNA_edgelist works as expected", {
   expect_equal(dim(el %>% collect()), c(110657, 7))
 })
 
+test_that("ReadPNA_edgelist works when uei_count is missing", {
+  # uei_count is optional, so drop it from a copy of the PXL file
+  pxl_file_no_uei <- fs::file_temp(ext = "pxl")
+  fs::file_copy(pxl_file, pxl_file_no_uei)
+  fs::file_chmod(pxl_file_no_uei, "u+w")
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = pxl_file_no_uei, read_only = FALSE)
+  DBI::dbExecute(con, "ALTER TABLE edgelist DROP COLUMN uei_count")
+  DBI::dbDisconnect(con, shutdown = TRUE)
+
+  expect_no_error(el <- ReadPNA_edgelist(pxl_file_no_uei, lazy = FALSE))
+  expect_equal(c("marker_1", "marker_2", "umi1", "umi2", "read_count", "component"), colnames(el))
+
+  # The counts are also dropped when include_all_columns = FALSE
+  expect_no_error(db <- PixelDB$new(pxl_file_no_uei))
+  expect_no_error(el <- db$components_edgelist("c3c393e9a17c1981"))
+  expect_equal(c("marker_1", "marker_2", "umi1", "umi2", "component"), colnames(el))
+  expect_equal(dim(el), c(110657, 5))
+  expect_no_error(db$close())
+})
+
 test_that("ReadPNA_edgelist fails with invalid input", {
   expect_error(ReadPNA_edgelist("Invalid"))
   expect_error(ReadPNA_edgelist(pxl_file, cells = "Invalid"))

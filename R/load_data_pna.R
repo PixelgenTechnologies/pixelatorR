@@ -259,6 +259,17 @@ ReadPNA_metadata <- function(
 #' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
 #' a \code{tbl_lazy} object is returned.
 #'
+#' @return A \code{tbl_df} or, if \code{lazy = TRUE}, a \code{tbl_lazy} object with
+#' the edge list:
+#'  - marker_1: The first protein
+#'  - marker_2: The second protein
+#'  - umi1: A unique ID of the first RCA product
+#'  - umi2: A unique ID of the second RCA product
+#'  - read_count: The number of reads supporting the edge
+#'  - uei_count: The number of unique event identifiers (UEIs) supporting the edge.
+#'    This column is optional and is only returned if it is present in the edgelist table.
+#'  - component: The component name
+#'
 #' @export
 #'
 ReadPNA_edgelist <- function(
