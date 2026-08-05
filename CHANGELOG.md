@@ -26,6 +26,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `highlight_colors`, `highlight_color_col` (dots-only mapping),
   `highlight_stroke`, `highlight_shrink`.
 
+### Fixes
+
+- `PixelDB$components_edgelist()` and `ReadPNA_edgelist()` now treat `uei_count` as
+  an optional column. Previously both failed on PXL files whose `edgelist` table
+  lacks `uei_count`, regardless of `include_all_columns`.
+
 ## [0.18.3] - 2026-07-21
 
 ### Updates

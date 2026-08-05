@@ -26,6 +26,20 @@ ReadPNA_edgelist(
 \item{lazy}{A logical specifying whether to load the data lazily. If \code{TRUE},
 a \code{tbl_lazy} object is returned.}
 }
+\value{
+A \code{tbl_df} or, if \code{lazy = TRUE}, a \code{tbl_lazy} object with
+the edge list:
+\itemize{
+\item marker_1: The first protein
+\item marker_2: The second protein
+\item umi1: A unique ID of the first RCA product
+\item umi2: A unique ID of the second RCA product
+\item read_count: The number of reads supporting the edge
+\item uei_count: The number of unique event identifiers (UEIs) supporting the edge.
+This column is optional and is only returned if it is present in the edgelist table.
+\item component: The component name
+}
+}
 \description{
 Note that the umi1 and umi2 sequences are encoded as \code{integer64} which
 is not natively supported by R. The \code{bit64} package is required to
