@@ -569,12 +569,12 @@ DifferentialProximityAnalysis.Seurat <- function(
 #' @noRd
 .median_difference <- function(object, cells_1, cells_2) {
   pct_1 <- round(
-    Matrix::rowSums(object[, cells_1, drop = FALSE] > 0) /
+    Matrix::rowSums(object[, cells_1, drop = FALSE] != 0) /
       length(x = cells_1),
     digits = 3
   )
   pct_2 <- round(
-    Matrix::rowSums(object[, cells_2, drop = FALSE] > 0) /
+    Matrix::rowSums(object[, cells_2, drop = FALSE] != 0) /
       length(x = cells_2),
     digits = 3
   )
