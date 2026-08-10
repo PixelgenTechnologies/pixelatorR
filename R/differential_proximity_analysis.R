@@ -532,7 +532,6 @@ DifferentialProximityAnalysis.Seurat <- function(
       targets = targets,
       group_vars = group_vars,
       proximity_metric = proximity_metric,
-      min_n_obs = min_n_obs,
       p_adjust_method = p_adjust_method,
       min_cells_per_group = min_cells_per_group,
       verbose = verbose
@@ -638,7 +637,7 @@ DifferentialProximityAnalysis.Seurat <- function(
 
   features <- intersect(features, features_diff)
   if (length(features) == 0) {
-    warning("No features pass min_diff threshold; returning empty data.frame")
+    cli::cli_warn("No features pass min_diff threshold; returning empty data.frame")
     return(fc_results[features, ])
   }
 

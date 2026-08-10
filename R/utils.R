@@ -364,7 +364,7 @@ abort_if_not <- function(
 #' @param targets A character vector of length >= 1 or NULL
 #' @param group_vars A character vector of length >= 1 or NULL
 #' @param spatial_metric A character vector of length 1
-#' @param min_n_obs An integer of length 1
+#' @param min_cells_per_group An integer of length 1
 #' @param conf_int Either TRUE or FALSE
 #' @param cl An integer, a cluster object or NULL
 #' @param data_type A character vector of length 1

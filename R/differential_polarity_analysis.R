@@ -40,7 +40,7 @@ RunDPA.data.frame <- function(
   targets = NULL,
   group_vars = NULL,
   polarity_metric = "morans_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -51,7 +51,7 @@ RunDPA.data.frame <- function(
   # Validate input parameters
   .validate_da_input(
     object, contrast_column, reference, targets, group_vars,
-    polarity_metric, min_n_obs, conf_int, cl,
+    polarity_metric, min_cells_per_group, conf_int, cl,
     data_type = "polarity"
   )
 
@@ -89,12 +89,12 @@ RunDPA.data.frame <- function(
       }
     }
 
-  if (min_n_obs > 0) {
+  if (min_cells_per_group > 0) {
     # Filter test groups by minimum number of observations allowed
     test_groups <- test_groups %>%
       group_by(!!sym(contrast_column), .add = TRUE) %>%
       mutate(n = n()) %>%
-      filter(n > min_n_obs) %>%
+      filter(n > min_cells_per_group) %>%
       ungroup(!!sym(contrast_column)) %>%
       mutate(
         ref_n = sum(!!sym(contrast_column) == reference),
@@ -103,7 +103,7 @@ RunDPA.data.frame <- function(
       filter(ref_n > 0, target_n > 0)
     if (nrow(test_groups) == 0) {
       cli::cli_abort(
-        c("x" = "Found no groups with at least {.val {min_n_obs}} observations.")
+        c("x" = "Found no groups with at least {.val {min_cells_per_group}} observations.")
       )
     }
   }
@@ -274,7 +274,7 @@ RunDPA.Seurat <- function(
   assay = NULL,
   group_vars = NULL,
   polarity_metric = "morans_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -305,7 +305,7 @@ RunDPA.Seurat <- function(
     contrast_column = contrast_column,
     group_vars = group_vars,
     polarity_metric = polarity_metric,
-    min_n_obs = min_n_obs,
+    min_cells_per_group = min_cells_per_group,
     cl = cl,
     alternative = alternative,
     conf_int = conf_int,

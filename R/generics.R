@@ -462,8 +462,8 @@ RunDAA <- function(
 #' @param group_vars An optional character vector with column names to group the tests by.
 #' @param polarity_metric The polarity metric to use. Any numeric data column in the polarity score table
 #' can be selected. The default is "morans_z".
-#' @param min_n_obs Minimum number of observations allowed in a group. Target groups with less
-#' observations than \code{min_n_obs} will be skipped.
+#' @param min_cells_per_group Minimum number of observations allowed in a group. Target groups with less
+#' observations than \code{min_cells_per_group} will be skipped.
 #' @param alternative One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)
 #' @param conf_int Should confidence intervals be computed? (see \code{?wilcox.test} for details)
 #' @param p_adjust_method One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
@@ -568,8 +568,8 @@ RunDPA <- function(
 #' @param group_vars An optional character vector with column names to group the tests by.
 #' @param coloc_metric The colocalization metric to use. Any numeric data column in the colocalization score table
 #' can be selected. The default is "pearson_z".
-#' @param min_n_obs Minimum number of observations allowed in a group. Target groups with less
-#' observations than \code{min_n_obs} will be skipped.
+#' @param min_cells_per_group Minimum number of observations allowed in a group. Target groups with less
+#' observations than \code{min_cells_per_group} will be skipped.
 #' @param alternative One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)
 #' @param conf_int Should confidence intervals be computed? (see \code{?wilcox.test} for details)
 #' @param p_adjust_method One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".

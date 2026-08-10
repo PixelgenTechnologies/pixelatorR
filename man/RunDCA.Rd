@@ -16,7 +16,7 @@ RunDCA(object, ...)
   targets = NULL,
   group_vars = NULL,
   coloc_metric = "pearson_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -33,7 +33,7 @@ RunDCA(object, ...)
   assay = NULL,
   group_vars = NULL,
   coloc_metric = "pearson_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -61,8 +61,8 @@ If the value is set to \code{NULL} (default), all groups available in \code{cont
 \item{coloc_metric}{The colocalization metric to use. Any numeric data column in the colocalization score table
 can be selected. The default is "pearson_z".}
 
-\item{min_n_obs}{Minimum number of observations allowed in a group. Target groups with less
-observations than \code{min_n_obs} will be skipped.}
+\item{min_cells_per_group}{Minimum number of observations allowed in a group. Target groups with less
+observations than \code{min_cells_per_group} will be skipped.}
 
 \item{alternative}{One of 'two.sided', 'less' or 'greater' (see \code{?wilcox.test} for details)}
 
