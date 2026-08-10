@@ -247,6 +247,10 @@ DifferentialProximityAnalysis.data.frame <- function(
     cli_progress_done()
   }
 
+  if (!is.null(group_vars) && verbose) {
+    cli::cli_alert_info("Adjusting p-values per group defined by group column{?s} {.str {group_vars}}.")
+  }
+
   .finalize_da_results(diff_prox_res, p_adjust_method, group_vars)
 }
 
