@@ -493,7 +493,7 @@ DifferentialProximityAnalysis.Seurat <- function(
   if (method == "seurat") {
     proximity_data <- proximity_data %>%
       compute() %>%
-      ProximityScoresToAssay()
+      ProximityScoresToAssay(values_from = proximity_metric)
     # Add missing columns
     missing_components <- setdiff(colnames(object), colnames(proximity_data))
     if (length(missing_components) > 0) {
@@ -605,6 +605,9 @@ DifferentialProximityAnalysis.Seurat <- function(
   min_pct = 0.01,
   min_diff_pct = -Inf
 ) {
+
+  expect_sparseMatrixStats()
+  
   fc_results <- .median_difference(
     object = data_use,
     cells_1 = cells_1,
