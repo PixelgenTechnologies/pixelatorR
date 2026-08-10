@@ -56,6 +56,7 @@ DifferentialProximityAnalysis(object, ...)
   min_diff_pct = -Inf,
   proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
+  backend = c("dplyr", "data.table"),
   method = c("seurat", "legacy"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,

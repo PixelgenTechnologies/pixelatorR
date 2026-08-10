@@ -467,6 +467,7 @@ DifferentialProximityAnalysis.Seurat <- function(
   min_diff_pct = -Inf,
   proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
+  backend = c("dplyr", "data.table"),
   method = c("seurat", "legacy"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
@@ -532,6 +533,7 @@ DifferentialProximityAnalysis.Seurat <- function(
       targets = targets,
       group_vars = group_vars,
       proximity_metric = proximity_metric,
+      backend = backend,
       p_adjust_method = p_adjust_method,
       min_cells_per_group = min_cells_per_group,
       verbose = verbose
@@ -667,6 +669,7 @@ DifferentialProximityAnalysis.Seurat <- function(
     res <- res[1:(nrow(x = res) / 2), ]
     p_val <- res$pval
   } else {
+    expect_limma()
     rlang::inform(
       c(
         "i" = "For a faster implementation of the Wilcoxon Rank Sum Test,
