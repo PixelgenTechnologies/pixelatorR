@@ -20,8 +20,8 @@ test_that("local_proximity works as expected", {
   expect_equal(
     score %>% sort(decreasing = TRUE) %>% head(2),
     c(
-      `11003117224941247-umi2` = 2.92922642517793,
-      `67262613737613740-umi1` = 2.66192180611334
+      `11003117224941247-umi2` = 2.13410426952319,
+      `9816302186898773-umi2` = 2.03158358758846
     )
   )
 
@@ -36,8 +36,8 @@ test_that("local_proximity works as expected", {
   expect_equal(
     score %>% sort(decreasing = TRUE) %>% head(2),
     c(
-      `67262613737613740-umi1` = 2.8073549220576,
-      `8936220015879929-umi2` = 2.4594316186373
+      `67262613737613740-umi1` = 2.10825438436169,
+      `8936220015879929-umi2` = 1.94611096348858
     )
   )
 
@@ -52,8 +52,8 @@ test_that("local_proximity works as expected", {
   expect_equal(
     score %>% sort(decreasing = TRUE) %>% head(2),
     c(
-      `34669962850295590-umi1` = 0.584962500721156,
-      `61322123765323003-umi1` = 0.584962500721156
+      `41752602342049118-umi2` = 1.1737434287477,
+      `61322123765323003-umi1` = 1.13209860331366
     )
   )
 
@@ -69,8 +69,8 @@ test_that("local_proximity works as expected", {
   expect_equal(
     score %>% sort(decreasing = TRUE) %>% head(2),
     c(
-      `57061743620873557-umi1` = 3.08746284125034,
-      `40552551807181406-umi1` = 3.08746284125034
+      `67262613737613740-umi1` = 2.43368047619204,
+      `57061743620873557-umi1` = 2.27950747300082
     )
   )
 
@@ -99,8 +99,8 @@ test_that("local_proximity works as expected", {
   expect_equal(
     score %>% sort(decreasing = TRUE) %>% head(2),
     c(
-      `67262613737613740-umi1` = 2.8073549220576,
-      `8936220015879929-umi2` = 2.4594316186373
+      `67262613737613740-umi1` = 2.41503749927884,
+      `11915219229172862-umi2` = 2.13750352374994
     )
   )
 })

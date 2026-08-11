@@ -51,9 +51,8 @@
 #' for node \eqn{i}.
 #'
 #' The local proximity score for node \eqn{i} is then computed as:
-
 #' \deqn{LNE_{i,m} = log2(\frac{O_{i,m}+k-1}{E_{i,m}+k-1})}
-#' 
+#'
 #' where \eqn{k-1} is a pseudocount used to flatten weak signals.
 #'
 #' A higher `k` will result in a more global proximity score, while a
