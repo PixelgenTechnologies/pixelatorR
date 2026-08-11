@@ -1,10 +1,3 @@
-# Declarations used in package check
-globalVariables(
-  names = c("node_type"),
-  package = "pixelatorR",
-  add = TRUE
-)
-
 #' Compute local proximity scores
 #'
 #' This function computes a local proximity score for each node based on the
@@ -59,7 +52,9 @@ globalVariables(
 #'
 #' The local proximity score for node \eqn{i} is then computed as:
 
-#' \deqn{LNE_{i,m} = log2(\frac{O_{i,m}}{E_{i,m}})}
+#' \deqn{LNE_{i,m} = log2(\frac{O_{i,m}+k-1}{E_{i,m}+k-1})}
+#' 
+#' where \eqn{k-1} is a pseudocount used to flatten weak signals.
 #'
 #' A higher `k` will result in a more global proximity score, while a
 #' lower `k` will result in a more local proximity score. Hence, `k` determines
@@ -248,7 +243,7 @@ local_proximity <- function(
   )
 
   # Compute log2 ratio of observed to expected statistic
-  log2_ratio <- log2(pmax(local_stat_obs, k - 1) / pmax(local_stat_exp, k - 1))
+  log2_ratio <- log2((local_stat_obs + k - 1) / (local_stat_exp + k - 1))
 
   # Sort results to match input graph
   log2_ratio <- switch(mode,
@@ -281,7 +276,7 @@ local_proximity <- function(
   degree_exp_B <- A_k[, (nA + 1):(nA + nB)] %>% Matrix::rowSums()
 
   # Compute marker frequencies for each node type
-  if (!exists("freq1")) {
+  if (!exists("freq1", inherits = FALSE)) {
     freq1 <- (counts[1:nA, , drop = FALSE] %>% Matrix::colSums()) / nA
   }
   if (mode != "self-clustering") {
@@ -295,7 +290,7 @@ local_proximity <- function(
   } else {
     local_stat_exp_A <- outer(degree_exp_A, freq1)
   }
-  if (!exists("freq2")) {
+  if (!exists("freq2", inherits = FALSE)) {
     freq2 <- (counts[(nA + 1):(nA + nB), , drop = FALSE] %>% Matrix::colSums()) / nB
   }
   if (mode != "self-clustering") {

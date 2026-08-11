@@ -106,7 +106,9 @@ can have different marker frequencies and are therefore treated separately in th
 for node \eqn{i}.
 
 The local proximity score for node \eqn{i} is then computed as:
-\deqn{LNE_{i,m} = log2(\frac{O_{i,m}}{E_{i,m}})}
+\deqn{LNE_{i,m} = log2(\frac{O_{i,m}+k-1}{E_{i,m}+k-1})}
+
+where \eqn{k-1} is a pseudocount used to flatten weak signals.
 
 A higher \code{k} will result in a more global proximity score, while a
 lower \code{k} will result in a more local proximity score. Hence, \code{k} determines
