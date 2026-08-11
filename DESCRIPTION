@@ -122,6 +122,7 @@ Collate:
     'load_data_mpx.R'
     'load_data_pna.R'
     'local_G.R'
+    'local_proximity_scores.R'
     'molecule_rank_plot.R'
     'objects.R'
     'patch_detection.R'

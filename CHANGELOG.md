@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `ColocalizationHeatmap` highlight options: `highlight_pairs`,
   `highlight_colors`, `highlight_color_col` (dots-only mapping),
   `highlight_stroke`, `highlight_shrink`.
+- `local_proximity` to compute Local Neighborhood Enrichment (LNE)
+  log2 ratios of observed vs expected UMI counts for selected marker(s).
 
 ### Fixes
 
