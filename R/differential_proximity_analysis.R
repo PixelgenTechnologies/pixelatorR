@@ -611,9 +611,8 @@ DifferentialProximityAnalysis.Seurat <- function(
   min_pct = 0.01,
   min_diff_pct = -Inf
 ) {
-
   expect_sparseMatrixStats()
-  
+
   fc_results <- .median_difference(
     object = data_use,
     cells_1 = cells_1,
