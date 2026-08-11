@@ -442,7 +442,7 @@ DifferentialProximityAnalysis.Matrix <- function(
 #' `duckdb` backend.
 #' @param min_exp_join_count Minimum number of join counts required for a marker pair to be
 #' included in the analysis. Dropped protein pairs (those with fewer than `min_exp_join_count` counts)
-#' will be treated as missing entries. With `method = "seurat"`, these are treated as having a 
+#' will be treated as missing entries. With `method = "seurat"`, these are treated as having a
 #' proximity score of 0.
 #' @param method One of "seurat" or "legacy". The former uses the Seurat framework for
 #' differential testing, while the latter uses a custom implementation. The main difference
