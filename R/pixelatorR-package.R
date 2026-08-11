@@ -83,6 +83,7 @@
 #' @importFrom dplyr semi_join
 #' @importFrom dplyr slice
 #' @importFrom dplyr slice_head
+#' @importFrom dplyr slice_max
 #' @importFrom dplyr summarise
 #' @importFrom dplyr summarize
 #' @importFrom dplyr tbl
