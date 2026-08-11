@@ -230,7 +230,7 @@ for (assay_version in c("v3", "v5")) {
           seur_obj_big,
           contrast_column = "cell_type",
           reference = "B",
-          min_n_obs = -1
+          min_cells_per_group = -1
         )
       },
       class = "error"
