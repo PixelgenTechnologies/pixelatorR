@@ -116,7 +116,9 @@ the \code{method} argument is set to "seurat".}
 \code{duckdb} backend.}
 
 \item{min_exp_join_count}{Minimum number of join counts required for a marker pair to be
-included in the analysis.}
+included in the analysis. Dropped protein pairs (those with fewer than \code{min_exp_join_count} counts)
+will be treated as missing entries. With \code{method = "seurat"}, these are treated as having a
+proximity score of 0.}
 
 \item{method}{One of "seurat" or "legacy". The former uses the Seurat framework for
 differential testing, while the latter uses a custom implementation. The main difference

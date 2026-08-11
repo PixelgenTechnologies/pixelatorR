@@ -69,6 +69,7 @@ for (assay_version in c("v3", "v5")) {
       )
     })
 
+    # Not that the Github Action runs with presto
     expected_data <-
       structure(
         list(
@@ -78,8 +79,8 @@ for (assay_version in c("v3", "v5")) {
           pct_tgt = c(0.333, 0.333),
           pct_ref = c(1, 1),
           diff_median = c(1.13093086982645, 2.06004738366994),
-          p = c(0.0924377451134652, 3.73436610215361e-07),
-          p_adj = c(1, 0.000347669484110502),
+          p = c(4.75190598378858e-07, 0.095422812113372),
+          p_adj = c(0.000442402447090716, 1),
           alternative = c("two.sided", "two.sided"),
           marker_1 = c("CD56", "CD56"),
           marker_2 = c("HLA-ABC", "HLA-DR-DP-DQ")

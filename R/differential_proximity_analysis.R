@@ -125,6 +125,10 @@ DifferentialProximityAnalysis.data.frame <- function(
     distinct() %>%
     mutate_all(as.character)
 
+  if (nrow(test_groups_keys) == 0) {
+    cli::cli_abort("Found no valid target data.")
+  }
+
   # Print the test set up and start a progress bar
   .print_da_setup(
     keys = test_groups_keys,
@@ -437,7 +441,9 @@ DifferentialProximityAnalysis.Matrix <- function(
 #' @param lazy If TRUE, the proximity scores will be loaded lazily and filtered using the
 #' `duckdb` backend.
 #' @param min_exp_join_count Minimum number of join counts required for a marker pair to be
-#' included in the analysis.
+#' included in the analysis. Dropped protein pairs (those with fewer than `min_exp_join_count` counts)
+#' will be treated as missing entries. With `method = "seurat"`, these are treated as having a 
+#' proximity score of 0.
 #' @param method One of "seurat" or "legacy". The former uses the Seurat framework for
 #' differential testing, while the latter uses a custom implementation. The main difference
 #' between the two methods is that missing observations are handled differently. With
@@ -676,7 +682,7 @@ DifferentialProximityAnalysis.Seurat <- function(
     rlang::inform(
       c(
         "i" = "For a faster implementation of the Wilcoxon Rank Sum Test,
-      please install the presto package: pak::pak('immunogenomics/presto'",
+      please install the presto package: pak::pak('immunogenomics/presto')",
         "v" = "This message will only appear once per R session."
       ),
       .frequency = "once",
