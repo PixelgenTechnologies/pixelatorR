@@ -15,7 +15,7 @@ RunDPA(object, ...)
   targets = NULL,
   group_vars = NULL,
   polarity_metric = "morans_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -32,7 +32,7 @@ RunDPA(object, ...)
   assay = NULL,
   group_vars = NULL,
   polarity_metric = "morans_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -60,8 +60,8 @@ If the value is set to \code{NULL} (default), all groups available in \code{cont
 \item{polarity_metric}{The polarity metric to use. Any numeric data column in the polarity score table
 can be selected. The default is "morans_z".}
 
-\item{min_n_obs}{Minimum number of observations allowed in a group. Target groups with less
-observations than \code{min_n_obs} will be skipped.}
+\item{min_cells_per_group}{Minimum number of observations allowed in a group. Target groups with less
+observations than \code{min_cells_per_group} will be skipped.}
 
 \item{cl}{A cluster object created by \code{\link[parallel]{makeCluster}},
 or an integer to indicate number of child-processes (integer values are

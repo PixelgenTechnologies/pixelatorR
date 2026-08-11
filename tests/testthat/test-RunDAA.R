@@ -1,3 +1,4 @@
+# NOTE: The check on GitHub Actions expects presto to be loaded
 options(Seurat.object.assay.version = "v3")
 
 pxl_file <- system.file("extdata/five_cells",
@@ -21,22 +22,13 @@ test_that("RunDAA works as expected on a Seurat object", {
     structure(
       list(
         marker = c("CD137", "CD62P"),
-        p = c(
-          3.73436610215361e-07,
-          1.42675642066992e-06
-        ),
-        p_adj = c(2.98749288172289e-05, 0.000114140513653594),
+        p = c(4.75190598378858e-07, 1.73611045127927e-06),
+        p_adj = c(3.80152478703086e-05, 0.000138888836102341),
         difference = c(0.0672793901912557, -0.130339927355884),
-        pct_1 = c(
-          1,
-          0
-        ),
+        pct_1 = c(1, 0),
         pct_2 = c(0.333, 1),
         target = c("T", "T"),
-        reference = c(
-          "C",
-          "C"
-        )
+        reference = c("C", "C")
       ),
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
@@ -55,30 +47,21 @@ test_that("RunDAA works as expected on a Seurat object", {
       list(
         marker = c("CD137", "CD62P", "CD55", "CD314"),
         p = c(
-          3.73436610215361e-07,
-          1.42675642066992e-06,
-          0.11041579736434,
-          0.11041579736434
+          4.75190598378858e-07,
+          1.73611045127927e-06,
+          0.113348979014337,
+          0.113348979014337
         ),
-        p_adj = c(
-          5.97498576344578e-05, 0.000228281027307187,
-          1, 1
-        ),
+        p_adj = c(7.60304957406172e-05, 0.000277777672204683, 1, 1),
         difference = c(
           0.0672793901912557,
           -0.130339927355884,
           0.372004130942341,
           -0.345923096372618
         ),
-        pct_1 = c(
-          1, 0, 1,
-          1
-        ),
+        pct_1 = c(1, 0, 1, 1),
         pct_2 = c(0.333, 1, 1, 1),
-        target = c(
-          "T", "T", "R",
-          "R"
-        ),
+        target = c("T", "T", "R", "R"),
         reference = c("C", "C", "C", "C")
       ),
       row.names = c(NA, -4L),
