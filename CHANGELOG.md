@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [UNRELEASED]
+
+### Fixes
+
+- `CreateCellGraphObject()` now correctly validates the `layout` argument as a
+  named `list` of `tbl_df` objects (matching the `CellGraph` `layout` slot),
+  instead of erroneously requiring a single `tbl_df`.
+
 ## [0.19.0]
 
 ### Updates
@@ -37,9 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
-- `CreateCellGraphObject()` now correctly validates the `layout` argument as a
-  named `list` of `tbl_df` objects (matching the `CellGraph` `layout` slot),
-  instead of erroneously requiring a single `tbl_df`.
 - `PixelDB$components_edgelist()` and `ReadPNA_edgelist()` now treat `uei_count` as
   an optional column. Previously both failed on PXL files whose `edgelist` table
   lacks `uei_count`, regardless of `include_all_columns`.
