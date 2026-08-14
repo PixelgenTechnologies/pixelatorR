@@ -7,7 +7,7 @@
 \title{The CellGraph class}
 \description{
 The CellGraph class is designed to hold information needed for working with
-mpx single-cell graphs.
+PNA single-cell graphs.
 }
 \section{Slots}{
 
