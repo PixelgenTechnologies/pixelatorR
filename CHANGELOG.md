@@ -5,10 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.19.0]
+
+### Updates
+
+- `min_n_obs` is renamed to `min_cells_per_group` in `DifferentialProximityAnalysis / RunDPA / RunDCA`.
+- The `DifferentialProximityAnalysis.Seurat` method defaults to using `method = "seurat"`, which zero-fills missing pairs/cells, and dispatches to the Matrix method; `method = "legacy"` keeps the long-table data.frame Wilcoxon implementation. With zero-filling, the default method (`"seurat"`) considers the full cell populations for testing. 
+- The `DifferentialProximityAnalysis.data.frame` method is refactored to use shared helpers (setup/progress, group filtering, p-value adjustment), faster min_cells_per_group filtering (semi_join on counts), default metric log2_ratio, and default min_cells_per_group = 10. 
 
 ### Added
 
+- Added `DifferentialProximityAnalysis.Matrix` method that runs Wilcoxon tests on a wide sparse matrix (marker pairs × components) with presto or limma fallbacks, plus FindMarkers-style filters (diff_threshold, min_pct, min_diff_pct). 
 - Interaction-database helpers for STRING, BioGRID, and AlphaFold DB:
   - Cache/load/save (`interaction_database_cache_dir()`,
     `normalise_interaction_edges()`, `save_interaction_database()`,
@@ -38,10 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Updates
 - Updated default parameter settings for `layout_with_coarsened_pmds`. Also added options `leiden_weighted` and `leiden_iterations` to get more fine tuning control.
-- Added `DifferentialProximityAnalysis.Matrix` method that runs Wilcoxon tests on a wide sparse matrix (marker pairs × components) with presto or limma fallbacks, plus FindMarkers-style filters (diff_threshold, min_pct, min_diff_pct). 
-- The `DifferentialProximityAnalysis.Seurat` method defaults to using `method = "seurat"`, which zero-fills missing pairs/cells, and dispatches to the Matrix method; `method = "legacy"` keeps the long-table data.frame Wilcoxon implementation. With zero-filling, the default method (`"seurat"`) considers the full cell populations for testing. 
-- The `DifferentialProximityAnalysis.data.frame` method is refactored to use shared helpers (setup/progress, group filtering, p-value adjustment), faster min_cells_per_group filtering (semi_join on counts), default metric log2_ratio, and default min_cells_per_group = 10. 
-- `min_n_obs` is renamed to `min_cells_per_group` in `DifferentialProximityAnalysis / RunDPA / RunDCA`.
 - Added option to `MoleculeRankPlot` to highlight results from size filters and to facet plot by groups (`group_by`).
 
 ### Fixes
