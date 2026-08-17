@@ -111,6 +111,7 @@ segment_cell <- function(
 
   # Expand the adjacency matrix to create a k-hop reachability matrix.
   A_k <- expand_adjacency_matrix(A, k = k)
+  Matrix::diag(A_k) <- 1
 
   # Use all nodes for scoring; component filtering is applied after classification.
   counts_segment <- cg@counts
@@ -254,7 +255,7 @@ segment_cell <- function(
     )
   }
   pixelatorR:::assert_single_value(k, type = "integer", call = call)
-  pixelatorR:::assert_within_limits(k, limits = c(0, 6), call = call)
+  pixelatorR:::assert_within_limits(k, limits = c(1, 6), call = call)
   pixelatorR:::assert_single_value(detect_interface, type = "bool", call = call)
   pixelatorR:::assert_single_value(k_interface_expansion, type = "integer", call = call)
   pixelatorR:::assert_within_limits(k_interface_expansion, limits = c(0, 4), call = call)
@@ -564,7 +565,7 @@ cc_protein_weights <- function(
     )
 
     km <- kmeans(x[, population_1], centers = 2)
-    th <- abs(km$centers[1] - km$centers[2]) / 2
+    th <- .kmeans_midpoint(km$centers)
     classification <- if_else(x[, population_1] >= th, population_1, population_2) %>%
       set_names(rownames(x))
 
@@ -782,7 +783,7 @@ cc_protein_weights <- function(
     nbs_keep <- nbs_keep & nbs_keep_clean
   }
 
-  counts <- counts[, nbs_keep]
+  counts <- counts[, nbs_keep, drop = FALSE]
   pop_components <- lapply(pop_components, function(x) x[nbs_keep])
 
   return(list(
@@ -870,6 +871,18 @@ cc_protein_weights <- function(
   rownames(x) <- colnames(counts)
   colnames(x) <- colnames(w)
   return(x)
+}
+
+#' Compute midpoint threshold from two k-means centers
+#'
+#' @param centers Numeric vector of length 2.
+#'
+#' @return Numeric midpoint between centers.
+#'
+#' @noRd
+.kmeans_midpoint <- function(centers) {
+  pixelatorR:::assert_vector(centers, type = "numeric", n = 2)
+  mean(centers)
 }
 
 #' Perform spatial smoothing of a count matrix using the adjacency matrix of the graph
@@ -986,7 +999,8 @@ spatial_smoothing <- function(
 #'
 #' This function projects weights onto node neighborhood protein counts vectors to
 #' quantify cell type identity. The classification is then derived by thresholding
-#' the identity scores at 0.5 (the identity score is bounded between 0 and 1).
+#' the first population score at the midpoint between two k-means centers estimated
+#' on that score distribution.
 #'
 #' @param counts_membrane A neighborhood count matrix for the nodes, with
 #' dimensions mxp, where m is the number of nodes and p is the number of proteins.
@@ -1053,7 +1067,7 @@ spatial_smoothing <- function(
 
   # Slice scores into classes
   km <- kmeans(x[, cell_names[1]], centers = 2)
-  th <- abs(km$centers[1] - km$centers[2]) / 2
+  th <- .kmeans_midpoint(km$centers)
   node_classification <- if_else(x[, cell_names[1]] >= th, 1, 2) %>%
     set_names(rownames(x))
 
