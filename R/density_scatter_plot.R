@@ -24,8 +24,11 @@
 #' @param coord_fixed Whether to use fixed coordinate ratio.
 #' @param equal_axes Whether to use equal axes scaling. If `TRUE` (default), the x and y axes will have the same scale.
 #' @param colors Optional character vector of colors to use for the color scale.
-#' @param annotation_params Optional list of parameters to pass to `geom_text` for gate annotations. Common parameters
-#' include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).
+#' @param gate_stat Optional string specifying whether gate annotations show cell
+#'   `"frequency"` (default) or absolute cell `"count"`.
+#' @param annotation_params Optional list of parameters to pass to `geom_label` for gate annotations. Common parameters
+#' include color (text color), fill (label background), alpha (label transparency),
+#' vjust (vertical justification), hjust (horizontal justification), and size (text size).
 #' @param ... Additional arguments to pass to `MASS::kde2d`.
 #'
 #' @return A ggplot object.
@@ -136,6 +139,7 @@ DensityScatterPlot <- function(
   coord_fixed = TRUE,
   equal_axes = TRUE,
   colors = NULL,
+  gate_stat = c("frequency", "count"),
   annotation_params = NULL,
   ...
 ) {
@@ -156,10 +160,12 @@ DensityScatterPlot <- function(
     coord_fixed = coord_fixed,
     equal_axes = equal_axes,
     colors = colors,
+    gate_stat = gate_stat,
     annotation_params = annotation_params
   )
 
   gate_type <- match.arg(gate_type, choices = c("rectangle", "quadrant"))
+  gate_stat <- match.arg(gate_stat, choices = c("frequency", "count"))
 
   # Prepare data
   plot_data <- .prepareDensityData(
@@ -206,6 +212,7 @@ DensityScatterPlot <- function(
       plot_gate = plot_gate,
       gate_type = gate_type,
       facet_vars = facet_vars,
+      gate_stat = gate_stat,
       annotation_params = annotation_params
     )
   }
@@ -235,6 +242,7 @@ DensityScatterPlot <- function(
 #' @param coord_fixed Whether to use fixed coordinate ratio
 #' @param equal_axes Whether to use equal axes scaling
 #' @param colors Colors to use for the density gradient
+#' @param gate_stat Whether gate annotations show frequency or count
 #' @param annotation_params Parameters for gate annotations
 #' @param call Environment to use for the error call
 #' @return List with validated margin_density and coord_fixed values
@@ -257,6 +265,7 @@ DensityScatterPlot <- function(
   coord_fixed,
   equal_axes,
   colors,
+  gate_stat,
   annotation_params,
   call = caller_env()
 ) {
@@ -307,6 +316,15 @@ DensityScatterPlot <- function(
   if (!is.null(annotation_params)) {
     assert_class(annotation_params, "list", call = call)
   }
+
+  if (!gate_stat[1] %in% c("frequency", "count")) {
+    cli::cli_abort(c(
+      "Invalid gate statistic provided.",
+      "i" = "'gate_stat' must be one of: {.code frequency}, {.code count}",
+      "x" = "You provided: {.val {gate_stat[1]}}"
+    ), call = call)
+  }
+  gate_stat <- match.arg(gate_stat, choices = c("frequency", "count"))
 
   if (!is.null(plot_gate)) {
     assert_class(plot_gate, c("data.frame", "tbl_df"), call = call)
@@ -527,12 +545,15 @@ DensityScatterPlot <- function(
 #' @param plot_gate Gate information for plotting
 #' @param gate_type Type of gate ("rectangle" or "quadrant")
 #' @param facet_vars Variables used for faceting
+#' @param gate_stat Whether gate annotations show frequency or count
 #' @param annotation_params Parameters for gate annotation
 #' @return A ggplot object with gate annotation
 #'
 #' @noRd
 #'
-.addGate <- function(gg, plot_gate, gate_type, facet_vars, annotation_params) {
+.addGate <- function(gg, plot_gate, gate_type, facet_vars, gate_stat, annotation_params) {
+  expect_scales()
+
   # Join gate data with facet metadata
   if (!is.null(facet_vars)) {
     join_vars <- intersect(facet_vars, names(plot_gate))
@@ -611,6 +632,15 @@ DensityScatterPlot <- function(
       )
   }
 
+  # Format gate annotation labels as frequency or absolute count
+  format_gate_label <- function(n_inside, total) {
+    if (identical(gate_stat, "count")) {
+      as.character(n_inside)
+    } else {
+      sprintf("%.1f%%", 100 * (n_inside / total))
+    }
+  }
+
   # Create gate coordinates and add gate to plot
   if (gate_type == "rectangle") {
     # Calculate annotation positions
@@ -619,7 +649,7 @@ DensityScatterPlot <- function(
       mutate(
         x = (xmin + xmax) / 2,
         y = ymax,
-        label = sprintf("%.1f%%", 100 * (n_inside / total)),
+        label = format_gate_label(n_inside, total),
         hjust = 0.5,
         vjust = 1,
       )
@@ -659,7 +689,7 @@ DensityScatterPlot <- function(
         ),
         hjust = ifelse(quadrant %in% c("top_left", "bottom_left"), 0, 1),
         vjust = ifelse(quadrant %in% c("top_left", "top_right"), 0, 1),
-        label = sprintf("%.1f%%", 100 * (n_inside / total))
+        label = format_gate_label(n_inside, total)
       )
 
 
@@ -684,7 +714,7 @@ DensityScatterPlot <- function(
       )
   }
 
-  # Add text annotations
+  # Add label annotations with a semi-transparent background for readability
   annotation_args <-
     list(
       data = gate_labels,
@@ -702,7 +732,12 @@ DensityScatterPlot <- function(
     )
 
   # Merge user parameters with defaults
-  default_params <- list(color = "black", size = 3)
+  default_params <- list(
+    color = "black",
+    size = 3,
+    fill = scales::alpha("white", 0.7),
+    label.size = 0
+  )
 
   final_params <-
     utils::modifyList(
@@ -713,7 +748,7 @@ DensityScatterPlot <- function(
   # Add annotations to plot
   gg <-
     gg +
-    do.call(geom_text, c(annotation_args, final_params))
+    do.call(geom_label, c(annotation_args, final_params))
 
 
   return(gg)

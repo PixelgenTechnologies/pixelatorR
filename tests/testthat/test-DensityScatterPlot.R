@@ -257,6 +257,82 @@ for (assay_version in c("v3", "v5")) {
           )
         )
       )
+
+      # Absolute cell counts in gate annotations
+      expect_no_error(
+        DensityScatterPlot(
+          object,
+          marker1 = "Feature1",
+          marker2 = "Feature2",
+          layer = "counts",
+          plot_gate = rect_gate,
+          gate_type = "rectangle",
+          gate_stat = "count"
+        )
+      )
+
+      expect_no_error(
+        DensityScatterPlot(
+          object,
+          marker1 = "Feature1",
+          marker2 = "Feature2",
+          layer = "counts",
+          plot_gate = quad_gate,
+          gate_type = "quadrant",
+          gate_stat = "count"
+        )
+      )
+
+      # Frequency remains the default / explicit option
+      expect_no_error(
+        DensityScatterPlot(
+          object,
+          marker1 = "Feature1",
+          marker2 = "Feature2",
+          layer = "counts",
+          plot_gate = rect_gate,
+          gate_type = "rectangle",
+          gate_stat = "frequency"
+        )
+      )
+
+      # Verify label format and geom_label usage
+      p_freq <- DensityScatterPlot(
+        object,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = rect_gate,
+        gate_type = "rectangle",
+        gate_stat = "frequency"
+      )
+      p_count <- DensityScatterPlot(
+        object,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = rect_gate,
+        gate_type = "rectangle",
+        gate_stat = "count"
+      )
+
+      label_layers_freq <- which(vapply(
+        p_freq$layers,
+        function(l) inherits(l$geom, "GeomLabel"),
+        logical(1)
+      ))
+      label_layers_count <- which(vapply(
+        p_count$layers,
+        function(l) inherits(l$geom, "GeomLabel"),
+        logical(1)
+      ))
+      expect_true(length(label_layers_freq) >= 1)
+      expect_true(length(label_layers_count) >= 1)
+
+      freq_labels <- p_freq$layers[[label_layers_freq[1]]]$data$label
+      count_labels <- p_count$layers[[label_layers_count[1]]]$data$label
+      expect_true(all(grepl("%$", freq_labels)))
+      expect_true(all(grepl("^[0-9]+$", count_labels)))
     })
 
     test_that("DensityScatterPlot errors correctly for invalid inputs", {
@@ -269,6 +345,19 @@ for (assay_version in c("v3", "v5")) {
           layer = "counts",
           plot_gate = tibble(x = 30, y = 40),
           gate_type = "invalid_type"
+        )
+      )
+
+      # Invalid gate_stat
+      expect_error(
+        DensityScatterPlot(
+          object,
+          marker1 = "Feature1",
+          marker2 = "Feature2",
+          layer = "counts",
+          plot_gate = tibble(x = 30, y = 40),
+          gate_type = "quadrant",
+          gate_stat = "invalid_stat"
         )
       )
 

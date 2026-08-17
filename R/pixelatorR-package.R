@@ -105,6 +105,7 @@
 #' @importFrom ggplot2 geom_point
 #' @importFrom ggplot2 geom_rect
 #' @importFrom ggplot2 geom_rug
+#' @importFrom ggplot2 geom_label
 #' @importFrom ggplot2 geom_text
 #' @importFrom ggplot2 geom_tile
 #' @importFrom ggplot2 geom_vline

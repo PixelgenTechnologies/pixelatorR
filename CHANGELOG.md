@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `layout_with_spectral` for Laplacian eigenmap / spectral embeddings of cell
   graphs, with `"svd"` (bipartite biadjacency via `irlba`) and `"eigen"`
   (`RSpectra`) solvers. Also available as `ComputeLayout(..., layout_method = "spectral")`.
+- `DensityScatterPlot()` gains a `gate_stat` argument to show either cell
+  frequency (default) or absolute cell count in gate annotations. Gate labels
+  now use `geom_label` with a semi-transparent background for readability.
 
 ### Fixes
 
