@@ -730,9 +730,11 @@ cc_protein_weights <- function(
     cli::cli_abort(
       c(
         "x" = "Unexpected number of sampled neighborhoods returned.",
-        "i" = "Expected {.val {expected_n_neighborhoods}} neighborhoods based on {.var neighborhoods_per_component} and selected populations.",
+        "i" = "Expected {.val {expected_n_neighborhoods}} neighborhoods based on {.var neighborhoods_per_component} 
+        and selected populations.",
         "i" = "Observed {.val {observed_n_neighborhoods}} neighborhoods in the fetched count matrix.",
-        "i" = "This indicates neighborhood sampling/labeling misalignment; aborting to avoid population mask mismatch in NMF training."
+        "i" = "This indicates neighborhood sampling/labeling misalignment; aborting to avoid population mask 
+        mismatch in NMF training."
       )
     )
   }
