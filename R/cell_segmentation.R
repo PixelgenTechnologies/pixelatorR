@@ -128,16 +128,19 @@ segment_cell <- function(
     verbose = verbose
   )
 
-  # Create cell1 and cell2 graphs by subsetting on classification and filtering components
+  # Create cell1 and cell2 graphs by subsetting on classification and filtering components.
+  # Index into node_classification by name to guard against any ordering divergence
+  # between cg@counts rows and cg@cellgraph nodes.
+  graph_node_names <- cg@cellgraph %N>% pull(name)
   g_c1 <- .subset_graph(
     cg@cellgraph,
-    bool_filter = node_classification == 1,
+    bool_filter = node_classification[graph_node_names] == 1,
     keep_largest_comp = keep_largest_comp,
     min_comp_size = min_comp_size
   )
   g_c2 <- .subset_graph(
     cg@cellgraph,
-    bool_filter = node_classification == 2,
+    bool_filter = node_classification[graph_node_names] == 2,
     keep_largest_comp = keep_largest_comp,
     min_comp_size = min_comp_size
   )
@@ -717,39 +720,31 @@ cc_protein_weights <- function(
   pop1_components <- colnames(object)[pop_components[[1]]]
   pop2_components <- colnames(object)[pop_components[[2]]]
 
-  counts <- fetch_node_neighborhoods(
+  # Fetch neighborhoods separately per population so that population membership
+  # is derived from the actual returned columns, not positional arithmetic.
+  # SQL LIMIT means cells with fewer nodes than neighborhoods_per_component return
+  # fewer seeds; a joint call followed by a fixed-size positional split would
+  # silently misalign the population masks.
+  counts_pop1 <- fetch_node_neighborhoods(
     object,
-    c(pop1_components, pop2_components),
+    pop1_components,
+    nodes_per_component = neighborhoods_per_component,
+    k = k
+  )
+  counts_pop2 <- fetch_node_neighborhoods(
+    object,
+    pop2_components,
     nodes_per_component = neighborhoods_per_component,
     k = k
   )
 
-  expected_n_neighborhoods <-
-    (length(pop1_components) + length(pop2_components)) * neighborhoods_per_component
-  observed_n_neighborhoods <- ncol(counts)
-  if (observed_n_neighborhoods != expected_n_neighborhoods) {
-    cli::cli_abort(
-      c(
-        "x" = "Unexpected number of sampled neighborhoods returned.",
-        "i" = "Expected {.val {expected_n_neighborhoods}} neighborhoods based on {.var neighborhoods_per_component} 
-        and selected populations.",
-        "i" = "Observed {.val {observed_n_neighborhoods}} neighborhoods in the fetched count matrix.",
-        "i" = "This indicates neighborhood sampling/labeling misalignment; aborting to avoid population mask 
-        mismatch in NMF training."
-      )
-    )
-  }
+  counts <- SeuratObject::RowMergeSparseMatrices(counts_pop1, list(counts_pop2))
 
+  # Build population masks from actual column names, not expected counts
   pop_components <- list(
-    c(
-      rep(TRUE, length(pop1_components) * neighborhoods_per_component),
-      rep(FALSE, length(pop2_components) * neighborhoods_per_component)
-    ),
-    c(
-      rep(FALSE, length(pop1_components) * neighborhoods_per_component),
-      rep(TRUE, length(pop2_components) * neighborhoods_per_component)
-    )
-  )
+    colnames(counts) %in% colnames(counts_pop1),
+    colnames(counts) %in% colnames(counts_pop2)
+  ) %>% set_names(names(pop_components))
 
   # Check percent masked
   if (!is.null(masked_markers)) {
@@ -768,7 +763,7 @@ cc_protein_weights <- function(
     }
   }
   # Filter by minimum allowed neighborhood size
-  nbs_keep_large <- Matrix::colSums(counts) > min_neighborhood_size
+  nbs_keep_large <- Matrix::colSums(counts) >= min_neighborhood_size
   if ((sum(!nbs_keep_large) / length(nbs_keep_large)) >= 0.1) {
     cli::cli_alert_warning(
       c(
