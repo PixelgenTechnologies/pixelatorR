@@ -58,7 +58,6 @@ The layout coordinates are the eigenvectors corresponding to the
 (\code{dim}) smallest non-trivial eigenvalues of the Laplacian or the
 normalized Laplacian, also known as Laplacian Eigenmaps or the spectral
 embedding of the graph.
-
 \enumerate{
 \item Compute the sparse adjacency matrix \eqn{A}. When
 \code{normalize_laplacian = FALSE}, form the unnormalized graph Laplacian
@@ -93,7 +92,6 @@ finding the bottom eigenvalues of the normalized Laplacian is equivalent to
 finding the largest singular values of the normalized biadjacency matrix.
 This allows replacing the eigenvalue solver with an SVD solver tailored for
 rectangular data, which often converges faster.
-
 \enumerate{
 \item Compute the sparse biadjacency matrix \eqn{B}, the diagonal degree
 matrices \eqn{D_1} (row sums of \eqn{B}) and \eqn{D_2} (column sums of
