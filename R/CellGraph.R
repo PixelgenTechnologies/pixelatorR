@@ -56,7 +56,9 @@ CellGraph <- setClass(
 #' db <- PixelDB$new(minimal_pna_pxl_file())
 #'
 #' # Select a component ID and load the edgelist
-#' sel_comp <- db$cell_meta() %>% rownames() %>% head(1)
+#' sel_comp <- db$cell_meta() %>%
+#'   rownames() %>%
+#'   head(1)
 #' component_edgelist <- db$components_edgelist(
 #'   components = sel_comp,
 #'   umi_data_type = "suffixed_string"
