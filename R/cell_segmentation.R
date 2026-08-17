@@ -56,7 +56,7 @@
 #' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
 #'   LoadCellGraphs(cells = colnames(.)[2], verbose = FALSE)
 #' cg <- CellGraphs(se)[[2]]
-#' 
+#'
 #' # Get cell type weights
 #' se$cell_type <- c("Mono", "pDC", "CD4T", "CD4T", "CD4T")
 #' w <- cc_protein_weights(
@@ -65,7 +65,7 @@
 #'   population_1 = "Mono", population_2 = "CD4T",
 #'   show_plot = FALSE
 #' )
-#' 
+#'
 #' cg <- segment_cell(
 #'   cg,
 #'   w = w
@@ -175,21 +175,23 @@ segment_cell <- function(
 
   # Final mapping. The priority of the mapping is as follows:
   # 1) Interface nodes are classified as "interface"
-  # 2) Nodes are classified as "cell1" or "cell2" (based on cell_names)
+  # 2) Nodes in retained cell-specific components are classified as "cell1" or "cell2"
   # 3) Nodes that don't fit any of the above categories are classified as "other"
   # Note that the interface can break the connectivity of the cell1 and cell2 graphs,
   # so there's no guarantee that these compartments will be fully connected.
+  c1_nodes_keep <- g_c1 %>% pull(name)
+  c2_nodes_keep <- g_c2 %>% pull(name)
+
   node_compartment_map <- tibble(
-    node = rownames(cg@counts),
-    cluster = node_classification[rownames(cg@counts)]
+    node = rownames(cg@counts)
   ) %>%
     mutate(group = if_else(
       node %in% interface_nodes, "interface", "other"
     )) %>%
     mutate(compartment = case_when(
       group == "interface" ~ "interface",
-      cluster == 1 ~ cell_names[1],
-      cluster == 2 ~ cell_names[2],
+      node %in% c1_nodes_keep ~ cell_names[1],
+      node %in% c2_nodes_keep ~ cell_names[2],
       TRUE ~ "other"
     ))
 
@@ -203,7 +205,7 @@ segment_cell <- function(
 
 
 #' Validate input parameters for segment_cell function
-#' 
+#'
 #' @param cg A `CellGraph` object
 #' @param w A matrix of NMF weights with rows corresponding to proteins and columns
 #' corresponding to the two interacting cell types.
@@ -721,6 +723,20 @@ cc_protein_weights <- function(
     k = k
   )
 
+  expected_n_neighborhoods <-
+    (length(pop1_components) + length(pop2_components)) * neighborhoods_per_component
+  observed_n_neighborhoods <- ncol(counts)
+  if (observed_n_neighborhoods != expected_n_neighborhoods) {
+    cli::cli_abort(
+      c(
+        "x" = "Unexpected number of sampled neighborhoods returned.",
+        "i" = "Expected {.val {expected_n_neighborhoods}} neighborhoods based on {.var neighborhoods_per_component} and selected populations.",
+        "i" = "Observed {.val {observed_n_neighborhoods}} neighborhoods in the fetched count matrix.",
+        "i" = "This indicates neighborhood sampling/labeling misalignment; aborting to avoid population mask mismatch in NMF training."
+      )
+    )
+  }
+
   pop_components <- list(
     c(
       rep(TRUE, length(pop1_components) * neighborhoods_per_component),
@@ -1070,7 +1086,7 @@ spatial_smoothing <- function(
   }
 
   # Slice out the adjacency matrix for crossing edges between cell1 and cell2
-  A_crossing <- A[c1_nodes, c2_nodes]
+  A_crossing <- A[c1_nodes, c2_nodes, drop = FALSE]
 
   # Select the node IDs for nodes attached to a crossing edge
   interface_nodes <- c(
@@ -1086,42 +1102,4 @@ spatial_smoothing <- function(
   }
 
   return(interface_nodes)
-}
-
-#' Perform spatial smoothing of a count matrix using the adjacency matrix of the graph
-#'
-#' @param A The adjacency matrix of the graph (sparse matrix of class `dgCMatrix`).
-#' @param x The count matrix to be smoothed (sparse matrix of class `dgCMatrix`).
-#' @param iter The number of iterations to perform the smoothing. Default is 5.
-#'
-#' @return A smoothed count matrix of the same dimensions as `x`.
-#'
-#' @export
-#'
-spatial_smoothing <- function(
-  A,
-  x,
-  iter = 5L
-) {
-  pixelatorR:::assert_class(A, "dgCMatrix")
-  pixelatorR:::assert_class(x, c("dgCMatrix", "matrix"))
-  pixelatorR:::assert_singles_match(nrow(A), nrow(x))
-  pixelatorR:::assert_single_value(iter, type = "integer")
-  pixelatorR:::assert_within_limits(iter, limits = c(1, 50))
-
-  # Assign equal weights to neighbors
-  P <- A / Matrix::rowSums(A)
-
-  # Assign center node the same weight as the sum of the neighbors
-  Matrix::diag(P) <- 1
-
-  # Renormalize to ensure rows sum to 1
-  P <- P / Matrix::rowSums(P)
-
-  # Apply smoothing
-  for (i in seq_len(iter)) {
-    x <- P %*% x
-  }
-
-  return(x)
 }

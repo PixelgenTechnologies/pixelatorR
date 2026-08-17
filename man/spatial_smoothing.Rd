@@ -5,8 +5,6 @@
 \title{Perform spatial smoothing of a count matrix using the adjacency matrix of the graph}
 \usage{
 spatial_smoothing(A, x, iter = 5L)
-
-spatial_smoothing(A, x, iter = 5L)
 }
 \arguments{
 \item{A}{The adjacency matrix of the graph (sparse matrix of class \code{dgCMatrix}).}
@@ -17,11 +15,7 @@ spatial_smoothing(A, x, iter = 5L)
 }
 \value{
 A smoothed count matrix of the same dimensions as \code{x}.
-
-A smoothed count matrix of the same dimensions as \code{x}.
 }
 \description{
-Perform spatial smoothing of a count matrix using the adjacency matrix of the graph
-
 Perform spatial smoothing of a count matrix using the adjacency matrix of the graph
 }

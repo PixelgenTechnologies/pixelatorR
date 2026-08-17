@@ -61,6 +61,36 @@ test_that("segment_cell handles empty interface without error", {
   expect_true(all(comp %in% c("Mono", "CD4T", "interface", "other")))
 })
 
+test_that("segment_cell applies component filtering to final annotation", {
+  out_lcc <- segment_cell(
+    cg,
+    w = w,
+    k = 2L,
+    detect_interface = FALSE,
+    keep_largest_comp = TRUE,
+    verbose = FALSE
+  )
+
+  out_min_size <- segment_cell(
+    cg,
+    w = w,
+    k = 2L,
+    detect_interface = FALSE,
+    keep_largest_comp = FALSE,
+    min_comp_size = 1L,
+    verbose = FALSE
+  )
+
+  comp_lcc <- out_lcc@cellgraph %>% pull(compartment)
+  comp_min_size <- out_min_size@cellgraph %>% pull(compartment)
+
+  n_non_other_lcc <- sum(comp_lcc %in% c("Mono", "CD4T"))
+  n_non_other_min_size <- sum(comp_min_size %in% c("Mono", "CD4T"))
+
+  expect_lte(n_non_other_lcc, n_non_other_min_size)
+  expect_gt(sum(comp_lcc == "other"), sum(comp_min_size == "other"))
+})
+
 test_that("segment_cell fails fast when w is NULL", {
   expect_error(
     segment_cell(cg, w = NULL),
