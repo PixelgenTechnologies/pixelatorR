@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `DensityScatterPlot()` gains a `gate_stat` argument to show either cell
   frequency (default) or absolute cell count in gate annotations. Gate labels
   now use `geom_label` with a semi-transparent background for readability.
+- `segment_cell` for segmenting cell:cell conjugate graphs into two cell-type compartments and optional interface nodes using NMF weights and NNLS projection.
 
 ### Fixes
 
