@@ -30,20 +30,9 @@ library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
-edge_list <-
-  ReadMPX_item(
-    minimal_mpx_pxl_file(),
-    items = "edgelist"
-  )
-bipart_graph <-
-  edge_list \%>\%
-  select(upia, upib, marker) \%>\%
-  distinct() \%>\%
-  as_tbl_graph(directed = FALSE) \%>\%
-  mutate(node_type = case_when(name \%in\% edge_list$upia ~ "A", TRUE ~ "B"))
-attr(bipart_graph, "type") <- "bipartite"
-
-cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
+se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
+cg <- CellGraphs(se)[[1]]
 
 # Get slot data
 CellGraphData(cg, slot = "cellgraph")
