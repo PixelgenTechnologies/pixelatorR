@@ -6,7 +6,8 @@ NULL
 #' Computes graph layouts for component graphs.
 #'
 #' @param layout_method The method for calculating the graph layout:
-#' coarsened Pivot MDS (cpmds), weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)
+#' coarsened Pivot MDS ("cpmds"), weighted Pivot MDS ("wpmds"), Pivot MDS
+#' ("pmds"), or spectral layout ("spectral"; see \code{\link{layout_with_spectral}})
 #' @param dim An integer specifying the dimensions of the layout (2 or 3). Note that
 #' for "cpmds", "pmds" and "wpmds", the x and y coordinates will be identical regardless if
 #' dim is set to 2 or 3.
@@ -67,7 +68,7 @@ NULL
 #'
 ComputeLayout.tbl_graph <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -118,22 +119,27 @@ ComputeLayout.tbl_graph <- function(
     .validate_custom_layout_function_results(layout, dim, n_nodes = length(object))
   } else {
     # Check and select a layout method
-    layout_method <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds"))
+    layout_method <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds", "spectral"))
 
-    layout_function <-
-      switch(layout_method,
-        "cpmds" = layout_with_coarsened_pmds,
-        "wpmds" = layout_with_weighted_pmds,
-        "pmds" = {
-          # Abort if pmds is selected and graphlayouts isn't installed
-          expect_graphlayouts()
-          graphlayouts::layout_with_pmds
-        }
-      )
+    if (layout_method == "spectral") {
+      layout <- layout_with_spectral(object, dim = dim, ...)
+    } else {
+      layout_function <-
+        switch(layout_method,
+          "cpmds" = layout_with_coarsened_pmds,
+          "wpmds" = layout_with_weighted_pmds,
+          "pmds" = {
+            # Abort if pmds is selected and graphlayouts isn't installed
+            expect_graphlayouts()
+            graphlayouts::layout_with_pmds
+          }
+        )
 
-    layout <-
-      object %>%
-      layout_function(dim = dim, pivots = pivots, ...) %>%
+      layout <- object %>%
+        layout_function(dim = dim, pivots = pivots, ...)
+    }
+
+    layout <- layout %>%
       as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_len(dim)]) %>%
       bind_cols(object %N>% as_tibble()) %>%
       select(any_of(c("x", "y", "z")))
@@ -169,7 +175,7 @@ ComputeLayout.tbl_graph <- function(
 #'
 ComputeLayout.CellGraph <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -181,7 +187,7 @@ ComputeLayout.CellGraph <- function(
   ...
 ) {
   if (is.null(custom_layout_function) && is.null(layout_name)) {
-    layout_name <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds"))
+    layout_name <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds", "spectral"))
     # Add suffix _3d if dim = 3
     if (dim == 3) {
       layout_name <- paste0(layout_name, "_3d")
@@ -229,7 +235,7 @@ ComputeLayout.CellGraph <- function(
 #'
 ComputeLayout.MPXAssay <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -309,7 +315,7 @@ ComputeLayout.CellGraphAssay5 <- ComputeLayout.MPXAssay
 #'
 ComputeLayout.PNAAssay <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -387,7 +393,7 @@ ComputeLayout.PNAAssay5 <- ComputeLayout.PNAAssay
 ComputeLayout.Seurat <- function(
   object,
   assay = NULL,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,

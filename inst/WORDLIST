@@ -95,6 +95,7 @@ anndata
 artefacts
 bb
 bfbfb
+biadjacency
 bioRxiv
 bleedover
 bonferroni
@@ -127,6 +128,7 @@ eba
 edgelist
 edgelists
 efe
+Eigenmaps
 eigen
 eq
 et
@@ -146,10 +148,12 @@ holm
 hommel
 homodimer
 https
+irlba
 isotype
 json
 kmers
 labelled
+Laplacian
 linegraph
 linegraphs
 makeCluster
@@ -183,6 +187,7 @@ residualizes
 sampleID
 scalable
 seurat
+spectral
 subgraphs
 subtypes
 th

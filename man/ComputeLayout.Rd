@@ -17,7 +17,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{tbl_graph}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -30,7 +30,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraph}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -44,7 +44,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{MPXAssay}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -60,7 +60,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -76,7 +76,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay5}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -92,7 +92,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{PNAAssay}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -108,7 +108,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{PNAAssay5}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -125,7 +125,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{Seurat}(
   object,
   assay = NULL,
-  layout_method = c("cpmds", "pmds", "wpmds"),
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -145,7 +145,8 @@ ComputeLayout(object, ...)
 \item{...}{Additional parameters passed to other methods}
 
 \item{layout_method}{The method for calculating the graph layout:
-coarsened Pivot MDS (cpmds), weighted Pivot MDS ("wpmds") or Pivot MDS (pmds)}
+coarsened Pivot MDS ("cpmds"), weighted Pivot MDS ("wpmds"), Pivot MDS
+("pmds"), or spectral layout ("spectral"; see \code{\link{layout_with_spectral}})}
 
 \item{dim}{An integer specifying the dimensions of the layout (2 or 3). Note that
 for "cpmds", "pmds" and "wpmds", the x and y coordinates will be identical regardless if

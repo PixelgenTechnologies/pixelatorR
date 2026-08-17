@@ -75,6 +75,7 @@ Suggests:
     RcppML,
     ggrepel,
     RSpectra,
+    irlba,
     pls,
     matrixStats,
     sparseMatrixStats,
@@ -135,6 +136,7 @@ Collate:
     'render_rotating_layout.R'
     'restore_paths.R'
     'sequencing_saturation.R'
+    'spectral_layout.R'
     'tau_plot.R'
     'themes_and_palettes.R'
     'two_bit_encoding.R'
