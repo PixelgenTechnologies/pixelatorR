@@ -126,6 +126,10 @@ expect_RSpectra <- function(...) {
   rlang::check_installed("RSpectra", ...)
 }
 
+expect_irlba <- function(...) {
+  rlang::check_installed("irlba", ...)
+}
+
 expect_pls <- function(...) {
   rlang::check_installed("pls", ...)
 }

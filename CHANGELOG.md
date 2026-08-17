@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
+### Added
+
+- `layout_with_spectral` for Laplacian eigenmap / spectral embeddings of cell
+  graphs, with `"svd"` (bipartite biadjacency via `irlba`) and `"eigen"`
+  (`RSpectra`) solvers. Also available as `ComputeLayout(..., layout_method = "spectral")`.
+
 ### Fixes
 
 - `CreateCellGraphObject()` now correctly validates the `layout` argument as a
