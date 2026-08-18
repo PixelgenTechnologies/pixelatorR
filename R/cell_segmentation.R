@@ -1114,3 +1114,169 @@ spatial_smoothing <- function(
 
   return(interface_nodes)
 }
+
+#' Compute distance from a set of seed nodes using fast breadth-first search.
+#'
+#' This function computes the shortest path distance from a set of seed nodes to all
+#' other nodes in the graph using a breadth-first search (BFS) approach. It iteratively
+#' expands the frontier of reached nodes until all reachable nodes have been assigned a
+#' distance or the maximum number of iterations is reached.
+#'
+#' @param cg A `CellGraph` object.
+#' @param seed_nodes A character vector of node names to use as seeds for distance calculation.
+#' @param max_iter An integer specifying the maximum number of iterations (distance levels)
+#' to compute. Default is 40.
+#' @param verbose A logical value indicating whether to print progress messages during the
+#' computation. Default is FALSE.
+#'
+#' @return A `CellGraph` object with an added `distance_from_seed` column in the node data,
+#' indicating the shortest path distance from the nearest seed node.
+#'
+#' @examples
+#' library(dplyr)
+#' library(tidygraph)
+#' cg <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) %>%
+#'   LoadCellGraphs(cells = colnames(.)[4], add_layout = TRUE, verbose = FALSE) %>%
+#'   CellGraphs() %>%
+#'   .[[4]]
+#'
+#' # Compute distances from the seed set, here we just pick a random point
+#' start_set <- cg@cellgraph %N>%
+#'   pull(name) %>%
+#'   head(1)
+#' cg <- distance_from_node_set(cg, start_set)
+#'
+#' # Visualize the distance on the 3D layout
+#' xyz <- cg@layout$wpmds_3d %>%
+#'   mutate(d = cg@cellgraph %N>% pull(distance_from_seed))
+#'
+#' plotly::plot_ly(
+#'   data = xyz,
+#'   x = ~x, y = ~y, z = ~z,
+#'   color = ~d,
+#'   colors = c("lightgrey", "mistyrose", "red", "darkred", "black"),
+#'   type = "scatter3d",
+#'   mode = "markers",
+#'   marker = list(size = 2)
+#' )
+#'
+#' @export
+#'
+distance_from_node_set <- function(
+  cg,
+  seed_nodes,
+  max_iter = 40L,
+  verbose = FALSE
+) {
+  pixelatorR:::assert_class(cg, "CellGraph")
+  pixelatorR:::assert_vector(seed_nodes, "character", n = 1)
+  pixelatorR:::assert_single_value(max_iter, type = "integer")
+  pixelatorR:::assert_within_limits(max_iter, limits = c(0, Inf))
+  pixelatorR:::assert_single_value(verbose, type = "bool")
+
+  nodes <- cg@cellgraph %N>% pull(name)
+  n <- length(nodes)
+
+  missing_seeds <- setdiff(seed_nodes, nodes)
+  if (length(missing_seeds) > 0L) {
+    cli::cli_abort(c(
+      "x" = "All seed nodes must be present in the graph.",
+      "i" = "The following seed nodes are not present in the graph: {missing_seeds}"
+    ))
+  }
+
+  # Adjacency matrix — use column-major (dgCMatrix) and operate column-wise
+  A <- igraph::as_adjacency_matrix(cg@cellgraph, sparse = TRUE)
+
+  # Pre-allocate the distance vector (NA = unreached)
+  d <- rep(NA_integer_, n)
+  is_seed <- nodes %in% seed_nodes
+  d[is_seed] <- 0L
+
+  # Frontier = nodes added in the previous iteration (initially the seeds)
+  frontier_idx <- which(is_seed)
+
+  for (i in seq_len(max_iter)) {
+    # Neighbors of the frontier: sum of frontier rows of A, restricted to unreached nodes
+    f <- numeric(n)
+    f[frontier_idx] <- 1
+    neighbor_counts <- as.numeric(f %*% A)
+
+    # New frontier = neighbors that have not been reached yet
+    new_frontier_idx <- which(neighbor_counts > 0 & is.na(d))
+    if (length(new_frontier_idx) == 0L) break
+
+    d[new_frontier_idx] <- i
+    frontier_idx <- new_frontier_idx
+
+    if (isTRUE(verbose)) {
+      cli::cli_inform("Iteration {i}: {length(new_frontier_idx)} new nodes reached.")
+    }
+  }
+
+  # Add distance
+  cg@cellgraph <- cg@cellgraph %N>%
+    select(-any_of("distance_from_seed")) %>%
+    left_join(tibble(name = nodes, distance_from_seed = d), by = "name")
+
+  return(cg)
+}
+
+#' Compute partition counts
+#'
+#' @param cg A CellGraph object containing the cell graph and count data.
+#' @param partition A character or factor vector indicating the partition of
+#' nodes into groups. Either `partition` or `partition_column` must be provided.
+#' @param partition_column A string indicating the name of the vertex attribute in
+#' the cell graph that contains the partition information.
+#'
+#' @return A matrix of counts for each partition group, where rows correspond to
+#' partition groups and columns correspond to features (e.g., proteins).
+#'
+#' @export
+#'
+partition_counts <- function(
+  cg,
+  partition = NULL,
+  partition_column = NULL
+) {
+  pixelatorR:::assert_class(cg, "CellGraph")
+  if (is.null(partition) && is.null(partition_column)) {
+    cli::cli_abort("Either `partition` or `partition_column` must be provided.")
+  }
+  if (!is.null(partition) && !is.null(partition_column)) {
+    cli::cli_abort("One of `partition` or `partition_column` must be provided, not both.")
+  }
+  pixelatorR:::assert_class(partition, c("character", "factor"), allow_null = TRUE)
+  if (!is.null(partition)) {
+    if (length(partition) != length(cg@cellgraph)) {
+      cli::cli_abort(
+        "Length of `partition` must match the number of nodes in the cell graph."
+      )
+    }
+  }
+  pixelatorR:::assert_single_value(partition_column, "string", allow_null = TRUE)
+
+  if (!is.null(partition_column)) {
+    partition <- try(
+      cg@cellgraph %N>%
+        pull(!!sym(partition_column)),
+      silent = TRUE
+    )
+    if (inherits(partition, "try-error")) {
+      cli::cli_abort(
+        "Column '{partition_column}' not found in cell graph node attributes."
+      )
+    }
+  }
+
+  if (is.character(partition)) {
+    lvls <- unique(partition)
+    partition <- factor(partition, levels = lvls)
+  }
+
+  mm <- Matrix::sparse.model.matrix(~ 0 + partition)
+  part_counts <- Matrix::t(mm) %*% cg@counts
+  rownames(part_counts) <- levels(partition)
+  return(part_counts)
+}
