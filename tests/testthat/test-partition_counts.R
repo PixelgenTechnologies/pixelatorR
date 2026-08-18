@@ -1,10 +1,18 @@
+library(dplyr)
 library(tidygraph)
-set.seed(123)
-cg <- simulate_bipartite_graph(n_nodes = 1e3)
-cg <- add_binary_marker_counts(cg, markers = paste0("marker", 1:2))
+
+se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
+se <- LoadCellGraphs(se, cells = colnames(se)[4], verbose = FALSE)
+cg <- CellGraphs(se)[[4]]
+partition <- rep(c("A", "B"), length.out = length(cg@cellgraph))
 cg@cellgraph <- cg@cellgraph %N>%
-  mutate(partition = sample(c("A", "B"), n(), replace = TRUE))
-partition <- cg@cellgraph %N>% pull(partition)
+  mutate(partition = partition)
+
+expected_counts <- structure(
+  c(8516, 8588, 1626, 1644, 265, 307),
+  dim = 2:3,
+  dimnames = list(c("A", "B"), c("CD44", "CD3e", "CD4"))
+)
 
 test_that("partition_counts works as expected", {
   expect_no_error(
@@ -12,16 +20,8 @@ test_that("partition_counts works as expected", {
   )
 
   expect_equal(
-    new(
-      "dgCMatrix",
-      i = c(0L, 1L, 0L, 1L),
-      p = c(0L, 2L, 4L),
-      Dim = c(2L, 2L),
-      Dimnames = list(c("A", "B"), c("marker1", "marker2")),
-      x = c(265, 275, 257, 227),
-      factors = list()
-    ),
-    res
+    as.matrix(res[, colnames(expected_counts)]),
+    expected_counts
   )
 
   expect_no_error(
@@ -29,34 +29,26 @@ test_that("partition_counts works as expected", {
   )
 
   expect_equal(
-    new(
-      "dgCMatrix",
-      i = c(0L, 1L, 0L, 1L),
-      p = c(0L, 2L, 4L),
-      Dim = c(2L, 2L),
-      Dimnames = list(c("A", "B"), c("marker1", "marker2")),
-      x = c(265, 275, 257, 227),
-      factors = list()
-    ),
-    res
+    as.matrix(res[, colnames(expected_counts)]),
+    expected_counts
   )
 })
 
 
 test_that("partition_counts fails with invalid input", {
   expect_error(
-    res <- partition_counts("Invalid")
+    partition_counts("Invalid")
   )
 
   expect_error(
-    res <- partition_counts(cg, partition = 1:10)
+    partition_counts(cg, partition = 1:10)
   )
 
   expect_error(
-    res <- partition_counts(cg, partition = c("A", "B"))
+    partition_counts(cg, partition = c("A", "B"))
   )
 
   expect_error(
-    res <- partition_counts(cg, partition_column = "Invalid")
+    partition_counts(cg, partition_column = "Invalid")
   )
 })
