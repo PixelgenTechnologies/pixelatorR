@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `distance_from_node_set` to compute shortest-path distances from seed nodes
+  on a `CellGraph` via breadth-first search.
+- `partition_counts` to aggregate node-level counts by a partition vector or
+  node attribute column.
+
 ### Removed
 
 - Interaction-database helpers have been removed.
