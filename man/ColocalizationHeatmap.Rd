@@ -231,5 +231,5 @@ ColocalizationHeatmap(
 
 }
 \seealso{
-\code{\link{extract_panel_interactions}}
+\code{pixelatorRinternal::extract_panel_interactions()}
 }
