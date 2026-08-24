@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.18.3
+Version: 0.20.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
@@ -75,9 +75,13 @@ Suggests:
     RcppML,
     ggrepel,
     RSpectra,
+    irlba,
     pls,
     matrixStats,
-    FNN
+    sparseMatrixStats,
+    FNN,
+    presto
+Remotes: immunogenomics/presto
 Collate: 
     'generics.R'
     'CellGraph.R'
@@ -90,6 +94,7 @@ Collate:
     'analysis-utils.R'
     'annotate.R'
     'cell_count_plot.R'
+    'cell_segmentation.R'
     'coarsened_pmds.R'
     'colocalization_heatmap.R'
     'd3_graph_helpers.R'
@@ -103,6 +108,7 @@ Collate:
     'dispersion.R'
     'doublet_detection.R'
     'duckdb_methods.R'
+    'duckdb_node_neighborhoods.R'
     'extdata.R'
     'filter_and_summarize_proximity_scores.R'
     'global_options.R'
@@ -118,6 +124,7 @@ Collate:
     'load_data_mpx.R'
     'load_data_pna.R'
     'local_G.R'
+    'local_proximity_scores.R'
     'molecule_rank_plot.R'
     'objects.R'
     'patch_detection.R'
@@ -130,6 +137,7 @@ Collate:
     'render_rotating_layout.R'
     'restore_paths.R'
     'sequencing_saturation.R'
+    'spectral_layout.R'
     'tau_plot.R'
     'themes_and_palettes.R'
     'two_bit_encoding.R'

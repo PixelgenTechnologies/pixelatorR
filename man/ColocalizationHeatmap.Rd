@@ -24,6 +24,11 @@ ColocalizationHeatmap(
   symmetrise = TRUE,
   legend_range = NULL,
   legend_title = "",
+  highlight_pairs = NULL,
+  highlight_colors = "black",
+  highlight_color_col = NULL,
+  highlight_stroke = 1.2,
+  highlight_shrink = 0.1,
   ...
 )
 }
@@ -60,13 +65,9 @@ to use for clustering rows and columns. Can be any method accepted by \code{dist
 \item{clustering_method}{The clustering method to use. Can be any method
 accepted by \code{hclust}.}
 
-\item{type}{The type of plot to draw. Can be \code{"tiles"} for a typical
-heatmap where each marker pair corresponds to a filled tile or \code{"dots"}
-for a "dot plot". In the latter, the sizes of the dots are scaled by the
-\code{size_col} column. This representation has the added advantage that
-size differences can be used to highlight other important information,
-such as significance. The dot plot is a \code{ggplot} object which can
-be easily modified to customize the style.}
+\item{type}{Plot type: \code{"tiles"} for a filled-tile heatmap, or
+\code{"dots"} for a dot plot where size maps to \code{size_col}. Dot plots
+return a \code{ggplot} object.}
 
 \item{return_plot_data}{Return data formatted for plotting instead of drawing
 the heatmap.}
@@ -82,6 +83,30 @@ legend range limit.}
 
 \item{legend_title}{The title of the legend}
 
+\item{highlight_pairs}{Optional \code{tbl_df}/data.frame with columns
+\code{marker_1} and \code{marker_2} naming pairs to outline with a cell
+border. Pairs whose markers are absent from \code{data} are ignored.
+\code{NULL} disables highlighting. May also carry a column named by
+\code{highlight_color_col} when mapping border colours for
+\code{type = "dots"}.}
+
+\item{highlight_colors}{Border colour(s) for highlighted cells. Single colour
+when \code{highlight_color_col} is \code{NULL} (default \code{"black"};
+tiles and dots). With \code{highlight_color_col} (\code{type = "dots"} only):
+a named vector for discrete values, or two or more colours for numeric
+values.}
+
+\item{highlight_color_col}{Column in \code{highlight_pairs} used to colour
+borders (\code{type = "dots"} only; errors with \code{"tiles"}).
+\code{NULL} (default) draws a constant border colour.}
+
+\item{highlight_stroke}{Border line width for highlighted cells.}
+
+\item{highlight_shrink}{Fraction by which to reduce the width and height of
+highlighted cell borders. Must be at least 0 and less than 1. The default
+\code{0.1} leaves a small gap between adjacent highlights; \code{0} uses the
+full cell size.}
+
 \item{...}{Parameters passed to \code{pheatmap}}
 }
 \value{
@@ -89,9 +114,8 @@ A \code{Heatmap} object/plot if \code{type = "tiles"} or a \code{ggplot}
 object/plot if \code{type = "dots"}.
 }
 \description{
-Draws a heatmap of some summary statistic between marker pairs stored in a
-\code{tbl_df}. A typical use case is to show the estimates of a differential
-colocalization analysis test (\code{\link{RunDCA}}).
+Heatmap of a summary statistic between marker pairs (e.g. DCA from
+\code{\link{RunDCA}}).
 }
 \section{Input}{
 
@@ -141,6 +165,33 @@ ColocalizationHeatmap(
 ) &
   labs(size = "-log10p(p_adj)")
 
+# Outline selected marker pairs (constant colour)
+ColocalizationHeatmap(
+  dca_markers,
+  type = "dots",
+  size_range = c(1, 10),
+  highlight_pairs = tibble(
+    marker_1 = c("M1", "M3"),
+    marker_2 = c("M2", "M5")
+  ),
+  highlight_colors = "black"
+)
+
+# Map border colours from a column in highlight_pairs (dots only)
+ColocalizationHeatmap(
+  dca_markers,
+  type = "dots",
+  size_range = c(1, 10),
+  highlight_pairs = tibble(
+    marker_1 = c("M1", "M3"),
+    marker_2 = c("M2", "M5"),
+    database = c("string", "alphafold")
+  ),
+  highlight_color_col = "database",
+  highlight_colors = c(string = "#C0392B", alphafold = "#6C3483"),
+  highlight_shrink = 0.15
+)
+
 # We can specify the order of the markers with factor levels
 # but we need to turn off the clustering
 ColocalizationHeatmap(
@@ -178,4 +229,7 @@ ColocalizationHeatmap(
     filter(target == "stim1")
 )
 
+}
+\seealso{
+\code{pixelatorRinternal::extract_panel_interactions()}
 }

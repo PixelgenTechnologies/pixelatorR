@@ -442,8 +442,11 @@ PixelDB <- R6Class(
     #'  - marker_1: The first protein
     #'  - marker_2: The second protein
     #'  - component: The component name
+    #'
+    #' If \code{include_all_columns = TRUE}, the following columns are also returned:
     #'  - read_count: The number of reads supporting the edge
-    #'  - uei_count: The number of unique event identifiers (UEIs) supporting the edge
+    #'  - uei_count: The number of unique event identifiers (UEIs) supporting the edge.
+    #'    This column is optional and is only returned if it is present in the edgelist table.
     #'
     components_edgelist = function(components,
                                    umi_data_type = c("int64", "string", "suffixed_string"),
@@ -466,13 +469,10 @@ PixelDB <- R6Class(
 
       if (include_all_columns) {
         el <- el %>%
-          mutate(
-            read_count = as.integer(read_count),
-            uei_count = as.integer(uei_count)
-          )
+          mutate(across(any_of(c("read_count", "uei_count")), as.integer))
       } else {
         el <- el %>%
-          select(-read_count, -uei_count)
+          select(-any_of(c("read_count", "uei_count")))
       }
 
       if (umi_data_type == "string") {

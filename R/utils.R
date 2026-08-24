@@ -364,7 +364,7 @@ abort_if_not <- function(
 #' @param targets A character vector of length >= 1 or NULL
 #' @param group_vars A character vector of length >= 1 or NULL
 #' @param spatial_metric A character vector of length 1
-#' @param min_n_obs An integer of length 1
+#' @param min_cells_per_group An integer of length 1
 #' @param conf_int Either TRUE or FALSE
 #' @param cl An integer, a cluster object or NULL
 #' @param data_type A character vector of length 1
@@ -378,7 +378,7 @@ abort_if_not <- function(
   targets,
   group_vars,
   spatial_metric = NULL,
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   conf_int = FALSE,
   cl = NULL,
   data_type = NULL,
@@ -464,11 +464,11 @@ abort_if_not <- function(
     }
   }
 
-  # Validate min_n_obs
-  assert_single_value(min_n_obs, type = "numeric", call = call)
-  if (min_n_obs < 0) {
+  # Validate min_cells_per_group
+  assert_single_value(min_cells_per_group, type = "numeric", call = call)
+  if (min_cells_per_group < 0) {
     cli::cli_abort(
-      c("x" = "{.var min_n_obs} must be a non-negative integer"),
+      c("x" = "{.var min_cells_per_group} must be a non-negative integer"),
       call = call
     )
   }

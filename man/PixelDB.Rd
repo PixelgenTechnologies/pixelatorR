@@ -613,8 +613,13 @@ A \code{data.frame} with the component edgelist:
 \item marker_1: The first protein
 \item marker_2: The second protein
 \item component: The component name
+}
+
+If \code{include_all_columns = TRUE}, the following columns are also returned:
+\itemize{
 \item read_count: The number of reads supporting the edge
-\item uei_count: The number of unique event identifiers (UEIs) supporting the edge
+\item uei_count: The number of unique event identifiers (UEIs) supporting the edge.
+This column is optional and is only returned if it is present in the edgelist table.
 }
 }
 \subsection{Examples}{

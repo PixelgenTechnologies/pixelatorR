@@ -2,14 +2,14 @@
 #' @importClassesFrom Matrix dgCMatrix
 NULL
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 # Class definition
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 
 #' The CellGraph class
 #'
 #' The CellGraph class is designed to hold information needed for working with
-#' mpx single-cell graphs.
+#' PNA single-cell graphs.
 #'
 #' @slot cellgraph A \code{tbl_graph} object corresponding to a cell graph
 #' @slot counts A \code{matrix}-like object with marker counts
@@ -29,15 +29,15 @@ CellGraph <- setClass(
 )
 
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 # Create methods
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 
 #' Create a CellGraph object
 #'
-#' @param cellgraph A \code{tbl_graph} object representing an mpx single-cell graph
+#' @param cellgraph A \code{tbl_graph} object representing a PNA single-cell graph
 #' @param counts A \code{dgCMatrix} with marker counts
-#' @param layout A \code{tbl_df} object with cell layout(s)
+#' @param layout A named \code{list} of \code{tbl_df} objects with cell layouts
 #' @param verbose Print messages
 #'
 #' @import rlang
@@ -52,20 +52,63 @@ CellGraph <- setClass(
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' edge_list <-
-#'   ReadMPX_item(
-#'     minimal_mpx_pxl_file(),
-#'     items = "edgelist"
-#'   )
-#' bipart_graph <-
-#'   edge_list %>%
-#'   select(upia, upib, marker) %>%
-#'   distinct() %>%
-#'   as_tbl_graph(directed = FALSE) %>%
-#'   mutate(node_type = case_when(name %in% edge_list$upia ~ "A", TRUE ~ "B"))
-#' attr(bipart_graph, "type") <- "bipartite"
+#' # Open a database connection (PXL file)
+#' db <- PixelDB$new(minimal_pna_pxl_file())
 #'
-#' cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+#' # Select a component ID and load the edgelist
+#' sel_comp <- db$cell_meta() %>%
+#'   rownames() %>%
+#'   head(1)
+#' component_edgelist <- db$components_edgelist(
+#'   components = sel_comp,
+#'   umi_data_type = "suffixed_string"
+#' ) %>%
+#'   select(umi1, umi2)
+#'
+#' # Define node types for the bipartite graph
+#' umi_node_type <- bind_rows(
+#'   component_edgelist %>% select(name = umi1) %>% mutate(node_type = "umi1"),
+#'   component_edgelist %>% select(name = umi2) %>% mutate(node_type = "umi2")
+#' ) %>%
+#'   distinct()
+#'
+#' # Create a bipartite graph from the edgelist and add node types
+#' component_graph <- as_tbl_graph(component_edgelist, directed = FALSE) %N>%
+#'   left_join(umi_node_type, by = "name")
+#'
+#' # Set the graph type attribute to "bipartite"
+#' attr(component_graph, "type") <- "bipartite"
+#'
+#' # Create a CellGraph object with just the graph
+#' cg <- CreateCellGraphObject(cellgraph = component_graph)
+#' cg
+#'
+#' # Load cell count matrix
+#' counts <- db$components_marker_counts(
+#'   components = sel_comp, as_sparse = TRUE
+#' )[[1]]
+#' node_names <- component_graph %>% pull(name)
+#' # Ensure that the counts matrix rows match the graph node names
+#' counts <- counts[node_names, ]
+#'
+#' # Create a CellGraph object with graph and counts
+#' cg <- CreateCellGraphObject(cellgraph = component_graph, counts = counts)
+#' cg
+#'
+#' # Create a CellGraph object with counts and layout
+#' layout <- db$components_layout(
+#'   components = sel_comp
+#' )[[1]]
+#' # Ensure that the layout table rows match the graph node names
+#' layout <- layout[match(node_names, layout$name), ] %>%
+#'   select(-name)
+#'
+#' # Create a CellGraph object with graph, counts and layout
+#' cg <- CreateCellGraphObject(
+#'   cellgraph = component_graph,
+#'   counts = counts,
+#'   layout = list(wpmds_3d = layout)
+#' )
 #' cg
 #'
 #' @export
@@ -79,13 +122,29 @@ CreateCellGraphObject <- function(
   # Validate input parameters
   assert_non_empty_object(cellgraph, classes = "tbl_graph")
   assert_non_empty_object(counts, classes = "dgCMatrix", allow_null = TRUE)
-  assert_non_empty_object(layout, classes = "tbl_df", allow_null = TRUE)
+  assert_non_empty_object(layout, classes = "list", allow_null = TRUE)
+
+  if (!is.null(layout)) {
+    if (is.null(names(layout)) || any(names(layout) == "")) {
+      cli::cli_abort("The {.arg layout} list must be named.")
+    }
+    for (i in seq_along(layout)) {
+      if (!inherits(layout[[i]], what = "tbl_df")) {
+        cli::cli_abort(
+          c(
+            "x" =
+              "The '{names(layout)[i]}' layout table must be a {.cls tbl_df}"
+          )
+        )
+      }
+    }
+  }
 
   if (!"type" %in% names(attributes(cellgraph))) {
     cli::cli_abort(c("x" = "Graph attribute {.str type} is missing."))
   } else {
     if (verbose && check_global_verbosity()) {
-      cli_alert_info("Got a graph of type '{attr(cellgraph, 'type')}'")
+      cli::cli_alert_info("Got a graph of type '{attr(cellgraph, 'type')}'")
     }
   }
 
@@ -116,9 +175,9 @@ CreateCellGraphObject <- function(
 }
 
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 # Get methods
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 
 #' Get and set CellGraph object data
 #'
@@ -137,20 +196,9 @@ CreateCellGraphObject <- function(
 #' library(dplyr)
 #' library(tidygraph)
 #'
-#' edge_list <-
-#'   ReadMPX_item(
-#'     minimal_mpx_pxl_file(),
-#'     items = "edgelist"
-#'   )
-#' bipart_graph <-
-#'   edge_list %>%
-#'   select(upia, upib, marker) %>%
-#'   distinct() %>%
-#'   as_tbl_graph(directed = FALSE) %>%
-#'   mutate(node_type = case_when(name %in% edge_list$upia ~ "A", TRUE ~ "B"))
-#' attr(bipart_graph, "type") <- "bipartite"
-#'
-#' cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+#' se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
+#' se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
+#' cg <- CellGraphs(se)[[1]]
 #'
 #' # Get slot data
 #' CellGraphData(cg, slot = "cellgraph")
@@ -275,9 +323,9 @@ CellGraphData <- function(
 }
 
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 # Base methods
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 
 #' CellGraph Methods
 #'

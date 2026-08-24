@@ -20,6 +20,7 @@ DensityScatterPlot(
   coord_fixed = TRUE,
   equal_axes = TRUE,
   colors = NULL,
+  gate_stat = c("frequency", "count"),
   annotation_params = NULL,
   ...
 )
@@ -59,8 +60,12 @@ Required if \code{plot_gate} is provided.}
 
 \item{colors}{Optional character vector of colors to use for the color scale.}
 
-\item{annotation_params}{Optional list of parameters to pass to \code{geom_text} for gate annotations. Common parameters
-include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).}
+\item{gate_stat}{Optional string specifying whether gate annotations show cell
+\code{"frequency"} (default) or absolute cell \code{"count"}.}
+
+\item{annotation_params}{Optional list of parameters to pass to \code{geom_label} for gate annotations. Common parameters
+include color (text color), fill (label background), alpha (label transparency),
+vjust (vertical justification), hjust (horizontal justification), and size (text size).}
 
 \item{...}{Additional arguments to pass to \code{MASS::kde2d}.}
 }

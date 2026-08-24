@@ -7,11 +7,11 @@
 CreateCellGraphObject(cellgraph, counts = NULL, layout = NULL, verbose = FALSE)
 }
 \arguments{
-\item{cellgraph}{A \code{tbl_graph} object representing an mpx single-cell graph}
+\item{cellgraph}{A \code{tbl_graph} object representing a PNA single-cell graph}
 
 \item{counts}{A \code{dgCMatrix} with marker counts}
 
-\item{layout}{A \code{tbl_df} object with cell layout(s)}
+\item{layout}{A named \code{list} of \code{tbl_df} objects with cell layouts}
 
 \item{verbose}{Print messages}
 }
@@ -27,20 +27,63 @@ library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
-edge_list <-
-  ReadMPX_item(
-    minimal_mpx_pxl_file(),
-    items = "edgelist"
-  )
-bipart_graph <-
-  edge_list \%>\%
-  select(upia, upib, marker) \%>\%
-  distinct() \%>\%
-  as_tbl_graph(directed = FALSE) \%>\%
-  mutate(node_type = case_when(name \%in\% edge_list$upia ~ "A", TRUE ~ "B"))
-attr(bipart_graph, "type") <- "bipartite"
+# Open a database connection (PXL file)
+db <- PixelDB$new(minimal_pna_pxl_file())
 
-cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+# Select a component ID and load the edgelist
+sel_comp <- db$cell_meta() \%>\%
+  rownames() \%>\%
+  head(1)
+component_edgelist <- db$components_edgelist(
+  components = sel_comp,
+  umi_data_type = "suffixed_string"
+) \%>\%
+  select(umi1, umi2)
+
+# Define node types for the bipartite graph
+umi_node_type <- bind_rows(
+  component_edgelist \%>\% select(name = umi1) \%>\% mutate(node_type = "umi1"),
+  component_edgelist \%>\% select(name = umi2) \%>\% mutate(node_type = "umi2")
+) \%>\%
+  distinct()
+
+# Create a bipartite graph from the edgelist and add node types
+component_graph <- as_tbl_graph(component_edgelist, directed = FALSE) \%N>\%
+  left_join(umi_node_type, by = "name")
+
+# Set the graph type attribute to "bipartite"
+attr(component_graph, "type") <- "bipartite"
+
+# Create a CellGraph object with just the graph
+cg <- CreateCellGraphObject(cellgraph = component_graph)
+cg
+
+# Load cell count matrix
+counts <- db$components_marker_counts(
+  components = sel_comp, as_sparse = TRUE
+)[[1]]
+node_names <- component_graph \%>\% pull(name)
+# Ensure that the counts matrix rows match the graph node names
+counts <- counts[node_names, ]
+
+# Create a CellGraph object with graph and counts
+cg <- CreateCellGraphObject(cellgraph = component_graph, counts = counts)
+cg
+
+# Create a CellGraph object with counts and layout
+layout <- db$components_layout(
+  components = sel_comp
+)[[1]]
+# Ensure that the layout table rows match the graph node names
+layout <- layout[match(node_names, layout$name), ] \%>\%
+  select(-name)
+
+# Create a CellGraph object with graph, counts and layout
+cg <- CreateCellGraphObject(
+  cellgraph = component_graph,
+  counts = counts,
+  layout = list(wpmds_3d = layout)
+)
 cg
 
 }
