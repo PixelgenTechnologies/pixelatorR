@@ -216,16 +216,16 @@ ComputeProximityScores(cg) %>%
 #> # A tibble: 167 × 7
 #>    join_count join_count_expected_mean join_count_expected_sd marker_1 marker_2
 #>         <dbl>                    <dbl>                  <dbl> <chr>    <chr>   
-#>  1         26                    6.41                   1.87  CD32     CD32    
-#>  2         34                    4.80                   1.61  VISTA    VISTA   
-#>  3          9                    1.14                   0.773 CD10     CD32    
-#>  4         24                    9.56                   2.27  CD32     CD43    
-#>  5          6                    0.816                  0.650 CD10     CD43    
-#>  6          4                    0.207                  0.325 CD11c    CD52    
-#>  7          9                    1.93                   1.01  CD29     CD32    
-#>  8        102                   31.8                    4.29  CD32     HLA-ABC 
-#>  9         11                    2.89                   1.27  CD10     HLA-ABC 
-#> 10         87                   24.2                    3.73  CD43     HLA-ABC 
+#>  1       1159                  903.                    28.9   CD24     CD24    
+#>  2         47                   12.8                    2.69  CD82     CD82    
+#>  3        172                   50.8                    5.62  CD35     CD35    
+#>  4         33                   12.6                    2.62  CD37     CD82    
+#>  5         13                    3.06                   1.27  CD37     CD37    
+#>  6          5                    1.14                   0.804 CD328    CD35    
+#>  7       6778                 6127.                    89.4   CD24     CD59    
+#>  8      11204                10197.                   103.    CD59     CD59    
+#>  9         16                    6.53                   1.88  CD82     Siglec-9
+#> 10          4                    0.830                  0.654 Siglec-9 Siglec-9
 #> # ℹ 157 more rows
 #> # ℹ 2 more variables: join_count_z <dbl>, log2_ratio <dbl>
 

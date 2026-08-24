@@ -116,6 +116,7 @@ library(dplyr)
 
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 ProximityScores(seur_obj[["PNA"]])
 #> # A tibble: 58,696 × 9
 #>    marker_1 marker_2 join_count join_count_expected_mean join_count_expected_sd
@@ -144,6 +145,7 @@ library(pixelatorR)
 # Create example Seurat object
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 
 # Get proximity scores
 proximity <- ProximityScores(seur_obj)

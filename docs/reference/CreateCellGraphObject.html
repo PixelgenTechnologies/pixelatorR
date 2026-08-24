@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.20.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,7 +50,7 @@
 
 
 <dl><dt id="arg-cellgraph">cellgraph<a class="anchor" aria-label="anchor" href="#arg-cellgraph"></a></dt>
-<dd><p>A <code>tbl_graph</code> object representing an mpx single-cell graph</p></dd>
+<dd><p>A <code>tbl_graph</code> object representing a PNA single-cell graph</p></dd>
 
 
 <dt id="arg-counts">counts<a class="anchor" aria-label="anchor" href="#arg-counts"></a></dt>
@@ -58,7 +58,7 @@
 
 
 <dt id="arg-layout">layout<a class="anchor" aria-label="anchor" href="#arg-layout"></a></dt>
-<dd><p>A <code>tbl_df</code> object with cell layout(s)</p></dd>
+<dd><p>A named <code>list</code> of <code>tbl_df</code> objects with cell layouts</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
@@ -77,25 +77,71 @@
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://tidygraph.data-imaginist.com" class="external-link">tidygraph</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">edge_list</span> <span class="op">&lt;-</span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="ReadMPX_item.html">ReadMPX_item</a></span><span class="op">(</span></span></span>
-<span class="r-in"><span>    <span class="fu"><a href="mpx_dataset.html">minimal_mpx_pxl_file</a></span><span class="op">(</span><span class="op">)</span>,</span></span>
-<span class="r-in"><span>    items <span class="op">=</span> <span class="st">"edgelist"</span></span></span>
-<span class="r-in"><span>  <span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: C:/Users/max/AppData/Local/Temp/RtmpszaM22/temp_libpath71507ecc7035/pixelatorR/extdata/five_cells/five_cells.pxl</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">edgelist</span> data</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
-<span class="r-in"><span><span class="va">bipart_graph</span> <span class="op">&lt;-</span></span></span>
-<span class="r-in"><span>  <span class="va">edge_list</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">upia</span>, <span class="va">upib</span>, <span class="va">marker</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://tidygraph.data-imaginist.com/reference/tbl_graph.html" class="external-link">as_tbl_graph</a></span><span class="op">(</span>directed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
-<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>node_type <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/case-and-replace-when.html" class="external-link">case_when</a></span><span class="op">(</span><span class="va">name</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="va">edge_list</span><span class="op">$</span><span class="va">upia</span> <span class="op">~</span> <span class="st">"A"</span>, <span class="cn">TRUE</span> <span class="op">~</span> <span class="st">"B"</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">bipart_graph</span>, <span class="st">"type"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"bipartite"</span></span></span>
+<span class="r-in"><span><span class="co"># Open a database connection (PXL file)</span></span></span>
+<span class="r-in"><span><span class="va">db</span> <span class="op">&lt;-</span> <span class="va"><a href="PixelDB.html">PixelDB</a></span><span class="op">$</span><span class="fu">new</span><span class="op">(</span><span class="fu"><a href="pna_dataset.html">minimal_pna_pxl_file</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
-<span class="r-in"><span><span class="va">cg</span> <span class="op">&lt;-</span> <span class="fu">CreateCellGraphObject</span><span class="op">(</span>cellgraph <span class="op">=</span> <span class="va">bipart_graph</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Select a component ID and load the edgelist</span></span></span>
+<span class="r-in"><span><span class="va">sel_comp</span> <span class="op">&lt;-</span> <span class="va">db</span><span class="op">$</span><span class="fu">cell_meta</span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/colnames.html" class="external-link">rownames</a></span><span class="op">(</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">component_edgelist</span> <span class="op">&lt;-</span> <span class="va">db</span><span class="op">$</span><span class="fu">components_edgelist</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  components <span class="op">=</span> <span class="va">sel_comp</span>,</span></span>
+<span class="r-in"><span>  umi_data_type <span class="op">=</span> <span class="st">"suffixed_string"</span></span></span>
+<span class="r-in"><span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="va">umi1</span>, <span class="va">umi2</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Define node types for the bipartite graph</span></span></span>
+<span class="r-in"><span><span class="va">umi_node_type</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">component_edgelist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">umi1</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>node_type <span class="op">=</span> <span class="st">"umi1"</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  <span class="va">component_edgelist</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>name <span class="op">=</span> <span class="va">umi2</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>node_type <span class="op">=</span> <span class="st">"umi2"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/distinct.html" class="external-link">distinct</a></span><span class="op">(</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a bipartite graph from the edgelist and add node types</span></span></span>
+<span class="r-in"><span><span class="va">component_graph</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tidygraph.data-imaginist.com/reference/tbl_graph.html" class="external-link">as_tbl_graph</a></span><span class="op">(</span><span class="va">component_edgelist</span>, directed <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span> <span class="op"><a href="https://tidygraph.data-imaginist.com/reference/activate.html" class="external-link">%N&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate-joins.html" class="external-link">left_join</a></span><span class="op">(</span><span class="va">umi_node_type</span>, by <span class="op">=</span> <span class="st">"name"</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Set the graph type attribute to "bipartite"</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">component_graph</span>, <span class="st">"type"</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="st">"bipartite"</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a CellGraph object with just the graph</span></span></span>
+<span class="r-in"><span><span class="va">cg</span> <span class="op">&lt;-</span> <span class="fu">CreateCellGraphObject</span><span class="op">(</span>cellgraph <span class="op">=</span> <span class="va">component_graph</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">cg</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">16800</span> nodes and <span style="color: #5555FF;">68255</span> edges</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">43543</span> nodes and <span style="color: #5555FF;">97014</span> edges</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Load cell count matrix</span></span></span>
+<span class="r-in"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="va">db</span><span class="op">$</span><span class="fu">components_marker_counts</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  components <span class="op">=</span> <span class="va">sel_comp</span>, as_sparse <span class="op">=</span> <span class="cn">TRUE</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-in"><span><span class="va">node_names</span> <span class="op">&lt;-</span> <span class="va">component_graph</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">name</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># Ensure that the counts matrix rows match the graph node names</span></span></span>
+<span class="r-in"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="va">counts</span><span class="op">[</span><span class="va">node_names</span>, <span class="op">]</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a CellGraph object with graph and counts</span></span></span>
+<span class="r-in"><span><span class="va">cg</span> <span class="op">&lt;-</span> <span class="fu">CreateCellGraphObject</span><span class="op">(</span>cellgraph <span class="op">=</span> <span class="va">component_graph</span>, counts <span class="op">=</span> <span class="va">counts</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cg</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">43543</span> nodes and <span style="color: #5555FF;">97014</span> edges</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Number of markers:  <span style="color: #5555FF;">149</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a CellGraph object with counts and layout</span></span></span>
+<span class="r-in"><span><span class="va">layout</span> <span class="op">&lt;-</span> <span class="va">db</span><span class="op">$</span><span class="fu">components_layout</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  components <span class="op">=</span> <span class="va">sel_comp</span></span></span>
+<span class="r-in"><span><span class="op">)</span><span class="op">[[</span><span class="fl">1</span><span class="op">]</span><span class="op">]</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Fetching <span style="color: #0000BB;">1</span> component layouts...</span>
+<span class="r-in"><span><span class="co"># Ensure that the layout table rows match the graph node names</span></span></span>
+<span class="r-in"><span><span class="va">layout</span> <span class="op">&lt;-</span> <span class="va">layout</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/match.html" class="external-link">match</a></span><span class="op">(</span><span class="va">node_names</span>, <span class="va">layout</span><span class="op">$</span><span class="va">name</span><span class="op">)</span>, <span class="op">]</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span><span class="op">-</span><span class="va">name</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Create a CellGraph object with graph, counts and layout</span></span></span>
+<span class="r-in"><span><span class="va">cg</span> <span class="op">&lt;-</span> <span class="fu">CreateCellGraphObject</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  cellgraph <span class="op">=</span> <span class="va">component_graph</span>,</span></span>
+<span class="r-in"><span>  counts <span class="op">=</span> <span class="va">counts</span>,</span></span>
+<span class="r-in"><span>  layout <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>wpmds_3d <span class="op">=</span> <span class="va">layout</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">cg</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A CellGraph object containing a <span style="color: #5555FF;">bipartite</span> graph with <span style="color: #5555FF;">43543</span> nodes and <span style="color: #5555FF;">97014</span> edges</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Number of markers:  <span style="color: #5555FF;">149</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Layouts: <span style="color: #5555FF;">wpmds_3d</span> </span>
 <span class="r-in"><span></span></span>
 </code></pre></div>
     </div>

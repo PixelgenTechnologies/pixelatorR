@@ -1,7 +1,7 @@
 # The CellGraph class
 
 The CellGraph class is designed to hold information needed for working
-with mpx single-cell graphs.
+with PNA single-cell graphs.
 
 ## Slots
 

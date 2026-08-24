@@ -6,6 +6,94 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[Unreleased\]
+
+### Added
+
+- `distance_from_node_set` to compute shortest-path distances from seed
+  nodes on a `CellGraph` via breadth-first search.
+- `partition_counts` to aggregate node-level counts by a partition
+  vector or node attribute column.
+
+### Removed
+
+- Interaction-database helpers have been removed.
+
+## \[0.20.0\]
+
+### Added
+
+- `layout_with_spectral` for Laplacian eigenmap / spectral embeddings of
+  cell graphs, with `"svd"` (bipartite biadjacency via `irlba`) and
+  `"eigen"` (`RSpectra`) solvers. Also available as
+  `ComputeLayout(..., layout_method = "spectral")`.
+- [`DensityScatterPlot()`](reference/DensityScatterPlot.md) gains a
+  `gate_stat` argument to show either cell frequency (default) or
+  absolute cell count in gate annotations. Gate labels now use
+  `geom_label` with a semi-transparent background for readability.
+- `segment_cell` for segmenting cell:cell conjugate graphs into two
+  cell-type compartments and optional interface nodes using NMF weights
+  and NNLS projection.
+
+### Fixes
+
+- [`CreateCellGraphObject()`](reference/CreateCellGraphObject.md) now
+  correctly validates the `layout` argument as a named `list` of
+  `tbl_df` objects (matching the `CellGraph` `layout` slot), instead of
+  erroneously requiring a single `tbl_df`.
+
+## \[0.19.0\]
+
+### Updates
+
+- `min_n_obs` is renamed to `min_cells_per_group` in
+  `DifferentialProximityAnalysis / RunDPA / RunDCA`.
+- The `DifferentialProximityAnalysis.Seurat` method defaults to using
+  `method = "seurat"`, which zero-fills missing pairs/cells, and
+  dispatches to the Matrix method; `method = "legacy"` keeps the
+  long-table data.frame Wilcoxon implementation. With zero-filling, the
+  default method (`"seurat"`) considers the full cell populations for
+  testing.
+- The `DifferentialProximityAnalysis.data.frame` method is refactored to
+  use shared helpers (setup/progress, group filtering, p-value
+  adjustment), faster min_cells_per_group filtering (semi_join on
+  counts), default metric log2_ratio, and default min_cells_per_group =
+  10.
+
+### Added
+
+- Added `DifferentialProximityAnalysis.Matrix` method that runs Wilcoxon
+  tests on a wide sparse matrix (marker pairs × components) with presto
+  or limma fallbacks, plus FindMarkers-style filters (diff_threshold,
+  min_pct, min_diff_pct).
+- Interaction-database helpers for STRING, BioGRID, and AlphaFold DB:
+  - Cache/load/save (`interaction_database_cache_dir()`,
+    `normalise_interaction_edges()`, `save_interaction_database()`,
+    `load_interaction_database(build_if_missing = …)`) storing UniProt
+    edges with native `score_columns` and optional `additional_columns`
+    (STRING: `network`; BioGRID: experimental system from the full human
+    physical dataset). Raw dumps stage ephemerally during
+    `build_*_database()`; only the edge RDS is kept.
+  - `extract_panel_interactions()` for panel marker pairs
+    (homodimer-safe joins; named `score_min` / `score_max` with
+    `score_combine`).
+  - `create_marker_uniprot_map()` from Seurat / PNA assay metadata.
+  - Builders: `build_string_database()`, `build_biogrid_database()`,
+    `build_alphafold_database()`, `build_all_interaction_databases()`.
+- `ColocalizationHeatmap` highlight options: `highlight_pairs`,
+  `highlight_colors`, `highlight_color_col` (dots-only mapping),
+  `highlight_stroke`, `highlight_shrink`.
+- `local_proximity` to compute Local Neighborhood Enrichment (LNE) log2
+  ratios of observed vs expected UMI counts for selected marker(s).
+
+### Fixes
+
+- `PixelDB$components_edgelist()` and
+  [`ReadPNA_edgelist()`](reference/ReadPNA_edgelist.md) now treat
+  `uei_count` as an optional column. Previously both failed on PXL files
+  whose `edgelist` table lacks `uei_count`, regardless of
+  `include_all_columns`.
+
 ## \[0.18.3\] - 2026-07-21
 
 ### Updates
@@ -162,7 +250,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Added reference PBMC dataset and load function `read_pbmc_reference`
-  that can be used for annotation.  
+  that can be used for annotation.\
 - Added `isotype_pls` to calculate isotype background score.
 - Added `export_plot` utility function to export ggplot objects to file.
 - Added `create_discrete_palette` to create palettes to color different
@@ -426,7 +514,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`RunDCA`).
 - Updated `subset` and `merge` methods for `MPXAssay` to have less
   stringent validation of the spatial metric tables (polarity and
-  colocalization scores).  
+  colocalization scores).\
 - Updated `ReadMPX_Seurat` to have less stringent validation of the
   spatial metric tables (polarity and colocalization scores).
 - `ColocalizationHeatmap` now allows legend titles and the legend range

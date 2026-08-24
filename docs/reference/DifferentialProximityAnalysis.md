@@ -16,11 +16,29 @@ DifferentialProximityAnalysis(
   reference,
   targets = NULL,
   group_vars = NULL,
-  proximity_metric = "join_count_z",
+  proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
   backend = c("dplyr", "data.table"),
-  min_n_obs = 0,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  min_cells_per_group = 10,
+  verbose = TRUE,
+  ...
+)
+
+# S3 method for class 'Matrix'
+DifferentialProximityAnalysis(
+  object,
+  group_data,
+  contrast_column,
+  reference,
+  targets = NULL,
+  group_vars = NULL,
+  proximity_metric = "log2_ratio",
+  p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
+  min_cells_per_group = 10,
   verbose = TRUE,
   ...
 )
@@ -33,9 +51,16 @@ DifferentialProximityAnalysis(
   targets = NULL,
   assay = NULL,
   group_vars = NULL,
-  proximity_metric = "join_count_z",
+  lazy = FALSE,
+  min_exp_join_count = 0,
+  min_cells_per_group = 10,
+  diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
+  proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
-  min_n_obs = 0,
+  backend = c("dplyr", "data.table"),
+  method = c("seurat", "legacy"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -89,24 +114,78 @@ DifferentialProximityAnalysis(
   One of "dplyr" or "data.table". The latter requires the `dtplyr`
   package to be installed.
 
-- min_n_obs:
-
-  Minimum number of observations allowed in a group. Target groups with
-  less observations than `min_n_obs` will be skipped.
-
 - p_adjust_method:
 
   One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or
   "fdr". (see [`?p.adjust`](https://rdrr.io/r/stats/p.adjust.html) for
   details)
 
+- min_cells_per_group:
+
+  Minimum number of cells required per group. Target groups with less
+  observations than `min_cells_per_group` will be skipped.
+
 - verbose:
 
   Print messages
 
+- group_data:
+
+  A tibble with a column for the contrast and optional group variables.
+  The rownames of this tibble should correspond to the columns names of
+  the matrix `object`.
+
+- diff_threshold:
+
+  Minimum difference in proximity metric to consider a pair of groups
+  for testing. Default is 0.1. This parameter is only used when the
+  `method` argument is set to "seurat".
+
+- min_pct:
+
+  Minimum percentage of cells in either group that must express a marker
+  pair for it to be considered for testing. Default is 0. This parameter
+  is only used when the `method` argument is set to "seurat".
+
+- min_diff_pct:
+
+  Minimum difference in percentage of cells expressing a marker pair
+  between the two groups for it to be considered for testing. Default is
+  -Inf. This parameter is only used when the `method` argument is set to
+  "seurat".
+
 - assay:
 
   Name of assay to use
+
+- lazy:
+
+  If TRUE, the proximity scores will be loaded lazily and filtered using
+  the `duckdb` backend.
+
+- min_exp_join_count:
+
+  Minimum number of join counts required for a marker pair to be
+  included in the analysis. Dropped protein pairs (those with fewer than
+  `min_exp_join_count` counts) will be treated as missing entries. With
+  `method = "seurat"`, these are treated as having a proximity score of
+  0.
+
+- method:
+
+  One of "seurat" or "legacy". The former uses the Seurat framework for
+  differential testing, while the latter uses a custom implementation.
+  The main difference between the two methods is that missing
+  observations are handled differently. With the "seurat" method, all
+  missing values are set to 0, while the "legacy" method ignores missing
+  values. For the former, this means that the number of observations per
+  group is always equal to the number of cells in that group, while for
+  the latter ("legacy"), the number of observations per group can be
+  less than the number of cells in that group. Ignoring missing values
+  can lead to confusing estimates of group statistics and misses
+  comparisons where one of the two test groups have no observations. The
+  "legacy" method is provided for backward compatibility and may be
+  removed in future versions.
 
 ## Value
 
@@ -124,7 +203,7 @@ example is a column with sample labels, for instance: "control",
 "stimulated1", "stimulated2". If the input object is a `Seurat` object,
 the `contrast_column` should be available in the `meta.data` slot. For
 those familiar with `FindMarkers` from Seurat, `contrast_column` is
-equivalent to the `group.by` parameter.
+comparable to the `group.by` parameter.
 
 The `targets` parameter specifies a character vector with the names of
 the groups to compare `reference`. `targets` can be a single group name
@@ -135,8 +214,8 @@ group. Both `targets` and `reference` should be present in the
 
 ## Additional groups
 
-The test is always computed between `targets` and `reference`, but it is
-possible to add additional grouping variables with `group_vars`. If
+The tests are always computed between `targets` and `reference`, but it
+is possible to add additional grouping variables with `group_vars`. If
 `group_vars` is used, each comparison is split into groups defined by
 the `group_vars`. For instance, if we have annotated cells into cell
 type populations and saved these annotations in a `meta.data` column
@@ -156,7 +235,6 @@ type identity of each component.
 1.  If we want to compare the "stimulated1" group to the "control"
     group:
 
-
         dp_markers <- DifferentialProximityAnalysis(
            object = seurat_object,
            contrast_column = "sampleID",
@@ -167,7 +245,6 @@ type identity of each component.
 2.  If we want to compare the "stimulated1" and "stimulated2" groups to
     the "control" group:
 
-
         dp_markers <- DifferentialProximityAnalysis(
           object = seurat_object,
           contrast_column = "sampleID",
@@ -176,8 +253,7 @@ type identity of each component.
         )
 
 3.  If we want to compare the "stimulated1" and "stimulated2" groups to
-    the "control" group, and split the tests by cell type:
-
+    the "control" group within each cell type:
 
         dp_markers <- DifferentialProximityAnalysis(
            object = seurat_object,
@@ -187,6 +263,31 @@ type identity of each component.
            group_vars = "cell_type"
         )
 
+## Method details
+
+By default, the function uses `FindMarkers` under the hood to compute
+the tests (`method = "Seurat"`). The proximity scores are stored in long
+format in a table (either as a table in the Seurat object or in the
+associated PXL file). The function reshapes the table to wide format and
+uses `FindMarkers` to compute the tests.
+
+Note that missing observations in the proximity score table are replaced
+with 0's when reshaping to wide format. This means that if a marker pair
+is not present in a component, it will be treated as having a proximity
+score of 0 for that component. With this strategy, we cannot distinguish
+between a marker pair that is truly absent in a component and a marker
+pair that is present but has a proximity score of 0. Marker pairs rarely
+have a proximity score of 0, except for extremely low abundant pairs
+which are usually filtered out in the pre-processing steps.
+
+With the "legacy" method, the missing observations are ignored and the
+tests are computed only on the marker pairs that are present in both
+groups. This strategy has two important limitations: 1) it tends to
+focus the results on subsets of cells which are not necessarily
+representative of the entire population of interest, and 2) if one of
+the two conditions (target or reference) has no observations for a pair,
+that comparison will be skipped.
+
 ## See also
 
 Other DA-methods: [`RunDAA()`](RunDAA.md), [`RunDCA()`](RunDCA.md),
@@ -195,7 +296,6 @@ Other DA-methods: [`RunDAA()`](RunDAA.md), [`RunDCA()`](RunDCA.md),
 ## Examples
 
 ``` r
-# TODO: Update examples with real data
 library(dplyr)
 example_data <- tidyr::expand_grid(
   marker_1 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") %>%
@@ -222,7 +322,7 @@ dp_results <- DifferentialProximityAnalysis(
   proximity_metric = "join_count_z",
   metric_type = "self"
 )
-#> ℹ Computing Running Wilcoxon rank-sum test for each marker pair across the following comparisons:
+#> ℹ Running Wilcoxon rank-sum test across the following comparisons:
 #> 
 #>   • treatment vs ctrl
 ```

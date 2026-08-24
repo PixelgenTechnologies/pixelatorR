@@ -25,6 +25,7 @@ DensityScatterPlot(
   coord_fixed = TRUE,
   equal_axes = TRUE,
   colors = NULL,
+  gate_stat = c("frequency", "count"),
   annotation_params = NULL,
   ...
 )
@@ -100,12 +101,18 @@ DensityScatterPlot(
 
   Optional character vector of colors to use for the color scale.
 
+- gate_stat:
+
+  Optional string specifying whether gate annotations show cell
+  `"frequency"` (default) or absolute cell `"count"`.
+
 - annotation_params:
 
-  Optional list of parameters to pass to `geom_text` for gate
-  annotations. Common parameters include color (text color), vjust
-  (vertical justification), hjust (horizontal justification), and size
-  (text size).
+  Optional list of parameters to pass to `geom_label` for gate
+  annotations. Common parameters include color (text color), fill (label
+  background), alpha (label transparency), vjust (vertical
+  justification), hjust (horizontal justification), and size (text
+  size).
 
 - ...:
 
@@ -121,12 +128,6 @@ A ggplot object.
 ``` r
 library(pixelatorR)
 library(Seurat)
-#> Warning: package 'Seurat' was built under R version 4.5.3
-#> 
-#> Attaching package: 'Seurat'
-#> The following object is masked from 'package:igraph':
-#> 
-#>     components
 
 set.seed(123)
 

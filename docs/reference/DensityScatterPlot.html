@@ -11,7 +11,7 @@ can be faceted by one or two variables and a gate can be plotted."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.20.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -64,6 +64,7 @@ can be faceted by one or two variables and a gate can be plotted.</p>
 <span>  coord_fixed <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  equal_axes <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  colors <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  gate_stat <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"frequency"</span>, <span class="st">"count"</span><span class="op">)</span>,</span>
 <span>  annotation_params <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -137,9 +138,15 @@ Required if <code>plot_gate</code> is provided.</p></dd>
 <dd><p>Optional character vector of colors to use for the color scale.</p></dd>
 
 
+<dt id="arg-gate-stat">gate_stat<a class="anchor" aria-label="anchor" href="#arg-gate-stat"></a></dt>
+<dd><p>Optional string specifying whether gate annotations show cell
+<code>"frequency"</code> (default) or absolute cell <code>"count"</code>.</p></dd>
+
+
 <dt id="arg-annotation-params">annotation_params<a class="anchor" aria-label="anchor" href="#arg-annotation-params"></a></dt>
-<dd><p>Optional list of parameters to pass to <code>geom_text</code> for gate annotations. Common parameters
-include color (text color), vjust (vertical justification), hjust (horizontal justification), and size (text size).</p></dd>
+<dd><p>Optional list of parameters to pass to <code>geom_label</code> for gate annotations. Common parameters
+include color (text color), fill (label background), alpha (label transparency),
+vjust (vertical justification), hjust (horizontal justification), and size (text size).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -155,12 +162,6 @@ include color (text color), vjust (vertical justification), hjust (horizontal ju
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://satijalab.org/seurat" class="external-link">Seurat</a></span><span class="op">)</span></span></span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>package 'Seurat' was built under R version 4.5.3</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Attaching package: 'Seurat'</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> The following object is masked from 'package:igraph':</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>     components</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>

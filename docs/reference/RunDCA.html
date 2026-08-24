@@ -9,7 +9,7 @@ Pixelator data processing pipeline."><meta property="og:image" content="/logo.pn
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.20.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@ Pixelator data processing pipeline."><meta property="og:image" content="/logo.pn
 <span>  targets <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  coloc_metric <span class="op">=</span> <span class="st">"pearson_z"</span>,</span>
-<span>  min_n_obs <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_cells_per_group <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  alternative <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"two.sided"</span>, <span class="st">"less"</span>, <span class="st">"greater"</span><span class="op">)</span>,</span>
 <span>  conf_int <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  p_adjust_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bonferroni"</span>, <span class="st">"holm"</span>, <span class="st">"hochberg"</span>, <span class="st">"hommel"</span>, <span class="st">"BH"</span>, <span class="st">"BY"</span>, <span class="st">"fdr"</span><span class="op">)</span>,</span>
@@ -73,7 +73,7 @@ Pixelator data processing pipeline."><meta property="og:image" content="/logo.pn
 <span>  assay <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  coloc_metric <span class="op">=</span> <span class="st">"pearson_z"</span>,</span>
-<span>  min_n_obs <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_cells_per_group <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  alternative <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"two.sided"</span>, <span class="st">"less"</span>, <span class="st">"greater"</span><span class="op">)</span>,</span>
 <span>  conf_int <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  p_adjust_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bonferroni"</span>, <span class="st">"holm"</span>, <span class="st">"hochberg"</span>, <span class="st">"hommel"</span>, <span class="st">"BH"</span>, <span class="st">"BY"</span>, <span class="st">"fdr"</span><span class="op">)</span>,</span>
@@ -119,9 +119,9 @@ If the value is set to <code>NULL</code> (default), all groups available in <cod
 can be selected. The default is "pearson_z".</p></dd>
 
 
-<dt id="arg-min-n-obs">min_n_obs<a class="anchor" aria-label="anchor" href="#arg-min-n-obs"></a></dt>
+<dt id="arg-min-cells-per-group">min_cells_per_group<a class="anchor" aria-label="anchor" href="#arg-min-cells-per-group"></a></dt>
 <dd><p>Minimum number of observations allowed in a group. Target groups with less
-observations than <code>min_n_obs</code> will be skipped.</p></dd>
+observations than <code>min_cells_per_group</code> will be skipped.</p></dd>
 
 
 <dt id="arg-alternative">alternative<a class="anchor" aria-label="anchor" href="#arg-alternative"></a></dt>
@@ -238,7 +238,7 @@ to reduce the overhead of communication between processes.</p>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="mpx_dataset.html">minimal_mpx_pxl_file</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="co"># Seurat objects</span></span></span>
 <span class="r-in"><span><span class="va">seur1</span> <span class="op">&lt;-</span> <span class="va">seur2</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc472f6079.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc472f6079.h5ad</span></a></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span><span class="va">seur1</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample1"</span></span></span>
 <span class="r-in"><span><span class="va">seur2</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample2"</span></span></span>
 <span class="r-in"><span><span class="va">seur_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://edzer.github.io/sp/reference/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">seur1</span>, <span class="va">seur2</span>, add.cell.ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -256,6 +256,9 @@ to reduce the overhead of communication between processes.</p>
 <span class="r-in"><span>  contrast_column <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
 <span class="r-in"><span>  target <span class="op">=</span> <span class="st">"Sample1"</span>, reference <span class="op">=</span> <span class="st">"Sample2"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Splitting data by: marker_1, marker_2</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running 10 tests for the following comparison:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - Sample1 vs Sample2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Got the following message when running wilcox.test test for marker 'CD19/CD20': Sample1 vs Sample2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>   <span style="color: #BB0000;">cannot compute exact confidence intervals with ties</span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Got the following message when running wilcox.test test for marker 'CD19/CD4': Sample1 vs Sample2</span>

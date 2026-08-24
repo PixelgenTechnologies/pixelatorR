@@ -93,11 +93,9 @@ created with `pixelatorR` and that the PXL files are stored in the
 directory `DATA_DIR` on your local system. You can export the Seurat
 object to an RDS file with:
 
-
     saveRDS(seurat_obj, file = file.path(DATA_DIR, "seurat_obj.rds"))
 
 The content of DATA_DIR might look like this:
-
 
     DATA_DIR
     ├── seurat_obj.rds
@@ -109,7 +107,6 @@ object need to be updated, because recipients `DATA_DIR` will be
 different from yours. Assuming that the recipient has stored the PXL
 file and the RDS object in the directory `RECIPIENT_DATA_DIR`, the
 recipient can update the PXL file paths with:
-
 
     seurat_obj <- readRDS(file = file.path(RECIPIENT_DATA_DIR, "seurat_obj.rds"))
     seurat_obj <- RestorePaths(seurat_obj, pxl_files_dir = RECIPIENT_DATA_DIR)
@@ -127,10 +124,12 @@ pxl_file <- minimal_mpx_pxl_file()
 tmp_pxl_file <- file.path(fs::path_temp(), "five_cells.pxl")
 fs::file_copy(pxl_file, tmp_pxl_file)
 seur_obj <- ReadMPX_Seurat(tmp_pxl_file)
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc61cd7fa7.h5ad
+#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 
 # Now we can load graphs
 seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1])
+#> →    Loading CellGraphs for 1 cells from sample 1
+#> ✔ Successfully loaded 1 CellGraph object(s).
 
 # Removing or moving PXL file will make graphs inaccessible
 fs::file_delete(tmp_pxl_file)
@@ -145,7 +144,10 @@ pxl_files_dir <- system.file("extdata/five_cells",
   package = "pixelatorR"
 )
 seur_obj <- RestorePaths(seur_obj, pxl_files_dir = pxl_files_dir)
+#> ✔ Successfully updated PXL file paths.
 
 # Now LoadCellGraphs should work as expected
 seur_obj <- LoadCellGraphs(seur_obj, force = TRUE)
+#> →    Loading CellGraphs for 5 cells from sample 1
+#> ✔ Successfully loaded 5 CellGraph object(s).
 ```

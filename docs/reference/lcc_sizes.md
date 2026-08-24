@@ -17,11 +17,11 @@ lcc_sizes(df, mc_cores = 1)
 
   pq_files
 
-  :   Paths to parquet files containing downsampled edgelists.
+  : Paths to parquet files containing downsampled edgelists.
 
   fracs
 
-  :   The corresponding downsampling fractions.
+  : The corresponding downsampling fractions.
 
   Typically generated with
   [`downsample_to_parquet`](downsample_to_parquet.md).
@@ -30,7 +30,7 @@ lcc_sizes(df, mc_cores = 1)
 
   Number of cores to use for parallel processing. Default is 1
   (sequential processing). Values \> 1 use
-  [`parallel::mclapply`](https://rdrr.io/r/parallel/mcdummies.html).
+  [`parallel::mclapply`](https://rdrr.io/r/parallel/mclapply.html).
 
 ## Value
 

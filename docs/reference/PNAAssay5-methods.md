@@ -110,6 +110,7 @@ options(Seurat.object.assay.version = "v5")
 # Load example data as a Seurat object
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 
 # Merge Seurat objects
 seur_obj_merged <- merge(seur_obj, seur_obj)

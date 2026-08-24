@@ -108,13 +108,18 @@ A `CellGraphAssay5` object with layers joined
 
 ``` r
 library(SeuratObject)
+#> Loading required package: sp
+#> 
+#> Attaching package: ‘SeuratObject’
+#> The following objects are masked from ‘package:base’:
+#> 
+#>     intersect, t
 options(Seurat.object.assay.version = "v5")
 
 # Load example data as a Seurat object
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
 #> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc4f493e16.h5ad
 
 # Merge Seurat objects
 seur_obj_merged <- merge(seur_obj, seur_obj)

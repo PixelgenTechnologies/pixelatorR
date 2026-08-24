@@ -164,6 +164,8 @@ contributors](https://github.com/PixelgenTechnologies/pixelatorR/graphs/contribu
 ### Graph layouts
 
 - [`ComputeLayout()`](ComputeLayout.md) : Compute a graph layout
+- [`layout_with_spectral()`](layout_with_spectral.md) : Spectral Layout
+  via Graph Laplacian
 - [`layout_with_weighted_pmds()`](layout_with_weighted_pmds.md) :
   Weighted PMDS
 - [`layout_with_coarsened_pmds()`](layout_with_coarsened_pmds.md) :
@@ -240,6 +242,21 @@ contributors](https://github.com/PixelgenTechnologies/pixelatorR/graphs/contribu
   proximity scores
 - [`SummarizeProximityScores()`](SummarizeProximityScores.md) :
   Summarize proximity scores
+- [`local_proximity()`](local_proximity.md) : Compute local proximity
+  scores
+
+### Cell segmentation
+
+- [`segment_cell()`](segment_cell.md) : cell:cell conjugate segmentation
+- [`cc_protein_weights()`](cc_protein_weights.md) : Derive protein
+  weights for two cell populations
+- [`distance_from_node_set()`](distance_from_node_set.md) : Compute
+  distance from a set of seed nodes using fast breadth-first search.
+- [`partition_counts()`](partition_counts.md) : Compute partition counts
+- [`spatial_smoothing()`](spatial_smoothing.md) : Perform spatial
+  smoothing of a count matrix using the adjacency matrix of the graph
+- [`fetch_node_neighborhoods()`](fetch_node_neighborhoods.md) : Fetch
+  node neighborhoods from pxl file(s) attached to a Seurat object
 
 ### Doublet detection
 

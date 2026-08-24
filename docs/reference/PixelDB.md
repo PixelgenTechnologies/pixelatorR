@@ -432,10 +432,14 @@ A `data.frame` with the component edgelist:
 
 - component: The component name
 
+If `include_all_columns = TRUE`, the following columns are also
+returned:
+
 - read_count: The number of reads supporting the edge
 
 - uei_count: The number of unique event identifiers (UEIs) supporting
-  the edge
+  the edge. This column is optional and is only returned if it is
+  present in the edgelist table.
 
 #### Examples
 
@@ -858,11 +862,11 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name                   CD127  CD57  CD32
-#>   <chr>                  <dbl> <dbl> <dbl>
-#> 1 70574536300650427-umi1     1     0     0
-#> 2 4923991255037350-umi1      0     1     0
-#> 3 26179964954559200-umi1     0     0     1
+#>   name                    CD80 `HLA-ABC`  CD58
+#>   <chr>                  <dbl>     <dbl> <dbl>
+#> 1 43372172436709610-umi1     1         0     0
+#> 2 39111557519986331-umi1     0         1     0
+#> 3 26874559125404499-umi1     0         1     0
 
 
 ## ------------------------------------------------
@@ -873,8 +877,8 @@ db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc3d5766ff.parquet 
-#>                                                               TRUE 
+#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpXxUDE2/filebadb28d4ed52.parquet 
+#>                                                                                 TRUE 
 
 
 ## ------------------------------------------------

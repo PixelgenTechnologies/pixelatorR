@@ -1,8 +1,7 @@
 # Plot a colocalization heatmap
 
-Draws a heatmap of some summary statistic between marker pairs stored in
-a `tbl_df`. A typical use case is to show the estimates of a
-differential colocalization analysis test ([`RunDCA`](RunDCA.md)).
+Heatmap of a summary statistic between marker pairs (e.g. DCA from
+[`RunDCA`](RunDCA.md)).
 
 ## Usage
 
@@ -27,6 +26,11 @@ ColocalizationHeatmap(
   symmetrise = TRUE,
   legend_range = NULL,
   legend_title = "",
+  highlight_pairs = NULL,
+  highlight_colors = "black",
+  highlight_color_col = NULL,
+  highlight_stroke = 1.2,
+  highlight_shrink = 0.1,
   ...
 )
 ```
@@ -88,13 +92,9 @@ ColocalizationHeatmap(
 
 - type:
 
-  The type of plot to draw. Can be `"tiles"` for a typical heatmap where
-  each marker pair corresponds to a filled tile or `"dots"` for a "dot
-  plot". In the latter, the sizes of the dots are scaled by the
-  `size_col` column. This representation has the added advantage that
-  size differences can be used to highlight other important information,
-  such as significance. The dot plot is a `ggplot` object which can be
-  easily modified to customize the style.
+  Plot type: `"tiles"` for a filled-tile heatmap, or `"dots"` for a dot
+  plot where size maps to `size_col`. Dot plots return a `ggplot`
+  object.
 
 - return_plot_data:
 
@@ -115,6 +115,37 @@ ColocalizationHeatmap(
 - legend_title:
 
   The title of the legend
+
+- highlight_pairs:
+
+  Optional `tbl_df`/data.frame with columns `marker_1` and `marker_2`
+  naming pairs to outline with a cell border. Pairs whose markers are
+  absent from `data` are ignored. `NULL` disables highlighting. May also
+  carry a column named by `highlight_color_col` when mapping border
+  colours for `type = "dots"`.
+
+- highlight_colors:
+
+  Border colour(s) for highlighted cells. Single colour when
+  `highlight_color_col` is `NULL` (default `"black"`; tiles and dots).
+  With `highlight_color_col` (`type = "dots"` only): a named vector for
+  discrete values, or two or more colours for numeric values.
+
+- highlight_color_col:
+
+  Column in `highlight_pairs` used to colour borders (`type = "dots"`
+  only; errors with `"tiles"`). `NULL` (default) draws a constant border
+  colour.
+
+- highlight_stroke:
+
+  Border line width for highlighted cells.
+
+- highlight_shrink:
+
+  Fraction by which to reduce the width and height of highlighted cell
+  borders. Must be at least 0 and less than 1. The default `0.1` leaves
+  a small gap between adjacent highlights; `0` uses the full cell size.
 
 - ...:
 
@@ -141,13 +172,16 @@ Each marker pair can only appear once in the data. This means that if
 you ran the test across multiple groups, you need to subset the data
 first.
 
+## See also
+
+`pixelatorRinternal::extract_panel_interactions()`
+
 ## Examples
 
 ``` r
 library(pixelatorR)
 library(dplyr)
 library(ggplot2)
-#> Warning: package 'ggplot2' was built under R version 4.5.3
 
 # Create a table with artificial DCA results
 # for the example
@@ -193,6 +227,35 @@ ColocalizationHeatmap(
   }
 ) &
   labs(size = "-log10p(p_adj)")
+
+
+# Outline selected marker pairs (constant colour)
+ColocalizationHeatmap(
+  dca_markers,
+  type = "dots",
+  size_range = c(1, 10),
+  highlight_pairs = tibble(
+    marker_1 = c("M1", "M3"),
+    marker_2 = c("M2", "M5")
+  ),
+  highlight_colors = "black"
+)
+
+
+# Map border colours from a column in highlight_pairs (dots only)
+ColocalizationHeatmap(
+  dca_markers,
+  type = "dots",
+  size_range = c(1, 10),
+  highlight_pairs = tibble(
+    marker_1 = c("M1", "M3"),
+    marker_2 = c("M2", "M5"),
+    database = c("string", "alphafold")
+  ),
+  highlight_color_col = "database",
+  highlight_colors = c(string = "#C0392B", alphafold = "#6C3483"),
+  highlight_shrink = 0.15
+)
 
 
 # We can specify the order of the markers with factor levels

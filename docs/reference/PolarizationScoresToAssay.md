@@ -98,6 +98,9 @@ library(SeuratObject)
 # Load example data as a Seurat object
 pxl_file <- minimal_mpx_pxl_file()
 pol_scores <- ReadMPX_polarization(pxl_file)
+#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl
+#> →   Loading polarization data
+#> ✔ Returning a 'tbl_df' object
 
 # PolarizationScoresToAssay returns a matrix for a tbl_df
 pol_scores_mat <- PolarizationScoresToAssay(pol_scores)
@@ -110,7 +113,7 @@ pol_scores_mat[1:4, 1:5]
 
 # Create a Seurat object
 seur <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc23344915.h5ad
+#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 
 # Fetch CellGraphAssay and create new polarization
 # scores Assay

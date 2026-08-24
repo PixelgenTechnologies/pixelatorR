@@ -89,7 +89,7 @@ seur_obj_pna
 #> An object of class Seurat 
 #> 158 features across 5 samples within 1 assay 
 #> Active assay: PNA (158 features, 158 variable features)
-#>  1 layer present: counts
+#>  2 layers present: counts, data
 
 # Plot with data.frame
 MoleculeRankPlot(seur_obj_pna[[]])

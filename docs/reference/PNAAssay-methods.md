@@ -97,6 +97,7 @@ library(SeuratObject)
 
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 pna_assay <- seur_obj[["PNA"]]
 pna_assay <- RenameCells(pna_assay, new.names = paste0(colnames(pna_assay), "-new"))
 colnames(pna_assay)
@@ -107,6 +108,7 @@ library(pixelatorR)
 
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 seur_obj[["PNA"]]
 #> PNAAssay data with 158 features for 5 cells
 #> Top 10 variable features:
@@ -118,6 +120,7 @@ library(pixelatorR)
 
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 pna_assay <- seur_obj[["PNA"]]
 
 pna_assay <- subset(pna_assay, cells = colnames(pna_assay)[1:2])
@@ -133,6 +136,7 @@ library(dplyr)
 
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 pna_assay <- seur_obj[["PNA"]]
 
 # Merge two data sets

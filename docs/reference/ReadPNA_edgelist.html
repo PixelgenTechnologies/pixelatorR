@@ -15,7 +15,7 @@ for downstream processing."><meta property="og:image" content="/logo.png"></head
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.20.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,6 +86,18 @@ for downstream processing.</p>
 a <code>tbl_lazy</code> object is returned.</p></dd>
 
 </dl></div>
+    <div class="section level2">
+    <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
+    <p>A <code>tbl_df</code> or, if <code>lazy = TRUE</code>, a <code>tbl_lazy</code> object with
+the edge list:</p><ul><li><p>marker_1: The first protein</p></li>
+<li><p>marker_2: The second protein</p></li>
+<li><p>umi1: A unique ID of the first RCA product</p></li>
+<li><p>umi2: A unique ID of the second RCA product</p></li>
+<li><p>read_count: The number of reads supporting the edge</p></li>
+<li><p>uei_count: The number of unique event identifiers (UEIs) supporting the edge.
+This column is optional and is only returned if it is present in the edgelist table.</p></li>
+<li><p>component: The component name</p></li>
+</ul></div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

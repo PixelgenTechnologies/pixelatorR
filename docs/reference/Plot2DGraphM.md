@@ -119,9 +119,12 @@ library(pixelatorR)
 # MPX
 pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc18225bd0.h5ad
+#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 seur <- LoadCellGraphs(seur, load_as = "Anode")
+#> →    Loading CellGraphs for 5 cells from sample 1
+#> ✔ Successfully loaded 5 CellGraph object(s).
 seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
+#> ℹ Computing layouts for 5 graphs
 Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
 #> ✖ 'CD20' is missing from node count matrix for component RCVCMP0000487
 
@@ -129,8 +132,17 @@ Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers
 # PNA
 pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[2:3], add_layouts = TRUE)
+#> ℹ Fetching edgelists for 2 cells 
+#> → Creating <CellGraph> objects
+#> → Fetching marker counts
+#> → Adding marker counts to <CellGraph> object(s)
+#> → Fetching layouts
+#> → Adding layouts to <CellGraph> object(s)
+#> ✔ Successfully loaded 2 <CellGraph> object(s).
 seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
+#> ℹ Computing layouts for 2 graphs
 Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
 
 ```

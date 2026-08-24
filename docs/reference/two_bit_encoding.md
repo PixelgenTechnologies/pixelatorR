@@ -37,12 +37,12 @@ unpack_2bits(packed, k)
 
 ## Details
 
-`pack_2bits`:  
+`pack_2bits`:\
 Converts DNA strings (containing only A, C, G, T) into a 64-bit integers
 using 2 bits per base. This allows compact storage and efficient
 comparison of short DNA sequences (kmers).
 
-`unpack_2bits`:  
+`unpack_2bits`:\
 Given a 64-bit integer encoding a DNA sequence using 2 bits per base (as
 from `pack_2bits`), this function reconstructs the original DNA string.
 

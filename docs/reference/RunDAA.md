@@ -130,7 +130,6 @@ PNA component.
 1.  If we want to compare the "stimulated1" group to the "control"
     group:
 
-
         daa_markers <- RunDAA(object = seurat_object,
                               contrast_column = "sampleID",
                               reference = "control",
@@ -139,7 +138,6 @@ PNA component.
 2.  If we want to compare the "stimulated1" and "stimulated2" groups to
     the "control" group:
 
-
         daa_markers <- RunDAA(object = seurat_object,
                               contrast_column = "sampleID",
                               reference = "control",
@@ -147,7 +145,6 @@ PNA component.
 
 3.  If we want to compare the "stimulated1" and "stimulated2" groups to
     the "control" group, and split the tests by cell type:
-
 
         daa_markers <- RunDAA(object = seurat_object,
                              contrast_column = "sampleID",
@@ -171,7 +168,7 @@ library(SeuratObject)
 pxl_file <- minimal_mpx_pxl_file()
 # Seurat objects
 se <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc2716a15.h5ad
+#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
 se$sample <- c("T", "C", "C", "C", "C") %>% rep(times = 10)
 se <- Seurat::NormalizeData(se %>% JoinLayers(), normalization.method = "CLR", margin = 2)
@@ -183,28 +180,19 @@ daa_markers <- RunDAA(se,
   contrast_column = "sample",
   targets = "T", reference = "C"
 )
-#> For a (much!) faster implementation of the Wilcoxon Rank Sum Test,
-#> (default method for FindMarkers) please install the presto package
-#> --------------------------------------------
-#> install.packages('devtools')
-#> devtools::install_github('immunogenomics/presto')
-#> --------------------------------------------
-#> After installation of presto, Seurat will automatically use the more 
-#> efficient implementation (no further action necessary).
-#> This message will be shown once per session
 daa_markers
 #> # A tibble: 80 × 8
 #>    marker           p     p_adj difference pct_1 pct_2 target reference
 #>    <chr>        <dbl>     <dbl>      <dbl> <dbl> <dbl> <chr>  <chr>    
-#>  1 CD137  0.000000407 0.0000326     0.0568     1  0.5  T      C        
-#>  2 CD62P  0.000000792 0.0000633    -0.130      0  1    T      C        
-#>  3 CD11b  0.000000792 0.0000633     0.0400     1  0.75 T      C        
-#>  4 CD152  0.000000792 0.0000633     0.218      1  0.75 T      C        
-#>  5 CD163  0.000000792 0.0000633     0.0641     1  0.75 T      C        
-#>  6 CD200  0.000000792 0.0000633     0.236      1  0.75 T      C        
-#>  7 CD154  0.000000792 0.0000633     0.111      1  0.75 T      C        
-#>  8 CD328  0.000000792 0.0000633     0.161      1  0.75 T      C        
-#>  9 CD158  0.000000792 0.0000633     0.215      1  0.75 T      C        
-#> 10 CD279  0.000000792 0.0000633     0.843      1  1    T      C        
+#>  1 CD137  0.000000456 0.0000365     0.0568     1  0.5  T      C        
+#>  2 CD62P  0.000000878 0.0000703    -0.130      0  1    T      C        
+#>  3 CD11b  0.000000878 0.0000703     0.0400     1  0.75 T      C        
+#>  4 CD152  0.000000878 0.0000703     0.218      1  0.75 T      C        
+#>  5 CD163  0.000000878 0.0000703     0.0641     1  0.75 T      C        
+#>  6 CD200  0.000000878 0.0000703     0.236      1  0.75 T      C        
+#>  7 CD154  0.000000878 0.0000703     0.111      1  0.75 T      C        
+#>  8 CD328  0.000000878 0.0000703     0.161      1  0.75 T      C        
+#>  9 CD158  0.000000878 0.0000703     0.215      1  0.75 T      C        
+#> 10 CD279  0.000000878 0.0000703     0.843      1  1    T      C        
 #> # ℹ 70 more rows
 ```

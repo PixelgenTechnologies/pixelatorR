@@ -73,6 +73,7 @@ reference:
   - subtitle: Graph layouts
   - contents:
     - ComputeLayout
+    - layout_with_spectral
     - layout_with_weighted_pmds
     - layout_with_coarsened_pmds
     - center_layout_coordinates
@@ -117,6 +118,15 @@ reference:
     - ProximityScoresToAssay
     - FilterProximityScores
     - SummarizeProximityScores
+    - local_proximity
+  - subtitle: Cell segmentation
+  - contents:
+    - segment_cell
+    - cc_protein_weights
+    - distance_from_node_set
+    - partition_counts
+    - spatial_smoothing
+    - fetch_node_neighborhoods
   - subtitle: Doublet detection
   - contents:
     - FindAnnoyNeighbors

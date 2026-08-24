@@ -16,7 +16,7 @@ RunDPA(
   targets = NULL,
   group_vars = NULL,
   polarity_metric = "morans_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -34,7 +34,7 @@ RunDPA(
   assay = NULL,
   group_vars = NULL,
   polarity_metric = "morans_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   cl = NULL,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
@@ -79,10 +79,10 @@ RunDPA(
   The polarity metric to use. Any numeric data column in the polarity
   score table can be selected. The default is "morans_z".
 
-- min_n_obs:
+- min_cells_per_group:
 
   Minimum number of observations allowed in a group. Target groups with
-  less observations than `min_n_obs` will be skipped.
+  less observations than `min_cells_per_group` will be skipped.
 
 - cl:
 
@@ -170,7 +170,6 @@ PNA component.
 1.  If we want to compare the "stimulated1" group to the "control"
     group:
 
-
         dpa_markers <- RunDPA(object = seurat_object,
                               contrast_column = "sampleID",
                               reference = "control",
@@ -179,7 +178,6 @@ PNA component.
 2.  If we want to compare the "stimulated1" and "stimulated2" groups to
     the "control" group:
 
-
         dpa_markers <- RunDPA(object = seurat_object,
                               contrast_column = "sampleID",
                               reference = "control",
@@ -187,7 +185,6 @@ PNA component.
 
 3.  If we want to compare the "stimulated1" and "stimulated2" groups to
     the "control" group, and split the tests by cell type:
-
 
         dpa_markers <- RunDPA(object = seurat_object,
                              contrast_column = "sampleID",
@@ -219,6 +216,9 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Load polarization scores
 polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
+#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl
+#> →   Loading polarization data
+#> ✔ Returning a 'tbl_df' object
 polarization_table1$sample <- "Sample1"
 polarization_table2$sample <- "Sample2"
 polarization_table_merged <- bind_rows(polarization_table1, polarization_table2)
@@ -228,6 +228,10 @@ dpa_markers <- RunDPA(polarization_table_merged,
   contrast_column = "sample",
   targets = "Sample1", reference = "Sample2"
 )
+#> ℹ Splitting data by: marker
+#> ℹ Polarity metric: 'morans_z'
+#> ℹ Running 80 tests for the following comparison:
+#>   - Sample1 vs Sample2
 #> Warning: Got the following message when running wilcox.test test for marker 'ACTB': Sample1 vs Sample2
 #>   cannot compute exact confidence intervals with ties
 #> Warning: Got the following message when running wilcox.test test for marker 'B2M': Sample1 vs Sample2
@@ -408,7 +412,7 @@ dpa_markers
 
 # Seurat objects
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc705a2eb4.h5ad
+#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
@@ -418,6 +422,10 @@ dpa_markers <- RunDPA(seur_merged,
   contrast_column = "sample",
   targets = "Sample1", reference = "Sample2"
 )
+#> ℹ Splitting data by: marker
+#> ℹ Polarity metric: 'morans_z'
+#> ℹ Running 80 tests for the following comparison:
+#>   - Sample1 vs Sample2
 #> Warning: Got the following message when running wilcox.test test for marker 'ACTB': Sample1 vs Sample2
 #>   cannot compute exact confidence intervals with ties
 #> Warning: Got the following message when running wilcox.test test for marker 'B2M': Sample1 vs Sample2

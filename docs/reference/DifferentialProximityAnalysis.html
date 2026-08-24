@@ -11,7 +11,7 @@ pipeline."><meta property="og:image" content="/logo.png"></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.20.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -57,11 +57,29 @@ pipeline.</p>
 <span>  <span class="va">reference</span>,</span>
 <span>  targets <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  proximity_metric <span class="op">=</span> <span class="st">"join_count_z"</span>,</span>
+<span>  proximity_metric <span class="op">=</span> <span class="st">"log2_ratio"</span>,</span>
 <span>  metric_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"self"</span>, <span class="st">"co"</span><span class="op">)</span>,</span>
 <span>  backend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dplyr"</span>, <span class="st">"data.table"</span><span class="op">)</span>,</span>
-<span>  min_n_obs <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  p_adjust_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bonferroni"</span>, <span class="st">"holm"</span>, <span class="st">"hochberg"</span>, <span class="st">"hommel"</span>, <span class="st">"BH"</span>, <span class="st">"BY"</span>, <span class="st">"fdr"</span><span class="op">)</span>,</span>
+<span>  min_cells_per_group <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'Matrix'</span></span>
+<span><span class="fu">DifferentialProximityAnalysis</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  <span class="va">group_data</span>,</span>
+<span>  <span class="va">contrast_column</span>,</span>
+<span>  <span class="va">reference</span>,</span>
+<span>  targets <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  proximity_metric <span class="op">=</span> <span class="st">"log2_ratio"</span>,</span>
+<span>  p_adjust_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bonferroni"</span>, <span class="st">"holm"</span>, <span class="st">"hochberg"</span>, <span class="st">"hommel"</span>, <span class="st">"BH"</span>, <span class="st">"BY"</span>, <span class="st">"fdr"</span><span class="op">)</span>,</span>
+<span>  diff_threshold <span class="op">=</span> <span class="fl">0.01</span>,</span>
+<span>  min_pct <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_diff_pct <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>,</span>
+<span>  min_cells_per_group <span class="op">=</span> <span class="fl">10</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
@@ -74,9 +92,16 @@ pipeline.</p>
 <span>  targets <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  assay <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  proximity_metric <span class="op">=</span> <span class="st">"join_count_z"</span>,</span>
+<span>  lazy <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  min_exp_join_count <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_cells_per_group <span class="op">=</span> <span class="fl">10</span>,</span>
+<span>  diff_threshold <span class="op">=</span> <span class="fl">0.01</span>,</span>
+<span>  min_pct <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_diff_pct <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>,</span>
+<span>  proximity_metric <span class="op">=</span> <span class="st">"log2_ratio"</span>,</span>
 <span>  metric_type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"all"</span>, <span class="st">"self"</span>, <span class="st">"co"</span><span class="op">)</span>,</span>
-<span>  min_n_obs <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  backend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"dplyr"</span>, <span class="st">"data.table"</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"seurat"</span>, <span class="st">"legacy"</span><span class="op">)</span>,</span>
 <span>  p_adjust_method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"bonferroni"</span>, <span class="st">"holm"</span>, <span class="st">"hochberg"</span>, <span class="st">"hommel"</span>, <span class="st">"BH"</span>, <span class="st">"BY"</span>, <span class="st">"fdr"</span><span class="op">)</span>,</span>
 <span>  verbose <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -129,22 +154,69 @@ type are considered.</p></dd>
 <dd><p>One of "dplyr" or "data.table". The latter requires the <code>dtplyr</code> package to be installed.</p></dd>
 
 
-<dt id="arg-min-n-obs">min_n_obs<a class="anchor" aria-label="anchor" href="#arg-min-n-obs"></a></dt>
-<dd><p>Minimum number of observations allowed in a group. Target groups with less
-observations than <code>min_n_obs</code> will be skipped.</p></dd>
-
-
 <dt id="arg-p-adjust-method">p_adjust_method<a class="anchor" aria-label="anchor" href="#arg-p-adjust-method"></a></dt>
 <dd><p>One of "bonferroni", "holm", "hochberg", "hommel", "BH", "BY" or "fdr".
 (see <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">?p.adjust</a></code> for details)</p></dd>
+
+
+<dt id="arg-min-cells-per-group">min_cells_per_group<a class="anchor" aria-label="anchor" href="#arg-min-cells-per-group"></a></dt>
+<dd><p>Minimum number of cells required per group. Target groups with less
+observations than <code>min_cells_per_group</code> will be skipped.</p></dd>
 
 
 <dt id="arg-verbose">verbose<a class="anchor" aria-label="anchor" href="#arg-verbose"></a></dt>
 <dd><p>Print messages</p></dd>
 
 
+<dt id="arg-group-data">group_data<a class="anchor" aria-label="anchor" href="#arg-group-data"></a></dt>
+<dd><p>A tibble with a column for the contrast and optional group variables.
+The rownames of this tibble should correspond to the columns names of the matrix <code>object</code>.</p></dd>
+
+
+<dt id="arg-diff-threshold">diff_threshold<a class="anchor" aria-label="anchor" href="#arg-diff-threshold"></a></dt>
+<dd><p>Minimum difference in proximity metric to consider a pair of groups for
+testing. Default is 0.1. This parameter is only used when the <code>method</code> argument is set to "seurat".</p></dd>
+
+
+<dt id="arg-min-pct">min_pct<a class="anchor" aria-label="anchor" href="#arg-min-pct"></a></dt>
+<dd><p>Minimum percentage of cells in either group that must express a marker pair for it
+to be considered for testing. Default is 0. This parameter is only used when the <code>method</code> argument
+is set to "seurat".</p></dd>
+
+
+<dt id="arg-min-diff-pct">min_diff_pct<a class="anchor" aria-label="anchor" href="#arg-min-diff-pct"></a></dt>
+<dd><p>Minimum difference in percentage of cells expressing a marker pair between the
+two groups for it to be considered for testing. Default is -Inf. This parameter is only used when
+the <code>method</code> argument is set to "seurat".</p></dd>
+
+
 <dt id="arg-assay">assay<a class="anchor" aria-label="anchor" href="#arg-assay"></a></dt>
 <dd><p>Name of assay to use</p></dd>
+
+
+<dt id="arg-lazy">lazy<a class="anchor" aria-label="anchor" href="#arg-lazy"></a></dt>
+<dd><p>If TRUE, the proximity scores will be loaded lazily and filtered using the
+<code>duckdb</code> backend.</p></dd>
+
+
+<dt id="arg-min-exp-join-count">min_exp_join_count<a class="anchor" aria-label="anchor" href="#arg-min-exp-join-count"></a></dt>
+<dd><p>Minimum number of join counts required for a marker pair to be
+included in the analysis. Dropped protein pairs (those with fewer than <code>min_exp_join_count</code> counts)
+will be treated as missing entries. With <code>method = "seurat"</code>, these are treated as having a
+proximity score of 0.</p></dd>
+
+
+<dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
+<dd><p>One of "seurat" or "legacy". The former uses the Seurat framework for
+differential testing, while the latter uses a custom implementation. The main difference
+between the two methods is that missing observations are handled differently. With
+the "seurat" method, all missing values are set to 0, while the "legacy" method ignores
+missing values. For the former, this means that the number of observations per group is
+always equal to the number of cells in that group, while for the latter ("legacy"), the
+number of observations per group can be less than the number of cells in that group. Ignoring
+missing values can lead to confusing estimates of group statistics and misses comparisons
+where one of the two test groups have no observations.
+The "legacy" method is provided for backward compatibility and may be removed in future versions.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -160,7 +232,7 @@ that includes information about the groups to compare. A typical example is a co
 with sample labels, for instance: "control", "stimulated1", "stimulated2". If the input
 object is a <code>Seurat</code> object, the <code>contrast_column</code> should be available in
 the <code>meta.data</code> slot. For those familiar with <code>FindMarkers</code> from Seurat,
-<code>contrast_column</code> is equivalent to the <code>group.by</code> parameter.</p>
+<code>contrast_column</code> is comparable to the <code>group.by</code> parameter.</p>
 <p>The <code>targets</code> parameter specifies a character vector with the names of the groups
 to compare <code>reference</code>. <code>targets</code> can be a single group name or a vector of
 group names while <code>reference</code> can only refer to a single group. Both <code>targets</code>
@@ -171,7 +243,7 @@ are similar to the <code>ident.1</code> and <code>ident.2</code> parameters in <
     <h2 id="additional-groups">Additional groups<a class="anchor" aria-label="anchor" href="#additional-groups"></a></h2>
 
 
-<p>The test is always computed between <code>targets</code> and <code>reference</code>, but it is possible
+<p>The tests are always computed between <code>targets</code> and <code>reference</code>, but it is possible
 to add additional grouping variables with <code>group_vars</code>. If <code>group_vars</code> is used,
 each comparison is split into groups defined by the <code>group_vars</code>. For instance, if we
 have annotated cells into cell type populations and saved these annotations in a <code>meta.data</code>
@@ -200,8 +272,8 @@ called "cell_type" that holds information about the cell type identity of each c
 <span>  reference <span class="op">=</span> <span class="st">"control"</span>,</span>
 <span>  targets <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"stimulated1"</span>, <span class="st">"stimulated2"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div></li>
-<li><p>If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group, and split
-the tests by cell type:</p><div class="sourceCode"><pre><code><span></span>
+<li><p>If we want to compare the "stimulated1" and "stimulated2" groups to the "control" group
+within each cell type:</p><div class="sourceCode"><pre><code><span></span>
 <span><span class="va">dp_markers</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/DifferentialProximityAnalysis.html">DifferentialProximityAnalysis</a></span><span class="op">(</span></span>
 <span>   object <span class="op">=</span> <span class="va">seurat_object</span>,</span>
 <span>   contrast_column <span class="op">=</span> <span class="st">"sampleID"</span>,</span>
@@ -210,6 +282,26 @@ the tests by cell type:</p><div class="sourceCode"><pre><code><span></span>
 <span>   group_vars <span class="op">=</span> <span class="st">"cell_type"</span></span>
 <span><span class="op">)</span></span></code></pre></div></li>
 </ol></div>
+    <div class="section level2">
+    <h2 id="method-details">Method details<a class="anchor" aria-label="anchor" href="#method-details"></a></h2>
+
+
+<p>By default, the function uses <code>FindMarkers</code> under the hood to compute the tests (<code>method = "Seurat"</code>).
+The proximity scores are stored in long format in a table (either as a table in the Seurat object or
+in the associated PXL file). The function reshapes the table to wide format and uses <code>FindMarkers</code> to
+compute the tests.</p>
+<p>Note that missing observations in the proximity score table are replaced with 0's when reshaping to
+wide format. This means that if a marker pair is not present in a component, it will be treated as
+having a proximity score of 0 for that component. With this strategy, we cannot distinguish between
+a marker pair that is truly absent in a component and a marker pair that is present but has a proximity
+score of 0. Marker pairs rarely have a proximity score of 0, except for extremely low abundant pairs
+which are usually filtered out in the pre-processing steps.</p>
+<p>With the "legacy" method, the missing observations are ignored and the tests are computed only on the
+marker pairs that are present in both groups. This strategy has two important limitations: 1) it tends
+to focus the results on subsets of cells which are not necessarily representative of the entire population
+of interest, and 2) if one of the two conditions (target or reference) has no observations for a pair,
+that comparison will be skipped.</p>
+    </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Other DA-methods:
@@ -220,8 +312,7 @@ the tests by cell type:</p><div class="sourceCode"><pre><code><span></span>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># TODO: Update examples with real data</span></span></span>
-<span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">example_data</span> <span class="op">&lt;-</span> <span class="fu">tidyr</span><span class="fu">::</span><span class="fu"><a href="https://tidyr.tidyverse.org/reference/expand_grid.html" class="external-link">expand_grid</a></span><span class="op">(</span></span></span>
 <span class="r-in"><span>  marker_1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"HLA-ABC"</span>, <span class="st">"B2M"</span>, <span class="st">"CD4"</span>, <span class="st">"CD8"</span>, <span class="st">"CD20"</span>, <span class="st">"CD19"</span>, <span class="st">"CD45"</span>, <span class="st">"CD43"</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
 <span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span>each <span class="op">=</span> <span class="fl">50</span><span class="op">)</span>,</span></span>
@@ -247,7 +338,7 @@ the tests by cell type:</p><div class="sourceCode"><pre><code><span></span>
 <span class="r-in"><span>  proximity_metric <span class="op">=</span> <span class="st">"join_count_z"</span>,</span></span>
 <span class="r-in"><span>  metric_type <span class="op">=</span> <span class="st">"self"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Computing Running Wilcoxon rank-sum test for each marker pair across the following comparisons:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running Wilcoxon rank-sum test across the following comparisons:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   • treatment vs ctrl</span>
 <span class="r-in"><span></span></span>

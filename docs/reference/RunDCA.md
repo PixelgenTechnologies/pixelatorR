@@ -16,7 +16,7 @@ RunDCA(
   targets = NULL,
   group_vars = NULL,
   coloc_metric = "pearson_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -34,7 +34,7 @@ RunDCA(
   assay = NULL,
   group_vars = NULL,
   coloc_metric = "pearson_z",
-  min_n_obs = 0,
+  min_cells_per_group = 0,
   alternative = c("two.sided", "less", "greater"),
   conf_int = TRUE,
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -80,10 +80,10 @@ RunDCA(
   colocalization score table can be selected. The default is
   "pearson_z".
 
-- min_n_obs:
+- min_cells_per_group:
 
   Minimum number of observations allowed in a group. Target groups with
-  less observations than `min_n_obs` will be skipped.
+  less observations than `min_cells_per_group` will be skipped.
 
 - alternative:
 
@@ -171,7 +171,6 @@ PNA component.
 1.  If we want to compare the "stimulated1" group to the "control"
     group:
 
-
         dca_markers <- RunDCA(object = seurat_object,
                               contrast_column = "sampleID",
                               reference = "control",
@@ -180,7 +179,6 @@ PNA component.
 2.  If we want to compare the "stimulated1" and "stimulated2" groups to
     the "control" group:
 
-
         dca_markers <- RunDCA(object = seurat_object,
                               contrast_column = "sampleID",
                               reference = "control",
@@ -188,7 +186,6 @@ PNA component.
 
 3.  If we want to compare the "stimulated1" and "stimulated2" groups to
     the "control" group, and split the tests by cell type:
-
 
         dca_markers <- RunDCA(object = seurat_object,
                              contrast_column = "sampleID",
@@ -219,7 +216,7 @@ library(dplyr)
 pxl_file <- minimal_mpx_pxl_file()
 # Seurat objects
 seur1 <- seur2 <- ReadMPX_Seurat(pxl_file)
-#> ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc472f6079.h5ad
+#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
 seur_merged <- merge(seur1, seur2, add.cell.ids = c("A", "B"))
@@ -237,6 +234,9 @@ dca_markers <- RunDCA(seur_merged,
   contrast_column = "sample",
   target = "Sample1", reference = "Sample2"
 )
+#> ℹ Splitting data by: marker_1, marker_2
+#> ℹ Running 10 tests for the following comparison:
+#>   - Sample1 vs Sample2
 #> Warning: Got the following message when running wilcox.test test for marker 'CD19/CD20': Sample1 vs Sample2
 #>   cannot compute exact confidence intervals with ties
 #> Warning: Got the following message when running wilcox.test test for marker 'CD19/CD4': Sample1 vs Sample2

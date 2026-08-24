@@ -113,8 +113,6 @@ and whistles provided by `pixelatorR`.
 seur_obj <- ReadMPX_Seurat(pxl_file)
 ```
 
-    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpEJyw2L/file5bc84dc0555.h5ad
-
 Here, you have a few options to modify how the `Seurat` should be
 created. First and foremost, we can set `return_cellgraphassay = FALSE`
 to return a `Seurat` object which only includes abundance measurements.
@@ -136,8 +134,6 @@ seur_obj <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = FALSE)
 ```
 
     ## Warning: Data is of class matrix. Coercing to dgCMatrix.
-
-    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpEJyw2L/file5bc872e246ec.h5ad
 
 ``` r
 
@@ -164,12 +160,6 @@ scores and colocalization scores are loaded and stored in a
 ``` r
 
 seur_obj <- ReadMPX_Seurat(pxl_file)
-```
-
-    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpEJyw2L/file5bc86f5e21d7.h5ad
-
-``` r
-
 seur_obj
 ```
 

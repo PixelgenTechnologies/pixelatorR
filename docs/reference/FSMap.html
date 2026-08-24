@@ -9,7 +9,7 @@ CellGraphAssay5 or a Seurat object"><meta property="og:image" content="/logo.png
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.20.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -114,7 +114,7 @@ spatial metrics</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id_map           sample pxl_file                                              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;tibble [5 × 2]&gt;</span>      1 <span style="color: #949494;">"</span>C:\\Users\\max\\AppData\\Local\\Temp\\RtmpszaM22\\te…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;tibble [5 × 2]&gt;</span>      1 /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000g…</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># If the PXL has been moved, we can update the fs_map</span></span></span>
 <span class="r-in"><span><span class="co"># Here we copy the test PXL file to a temporary location</span></span></span>
@@ -131,19 +131,18 @@ spatial metrics</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id_map           sample pxl_file                                              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fs::path&gt;</span>                                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;tibble [5 × 2]&gt;</span>      1 …max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc1d7512bd.pxl</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;tibble [5 × 2]&gt;</span>      1 …gs_mq8n51jtbc0000gn/T/RtmpXxUDE2/filebadb2e104962.pxl</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="mpx_dataset.html">minimal_mpx_pxl_file</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">seur_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc3992af8.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc3992af8.h5ad</span></a></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Check PXL file paths in a Seurat object</span></span></span>
 <span class="r-in"><span><span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id_map           sample pxl_file                                              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;tibble [5 × 2]&gt;</span>      1 <span style="color: #949494;">"</span>C:\\Users\\max\\AppData\\Local\\Temp\\RtmpszaM22\\te…</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;tibble [5 × 2]&gt;</span>      1 /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000g…</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pixelgentechnologies.github.io/pixelatorR/" class="external-link">pixelatorR</a></span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>

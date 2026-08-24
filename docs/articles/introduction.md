@@ -60,7 +60,7 @@ download.file(url = "https://pixelgen-technologies-datasets.s3.eu-north-1.amazon
               destfile = "PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
 ```
 
-  
+\
 
 Now, we can load the MPX data as a Seurat object with `ReadMPX_Seurat`:
 
@@ -70,8 +70,6 @@ seur <- ReadMPX_Seurat("PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl"
 ```
 
     ## ✔ Created a 'Seurat' object with 477 cells and 80 targeted surface proteins
-
-    ## ! Failed to remove temporary file C:/Users/max/AppData/Local/Temp/RtmpasFgCQ/fileb28391bb54.h5ad
 
 ## Seurat v5
 

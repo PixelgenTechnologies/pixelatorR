@@ -38,19 +38,21 @@ the k-step walk.
 
 ``` r
 library(igraph)
-#> Warning: package 'igraph' was built under R version 4.5.3
 #> 
-#> Attaching package: 'igraph'
-#> The following object is masked from 'package:tidygraph':
+#> Attaching package: ‘igraph’
+#> The following object is masked from ‘package:Seurat’:
+#> 
+#>     components
+#> The following object is masked from ‘package:tidygraph’:
 #> 
 #>     groups
-#> The following objects are masked from 'package:dplyr':
+#> The following objects are masked from ‘package:dplyr’:
 #> 
 #>     as_data_frame, groups, union
-#> The following objects are masked from 'package:stats':
+#> The following objects are masked from ‘package:stats’:
 #> 
 #>     decompose, spectrum
-#> The following object is masked from 'package:base':
+#> The following object is masked from ‘package:base’:
 #> 
 #>     union
 g <- make_lattice(c(2, 3))

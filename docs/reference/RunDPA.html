@@ -9,7 +9,7 @@ Pixelator data processing pipeline."><meta property="og:image" content="/logo.pn
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.18.3</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.20.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -55,7 +55,7 @@ Pixelator data processing pipeline."><meta property="og:image" content="/logo.pn
 <span>  targets <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  polarity_metric <span class="op">=</span> <span class="st">"morans_z"</span>,</span>
-<span>  min_n_obs <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_cells_per_group <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alternative <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"two.sided"</span>, <span class="st">"less"</span>, <span class="st">"greater"</span><span class="op">)</span>,</span>
 <span>  conf_int <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -73,7 +73,7 @@ Pixelator data processing pipeline."><meta property="og:image" content="/logo.pn
 <span>  assay <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  group_vars <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  polarity_metric <span class="op">=</span> <span class="st">"morans_z"</span>,</span>
-<span>  min_n_obs <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  min_cells_per_group <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  cl <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  alternative <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"two.sided"</span>, <span class="st">"less"</span>, <span class="st">"greater"</span><span class="op">)</span>,</span>
 <span>  conf_int <span class="op">=</span> <span class="cn">TRUE</span>,</span>
@@ -119,9 +119,9 @@ If the value is set to <code>NULL</code> (default), all groups available in <cod
 can be selected. The default is "morans_z".</p></dd>
 
 
-<dt id="arg-min-n-obs">min_n_obs<a class="anchor" aria-label="anchor" href="#arg-min-n-obs"></a></dt>
+<dt id="arg-min-cells-per-group">min_cells_per_group<a class="anchor" aria-label="anchor" href="#arg-min-cells-per-group"></a></dt>
 <dd><p>Minimum number of observations allowed in a group. Target groups with less
-observations than <code>min_n_obs</code> will be skipped.</p></dd>
+observations than <code>min_cells_per_group</code> will be skipped.</p></dd>
 
 
 <dt id="arg-cl">cl<a class="anchor" aria-label="anchor" href="#arg-cl"></a></dt>
@@ -239,6 +239,9 @@ to reduce the overhead of communication between processes.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Load polarization scores</span></span></span>
 <span class="r-in"><span><span class="va">polarization_table1</span> <span class="op">&lt;-</span> <span class="va">polarization_table2</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_item.html">ReadMPX_polarization</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> →   Loading <span style="color: #FF55FF;">polarization</span> data</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Returning a 'tbl_df' object</span>
 <span class="r-in"><span><span class="va">polarization_table1</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample1"</span></span></span>
 <span class="r-in"><span><span class="va">polarization_table2</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample2"</span></span></span>
 <span class="r-in"><span><span class="va">polarization_table_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/bind_rows.html" class="external-link">bind_rows</a></span><span class="op">(</span><span class="va">polarization_table1</span>, <span class="va">polarization_table2</span><span class="op">)</span></span></span>
@@ -248,6 +251,10 @@ to reduce the overhead of communication between processes.</p>
 <span class="r-in"><span>  contrast_column <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
 <span class="r-in"><span>  targets <span class="op">=</span> <span class="st">"Sample1"</span>, reference <span class="op">=</span> <span class="st">"Sample2"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Splitting data by: marker</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Polarity metric: 'morans_z'</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running 80 tests for the following comparison:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - Sample1 vs Sample2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Got the following message when running wilcox.test test for marker 'ACTB': Sample1 vs Sample2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>   <span style="color: #BB0000;">cannot compute exact confidence intervals with ties</span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Got the following message when running wilcox.test test for marker 'B2M': Sample1 vs Sample2</span>
@@ -428,7 +435,7 @@ to reduce the overhead of communication between processes.</p>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Seurat objects</span></span></span>
 <span class="r-in"><span><span class="va">seur1</span> <span class="op">&lt;-</span> <span class="va">seur2</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> Failed to remove temporary file <a href="file://C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc705a2eb4.h5ad"><span style="color: #0000BB;">C:/Users/max/AppData/Local/Temp/Rtmp8i0Mbp/file2bc705a2eb4.h5ad</span></a></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a 'Seurat' object with <span style="color: #5555FF;">5</span> cells and <span style="color: #5555FF;">80</span> targeted surface proteins</span>
 <span class="r-in"><span><span class="va">seur1</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample1"</span></span></span>
 <span class="r-in"><span><span class="va">seur2</span><span class="op">$</span><span class="va">sample</span> <span class="op">&lt;-</span> <span class="st">"Sample2"</span></span></span>
 <span class="r-in"><span><span class="va">seur_merged</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://edzer.github.io/sp/reference/merge.html" class="external-link">merge</a></span><span class="op">(</span><span class="va">seur1</span>, <span class="va">seur2</span>, add.cell.ids <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"A"</span>, <span class="st">"B"</span><span class="op">)</span><span class="op">)</span></span></span>
@@ -438,6 +445,10 @@ to reduce the overhead of communication between processes.</p>
 <span class="r-in"><span>  contrast_column <span class="op">=</span> <span class="st">"sample"</span>,</span></span>
 <span class="r-in"><span>  targets <span class="op">=</span> <span class="st">"Sample1"</span>, reference <span class="op">=</span> <span class="st">"Sample2"</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Splitting data by: marker</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Polarity metric: 'morans_z'</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Running 80 tests for the following comparison:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   - Sample1 vs Sample2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Got the following message when running wilcox.test test for marker 'ACTB': Sample1 vs Sample2</span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span>   <span style="color: #BB0000;">cannot compute exact confidence intervals with ties</span></span>
 <span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>Got the following message when running wilcox.test test for marker 'B2M': Sample1 vs Sample2</span>

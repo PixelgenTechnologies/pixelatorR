@@ -41,6 +41,8 @@ library(pixelatorR)
 # Load example data
 pxl_file <- minimal_mpx_pxl_file()
 edgelist_arrow <- ReadMPX_arrow_edgelist(pxl_file)
+#> ℹ Extracting edgelist.parquet file to /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpXxUDE2/edgelist.parquet
+#> ✔ Returning FileSystemDataset
 edgelist_arrow
 #> FileSystemDataset with 1 Parquet file
 #> 5 columns

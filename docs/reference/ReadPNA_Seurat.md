@@ -80,6 +80,7 @@ library(pixelatorR)
 # Crete example Seurat object
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 seur_obj
 #> An object of class Seurat 
 #> 158 features across 5 samples within 1 assay 

@@ -36,54 +36,53 @@ CellGraphData(object, slot = "cellgraph") <- value
 
 library(pixelatorR)
 library(dplyr)
+#> 
+#> Attaching package: ‘dplyr’
+#> The following objects are masked from ‘package:stats’:
+#> 
+#>     filter, lag
+#> The following objects are masked from ‘package:base’:
+#> 
+#>     intersect, setdiff, setequal, union
 library(tidygraph)
+#> 
+#> Attaching package: ‘tidygraph’
+#> The following object is masked from ‘package:stats’:
+#> 
+#>     filter
 
-edge_list <-
-  ReadMPX_item(
-    minimal_mpx_pxl_file(),
-    items = "edgelist"
-  )
-#> ℹ Loading item(s) from: C:/Users/max/AppData/Local/Temp/RtmpszaM22/temp_libpath71507ecc7035/pixelatorR/extdata/five_cells/five_cells.pxl
-#> →   Loading edgelist data
-#> ✔ Returning a 'tbl_df' object
-bipart_graph <-
-  edge_list %>%
-  select(upia, upib, marker) %>%
-  distinct() %>%
-  as_tbl_graph(directed = FALSE) %>%
-  mutate(node_type = case_when(name %in% edge_list$upia ~ "A", TRUE ~ "B"))
-attr(bipart_graph, "type") <- "bipartite"
-
-cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
+se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
+cg <- CellGraphs(se)[[1]]
 
 # Get slot data
 CellGraphData(cg, slot = "cellgraph")
-#> # A tbl_graph: 16800 nodes and 68255 edges
+#> # A tbl_graph: 43543 nodes and 97014 edges
 #> #
-#> # An undirected multigraph with 5 components
+#> # An undirected simple graph with 1 component
 #> #
-#> # Node Data: 16,800 × 2 (active)
-#>    name                      node_type
-#>    <chr>                     <chr>    
-#>  1 GGTATATATTTTAAGTAGTTTAGTA A        
-#>  2 ATTATGTTGTTGTATGTTTATTATT A        
-#>  3 TCCGTGGTTTGATACTCGGGAATTT A        
-#>  4 AGTGTAAGAGGTTGTTTCTTAGAAA A        
-#>  5 GAGCAGACAATGGCGCTTAGCTAAA A        
-#>  6 CAATTTTGACCTAGTTGTGGCCAAG A        
-#>  7 ATGTCAGAGTGAATAGTTGTGATTG A        
-#>  8 ATAAAGTGACCAGTTGAATGGGCCC A        
-#>  9 TGCCTCTTGAGCTGTTGATCGCCTG A        
-#> 10 ATTAGATGTAGAGCGCGAAAATTGG A        
-#> # ℹ 16,790 more rows
+#> # Node Data: 43,543 × 2 (active)
+#>    name                   node_type
+#>    <chr>                  <chr>    
+#>  1 61208583141770358-umi1 umi1     
+#>  2 50526950249468550-umi2 umi2     
+#>  3 69733109123764664-umi1 umi1     
+#>  4 43235234960499656-umi2 umi2     
+#>  5 16002757515879905-umi1 umi1     
+#>  6 4606209975865882-umi2  umi2     
+#>  7 59822389138925142-umi1 umi1     
+#>  8 28470384711643019-umi2 umi2     
+#>  9 64270251753030037-umi1 umi1     
+#> 10 63550490663717685-umi2 umi2     
+#> # ℹ 43,533 more rows
 #> #
-#> # Edge Data: 68,255 × 3
-#>    from    to marker
-#>   <int> <int> <fct> 
-#> 1     1 11034 CD27  
-#> 2     2 11035 CD27  
-#> 3     3 11036 CD27  
-#> # ℹ 68,252 more rows
+#> # Edge Data: 97,014 × 2
+#>    from    to
+#>   <int> <int>
+#> 1     1     2
+#> 2     3     4
+#> 3     5     6
+#> # ℹ 97,011 more rows
 
 # Set slot data
 CellGraphData(cg, slot = "cellgraph") <- CellGraphData(cg, slot = "cellgraph")
