@@ -84,6 +84,12 @@ Note that patches can appear from cell debris or from artificial bleedover and d
 necessarily indicate a cell-cell interaction. If you aim to study patch composition in response to
 a specific treatment or condition, it is recommended to include a control population for reference.
 
+For full cell:cell conjugates (two cells of comparable size in one graph),
+\code{\link{segment_cell}} is preferred: it segments both compartments and
+optionally the interface using NMF weights rather than a short list of patch
+markers. \code{patch_detection()} remains the better tool for small foreign
+subgraphs on a dominant receiver cell.
+
 Two algorithms are available for patch detection, described in the sections below.
 }
 \section{Expand and contract}{
@@ -230,4 +236,7 @@ ggplot(gg \%>\% mutate(name = factor(name, lvls)), aes(name, patch, fill = value
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   labs(fill = "Fraction of\ncounts")
 
+}
+\seealso{
+\code{\link[=segment_cell]{segment_cell()}}
 }

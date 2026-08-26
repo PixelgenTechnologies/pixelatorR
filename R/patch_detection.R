@@ -22,6 +22,12 @@
 #' necessarily indicate a cell-cell interaction. If you aim to study patch composition in response to
 #' a specific treatment or condition, it is recommended to include a control population for reference.
 #'
+#' For full cell:cell conjugates (two cells of comparable size in one graph),
+#' \code{\link{segment_cell}} is preferred: it segments both compartments and
+#' optionally the interface using NMF weights rather than a short list of patch
+#' markers. `patch_detection()` remains the better tool for small foreign
+#' subgraphs on a dominant receiver cell.
+#'
 #' Two algorithms are available for patch detection, described in the sections below.
 #'
 #' @section Expand and contract:
@@ -183,6 +189,8 @@
 #' - `patch`: An integer vector indicating the patch each node belongs to.
 #' - `potential_patch`: An integer vector indicating potential patches which are smaller than
 #'                      `patch_nodes_threshold`.
+#'
+#' @seealso [segment_cell()]
 #'
 #' @export
 #'

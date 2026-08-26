@@ -21,6 +21,22 @@
 #'
 #' Nodes that cannot be classified with confidence are labeled as "other".
 #'
+#' @section Why prefer `segment_cell` over `patch_detection`:
+#' For cell:cell conjugates, `segment_cell()` is preferred over
+#' \code{\link{patch_detection}}. `patch_detection()` looks for small foreign
+#' subgraphs (patches) on a dominant receiver cell using a short list of
+#' patch-specific markers. That model does not fit conjugates, where two cells
+#' of comparable size occupy one graph and the relevant structure is the two
+#' cell-type compartments plus their interface.
+#'
+#' `segment_cell()` instead projects k-hop neighborhood profiles onto
+#' NMF-derived protein weights for both cell types (NNLS), with optional spatial
+#' smoothing. This uses the full two-population signature rather than a handful
+#' of exclusive markers, is less sensitive to marker choice, labels both
+#' compartments symmetrically, and can annotate interface nodes. Use
+#' `patch_detection()` when the biology is genuinely patch-like (for example a
+#' small transferred fragment or platelet debris on a larger cell).
+#'
 #' @section NNLS method for classifying membrane nodes:
 #' To segment cell:cell conjugates, we first need to fit an NMF model to the abundance matrix (or local node
 #' neighborhood abundance profiles) of the two cell populations using the `cc_protein_weights` function.
@@ -72,6 +88,8 @@
 #' )
 #'
 #' @return A `CellGraph` object containing the compartment labels from the segmentation as a node attribute.
+#'
+#' @seealso [patch_detection()], [cc_protein_weights()]
 #'
 #' @export
 #'
