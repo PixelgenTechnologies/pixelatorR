@@ -237,7 +237,7 @@ segment_cell <- function(
   verbose,
   call = rlang::caller_env()
 ) {
-  pixelatorR:::assert_class(cg, "CellGraph", call = call)
+  assert_class(cg, "CellGraph", call = call)
   if (is.null(w)) {
     cli::cli_abort(
       c(
@@ -246,9 +246,9 @@ segment_cell <- function(
       call = call
     )
   }
-  pixelatorR:::assert_class(w, "matrix", call = call)
-  pixelatorR:::assert_vector(colnames(w), type = "character", n = 2, call = call)
-  pixelatorR:::assert_vector(rownames(w), type = "character", n = 1, call = call)
+  assert_class(w, "matrix", call = call)
+  assert_vector(colnames(w), type = "character", n = 2, call = call)
+  assert_vector(rownames(w), type = "character", n = 1, call = call)
   if (ncol(w) != 2L) {
     cli::cli_abort(
       c(
@@ -257,17 +257,17 @@ segment_cell <- function(
       call = call
     )
   }
-  pixelatorR:::assert_single_value(k, type = "integer", call = call)
-  pixelatorR:::assert_within_limits(k, limits = c(1, 6), call = call)
-  pixelatorR:::assert_single_value(detect_interface, type = "bool", call = call)
-  pixelatorR:::assert_single_value(k_interface_expansion, type = "integer", call = call)
-  pixelatorR:::assert_within_limits(k_interface_expansion, limits = c(0, 4), call = call)
-  pixelatorR:::assert_single_value(keep_largest_comp, type = "bool", call = call)
-  pixelatorR:::assert_single_value(min_comp_size, type = "integer", call = call)
-  pixelatorR:::assert_within_limits(min_comp_size, limits = c(1, Inf), call = call)
-  pixelatorR:::assert_single_value(spatial_smoothing_iter, type = "integer", call = call)
-  pixelatorR:::assert_within_limits(spatial_smoothing_iter, limits = c(0, 50), call = call)
-  pixelatorR:::assert_single_value(verbose, type = "bool", call = call)
+  assert_single_value(k, type = "integer", call = call)
+  assert_within_limits(k, limits = c(1, 6), call = call)
+  assert_single_value(detect_interface, type = "bool", call = call)
+  assert_single_value(k_interface_expansion, type = "integer", call = call)
+  assert_within_limits(k_interface_expansion, limits = c(0, 4), call = call)
+  assert_single_value(keep_largest_comp, type = "bool", call = call)
+  assert_single_value(min_comp_size, type = "integer", call = call)
+  assert_within_limits(min_comp_size, limits = c(1, Inf), call = call)
+  assert_single_value(spatial_smoothing_iter, type = "integer", call = call)
+  assert_within_limits(spatial_smoothing_iter, limits = c(0, 50), call = call)
+  assert_single_value(verbose, type = "bool", call = call)
 }
 
 #' Derive protein weights for two cell populations
@@ -395,8 +395,8 @@ cc_protein_weights <- function(
 
   # Define group vector and check that specified populations are present in the data
   group_vec <- object[[]] %>% pull(!!sym(group_by))
-  pixelatorR:::assert_x_in_y(population_1, group_vec)
-  pixelatorR:::assert_x_in_y(population_2, group_vec)
+  assert_x_in_y(population_1, group_vec)
+  assert_x_in_y(population_2, group_vec)
 
   # List of length 2 with logical vectors indicating which components (cells or neighborhoods)
   # to keep for each population.
@@ -809,31 +809,31 @@ cc_protein_weights <- function(
   verbose,
   call = rlang::caller_env()
 ) {
-  pixelatorR:::assert_class(object, "Seurat", call = call)
-  pixelatorR:::assert_single_value(group_by, type = "string", call = call)
-  pixelatorR:::assert_col_in_data(group_by, object[[]], call = call)
-  pixelatorR:::assert_single_value(population_1, type = "string", call = call)
-  pixelatorR:::assert_single_value(population_2, type = "string", call = call)
+  assert_class(object, "Seurat", call = call)
+  assert_single_value(group_by, type = "string", call = call)
+  assert_col_in_data(group_by, object[[]], call = call)
+  assert_single_value(population_1, type = "string", call = call)
+  assert_single_value(population_2, type = "string", call = call)
 
-  pixelatorR:::assert_vector(masked_markers, type = "character", n = 1, allow_null = TRUE, call = call)
+  assert_vector(masked_markers, type = "character", n = 1, allow_null = TRUE, call = call)
   if (!is.null(masked_markers)) {
-    pixelatorR:::assert_x_in_y(masked_markers, rownames(object), call = call)
+    assert_x_in_y(masked_markers, rownames(object), call = call)
   }
-  pixelatorR:::assert_single_value(max_freq, type = "numeric", call = call)
-  pixelatorR:::assert_within_limits(max_freq, limits = c(0, 1), call = call)
-  pixelatorR:::assert_single_value(min_diff, type = "numeric", call = call)
-  pixelatorR:::assert_within_limits(min_diff, limits = c(0, 1), call = call)
-  pixelatorR:::assert_single_value(show_plot, type = "bool", call = call)
+  assert_single_value(max_freq, type = "numeric", call = call)
+  assert_within_limits(max_freq, limits = c(0, 1), call = call)
+  assert_single_value(min_diff, type = "numeric", call = call)
+  assert_within_limits(min_diff, limits = c(0, 1), call = call)
+  assert_single_value(show_plot, type = "bool", call = call)
 
-  pixelatorR:::assert_single_value(k, "integer", call = call)
-  pixelatorR:::assert_within_limits(k, c(1, 6), call = call)
-  pixelatorR:::assert_single_value(min_neighborhood_size, "integer", call = call)
-  pixelatorR:::assert_within_limits(min_neighborhood_size, c(1, 50), call = call)
-  pixelatorR:::assert_single_value(max_components_per_population, "integer", call = call)
-  pixelatorR:::assert_within_limits(max_components_per_population, c(1, Inf), call = call)
-  pixelatorR:::assert_single_value(neighborhoods_per_component, "integer", call = call)
-  pixelatorR:::assert_within_limits(neighborhoods_per_component, c(10, 1e4), call = call)
-  pixelatorR:::assert_single_value(verbose, type = "bool", call = call)
+  assert_single_value(k, "integer", call = call)
+  assert_within_limits(k, c(1, 6), call = call)
+  assert_single_value(min_neighborhood_size, "integer", call = call)
+  assert_within_limits(min_neighborhood_size, c(1, 50), call = call)
+  assert_single_value(max_components_per_population, "integer", call = call)
+  assert_within_limits(max_components_per_population, c(1, Inf), call = call)
+  assert_single_value(neighborhoods_per_component, "integer", call = call)
+  assert_within_limits(neighborhoods_per_component, c(10, 1e4), call = call)
+  assert_single_value(verbose, type = "bool", call = call)
 
   return(invisible(NULL))
 }
@@ -876,7 +876,7 @@ cc_protein_weights <- function(
 #'
 #' @noRd
 .kmeans_midpoint <- function(centers) {
-  pixelatorR:::assert_vector(centers, type = "numeric", n = 2)
+  assert_vector(centers, type = "numeric", n = 2)
   mean(centers)
 }
 
@@ -895,11 +895,11 @@ spatial_smoothing <- function(
   x,
   iter = 5L
 ) {
-  pixelatorR:::assert_class(A, "dgCMatrix")
-  pixelatorR:::assert_class(x, c("dgCMatrix", "matrix"))
-  pixelatorR:::assert_singles_match(nrow(A), nrow(x))
-  pixelatorR:::assert_single_value(iter, type = "integer")
-  pixelatorR:::assert_within_limits(iter, limits = c(1, 50))
+  assert_class(A, "dgCMatrix")
+  assert_class(x, c("dgCMatrix", "matrix"))
+  assert_singles_match(nrow(A), nrow(x))
+  assert_single_value(iter, type = "integer")
+  assert_within_limits(iter, limits = c(1, 50))
 
   # Assign equal weights to neighbors
   P <- A / Matrix::rowSums(A)
@@ -1168,11 +1168,11 @@ distance_from_node_set <- function(
   max_iter = 40L,
   verbose = FALSE
 ) {
-  pixelatorR:::assert_class(cg, "CellGraph")
-  pixelatorR:::assert_vector(seed_nodes, "character", n = 1)
-  pixelatorR:::assert_single_value(max_iter, type = "integer")
-  pixelatorR:::assert_within_limits(max_iter, limits = c(0, Inf))
-  pixelatorR:::assert_single_value(verbose, type = "bool")
+  assert_class(cg, "CellGraph")
+  assert_vector(seed_nodes, "character", n = 1)
+  assert_single_value(max_iter, type = "integer")
+  assert_within_limits(max_iter, limits = c(0, Inf))
+  assert_single_value(verbose, type = "bool")
 
   nodes <- cg@cellgraph %N>% pull(name)
   n <- length(nodes)
@@ -1240,14 +1240,14 @@ partition_counts <- function(
   partition = NULL,
   partition_column = NULL
 ) {
-  pixelatorR:::assert_class(cg, "CellGraph")
+  assert_class(cg, "CellGraph")
   if (is.null(partition) && is.null(partition_column)) {
     cli::cli_abort("Either `partition` or `partition_column` must be provided.")
   }
   if (!is.null(partition) && !is.null(partition_column)) {
     cli::cli_abort("One of `partition` or `partition_column` must be provided, not both.")
   }
-  pixelatorR:::assert_class(partition, c("character", "factor"), allow_null = TRUE)
+  assert_class(partition, c("character", "factor"), allow_null = TRUE)
   if (!is.null(partition)) {
     if (length(partition) != length(cg@cellgraph)) {
       cli::cli_abort(
@@ -1255,7 +1255,7 @@ partition_counts <- function(
       )
     }
   }
-  pixelatorR:::assert_single_value(partition_column, "string", allow_null = TRUE)
+  assert_single_value(partition_column, "string", allow_null = TRUE)
 
   if (!is.null(partition_column)) {
     partition <- try(

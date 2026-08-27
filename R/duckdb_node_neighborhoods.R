@@ -45,17 +45,17 @@ fetch_node_neighborhoods <- function(
   nodes_per_component = 1000,
   k = 3
 ) {
-  pixelatorR:::assert_class(object, "Seurat")
+  assert_class(object, "Seurat")
   assay <- DefaultAssay(object)
-  pixelatorR:::assert_pna_assay(object[[assay]])
-  pixelatorR:::assert_vector(components, "character", n = 1, allow_null = TRUE)
-  pixelatorR:::assert_x_in_y(components, colnames(object), allow_null = TRUE)
-  pixelatorR:::assert_single_value(nodes_per_component, "integer", allow_null = TRUE)
+  assert_pna_assay(object[[assay]])
+  assert_vector(components, "character", n = 1, allow_null = TRUE)
+  assert_x_in_y(components, colnames(object), allow_null = TRUE)
+  assert_single_value(nodes_per_component, "integer", allow_null = TRUE)
   if (!is.null(nodes_per_component)) {
-    pixelatorR:::assert_within_limits(nodes_per_component, c(1, 10000))
+    assert_within_limits(nodes_per_component, c(1, 10000))
   }
-  pixelatorR:::assert_single_value(k, "integer")
-  pixelatorR:::assert_within_limits(k, c(1, 6))
+  assert_single_value(k, "integer")
+  assert_within_limits(k, c(1, 6))
 
   components <- components %||% colnames(object)
 

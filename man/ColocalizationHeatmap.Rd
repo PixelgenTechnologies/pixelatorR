@@ -230,6 +230,3 @@ ColocalizationHeatmap(
 )
 
 }
-\seealso{
-\code{pixelatorRinternal::extract_panel_interactions()}
-}
