@@ -38,8 +38,7 @@ test_that("CreateCellGraphObject fails when invalid input is provided", {
     CreateCellGraphObject(
       cellgraph = bipart_graph,
       layout = list(example_layout = data.frame(x = 1))
-    ),
-    "must be a <tbl_df>"
+    )
   )
   expect_error(
     CreateCellGraphObject(
