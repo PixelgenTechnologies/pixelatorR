@@ -121,6 +121,7 @@ Collate:
     'extdata.R'
     'fetch_layout_data.R'
     'filter_and_summarize_proximity_scores.R'
+    'filter_markers.R'
     'global_options.R'
     'graph_analysis.R'
     'graph_conversion.R'
