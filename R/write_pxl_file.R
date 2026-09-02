@@ -706,13 +706,15 @@ WriteMPX_pxl_file <- function(
 
     layouts <- cg@layout
 
-    # Add node names to layout tibbles
+    # Add node names to layout tables
     layouts <- lapply(layouts, function(ly) {
-      node_names <- rownames(cg@counts)
+      node_names <- rownames(ly)
+      # Layout tables are stored without the A/B suffix used in bipartite graphs
       if (attr(cg@cellgraph, "type") == "bipartite") {
         node_names <- stringr::str_replace(node_names, "-[A|B]", "")
       }
       ly %>%
+        as_tibble() %>%
         mutate(name = node_names) %>%
         relocate(name, .before = x)
     })

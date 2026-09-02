@@ -233,36 +233,17 @@ Cells.NodeDimReduc <- function(x, ...) {
   rownames(slot(x, "embeddings"))
 }
 
-#' Subset a NodeDimReduc to a set of nodes
-#'
-#' @noRd
-#'
-.subset_node_dimreduc <- function(object, nodes) {
-  embeddings <- slot(object, "embeddings")
-  missing_nodes <- setdiff(nodes, rownames(embeddings))
-  if (length(missing_nodes) > 0) {
-    cli::cli_abort(
-      c(
-        "x" = "The reduction is missing embeddings for {length(missing_nodes)} node{?s}.",
-        "i" = "Example: {.val {head(missing_nodes, 3)}}"
-      )
-    )
-  }
-  slot(object, "embeddings") <- embeddings[nodes, , drop = FALSE]
-  object
-}
-
 #' Align a NodeDimReduc to a node name order
 #'
 #' @noRd
 #'
-.align_node_dimreduc <- function(object, node_names, arg = "reduction") {
-  assert_class(object, "NodeDimReduc")
-  embeddings <- slot(object, "embeddings")
+.align_node_dimreduc <- function(object, node_names, arg = "reduction", call = caller_env()) {
+  assert_class(object, "NodeDimReduc", arg = arg, call = call)
   slot(object, "embeddings") <- .align_matrix_rows(
-    mat = embeddings,
+    mat = slot(object, "embeddings"),
     node_names = node_names,
-    arg = arg
+    arg = arg,
+    call = call
   )
   object
 }

@@ -17,18 +17,19 @@ NULL
 #' in that node order. Shuffling the graph or a matrix no longer silently
 #' breaks the mapping.
 #'
-#' Layout tables may include a \code{name} column, which is used for matching
-#' and then dropped so that stored layouts keep their coordinate columns
-#' (typically \code{x}, \code{y}, \code{z}). The matched node names are stored
-#' in the \code{node_names} attribute of each layout tibble. Layouts without
-#' names still work if the number of rows matches the graph, which preserves
-#' objects created with earlier versions of pixelatorR.
+#' Layouts are stored as \code{data.frame} objects with node IDs as row names.
+#' A \code{name} column is accepted on input and is converted to row names, so
+#' that stored layouts keep only their coordinate columns (typically \code{x},
+#' \code{y}, \code{z}). Layouts without node IDs still work if the number of
+#' rows matches the graph, which preserves objects created with earlier
+#' versions of pixelatorR.
 #'
 #' @slot cellgraph A \code{tbl_graph} object corresponding to a cell graph
 #' @slot counts A \code{matrix}-like object with marker counts (nodes x markers).
 #' Row names are node names.
-#' @slot layout A named \code{list} of \code{tbl_df} objects with coordinates
-#' for cell layouts. Row order matches the graph node order.
+#' @slot layout A named \code{list} of \code{data.frame} objects with coordinates
+#' for cell layouts. Row names are node names and the row order matches the
+#' graph node order.
 #' @slot layers A named \code{list} of additional numeric node matrices
 #' (nodes x features), analogous to layers on a Seurat
 #' \code{\link[SeuratObject]{Assay5}}. The counts matrix is not stored here;
@@ -72,9 +73,9 @@ CellGraph <- setClass(
 #' @param cellgraph A \code{tbl_graph} object representing a PNA single-cell graph
 #' @param counts A \code{dgCMatrix} with marker counts. Rows are matched to graph
 #' node names (order does not need to match).
-#' @param layout A named \code{list} of \code{tbl_df} objects with cell layouts.
-#' Each table may have a \code{name} column used to match nodes; otherwise the
-#' row order is assumed to follow the graph (legacy behavior).
+#' @param layout A named \code{list} of \code{data.frame} objects with cell
+#' layouts. Nodes are identified by row names or by a \code{name} column;
+#' otherwise the row order is assumed to follow the graph (legacy behavior).
 #' @param layers A named \code{list} of additional numeric node matrices
 #' (nodes x features). \code{"counts"} is reserved.
 #' @param meta.data A node-level \code{data.frame} or \code{tbl_df}. Either row
@@ -139,7 +140,7 @@ CellGraph <- setClass(
 #'   components = sel_comp
 #' )[[1]]
 #'
-#' # Layouts with a name column are matched to graph nodes automatically
+#' # Layouts with a name column or node row names are matched automatically
 #' cg <- CreateCellGraphObject(
 #'   cellgraph = component_graph,
 #'   counts = counts,
@@ -632,26 +633,26 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.validate_cellgraph <- function(cellgraph, verbose = FALSE) {
+.validate_cellgraph <- function(cellgraph, verbose = FALSE, call = caller_env()) {
   if (!"type" %in% names(attributes(cellgraph))) {
-    cli::cli_abort(c("x" = "Graph attribute {.str type} is missing."))
+    cli::cli_abort(c("x" = "Graph attribute {.str type} is missing."), call = call)
   } else if (verbose && check_global_verbosity()) {
     cli::cli_alert_info("Got a graph of type '{attr(cellgraph, 'type')}'")
   }
 
   if (attr(cellgraph, "type") == "bipartite") {
     if (!"name" %in% vertex_attr_names(cellgraph)) {
-      cli::cli_abort("x" = "Node attribute {.str name} is missing from the graph")
+      cli::cli_abort("x" = "Node attribute {.str name} is missing from the graph", call = call)
     }
     if (!"node_type" %in% vertex_attr_names(cellgraph)) {
-      cli::cli_abort("x" = "Node attribute {.str node_type} is missing from the graph")
+      cli::cli_abort("x" = "Node attribute {.str node_type} is missing from the graph", call = call)
     }
   }
   # TODO: Add check for A-node-projection and linegraph
 
   node_names <- .cg_node_names(cellgraph)
   if (anyDuplicated(node_names)) {
-    cli::cli_abort(c("x" = "Node names in {.arg cellgraph} must be unique."))
+    cli::cli_abort(c("x" = "Node names in {.arg cellgraph} must be unique."), call = call)
   }
 }
 
@@ -698,7 +699,7 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.align_matrix_rows <- function(mat, node_names, arg = "matrix") {
+.align_matrix_rows <- function(mat, node_names, arg = "matrix", call = caller_env()) {
   if (is.null(mat)) {
     return(NULL)
   }
@@ -708,20 +709,25 @@ subset.CellGraph <- function(
         c(
           "x" = "{.arg {arg}} has no row names and {nrow(mat)} row{?s},",
           " " = "but the graph has {length(node_names)} node{?s}."
-        )
+        ),
+        call = call
       )
     }
     rownames(mat) <- node_names
     return(mat)
   }
   rownames(mat) <- as.character(rownames(mat))
+  if (anyDuplicated(rownames(mat))) {
+    cli::cli_abort(c("x" = "Row names in {.arg {arg}} must be unique."), call = call)
+  }
   missing_nodes <- setdiff(node_names, rownames(mat))
   if (length(missing_nodes) > 0) {
     cli::cli_abort(
       c(
         "x" = "{.arg {arg}} is missing {length(missing_nodes)} node{?s} present in the graph.",
         "i" = "Example: {.val {head(missing_nodes, 3)}}"
-      )
+      ),
+      call = call
     )
   }
   mat[node_names, , drop = FALSE]
@@ -731,19 +737,19 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.align_counts <- function(counts, node_names) {
+.align_counts <- function(counts, node_names, call = caller_env()) {
   if (is.null(counts)) {
     return(NULL)
   }
-  assert_class(counts, "dgCMatrix")
-  .align_matrix_rows(counts, node_names, arg = "counts")
+  assert_class(counts, "dgCMatrix", call = call)
+  .align_matrix_rows(counts, node_names, arg = "counts", call = call)
 }
 
 #' Align a numeric node matrix used as a layer
 #'
 #' @noRd
 #'
-.align_node_matrix <- function(mat, node_names, arg = "layer") {
+.align_node_matrix <- function(mat, node_names, arg = "layer", call = caller_env()) {
   if (inherits(mat, "data.frame")) {
     mat <- as.matrix(mat)
   }
@@ -752,58 +758,79 @@ subset.CellGraph <- function(
       c(
         "x" = "{.arg {arg}} must be a numeric matrix.",
         "i" = "Got a {.cls {class(mat)}}."
-      )
+      ),
+      call = call
     )
   }
   if (nrow(mat) > 0 && ncol(mat) > 0 && !is.numeric(mat[1, 1])) {
-    cli::cli_abort(c("x" = "{.arg {arg}} must be numeric."))
+    cli::cli_abort(c("x" = "{.arg {arg}} must be numeric."), call = call)
   }
-  .align_matrix_rows(mat, node_names, arg = arg)
+  .align_matrix_rows(mat, node_names, arg = arg, call = call)
 }
 
 #' Align a named list of layers
 #'
 #' @noRd
 #'
-.align_layers <- function(layers, node_names) {
+.align_layers <- function(layers, node_names, call = caller_env()) {
   if (is.null(layers) || length(layers) == 0) {
     return(list())
   }
   if (is.null(names(layers)) || any(names(layers) == "")) {
-    cli::cli_abort("The {.arg layers} list must be named.")
+    cli::cli_abort("The {.arg layers} list must be named.", call = call)
   }
   if ("counts" %in% names(layers)) {
     cli::cli_abort(
       c(
         "x" = "{.str counts} is a reserved layer name.",
         "i" = "Store the count matrix in the {.arg counts} argument / slot."
-      )
+      ),
+      call = call
     )
   }
   aligned <- lapply(names(layers), function(nm) {
-    .align_node_matrix(layers[[nm]], node_names, arg = nm)
+    .align_node_matrix(layers[[nm]], node_names, arg = nm, call = call)
   })
   names(aligned) <- names(layers)
   aligned
 }
 
-#' Align a layout tibble to graph node order
+#' Node identifiers stored as row names
+#'
+#' Returns \code{NULL} for automatic row names, which \code{data.frame} uses
+#' when no identifiers have been set (tibbles never carry row names, so they
+#' also end up with automatic row names once coerced).
 #'
 #' @noRd
 #'
-.align_layout <- function(layout, node_names, layout_name = "layout") {
-  if (!inherits(layout, "tbl_df")) {
+.explicit_rownames <- function(x) {
+  if (!is.data.frame(x)) {
+    x <- as.data.frame(x, stringsAsFactors = FALSE, check.names = FALSE)
+  }
+  if (.row_names_info(x) < 0L) {
+    return(NULL)
+  }
+  as.character(attr(x, "row.names"))
+}
+
+#' Align a layout table to graph node order
+#'
+#' @noRd
+#'
+.align_layout <- function(layout, node_names, layout_name = "layout", call = caller_env()) {
+  if (!inherits(layout, "data.frame")) {
     cli::cli_abort(
-      c("x" = "The '{layout_name}' layout table must be a {.cls tbl_df}")
+      c("x" = "The '{layout_name}' layout table must be a {.cls data.frame}"),
+      call = call
     )
   }
 
-  layout_names <- NULL
+  layout <- as.data.frame(layout, stringsAsFactors = FALSE, check.names = FALSE)
   if ("name" %in% colnames(layout)) {
     layout_names <- as.character(layout$name)
     layout <- layout[, setdiff(colnames(layout), "name"), drop = FALSE]
-  } else if (!is.null(attr(layout, "node_names"))) {
-    layout_names <- as.character(attr(layout, "node_names"))
+  } else {
+    layout_names <- .explicit_rownames(layout)
   }
 
   if (is.null(layout_names)) {
@@ -812,14 +839,18 @@ subset.CellGraph <- function(
         c(
           "x" = "Number of nodes ({length(node_names)}) in the 'cellgraph' slot does not match ",
           " " = "the number of rows ({nrow(layout)}) in the '{layout_name}' layout table"
-        )
+        ),
+        call = call
       )
     }
     layout_names <- node_names
   }
 
   if (anyDuplicated(layout_names)) {
-    cli::cli_abort(c("x" = "Node names in the '{layout_name}' layout must be unique."))
+    cli::cli_abort(
+      c("x" = "Node names in the '{layout_name}' layout must be unique."),
+      call = call
+    )
   }
   missing_nodes <- setdiff(node_names, layout_names)
   if (length(missing_nodes) > 0) {
@@ -827,11 +858,12 @@ subset.CellGraph <- function(
       c(
         "x" = "The '{layout_name}' layout is missing {length(missing_nodes)} node{?s}.",
         "i" = "Example: {.val {head(missing_nodes, 3)}}"
-      )
+      ),
+      call = call
     )
   }
-  layout <- layout[match(node_names, layout_names), ]
-  attr(layout, "node_names") <- node_names
+  layout <- layout[match(node_names, layout_names), , drop = FALSE]
+  rownames(layout) <- node_names
   layout
 }
 
@@ -839,16 +871,16 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.align_layout_list <- function(layout, node_names) {
+.align_layout_list <- function(layout, node_names, call = caller_env()) {
   if (is.null(layout)) {
     return(NULL)
   }
-  assert_non_empty_object(layout, "list")
+  assert_non_empty_object(layout, "list", call = call)
   if (is.null(names(layout)) || any(names(layout) == "")) {
-    cli::cli_abort("The {.arg layout} list must be named.")
+    cli::cli_abort("The {.arg layout} list must be named.", call = call)
   }
   aligned <- lapply(names(layout), function(nm) {
-    .align_layout(layout[[nm]], node_names, layout_name = nm)
+    .align_layout(layout[[nm]], node_names, layout_name = nm, call = call)
   })
   names(aligned) <- names(layout)
   aligned
@@ -858,37 +890,40 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.align_meta_data <- function(meta, node_names) {
+.align_meta_data <- function(meta, node_names, call = caller_env()) {
   if (is.null(meta) || (nrow(as.data.frame(meta)) == 0 && ncol(as.data.frame(meta)) == 0)) {
     return(data.frame(row.names = node_names))
   }
   meta <- as.data.frame(meta, stringsAsFactors = FALSE, check.names = FALSE)
-  default_rn <- identical(rownames(meta), as.character(seq_len(nrow(meta))))
-  used_name_col <- FALSE
-  if ("name" %in% colnames(meta) && (is.null(rownames(meta)) || default_rn)) {
-    rownames(meta) <- as.character(meta$name)
+  meta_names <- .explicit_rownames(meta)
+  if ("name" %in% colnames(meta) && is.null(meta_names)) {
+    meta_names <- as.character(meta$name)
     meta$name <- NULL
-    used_name_col <- TRUE
   }
-  if (!used_name_col && (is.null(rownames(meta)) || default_rn)) {
+  if (is.null(meta_names)) {
     if (nrow(meta) != length(node_names)) {
       cli::cli_abort(
         c(
           "x" = "{.arg meta.data} has no node identifiers and {nrow(meta)} row{?s},",
           " " = "but the graph has {length(node_names)} node{?s}."
-        )
+        ),
+        call = call
       )
     }
-    rownames(meta) <- node_names
+    meta_names <- node_names
   }
-  rownames(meta) <- as.character(rownames(meta))
-  missing_nodes <- setdiff(node_names, rownames(meta))
+  if (anyDuplicated(meta_names)) {
+    cli::cli_abort(c("x" = "Node names in {.arg meta.data} must be unique."), call = call)
+  }
+  rownames(meta) <- meta_names
+  missing_nodes <- setdiff(node_names, meta_names)
   if (length(missing_nodes) > 0) {
     cli::cli_abort(
       c(
         "x" = "{.arg meta.data} is missing {length(missing_nodes)} node{?s} present in the graph.",
         "i" = "Example: {.val {head(missing_nodes, 3)}}"
-      )
+      ),
+      call = call
     )
   }
   meta[node_names, , drop = FALSE]
@@ -898,15 +933,15 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.align_reductions <- function(reductions, node_names) {
+.align_reductions <- function(reductions, node_names, call = caller_env()) {
   if (is.null(reductions) || length(reductions) == 0) {
     return(list())
   }
   if (is.null(names(reductions)) || any(names(reductions) == "")) {
-    cli::cli_abort("The {.arg reductions} list must be named.")
+    cli::cli_abort("The {.arg reductions} list must be named.", call = call)
   }
   aligned <- lapply(names(reductions), function(nm) {
-    .align_node_dimreduc(reductions[[nm]], node_names, arg = nm)
+    .align_node_dimreduc(reductions[[nm]], node_names, arg = nm, call = call)
   })
   names(aligned) <- names(reductions)
   aligned
@@ -916,22 +951,23 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.get_cellgraph_reduction <- function(object, reduction = NULL) {
+.get_cellgraph_reduction <- function(object, reduction = NULL, call = caller_env()) {
   object <- .upgrade_cellgraph(object)
   reductions <- slot(object, "reductions")
   if (length(reductions) == 0) {
-    cli::cli_abort(c("x" = "This {.cls CellGraph} has no reductions."))
+    cli::cli_abort(c("x" = "This {.cls CellGraph} has no reductions."), call = call)
   }
   if (is.null(reduction)) {
     reduction <- names(reductions)[1]
   }
-  assert_single_value(reduction, type = "string")
+  assert_single_value(reduction, type = "string", call = call)
   if (!reduction %in% names(reductions)) {
     cli::cli_abort(
       c(
         "x" = "Unknown reduction {.val {reduction}}.",
         "i" = "Available reductions: {.val {names(reductions)}}"
-      )
+      ),
+      call = call
     )
   }
   reductions[[reduction]]
@@ -953,17 +989,17 @@ subset.CellGraph <- function(
   layouts <- slot(object, "layout")
   if (!is.null(layouts) && length(layouts) > 0) {
     slot(object, "layout") <- lapply(layouts, function(ly) {
-      has_names <- !is.null(attr(ly, "node_names")) || "name" %in% colnames(ly)
+      has_names <- !is.null(.explicit_rownames(ly)) || "name" %in% colnames(ly)
       if (!has_names && nrow(ly) == length(node_names)) {
-        attr(ly, "node_names") <- node_names
+        ly <- as.data.frame(ly, stringsAsFactors = FALSE, check.names = FALSE)
+        rownames(ly) <- node_names
       }
       ly
     })
   }
 
   meta <- slot(object, "meta.data")
-  default_rn <- ncol(meta) > 0 && identical(rownames(meta), as.character(seq_len(nrow(meta))))
-  if (ncol(meta) > 0 && (is.null(rownames(meta)) || default_rn) && nrow(meta) == length(node_names)) {
+  if (ncol(meta) > 0 && is.null(.explicit_rownames(meta)) && nrow(meta) == length(node_names)) {
     rownames(meta) <- node_names
     slot(object, "meta.data") <- meta
   }
@@ -985,32 +1021,32 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.remap_cellgraph_nodes <- function(object, node_names) {
+.remap_cellgraph_nodes <- function(object, node_names, call = caller_env()) {
   counts <- slot(object, "counts")
   if (!is.null(counts)) {
-    slot(object, "counts") <- .align_counts(counts, node_names)
+    slot(object, "counts") <- .align_counts(counts, node_names, call = call)
   }
 
   layouts <- slot(object, "layout")
   if (!is.null(layouts) && length(layouts) > 0) {
-    slot(object, "layout") <- .align_layout_list(layouts, node_names)
+    slot(object, "layout") <- .align_layout_list(layouts, node_names, call = call)
   }
 
   layers <- slot(object, "layers")
   if (length(layers) > 0) {
-    slot(object, "layers") <- .align_layers(layers, node_names)
+    slot(object, "layers") <- .align_layers(layers, node_names, call = call)
   }
 
   meta <- slot(object, "meta.data")
   if (ncol(meta) == 0 && (nrow(meta) == 0 || !all(node_names %in% rownames(meta)))) {
     slot(object, "meta.data") <- data.frame(row.names = node_names)
   } else {
-    slot(object, "meta.data") <- .align_meta_data(meta, node_names)
+    slot(object, "meta.data") <- .align_meta_data(meta, node_names, call = call)
   }
 
   reductions <- slot(object, "reductions")
   if (length(reductions) > 0) {
-    slot(object, "reductions") <- .align_reductions(reductions, node_names)
+    slot(object, "reductions") <- .align_reductions(reductions, node_names, call = call)
   }
 
   object

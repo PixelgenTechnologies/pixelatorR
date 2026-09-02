@@ -20,9 +20,9 @@ CreateCellGraphObject(
 \item{counts}{A \code{dgCMatrix} with marker counts. Rows are matched to graph
 node names (order does not need to match).}
 
-\item{layout}{A named \code{list} of \code{tbl_df} objects with cell layouts.
-Each table may have a \code{name} column used to match nodes; otherwise the
-row order is assumed to follow the graph (legacy behavior).}
+\item{layout}{A named \code{list} of \code{data.frame} objects with cell
+layouts. Nodes are identified by row names or by a \code{name} column;
+otherwise the row order is assumed to follow the graph (legacy behavior).}
 
 \item{layers}{A named \code{list} of additional numeric node matrices
 (nodes x features). \code{"counts"} is reserved.}
@@ -90,7 +90,7 @@ layout <- db$components_layout(
   components = sel_comp
 )[[1]]
 
-# Layouts with a name column are matched to graph nodes automatically
+# Layouts with a name column or node row names are matched automatically
 cg <- CreateCellGraphObject(
   cellgraph = component_graph,
   counts = counts,

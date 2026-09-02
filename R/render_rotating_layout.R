@@ -66,7 +66,7 @@
 #' Set \code{normalize_illumination = FALSE} to use raw output from
 #' \code{heuristic_illumination} instead of rescaling the mask to \code{[0, 1]}.
 #'
-#' @param data A tibble (\code{tbl_df}) with columns 'x', 'y', 'z',
+#' @param data A \code{data.frame}-like object with columns 'x', 'y', 'z',
 #' and 'node_val'. The 'node_val' column can be either a numeric or a
 #' factor.
 #' @param file A character string specifying the path to the output file.
@@ -1564,7 +1564,7 @@ scale_layout <- function(
   normalize_illumination,
   call = caller_env()
 ) {
-  assert_class(data, "tbl_df", call = call)
+  assert_class(data, "data.frame", call = call)
   assert_within_limits(pt_opacity, c(0, 1), call = call)
   assert_within_limits(pt_size, c(0, 5), call = call)
   assert_vector(colors, "character", call = call)

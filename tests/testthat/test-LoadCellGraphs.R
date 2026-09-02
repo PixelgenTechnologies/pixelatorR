@@ -65,7 +65,11 @@ for (assay_version in c("v3", "v5")) {
     layouts <- seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(2470, 3))
     expect_equal(
-      layouts[[1]] %>% head(),
+      rownames(layouts[[1]]),
+      seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@cellgraph %>% pull(name)
+    )
+    expect_equal(
+      layouts[[1]] %>% head() %>% tibble::as_tibble(),
       structure(
         list(
           x = c(
@@ -100,7 +104,11 @@ for (assay_version in c("v3", "v5")) {
     layouts <- seur_obj_pna[["PNA"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(43543, 3))
     expect_equal(
-      layouts[[1]] %>% head(),
+      rownames(layouts[[1]]),
+      seur_obj_pna[["PNA"]]@cellgraphs[[1]]@cellgraph %>% pull(name)
+    )
+    expect_equal(
+      layouts[[1]] %>% head() %>% tibble::as_tibble(),
       structure(
         list(
           x = c(

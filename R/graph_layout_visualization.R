@@ -178,7 +178,7 @@ Plot2DGraph <- function(
       inds_keep <- (graph %N>% pull(node_type)) %in% c("A", "umi1")
       graph <- graph %N>%
         filter(node_type %in% c("A", "umi1"))
-      layout <- layout[inds_keep, ]
+      layout <- layout[inds_keep, , drop = FALSE]
     }
 
     # Rearrange by marker

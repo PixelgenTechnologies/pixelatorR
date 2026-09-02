@@ -27,9 +27,11 @@ test_that("CreateCellGraphObject accepts named layout lists", {
     layout = list(example_layout = layout)
   )
 
+  expect_s3_class(cg@layout$example_layout, "data.frame")
+  expect_false(inherits(cg@layout$example_layout, "tbl_df"))
   expect_equal(cg@layout$example_layout$x, layout$x)
   expect_equal(colnames(cg@layout$example_layout), "x")
-  expect_equal(attr(cg@layout$example_layout, "node_names"), bipart_graph %>% pull(name))
+  expect_equal(rownames(cg@layout$example_layout), bipart_graph %>% pull(name))
 })
 
 test_that("CreateCellGraphObject fails when invalid input is provided", {
@@ -92,7 +94,21 @@ test_that("CreateCellGraphObject aligns layouts with a name column", {
   )
   expect_equal(cg@layout$example_layout$x, as.integer(match(node_names, rev(node_names))))
   expect_false("name" %in% colnames(cg@layout$example_layout))
-  expect_equal(attr(cg@layout$example_layout, "node_names"), node_names)
+  expect_equal(rownames(cg@layout$example_layout), node_names)
+})
+
+test_that("CreateCellGraphObject aligns layouts by row names", {
+  layout <- data.frame(
+    x = seq_len(n_nodes),
+    y = seq_len(n_nodes),
+    row.names = rev(node_names)
+  )
+  cg <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    layout = list(example_layout = layout)
+  )
+  expect_equal(rownames(cg@layout$example_layout), node_names)
+  expect_equal(cg@layout$example_layout$x, layout[node_names, "x"])
 })
 
 test_that("CreateCellGraphObject stores layers, meta.data and reductions", {
@@ -199,8 +215,9 @@ test_that("subset.CellGraph keeps node-level slots aligned", {
   cg_small <- subset(cg, nodes = keep)
   small_names <- cg_small@cellgraph %>% dplyr::pull(name)
   expect_equal(rownames(cg_small@counts), small_names)
-  expect_equal(attr(cg_small@layout$xy, "node_names"), small_names)
+  expect_equal(rownames(cg_small@layout$xy), small_names)
   expect_equal(rownames(cg_small@layers$data), small_names)
   expect_equal(rownames(cg_small@meta.data), small_names)
   expect_true(all(small_names %in% keep))
+  expect_equal(cg_small@layout$xy$x, layout$x[match(small_names, node_names)])
 })
