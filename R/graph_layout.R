@@ -216,8 +216,12 @@ ComputeLayout.CellGraph <- function(
     slot(object, name = "layout") <- list()
   }
 
-  # Add layout to CellGraph layout slot
-  slot(object, name = "layout")[[layout_name]] <- layout
+  # Add layout to CellGraph layout slot, aligned to graph node names
+  slot(object, name = "layout")[[layout_name]] <- .align_layout(
+    layout,
+    node_names = .cg_node_names(slot(object, name = "cellgraph")),
+    layout_name = layout_name
+  )
 
   return(object)
 }

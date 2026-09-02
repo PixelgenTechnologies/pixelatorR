@@ -76,32 +76,9 @@ KeepLargestComponent.CellGraph <- function(
   verbose = TRUE,
   ...
 ) {
-  # Fetch node ids before filtering
-  node_ids <- object@cellgraph %N>% pull(name)
-
   filtered_graph <- KeepLargestComponent(slot(object, name = "cellgraph"), verbose = verbose, ...)
-  slot(object, name = "cellgraph") <- filtered_graph
-
-  # fetch node ids after filtering
-  node_ids_filtered <- filtered_graph %N>% pull(name)
-
-  # Filter counts
-  counts <- slot(object, name = "counts")
-  if (!is.null(counts)) {
-    counts <- counts[match(node_ids_filtered, node_ids), ]
-    slot(object, name = "counts") <- counts
-  }
-
-  # Filter layouts if available
-  layouts <- slot(object, name = "layout")
-  if (!is.null(layouts)) {
-    layouts <- lapply(layouts, function(layout) {
-      layout[match(node_ids_filtered, node_ids), ]
-    })
-    slot(object, name = "layout") <- layouts
-  }
-
-  return(object)
+  node_ids_filtered <- .cg_node_names(filtered_graph)
+  subset(object, nodes = node_ids_filtered)
 }
 
 
