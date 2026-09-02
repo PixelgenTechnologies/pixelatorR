@@ -41,7 +41,7 @@ render_rotating_layout(
 )
 }
 \arguments{
-\item{data}{A tibble (\code{tbl_df}) with columns 'x', 'y', 'z',
+\item{data}{A \code{data.frame}-like object with columns 'x', 'y', 'z',
 and 'node_val'. The 'node_val' column can be either a numeric or a
 factor.}
 
