@@ -382,17 +382,22 @@ LoadCellGraphs.MPXAssay <- function(
     cg_list_full <- lapply(names(cg_list_full), function(nm) {
       cg <- cg_list_full[[nm]]
       cg@layout <- list()
+      graph_node_names <- cg@cellgraph %N>% pull(name)
       for (layout_type in all_layout_types) {
+        # Layout tables identify nodes without the A/B suffix used in the graph
         if (attr(cg@cellgraph, "type") == "bipartite") {
-          node_names <- rownames(cg@counts) %>%
+          node_names <- graph_node_names %>%
             stringr::str_replace("-[A|B]", "")
         } else {
-          node_names <- rownames(cg@counts)
+          node_names <- graph_node_names
         }
         # Rearrange layout node coordinates to match CellGraph node order
         coords <- precomputed_layouts_merged[[layout_type]][[nm]]
-        coords <- coords[match(node_names, coords$name), ]
-        cg@layout[[layout_type]] <- coords %>% select(-all_of("name"))
+        coords <- coords[match(node_names, coords$name), ] %>%
+          select(-all_of("name")) %>%
+          as.data.frame()
+        rownames(coords) <- graph_node_names
+        cg@layout[[layout_type]] <- coords
       }
       return(cg)
     }) %>%
@@ -584,8 +589,12 @@ LoadCellGraphs.PNAAssay <- function(
 
       cg_list <- pblapply(names(cg_list), function(nm) {
         cg <- cg_list[[nm]]
+        graph_node_names <- cg@cellgraph %N>% pull(name)
         layout <- layout_list[[nm]]
-        layout <- layout[match(cg@cellgraph %N>% pull(name), layout$name), ] %>% select(-name)
+        layout <- layout[match(graph_node_names, layout$name), ] %>%
+          select(-name) %>%
+          as.data.frame()
+        rownames(layout) <- graph_node_names
         cg@layout <- list(wpmds_3d = layout)
         return(cg)
       }) %>%

@@ -138,7 +138,7 @@ color_by_marker <- function(
 
     cg@counts <- cg@counts[nodes_keep, ]
     cg@layout <- lapply(cg@layout, function(x) {
-      x[nodes_keep, ]
+      x[nodes_keep, , drop = FALSE]
     })
   }
 

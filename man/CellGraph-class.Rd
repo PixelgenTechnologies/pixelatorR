@@ -15,12 +15,12 @@ matched to the \code{name} vertex attribute of \code{cellgraph} and stored
 in that node order. Shuffling the graph or a matrix no longer silently
 breaks the mapping.
 
-Layout tables may include a \code{name} column, which is used for matching
-and then dropped so that stored layouts keep their coordinate columns
-(typically \code{x}, \code{y}, \code{z}). The matched node names are stored
-in the \code{node_names} attribute of each layout tibble. Layouts without
-names still work if the number of rows matches the graph, which preserves
-objects created with earlier versions of pixelatorR.
+Layouts are stored as \code{data.frame} objects with node IDs as row names.
+A \code{name} column is accepted on input and is converted to row names, so
+that stored layouts keep only their coordinate columns (typically \code{x},
+\code{y}, \code{z}). Layouts without node IDs still work if the number of
+rows matches the graph, which preserves objects created with earlier
+versions of pixelatorR.
 }
 \section{Slots}{
 
@@ -30,8 +30,9 @@ objects created with earlier versions of pixelatorR.
 \item{\code{counts}}{A \code{matrix}-like object with marker counts (nodes x markers).
 Row names are node names.}
 
-\item{\code{layout}}{A named \code{list} of \code{tbl_df} objects with coordinates
-for cell layouts. Row order matches the graph node order.}
+\item{\code{layout}}{A named \code{list} of \code{data.frame} objects with coordinates
+for cell layouts. Row names are node names and the row order matches the
+graph node order.}
 
 \item{\code{layers}}{A named \code{list} of additional numeric node matrices
 (nodes x features), analogous to layers on a Seurat
