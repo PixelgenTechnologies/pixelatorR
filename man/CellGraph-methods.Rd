@@ -5,11 +5,41 @@
 \alias{CellGraph-methods}
 \alias{show,CellGraph-method}
 \alias{subset.CellGraph}
+\alias{[[,CellGraph,character,missing-method}
+\alias{[[<-,CellGraph,character,missing,ANY-method}
+\alias{Layers.CellGraph}
+\alias{LayerData.CellGraph}
+\alias{LayerData<-.CellGraph}
+\alias{Embeddings.CellGraph}
+\alias{Loadings.CellGraph}
+\alias{Stdev.CellGraph}
+\alias{Cells.CellGraph}
+\alias{AddMetaData.CellGraph}
 \title{CellGraph Methods}
 \usage{
 \S4method{show}{CellGraph}(object)
 
 \method{subset}{CellGraph}(x, nodes, ...)
+
+\S4method{[[}{CellGraph,character,missing}(x, i, j, ..., drop = TRUE)
+
+\S4method{[[}{CellGraph,character,missing,ANY}(x, i, j, ...) <- value
+
+\method{Layers}{CellGraph}(object, search = NULL, ...)
+
+\method{LayerData}{CellGraph}(object, layer = "counts", ...)
+
+\method{LayerData}{CellGraph}(object, layer = "counts", ...) <- value
+
+\method{Embeddings}{CellGraph}(object, reduction = NULL, ...)
+
+\method{Loadings}{CellGraph}(object, reduction = NULL, ...)
+
+\method{Stdev}{CellGraph}(object, reduction = NULL, ...)
+
+\method{Cells}{CellGraph}(x, ...)
+
+\method{AddMetaData}{CellGraph}(object, metadata, col.name = NULL, ...)
 }
 \arguments{
 \item{object}{A \code{\link{CellGraph}} object}
@@ -17,6 +47,26 @@
 \item{x}{A \code{\link{CellGraph}} object}
 
 \item{nodes}{A character vector of node names}
+
+\item{i}{Name of a stored reduction}
+
+\item{j}{Unused}
+
+\item{value}{Replacement value}
+
+\item{drop}{Unused}
+
+\item{search}{Optional layer name or pattern passed to \code{\link[SeuratObject]{Layers}}}
+
+\item{layer}{Name of a node matrix layer. Use \code{"counts"} for the
+counts slot.}
+
+\item{reduction}{Name of a stored \code{\link{NodeDimReduc}}. Defaults to
+the first reduction when \code{NULL}.}
+
+\item{metadata}{A vector, matrix, or \code{data.frame} of node metadata}
+
+\item{col.name}{Name of the metadata column when \code{metadata} is a vector}
 
 \item{...}{Currently not used}
 }
@@ -28,12 +78,18 @@ Methods for \code{\link{CellGraph}} objects for generics defined in other
 packages
 }
 \section{Functions}{
+
 \itemize{
 \item \code{show(CellGraph)}: Show a \code{CellGraph} object
 
 \item \code{subset(CellGraph)}: Subset a \code{CellGraph} object
 
-}}
+\item \code{x[[i}}: Extract a \code{NodeDimReduc} by name
+
+\item \code{x[[i]] <- value}: Add or replace a \code{NodeDimReduc}
+
+}
+}
 \examples{
 
 library(pixelatorR)

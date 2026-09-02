@@ -12,7 +12,9 @@ CellGraphData(object, slot = "cellgraph") <- value
 \arguments{
 \item{object}{A \code{\link{CellGraph}} object}
 
-\item{slot}{Information to pull from object (cellgraph, meta_data, layout)}
+\item{slot}{Information to pull from object (\code{cellgraph}, \code{counts},
+\code{layout}, \code{layers}, \code{meta.data}, \code{reductions}).
+\code{meta_data} is accepted as an alias for \code{meta.data}.}
 
 \item{value}{A new variable to place in \code{slot}}
 }
