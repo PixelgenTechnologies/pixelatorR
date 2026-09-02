@@ -82,6 +82,7 @@ Suggests:
     FNN
 Collate: 
     'generics.R'
+    'NodeDimReduc.R'
     'CellGraph.R'
     'CellGraphAssay.R'
     'lazy_load_tables.R'
