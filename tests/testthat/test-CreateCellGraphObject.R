@@ -156,17 +156,24 @@ test_that("CreateCellGraphObject stores layers, meta.data and reductions", {
 })
 
 test_that("CellGraphData<- stores the provided value and remaps shuffled graphs", {
-  counts <- make_counts()
-  cg <- CreateCellGraphObject(cellgraph = bipart_graph, counts = counts)
-  CellGraphData(cg, slot = "counts") <- make_counts(rev(node_names))
+  cg <- CreateCellGraphObject(cellgraph = bipart_graph, counts = make_counts())
+
+  # The replacement holds different values than the counts it replaces, so that
+  # the setter has to store the value it was given
+  replacement <- make_counts(rev(node_names)) * 10
+  CellGraphData(cg, slot = "counts") <- replacement
   expect_equal(rownames(CellGraphData(cg, slot = "counts")), node_names)
+  expect_equal(
+    as.matrix(CellGraphData(cg, slot = "counts")),
+    as.matrix(replacement[node_names, ])
+  )
 
   shuffled_graph <- bipart_graph %N>% dplyr::arrange(dplyr::desc(name))
   attr(shuffled_graph, "type") <- "bipartite"
   CellGraphData(cg, slot = "cellgraph") <- shuffled_graph
   new_names <- shuffled_graph %>% dplyr::pull(name)
   expect_equal(rownames(cg@counts), new_names)
-  expect_equal(as.matrix(cg@counts), as.matrix(counts[new_names, ]))
+  expect_equal(as.matrix(cg@counts), as.matrix(replacement[new_names, ]))
 })
 
 test_that("LayerData and AddMetaData work on CellGraph objects", {
