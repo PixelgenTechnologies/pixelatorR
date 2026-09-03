@@ -818,6 +818,11 @@ subset.CellGraph <- function(
 #' @noRd
 #'
 .align_layout <- function(layout, node_names, layout_name = "layout", call = caller_env()) {
+  # Matrix layouts are accepted so that coordinates produced by layout
+  # functions can be stored directly; row names are kept as node identifiers
+  if (is.matrix(layout) || inherits(layout, "Matrix")) {
+    layout <- as.data.frame(as.matrix(layout))
+  }
   if (!inherits(layout, "data.frame")) {
     cli::cli_abort(
       c("x" = "The '{layout_name}' layout table must be a {.cls data.frame}"),
