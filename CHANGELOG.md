@@ -5,6 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Updates
+- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to avoid bloating the `meta.data` slot. Detailed meta data can be loaded by setting `detailed_meta_data = TRUE`.
+
 ## [0.20.0] - 2026-08-27
 
 ### Added
@@ -29,9 +34,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   frequency (default) or absolute cell count in gate annotations. Gate labels
   now use `geom_label` with a semi-transparent background for readability.
 - `segment_cell` for segmenting cell:cell conjugate graphs into two cell-type compartments and optional interface nodes using NMF weights and NNLS projection.
-
-### Updates
-- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to avoid bloating the `meta.data` slot. Users can enable loading of detailed meta data by setting `detailed_meta_data = TRUE`.
 
 ### Fixes
 
