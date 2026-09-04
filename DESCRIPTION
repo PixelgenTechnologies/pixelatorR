@@ -79,9 +79,7 @@ Suggests:
     pls,
     matrixStats,
     sparseMatrixStats,
-    FNN,
-    presto
-Remotes: immunogenomics/presto
+    FNN
 Collate: 
     'generics.R'
     'CellGraph.R'

@@ -1,4 +1,3 @@
-# NOTE: The check on GitHub Actions expects presto to be loaded
 options(Seurat.object.assay.version = "v3")
 
 pxl_file <- system.file("extdata/five_cells",
