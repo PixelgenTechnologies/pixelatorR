@@ -81,6 +81,7 @@ cg
 counts <- db$components_marker_counts(
   components = sel_comp, as_sparse = TRUE
 )[[1]]
+
 # Counts are matched by row name; pre-ordering is optional
 cg <- CreateCellGraphObject(cellgraph = component_graph, counts = counts)
 cg

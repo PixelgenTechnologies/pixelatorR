@@ -8,7 +8,8 @@
 \description{
 The CellGraph class is designed to hold information needed for working with
 PNA single-cell graphs.
-
+}
+\details{
 Node-level data are always aligned by \strong{node name}, not by row position.
 When counts, layouts, layers, metadata, or reductions are added, rows are
 matched to the \code{name} vertex attribute of \code{cellgraph} and stored
