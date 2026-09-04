@@ -78,6 +78,74 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(dim(CellGraphs(se_layout)[[1]]@layout[["my_layout"]]), c(2470, 3))
   })
 
+  test_that("custom layouts are stored like the built-in layouts", {
+    custom_layout_fkn <- graphlayouts::layout_with_pmds
+
+    cg <- CellGraphs(se)[[colnames(se)[1]]]
+    node_names <- cg@cellgraph %>% pull(name)
+
+    # Custom layout functions return a matrix, which is converted to the same
+    # coordinate table that the built-in layout methods return
+    layout <- ComputeLayout(cg@cellgraph,
+      custom_layout_function = custom_layout_fkn,
+      custom_layout_function_args = list(pivots = 100, dim = 3)
+    )
+    expect_s3_class(layout, "tbl_df")
+    expect_equal(colnames(layout), c("x", "y", "z"))
+
+    cg_layout <- ComputeLayout(cg,
+      custom_layout_function = custom_layout_fkn,
+      custom_layout_function_args = list(pivots = 100, dim = 3)
+    )
+    expect_s3_class(cg_layout@layout[["custom"]], "data.frame")
+    expect_equal(colnames(cg_layout@layout[["custom"]]), c("x", "y", "z"))
+    expect_equal(rownames(cg_layout@layout[["custom"]]), node_names)
+  })
+
+  test_that("custom layout coordinates are matched to nodes by name", {
+    cg <- CellGraphs(se)[[colnames(se)[1]]]
+    node_names <- cg@cellgraph %>% pull(name)
+    coords <- graphlayouts::layout_with_pmds(cg@cellgraph, pivots = 100, dim = 3)
+
+    # A custom function that returns its coordinates in a different order than
+    # the graph nodes
+    shuffled_fkn <- function(g, ...) coords[rev(seq_len(nrow(coords))), , drop = FALSE]
+    cg_layout <- ComputeLayout(cg,
+      custom_layout_function = shuffled_fkn,
+      custom_layout_function_args = list(dim = 3)
+    )
+    expect_equal(rownames(cg_layout@layout[["custom"]]), node_names)
+    expect_equal(
+      as.numeric(as.matrix(cg_layout@layout[["custom"]])),
+      as.numeric(coords[node_names, ])
+    )
+
+    # Coordinates without node names fall back to the graph node order
+    unnamed_fkn <- function(g, ...) unname(coords)
+    cg_layout <- ComputeLayout(cg,
+      custom_layout_function = unnamed_fkn,
+      custom_layout_function_args = list(dim = 3)
+    )
+    expect_equal(rownames(cg_layout@layout[["custom"]]), node_names)
+    expect_equal(
+      as.numeric(as.matrix(cg_layout@layout[["custom"]])),
+      as.numeric(coords)
+    )
+
+    # Coordinates for nodes that are not in the graph are rejected
+    unknown_nodes_fkn <- function(g, ...) {
+      rownames(coords) <- paste0("unknown", seq_len(nrow(coords)))
+      coords
+    }
+    expect_error(
+      ComputeLayout(cg,
+        custom_layout_function = unknown_nodes_fkn,
+        custom_layout_function_args = list(dim = 3)
+      ),
+      "missing"
+    )
+  })
+
 
   test_that("ComputeLayout fails when invalid input is provided", {
     # Invalid object

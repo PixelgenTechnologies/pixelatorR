@@ -9,14 +9,42 @@
 The CellGraph class is designed to hold information needed for working with
 PNA single-cell graphs.
 }
+\details{
+Node-level data are always aligned by \strong{node name}, not by row position.
+When counts, layouts, layers, metadata, or reductions are added, rows are
+matched to the \code{name} vertex attribute of \code{cellgraph} and stored
+in that node order. Shuffling the graph or a matrix no longer silently
+breaks the mapping.
+
+Layouts are stored as \code{data.frame} objects with node IDs as row names.
+A \code{name} column is accepted on input and is converted to row names, so
+that stored layouts keep only their coordinate columns (typically \code{x},
+\code{y}, \code{z}). Layouts without node IDs still work if the number of
+rows matches the graph, which preserves objects created with earlier
+versions of pixelatorR.
+}
 \section{Slots}{
 
 \describe{
 \item{\code{cellgraph}}{A \code{tbl_graph} object corresponding to a cell graph}
 
-\item{\code{counts}}{A \code{matrix}-like object with marker counts}
+\item{\code{counts}}{A \code{matrix}-like object with marker counts (nodes x markers).
+Row names are node names.}
 
-\item{\code{layout}}{A \code{list} of \code{tbl_df} objects with coordinates for cell layouts}
+\item{\code{layout}}{A named \code{list} of \code{data.frame} objects with coordinates
+for cell layouts. Row names are node names and the row order matches the
+graph node order.}
+
+\item{\code{layers}}{A named \code{list} of additional numeric node matrices
+(nodes x features), analogous to layers on a Seurat
+\code{\link[SeuratObject]{Assay5}}. The counts matrix is not stored here;
+it remains in \code{counts} and is exposed as the \code{"counts"} layer
+via \code{\link[SeuratObject]{Layers}} / \code{\link[SeuratObject]{LayerData}}.}
+
+\item{\code{meta.data}}{A \code{data.frame} of node-level metadata (one row per node).
+Row names are node names. Columns may have mixed types.}
+
+\item{\code{reductions}}{A named \code{list} of \code{\link{NodeDimReduc}} objects}
 }}
 
 \concept{cellgraph}
