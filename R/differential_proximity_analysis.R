@@ -665,36 +665,30 @@ DifferentialProximityAnalysis.Seurat <- function(
     ))
   )
 
-  presto_check <- requireNamespace("presto", quietly = TRUE)
-  if (presto_check[1]) {
-    data_use <- data_use[, rownames(group_info), drop = FALSE]
-    res <- presto::wilcoxauc(
-      X = data_use,
-      y = group_info[
-        ,
-        "group"
-      ]
-    )
-    res <- res[1:(nrow(x = res) / 2), ]
-    p_val <- res$pval
+  data_use <- data_use[, rownames(group_info), drop = FALSE]
+
+  if (requireNamespace("limma", quietly = TRUE)) {
+    j <- seq_along(cells_1)
+    p_val <- sapply(seq_len(nrow(data_use)), function(x) {
+      min(2 * min(limma::rankSumTestWithCorrelation(
+        index = j,
+        statistics = data_use[x, ]
+      )), 1)
+    })
   } else {
-    expect_limma()
     rlang::inform(
       c(
         "i" = "For a faster implementation of the Wilcoxon Rank Sum Test,
-      please install the presto package: pak::pak('immunogenomics/presto')",
+      please install the limma package: pak::pak('limma')",
         "v" = "This message will only appear once per R session."
       ),
       .frequency = "once",
-      .frequency_id = "presto_not_installed"
+      .frequency_id = "limma_not_installed"
     )
-    j <- seq_along(cells_1)
-    data_use <- data_use[, rownames(group_info), drop = FALSE]
     p_val <- sapply(seq_len(nrow(data_use)), function(x) {
-      return(min(2 * min(limma::rankSumTestWithCorrelation(
-        index = j,
-        statistics = data_use[x, ]
-      )), 1))
+      x1 <- as.numeric(data_use[x, cells_1])
+      x2 <- as.numeric(data_use[x, cells_2])
+      suppressWarnings(stats::wilcox.test(x1, x2, exact = FALSE)$p.value)
     })
   }
   de_results <- cbind(

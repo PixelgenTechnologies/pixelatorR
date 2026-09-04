@@ -5,7 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.20.0] - 2026-08-27
+## [0.21.0] - 2026-09-04
+
+### Fixes
+
+- Removed option to use `presto::wilcoxauc` for Wilcoxon tests since it doesn't handle negative values. The current options are to use `limma::rankSumTestWithCorrelation` (used if limma is installed) or base R's `wilcox.test` from the `stats` package otherwise.
+
+## [0.20.1] - 2026-08-27
 
 ### Added
 
