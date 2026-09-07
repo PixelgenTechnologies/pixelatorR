@@ -400,7 +400,7 @@ ColocalizationHeatmap <- function(
 
   # Set range for heatmap legend
   if (is.null(legend_range)) {
-    legend_range <- max(abs(plot_data %>% pull(all_of(value_col)))) * c(-1, 1)
+    legend_range <- max(abs(plot_data %>% pull(all_of(!!value_col)))) * c(-1, 1)
   }
 
   # Cap values to legend range

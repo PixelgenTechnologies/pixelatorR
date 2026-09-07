@@ -187,7 +187,7 @@ SummarizeProximityScores.tbl_lazy <- function(
   # Validate proximity_metric class
   proximity_metric_slice <- object %>%
     head() %>%
-    pull(all_of(proximity_metric))
+    pull(all_of(!!proximity_metric))
   if (!inherits(proximity_metric_slice, c("numeric", "integer"))) {
     cli::cli_abort(
       c(
@@ -202,7 +202,7 @@ SummarizeProximityScores.tbl_lazy <- function(
       assert_col_in_data(group_var, object)
       group_var_slice <- object %>%
         head() %>%
-        pull(all_of(group_var))
+        pull(all_of(!!group_var))
       if (!inherits(group_var_slice, c("character", "factor"))) {
         cli::cli_abort(
           c(

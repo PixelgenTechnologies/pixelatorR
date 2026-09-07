@@ -613,7 +613,7 @@ identify_markers_for_patch_analysis <- function(
   assert_single_value(target_population, "string")
   assert_col_in_data(group_by, object[[]])
   assert_col_class(group_by, object[[]], c("character", "factor"))
-  group_vec <- object[[]] %>% pull(all_of(group_by))
+  group_vec <- object[[]] %>% pull(all_of(!!group_by))
   assert_x_in_y(receiver_population, group_vec)
   assert_x_in_y(target_population, group_vec)
   assert_single_value(abundance_difference, "numeric")

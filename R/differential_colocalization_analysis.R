@@ -152,12 +152,12 @@ RunDCA.data.frame <- function(
       x_list <- lapply(targets, function(target) {
         colocalization_contrast %>%
           filter(.data[[contrast_column]] == target) %>%
-          pull(all_of(coloc_metric))
+          pull(all_of(!!coloc_metric))
       }) %>%
         set_names(nm = targets)
       y <- colocalization_contrast %>%
         filter(.data[[contrast_column]] == reference) %>%
-        pull(all_of(coloc_metric))
+        pull(all_of(!!coloc_metric))
 
       # Run wilcox.test for all targets vs reference
       results <- lapply(names(x_list), function(target) {

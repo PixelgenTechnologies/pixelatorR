@@ -491,7 +491,7 @@ ProximityScoresToAssay.data.frame <- function(
   prox_wide <- Matrix::sparseMatrix(
     i = as.integer(pair),
     j = as.integer(components),
-    x = object %>% pull(all_of(values_from)),
+    x = object %>% pull(all_of(!!values_from)),
     dimnames = list(
       levels(pair),
       levels(components)

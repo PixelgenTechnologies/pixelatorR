@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [UNRELEASED]
+
+### Fixes
+
+- Column selections in `dplyr::pull()` are now always resolved from the variable
+  holding the column name. Unlike `select()`, `pull()` evaluates its selection with
+  the column names of the data in scope, so `pull(all_of(x))` returned the column
+  named `x` whenever the data happened to contain one, instead of the column named
+  by `x`. Internal type checking validated the wrong column as a result (for
+  example checking `x` rather than `log2_ratio`), and the same pattern affected
+  `RunDPA()`, `RunDCA()`, `SummarizeProximityScores()`, `ProximityScoresToAssay()`,
+  `ColocalizationHeatmap()`, `identify_markers_for_patch_analysis()` and
+  `WriteMPX_pxl_file()`.
+
 ## [0.21.0] - 2026-09-04
 
 ### Fixes

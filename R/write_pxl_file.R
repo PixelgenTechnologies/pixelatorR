@@ -311,7 +311,7 @@ WriteMPX_pxl_file <- function(
 
   if (length(obs_cols_keep) > 0) {
     for (col_name in obs_cols_keep) {
-      col_vals <- object[[]] %>% pull(col_name)
+      col_vals <- object[[]] %>% pull(all_of(!!col_name))
       encoding_type <- "array"
 
       # Switch data type depending on column type
@@ -377,7 +377,7 @@ WriteMPX_pxl_file <- function(
     )
     if (length(var_cols_keep) > 0) {
       for (col_name in var_cols_keep) {
-        col_vals <- feature_meta_data %>% pull(col_name)
+        col_vals <- feature_meta_data %>% pull(all_of(!!col_name))
         encoding_type <- "array"
         if (is.integer(col_vals)) {
           dtype <- hdf5r::h5types$int64_t

@@ -165,12 +165,12 @@ RunDPA.data.frame <- function(
       x_list <- lapply(targets, function(target) {
         polarity_contrast %>%
           filter(.data[[contrast_column]] == target) %>%
-          pull(all_of(polarity_metric))
+          pull(all_of(!!polarity_metric))
       }) %>%
         set_names(nm = targets)
       y <- polarity_contrast %>%
         filter(.data[[contrast_column]] == reference) %>%
-        pull(all_of(polarity_metric))
+        pull(all_of(!!polarity_metric))
 
       # Run wilcox.test for all targets vs reference
       results <- lapply(names(x_list), function(target) {
