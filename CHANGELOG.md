@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `FilterMarkers` to keep markers whose CPM exceeds an isotype-relative
+- `FindAbundantMarkers` to keep markers whose CPM exceeds an isotype-relative
   ratio and/or an absolute abundance threshold in at least
   `min_cell_fraction` of cells.
 

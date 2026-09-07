@@ -2,9 +2,9 @@ seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE, load_proximity_
 isotype_markers <- c("mIgG1", "mIgG2a", "mIgG2b")
 seur$sample <- c("S1", "S1", "S2", "S2", "S2")
 
-test_that("FilterMarkers works as expected", {
+test_that("FindAbundantMarkers works as expected", {
   expect_no_error(
-    kept <- FilterMarkers(
+    kept <- FindAbundantMarkers(
       seur,
       isotype_markers = isotype_markers
     )
@@ -37,7 +37,7 @@ test_that("FilterMarkers works as expected", {
   expect_false(any(isotype_markers %in% kept))
 
   expect_equal(
-    FilterMarkers(
+    FindAbundantMarkers(
       seur,
       isotype_markers = isotype_markers,
       isotype_ratio = NULL,
@@ -58,7 +58,7 @@ test_that("FilterMarkers works as expected", {
   )
 
   expect_equal(
-    FilterMarkers(
+    FindAbundantMarkers(
       seur,
       isotype_markers = isotype_markers,
       isotype_ratio = 1.5,
@@ -70,7 +70,7 @@ test_that("FilterMarkers works as expected", {
     )
   )
 
-  stats <- FilterMarkers(
+  stats <- FindAbundantMarkers(
     seur,
     isotype_markers = isotype_markers,
     return_stats = TRUE
@@ -89,7 +89,7 @@ test_that("FilterMarkers works as expected", {
   )
 
   expect_equal(
-    FilterMarkers(
+    FindAbundantMarkers(
       seur,
       isotype_markers = isotype_markers,
       group_column = "sample"
@@ -135,21 +135,21 @@ test_that("FilterMarkers works as expected", {
   )
 
   expect_error(
-    FilterMarkers(
+    FindAbundantMarkers(
       seur,
       isotype_markers = c("mIgG1", "misspelled")
     )
   )
 
   expect_error(
-    FilterMarkers(
+    FindAbundantMarkers(
       seur[[]],
       isotype_markers = isotype_markers
     )
   )
 
   expect_error(
-    FilterMarkers(
+    FindAbundantMarkers(
       seur,
       isotype_markers = isotype_markers,
       isotype_ratio = NULL,
@@ -158,7 +158,7 @@ test_that("FilterMarkers works as expected", {
   )
 
   expect_error(
-    FilterMarkers(
+    FindAbundantMarkers(
       seur,
       isotype_markers = isotype_markers,
       group_column = "missing_column"
