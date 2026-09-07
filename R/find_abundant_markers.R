@@ -1,4 +1,4 @@
-#' Filter markers by isotype-relative and/or absolute abundance
+#' Find abundant markers by isotype-relative and/or absolute abundance
 #'
 #' Identifies markers that are positive in a sufficient fraction of cells.
 #' A cell is positive for a marker if that cell's counts-per-million (CPM)
@@ -19,7 +19,7 @@
 #'
 #' @param object A `Seurat` object with a `counts` layer.
 #' @param isotype_markers Character vector of isotype control marker names
-#'   (for example `c("mIgG1", "mIgG2a", "mIgG2b")`.
+#'   (for example `c("mIgG1", "mIgG2a", "mIgG2b")`).
 #' @param isotype_ratio Numeric relative cutoff versus the median isotype CPM,
 #'   or `NULL` to skip this cutoff. Default is `1.5`.
 #' @param abundance_threshold Numeric absolute CPM cutoff, or `NULL` to skip
@@ -48,13 +48,13 @@
 #'   )
 #'
 #' # Keep markers above 1.5 times the isotype median CPM in at least 5% of cells
-#' kept <- FilterMarkers(
+#' kept <- FindAbundantMarkers(
 #'   object = seur,
 #'   isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b")
 #' )
 #'
 #' # Require both the isotype ratio and an absolute CPM floor
-#' kept_and <- FilterMarkers(
+#' kept_and <- FindAbundantMarkers(
 #'   object = seur,
 #'   isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
 #'   isotype_ratio = 1.5,
@@ -64,7 +64,7 @@
 #'
 #' # Per-group filtering
 #' seur$sample <- c("S1", "S1", "S2", "S2", "S2")
-#' kept_by_sample <- FilterMarkers(
+#' kept_by_sample <- FindAbundantMarkers(
 #'   object = seur,
 #'   isotype_markers = c("mIgG1", "mIgG2a", "mIgG2b"),
 #'   group_column = "sample"
@@ -72,7 +72,7 @@
 #'
 #' @export
 #'
-FilterMarkers <- function(
+FindAbundantMarkers <- function(
   object,
   isotype_markers,
   isotype_ratio = 1.5,
