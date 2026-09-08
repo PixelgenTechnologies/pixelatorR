@@ -664,7 +664,7 @@ subset.CellGraph <- function(
   if ("name" %in% vertex_attr_names(cellgraph)) {
     return(as.character(cellgraph %N>% pull(name)))
   }
-  as.character(seq_len(length(cellgraph)))
+  as.character(seq_along(cellgraph))
 }
 
 #' Upgrade CellGraph objects created with fewer slots
