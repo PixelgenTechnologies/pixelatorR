@@ -65,6 +65,9 @@
 #' works well as a shadow palette while \code{colors} carries the marker signal.
 #' Set \code{normalize_illumination = FALSE} to use raw output from
 #' \code{heuristic_illumination} instead of rescaling the mask to \code{[0, 1]}.
+#' Directional lighting uses \code{light_direction} in layout \code{(x, y, z)}
+#' coordinates (default positive z-axis), not camera coordinates. The mask is
+#' computed once before rotation, so the key light stays fixed in layout space.
 #'
 #' @param data A tibble (\code{tbl_df}) with columns 'x', 'y', 'z',
 #' and 'node_val'. The 'node_val' column can be either a numeric or a
@@ -158,6 +161,11 @@
 #' @param normalize_illumination A logical value indicating whether the
 #' illumination mask should be rescaled to \code{[0, 1]} per cell. Default is
 #' \code{TRUE}.
+#' @param light_direction A numeric vector of length 3 in layout \code{(x, y, z)}
+#' coordinates giving the directional light axis passed to
+#' \code{\link{heuristic_illumination}}. Internally normalized to unit length.
+#' Default is \code{c(0, 0, 1)} (positive z-axis). Lighting is in layout
+#' coordinates, not camera coordinates.
 #'
 #' @returns Exports an animation of a rotating 3D scatter plot.
 #'
@@ -284,7 +292,8 @@ render_rotating_layout <- function(
   illumination_ambient = 0.3,
   illumination_sat_boost = 0.6,
   illumination_shadow_colors = NULL,
-  normalize_illumination = TRUE
+  normalize_illumination = TRUE,
+  light_direction = c(0, 0, 1)
 ) {
   if (fs::path_ext(file) == "gif") {
     rlang::check_installed("gifski")
@@ -318,7 +327,8 @@ render_rotating_layout <- function(
     res, delay, ggplot_theme, title, bg,
     label_grid_axes, margin_widths, use_facet_grid,
     flip, boomerang, use_illumination, illumination_ambient,
-    illumination_sat_boost, illumination_shadow_colors, normalize_illumination
+    illumination_sat_boost, illumination_shadow_colors, normalize_illumination,
+    light_direction
   )
 
   # Set variables if NULL
@@ -370,7 +380,7 @@ render_rotating_layout <- function(
   if (use_illumination) {
     # Compute shading once per cell.
     xyz_list <- lapply(xyz_list, function(xyz) {
-      ill <- heuristic_illumination(xyz)
+      ill <- heuristic_illumination(xyz, light_direction = light_direction)
       if (normalize_illumination) {
         ill <- scales::rescale(ill, to = c(0, 1))
       }
@@ -1527,6 +1537,7 @@ scale_layout <- function(
 #' @param illumination_sat_boost A numeric value
 #' @param illumination_shadow_colors A character vector or \code{NULL}
 #' @param normalize_illumination A logical value
+#' @param light_direction A numeric vector of length 3
 #'
 #' @returns Nothing
 #'
@@ -1562,6 +1573,7 @@ scale_layout <- function(
   illumination_sat_boost,
   illumination_shadow_colors,
   normalize_illumination,
+  light_direction,
   call = caller_env()
 ) {
   assert_class(data, "tbl_df", call = call)
@@ -1595,6 +1607,8 @@ scale_layout <- function(
   if (isTRUE(use_illumination) && !is.null(illumination_shadow_colors)) {
     assert_valid_color(illumination_shadow_colors, n = 1, call = call)
   }
+
+  .normalize_light_direction(light_direction, call = call)
 
   if (!all(.areColors(colors))) {
     cli::cli_abort(
@@ -1670,9 +1684,13 @@ scale_layout <- function(
 #' Compute heuristic illumination for 3D layouts
 #'
 #' Combines three simple lighting heuristics for 3D coordinates:
-#' (1) directional light from the positive z-axis,
+#' (1) directional light along `light_direction` (default: the positive z-axis),
 #' (2) radial volume shading from the origin,
 #' and (3) ambient occlusion approximated from mean distance to nearest neighbors.
+#'
+#' Directional lighting is defined in layout `(x, y, z)` coordinates, not camera
+#' coordinates. Interactive cameras will not re-light a scene unless a renderer
+#' recomputes the illumination mask.
 #'
 #' @param layout A data frame or tibble with numeric columns `x`, `y`, and `z`.
 #' @param clamp_quantiles Numeric vector of length 2 in `[0, 1]`. Illumination is
@@ -1687,6 +1705,11 @@ scale_layout <- function(
 #'   ambient occlusion approximation. Default: `20`.
 #' @param normalize_weights Logical; if `TRUE`, weights are normalized to sum to 1.
 #'   Default: `TRUE`.
+#' @param light_direction Numeric vector of length 3 in layout `(x, y, z)`
+#'   coordinates giving the directional light axis. Internally normalized to
+#'   unit length. The directional term is the projection of each point onto
+#'   this unit vector, then rescaled to `[0, 1]`. Default: `c(0, 0, 1)`
+#'   (positive z-axis). The zero vector and non-finite values are rejected.
 #'
 #' @returns A numeric vector of illumination values (length `nrow(layout)`). Higher values indicate stronger
 #'   illumination.
@@ -1745,7 +1768,8 @@ heuristic_illumination <- function(
   volume_shading_weight = 0.5,
   ambient_occlusion_weight = 1,
   ambient_occlusion_k = 20,
-  normalize_weights = TRUE
+  normalize_weights = TRUE,
+  light_direction = c(0, 0, 1)
 ) {
   expect_FNN()
 
@@ -1777,6 +1801,7 @@ heuristic_illumination <- function(
   assert_single_value(ambient_occlusion_k, "integer")
   assert_within_limits(ambient_occlusion_k, c(1, nrow(layout) - 1))
   assert_single_value(normalize_weights, "bool")
+  light_unit <- .normalize_light_direction(light_direction)
 
   # Rescale function
   safe_rescale <- function(x, to = c(0, 1)) {
@@ -1803,8 +1828,8 @@ heuristic_illumination <- function(
   }
 
 
-  # Compute directional light as the rescaled z-coordinate (light from above)
-  directional_light <- safe_rescale(layout$z)
+  # Directional light: project points onto the unit light direction, then rescale
+  directional_light <- safe_rescale(as.numeric(coords %*% light_unit))
 
   # Compute radial volume shading as the rescaled distance from the origin
   r <- sqrt(layout$x^2 + layout$y^2 + layout$z^2)
@@ -1825,4 +1850,38 @@ heuristic_illumination <- function(
   illumination <- pmin(pmax(illumination, quants[[1]]), quants[[2]])
 
   return(illumination)
+}
+
+#' Normalize a length-3 light direction to a unit vector
+#'
+#' Validates that `light_direction` is a finite, non-zero numeric vector of
+#' length 3 in layout `(x, y, z)` space, then returns the corresponding unit
+#' vector.
+#'
+#' @param light_direction Numeric vector of length 3.
+#' @param call Environment used for error reporting.
+#'
+#' @returns A numeric vector of length 3 with unit Euclidean norm.
+#'
+#' @noRd
+.normalize_light_direction <- function(light_direction, call = caller_env()) {
+  assert_vector(light_direction, "numeric", n = 3, call = call)
+  assert_length(light_direction, n = 3, call = call)
+
+  if (any(!is.finite(light_direction))) {
+    cli::cli_abort(
+      c("x" = "{.arg light_direction} must contain only finite values."),
+      call = call
+    )
+  }
+
+  nrm <- sqrt(sum(light_direction^2))
+  if (nrm == 0) {
+    cli::cli_abort(
+      c("x" = "{.arg light_direction} must be a non-zero vector."),
+      call = call
+    )
+  }
+
+  return(as.numeric(light_direction) / nrm)
 }

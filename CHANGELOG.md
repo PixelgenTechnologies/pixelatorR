@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
+  layout `(x, y, z)` coordinates for the directional (key) light. The default
+  `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
+  forwards the same argument when illumination is enabled.
+
 ## [0.21.0] - 2026-09-04
 
 ### Fixes

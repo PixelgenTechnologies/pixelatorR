@@ -37,7 +37,8 @@ render_rotating_layout(
   illumination_ambient = 0.3,
   illumination_sat_boost = 0.6,
   illumination_shadow_colors = NULL,
-  normalize_illumination = TRUE
+  normalize_illumination = TRUE,
+  light_direction = c(0, 0, 1)
 )
 }
 \arguments{
@@ -163,6 +164,12 @@ with the base \code{node_val} color.}
 \item{normalize_illumination}{A logical value indicating whether the
 illumination mask should be rescaled to \code{[0, 1]} per cell. Default is
 \code{TRUE}.}
+
+\item{light_direction}{A numeric vector of length 3 in layout \code{(x, y, z)}
+coordinates giving the directional light axis passed to
+\code{\link{heuristic_illumination}}. Internally normalized to unit length.
+Default is \code{c(0, 0, 1)} (positive z-axis). Lighting is in layout
+coordinates, not camera coordinates.}
 }
 \value{
 Exports an animation of a rotating 3D scatter plot.
@@ -241,6 +248,9 @@ toward a second color gradient mapped from the illumination mask; in that mode
 works well as a shadow palette while \code{colors} carries the marker signal.
 Set \code{normalize_illumination = FALSE} to use raw output from
 \code{heuristic_illumination} instead of rescaling the mask to \code{[0, 1]}.
+Directional lighting uses \code{light_direction} in layout \code{(x, y, z)}
+coordinates (default positive z-axis), not camera coordinates. The mask is
+computed once before rotation, so the key light stays fixed in layout space.
 }
 
 \examples{

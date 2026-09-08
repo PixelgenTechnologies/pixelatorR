@@ -11,7 +11,8 @@ heuristic_illumination(
   volume_shading_weight = 0.5,
   ambient_occlusion_weight = 1,
   ambient_occlusion_k = 20,
-  normalize_weights = TRUE
+  normalize_weights = TRUE,
+  light_direction = c(0, 0, 1)
 )
 }
 \arguments{
@@ -34,6 +35,12 @@ ambient occlusion approximation. Default: \code{20}.}
 
 \item{normalize_weights}{Logical; if \code{TRUE}, weights are normalized to sum to 1.
 Default: \code{TRUE}.}
+
+\item{light_direction}{Numeric vector of length 3 in layout \code{(x, y, z)}
+coordinates giving the directional light axis. Internally normalized to
+unit length. The directional term is the projection of each point onto
+this unit vector, then rescaled to \code{[0, 1]}. Default: \code{c(0, 0, 1)}
+(positive z-axis). The zero vector and non-finite values are rejected.}
 }
 \value{
 A numeric vector of illumination values (length \code{nrow(layout)}). Higher values indicate stronger
@@ -41,9 +48,13 @@ illumination.
 }
 \description{
 Combines three simple lighting heuristics for 3D coordinates:
-(1) directional light from the positive z-axis,
+(1) directional light along \code{light_direction} (default: the positive z-axis),
 (2) radial volume shading from the origin,
 and (3) ambient occlusion approximated from mean distance to nearest neighbors.
+
+Directional lighting is defined in layout \code{(x, y, z)} coordinates, not camera
+coordinates. Interactive cameras will not re-light a scene unless a renderer
+recomputes the illumination mask.
 }
 \examples{
 

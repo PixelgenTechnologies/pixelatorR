@@ -34,6 +34,37 @@ test_that("heuristic_illumination works as expected", {
   )
   expect_equal(sum(illum), 48.59722, tolerance = 1e-4)
 
+  # Default light_direction is +z
+  expect_equal(
+    heuristic_illumination(layout),
+    heuristic_illumination(layout, light_direction = c(0, 0, 1))
+  )
+  expect_equal(
+    heuristic_illumination(layout, light_direction = c(0, 0, 2)),
+    heuristic_illumination(layout, light_direction = c(0, 0, 1))
+  )
+
+  # Opposite direction inverts the directional ranking when other weights are zero
+  illum_pos <- heuristic_illumination(
+    layout,
+    volume_shading_weight = 0,
+    ambient_occlusion_weight = 0,
+    clamp_quantiles = c(0, 1),
+    light_direction = c(0, 0, 1)
+  )
+  illum_neg <- heuristic_illumination(
+    layout,
+    volume_shading_weight = 0,
+    ambient_occlusion_weight = 0,
+    clamp_quantiles = c(0, 1),
+    light_direction = c(0, 0, -1)
+  )
+  expect_equal(illum_neg, 1 - illum_pos)
+
+  illum_diag <- heuristic_illumination(layout, light_direction = c(1, 1, 1))
+  expect_true(all(is.finite(illum_diag)))
+  expect_length(illum_diag, nrow(layout))
+
   # Expect errors with bad input
 
   expect_error(
@@ -98,5 +129,22 @@ test_that("heuristic_illumination works as expected", {
   expect_error(
     heuristic_illumination(layout, ambient_occlusion_k = 0),
     "1|Inf|ambient_occlusion_k|within"
+  )
+
+  expect_error(
+    heuristic_illumination(layout, light_direction = c(0, 0, 0)),
+    "non-zero|zero"
+  )
+  expect_error(
+    heuristic_illumination(layout, light_direction = c(1, 0)),
+    "exactly|length|element"
+  )
+  expect_error(
+    heuristic_illumination(layout, light_direction = c(1, 0, NA_real_)),
+    "finite"
+  )
+  expect_error(
+    heuristic_illumination(layout, light_direction = c(1, 0, Inf)),
+    "finite"
   )
 })

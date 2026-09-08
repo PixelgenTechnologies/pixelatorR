@@ -82,6 +82,13 @@ test_that("render_rotating_layout works as expected", {
     use_illumination = TRUE
   ))
 
+  # Offset key light from the +z viewing axis
+  expect_no_error(render_rotating_layout(xyz, gif_file,
+    frames = 2, show_first_frame = FALSE,
+    use_illumination = TRUE,
+    light_direction = c(1, 0, 0.3)
+  ))
+
   # Use illumination without normalizing the mask
   expect_no_error(render_rotating_layout(xyz, gif_file,
     frames = 2, show_first_frame = FALSE,
@@ -236,6 +243,11 @@ test_that("render_rotating_layout fails with invalid input", {
       use_illumination = TRUE,
       illumination_shadow_colors = c("Invalid")
     )
+  )
+
+  # Invalid light_direction
+  expect_error(
+    render_rotating_layout(xyz, gif_file, light_direction = c(0, 0, 0))
   )
 })
 
