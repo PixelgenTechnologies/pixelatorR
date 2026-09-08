@@ -1875,13 +1875,17 @@ heuristic_illumination <- function(
     )
   }
 
-  nrm <- sqrt(sum(light_direction^2))
-  if (nrm == 0) {
+  light_direction <- as.numeric(light_direction)
+  max_abs <- max(abs(light_direction))
+  if (max_abs == 0) {
     cli::cli_abort(
       c("x" = "{.arg light_direction} must be a non-zero vector."),
       call = call
     )
   }
 
-  return(as.numeric(light_direction) / nrm)
+  # Scale by the largest component first so squaring cannot overflow or
+  # underflow for extreme-but-finite values.
+  scaled <- light_direction / max_abs
+  return(scaled / sqrt(sum(scaled^2)))
 }

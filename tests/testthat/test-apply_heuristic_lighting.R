@@ -43,6 +43,14 @@ test_that("heuristic_illumination works as expected", {
     heuristic_illumination(layout, light_direction = c(0, 0, 2)),
     heuristic_illumination(layout, light_direction = c(0, 0, 1))
   )
+  expect_equal(
+    heuristic_illumination(layout, light_direction = c(1e308, 0, 0)),
+    heuristic_illumination(layout, light_direction = c(1, 0, 0))
+  )
+  expect_equal(
+    heuristic_illumination(layout, light_direction = c(1e-320, 0, 0)),
+    heuristic_illumination(layout, light_direction = c(1, 0, 0))
+  )
 
   # Opposite direction inverts the directional ranking when other weights are zero
   illum_pos <- heuristic_illumination(
