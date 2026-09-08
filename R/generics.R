@@ -241,6 +241,30 @@ ComputeLayout <- function(
   UseMethod(generic = "ComputeLayout", object = object)
 }
 
+#' Compute local proximity scores
+#'
+#' Computes local proximity scores (LPS) for nodes in PNA cell graphs
+#' using \code{\link{local_proximity}} and stores the result on each
+#' \code{\link{CellGraph}}.
+#'
+#' @param object An object
+#' @param ... Additional parameters passed to other methods
+#'
+#' @rdname ComputeLPS
+#'
+#' @return An object with local proximity scores stored on each
+#' \code{\link{CellGraph}}. Matrix results are stored as a layer;
+#' vector results are stored in node \code{meta.data}.
+#'
+#' @export
+#'
+ComputeLPS <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ComputeLPS", object = object)
+}
+
 #' Keep largest component
 #'
 #' Finds connected components of a graph and returns the largest component
