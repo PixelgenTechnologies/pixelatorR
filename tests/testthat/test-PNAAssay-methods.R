@@ -12,6 +12,7 @@ for (assay_version in c("v3", "v5")) {
   test_that("CellGraphs.PNAAssay getter/setter works as expected", {
     cg_list <- CellGraphs(pna_assay)
     expect_type(cg_list, "list")
+    expect_s3_class(cg_list, "CellGraphList")
     expect_equal(cg_list %>% length(), 5)
     CellGraphs(pna_assay) <- pna_assay@cellgraphs
     cg_list <- pna_assay@cellgraphs

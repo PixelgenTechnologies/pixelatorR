@@ -34,9 +34,8 @@ as.CellGraphAssay <- function(
 #' @param object A \code{Seurat}, \code{CellGraphAssay} or \code{CellGraphAssay} object
 #' @param ... Arguments passed to other methods
 #'
-#' @return Returns a list of \code{\link{CellGraph}} objects. If there are
-#' no \code{\link{CellGraph}} objects present, returns a named list where each element
-#' is \code{NULL}.
+#' @return Returns a \code{\link{CellGraphList}}. Unloaded graphs are stored
+#' as \code{NULL} elements.
 #'
 #' @rdname CellGraphs
 #' @seealso [PolarizationScores()] and [ColocalizationScores()] for getting/setting spatial metrics

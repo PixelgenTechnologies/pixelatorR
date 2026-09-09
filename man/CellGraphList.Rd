@@ -11,7 +11,8 @@ CreateCellGraphList(cellgraphs)
 \method{print}{CellGraphList}(x, ...)
 }
 \arguments{
-\item{cellgraphs}{A named list of \code{\link{CellGraph}} objects}
+\item{cellgraphs}{A named list of \code{\link{CellGraph}} objects.
+Unloaded graphs may be represented as \code{NULL}.}
 
 \item{x}{A \code{\link{CellGraphList}} object}
 
@@ -25,7 +26,7 @@ A named list of \code{\link{CellGraph}} objects. \code{CellGraphList}
 extends \code{list}, so list operations such as \code{[[}, \code{lapply},
 \code{names}, and \code{length} work as usual. The only specialized
 behavior is printing, which shows a short summary instead of each
-\code{CellGraph}.
+\code{CellGraph}. Unloaded graphs may be stored as \code{NULL}.
 }
 \examples{
 library(pixelatorR)

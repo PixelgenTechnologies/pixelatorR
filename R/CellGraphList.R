@@ -7,9 +7,10 @@ NULL
 #' extends \code{list}, so list operations such as \code{[[}, \code{lapply},
 #' \code{names}, and \code{length} work as usual. The only specialized
 #' behavior is printing, which shows a short summary instead of each
-#' \code{CellGraph}.
+#' \code{CellGraph}. Unloaded graphs may be stored as \code{NULL}.
 #'
-#' @param cellgraphs A named list of \code{\link{CellGraph}} objects
+#' @param cellgraphs A named list of \code{\link{CellGraph}} objects.
+#' Unloaded graphs may be represented as \code{NULL}.
 #' @param x A \code{\link{CellGraphList}} object
 #' @param ... Currently not used
 #'
@@ -39,9 +40,10 @@ CreateCellGraphList <- function(cellgraphs) {
 #'
 print.CellGraphList <- function(x, ...) {
   n <- length(x)
+  n_loaded <- sum(vapply(x, function(el) is(el, "CellGraph"), logical(1)))
   cat(
-    "A CellGraphList with", col_br_blue(n),
-    "CellGraph objects\n"
+    "A CellGraphList with", col_br_blue(n_loaded),
+    "loaded CellGraph object(s) out of", col_br_blue(n), "\n"
   )
   nm <- names(x)
   if (!is.null(nm) && length(nm) > 0) {
@@ -61,10 +63,12 @@ print.CellGraphList <- function(x, ...) {
   if (length(cellgraphs) == 0) {
     return(invisible(NULL))
   }
-  is_cg <- vapply(cellgraphs, function(x) is(x, "CellGraph"), logical(1))
-  if (!all(is_cg)) {
+  is_ok <- vapply(cellgraphs, function(x) {
+    is.null(x) || is(x, "CellGraph")
+  }, logical(1))
+  if (!all(is_ok)) {
     cli::cli_abort(
-      c("x" = "All elements of {.arg cellgraphs} must be {.cls CellGraph} objects."),
+      c("x" = "All elements of {.arg cellgraphs} must be {.cls CellGraph} objects or {.cls NULL}."),
       call = call
     )
   }
@@ -82,4 +86,15 @@ print.CellGraphList <- function(x, ...) {
     )
   }
   invisible(NULL)
+}
+
+#' Drop the CellGraphList class so the object can be stored in an S4 list slot
+#'
+#' @noRd
+#'
+.unclass_cellgraph_list <- function(x) {
+  if (inherits(x, "CellGraphList")) {
+    return(unclass(x))
+  }
+  x
 }

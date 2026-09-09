@@ -256,7 +256,7 @@ CellGraphs.PNAAssay <- function(
   object,
   ...
 ) {
-  return(slot(object, name = "cellgraphs"))
+  return(CreateCellGraphList(slot(object, name = "cellgraphs")))
 }
 
 #' @rdname CellGraphs
@@ -295,7 +295,7 @@ CellGraphs.PNAAssay5 <- CellGraphs.PNAAssay
         )
       }
     }
-    slot(object = object, name = "cellgraphs") <- value
+    slot(object = object, name = "cellgraphs") <- .unclass_cellgraph_list(value)
   } else {
     cli::cli_abort(
       c(
@@ -388,7 +388,7 @@ RenameCells.PNAAssay <- function(
   # Rename cellgraphs
   cellgraphs <- slot(object, name = "cellgraphs")
   cellgraphs <- set_names(cellgraphs, nm = new.names)
-  slot(pna_assay_renamed, name = "cellgraphs") <- cellgraphs
+  slot(pna_assay_renamed, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
 
   # Handle proximity slot
   name_conversion <- tibble(new = new.names, component = orig.names)
@@ -492,7 +492,7 @@ as.PNAAssay.Assay <- function(
   new_assay <- as(object = x, Class = "PNAAssay")
 
   # Add slots
-  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
   slot(new_assay, name = "proximity") <- proximity
 
   # Add fs_map
@@ -591,7 +591,7 @@ as.PNAAssay5.Assay5 <- function(
   new_assay <- as(object = x, Class = "PNAAssay5")
 
   # Add slots
-  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
   slot(new_assay, name = "proximity") <- proximity
 
   # Add fs_map
