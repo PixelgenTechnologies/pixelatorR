@@ -19,6 +19,22 @@ test_that("CreateCellGraphObject works as expected", {
   expect_s4_class(cg, "CellGraph")
 })
 
+test_that("CellGraph initialize supplies default slot values", {
+  cg <- methods::new("CellGraph")
+  expect_s4_class(cg, "CellGraph")
+  expect_null(cg@cellgraph)
+  expect_null(cg@counts)
+  expect_null(cg@layout)
+  expect_identical(cg@layers, list())
+  expect_equal(cg@meta.data, data.frame())
+  expect_identical(cg@reductions, list())
+
+  cg <- methods::new("CellGraph", cellgraph = bipart_graph)
+  expect_identical(cg@layers, list())
+  expect_identical(cg@reductions, list())
+  expect_equal(rownames(cg@meta.data), bipart_graph %>% dplyr::pull(name))
+})
+
 test_that("CreateCellGraphObject accepts named layout lists", {
   layout <- tibble::tibble(x = seq_len(length(bipart_graph)))
 
