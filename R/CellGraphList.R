@@ -1,39 +1,19 @@
 #' @include CellGraph.R
 NULL
 
-# -------------------------------------------------------
-# Class definition
-# -------------------------------------------------------
-
 #' The CellGraphList class
 #'
-#' A simple container for a named list of \code{\link{CellGraph}} objects.
-#'
-#' @slot cellgraphs A named list of \code{\link{CellGraph}} objects
-#'
-#' @name CellGraphList-class
-#' @rdname CellGraphList-class
-#' @exportClass CellGraphList
-#' @concept cellgraph
-CellGraphList <- setClass(
-  Class = "CellGraphList",
-  slots = list(
-    cellgraphs = "list"
-  ),
-  prototype = list(
-    cellgraphs = list()
-  )
-)
-
-# -------------------------------------------------------
-# Create methods
-# -------------------------------------------------------
-
-#' Create a CellGraphList object
+#' A named list of \code{\link{CellGraph}} objects. \code{CellGraphList}
+#' extends \code{list}, so list operations such as \code{[[}, \code{lapply},
+#' \code{names}, and \code{length} work as usual. The only specialized
+#' behavior is printing, which shows a short summary instead of each
+#' \code{CellGraph}.
 #'
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects
+#' @param x A \code{\link{CellGraphList}} object
+#' @param ... Currently not used
 #'
-#' @return A \code{\link{CellGraphList}} object
+#' @return \code{CreateCellGraphList}: a \code{CellGraphList} object
 #'
 #' @examples
 #' library(pixelatorR)
@@ -43,142 +23,34 @@ CellGraphList <- setClass(
 #' cgl <- CreateCellGraphList(CellGraphs(se)[1:2])
 #' cgl
 #'
+#' @name CellGraphList
+#' @rdname CellGraphList
 #' @export
 #' @concept cellgraph
 #'
 CreateCellGraphList <- function(cellgraphs) {
   .validate_cellgraph_list(cellgraphs)
-  new(Class = "CellGraphList", cellgraphs = cellgraphs)
+  structure(cellgraphs, class = c("CellGraphList", "list"))
 }
 
-# -------------------------------------------------------
-# Methods
-# -------------------------------------------------------
-
-#' CellGraphList Methods
-#'
-#' Methods for \code{\link{CellGraphList}} objects
-#'
-#' @param object A \code{\link{CellGraphList}} object
-#' @param x A \code{\link{CellGraphList}} object
-#' @param i Index
-#' @param j Unused
-#' @param value Replacement value
-#' @param drop Unused
-#' @param ... Currently not used
-#'
-#' @name CellGraphList-methods
-#' @rdname CellGraphList-methods
-#'
-#' @concept cellgraph
-#'
-NULL
-
-#' Show method for \code{CellGraphList} object
-#'
-#' @describeIn CellGraphList-methods Show a \code{CellGraphList} object
-#' @method show CellGraphList
-#' @docType methods
-#'
-setMethod(
-  f = "show",
-  signature = "CellGraphList",
-  definition = function(object) {
-    n <- length(slot(object, "cellgraphs"))
-    cat(
-      "A CellGraphList with", col_br_blue(n),
-      "CellGraph objects\n"
-    )
-    nm <- names(object)
-    if (!is.null(nm) && length(nm) > 0) {
-      shown <- nm[seq_len(min(length(nm), 5))]
-      extra <- if (length(nm) > 5) ", ..." else ""
-      cat("Names:", col_br_blue(paste(shown, collapse = ", ")), extra, "\n")
-    }
-  }
-)
-
-#' @describeIn CellGraphList-methods Number of \code{CellGraph} objects
+#' @rdname CellGraphList
+#' @method print CellGraphList
 #' @export
 #'
-setMethod(
-  f = "length",
-  signature = "CellGraphList",
-  definition = function(x) {
-    length(slot(x, "cellgraphs"))
+print.CellGraphList <- function(x, ...) {
+  n <- length(x)
+  cat(
+    "A CellGraphList with", col_br_blue(n),
+    "CellGraph objects\n"
+  )
+  nm <- names(x)
+  if (!is.null(nm) && length(nm) > 0) {
+    shown <- nm[seq_len(min(length(nm), 5))]
+    extra <- if (length(nm) > 5) ", ..." else ""
+    cat("Names:", col_br_blue(paste(shown, collapse = ", ")), extra, "\n")
   }
-)
-
-#' @describeIn CellGraphList-methods Names of \code{CellGraph} objects
-#' @export
-#'
-setMethod(
-  f = "names",
-  signature = "CellGraphList",
-  definition = function(x) {
-    names(slot(x, "cellgraphs"))
-  }
-)
-
-#' @describeIn CellGraphList-methods Set names of \code{CellGraph} objects
-#' @export
-#'
-setMethod(
-  f = "names<-",
-  signature = c(x = "CellGraphList", value = "ANY"),
-  definition = function(x, value) {
-    names(slot(x, "cellgraphs")) <- value
-    .validate_cellgraph_list(slot(x, "cellgraphs"))
-    x
-  }
-)
-
-#' @describeIn CellGraphList-methods Extract a \code{CellGraph}
-#' @export
-#'
-setMethod(
-  f = "[[",
-  signature = c(x = "CellGraphList", i = "ANY", j = "missing"),
-  definition = function(x, i, j, ..., drop = TRUE) {
-    slot(x, "cellgraphs")[[i]]
-  }
-)
-
-#' @describeIn CellGraphList-methods Replace a \code{CellGraph}
-#' @export
-#'
-setMethod(
-  f = "[[<-",
-  signature = c(x = "CellGraphList", i = "ANY", j = "missing", value = "ANY"),
-  definition = function(x, i, j, ..., value) {
-    slot(x, "cellgraphs")[[i]] <- value
-    .validate_cellgraph_list(slot(x, "cellgraphs"))
-    x
-  }
-)
-
-#' @describeIn CellGraphList-methods Subset a \code{CellGraphList}
-#' @export
-#'
-setMethod(
-  f = "[",
-  signature = c(x = "CellGraphList", i = "ANY", j = "missing", drop = "ANY"),
-  definition = function(x, i, j, ..., drop = TRUE) {
-    CreateCellGraphList(slot(x, "cellgraphs")[i])
-  }
-)
-
-#' @describeIn CellGraphList-methods Convert to a list of \code{CellGraph} objects
-#' @method as.list CellGraphList
-#' @export
-#'
-as.list.CellGraphList <- function(x, ...) {
-  slot(x, "cellgraphs")
+  invisible(x)
 }
-
-# -------------------------------------------------------
-# Internal helpers
-# -------------------------------------------------------
 
 #' Validate a list of CellGraph objects
 #'
