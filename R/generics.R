@@ -240,6 +240,30 @@ ComputeLayout <- function(
   UseMethod(generic = "ComputeLayout", object = object)
 }
 
+#' Extract graph layout coordinates
+#'
+#' Extracts a stored 3D layout from \code{\link{CellGraph}} objects and
+#' optionally joins node-level variables retrieved with
+#' \code{\link[SeuratObject]{FetchData}}.
+#'
+#' @param object An object
+#' @param ... Additional parameters passed to other methods
+#'
+#' @rdname ExtractLayout
+#'
+#' @return A \code{tbl_df} with columns \code{x}, \code{y}, \code{z} and any
+#' requested \code{vars}. Methods that extract from multiple components also
+#' include a \code{component} column.
+#'
+#' @export
+#'
+ExtractLayout <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ExtractLayout", object = object)
+}
+
 #' Compute local proximity scores
 #'
 #' Computes local proximity scores (LPS) for nodes in PNA cell graphs
