@@ -57,6 +57,21 @@ test_that("ComputeLPS.CellGraphList works as expected", {
   expect_true("lps" %in% Layers(cgl_lps[[2]]))
 })
 
+test_that("ComputeLPS.CellGraphList intersects missing markers", {
+  expect_no_error(
+    cgl_lps <- ComputeLPS(cgl, markers = c("B2M", "NotAMarker"), verbose = FALSE)
+  )
+  expect_equal(colnames(LayerData(cgl_lps[[1]], layer = "lps")), "B2M")
+  expect_equal(colnames(LayerData(cgl_lps[[2]], layer = "lps")), "B2M")
+})
+
+test_that("ComputeLPS.CellGraphList warns when all markers are missing", {
+  expect_warning(
+    cgl_skip <- ComputeLPS(cgl[1], markers = "NotAMarker", verbose = FALSE)
+  )
+  expect_false("lps" %in% setdiff(Layers(cgl_skip[[1]]), "counts"))
+})
+
 test_that("ComputeLPS.PNAAssay and Seurat only process loaded cellgraphs", {
   se_one <- se
   cgs <- lapply(CellGraphs(se_one), function(x) NULL)

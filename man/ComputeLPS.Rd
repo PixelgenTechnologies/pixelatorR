@@ -16,7 +16,7 @@ ComputeLPS(object, ...)
   object,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   A_k = NULL,
@@ -29,7 +29,7 @@ ComputeLPS(object, ...)
   object,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   seed = 123,
@@ -43,7 +43,7 @@ ComputeLPS(object, ...)
   object,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   seed = 123,
@@ -57,7 +57,7 @@ ComputeLPS(object, ...)
   object,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   seed = 123,
@@ -72,7 +72,7 @@ ComputeLPS(object, ...)
   assay = NULL,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   seed = 123,
@@ -89,7 +89,10 @@ ComputeLPS(object, ...)
 
 \item{markers}{A character vector specifying the markers to use. If
 \code{NULL}, all markers in the count matrix of each \code{CellGraph}
-are used.}
+are used. Methods that iterate over multiple \code{CellGraph} objects
+keep the intersection with available markers. If none of the requested
+markers are present in a graph, a warning is emitted and that graph is
+left unmodified.}
 
 \item{method}{A character string specifying the method to use for
 computing the local proximity score. Options are \code{"analytical"}

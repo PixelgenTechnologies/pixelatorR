@@ -13,7 +13,10 @@ NULL
 #'
 #' @param markers A character vector specifying the markers to use. If
 #' \code{NULL}, all markers in the count matrix of each \code{CellGraph}
-#' are used.
+#' are used. Methods that iterate over multiple \code{CellGraph} objects
+#' keep the intersection with available markers. If none of the requested
+#' markers are present in a graph, a warning is emitted and that graph is
+#' left unmodified.
 #' @param method A character string specifying the method to use for
 #' computing the local proximity score. Options are \code{"analytical"}
 #' or \code{"permutation"}.
@@ -54,7 +57,7 @@ ComputeLPS.CellGraph <- function(
   object,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   A_k = NULL,
@@ -64,6 +67,7 @@ ComputeLPS.CellGraph <- function(
 ) {
   object <- .upgrade_cellgraph(object)
   method <- match.arg(method, choices = c("analytical", "permutation"))
+  mode <- match.arg(mode, choices = c("self-clustering", "all", "any"))
   assert_single_value(name, type = "string")
 
   counts <- slot(object, "counts")
@@ -115,7 +119,7 @@ ComputeLPS.CellGraphList <- function(
   object,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   seed = 123,
@@ -125,6 +129,7 @@ ComputeLPS.CellGraphList <- function(
   ...
 ) {
   method <- match.arg(method, choices = c("analytical", "permutation"))
+  mode <- match.arg(mode, choices = c("self-clustering", "all", "any"))
   cellgraphs <- slot(object, "cellgraphs")
 
   if (length(cellgraphs) == 0) {
@@ -138,9 +143,10 @@ ComputeLPS.CellGraphList <- function(
     cli_alert_info("Computing local proximity scores for {length(cellgraphs)} graph{?s}")
   }
 
-  cellgraphs <- pblapply(cellgraphs, function(g) {
-    ComputeLPS(
-      g,
+  nms <- names(cellgraphs)
+  cellgraphs <- pblapply(nms, function(nm) {
+    .compute_lps_cellgraph(
+      object = cellgraphs[[nm]],
       markers = markers,
       method = method,
       mode = mode,
@@ -148,9 +154,11 @@ ComputeLPS.CellGraphList <- function(
       k = k,
       seed = seed,
       name = name,
+      graph_id = nm,
       ...
     )
   }, cl = cl)
+  names(cellgraphs) <- nms
 
   slot(object, "cellgraphs") <- cellgraphs
   return(object)
@@ -169,7 +177,7 @@ ComputeLPS.PNAAssay <- function(
   object,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   seed = 123,
@@ -179,6 +187,7 @@ ComputeLPS.PNAAssay <- function(
   ...
 ) {
   method <- match.arg(method, choices = c("analytical", "permutation"))
+  mode <- match.arg(mode, choices = c("self-clustering", "all", "any"))
   cellgraphs <- slot(object, name = "cellgraphs")
   loaded_graphs <- !sapply(cellgraphs, is.null)
 
@@ -231,7 +240,7 @@ ComputeLPS.Seurat <- function(
   assay = NULL,
   markers = NULL,
   method = c("analytical", "permutation"),
-  mode = "self-clustering",
+  mode = c("self-clustering", "all", "any"),
   iterations = 50L,
   k = 3L,
   seed = 123,
@@ -260,4 +269,53 @@ ComputeLPS.Seurat <- function(
 
   object[[assay]] <- pixel_assay
   return(object)
+}
+
+#' Compute LPS for one CellGraph, intersecting requested markers
+#'
+#' Used by methods that iterate over many graphs. Missing markers are
+#' dropped. If none remain, the graph is returned unmodified with a warning.
+#'
+#' @noRd
+#'
+.compute_lps_cellgraph <- function(
+  object,
+  markers = NULL,
+  method,
+  mode,
+  iterations,
+  k,
+  seed,
+  name,
+  graph_id = NULL,
+  ...
+) {
+  if (!is.null(markers)) {
+    counts <- slot(object, "counts")
+    available <- if (is.null(counts)) character(0) else colnames(counts)
+    keep <- intersect(markers, available)
+    if (length(keep) == 0) {
+      graph_label <- graph_id %||% "CellGraph"
+      cli::cli_warn(
+        c(
+          "!" = "None of the requested markers are present in {.val {graph_label}}.",
+          "i" = "Returning the {.cls CellGraph} unmodified."
+        )
+      )
+      return(object)
+    }
+    markers <- keep
+  }
+
+  ComputeLPS(
+    object,
+    markers = markers,
+    method = method,
+    mode = mode,
+    iterations = iterations,
+    k = k,
+    seed = seed,
+    name = name,
+    ...
+  )
 }
