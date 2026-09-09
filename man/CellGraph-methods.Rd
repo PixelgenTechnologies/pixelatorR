@@ -10,6 +10,7 @@
 \alias{Stdev.CellGraph}
 \alias{Cells.CellGraph}
 \alias{AddMetaData.CellGraph}
+\alias{FetchData.CellGraph}
 \alias{CellGraph-methods}
 \alias{show,CellGraph-method}
 \alias{[[,CellGraph,character,missing-method}
@@ -33,6 +34,8 @@
 
 \method{AddMetaData}{CellGraph}(object, metadata, col.name = NULL, ...)
 
+\method{FetchData}{CellGraph}(object, vars, cells = NULL, layer = NULL, clean = TRUE, ...)
+
 \S4method{show}{CellGraph}(object)
 
 \S4method{[[}{CellGraph,character,missing}(x, i, j, ..., drop = TRUE)
@@ -46,10 +49,11 @@
 
 \item{search}{Optional layer name or pattern passed to \code{\link[SeuratObject]{Layers}}}
 
-\item{...}{Currently not used}
-
 \item{layer}{Name of a node matrix layer. Use \code{"counts"} for the
-counts slot.}
+counts slot. For \code{FetchData}, \code{NULL} (default) selects
+\code{"counts"} when present, otherwise the first extra layer.}
+
+\item{...}{Currently not used}
 
 \item{value}{Replacement value}
 
@@ -62,6 +66,16 @@ the first reduction when \code{NULL}.}
 
 \item{col.name}{Name of the metadata column when \code{metadata} is a vector}
 
+\item{vars}{Variables to fetch: marker names, node metadata columns,
+graph vertex attributes, or reduction embedding columns (for example
+\code{"PC_1"}).}
+
+\item{cells}{Nodes to collect data for (default is all nodes). Numeric
+indices are allowed, matching \code{\link[SeuratObject]{FetchData}}.}
+
+\item{clean}{If \code{TRUE}, remove nodes that are missing data for every
+requested variable.}
+
 \item{i}{Name of a stored reduction}
 
 \item{j}{Unused}
@@ -71,7 +85,9 @@ the first reduction when \code{NULL}.}
 \item{nodes}{A character vector of node names}
 }
 \value{
-A \code{CellGraph} object containing only the specified nodes.
+\code{FetchData}: a \code{data.frame} with nodes as rows and
+requested variables as columns. \code{subset}: a \code{CellGraph}
+object containing only the specified nodes.
 }
 \description{
 Methods for \code{\link{CellGraph}} objects for generics defined in other
@@ -79,6 +95,8 @@ packages
 }
 \section{Functions}{
 \itemize{
+\item \code{FetchData(object)}: Pull node-level data from a \code{CellGraph}
+
 \item \code{show(CellGraph)}: Show a \code{CellGraph} object
 
 \item \code{x[[i}: Extract a \code{NodeDimReduc} by name
@@ -97,6 +115,9 @@ cg <- CellGraphs(se)[[1]]
 
 # Show method
 cg
+
+# Fetch marker counts, node attributes, or embeddings
+head(FetchData(cg, vars = colnames(cg@counts)[1]))
 
 # Subset
 cg_small <- subset(cg, nodes = rownames(cg@counts)[1:100])

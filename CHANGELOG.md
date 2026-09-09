@@ -7,13 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
-### Added
-
-- `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
-  layout `(x, y, z)` coordinates for the directional (key) light. The default
-  `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
-  forwards the same argument when illumination is enabled.
-
 ### Updates
 
 - `render_rotating_layout()` defaults `light_direction` to `c(-0.6, 0.5, 0.62)`,
@@ -30,10 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the check was previously applied to a column literally named `x` whenever the
   data contained one.
 
-## [0.21.0] - 2026-09-04
-
 ### Added
 
+- `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
+  layout `(x, y, z)` coordinates for the directional (key) light. The default
+  `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
+  forwards the same argument when illumination is enabled.
+- `FetchData.CellGraph` to pull node-level metadata, graph vertex attributes,
+  reduction embeddings, and layer/marker values, following the same lookup order
+  as `FetchData.Seurat`.
 - `CellGraphList`, a named `vctrs` `list_of` of `CellGraph` objects (subsetting,
   concatenation, and replacement type-check elements; printing shows a short
   summary).
@@ -42,6 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `mode = "self-clustering"`) are stored as a layer; vector results are stored
   in node `meta.data`. Methods are provided for `CellGraph`, `CellGraphList`,
   `PNAAssay`, `PNAAssay5`, and `Seurat` (loaded cell graphs only).
+
+## [0.21.0] - 2026-09-04
 
 ### Fixes
 

@@ -294,6 +294,9 @@ CellGraphData <- function(
 # -------------------------------------------------------
 
 #' @param search Optional layer name or pattern passed to \code{\link[SeuratObject]{Layers}}
+#' @param layer Name of a node matrix layer. Use \code{"counts"} for the
+#' counts slot. For \code{FetchData}, \code{NULL} (default) selects
+#' \code{"counts"} when present, otherwise the first extra layer.
 #'
 #' @rdname CellGraph-methods
 #' @method Layers CellGraph
@@ -318,9 +321,6 @@ Layers.CellGraph <- function(object, search = NULL, ...) {
   lyrs
 }
 
-#' @param layer Name of a node matrix layer. Use \code{"counts"} for the
-#' counts slot.
-#'
 #' @rdname CellGraph-methods
 #' @method LayerData CellGraph
 #' @export
@@ -453,6 +453,154 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
   object
 }
 
+#' @param vars Variables to fetch: marker names, node metadata columns,
+#' graph vertex attributes, or reduction embedding columns (for example
+#' \code{"PC_1"}).
+#' @param cells Nodes to collect data for (default is all nodes). Numeric
+#' indices are allowed, matching \code{\link[SeuratObject]{FetchData}}.
+#' @param clean If \code{TRUE}, remove nodes that are missing data for every
+#' requested variable.
+#'
+#' @describeIn CellGraph-methods Pull node-level data from a \code{CellGraph}
+#' @method FetchData CellGraph
+#' @export
+#'
+FetchData.CellGraph <- function(
+  object,
+  vars,
+  cells = NULL,
+  layer = NULL,
+  clean = TRUE,
+  ...
+) {
+  object <- .upgrade_cellgraph(object)
+  node_names <- Cells(object)
+
+  if (isTRUE(clean)) {
+    clean <- "all"
+  } else if (isFALSE(clean)) {
+    clean <- "none"
+  }
+  clean <- rlang::arg_match0(clean, values = c("all", "none"))
+
+  cells <- cells %||% node_names
+  if (is.numeric(cells)) {
+    cells <- node_names[cells]
+  }
+  assert_vector(cells, type = "character", n = 1)
+  cells <- as.character(cells)
+  cells.orig <- cells
+  cells <- cells[!is.na(cells)]
+  cells <- intersect(cells, node_names)
+  if (length(cells) == 0) {
+    cli::cli_abort(c("x" = "None of the requested nodes were found in this {.cls CellGraph}."))
+  }
+  if (length(cells) != length(cells.orig)) {
+    cli::cli_warn("Removing {length(cells.orig) - length(cells)} node{?s} not present in this {.cls CellGraph}.")
+  }
+
+  if (is.null(vars) || length(vars) == 0) {
+    return(data.frame(row.names = cells))
+  }
+  assert_vector(vars, type = "character", n = 1)
+  vars <- as.character(vars)
+
+  data.fetched <- data.frame(row.names = cells)
+
+  # Pull vars from node metadata first (same priority as FetchData.Seurat)
+  meta <- slot(object, "meta.data")
+  meta.vars <- intersect(vars, colnames(meta))
+  if (length(meta.vars) > 0) {
+    data.fetched <- .add_fetched_cols(data.fetched, meta[cells, meta.vars, drop = FALSE])
+  }
+
+  # Pull remaining vars from graph vertex attributes
+  graph_meta <- .cg_vertex_attr_df(slot(object, "cellgraph"))
+  graph.vars <- setdiff(intersect(vars, colnames(graph_meta)), names(data.fetched))
+  if (length(graph.vars) > 0) {
+    data.fetched <- .add_fetched_cols(data.fetched, graph_meta[cells, graph.vars, drop = FALSE])
+  }
+
+  # Pull keyed embedding columns from reductions
+  remaining <- setdiff(vars, names(data.fetched))
+  if (length(remaining) > 0) {
+    reductions <- slot(object, "reductions")
+    for (nm in names(reductions)) {
+      remaining <- setdiff(vars, names(data.fetched))
+      if (length(remaining) == 0) {
+        break
+      }
+      data.fetched <- .add_fetched_cols(
+        data.fetched,
+        .fetch_nodedimreduc_vars(reductions[[nm]], remaining, cells)
+      )
+    }
+  }
+
+  # Pull remaining vars from a node layer (markers / extra layers)
+  remaining <- setdiff(vars, names(data.fetched))
+  available_layers <- Layers(object)
+  if (length(remaining) > 0 && length(available_layers) > 0) {
+    if (is.null(layer)) {
+      layer <- if ("counts" %in% available_layers) "counts" else available_layers[[1]]
+    }
+    assert_single_value(layer, type = "string")
+    if (!layer %in% available_layers) {
+      cli::cli_abort(
+        c(
+          "x" = "Unknown layer {.val {layer}}.",
+          "i" = "Available layers: {.val {available_layers}}"
+        )
+      )
+    }
+    data.fetched <- .add_fetched_cols(
+      data.fetched,
+      .fetch_layer_vars(object, layer, remaining, cells, meta.vars)
+    )
+    remaining <- setdiff(vars, names(data.fetched))
+    other_layers <- setdiff(available_layers, layer)
+    if (length(remaining) > 0 && length(other_layers) > 0) {
+      data.fetched <- .add_fetched_cols(
+        data.fetched,
+        .fetch_vars_from_other_layers(object, remaining, cells, other_layers)
+      )
+    }
+  } else if (!is.null(layer) && length(available_layers) == 0) {
+    cli::cli_abort(
+      c(
+        "x" = "Unknown layer {.val {layer}}.",
+        "i" = "This {.cls CellGraph} has no layers."
+      )
+    )
+  }
+
+  vars.missing <- setdiff(vars, names(data.fetched))
+  m2 <- if (length(vars.missing) > 10) {
+    paste0(" (10 out of ", length(vars.missing), " shown)")
+  } else {
+    ""
+  }
+  if (length(vars.missing) == length(vars)) {
+    cli::cli_abort(
+      c("x" = "None of the requested variables were found{m2}: {.val {head(vars.missing, 10)}}")
+    )
+  } else if (length(vars.missing) > 0) {
+    cli::cli_warn("The following requested variables were not found{m2}: {.val {head(vars.missing, 10)}}")
+  }
+
+  found <- intersect(vars, names(data.fetched))
+  data.fetched <- data.fetched[, found, drop = FALSE]
+
+  if (identical(clean, "all")) {
+    no.data <- which(apply(data.fetched, 1L, function(x) all(is.na(x))))
+    if (length(no.data) > 0) {
+      cli::cli_warn("Removing {length(no.data)} node{?s} missing data for vars requested")
+      data.fetched <- data.fetched[-no.data, , drop = FALSE]
+    }
+  }
+  data.fetched
+}
+
 
 # -------------------------------------------------------
 # Base methods
@@ -471,6 +619,10 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 #' @param value Replacement value
 #' @param drop Unused
 #' @param ... Currently not used
+#'
+#' @return \code{FetchData}: a \code{data.frame} with nodes as rows and
+#' requested variables as columns. \code{subset}: a \code{CellGraph}
+#' object containing only the specified nodes.
 #'
 #' @name CellGraph-methods
 #' @rdname CellGraph-methods
@@ -494,6 +646,9 @@ NULL
 #'
 #' # Show method
 #' cg
+#'
+#' # Fetch marker counts, node attributes, or embeddings
+#' head(FetchData(cg, vars = colnames(cg@counts)[1]))
 #'
 setMethod(
   f = "show",
@@ -591,8 +746,6 @@ setMethod(
 #' # Subset
 #' cg_small <- subset(cg, nodes = rownames(cg@counts)[1:100])
 #' cg_small
-#'
-#' @return A \code{CellGraph} object containing only the specified nodes.
 #'
 #' @export
 #'
@@ -950,6 +1103,142 @@ subset.CellGraph <- function(
   })
   names(aligned) <- names(reductions)
   aligned
+}
+
+#' Bind fetched columns onto a node-level data.frame
+#'
+#' @noRd
+#'
+.add_fetched_cols <- function(data.fetched, new_df) {
+  if (is.null(new_df) || ncol(new_df) == 0) {
+    return(data.fetched)
+  }
+  missing_rows <- setdiff(rownames(data.fetched), rownames(new_df))
+  if (length(missing_rows) > 0) {
+    pad <- new_df[rep(NA_integer_, length(missing_rows)), , drop = FALSE]
+    rownames(pad) <- missing_rows
+    new_df <- rbind(new_df, pad)
+  }
+  new_df <- new_df[rownames(data.fetched), , drop = FALSE]
+  if (ncol(data.fetched) == 0) {
+    return(new_df)
+  }
+  cbind(data.fetched, new_df)
+}
+
+#' Fetch marker columns from a CellGraph layer
+#'
+#' @noRd
+#'
+.fetch_layer_vars <- function(object, layer, vars, cells, meta.vars = character()) {
+  mat <- LayerData(object, layer = layer)
+  if (is.null(mat) || ncol(mat) == 0) {
+    return(NULL)
+  }
+  overlap <- intersect(meta.vars, colnames(mat))
+  if (length(overlap) > 0) {
+    cli::cli_warn(
+      c(
+        "The following variables were found in both node meta.data and layer {.val {layer}}: {.val {overlap}}.",
+        "i" = "Returning meta.data."
+      )
+    )
+  }
+  feature.vars <- intersect(vars, colnames(mat))
+  if (length(feature.vars) == 0) {
+    return(NULL)
+  }
+  as.data.frame(as.matrix(mat[cells, feature.vars, drop = FALSE]), stringsAsFactors = FALSE)
+}
+
+#' Search remaining vars in layers other than the default
+#'
+#' @noRd
+#'
+.fetch_vars_from_other_layers <- function(object, vars, cells, other_layers) {
+  vars.alt <- vector("list", length(vars))
+  names(vars.alt) <- vars
+  for (lyr in other_layers) {
+    mat <- LayerData(object, layer = lyr)
+    if (is.null(mat) || ncol(mat) == 0) {
+      next
+    }
+    for (var in intersect(vars, colnames(mat))) {
+      vars.alt[[var]] <- c(vars.alt[[var]], lyr)
+    }
+  }
+  n_hits <- vapply(vars.alt, length, integer(1))
+  vars.many <- names(vars.alt)[n_hits > 1]
+  if (length(vars.many) > 0) {
+    cli::cli_warn(
+      "Found the following features in more than one layer besides the default; they will not be included: {.val {vars.many}}"
+    )
+  }
+  vars.one <- vars.alt[n_hits == 1]
+  if (length(vars.one) == 0) {
+    return(NULL)
+  }
+  pieces <- lapply(names(vars.one), function(var) {
+    lyr <- vars.one[[var]]
+    cli::cli_warn("Could not find {.val {var}} in the default layer, found in {.val {lyr}} instead")
+    .fetch_layer_vars(object, lyr, var, cells)
+  })
+  Reduce(cbind, pieces)
+}
+
+#' Vertex attributes of a CellGraph as a node-level data.frame
+#'
+#' @noRd
+#'
+.cg_vertex_attr_df <- function(cellgraph) {
+  node_names <- .cg_node_names(cellgraph)
+  attr_names <- igraph::vertex_attr_names(cellgraph)
+  if (length(attr_names) == 0) {
+    return(data.frame(row.names = node_names))
+  }
+  attrs <- lapply(attr_names, function(nm) {
+    igraph::vertex_attr(cellgraph, name = nm)
+  })
+  names(attrs) <- attr_names
+  keep <- vapply(attrs, function(x) {
+    is.atomic(x) && is.null(dim(x)) && length(x) == length(node_names)
+  }, logical(1))
+  if (!any(keep)) {
+    return(data.frame(row.names = node_names))
+  }
+  df <- as.data.frame(attrs[keep], stringsAsFactors = FALSE, check.names = FALSE)
+  rownames(df) <- node_names
+  df
+}
+
+#' Fetch embedding columns from a NodeDimReduc
+#'
+#' @noRd
+#'
+.fetch_nodedimreduc_vars <- function(object, vars, cells) {
+  key <- Key(object)
+  emb <- Embeddings(object)
+  if (is.null(emb) || ncol(emb) == 0) {
+    return(NULL)
+  }
+  keyed <- character()
+  if (length(key) && nzchar(key)) {
+    keyed <- grep(paste0("^", key), vars, value = TRUE)
+  }
+  keyed <- unique(c(keyed, intersect(vars, colnames(emb))))
+  if (length(keyed) == 0) {
+    return(NULL)
+  }
+  missing <- setdiff(keyed, colnames(emb))
+  keyed <- setdiff(keyed, missing)
+  if (length(keyed) == 0) {
+    return(NULL)
+  }
+  cells_keep <- intersect(cells, rownames(emb))
+  if (length(cells_keep) == 0) {
+    return(NULL)
+  }
+  as.data.frame(emb[cells_keep, keyed, drop = FALSE], stringsAsFactors = FALSE)
 }
 
 #' Fetch a named reduction from a CellGraph
