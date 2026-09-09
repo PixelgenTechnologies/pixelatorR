@@ -11,6 +11,7 @@ for (assay_version in c("v3", "v5")) {
   test_that("CellGraphs.MPXAssay getter/setter works as expected", {
     cg_list <- CellGraphs(cg_assay)
     expect_type(cg_list, "list")
+    expect_s3_class(cg_list, "CellGraphList")
     expect_equal(cg_list %>% length(), 5)
     CellGraphs(cg_assay) <- cg_assay@cellgraphs
     cg_list <- cg_assay@cellgraphs

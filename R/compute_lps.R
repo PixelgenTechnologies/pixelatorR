@@ -131,7 +131,8 @@ ComputeLPS.CellGraphList <- function(
   method <- match.arg(method, choices = c("analytical", "permutation"))
   mode <- match.arg(mode, choices = c("self-clustering", "all", "any"))
 
-  if (length(object) == 0) {
+  loaded <- !vapply(object, is.null, logical(1))
+  if (sum(loaded) == 0) {
     if (verbose && check_global_verbosity()) {
       cli_alert_info("No CellGraph objects in {.cls CellGraphList}. Returning unmodified object.")
     }
@@ -139,13 +140,17 @@ ComputeLPS.CellGraphList <- function(
   }
 
   if (verbose && check_global_verbosity()) {
-    cli_alert_info("Computing local proximity scores for {length(object)} graph{?s}")
+    cli_alert_info("Computing local proximity scores for {sum(loaded)} graph{?s}")
   }
 
   nms <- names(object)
   cellgraphs <- pblapply(nms, function(nm) {
+    g <- object[[nm]]
+    if (is.null(g)) {
+      return(NULL)
+    }
     .compute_lps_cellgraph(
-      object = object[[nm]],
+      object = g,
       markers = markers,
       method = method,
       mode = mode,

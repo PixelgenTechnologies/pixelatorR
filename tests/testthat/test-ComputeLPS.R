@@ -32,6 +32,10 @@ test_that("CreateCellGraphList fails when invalid input is provided", {
   expect_error(CreateCellGraphList(list(cg_small)))
   expect_error(CreateCellGraphList(list(a = cg_small, a = cg_small)))
   expect_error(CreateCellGraphList(list(a = cg_small, b = "Invalid")))
+  expect_s3_class(
+    CreateCellGraphList(list(a = cg_small, b = NULL)),
+    "CellGraphList"
+  )
 })
 
 test_that("ComputeLPS.CellGraph stores a matrix as a layer", {
