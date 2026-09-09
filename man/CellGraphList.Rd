@@ -30,10 +30,18 @@ behavior is printing, which shows a short summary instead of each
 }
 \examples{
 library(pixelatorR)
+library(tidygraph)
+library(dplyr)
 
-se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
-se <- LoadCellGraphs(se, cells = colnames(se)[1:2], verbose = FALSE)
-cgl <- CreateCellGraphList(CellGraphs(se)[1:2])
+# Build a small dummy cell graph
+edges <- tibble(from = c("a", "b"), to = c("b", "c"))
+g <- as_tbl_graph(edges, directed = FALSE) \%N>\%
+  mutate(node_type = c("umi1", "umi2", "umi1"))
+attr(g, "type") <- "bipartite"
+cg <- CreateCellGraphObject(cellgraph = g)
+
+# Repeat the CellGraph in a named list and convert to a CellGraphList
+cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg))
 cgl
 
 }
