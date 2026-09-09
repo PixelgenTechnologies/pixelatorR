@@ -10,11 +10,11 @@ bipart_graph <- tidygraph::tbl_graph(
 attr(bipart_graph, "type") <- "bipartite"
 
 counts <- Matrix::Matrix(
-  1:12,
+  1:16,
   nrow = 4,
-  ncol = 3,
+  ncol = 4,
   sparse = TRUE,
-  dimnames = list(node_names, c("CD3", "CD4", "CD8"))
+  dimnames = list(node_names, c("CD3", "CD4", "CD8", "HLA-DR"))
 )
 counts <- as(counts, "dgCMatrix")
 
@@ -22,7 +22,7 @@ layer_mat <- matrix(
   seq_len(8),
   nrow = 4,
   ncol = 2,
-  dimnames = list(node_names, c("f1", "f2"))
+  dimnames = list(node_names, c("f1", "f-2"))
 )
 meta <- data.frame(
   cluster = c("a", "a", "b", "b"),
@@ -60,10 +60,10 @@ test_that("FetchData.CellGraph works as expected", {
   expect_equal(fd$node_type, c("umi1", "umi1", "umi2", "umi2"))
 
   fd_layer <- SeuratObject::FetchData(cg, vars = "f1", layer = "data")
-  expect_equal(fd_layer$f1, layer_mat[, "f1"])
+  expect_equal(fd_layer$f1, unname(layer_mat[, "f1"]))
 
   expect_warning(fd_alt <- SeuratObject::FetchData(cg, vars = "f1"))
-  expect_equal(fd_alt$f1, layer_mat[, "f1"])
+  expect_equal(fd_alt$f1, unname(layer_mat[, "f1"]))
 
   fd_cells <- SeuratObject::FetchData(cg, vars = "CD3", cells = node_names[1:2])
   expect_equal(rownames(fd_cells), node_names[1:2])
@@ -75,6 +75,16 @@ test_that("FetchData.CellGraph works as expected", {
   empty <- SeuratObject::FetchData(cg, vars = NULL)
   expect_equal(nrow(empty), 4)
   expect_equal(ncol(empty), 0)
+})
+
+test_that("FetchData.CellGraph keeps non-syntactic marker names", {
+  expect_no_error(fd <- SeuratObject::FetchData(cg, vars = c("HLA-DR", "CD3")))
+  expect_equal(colnames(fd), c("HLA-DR", "CD3"))
+  expect_equal(fd[["HLA-DR"]], as.numeric(counts[, "HLA-DR"]))
+
+  fd_layer <- SeuratObject::FetchData(cg, vars = "f-2", layer = "data")
+  expect_equal(colnames(fd_layer), "f-2")
+  expect_equal(fd_layer[["f-2"]], unname(layer_mat[, "f-2"]))
 })
 
 test_that("FetchData.CellGraph fails with invalid input", {
