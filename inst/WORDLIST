@@ -8,7 +8,9 @@ CLR
 CMD
 CellGraph
 CellGraphAssay
+CellGraphList
 CellGraphs
+ComputeLPS
 Colocalization
 ColocalizationScores
 Commun
@@ -150,6 +152,7 @@ kmers
 labelled
 linegraph
 linegraphs
+lps
 makeCluster
 mkv
 morans

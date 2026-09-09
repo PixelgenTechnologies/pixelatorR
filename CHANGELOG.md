@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.21.0] - 2026-09-04
 
+### Added
+
+- `CellGraphList`, a named `vctrs` `list_of` of `CellGraph` objects (subsetting,
+  concatenation, and replacement type-check elements; printing shows a short
+  summary).
+- `ComputeLPS` to compute local proximity scores with `local_proximity` and
+  store them on each `CellGraph`. Matrix results (default
+  `mode = "self-clustering"`) are stored as a layer; vector results are stored
+  in node `meta.data`. Methods are provided for `CellGraph`, `CellGraphList`,
+  `PNAAssay`, `PNAAssay5`, and `Seurat` (loaded cell graphs only).
+
 ### Fixes
 
 - Removed option to use `presto::wilcoxauc` for Wilcoxon tests since it doesn't handle negative values. The current options are to use `limma::rankSumTestWithCorrelation` (used if limma is installed) or base R's `wilcox.test` from the `stats` package otherwise.

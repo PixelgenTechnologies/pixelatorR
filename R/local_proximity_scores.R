@@ -246,7 +246,7 @@ local_proximity <- function(
 
   # Sort results to match input graph
   log2_ratio <- switch(mode,
-    "self-clustering" = log2_ratio[object@cellgraph %N>% pull(name), ],
+    "self-clustering" = log2_ratio[object@cellgraph %N>% pull(name), , drop = FALSE],
     "all" = log2_ratio[object@cellgraph %N>% pull(name)],
     "any" = log2_ratio[object@cellgraph %N>% pull(name)]
   )

@@ -334,7 +334,7 @@ CellGraphs.MPXAssay <- function(
   object,
   ...
 ) {
-  return(slot(object, name = "cellgraphs"))
+  return(CreateCellGraphList(slot(object, name = "cellgraphs")))
 }
 
 
@@ -376,7 +376,7 @@ CellGraphs.MPXAssay <- function(
         )
       }
     }
-    slot(object = object, name = "cellgraphs") <- value
+    slot(object = object, name = "cellgraphs") <- .unclass_cellgraph_list(value)
   } else {
     cli::cli_abort(
       c(
@@ -427,7 +427,7 @@ RenameCells.MPXAssay <- function(
   # Rename cellgraphs
   cellgraphs <- slot(object, name = "cellgraphs")
   cellgraphs <- set_names(cellgraphs, nm = new.names)
-  slot(cg_assay_renamed, name = "cellgraphs") <- cellgraphs
+  slot(cg_assay_renamed, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
 
   # Handle polarization slot
   name_conversion <- tibble(new = new.names, component = orig.names)
@@ -572,7 +572,7 @@ as.CellGraphAssay.Assay <- function(
   new_assay <- as(object = x, Class = "CellGraphAssay")
 
   # Add slots
-  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
   slot(new_assay, name = "polarization") <- polarization
   slot(new_assay, name = "colocalization") <- colocalization
 
@@ -694,7 +694,7 @@ as.CellGraphAssay5.Assay5 <- function(
   new_assay <- as(object = x, Class = "CellGraphAssay5")
 
   # Add slots
-  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
   slot(new_assay, name = "polarization") <- polarization
   slot(new_assay, name = "colocalization") <- colocalization
 

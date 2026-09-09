@@ -27,6 +27,7 @@ Imports:
     igraph,
     tidygraph,
     tidyr,
+    vctrs,
     Matrix,
     methods,
     ggplot2,
@@ -84,6 +85,7 @@ Collate:
     'generics.R'
     'NodeDimReduc.R'
     'CellGraph.R'
+    'CellGraphList.R'
     'CellGraphAssay.R'
     'lazy_load_tables.R'
     'PNAAssay.R'
@@ -124,6 +126,7 @@ Collate:
     'load_data_pna.R'
     'local_G.R'
     'local_proximity_scores.R'
+    'compute_lps.R'
     'molecule_rank_plot.R'
     'objects.R'
     'patch_detection.R'
