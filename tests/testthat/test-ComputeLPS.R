@@ -17,13 +17,14 @@ cgl <- CreateCellGraphList(cg_small_list)
 cg_small <- cg_small_list[[1]]
 
 test_that("CreateCellGraphList works as expected", {
-  expect_s4_class(cgl, "CellGraphList")
+  expect_s3_class(cgl, "CellGraphList")
+  expect_type(cgl, "list")
   expect_equal(length(cgl), 2)
   expect_equal(names(cgl), names(cg_small_list))
   expect_s4_class(cgl[[1]], "CellGraph")
   expect_equal(length(cgl[1]), 1)
-  expect_type(as.list(cgl), "list")
-  expect_s4_class(as.list(cgl)[[1]], "CellGraph")
+  expect_equal(length(lapply(cgl, identity)), 2)
+  expect_s4_class(lapply(cgl, identity)[[1]], "CellGraph")
 })
 
 test_that("CreateCellGraphList fails when invalid input is provided", {
@@ -67,7 +68,7 @@ test_that("ComputeLPS.CellGraphList intersects missing markers", {
 
 test_that("ComputeLPS.CellGraphList warns when all markers are missing", {
   expect_warning(
-    cgl_skip <- ComputeLPS(cgl[1], markers = "NotAMarker", verbose = FALSE)
+    cgl_skip <- ComputeLPS(CreateCellGraphList(cgl[1]), markers = "NotAMarker", verbose = FALSE)
   )
   expect_false("lps" %in% setdiff(Layers(cgl_skip[[1]]), "counts"))
 })

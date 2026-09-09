@@ -130,9 +130,8 @@ ComputeLPS.CellGraphList <- function(
 ) {
   method <- match.arg(method, choices = c("analytical", "permutation"))
   mode <- match.arg(mode, choices = c("self-clustering", "all", "any"))
-  cellgraphs <- slot(object, "cellgraphs")
 
-  if (length(cellgraphs) == 0) {
+  if (length(object) == 0) {
     if (verbose && check_global_verbosity()) {
       cli_alert_info("No CellGraph objects in {.cls CellGraphList}. Returning unmodified object.")
     }
@@ -140,13 +139,13 @@ ComputeLPS.CellGraphList <- function(
   }
 
   if (verbose && check_global_verbosity()) {
-    cli_alert_info("Computing local proximity scores for {length(cellgraphs)} graph{?s}")
+    cli_alert_info("Computing local proximity scores for {length(object)} graph{?s}")
   }
 
-  nms <- names(cellgraphs)
+  nms <- names(object)
   cellgraphs <- pblapply(nms, function(nm) {
     .compute_lps_cellgraph(
-      object = cellgraphs[[nm]],
+      object = object[[nm]],
       markers = markers,
       method = method,
       mode = mode,
@@ -160,8 +159,7 @@ ComputeLPS.CellGraphList <- function(
   }, cl = cl)
   names(cellgraphs) <- nms
 
-  slot(object, "cellgraphs") <- cellgraphs
-  return(object)
+  CreateCellGraphList(cellgraphs)
 }
 
 #' @rdname ComputeLPS
@@ -212,7 +210,7 @@ ComputeLPS.PNAAssay <- function(
     cl = cl,
     ...
   )
-  slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- as.list(cellgraphs_loaded)
+  slot(object, name = "cellgraphs")[names(cellgraphs_loaded)] <- unclass(cellgraphs_loaded)
 
   return(object)
 }
