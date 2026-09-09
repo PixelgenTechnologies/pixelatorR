@@ -52,15 +52,50 @@ CellGraph <- setClass(
     layers = "list",
     meta.data = "data.frame",
     reductions = "list"
-  ),
-  prototype = list(
+  )
+)
+
+#' Initialize a CellGraph object
+#'
+#' @keywords internal
+#' @noRd
+#'
+setMethod(
+  f = "initialize",
+  signature = "CellGraph",
+  definition = function(
+    .Object,
     cellgraph = NULL,
     counts = NULL,
     layout = NULL,
     layers = list(),
     meta.data = data.frame(),
-    reductions = list()
-  )
+    reductions = list(),
+    ...
+  ) {
+    if (is.null(layers)) {
+      layers <- list()
+    }
+    if (is.null(reductions)) {
+      reductions <- list()
+    }
+    if (is.null(meta.data)) {
+      meta.data <- data.frame()
+    }
+    if (!is.null(cellgraph) && ncol(as.data.frame(meta.data)) == 0) {
+      meta.data <- data.frame(row.names = .cg_node_names(cellgraph))
+    }
+    callNextMethod(
+      .Object,
+      cellgraph = cellgraph,
+      counts = counts,
+      layout = layout,
+      layers = layers,
+      meta.data = meta.data,
+      reductions = reductions,
+      ...
+    )
+  }
 )
 
 

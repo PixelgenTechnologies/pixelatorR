@@ -160,6 +160,7 @@
 #' @importFrom Matrix rowSums
 #' @importFrom methods as
 #' @importFrom methods getMethod
+#' @importFrom methods initialize
 #' @importFrom methods is
 #' @importFrom methods new
 #' @importFrom methods setClass
