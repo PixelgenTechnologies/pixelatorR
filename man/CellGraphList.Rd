@@ -4,17 +4,22 @@
 \alias{CellGraphList}
 \alias{CreateCellGraphList}
 \alias{print.CellGraphList}
+\alias{lapply.CellGraphList}
 \title{The CellGraphList class}
 \usage{
-CreateCellGraphList(cellgraphs)
+CreateCellGraphList(cellgraphs = list())
 
 \method{print}{CellGraphList}(x, ...)
+
+\method{lapply}{CellGraphList}(X, FUN, ...)
 }
 \arguments{
 \item{cellgraphs}{A named list of \code{\link{CellGraph}} objects.
 Unloaded graphs may be represented as \code{NULL}.}
 
-\item{x}{A \code{\link{CellGraphList}} object}
+\item{x, X}{A \code{\link{CellGraphList}} object}
+
+\item{FUN}{A function to apply to each element}
 
 \item{...}{Currently not used}
 }
@@ -23,9 +28,8 @@ Unloaded graphs may be represented as \code{NULL}.}
 }
 \description{
 A named list of \code{\link{CellGraph}} objects. \code{CellGraphList}
-extends \code{list}, so list operations such as \code{[[}, \code{lapply},
-\code{names}, and \code{length} work as usual. The only specialized
-behavior is printing, which shows a short summary instead of each
+is a \code{\link[vctrs:list_of]{vctrs} list_of} subclass, so subsetting,
+concatenation, and replacement type-check elements against
 \code{CellGraph}. Unloaded graphs may be stored as \code{NULL}.
 }
 \examples{

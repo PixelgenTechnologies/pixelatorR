@@ -9,8 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `CellGraphList`, a named list of `CellGraph` objects (list operations work
-  as usual; printing shows a short summary).
+- `CellGraphList`, a named `vctrs` `list_of` of `CellGraph` objects (subsetting,
+  concatenation, and replacement type-check elements; printing shows a short
+  summary).
 - `ComputeLPS` to compute local proximity scores with `local_proximity` and
   store them on each `CellGraph`. Matrix results (default
   `mode = "self-clustering"`) are stored as a layer; vector results are stored

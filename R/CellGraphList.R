@@ -1,17 +1,50 @@
 #' @include CellGraph.R
 NULL
 
+#' Treat CellGraph objects as length-1 vctrs
+#'
+#' \code{vctrs::new_list_of()} requires a prototype that is a true vector.
+#' An empty S3 \code{CellGraph} list is used as that prototype; S4
+#' \code{CellGraph} objects are proxied as length-1 lists so they can be
+#' stored and type-checked as elements of a \code{CellGraphList}.
+#'
+#' @noRd
+#' @export
+#' @method vec_proxy CellGraph
+#'
+vec_proxy.CellGraph <- function(x, ...) {
+  if (isS4(x)) {
+    list(.cellgraph = x)
+  } else {
+    unclass(x)
+  }
+}
+
+#' @noRd
+#' @export
+#' @method vec_restore CellGraph
+#'
+vec_restore.CellGraph <- function(x, to, ...) {
+  if (length(x) == 0) {
+    return(structure(list(), class = "CellGraph"))
+  }
+  if (is.list(x) && !is.null(x$.cellgraph)) {
+    return(x$.cellgraph)
+  }
+  x
+}
+
 #' The CellGraphList class
 #'
 #' A named list of \code{\link{CellGraph}} objects. \code{CellGraphList}
-#' extends \code{list}, so list operations such as \code{[[}, \code{lapply},
-#' \code{names}, and \code{length} work as usual. The only specialized
-#' behavior is printing, which shows a short summary instead of each
+#' is a \code{\link[vctrs:list_of]{vctrs} list_of} subclass, so subsetting,
+#' concatenation, and replacement type-check elements against
 #' \code{CellGraph}. Unloaded graphs may be stored as \code{NULL}.
 #'
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects.
 #' Unloaded graphs may be represented as \code{NULL}.
-#' @param x A \code{\link{CellGraphList}} object
+#' @param x,X A \code{\link{CellGraphList}} object
+#' @param FUN A function to apply to each element
 #' @param ... Currently not used
 #'
 #' @return \code{CreateCellGraphList}: a \code{CellGraphList} object
@@ -34,12 +67,17 @@ NULL
 #'
 #' @name CellGraphList
 #' @rdname CellGraphList
+#' @importFrom vctrs new_list_of
 #' @export
 #' @concept cellgraph
 #'
-CreateCellGraphList <- function(cellgraphs) {
+CreateCellGraphList <- function(cellgraphs = list()) {
   .validate_cellgraph_list(cellgraphs)
-  structure(cellgraphs, class = c("CellGraphList", "list"))
+  vctrs::new_list_of(
+    x = cellgraphs,
+    ptype = structure(list(), class = "CellGraph"),
+    class = "CellGraphList"
+  )
 }
 
 #' @rdname CellGraphList
@@ -48,7 +86,7 @@ CreateCellGraphList <- function(cellgraphs) {
 #'
 print.CellGraphList <- function(x, ...) {
   n <- length(x)
-  n_loaded <- sum(vapply(x, function(el) is(el, "CellGraph"), logical(1)))
+  n_loaded <- sum(vapply(x, function(el) inherits(el, "CellGraph"), logical(1)))
   cat(
     "A CellGraphList with", col_br_blue(n_loaded),
     "loaded CellGraph object(s) out of", col_br_blue(n), "\n"
@@ -62,6 +100,14 @@ print.CellGraphList <- function(x, ...) {
   invisible(x)
 }
 
+#' @rdname CellGraphList
+#' @method lapply CellGraphList
+#' @export
+#'
+lapply.CellGraphList <- function(X, FUN, ...) {
+  CreateCellGraphList(lapply(as.list(X), FUN, ...))
+}
+
 #' Validate a list of CellGraph objects
 #'
 #' @noRd
@@ -72,7 +118,7 @@ print.CellGraphList <- function(x, ...) {
     return(invisible(NULL))
   }
   is_ok <- vapply(cellgraphs, function(x) {
-    is.null(x) || is(x, "CellGraph")
+    is.null(x) || inherits(x, "CellGraph")
   }, logical(1))
   if (!all(is_ok)) {
     cli::cli_abort(
@@ -102,7 +148,7 @@ print.CellGraphList <- function(x, ...) {
 #'
 .unclass_cellgraph_list <- function(x) {
   if (inherits(x, "CellGraphList")) {
-    return(unclass(x))
+    return(as.list(x))
   }
   x
 }

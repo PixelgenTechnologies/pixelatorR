@@ -27,6 +27,7 @@ Imports:
     igraph,
     tidygraph,
     tidyr,
+    vctrs,
     Matrix,
     methods,
     ggplot2,

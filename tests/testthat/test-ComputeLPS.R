@@ -18,13 +18,29 @@ cg_small <- cg_small_list[[1]]
 
 test_that("CreateCellGraphList works as expected", {
   expect_s3_class(cgl, "CellGraphList")
+  expect_s3_class(cgl, "vctrs_list_of")
   expect_type(cgl, "list")
   expect_equal(length(cgl), 2)
   expect_equal(names(cgl), names(cg_small_list))
   expect_s4_class(cgl[[1]], "CellGraph")
   expect_equal(length(cgl[1]), 1)
+  expect_s3_class(cgl[1], "CellGraphList")
   expect_equal(length(lapply(cgl, identity)), 2)
   expect_s4_class(lapply(cgl, identity)[[1]], "CellGraph")
+  mapped <- lapply.CellGraphList(cgl, identity)
+  expect_s3_class(mapped, "CellGraphList")
+  expect_equal(length(mapped), 2)
+  expect_s4_class(mapped[[1]], "CellGraph")
+})
+
+test_that("CellGraphList subsetting, concatenation, and type checks work", {
+  expect_s3_class(c(cgl[1], cgl[2]), "CellGraphList")
+  expect_equal(length(c(cgl[1], cgl[2])), 2)
+  expect_error(cgl[[1]] <- "Invalid")
+  cgl_assigned <- cgl
+  cgl_assigned[[1]] <- cg_small
+  expect_s4_class(cgl_assigned[[1]], "CellGraph")
+  expect_s3_class(cgl_assigned, "CellGraphList")
 })
 
 test_that("CreateCellGraphList fails when invalid input is provided", {
