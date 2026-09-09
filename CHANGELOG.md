@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the check was previously applied to a column literally named `x` whenever the
   data contained one.
 
+### Changed
+
+- `CellGraph` now uses an `initialize()` method instead of a `setClass()`
+  prototype for default slot values.
+
 ### Added
 
 - `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
