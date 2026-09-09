@@ -10,6 +10,7 @@ NULL
 #'
 #' @noRd
 #' @export
+#' @importFrom vctrs vec_proxy
 #' @method vec_proxy CellGraph
 #'
 vec_proxy.CellGraph <- function(x, ...) {
@@ -22,6 +23,7 @@ vec_proxy.CellGraph <- function(x, ...) {
 
 #' @noRd
 #' @export
+#' @importFrom vctrs vec_restore
 #' @method vec_restore CellGraph
 #'
 vec_restore.CellGraph <- function(x, to, ...) {
