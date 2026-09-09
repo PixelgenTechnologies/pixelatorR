@@ -42,6 +42,8 @@ vec_restore.CellGraph <- function(x, to, ...) {
 #' is a \code{\link[vctrs:list_of]{vctrs} list_of} subclass, so subsetting,
 #' concatenation, and replacement type-check elements against
 #' \code{CellGraph}. Unloaded graphs may be stored as \code{NULL}.
+#' Use \code{lapply.CellGraphList} to apply a function without dropping
+#' the \code{CellGraphList} class (\code{base::lapply} is not an S3 generic).
 #'
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects.
 #' Unloaded graphs may be represented as \code{NULL}.
