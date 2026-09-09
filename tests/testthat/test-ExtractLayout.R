@@ -1,3 +1,6 @@
+library(pixelatorR)
+library(SeuratObject)
+
 node_names <- paste0("n", 1:4)
 bipart_graph <- tidygraph::tbl_graph(
   nodes = data.frame(
