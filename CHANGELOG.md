@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.21.0] - 2026-09-04
 
+### Changed
+
+- `CellGraph` now uses an `initialize()` method instead of a `setClass()`
+  prototype for default slot values.
+
 ### Added
 
 - `CellGraphList`, a named `vctrs` `list_of` of `CellGraph` objects (subsetting,
