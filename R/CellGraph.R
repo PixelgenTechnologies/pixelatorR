@@ -489,14 +489,14 @@ FetchData.CellGraph <- function(
   }
   assert_vector(cells, type = "character", n = 1)
   cells <- as.character(cells)
-  cells.orig <- cells
+  cells_orig <- cells
   cells <- cells[!is.na(cells)]
   cells <- intersect(cells, node_names)
   if (length(cells) == 0) {
     cli::cli_abort(c("x" = "None of the requested nodes were found in this {.cls CellGraph}."))
   }
-  if (length(cells) != length(cells.orig)) {
-    cli::cli_warn("Removing {length(cells.orig) - length(cells)} node{?s} not present in this {.cls CellGraph}.")
+  if (length(cells) != length(cells_orig)) {
+    cli::cli_warn("Removing {length(cells_orig) - length(cells)} node{?s} not present in this {.cls CellGraph}.")
   }
 
   if (is.null(vars) || length(vars) == 0) {
@@ -505,40 +505,40 @@ FetchData.CellGraph <- function(
   assert_vector(vars, type = "character", n = 1)
   vars <- as.character(vars)
 
-  data.fetched <- data.frame(row.names = cells)
+  data_fetched <- data.frame(row.names = cells)
 
   # Pull vars from node metadata first (same priority as FetchData.Seurat)
   meta <- slot(object, "meta.data")
-  meta.vars <- intersect(vars, colnames(meta))
-  if (length(meta.vars) > 0) {
-    data.fetched <- .add_fetched_cols(data.fetched, meta[cells, meta.vars, drop = FALSE])
+  meta_vars <- intersect(vars, colnames(meta))
+  if (length(meta_vars) > 0) {
+    data_fetched <- .add_fetched_cols(data_fetched, meta[cells, meta_vars, drop = FALSE])
   }
 
   # Pull remaining vars from graph vertex attributes
   graph_meta <- .cg_vertex_attr_df(slot(object, "cellgraph"))
-  graph.vars <- setdiff(intersect(vars, colnames(graph_meta)), names(data.fetched))
-  if (length(graph.vars) > 0) {
-    data.fetched <- .add_fetched_cols(data.fetched, graph_meta[cells, graph.vars, drop = FALSE])
+  graph_vars <- setdiff(intersect(vars, colnames(graph_meta)), names(data_fetched))
+  if (length(graph_vars) > 0) {
+    data_fetched <- .add_fetched_cols(data_fetched, graph_meta[cells, graph_vars, drop = FALSE])
   }
 
   # Pull keyed embedding columns from reductions
-  remaining <- setdiff(vars, names(data.fetched))
+  remaining <- setdiff(vars, names(data_fetched))
   if (length(remaining) > 0) {
     reductions <- slot(object, "reductions")
     for (nm in names(reductions)) {
-      remaining <- setdiff(vars, names(data.fetched))
+      remaining <- setdiff(vars, names(data_fetched))
       if (length(remaining) == 0) {
         break
       }
-      data.fetched <- .add_fetched_cols(
-        data.fetched,
+      data_fetched <- .add_fetched_cols(
+        data_fetched,
         .fetch_nodedimreduc_vars(reductions[[nm]], remaining, cells)
       )
     }
   }
 
   # Pull remaining vars from a node layer (markers / extra layers)
-  remaining <- setdiff(vars, names(data.fetched))
+  remaining <- setdiff(vars, names(data_fetched))
   available_layers <- Layers(object)
   if (length(remaining) > 0 && length(available_layers) > 0) {
     if (is.null(layer)) {
@@ -553,15 +553,15 @@ FetchData.CellGraph <- function(
         )
       )
     }
-    data.fetched <- .add_fetched_cols(
-      data.fetched,
-      .fetch_layer_vars(object, layer, remaining, cells, meta.vars)
+    data_fetched <- .add_fetched_cols(
+      data_fetched,
+      .fetch_layer_vars(object, layer, remaining, cells, meta_vars)
     )
-    remaining <- setdiff(vars, names(data.fetched))
+    remaining <- setdiff(vars, names(data_fetched))
     other_layers <- setdiff(available_layers, layer)
     if (length(remaining) > 0 && length(other_layers) > 0) {
-      data.fetched <- .add_fetched_cols(
-        data.fetched,
+      data_fetched <- .add_fetched_cols(
+        data_fetched,
         .fetch_vars_from_other_layers(object, remaining, cells, other_layers)
       )
     }
@@ -574,31 +574,31 @@ FetchData.CellGraph <- function(
     )
   }
 
-  vars.missing <- setdiff(vars, names(data.fetched))
-  m2 <- if (length(vars.missing) > 10) {
-    paste0(" (10 out of ", length(vars.missing), " shown)")
+  vars_missing <- setdiff(vars, names(data_fetched))
+  m2 <- if (length(vars_missing) > 10) {
+    paste0(" (10 out of ", length(vars_missing), " shown)")
   } else {
     ""
   }
-  if (length(vars.missing) == length(vars)) {
+  if (length(vars_missing) == length(vars)) {
     cli::cli_abort(
-      c("x" = "None of the requested variables were found{m2}: {.val {head(vars.missing, 10)}}")
+      c("x" = "None of the requested variables were found{m2}: {.val {head(vars_missing, 10)}}")
     )
-  } else if (length(vars.missing) > 0) {
-    cli::cli_warn("The following requested variables were not found{m2}: {.val {head(vars.missing, 10)}}")
+  } else if (length(vars_missing) > 0) {
+    cli::cli_warn("The following requested variables were not found{m2}: {.val {head(vars_missing, 10)}}")
   }
 
-  found <- intersect(vars, names(data.fetched))
-  data.fetched <- data.fetched[, found, drop = FALSE]
+  found <- intersect(vars, names(data_fetched))
+  data_fetched <- data_fetched[, found, drop = FALSE]
 
   if (identical(clean, "all")) {
-    no.data <- which(apply(data.fetched, 1L, function(x) all(is.na(x))))
-    if (length(no.data) > 0) {
-      cli::cli_warn("Removing {length(no.data)} node{?s} missing data for vars requested")
-      data.fetched <- data.fetched[-no.data, , drop = FALSE]
+    no_data <- which(apply(data_fetched, 1L, function(x) all(is.na(x))))
+    if (length(no_data) > 0) {
+      cli::cli_warn("Removing {length(no_data)} node{?s} missing data for vars requested")
+      data_fetched <- data_fetched[-no_data, , drop = FALSE]
     }
   }
-  data.fetched
+  data_fetched
 }
 
 
@@ -1109,33 +1109,33 @@ subset.CellGraph <- function(
 #'
 #' @noRd
 #'
-.add_fetched_cols <- function(data.fetched, new_df) {
+.add_fetched_cols <- function(data_fetched, new_df) {
   if (is.null(new_df) || ncol(new_df) == 0) {
-    return(data.fetched)
+    return(data_fetched)
   }
-  missing_rows <- setdiff(rownames(data.fetched), rownames(new_df))
+  missing_rows <- setdiff(rownames(data_fetched), rownames(new_df))
   if (length(missing_rows) > 0) {
     pad <- new_df[rep(NA_integer_, length(missing_rows)), , drop = FALSE]
     rownames(pad) <- missing_rows
     new_df <- rbind(new_df, pad)
   }
-  new_df <- new_df[rownames(data.fetched), , drop = FALSE]
-  if (ncol(data.fetched) == 0) {
+  new_df <- new_df[rownames(data_fetched), , drop = FALSE]
+  if (ncol(data_fetched) == 0) {
     return(new_df)
   }
-  cbind(data.fetched, new_df)
+  cbind(data_fetched, new_df)
 }
 
 #' Fetch marker columns from a CellGraph layer
 #'
 #' @noRd
 #'
-.fetch_layer_vars <- function(object, layer, vars, cells, meta.vars = character()) {
+.fetch_layer_vars <- function(object, layer, vars, cells, meta_vars = character()) {
   mat <- LayerData(object, layer = layer)
   if (is.null(mat) || ncol(mat) == 0) {
     return(NULL)
   }
-  overlap <- intersect(meta.vars, colnames(mat))
+  overlap <- intersect(meta_vars, colnames(mat))
   if (length(overlap) > 0) {
     cli::cli_warn(
       c(
@@ -1144,11 +1144,11 @@ subset.CellGraph <- function(
       )
     )
   }
-  feature.vars <- intersect(vars, colnames(mat))
-  if (length(feature.vars) == 0) {
+  feature_vars <- intersect(vars, colnames(mat))
+  if (length(feature_vars) == 0) {
     return(NULL)
   }
-  as.data.frame(as.matrix(mat[cells, feature.vars, drop = FALSE]), stringsAsFactors = FALSE)
+  as.data.frame(as.matrix(mat[cells, feature_vars, drop = FALSE]), stringsAsFactors = FALSE)
 }
 
 #' Search remaining vars in layers other than the default
@@ -1156,30 +1156,30 @@ subset.CellGraph <- function(
 #' @noRd
 #'
 .fetch_vars_from_other_layers <- function(object, vars, cells, other_layers) {
-  vars.alt <- vector("list", length(vars))
-  names(vars.alt) <- vars
+  vars_alt <- vector("list", length(vars))
+  names(vars_alt) <- vars
   for (lyr in other_layers) {
     mat <- LayerData(object, layer = lyr)
     if (is.null(mat) || ncol(mat) == 0) {
       next
     }
     for (var in intersect(vars, colnames(mat))) {
-      vars.alt[[var]] <- c(vars.alt[[var]], lyr)
+      vars_alt[[var]] <- c(vars_alt[[var]], lyr)
     }
   }
-  n_hits <- vapply(vars.alt, length, integer(1))
-  vars.many <- names(vars.alt)[n_hits > 1]
-  if (length(vars.many) > 0) {
+  n_hits <- vapply(vars_alt, length, integer(1))
+  vars_many <- names(vars_alt)[n_hits > 1]
+  if (length(vars_many) > 0) {
     cli::cli_warn(
-      "Found the following features in more than one layer besides the default; they will not be included: {.val {vars.many}}"
+      "Found the following features in more than one layer besides the default; they will not be included: {.val {vars_many}}"
     )
   }
-  vars.one <- vars.alt[n_hits == 1]
-  if (length(vars.one) == 0) {
+  vars_one <- vars_alt[n_hits == 1]
+  if (length(vars_one) == 0) {
     return(NULL)
   }
-  pieces <- lapply(names(vars.one), function(var) {
-    lyr <- vars.one[[var]]
+  pieces <- lapply(names(vars_one), function(var) {
+    lyr <- vars_one[[var]]
     cli::cli_warn("Could not find {.val {var}} in the default layer, found in {.val {lyr}} instead")
     .fetch_layer_vars(object, lyr, var, cells)
   })
