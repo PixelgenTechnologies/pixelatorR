@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
-### Updates
+### Updated
 
 - `render_rotating_layout()` defaults `light_direction` to `c(-0.6, 0.5, 0.62)`,
   a key light above and to the viewer's left instead of on the camera axis. This
@@ -45,6 +45,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `mode = "self-clustering"`) are stored as a layer; vector results are stored
   in node `meta.data`. Methods are provided for `CellGraph`, `CellGraphList`,
   `PNAAssay`, `PNAAssay5`, and `Seurat` (loaded cell graphs only).
+- `ExtractLayout` to extract a stored 3D layout (`x`, `y`, `z`) from
+  `CellGraph` objects, optionally joined with node-level variables from
+  `FetchData`. Methods are provided for `CellGraph`, `CellGraphList`,
+  `PNAAssay`, `PNAAssay5`, and `Seurat`. Missing `vars` are filled with `NA`.
+- `FetchData.CellGraph` to pull node-level metadata, graph vertex attributes,
+  reduction embeddings, and layer/marker values, following the same lookup order
+  as `FetchData.Seurat`.
 
 ## [0.21.0] - 2026-09-04
 
