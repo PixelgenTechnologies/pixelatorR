@@ -35,7 +35,7 @@ test_that("CellGraph initialize supplies default slot values", {
   expect_equal(rownames(cg@meta.data), bipart_graph %>% dplyr::pull(name))
 })
 
-test_that("upgrade fills per-node meta.data on empty tables", {
+test_that("AddMetaData fills per-node meta.data on empty tables", {
   nodes <- bipart_graph %>% dplyr::pull(name)
   cg <- CreateCellGraphObject(cellgraph = bipart_graph)
   slot(cg, "meta.data") <- data.frame()

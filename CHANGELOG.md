@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collisions between the graph node table, `meta.data`, reductions, and
   matrix features. Counts and layers may still share feature names because
   callers can select a specific layer.
+- `CellGraph` objects serialized before the extra slots existed are not
+  upgraded. Loading or using them fails.
 
 ### Fixes
 
@@ -47,11 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `c.CellGraphList` names a bare `CellGraph` from the argument name, or
   `CellGraph1`, `CellGraph2`, ... when unnamed.
 - `FetchLayoutData` keeps factor (and other classed) metadata columns.
-- `.upgrade_cellgraph()` fills per-node `meta.data` row names on objects that
-  still have an empty metadata table after the class gained new slots.
 - `color_by_marker(..., nNodes = )` subsets layers, metadata, and reductions
   along with the graph, counts, and layouts.
-- Legacy layout tables without row names get node IDs on upgrade, so
+- Layout tables without row names get node IDs on subset so
   `WriteMPX_pxl_file()` can restore the `name` column.
 
 ### Added

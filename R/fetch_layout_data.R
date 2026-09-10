@@ -38,7 +38,6 @@ FetchLayoutData.CellGraph <- function(
   layer = NULL,
   ...
 ) {
-  object <- .upgrade_cellgraph(object)
   assert_single_value(layout_method, type = "string")
   assert_vector(vars, type = "character", n = 1, allow_null = TRUE)
   assert_single_value(layer, type = "string", allow_null = TRUE)

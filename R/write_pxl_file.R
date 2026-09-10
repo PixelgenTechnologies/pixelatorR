@@ -695,7 +695,7 @@ WriteMPX_pxl_file <- function(
   ))
 
   all_data <- lapply(names(cg_list), function(nm) {
-    cg <- .upgrade_cellgraph(cg_list[[nm]])
+    cg <- cg_list[[nm]]
 
     if (is.null(cg@layout)) {
       return(invisible(NULL))

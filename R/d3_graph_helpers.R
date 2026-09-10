@@ -55,7 +55,6 @@ color_by_marker <- function(
 
   # Validate input parameters
   assert_class(cg, "CellGraph")
-  cg <- .upgrade_cellgraph(cg)
   assert_vector(markers, type = "character", n = 1)
   assert_vector(palette, type = "character", n = 1)
   assert_single_value(smooth_counts, type = "bool")

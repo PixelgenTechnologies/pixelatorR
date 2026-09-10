@@ -38,6 +38,9 @@ NULL
 #' layer features. Count and layer matrices are the exception: they may share
 #' feature names because callers select a layer explicitly.
 #'
+#' Objects serialized before these extra slots existed are not upgraded.
+#' Loading or using them will fail.
+#'
 #' @name CellGraph-class
 #' @rdname CellGraph-class
 #' @exportClass CellGraph
@@ -277,7 +280,6 @@ CellGraphData <- function(
   slot = "cellgraph"
 ) {
   assert_class(object, "CellGraph")
-  object <- .upgrade_cellgraph(object)
   assert_single_value(slot, type = "string")
   slot <- .normalize_cellgraph_slot_name(slot)
   assert_is_one_of(slot, slotNames(x = object))
@@ -303,7 +305,6 @@ CellGraphData <- function(
   value
 ) {
   assert_class(object, "CellGraph")
-  object <- .upgrade_cellgraph(object)
   slot <- .normalize_cellgraph_slot_name(slot)
   assert_is_one_of(slot, slotNames(x = object))
 
@@ -366,7 +367,6 @@ CellGraphData <- function(
 #' @export
 #'
 Layers.CellGraph <- function(object, search = NULL, ...) {
-  object <- .upgrade_cellgraph(object)
   lyrs <- names(slot(object, "layers"))
   if (!is.null(slot(object, "counts"))) {
     lyrs <- c("counts", lyrs)
@@ -389,7 +389,6 @@ Layers.CellGraph <- function(object, search = NULL, ...) {
 #' @export
 #'
 LayerData.CellGraph <- function(object, layer = "counts", ...) {
-  object <- .upgrade_cellgraph(object)
   assert_single_value(layer, type = "string")
   if (identical(layer, "counts")) {
     return(slot(object, "counts"))
@@ -411,7 +410,6 @@ LayerData.CellGraph <- function(object, layer = "counts", ...) {
 #' @export
 #'
 "LayerData<-.CellGraph" <- function(object, layer = "counts", ..., value) {
-  object <- .upgrade_cellgraph(object)
   assert_single_value(layer, type = "string")
   node_names <- .cg_node_names(slot(object, "cellgraph"))
   if (identical(layer, "counts")) {
@@ -460,7 +458,7 @@ Stdev.CellGraph <- function(object, reduction = NULL, ...) {
 #' @export
 #'
 Cells.CellGraph <- function(x, ...) {
-  .cg_node_names(slot(.upgrade_cellgraph(x), "cellgraph"))
+  .cg_node_names(slot(x, "cellgraph"))
 }
 
 #' @param metadata A vector, matrix, or \code{data.frame} of node metadata
@@ -471,7 +469,6 @@ Cells.CellGraph <- function(x, ...) {
 #' @export
 #'
 AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
-  object <- .upgrade_cellgraph(object)
   node_names <- .cg_node_names(slot(object, "cellgraph"))
 
   if (is.null(metadata)) {
@@ -545,7 +542,6 @@ FetchData.CellGraph <- function(
   clean = TRUE,
   ...
 ) {
-  object <- .upgrade_cellgraph(object)
   .validate_cellgraph_data_names(object)
   node_names <- Cells(object)
 
@@ -726,7 +722,6 @@ setMethod(
   f = "show",
   signature = "CellGraph",
   definition = function(object) {
-    object <- .upgrade_cellgraph(object)
     graph_type <- attr(slot(object, "cellgraph"), "type")
     if (is.null(slot(object, "counts"))) {
       n_markers <- NULL
@@ -773,7 +768,6 @@ setMethod(
   f = "[[",
   signature = c("x" = "CellGraph", "i" = "character", "j" = "missing"),
   definition = function(x, i, j, ..., drop = TRUE) {
-    x <- .upgrade_cellgraph(x)
     reductions <- slot(x, "reductions")
     if (!i %in% names(reductions)) {
       cli::cli_abort(
@@ -797,7 +791,6 @@ setMethod(
   f = "[[<-",
   signature = c("x" = "CellGraph", "i" = "character", "j" = "missing", "value" = "ANY"),
   definition = function(x, i, j, ..., value) {
-    x <- .upgrade_cellgraph(x)
     node_names <- .cg_node_names(slot(x, "cellgraph"))
     if (is.null(value)) {
       slot(x, "reductions")[[i]] <- NULL
@@ -827,7 +820,6 @@ subset.CellGraph <- function(
   nodes,
   ...
 ) {
-  x <- .upgrade_cellgraph(x)
   assert_vector(nodes, type = "character", n = 1)
   available_nodes <- .cg_node_names(slot(x, "cellgraph"))
   assert_x_in_y(nodes, available_nodes)
@@ -1035,66 +1027,6 @@ subset.CellGraph <- function(
     return(as.character(cellgraph %N>% pull(name)))
   }
   as.character(seq_along(cellgraph))
-}
-
-#' Upgrade CellGraph objects created with fewer slots
-#'
-#' Serialized objects from older pixelatorR versions only have
-#' \code{cellgraph}, \code{counts}, and \code{layout}. Slot access for
-#' \code{layers}, \code{meta.data}, or \code{reductions} would error
-#' without this reconstruction, even when the caller only needs an
-#' empty default. \code{methods::.hasSlot()} is not used because it
-#' checks the class definition (which always has the new slots after
-#' this version); missing instance slots are detected with
-#' \code{tryCatch(slot(...))}. Empty \code{meta.data} tables are
-#' replaced with one row per node.
-#'
-#' @param object A \code{CellGraph}, or another object (returned unchanged)
-#'
-#' @return \code{object} with the current slot set and node IDs on layouts
-#'
-#' @keywords internal
-#' @noRd
-#'
-.upgrade_cellgraph <- function(object) {
-  if (!is(object, "CellGraph")) {
-    return(object)
-  }
-
-  # `.hasSlot()` checks the class definition, which always includes the new
-  # slots after this package version. Detect old instances by whether the
-  # object can actually supply those slots.
-  has_layers <- tryCatch(
-    {
-      slot(object, "layers")
-      TRUE
-    },
-    error = function(e) FALSE
-  )
-  if (!isTRUE(has_layers)) {
-    object <- new(
-      Class = "CellGraph",
-      cellgraph = slot(object, "cellgraph"),
-      counts = slot(object, "counts"),
-      layout = slot(object, "layout")
-    )
-  }
-  if (is.null(slot(object, "layers"))) {
-    slot(object, "layers") <- list()
-  }
-  if (is.null(slot(object, "reductions"))) {
-    slot(object, "reductions") <- list()
-  }
-
-  meta <- slot(object, "meta.data")
-  node_names <- character()
-  if (!is.null(slot(object, "cellgraph"))) {
-    node_names <- .cg_node_names(slot(object, "cellgraph"))
-  }
-  if (is.null(meta) || (nrow(meta) == 0 && ncol(meta) == 0 && length(node_names) > 0)) {
-    slot(object, "meta.data") <- data.frame(row.names = node_names)
-  }
-  .ensure_node_ids_on_slots(object)
 }
 
 #' Match row names of a matrix to node names
@@ -1672,9 +1604,7 @@ subset.CellGraph <- function(
 
 #' Fetch a named reduction from a CellGraph
 #'
-#' Upgrades the object first so \code{reductions} can be read on old
-#' serialized instances. When \code{reduction} is \code{NULL}, the first
-#' stored reduction is used.
+#' When \code{reduction} is \code{NULL}, the first stored reduction is used.
 #'
 #' @param object A \code{CellGraph}
 #' @param reduction Name of a stored \code{NodeDimReduc}, or \code{NULL}
@@ -1686,7 +1616,6 @@ subset.CellGraph <- function(
 #' @noRd
 #'
 .get_cellgraph_reduction <- function(object, reduction = NULL, call = caller_env()) {
-  object <- .upgrade_cellgraph(object)
   reductions <- slot(object, "reductions")
   if (length(reductions) == 0) {
     cli::cli_abort(c("x" = "This {.cls CellGraph} has no reductions."), call = call)
@@ -1714,7 +1643,7 @@ subset.CellGraph <- function(
 #' matrices that lack row names but match the graph length get node names
 #' assigned in current order.
 #'
-#' @param object A \code{CellGraph} (already upgraded)
+#' @param object A \code{CellGraph}
 #'
 #' @return \code{object} with node IDs on slots that were positional
 #'

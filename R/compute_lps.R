@@ -65,7 +65,6 @@ ComputeLPS.CellGraph <- function(
   name = "lps",
   ...
 ) {
-  object <- .upgrade_cellgraph(object)
   method <- match.arg(method, choices = c("analytical", "permutation"))
   mode <- match.arg(mode, choices = c("self-clustering", "all", "any"))
   assert_single_value(name, type = "string")
