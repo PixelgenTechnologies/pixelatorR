@@ -1,3 +1,14 @@
+test_that("NodeDimReduc initialize supplies default slot values", {
+  dr <- methods::new("NodeDimReduc")
+  expect_s4_class(dr, "NodeDimReduc")
+  expect_equal(dim(dr@embeddings), c(0, 0))
+  expect_equal(dim(dr@loadings), c(0, 0))
+  expect_equal(dr@stdev, numeric())
+  expect_equal(dr@key, "DR_")
+  expect_equal(dr@method, character())
+  expect_identical(dr@misc, list())
+})
+
 test_that("CreateNodeDimReducObject works as expected", {
   embeddings <- matrix(
     1:6,

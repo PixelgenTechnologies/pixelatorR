@@ -39,15 +39,56 @@ NodeDimReduc <- setClass(
     key = "character",
     method = "character",
     misc = "list"
-  ),
-  prototype = list(
+  )
+)
+
+#' Initialize a NodeDimReduc object
+#'
+#' @keywords internal
+#' @noRd
+#'
+setMethod(
+  f = "initialize",
+  signature = "NodeDimReduc",
+  definition = function(
+    .Object,
     embeddings = matrix(nrow = 0, ncol = 0),
     loadings = matrix(nrow = 0, ncol = 0),
     stdev = numeric(),
     key = "DR_",
     method = character(),
-    misc = list()
-  )
+    misc = list(),
+    ...
+  ) {
+    if (is.null(embeddings)) {
+      embeddings <- matrix(nrow = 0, ncol = 0)
+    }
+    if (is.null(loadings)) {
+      loadings <- matrix(nrow = 0, ncol = 0)
+    }
+    if (is.null(stdev)) {
+      stdev <- numeric()
+    }
+    if (is.null(key) || !nzchar(key)) {
+      key <- "DR_"
+    }
+    if (is.null(method)) {
+      method <- character()
+    }
+    if (is.null(misc)) {
+      misc <- list()
+    }
+    callNextMethod(
+      .Object,
+      embeddings = embeddings,
+      loadings = loadings,
+      stdev = stdev,
+      key = key,
+      method = method,
+      misc = misc,
+      ...
+    )
+  }
 )
 
 # -------------------------------------------------------

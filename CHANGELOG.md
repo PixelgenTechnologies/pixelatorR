@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CellGraph` now uses an `initialize()` method instead of a `setClass()`
   prototype for default slot values.
 
+### Changed
+
+- `NodeDimReduc` now uses an `initialize()` method instead of a `setClass()`
+  prototype for default slot values.
+
 ### Fixes
 
 - `subset.CellGraph` and `KeepLargestComponent.CellGraph` accept a single node.
