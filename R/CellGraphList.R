@@ -232,6 +232,16 @@ lapply.CellGraphList <- function(X, FUN, ...) {
 
 #' Validate a list of CellGraph objects
 #'
+#' Ensures every element is a \code{CellGraph} or \code{NULL}, and that
+#' names are unique and non-missing. An empty list is allowed (no names
+#' required). Errors are reported from \code{call}.
+#'
+#' @param cellgraphs A list
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{NULL}, invisibly
+#'
+#' @keywords internal
 #' @noRd
 #'
 .validate_cellgraph_list <- function(cellgraphs, call = caller_env()) {
@@ -266,6 +276,15 @@ lapply.CellGraphList <- function(X, FUN, ...) {
 
 #' Drop the CellGraphList class so the object can be stored in an S4 list slot
 #'
+#' Assay \code{cellgraphs} slots are plain lists. This strips the
+#' \code{CellGraphList} class while keeping names and \code{NULL}
+#' placeholders.
+#'
+#' @param x A \code{CellGraphList} or list
+#'
+#' @return A named list of \code{CellGraph} objects and \code{NULL}s
+#'
+#' @keywords internal
 #' @noRd
 #'
 .unclass_cellgraph_list <- function(x) {

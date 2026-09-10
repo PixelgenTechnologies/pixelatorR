@@ -44,6 +44,22 @@ NodeDimReduc <- setClass(
 
 #' Initialize a NodeDimReduc object
 #'
+#' Supplies default slot values so \code{methods::new("NodeDimReduc")}
+#' works without arguments. \code{NULL} inputs are replaced with empty
+#' matrices, \code{numeric()}/\code{character()} vectors, \code{key = "DR_"},
+#' or \code{list()} as appropriate.
+#'
+#' @param .Object A \code{NodeDimReduc} instance being constructed
+#' @param embeddings A numeric matrix of node embeddings
+#' @param loadings A numeric matrix of feature loadings
+#' @param stdev A numeric vector of standard deviations
+#' @param key Dimension-name prefix (default \code{"DR_"})
+#' @param method Name of the reduction method
+#' @param misc A list of extra metadata
+#' @param ... Passed to the next \code{initialize} method
+#'
+#' @return A \code{NodeDimReduc} object
+#'
 #' @keywords internal
 #' @noRd
 #'
@@ -276,6 +292,18 @@ Cells.NodeDimReduc <- function(x, ...) {
 
 #' Align a NodeDimReduc to a node name order
 #'
+#' Reorders embedding rows so they match \code{node_names}. Used when a
+#' reduction is stored on a \code{CellGraph} whose graph node order may
+#' differ from the embedding row order.
+#'
+#' @param object A \code{NodeDimReduc} object
+#' @param node_names Character vector of graph node names (target row order)
+#' @param arg Name of the argument to cite in error messages
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{object} with embeddings aligned to \code{node_names}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_node_dimreduc <- function(object, node_names, arg = "reduction", call = caller_env()) {

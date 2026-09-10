@@ -51,6 +51,23 @@ CellGraph <- setClass(
 
 #' Initialize a CellGraph object
 #'
+#' Supplies default values for the extra slots so
+#' \code{methods::new("CellGraph")} and constructors can omit
+#' \code{layers}, \code{meta.data}, and \code{reductions}. When a graph is
+#' provided and \code{meta.data} has no columns, row names are set to the
+#' graph node names.
+#'
+#' @param .Object A \code{CellGraph} instance being constructed
+#' @param cellgraph A \code{tbl_graph}, or \code{NULL}
+#' @param counts A count matrix, or \code{NULL}
+#' @param layout A named list of layout tables, or \code{NULL}
+#' @param layers A named list of extra node matrices
+#' @param meta.data A node-level \code{data.frame}
+#' @param reductions A named list of \code{NodeDimReduc} objects
+#' @param ... Passed to the next \code{initialize} method
+#'
+#' @return A \code{CellGraph} object
+#'
 #' @keywords internal
 #' @noRd
 #'
@@ -801,6 +818,14 @@ subset.CellGraph <- function(
 
 #' Normalize CellGraphData slot names
 #'
+#' Maps the \code{meta_data} alias to the \code{meta.data} slot name so
+#' getters and setters accept either spelling.
+#'
+#' @param slot Character slot name from \code{CellGraphData}
+#'
+#' @return The canonical slot name
+#'
+#' @keywords internal
 #' @noRd
 #'
 .normalize_cellgraph_slot_name <- function(slot) {
@@ -812,6 +837,18 @@ subset.CellGraph <- function(
 
 #' Validate a tbl_graph for use in a CellGraph
 #'
+#' Checks that the graph has a \code{type} attribute, unique node names,
+#' and (for bipartite graphs) \code{name} and \code{node_type} vertex
+#' attributes. Errors are reported from \code{call} so they point at the
+#' user-facing constructor or setter, not this helper.
+#'
+#' @param cellgraph A \code{tbl_graph}
+#' @param verbose Print the detected graph type
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{NULL}, invisibly
+#'
+#' @keywords internal
 #' @noRd
 #'
 .validate_cellgraph <- function(cellgraph, verbose = FALSE, call = caller_env()) {
@@ -839,6 +876,14 @@ subset.CellGraph <- function(
 
 #' Node names for a tbl_graph
 #'
+#' Reads the \code{name} vertex attribute when present; otherwise uses
+#' \code{"1"}, \code{"2"}, ... in node order.
+#'
+#' @param cellgraph A \code{tbl_graph}
+#'
+#' @return A character vector of node names, one per vertex
+#'
+#' @keywords internal
 #' @noRd
 #'
 .cg_node_names <- function(cellgraph) {
@@ -854,8 +899,17 @@ subset.CellGraph <- function(
 #' \code{cellgraph}, \code{counts}, and \code{layout}. Slot access for
 #' \code{layers}, \code{meta.data}, or \code{reductions} would error
 #' without this reconstruction, even when the caller only needs an
-#' empty default.
+#' empty default. \code{methods::.hasSlot()} is not used because it
+#' checks the class definition (which always has the new slots after
+#' this version); missing instance slots are detected with
+#' \code{tryCatch(slot(...))}. Empty \code{meta.data} tables are
+#' replaced with one row per node.
 #'
+#' @param object A \code{CellGraph}, or another object (returned unchanged)
+#'
+#' @return \code{object} with the current slot set and node IDs on layouts
+#'
+#' @keywords internal
 #' @noRd
 #'
 .upgrade_cellgraph <- function(object) {
@@ -901,6 +955,19 @@ subset.CellGraph <- function(
 
 #' Match row names of a matrix to node names
 #'
+#' Reorders rows to \code{node_names}. If the matrix has no row names and
+#' \code{nrow} matches the graph, names are assigned in current row order.
+#' Duplicate or missing node names abort with an error attributed to
+#' \code{call}.
+#'
+#' @param mat A matrix-like object, or \code{NULL}
+#' @param node_names Character vector of graph node names (target row order)
+#' @param arg Name of the argument to cite in error messages
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{mat} with rows in \code{node_names} order, or \code{NULL}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_matrix_rows <- function(mat, node_names, arg = "matrix", call = caller_env()) {
@@ -939,6 +1006,16 @@ subset.CellGraph <- function(
 
 #' Align the counts matrix
 #'
+#' Requires a \code{dgCMatrix} (when not \code{NULL}) and matches rows to
+#' graph node names.
+#'
+#' @param counts A \code{dgCMatrix}, or \code{NULL}
+#' @param node_names Character vector of graph node names
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{counts} aligned to \code{node_names}, or \code{NULL}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_counts <- function(counts, node_names, call = caller_env()) {
@@ -951,6 +1028,18 @@ subset.CellGraph <- function(
 
 #' Align a numeric node matrix used as a layer
 #'
+#' Coerces data frames to matrices, requires numeric values, and matches
+#' rows to graph node names. Used for extra \code{layers} on a
+#' \code{CellGraph}.
+#'
+#' @param mat A matrix, \code{Matrix}, or data frame
+#' @param node_names Character vector of graph node names
+#' @param arg Name of the argument to cite in error messages
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{mat} as a matrix aligned to \code{node_names}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_node_matrix <- function(mat, node_names, arg = "layer", call = caller_env()) {
@@ -974,6 +1063,16 @@ subset.CellGraph <- function(
 
 #' Align a named list of layers
 #'
+#' Each element is aligned with \code{\link{.align_node_matrix}}. The name
+#' \code{"counts"} is reserved for the \code{counts} slot.
+#'
+#' @param layers A named list of numeric node matrices, or \code{NULL}
+#' @param node_names Character vector of graph node names
+#' @param call Environment to report as the error caller
+#'
+#' @return A named list of aligned matrices, or an empty list
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_layers <- function(layers, node_names, call = caller_env()) {
@@ -1003,8 +1102,14 @@ subset.CellGraph <- function(
 #'
 #' Returns \code{NULL} for automatic row names, which \code{data.frame} uses
 #' when no identifiers have been set (tibbles never carry row names, so they
-#' also end up with automatic row names once coerced).
+#' also end up with automatic row names once coerced). Explicit row names
+#' are returned as a character vector.
 #'
+#' @param x A data frame, tibble, or object coercible to a data frame
+#'
+#' @return Character row names, or \code{NULL} if they are automatic
+#'
+#' @keywords internal
 #' @noRd
 #'
 .explicit_rownames <- function(x) {
@@ -1019,6 +1124,20 @@ subset.CellGraph <- function(
 
 #' Align a layout table to graph node order
 #'
+#' Accepts a data frame or matrix. Nodes are identified by row names or a
+#' \code{name} column (which is then dropped so only coordinates remain).
+#' If neither is present and \code{nrow} matches the graph, rows are assumed
+#' to follow node order. The result is a base \code{data.frame} with node
+#' IDs as row names.
+#'
+#' @param layout A data frame or matrix of coordinates
+#' @param node_names Character vector of graph node names
+#' @param layout_name Name of this layout, used in error messages
+#' @param call Environment to report as the error caller
+#'
+#' @return A \code{data.frame} of coordinates with row names \code{node_names}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_layout <- function(layout, node_names, layout_name = "layout", call = caller_env()) {
@@ -1078,6 +1197,16 @@ subset.CellGraph <- function(
 
 #' Align a named list of layouts
 #'
+#' Runs \code{\link{.align_layout}} on each named element. \code{NULL} is
+#' returned unchanged (no layouts stored).
+#'
+#' @param layout A named list of layout tables, or \code{NULL}
+#' @param node_names Character vector of graph node names
+#' @param call Environment to report as the error caller
+#'
+#' @return A named list of aligned layout data frames, or \code{NULL}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_layout_list <- function(layout, node_names, call = caller_env()) {
@@ -1097,6 +1226,17 @@ subset.CellGraph <- function(
 
 #' Align node metadata
 #'
+#' Matches rows to graph nodes via explicit row names or a \code{name}
+#' column. An empty table becomes a zero-column \code{data.frame} with
+#' \code{node_names} as row names.
+#'
+#' @param meta A data frame or tibble, or \code{NULL}
+#' @param node_names Character vector of graph node names
+#' @param call Environment to report as the error caller
+#'
+#' @return A \code{data.frame} with row names \code{node_names}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_meta_data <- function(meta, node_names, call = caller_env()) {
@@ -1140,6 +1280,15 @@ subset.CellGraph <- function(
 
 #' Align a named list of NodeDimReduc objects
 #'
+#' Each reduction's embeddings are matched to graph node names.
+#'
+#' @param reductions A named list of \code{NodeDimReduc} objects, or \code{NULL}
+#' @param node_names Character vector of graph node names
+#' @param call Environment to report as the error caller
+#'
+#' @return A named list of aligned \code{NodeDimReduc} objects, or an empty list
+#'
+#' @keywords internal
 #' @noRd
 #'
 .align_reductions <- function(reductions, node_names, call = caller_env()) {
@@ -1158,6 +1307,14 @@ subset.CellGraph <- function(
 
 #' Bind data.frames while keeping non-syntactic column names
 #'
+#' \code{cbind()} rewrites names such as \code{HLA-DR} to \code{HLA.DR}.
+#' This helper cbinds, then restores the original column names.
+#'
+#' @param ... Data frames to bind column-wise
+#'
+#' @return A data frame, a single input if only one has columns, or \code{NULL}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .cbind_keep_names <- function(...) {
@@ -1179,6 +1336,15 @@ subset.CellGraph <- function(
 
 #' Bind fetched columns onto a node-level data.frame
 #'
+#' Pads missing rows with \code{NA}, aligns by row name, and cbinds while
+#' keeping non-syntactic names. Used by \code{FetchData.CellGraph}.
+#'
+#' @param data_fetched Accumulated result with nodes as row names
+#' @param new_df Columns to add, with nodes as row names
+#'
+#' @return \code{data_fetched} with columns from \code{new_df} appended
+#'
+#' @keywords internal
 #' @noRd
 #'
 .add_fetched_cols <- function(data_fetched, new_df) {
@@ -1200,6 +1366,19 @@ subset.CellGraph <- function(
 
 #' Fetch marker columns from a CellGraph layer
 #'
+#' Pulls requested feature names from \code{LayerData()}. Columns that
+#' already came from node \code{meta.data} are skipped with a warning.
+#' Marker names are not passed through \code{check.names}.
+#'
+#' @param object A \code{CellGraph}
+#' @param layer Layer name (for example \code{"counts"})
+#' @param vars Character vector of requested variable names
+#' @param cells Node names to keep as rows
+#' @param meta_vars Variable names already taken from \code{meta.data}
+#'
+#' @return A data frame of selected columns, or \code{NULL} if none match
+#'
+#' @keywords internal
 #' @noRd
 #'
 .fetch_layer_vars <- function(object, layer, vars, cells, meta_vars = character()) {
@@ -1229,6 +1408,17 @@ subset.CellGraph <- function(
 
 #' Search remaining vars in layers other than the default
 #'
+#' Features found in exactly one non-default layer are included (with a
+#' warning). Features present in more than one extra layer are skipped.
+#'
+#' @param object A \code{CellGraph}
+#' @param vars Character vector of names not found in the default layer
+#' @param cells Node names to keep as rows
+#' @param other_layers Character vector of layer names to search
+#'
+#' @return A data frame of recovered columns, or \code{NULL}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .fetch_vars_from_other_layers <- function(object, vars, cells, other_layers) {
@@ -1273,6 +1463,15 @@ subset.CellGraph <- function(
 
 #' Vertex attributes of a CellGraph as a node-level data.frame
 #'
+#' Collects atomic, unnamed vertex attributes (such as \code{name} and
+#' \code{node_type}) into a data frame keyed by node name for
+#' \code{FetchData.CellGraph}.
+#'
+#' @param cellgraph A \code{tbl_graph}
+#'
+#' @return A data frame with one row per node
+#'
+#' @keywords internal
 #' @noRd
 #'
 .cg_vertex_attr_df <- function(cellgraph) {
@@ -1298,6 +1497,16 @@ subset.CellGraph <- function(
 
 #' Fetch embedding columns from a NodeDimReduc
 #'
+#' Selects columns whose names match \code{vars}, including keyed names
+#' such as \code{PC_1}.
+#'
+#' @param object A \code{NodeDimReduc}
+#' @param vars Character vector of requested variable names
+#' @param cells Node names to keep as rows
+#'
+#' @return A data frame of embedding columns, or \code{NULL} if none match
+#'
+#' @keywords internal
 #' @noRd
 #'
 .fetch_nodedimreduc_vars <- function(object, vars, cells) {
@@ -1328,6 +1537,17 @@ subset.CellGraph <- function(
 
 #' Fetch a named reduction from a CellGraph
 #'
+#' Upgrades the object first so \code{reductions} can be read on old
+#' serialized instances. When \code{reduction} is \code{NULL}, the first
+#' stored reduction is used.
+#'
+#' @param object A \code{CellGraph}
+#' @param reduction Name of a stored \code{NodeDimReduc}, or \code{NULL}
+#' @param call Environment to report as the error caller
+#'
+#' @return A \code{NodeDimReduc} object
+#'
+#' @keywords internal
 #' @noRd
 #'
 .get_cellgraph_reduction <- function(object, reduction = NULL, call = caller_env()) {
@@ -1354,6 +1574,16 @@ subset.CellGraph <- function(
 
 #' Attach node identities to slots that still rely on positional alignment
 #'
+#' Used before subsetting. Layouts without row names (or with a \code{name}
+#' column) are converted to node-ID row names. Count, layer, and metadata
+#' matrices that lack row names but match the graph length get node names
+#' assigned in current order.
+#'
+#' @param object A \code{CellGraph} (already upgraded)
+#'
+#' @return \code{object} with node IDs on slots that were positional
+#'
+#' @keywords internal
 #' @noRd
 #'
 .ensure_node_ids_on_slots <- function(object) {
@@ -1404,6 +1634,17 @@ subset.CellGraph <- function(
 
 #' Reorder or subset all node-level slots to \code{node_names}
 #'
+#' After the graph is filtered or replaced, counts, layouts, layers,
+#' metadata, and reductions are aligned to the remaining node names so
+#' they stay in sync with the graph.
+#'
+#' @param object A \code{CellGraph}
+#' @param node_names Character vector of node names to keep, in graph order
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{object} with every node-level slot aligned to \code{node_names}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .remap_cellgraph_nodes <- function(object, node_names, call = caller_env()) {

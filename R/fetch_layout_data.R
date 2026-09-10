@@ -173,6 +173,16 @@ FetchLayoutData.Seurat <- function(
 
 #' Fetch a named 3D layout from a CellGraph
 #'
+#' Looks up \code{layout_method} in the \code{layout} slot and checks that
+#' the table has \code{x}, \code{y}, and \code{z} columns.
+#'
+#' @param object A \code{CellGraph}
+#' @param layout_method Name of a stored layout (for example \code{"wpmds_3d"})
+#' @param call Environment to report as the error caller
+#'
+#' @return A data frame of coordinates
+#'
+#' @keywords internal
 #' @noRd
 #'
 .get_cellgraph_layout <- function(object, layout_method, call = caller_env()) {
@@ -215,6 +225,20 @@ FetchLayoutData.Seurat <- function(
 
 #' Fetch vars for layout rows, filling missing values with NA
 #'
+#' Calls \code{FetchData} on the \code{CellGraph} and aligns the result
+#' to \code{cells}. Variables that are missing stay \code{NA} instead of
+#' aborting. Classed columns such as factors are copied with \code{[[}
+#' so types are preserved.
+#'
+#' @param object A \code{CellGraph}
+#' @param vars Character vector of variable names, or \code{NULL}
+#' @param cells Node names corresponding to layout rows
+#' @param layer Layer name passed to \code{FetchData}, or \code{NULL}
+#' @param call Environment to report as the error caller
+#'
+#' @return A data frame with rows \code{cells} and columns \code{vars}
+#'
+#' @keywords internal
 #' @noRd
 #'
 .fetch_layout_vars <- function(object, vars, cells, layer, call = caller_env()) {
@@ -264,6 +288,17 @@ FetchLayoutData.Seurat <- function(
 
 #' Resolve component IDs and require loaded CellGraph objects
 #'
+#' When \code{cells} is \code{NULL}, all loaded graphs in the
+#' \code{CellGraphList} are used. Requested IDs that are missing or still
+#' \code{NULL} abort with a message to run \code{LoadCellGraphs}.
+#'
+#' @param object A \code{CellGraphList} (or named list of graphs)
+#' @param cells Component IDs to keep, or \code{NULL} for all loaded graphs
+#' @param call Environment to report as the error caller
+#'
+#' @return A character vector of component IDs
+#'
+#' @keywords internal
 #' @noRd
 #'
 .resolve_fetch_layout_data_cells <- function(object, cells, call = caller_env()) {

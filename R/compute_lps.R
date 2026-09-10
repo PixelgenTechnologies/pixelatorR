@@ -276,9 +276,26 @@ ComputeLPS.Seurat <- function(
 
 #' Compute LPS for one CellGraph, intersecting requested markers
 #'
-#' Used by methods that iterate over many graphs. Missing markers are
-#' dropped. If none remain, the graph is returned unmodified with a warning.
+#' Used by methods that iterate over many graphs. Requested markers that
+#' are absent from that graph's count matrix are dropped. If none remain,
+#' the graph is returned unmodified with a warning instead of aborting the
+#' whole batch.
 #'
+#' @param object A \code{CellGraph}
+#' @param markers Character vector of marker names, or \code{NULL} for all
+#' @param method \code{"analytical"} or \code{"permutation"}
+#' @param mode Passed to \code{local_proximity} (\code{"self-clustering"},
+#' \code{"all"}, or \code{"any"})
+#' @param iterations Permutation iterations
+#' @param k Neighborhood size
+#' @param seed Random seed
+#' @param name Layer or metadata column name for the scores
+#' @param graph_id Optional label used in the missing-marker warning
+#' @param ... Passed to \code{ComputeLPS.CellGraph}
+#'
+#' @return \code{object} with LPS stored, or unchanged if no markers matched
+#'
+#' @keywords internal
 #' @noRd
 #'
 .compute_lps_cellgraph <- function(

@@ -268,7 +268,19 @@ CellGraphs.PNAAssay <- function(
 CellGraphs.PNAAssay5 <- CellGraphs.PNAAssay
 
 
-#' Internal function to replace cellgraphs in a PNAAssay object
+#' Replace the cellgraphs slot of a PNAAssay
+#'
+#' Accepts a named list or \code{CellGraphList} of \code{CellGraph} objects
+#' and \code{NULL} placeholders. \code{value = NULL} unloads every cell.
+#' The list is stored unclassed so it fits the S4 slot.
+#'
+#' @param object A \code{PNAAssay} or \code{PNAAssay5}
+#' @param value A named list / \code{CellGraphList}, or \code{NULL}
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{object} with an updated \code{cellgraphs} slot
+#'
+#' @keywords internal
 #' @noRd
 .replace_cellgraphs <- function(
   object,
