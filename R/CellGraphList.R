@@ -3,23 +3,14 @@ NULL
 
 #' The CellGraphList class
 #'
-#' A named list of \code{\link{CellGraph}} objects. Subsetting,
-#' concatenation, and replacement type-check elements against
-#' \code{CellGraph}. Unloaded graphs may be stored as \code{NULL};
-#' \code{x[[i]] <- NULL} keeps the name and stores \code{NULL}
-#' rather than dropping the element.
-#' Use \code{lapply.CellGraphList} to apply a function without dropping
-#' the \code{CellGraphList} class (\code{base::lapply} is not an S3 generic).
+#' A named list of \code{\link{CellGraph}} objects. Unloaded graphs may be
+#' stored as \code{NULL}. See \code{\link{CellGraphList-methods}} for
+#' subsetting, replacement, concatenation, and mapping.
 #'
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects.
 #' Unloaded graphs may be represented as \code{NULL}.
-#' @param x,X A \code{\link{CellGraphList}} object
-#' @param i Index to extract or replace
-#' @param value A \code{\link{CellGraph}}, \code{NULL}, or a list of those
-#' @param FUN A function to apply to each element
-#' @param ... Currently not used
 #'
-#' @return \code{CreateCellGraphList}: a \code{CellGraphList} object
+#' @return A \code{CellGraphList} object
 #'
 #' @examples
 #' library(pixelatorR)
@@ -37,6 +28,7 @@ NULL
 #' cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg))
 #' cgl
 #'
+#' @seealso \code{\link{CellGraphList-methods}}
 #' @name CellGraphList
 #' @rdname CellGraphList
 #' @export
@@ -47,7 +39,61 @@ CreateCellGraphList <- function(cellgraphs = list()) {
   structure(cellgraphs, class = c("CellGraphList", "list"))
 }
 
-#' @rdname CellGraphList
+
+# -------------------------------------------------------
+# Methods
+# -------------------------------------------------------
+
+#' CellGraphList Methods
+#'
+#' Methods for \code{\link{CellGraphList}} objects. Subsetting, concatenation,
+#' and replacement type-check elements against \code{\link{CellGraph}}.
+#' Unloaded graphs may be stored as \code{NULL}; \code{x[[i]] <- NULL} keeps
+#' the name and stores \code{NULL} rather than dropping the element.
+#' Use \code{lapply.CellGraphList} to apply a function without dropping the
+#' \code{CellGraphList} class (\code{base::lapply} is not an S3 generic).
+#'
+#' @param x,X A \code{\link{CellGraphList}} object
+#' @param i Index to extract or replace
+#' @param value A \code{\link{CellGraph}}, \code{NULL}, or a list of those
+#' @param FUN A function to apply to each element
+#' @param ... Currently not used
+#'
+#' @return \code{[}, \code{[<-}, \code{[[<-}, \code{names<-}, \code{c}, and
+#' \code{lapply}: a \code{CellGraphList}. \code{as.list}: a named list.
+#' \code{print}: \code{x}, invisibly.
+#'
+#' @examples
+#' library(pixelatorR)
+#' library(tidygraph)
+#' library(dplyr)
+#'
+#' edges <- tibble(from = c("a", "b"), to = c("b", "c"))
+#' g <- as_tbl_graph(edges, directed = FALSE) %N>%
+#'   mutate(node_type = c("umi1", "umi2", "umi1"))
+#' attr(g, "type") <- "bipartite"
+#' cg <- CreateCellGraphObject(cellgraph = g)
+#' cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg))
+#'
+#' # Print and subset
+#' print(cgl)
+#' cgl[1]
+#'
+#' # Unload a graph without dropping its name
+#' cgl[[1]] <- NULL
+#'
+#' # Concatenate and map while keeping the class
+#' c(cgl[1], cgl[2])
+#' lapply.CellGraphList(cgl, identity)
+#'
+#' @name CellGraphList-methods
+#' @rdname CellGraphList-methods
+#' @seealso \code{\link{CellGraphList}}
+#' @concept cellgraph
+#'
+NULL
+
+#' @describeIn CellGraphList-methods Print a \code{CellGraphList}
 #' @method print CellGraphList
 #' @export
 #'
@@ -67,7 +113,8 @@ print.CellGraphList <- function(x, ...) {
   invisible(x)
 }
 
-#' @rdname CellGraphList
+#' @describeIn CellGraphList-methods Subset a \code{CellGraphList}. Unknown
+#' character names raise an error.
 #' @method [ CellGraphList
 #' @export
 #'
@@ -83,7 +130,8 @@ print.CellGraphList <- function(x, ...) {
   CreateCellGraphList(NextMethod())
 }
 
-#' @rdname CellGraphList
+#' @describeIn CellGraphList-methods Replace a subset of graphs. \code{NULL}
+#' unloads the selected cells without dropping their names.
 #' @method [<- CellGraphList
 #' @export
 #'
@@ -99,7 +147,8 @@ print.CellGraphList <- function(x, ...) {
   CreateCellGraphList(x)
 }
 
-#' @rdname CellGraphList
+#' @describeIn CellGraphList-methods Replace a single graph. \code{NULL}
+#' unloads that cell without dropping its name.
 #' @method [[<- CellGraphList
 #' @export
 #'
@@ -118,7 +167,8 @@ print.CellGraphList <- function(x, ...) {
   CreateCellGraphList(x)
 }
 
-#' @rdname CellGraphList
+#' @describeIn CellGraphList-methods Set names. Names must be unique and
+#' non-missing.
 #' @method names<- CellGraphList
 #' @export
 #'
@@ -128,7 +178,8 @@ print.CellGraphList <- function(x, ...) {
   CreateCellGraphList(x)
 }
 
-#' @rdname CellGraphList
+#' @describeIn CellGraphList-methods Concatenate \code{CellGraphList} objects
+#' with lists of \code{CellGraph} or \code{NULL}
 #' @method c CellGraphList
 #' @export
 #'
@@ -153,7 +204,7 @@ c.CellGraphList <- function(...) {
   CreateCellGraphList(do.call(c, pieces))
 }
 
-#' @rdname CellGraphList
+#' @describeIn CellGraphList-methods Convert to a named list
 #' @method as.list CellGraphList
 #' @export
 #'
@@ -161,7 +212,8 @@ as.list.CellGraphList <- function(x, ...) {
   unclass(x)
 }
 
-#' @rdname CellGraphList
+#' @describeIn CellGraphList-methods Apply a function to each element and
+#' return a \code{CellGraphList}
 #' @method lapply CellGraphList
 #' @export
 #'

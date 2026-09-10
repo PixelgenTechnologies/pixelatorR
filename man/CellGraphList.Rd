@@ -3,59 +3,21 @@
 \name{CellGraphList}
 \alias{CellGraphList}
 \alias{CreateCellGraphList}
-\alias{print.CellGraphList}
-\alias{[.CellGraphList}
-\alias{[<-.CellGraphList}
-\alias{[[<-.CellGraphList}
-\alias{names<-.CellGraphList}
-\alias{c.CellGraphList}
-\alias{as.list.CellGraphList}
-\alias{lapply.CellGraphList}
 \title{The CellGraphList class}
 \usage{
 CreateCellGraphList(cellgraphs = list())
-
-\method{print}{CellGraphList}(x, ...)
-
-\method{[}{CellGraphList}(x, i, ...)
-
-\method{[}{CellGraphList}(x, i) <- value
-
-\method{[[}{CellGraphList}(x, i) <- value
-
-\method{names}{CellGraphList}(x) <- value
-
-\method{c}{CellGraphList}(...)
-
-\method{as.list}{CellGraphList}(x, ...)
-
-\method{lapply}{CellGraphList}(X, FUN, ...)
 }
 \arguments{
 \item{cellgraphs}{A named list of \code{\link{CellGraph}} objects.
 Unloaded graphs may be represented as \code{NULL}.}
-
-\item{x, X}{A \code{\link{CellGraphList}} object}
-
-\item{i}{Index to extract or replace}
-
-\item{value}{A \code{\link{CellGraph}}, \code{NULL}, or a list of those}
-
-\item{FUN}{A function to apply to each element}
-
-\item{...}{Currently not used}
 }
 \value{
-\code{CreateCellGraphList}: a \code{CellGraphList} object
+A \code{CellGraphList} object
 }
 \description{
-A named list of \code{\link{CellGraph}} objects. Subsetting,
-concatenation, and replacement type-check elements against
-\code{CellGraph}. Unloaded graphs may be stored as \code{NULL};
-\code{x[[i]] <- NULL} keeps the name and stores \code{NULL}
-rather than dropping the element.
-Use \code{lapply.CellGraphList} to apply a function without dropping
-the \code{CellGraphList} class (\code{base::lapply} is not an S3 generic).
+A named list of \code{\link{CellGraph}} objects. Unloaded graphs may be
+stored as \code{NULL}. See \code{\link{CellGraphList-methods}} for
+subsetting, replacement, concatenation, and mapping.
 }
 \examples{
 library(pixelatorR)
@@ -73,5 +35,8 @@ cg <- CreateCellGraphObject(cellgraph = g)
 cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg))
 cgl
 
+}
+\seealso{
+\code{\link{CellGraphList-methods}}
 }
 \concept{cellgraph}
