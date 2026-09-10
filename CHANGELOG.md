@@ -49,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `c.CellGraphList` names a bare `CellGraph` from the argument name, or
   `CellGraph1`, `CellGraph2`, ... when unnamed.
 - `FetchLayoutData` keeps factor (and other classed) metadata columns.
+- `AddMetaData` on a `CellGraph` accepts metadata for a subset of the nodes.
+  Nodes without a value get `NA` and names that are not graph nodes are
+  dropped, matching `SeuratObject::AddMetaData`.
+- Graphs missing the `name` or `node_type` vertex attribute report that
+  instead of failing inside `cli` with a missing-argument error.
 - `color_by_marker(..., nNodes = )` subsets layers, metadata, and reductions
   along with the graph, counts, and layouts.
 - Layout tables without row names get node IDs on subset so

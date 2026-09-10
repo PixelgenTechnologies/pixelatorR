@@ -245,6 +245,43 @@ test_that("LayerData and AddMetaData work on CellGraph objects", {
   expect_equal(names(cg@reductions), "umap")
 })
 
+test_that("AddMetaData annotates a subset of nodes", {
+  cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+
+  partial <- c(1, 3)
+  names(partial) <- node_names[c(1, 3)]
+  cg <- SeuratObject::AddMetaData(cg, metadata = partial, col.name = "score")
+  expect_equal(nrow(cg@meta.data), n_nodes)
+  expect_equal(rownames(cg@meta.data), node_names)
+  expect_equal(cg@meta.data$score[c(1, 3)], c(1, 3))
+  expect_true(all(is.na(cg@meta.data$score[-c(1, 3)])))
+
+  # Names that are not graph nodes are dropped
+  partial_df <- data.frame(
+    group = c("a", "b"),
+    row.names = c(node_names[2], "not_a_node")
+  )
+  cg <- SeuratObject::AddMetaData(cg, metadata = partial_df)
+  expect_equal(cg@meta.data$group[2], "a")
+  expect_true(all(is.na(cg@meta.data$group[-2])))
+
+  expect_error(
+    SeuratObject::AddMetaData(
+      cg,
+      metadata = data.frame(x = 1, row.names = "not_a_node")
+    ),
+    "No node"
+  )
+  expect_error(
+    SeuratObject::AddMetaData(
+      cg,
+      metadata = c(a = 1, a = 2),
+      col.name = "dup"
+    ),
+    "must be unique"
+  )
+})
+
 test_that("matrix layers may share feature names", {
   counts <- make_counts()
   overlapping_layer <- matrix(

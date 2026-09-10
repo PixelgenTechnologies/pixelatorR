@@ -462,7 +462,10 @@ Cells.CellGraph <- function(x, ...) {
   .cg_node_names(slot(x, "cellgraph"))
 }
 
-#' @param metadata A vector, matrix, or \code{data.frame} of node metadata
+#' @param metadata A vector, matrix, or \code{data.frame} of node metadata.
+#' Nodes are matched by name, so metadata may cover a subset of the graph;
+#' the remaining nodes get \code{NA}. Names that are not graph nodes are
+#' dropped.
 #' @param col.name Name of the metadata column when \code{metadata} is a vector
 #'
 #' @rdname CellGraph-methods
@@ -492,6 +495,9 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
       }
       meta_names <- node_names
     }
+    if (anyDuplicated(meta_names)) {
+      cli::cli_abort(c("x" = "Names in {.arg metadata} must be unique."))
+    }
     metadata <- data.frame(
       x = unname(metadata),
       row.names = meta_names,
@@ -501,7 +507,7 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
     colnames(metadata) <- col.name
   }
 
-  new_meta <- .align_meta_data(metadata, node_names)
+  new_meta <- .fill_meta_data(metadata, node_names)
   old_meta <- slot(object, "meta.data")
   if (ncol(old_meta) == 0) {
     slot(object, "meta.data") <- new_meta
@@ -881,10 +887,10 @@ subset.CellGraph <- function(
 
   if (attr(cellgraph, "type") == "bipartite") {
     if (!"name" %in% vertex_attr_names(cellgraph)) {
-      cli::cli_abort("x" = "Node attribute {.str name} is missing from the graph", call = call)
+      cli::cli_abort(c("x" = "Node attribute {.str name} is missing from the graph"), call = call)
     }
     if (!"node_type" %in% vertex_attr_names(cellgraph)) {
-      cli::cli_abort("x" = "Node attribute {.str node_type} is missing from the graph", call = call)
+      cli::cli_abort(c("x" = "Node attribute {.str node_type} is missing from the graph"), call = call)
     }
   }
   # TODO: Add check for A-node-projection and linegraph
@@ -1355,6 +1361,56 @@ subset.CellGraph <- function(
     )
   }
   meta[node_names, , drop = FALSE]
+}
+
+#' Align node metadata, filling nodes that are not covered
+#'
+#' Like \code{.align_meta_data()}, but partial tables are allowed:
+#' graph nodes without a row get \code{NA} and rows that do not name a
+#' graph node are dropped. This follows
+#' \code{\link[SeuratObject]{AddMetaData}}, which annotates a subset of
+#' cells without touching the rest.
+#'
+#' @param meta A data frame or tibble
+#' @param node_names Character vector of graph node names
+#' @param call Environment to report as the error caller
+#'
+#' @return A \code{data.frame} with row names \code{node_names}
+#'
+#' @keywords internal
+#' @noRd
+#'
+.fill_meta_data <- function(meta, node_names, call = caller_env()) {
+  meta <- as.data.frame(meta, stringsAsFactors = FALSE, check.names = FALSE)
+  meta_names <- .explicit_rownames(meta)
+  if ("name" %in% colnames(meta) && is.null(meta_names)) {
+    meta_names <- as.character(meta$name)
+    meta$name <- NULL
+  }
+  if (is.null(meta_names)) {
+    if (nrow(meta) != length(node_names)) {
+      cli::cli_abort(
+        c(
+          "x" = "{.arg metadata} has no node identifiers and {nrow(meta)} row{?s},",
+          " " = "but the graph has {length(node_names)} node{?s}."
+        ),
+        call = call
+      )
+    }
+    meta_names <- node_names
+  }
+  if (anyDuplicated(meta_names)) {
+    cli::cli_abort(c("x" = "Node names in {.arg metadata} must be unique."), call = call)
+  }
+  if (length(intersect(node_names, meta_names)) == 0) {
+    cli::cli_abort(
+      c("x" = "No node in {.arg metadata} is present in this {.cls CellGraph}."),
+      call = call
+    )
+  }
+  filled <- meta[match(node_names, meta_names), , drop = FALSE]
+  rownames(filled) <- node_names
+  filled
 }
 
 #' Align a named list of NodeDimReduc objects

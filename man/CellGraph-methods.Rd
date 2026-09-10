@@ -62,7 +62,10 @@ the first reduction when \code{NULL}.}
 
 \item{x}{A \code{\link{CellGraph}} object}
 
-\item{metadata}{A vector, matrix, or \code{data.frame} of node metadata}
+\item{metadata}{A vector, matrix, or \code{data.frame} of node metadata.
+Nodes are matched by name, so metadata may cover a subset of the graph;
+the remaining nodes get \code{NA}. Names that are not graph nodes are
+dropped.}
 
 \item{col.name}{Name of the metadata column when \code{metadata} is a vector}
 
