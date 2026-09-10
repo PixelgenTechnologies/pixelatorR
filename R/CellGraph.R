@@ -14,6 +14,14 @@ NULL
 #' A \code{CellGraph} contains counts and a graph, and optionally layouts, layers,
 #' metadata, or reductions.
 #'
+#' Node-level variable names must be unique across the graph node table,
+#' \code{meta.data}, and reduction embeddings, and must not overlap count or
+#' layer features. Count and layer matrices are the exception: they may share
+#' feature names because callers select a layer explicitly.
+#'
+#' Objects serialized before these extra slots existed are not upgraded.
+#' Loading or using them will fail.
+#'
 #' @slot cellgraph A \code{tbl_graph} object corresponding to a cell graph
 #' @slot counts A \code{matrix}-like object with marker counts (nodes x markers).
 #' Row names are node names. The counts matrix can be extracted as the
@@ -32,14 +40,6 @@ NULL
 #' @slot meta.data A \code{data.frame} of node-level metadata (one row per node).
 #' Row names are node names. Columns may have mixed types.
 #' @slot reductions A named \code{list} of \code{\link{NodeDimReduc}} objects
-#'
-#' Node-level variable names must be unique across the graph node table,
-#' \code{meta.data}, and reduction embeddings, and must not overlap count or
-#' layer features. Count and layer matrices are the exception: they may share
-#' feature names because callers select a layer explicitly.
-#'
-#' Objects serialized before these extra slots existed are not upgraded.
-#' Loading or using them will fail.
 #'
 #' @name CellGraph-class
 #' @rdname CellGraph-class
@@ -124,6 +124,7 @@ setMethod(
 
 #' Create a CellGraph object
 #'
+#' @details
 #' Node-level variable names must not clash between the graph node table,
 #' \code{meta.data}, reduction embeddings, and matrix features. Count and
 #' layer matrices may share feature names because methods such as
@@ -525,6 +526,7 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 #' @param clean If \code{TRUE}, remove nodes that are missing data for every
 #' requested variable.
 #'
+#' @details
 #' Variable names must be unique across the graph node table,
 #' \code{meta.data}, reduction embeddings, and matrix features. Count and
 #' layer matrices may share feature names because \code{layer} selects the
