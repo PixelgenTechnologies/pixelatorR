@@ -533,7 +533,9 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 #' component IDs (default is all loaded graphs). Unloaded graphs raise an
 #' error when they are included in \code{cells}.
 #' @param clean If \code{TRUE}, remove nodes that are missing data for every
-#' requested variable.
+#' requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
+#' \code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
+#' lack the requested variables still appear with \code{NA} values.
 #'
 #' @details
 #' Variable names must be unique across the graph node table,

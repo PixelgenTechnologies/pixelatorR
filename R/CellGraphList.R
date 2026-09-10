@@ -236,7 +236,8 @@ lapply.CellGraphList <- function(X, FUN, ...) {
 #' does not reserve coordinate names, so \code{vars} may include \code{x},
 #' \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 #' is reserved for the source graph ID. Variables missing from a graph are
-#' filled with \code{NA}.
+#' filled with \code{NA}. \code{clean} defaults to \code{FALSE} so those
+#' missing values are kept.
 #' @method FetchData CellGraphList
 #' @export
 #'
@@ -245,7 +246,7 @@ FetchData.CellGraphList <- function(
   vars,
   cells = NULL,
   layer = NULL,
-  clean = TRUE,
+  clean = FALSE,
   ...
 ) {
   cells <- .resolve_loaded_cellgraph_ids(object, cells, fn = "FetchData")
@@ -268,27 +269,32 @@ FetchData.CellGraphList <- function(
   }
   clean <- rlang::arg_match0(clean, values = c("all", "none"))
 
-  dplyr::bind_rows(lapply(cells, function(nm) {
+  fetched <- dplyr::bind_rows(lapply(cells, function(nm) {
     cg <- object[[nm]]
-    node_names <- Cells(cg)
-    fetched <- .fetch_layout_vars(
-      object = cg,
-      vars = vars,
-      cells = node_names,
-      layer = layer
-    )
-    if (identical(clean, "all") && ncol(fetched) > 0) {
-      no_data <- which(apply(fetched, 1L, function(x) all(is.na(x))))
-      if (length(no_data) > 0) {
-        fetched <- fetched[-no_data, , drop = FALSE]
-      }
-    }
     dplyr::mutate(
-      tibble::as_tibble(fetched, .name_repair = "minimal"),
+      tibble::as_tibble(
+        .fetch_layout_vars(
+          object = cg,
+          vars = vars,
+          cells = Cells(cg),
+          layer = layer
+        ),
+        .name_repair = "minimal"
+      ),
       component = nm,
       .before = 1
     )
   }))
+
+  value_cols <- setdiff(names(fetched), "component")
+  if (identical(clean, "all") && length(value_cols) > 0 && nrow(fetched) > 0) {
+    no_data <- which(apply(fetched[value_cols], 1L, function(x) all(is.na(x))))
+    if (length(no_data) > 0) {
+      cli::cli_warn("Removing {length(no_data)} node{?s} missing data for vars requested")
+      fetched <- fetched[-no_data, , drop = FALSE]
+    }
+  }
+  fetched
 }
 
 #' Validate a list of CellGraph objects

@@ -138,6 +138,17 @@ test_that("FetchData.CellGraphList works as expected", {
   expect_equal(colnames(fd_hyphen), c("component", "HLA-DR"))
 
   expect_error(SeuratObject::FetchData(cgl, vars = "component"), "cannot include")
+
+  fd_cluster <- SeuratObject::FetchData(cgl, vars = "cluster")
+  expect_equal(nrow(fd_cluster), 8)
+  expect_equal(unique(fd_cluster$component), c("cell_1", "cell_2"))
+  expect_true(all(is.na(fd_cluster$cluster[5:8])))
+
+  expect_warning(
+    fd_clean <- SeuratObject::FetchData(cgl, vars = "cluster", clean = TRUE)
+  )
+  expect_equal(unique(fd_clean$component), "cell_1")
+  expect_equal(nrow(fd_clean), 4)
 })
 
 test_that("FetchData.CellGraphList validates loaded CellGraphs", {

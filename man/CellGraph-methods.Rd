@@ -45,7 +45,7 @@
 
 \method{subset}{CellGraph}(x, nodes, ...)
 
-\method{FetchData}{CellGraphList}(object, vars, cells = NULL, layer = NULL, clean = TRUE, ...)
+\method{FetchData}{CellGraphList}(object, vars, cells = NULL, layer = NULL, clean = FALSE, ...)
 }
 \arguments{
 \item{object}{A \code{\link{CellGraph}} or \code{\link{CellGraphList}} object}
@@ -83,7 +83,9 @@ component IDs (default is all loaded graphs). Unloaded graphs raise an
 error when they are included in \code{cells}.}
 
 \item{clean}{If \code{TRUE}, remove nodes that are missing data for every
-requested variable.}
+requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
+\code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
+lack the requested variables still appear with \code{NA} values.}
 
 \item{i}{Name of a stored reduction}
 
@@ -126,7 +128,8 @@ matrix to search.
 does not reserve coordinate names, so \code{vars} may include \code{x},
 \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 is reserved for the source graph ID. Variables missing from a graph are
-filled with \code{NA}.
+filled with \code{NA}. \code{clean} defaults to \code{FALSE} so those
+missing values are kept.
 
 }}
 \examples{
