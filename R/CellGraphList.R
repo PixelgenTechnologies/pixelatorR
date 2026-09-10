@@ -230,6 +230,55 @@ lapply.CellGraphList <- function(X, FUN, ...) {
   CreateCellGraphList(lapply(as.list.CellGraphList(X), FUN, ...))
 }
 
+#' @describeIn CellGraph-methods Pull node-level data from each loaded
+#' \code{CellGraph} in a \code{CellGraphList}. Unlike
+#' \code{\link{FetchLayoutData}}, this does not require a stored layout and
+#' does not reserve coordinate names, so \code{vars} may include \code{x},
+#' \code{y}, or \code{z} when those columns exist on the graphs. Variables
+#' missing from a graph are filled with \code{NA}.
+#' @method FetchData CellGraphList
+#' @export
+#'
+FetchData.CellGraphList <- function(
+  object,
+  vars,
+  cells = NULL,
+  layer = NULL,
+  clean = TRUE,
+  ...
+) {
+  cells <- .resolve_loaded_cellgraph_ids(object, cells, fn = "FetchData")
+
+  if (isTRUE(clean)) {
+    clean <- "all"
+  } else if (isFALSE(clean)) {
+    clean <- "none"
+  }
+  clean <- rlang::arg_match0(clean, values = c("all", "none"))
+
+  dplyr::bind_rows(lapply(cells, function(nm) {
+    cg <- object[[nm]]
+    node_names <- Cells(cg)
+    fetched <- .fetch_layout_vars(
+      object = cg,
+      vars = vars,
+      cells = node_names,
+      layer = layer
+    )
+    if (identical(clean, "all") && ncol(fetched) > 0) {
+      no_data <- which(apply(fetched, 1L, function(x) all(is.na(x))))
+      if (length(no_data) > 0) {
+        fetched <- fetched[-no_data, , drop = FALSE]
+      }
+    }
+    dplyr::mutate(
+      tibble::as_tibble(fetched, .name_repair = "minimal"),
+      component = nm,
+      .before = 1
+    )
+  }))
+}
+
 #' Validate a list of CellGraph objects
 #'
 #' Ensures every element is a \code{CellGraph} or \code{NULL}, and that

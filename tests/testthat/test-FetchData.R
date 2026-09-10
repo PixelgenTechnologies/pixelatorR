@@ -107,3 +107,44 @@ test_that("FetchData.CellGraph fails with invalid input", {
     "1 node not present"
   )
 })
+
+cg_no_cluster <- CreateCellGraphObject(
+  cellgraph = bipart_graph,
+  counts = counts
+)
+cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg_no_cluster))
+
+test_that("FetchData.CellGraphList works as expected", {
+  expect_no_error(fd <- SeuratObject::FetchData(cgl, vars = c("CD3", "cluster", "node_type")))
+  expect_s3_class(fd, "tbl_df")
+  expect_equal(colnames(fd), c("component", "CD3", "cluster", "node_type"))
+  expect_equal(nrow(fd), 8)
+  expect_equal(unique(fd$component), c("cell_1", "cell_2"))
+  expect_equal(fd$CD3, rep(as.numeric(counts[, "CD3"]), 2))
+  expect_equal(fd$cluster[1:4], meta$cluster)
+  expect_true(all(is.na(fd$cluster[5:8])))
+  expect_equal(fd$node_type, rep(c("umi1", "umi1", "umi2", "umi2"), 2))
+
+  fd_one <- SeuratObject::FetchData(cgl, vars = "CD3", cells = "cell_2")
+  expect_equal(unique(fd_one$component), "cell_2")
+  expect_equal(nrow(fd_one), 4)
+
+  fd_xyz <- SeuratObject::FetchData(cgl, vars = c("x", "CD3"), clean = FALSE)
+  expect_equal(colnames(fd_xyz), c("component", "x", "CD3"))
+  expect_true(all(is.na(fd_xyz$x)))
+  expect_equal(fd_xyz$CD3, rep(as.numeric(counts[, "CD3"]), 2))
+
+  fd_hyphen <- SeuratObject::FetchData(cgl, vars = "HLA-DR")
+  expect_equal(colnames(fd_hyphen), c("component", "HLA-DR"))
+})
+
+test_that("FetchData.CellGraphList validates loaded CellGraphs", {
+  cgl_mixed <- CreateCellGraphList(list(cell_1 = cg, cell_2 = NULL))
+  expect_no_error(fd <- SeuratObject::FetchData(cgl_mixed, vars = "CD3"))
+  expect_equal(unique(fd$component), "cell_1")
+  expect_error(SeuratObject::FetchData(cgl_mixed, vars = "CD3", cells = c("cell_1", "cell_2")))
+  expect_error(SeuratObject::FetchData(cgl_mixed, vars = "CD3", cells = "missing_cell"))
+
+  cgl_empty <- CreateCellGraphList(list(cell_1 = NULL, cell_2 = NULL))
+  expect_error(SeuratObject::FetchData(cgl_empty, vars = "CD3"))
+})

@@ -527,8 +527,11 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 #' @param vars Variables to fetch: marker names, node metadata columns,
 #' graph vertex attributes, or reduction embedding columns (for example
 #' \code{"PC_1"}).
-#' @param cells Nodes to collect data for (default is all nodes). Numeric
-#' indices are allowed, matching \code{\link[SeuratObject]{FetchData}}.
+#' @param cells For \code{FetchData.CellGraph}, nodes to collect (default is
+#' all nodes). Numeric indices are allowed, matching
+#' \code{\link[SeuratObject]{FetchData}}. For \code{FetchData.CellGraphList},
+#' component IDs (default is all loaded graphs). Unloaded graphs raise an
+#' error when they are included in \code{cells}.
 #' @param clean If \code{TRUE}, remove nodes that are missing data for every
 #' requested variable.
 #'
@@ -687,7 +690,7 @@ FetchData.CellGraph <- function(
 #' Methods for \code{\link{CellGraph}} objects for generics defined in other
 #' packages
 #'
-#' @param object A \code{\link{CellGraph}} object
+#' @param object A \code{\link{CellGraph}} or \code{\link{CellGraphList}} object
 #' @param x A \code{\link{CellGraph}} object
 #' @param i Name of a stored reduction
 #' @param j,drop Required by the S4 \code{[[} generic and ignored
@@ -695,9 +698,11 @@ FetchData.CellGraph <- function(
 #' @param value Replacement value
 #' @param ... Currently not used
 #'
-#' @return \code{FetchData}: a \code{data.frame} with nodes as rows and
-#' requested variables as columns. \code{subset}: a \code{CellGraph}
-#' object containing only the specified nodes.
+#' @return \code{FetchData.CellGraph}: a \code{data.frame} with nodes as rows
+#' and requested variables as columns. \code{FetchData.CellGraphList}: a
+#' \code{tbl_df} with a \code{component} column identifying the source graph
+#' and the requested variables. \code{subset}: a \code{CellGraph} object
+#' containing only the specified nodes.
 #'
 #' @name CellGraph-methods
 #' @rdname CellGraph-methods
@@ -724,6 +729,10 @@ NULL
 #'
 #' # Fetch marker counts, node attributes, or embeddings
 #' head(SeuratObject::FetchData(cg, vars = colnames(cg@counts)[1]))
+#'
+#' # FetchData.CellGraphList combines loaded graphs without requiring a layout
+#' cgl <- CellGraphs(se)
+#' head(SeuratObject::FetchData(cgl, vars = colnames(cg@counts)[1]))
 #'
 setMethod(
   f = "show",

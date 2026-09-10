@@ -301,6 +301,26 @@ FetchLayoutData.Seurat <- function(
 #' @noRd
 #'
 .resolve_fetch_layout_data_cells <- function(object, cells, call = caller_env()) {
+  .resolve_loaded_cellgraph_ids(object, cells, fn = "FetchLayoutData", call = call)
+}
+
+#' Resolve component IDs and require loaded CellGraph objects
+#'
+#' When \code{cells} is \code{NULL}, all loaded graphs in the
+#' \code{CellGraphList} are used. Requested IDs that are missing or still
+#' \code{NULL} abort with a message to run \code{LoadCellGraphs}.
+#'
+#' @param object A \code{CellGraphList} (or named list of graphs)
+#' @param cells Component IDs to keep, or \code{NULL} for all loaded graphs
+#' @param fn Name of the calling function, used in error messages
+#' @param call Environment to report as the error caller
+#'
+#' @return A character vector of component IDs
+#'
+#' @keywords internal
+#' @noRd
+#'
+.resolve_loaded_cellgraph_ids <- function(object, cells, fn, call = caller_env()) {
   available <- names(object)
   loaded <- vapply(object, function(x) inherits(x, "CellGraph"), logical(1))
   loaded_ids <- available[loaded]
@@ -310,7 +330,7 @@ FetchLayoutData.Seurat <- function(
       cli::cli_abort(
         c(
           "x" = "No {.cls CellGraph} objects are loaded.",
-          "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn FetchLayoutData}."
+          "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn {fn}}."
         ),
         call = call
       )
@@ -328,7 +348,7 @@ FetchLayoutData.Seurat <- function(
       c(
         "x" = "{cli::qty(length(not_loaded))}{.cls CellGraph} object{?s} {?is/are} not
                 loaded for {length(not_loaded)} component{?s}: {.val {head(not_loaded, 5)}}.",
-        "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn FetchLayoutData}."
+        "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn {fn}}."
       ),
       call = call
     )

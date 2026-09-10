@@ -61,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `FetchData.CellGraphList` to pull node-level variables from each loaded
+  graph and bind them with a `component` column. Unlike `FetchLayoutData`,
+  it does not require a stored layout and does not reserve `x`/`y`/`z`.
+  Variables missing from a graph are filled with `NA`.
 - `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
   layout `(x, y, z)` coordinates for the directional (key) light. The default
   `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
