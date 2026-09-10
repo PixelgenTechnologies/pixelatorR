@@ -40,6 +40,12 @@ A \code{CellGraph} object
 \description{
 Create a CellGraph object
 }
+\details{
+Node-level variable names must not clash between the graph node table,
+\code{meta.data}, reduction embeddings, and matrix features. Count and
+layer matrices may share feature names because methods such as
+\code{\link[SeuratObject]{FetchData}} select a specific layer.
+}
 \examples{
 
 library(pixelatorR)

@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `NodeDimReduc` now uses an `initialize()` method instead of a `setClass()`
   prototype for default slot values.
+- `CellGraph` constructors and setters reject node-level variable name
+  collisions between the graph node table, `meta.data`, reductions, and
+  matrix features. Counts and layers may still share feature names because
+  callers can select a specific layer.
 
 ### Fixes
 

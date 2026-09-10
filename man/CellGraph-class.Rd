@@ -12,6 +12,11 @@ PNA single-cell graphs.
 \details{
 A \code{CellGraph} contains counts and a graph, and optionally layouts, layers,
 metadata, or reductions.
+
+Node-level variable names must be unique across the graph node table,
+\code{meta.data}, and reduction embeddings, and must not overlap count or
+layer features. Count and layer matrices are the exception: they may share
+feature names because callers select a layer explicitly.
 }
 \section{Slots}{
 

@@ -33,6 +33,11 @@ NULL
 #' Row names are node names. Columns may have mixed types.
 #' @slot reductions A named \code{list} of \code{\link{NodeDimReduc}} objects
 #'
+#' Node-level variable names must be unique across the graph node table,
+#' \code{meta.data}, and reduction embeddings, and must not overlap count or
+#' layer features. Count and layer matrices are the exception: they may share
+#' feature names because callers select a layer explicitly.
+#'
 #' @name CellGraph-class
 #' @rdname CellGraph-class
 #' @exportClass CellGraph
@@ -115,6 +120,11 @@ setMethod(
 # -------------------------------------------------------
 
 #' Create a CellGraph object
+#'
+#' Node-level variable names must not clash between the graph node table,
+#' \code{meta.data}, reduction embeddings, and matrix features. Count and
+#' layer matrices may share feature names because methods such as
+#' \code{\link[SeuratObject]{FetchData}} select a specific layer.
 #'
 #' @param cellgraph A \code{tbl_graph} object representing a PNA single-cell graph
 #' @param counts A \code{dgCMatrix} with marker counts. Rows are matched to graph
@@ -216,7 +226,7 @@ CreateCellGraphObject <- function(
 
   node_names <- .cg_node_names(cellgraph)
 
-  new(
+  object <- new(
     Class = "CellGraph",
     cellgraph = cellgraph,
     counts = .align_counts(counts, node_names),
@@ -225,6 +235,8 @@ CreateCellGraphObject <- function(
     meta.data = .align_meta_data(meta.data, node_names),
     reductions = .align_reductions(reductions, node_names)
   )
+  .validate_cellgraph_data_names(object)
+  object
 }
 
 
@@ -303,11 +315,13 @@ CellGraphData <- function(
     object <- .ensure_node_ids_on_slots(object)
     object <- .remap_cellgraph_nodes(object, .cg_node_names(value))
     slot(object, name = "cellgraph") <- value
+    .validate_cellgraph_data_names(object)
     return(object)
   }
 
   if (slot == "counts") {
     slot(object, name = "counts") <- .align_counts(value, node_names)
+    .validate_cellgraph_data_names(object)
     return(object)
   }
 
@@ -318,16 +332,19 @@ CellGraphData <- function(
 
   if (slot == "layers") {
     slot(object, name = "layers") <- .align_layers(value, node_names)
+    .validate_cellgraph_data_names(object)
     return(object)
   }
 
   if (slot == "meta.data") {
     slot(object, name = "meta.data") <- .align_meta_data(value, node_names)
+    .validate_cellgraph_data_names(object)
     return(object)
   }
 
   if (slot == "reductions") {
     slot(object, name = "reductions") <- .align_reductions(value, node_names)
+    .validate_cellgraph_data_names(object)
     return(object)
   }
 
@@ -399,6 +416,7 @@ LayerData.CellGraph <- function(object, layer = "counts", ...) {
   node_names <- .cg_node_names(slot(object, "cellgraph"))
   if (identical(layer, "counts")) {
     slot(object, "counts") <- .align_counts(value, node_names)
+    .validate_cellgraph_data_names(object)
     return(object)
   }
   if (is.null(value)) {
@@ -406,6 +424,7 @@ LayerData.CellGraph <- function(object, layer = "counts", ...) {
     return(object)
   }
   slot(object, "layers")[[layer]] <- .align_node_matrix(value, node_names, arg = layer)
+  .validate_cellgraph_data_names(object)
   object
 }
 
@@ -488,6 +507,7 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
   old_meta <- slot(object, "meta.data")
   if (ncol(old_meta) == 0) {
     slot(object, "meta.data") <- new_meta
+    .validate_cellgraph_data_names(object)
     return(object)
   }
   overlap <- intersect(colnames(old_meta), colnames(new_meta))
@@ -496,6 +516,7 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
   }
   slot(object, "meta.data") <- .cbind_keep_names(old_meta, new_meta)
   slot(object, "meta.data") <- .align_meta_data(slot(object, "meta.data"), node_names)
+  .validate_cellgraph_data_names(object)
   object
 }
 
@@ -506,6 +527,11 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 #' indices are allowed, matching \code{\link[SeuratObject]{FetchData}}.
 #' @param clean If \code{TRUE}, remove nodes that are missing data for every
 #' requested variable.
+#'
+#' Variable names must be unique across the graph node table,
+#' \code{meta.data}, reduction embeddings, and matrix features. Count and
+#' layer matrices may share feature names because \code{layer} selects the
+#' matrix to search.
 #'
 #' @describeIn CellGraph-methods Pull node-level data from a \code{CellGraph}
 #' @method FetchData CellGraph
@@ -520,6 +546,7 @@ FetchData.CellGraph <- function(
   ...
 ) {
   object <- .upgrade_cellgraph(object)
+  .validate_cellgraph_data_names(object)
   node_names <- Cells(object)
 
   if (isTRUE(clean)) {
@@ -553,7 +580,7 @@ FetchData.CellGraph <- function(
 
   data_fetched <- data.frame(row.names = cells)
 
-  # Pull vars from node metadata first (same priority as FetchData.Seurat)
+  # Pull vars from node metadata
   meta <- slot(object, "meta.data")
   meta_vars <- intersect(vars, colnames(meta))
   if (length(meta_vars) > 0) {
@@ -601,7 +628,7 @@ FetchData.CellGraph <- function(
     }
     data_fetched <- .add_fetched_cols(
       data_fetched,
-      .fetch_layer_vars(object, layer, remaining, cells, meta_vars)
+      .fetch_layer_vars(object, layer, remaining, cells)
     )
     remaining <- setdiff(vars, names(data_fetched))
     other_layers <- setdiff(available_layers, layer)
@@ -777,6 +804,7 @@ setMethod(
       return(x)
     }
     slot(x, "reductions")[[i]] <- .align_node_dimreduc(value, node_names, arg = i)
+    .validate_cellgraph_data_names(x)
     x
   }
 )
@@ -872,6 +900,104 @@ subset.CellGraph <- function(
   if (anyDuplicated(node_names)) {
     cli::cli_abort(c("x" = "Node names in {.arg cellgraph} must be unique."), call = call)
   }
+}
+
+#' Validate node-level variable names across CellGraph data sources
+#'
+#' Prevents ambiguous lookups in \code{FetchData.CellGraph}. Names in the
+#' graph node table, \code{meta.data}, and each reduction's embeddings must
+#' be unique across all sources and must not overlap matrix feature names.
+#' Count and layer matrices are grouped into one source because overlap
+#' between those matrices is explicitly supported: callers disambiguate them
+#' with the \code{layer} argument.
+#'
+#' Layout coordinate names are excluded because layouts are selected by
+#' \code{layout_method} and are not searched by \code{FetchData.CellGraph}.
+#'
+#' @param object A current \code{CellGraph} object
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{NULL}, invisibly
+#'
+#' @keywords internal
+#' @noRd
+#'
+.validate_cellgraph_data_names <- function(object, call = caller_env()) {
+  graph <- slot(object, "cellgraph")
+  graph_names <- if (is.null(graph)) {
+    character()
+  } else {
+    igraph::vertex_attr_names(graph)
+  }
+
+  meta <- slot(object, "meta.data")
+  meta_names <- if (is.null(meta)) character() else colnames(meta) %||% character()
+
+  reductions <- slot(object, "reductions")
+  reduction_sources <- lapply(reductions, function(reduction) {
+    colnames(Embeddings(reduction)) %||% character()
+  })
+  names(reduction_sources) <- paste0("reduction '", names(reductions), "'")
+
+  counts <- slot(object, "counts")
+  matrix_names <- if (is.null(counts)) {
+    character()
+  } else {
+    colnames(counts) %||% character()
+  }
+  layers <- slot(object, "layers")
+  for (layer in layers) {
+    matrix_names <- c(matrix_names, colnames(layer) %||% character())
+  }
+
+  sources <- c(
+    list(
+      "cellgraph node table" = graph_names,
+      "meta.data" = meta_names
+    ),
+    reduction_sources,
+    list("counts/layers" = unique(matrix_names))
+  )
+  sources <- sources[vapply(sources, length, integer(1)) > 0]
+
+  exclusive_sources <- setdiff(names(sources), "counts/layers")
+  for (source in exclusive_sources) {
+    duplicated_names <- unique(sources[[source]][duplicated(sources[[source]])])
+    if (length(duplicated_names) > 0) {
+      cli::cli_abort(
+        c(
+          "x" = "Node-level variable names in {source} must be unique.",
+          "i" = "Duplicated name{?s}: {.val {duplicated_names}}"
+        ),
+        call = call
+      )
+    }
+  }
+
+  if (length(sources) > 1) {
+    source_pairs <- utils::combn(names(sources), 2, simplify = FALSE)
+    for (pair in source_pairs) {
+      overlap <- intersect(sources[[pair[[1]]]], sources[[pair[[2]]]])
+      if (length(overlap) > 0) {
+        cli::cli_abort(
+          c(
+            "x" = paste0(
+              "Node-level variable name{?s} {.val {overlap}} {?is/are} ",
+              "present in both {pair[[1]]} and {pair[[2]]}."
+            ),
+            "i" = paste0(
+              "Names must be unique across the cellgraph node table, ",
+              "meta.data, reductions, and matrix features."
+            ),
+            "i" = "Only counts and layer matrices may share feature names."
+          ),
+          call = call
+        )
+      }
+    }
+  }
+
+  invisible(NULL)
 }
 
 #' Node names for a tbl_graph
@@ -1367,33 +1493,24 @@ subset.CellGraph <- function(
 #' Fetch marker columns from a CellGraph layer
 #'
 #' Pulls requested feature names from \code{LayerData()}. Columns that
-#' already came from node \code{meta.data} are skipped with a warning.
-#' Marker names are not passed through \code{check.names}.
+#' match \code{vars} are returned without passing marker names through
+#' \code{check.names}. Cross-source name collisions are rejected before
+#' this helper is called.
 #'
 #' @param object A \code{CellGraph}
 #' @param layer Layer name (for example \code{"counts"})
 #' @param vars Character vector of requested variable names
 #' @param cells Node names to keep as rows
-#' @param meta_vars Variable names already taken from \code{meta.data}
 #'
 #' @return A data frame of selected columns, or \code{NULL} if none match
 #'
 #' @keywords internal
 #' @noRd
 #'
-.fetch_layer_vars <- function(object, layer, vars, cells, meta_vars = character()) {
+.fetch_layer_vars <- function(object, layer, vars, cells) {
   mat <- LayerData(object, layer = layer)
   if (is.null(mat) || ncol(mat) == 0) {
     return(NULL)
-  }
-  overlap <- intersect(meta_vars, colnames(mat))
-  if (length(overlap) > 0) {
-    cli::cli_warn(
-      c(
-        "The following variables were found in both node meta.data and layer {.val {layer}}: {.val {overlap}}.",
-        "i" = "Returning meta.data."
-      )
-    )
   }
   feature_vars <- intersect(vars, colnames(mat))
   if (length(feature_vars) == 0) {

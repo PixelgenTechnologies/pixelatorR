@@ -91,6 +91,12 @@ object containing only the specified nodes.
 Methods for \code{\link{CellGraph}} objects for generics defined in other
 packages
 }
+\details{
+Variable names must be unique across the graph node table,
+\code{meta.data}, reduction embeddings, and matrix features. Count and
+layer matrices may share feature names because \code{layer} selects the
+matrix to search.
+}
 \section{Functions}{
 \itemize{
 \item \code{FetchData(CellGraph)}: Pull node-level data from a \code{CellGraph}

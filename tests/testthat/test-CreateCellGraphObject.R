@@ -229,6 +229,167 @@ test_that("LayerData and AddMetaData work on CellGraph objects", {
   expect_equal(names(cg@reductions), "umap")
 })
 
+test_that("matrix layers may share feature names", {
+  counts <- make_counts()
+  overlapping_layer <- matrix(
+    100 + seq_len(n_nodes),
+    ncol = 1,
+    dimnames = list(node_names, "m1")
+  )
+
+  expect_no_error(
+    cg <- CreateCellGraphObject(
+      cellgraph = bipart_graph,
+      counts = counts,
+      layers = list(data = overlapping_layer)
+    )
+  )
+  expect_no_error(
+    SeuratObject::LayerData(cg, layer = "scaled") <- overlapping_layer
+  )
+  expect_equal(colnames(cg@counts), c("m1", "m2", "m3"))
+  expect_equal(colnames(cg@layers$data), "m1")
+  expect_equal(colnames(cg@layers$scaled), "m1")
+  expect_equal(
+    SeuratObject::FetchData(cg, vars = "m1", layer = "counts")$m1,
+    as.numeric(counts[, "m1"])
+  )
+  expect_equal(
+    SeuratObject::FetchData(cg, vars = "m1", layer = "data")$m1,
+    as.numeric(overlapping_layer[, "m1"])
+  )
+})
+
+test_that("constructor rejects variable name collisions across data sources", {
+  counts <- make_counts()
+  colliding_meta <- data.frame(
+    m1 = seq_len(n_nodes),
+    row.names = node_names
+  )
+  expect_error(
+    CreateCellGraphObject(
+      cellgraph = bipart_graph,
+      counts = counts,
+      meta.data = colliding_meta
+    ),
+    "present in both meta.data and counts/layers"
+  )
+
+  colliding_graph <- bipart_graph %N>%
+    dplyr::mutate(m1 = seq_len(n_nodes))
+  expect_error(
+    CreateCellGraphObject(cellgraph = colliding_graph, counts = counts),
+    "present in both cellgraph node table and counts/layers"
+  )
+
+  expect_error(
+    CreateCellGraphObject(
+      cellgraph = bipart_graph,
+      meta.data = data.frame(
+        node_type = rep("umi", n_nodes),
+        row.names = node_names
+      )
+    ),
+    "cellgraph node table and meta.data"
+  )
+
+  reduction <- CreateNodeDimReducObject(
+    embeddings = matrix(
+      seq_len(n_nodes),
+      ncol = 1,
+      dimnames = list(node_names, NULL)
+    ),
+    key = "m"
+  )
+  colnames(reduction@embeddings) <- "m1"
+  expect_error(
+    CreateCellGraphObject(
+      cellgraph = bipart_graph,
+      counts = counts,
+      reductions = list(pca = reduction)
+    ),
+    "reduction 'pca'.*counts/layers"
+  )
+
+  expect_error(
+    CreateCellGraphObject(
+      cellgraph = bipart_graph,
+      reductions = list(first = reduction, second = reduction)
+    ),
+    "reduction 'first'.*reduction 'second'"
+  )
+})
+
+test_that("CellGraph setters reject variable name collisions", {
+  cg <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = make_counts(),
+    meta.data = data.frame(cluster = rep("a", n_nodes), row.names = node_names)
+  )
+
+  expect_error(
+    SeuratObject::AddMetaData(cg, seq_len(n_nodes), col.name = "m1"),
+    "meta.data and counts/layers"
+  )
+  expect_no_error(
+    cg <- SeuratObject::AddMetaData(cg, seq_len(n_nodes), col.name = "cluster")
+  )
+
+  colliding_layer <- matrix(
+    seq_len(n_nodes),
+    ncol = 1,
+    dimnames = list(node_names, "cluster")
+  )
+  expect_error(
+    SeuratObject::LayerData(cg, layer = "data") <- colliding_layer,
+    "meta.data and counts/layers"
+  )
+
+  colliding_counts <- make_counts()
+  colnames(colliding_counts)[1] <- "cluster"
+  expect_error(
+    CellGraphData(cg, slot = "counts") <- colliding_counts,
+    "meta.data and counts/layers"
+  )
+
+  colliding_graph <- bipart_graph %N>%
+    dplyr::mutate(m1 = seq_len(n_nodes))
+  expect_error(
+    CellGraphData(cg, slot = "cellgraph") <- colliding_graph,
+    "cellgraph node table and counts/layers"
+  )
+
+  reduction <- CreateNodeDimReducObject(
+    embeddings = matrix(
+      seq_len(n_nodes),
+      ncol = 1,
+      dimnames = list(node_names, NULL)
+    ),
+    key = "m"
+  )
+  colnames(reduction@embeddings) <- "m1"
+  expect_error(
+    cg[["pca"]] <- reduction,
+    "reduction 'pca'.*counts/layers"
+  )
+
+  expect_error(
+    CellGraphData(cg, slot = "layers") <- list(data = colliding_layer),
+    "meta.data and counts/layers"
+  )
+  expect_error(
+    CellGraphData(cg, slot = "meta.data") <- data.frame(
+      m1 = seq_len(n_nodes),
+      row.names = node_names
+    ),
+    "meta.data and counts/layers"
+  )
+  expect_error(
+    CellGraphData(cg, slot = "reductions") <- list(pca = reduction),
+    "reduction 'pca'.*counts/layers"
+  )
+})
+
 test_that("subset.CellGraph keeps node-level slots aligned", {
   counts <- make_counts()
   layout <- tibble::tibble(x = seq_len(n_nodes), y = seq_len(n_nodes))
