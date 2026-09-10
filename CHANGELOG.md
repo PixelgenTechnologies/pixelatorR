@@ -34,6 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FetchData.CellGraph` keeps non-syntactic column names such as `HLA-DR`.
 - `CellGraphList` replacement and concatenation keep `NULL` placeholders for
   unloaded graphs (`x[[i]] <- NULL` unloads without dropping the name).
+- `[.CellGraphList` errors on unknown names instead of crashing on `NA` names.
 - Legacy layout tables without row names get node IDs on upgrade, so
   `WriteMPX_pxl_file()` can restore the `name` column.
 

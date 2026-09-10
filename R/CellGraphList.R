@@ -72,6 +72,14 @@ print.CellGraphList <- function(x, ...) {
 #' @export
 #'
 `[.CellGraphList` <- function(x, i, ...) {
+  if (!missing(i) && is.character(i)) {
+    unknown <- unique(i[is.na(i) | !i %in% names(x)])
+    if (length(unknown) > 0) {
+      cli::cli_abort(
+        c("x" = "Unknown name{?s} in {.cls CellGraphList}: {.val {unknown}}.")
+      )
+    }
+  }
   CreateCellGraphList(NextMethod())
 }
 
@@ -180,9 +188,9 @@ lapply.CellGraphList <- function(X, FUN, ...) {
     )
   }
   nm <- names(cellgraphs)
-  if (is.null(nm) || any(nm == "")) {
+  if (is.null(nm) || any(is.na(nm) | nm == "")) {
     cli::cli_abort(
-      c("x" = "The {.arg cellgraphs} list must be named."),
+      c("x" = "The {.arg cellgraphs} list must have unique, non-missing names."),
       call = call
     )
   }

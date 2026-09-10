@@ -61,6 +61,15 @@ test_that("CellGraphList keeps NULL placeholders for unloaded graphs", {
   expect_null(combined[["unloaded"]])
 })
 
+test_that("CellGraphList subset errors on unknown or missing names", {
+  expect_error(cgl["not_a_cell"], "Unknown name")
+  expect_error(cgl[c(names(cgl)[1], "not_a_cell")], "Unknown name")
+  expect_error(cgl[NA_character_], "Unknown name")
+  expect_error({
+    names(cgl) <- c(names(cgl)[1], NA_character_)
+  }, "non-missing names")
+})
+
 test_that("CreateCellGraphList fails when invalid input is provided", {
   expect_error(CreateCellGraphList("Invalid"))
   expect_error(CreateCellGraphList(list(cg_small)))
