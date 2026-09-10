@@ -37,7 +37,8 @@ render_rotating_layout(
   illumination_ambient = 0.3,
   illumination_sat_boost = 0.6,
   illumination_shadow_colors = NULL,
-  normalize_illumination = TRUE
+  normalize_illumination = TRUE,
+  light_direction = c(-0.6, 0.5, 0.62)
 )
 }
 \arguments{
@@ -163,6 +164,13 @@ with the base \code{node_val} color.}
 \item{normalize_illumination}{A logical value indicating whether the
 illumination mask should be rescaled to \code{[0, 1]} per cell. Default is
 \code{TRUE}.}
+
+\item{light_direction}{A numeric vector of length 3 in layout \code{(x, y, z)}
+coordinates giving the directional light axis passed to
+\code{\link{heuristic_illumination}}. Internally normalized to unit length.
+Default is \code{c(-0.6, 0.5, 0.62)}, a key light above and to the viewer's
+left. Use \code{c(0, 0, 1)} to light along the rotation axis. Lighting is in
+layout coordinates, not camera coordinates; see the illumination section.}
 }
 \value{
 Exports an animation of a rotating 3D scatter plot.
@@ -241,6 +249,22 @@ toward a second color gradient mapped from the illumination mask; in that mode
 works well as a shadow palette while \code{colors} carries the marker signal.
 Set \code{normalize_illumination = FALSE} to use raw output from
 \code{heuristic_illumination} instead of rescaling the mask to \code{[0, 1]}.
+Directional lighting uses \code{light_direction} in layout \code{(x, y, z)}
+coordinates, not camera coordinates. Frames are drawn with x across the
+screen, z up the screen, and y as depth, so from the camera's point of view
+\code{+x} is to the right, \code{+z} is up, and \code{+y} is toward the
+viewer. The default \code{c(-0.6, 0.5, 0.62)} places the key light above and
+to the viewer's left, slightly in front of the layout (roughly 38 degrees
+above the horizon), which reads like afternoon sunlight rather than the flat
+head-on look of a light on the camera axis.
+
+The mask is computed once, before the points are rotated, so the key light is
+fixed relative to the layout rather than the camera. With the default
+direction the lit side therefore turns with the layout over a full rotation,
+and the camera-facing side is brightest near the start and end of the turn
+and dimmest around the halfway point. Pass \code{light_direction = c(0, 0, 1)}
+to light along the rotation axis instead, which keeps the apparent shading
+constant for the whole rotation.
 }
 
 \examples{
