@@ -153,7 +153,7 @@ cg <- CellGraphs(se)[[1]]
 
 # Matrix result is stored as a layer
 cg <- ComputeLPS(cg, markers = "B2M")
-Layers(cg)
+SeuratObject::Layers(cg)
 
 # Vector result is stored in node metadata
 cg <- ComputeLPS(cg, markers = "B2M", mode = "all", name = "lps_b2m")

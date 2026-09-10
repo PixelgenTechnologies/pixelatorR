@@ -159,6 +159,7 @@
 #' @importFrom Matrix colSums
 #' @importFrom Matrix rowSums
 #' @importFrom methods as
+#' @importFrom methods callNextMethod
 #' @importFrom methods getMethod
 #' @importFrom methods initialize
 #' @importFrom methods is

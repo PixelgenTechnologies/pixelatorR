@@ -717,7 +717,7 @@ NULL
 #' cg
 #'
 #' # Fetch marker counts, node attributes, or embeddings
-#' head(FetchData(cg, vars = colnames(cg@counts)[1]))
+#' head(SeuratObject::FetchData(cg, vars = colnames(cg@counts)[1]))
 #'
 setMethod(
   f = "show",

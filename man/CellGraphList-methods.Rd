@@ -26,7 +26,7 @@
 
 \method{as.list}{CellGraphList}(x, ...)
 
-\method{lapply}{CellGraphList}(X, FUN, ...)
+lapply.CellGraphList(X, FUN, ...)
 }
 \arguments{
 \item{x, X}{A \code{\link{CellGraphList}} object}
@@ -75,8 +75,9 @@ when unnamed.
 
 \item \code{as.list(CellGraphList)}: Convert to a named list
 
-\item \code{lapply(CellGraphList)}: Apply a function to each element and
-return a \code{CellGraphList}
+\item \code{lapply.CellGraphList()}: Apply a function to each element and
+return a \code{CellGraphList}. Called by name because \code{base::lapply}
+does not dispatch on class.
 
 }}
 \examples{

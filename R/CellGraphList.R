@@ -222,9 +222,9 @@ as.list.CellGraphList <- function(x, ...) {
 }
 
 #' @describeIn CellGraphList-methods Apply a function to each element and
-#' return a \code{CellGraphList}
-#' @method lapply CellGraphList
-#' @export
+#' return a \code{CellGraphList}. Called by name because \code{base::lapply}
+#' does not dispatch on class.
+#' @export lapply.CellGraphList
 #'
 lapply.CellGraphList <- function(X, FUN, ...) {
   CreateCellGraphList(lapply(as.list.CellGraphList(X), FUN, ...))

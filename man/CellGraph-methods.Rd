@@ -121,7 +121,7 @@ cg <- CellGraphs(se)[[1]]
 cg
 
 # Fetch marker counts, node attributes, or embeddings
-head(FetchData(cg, vars = colnames(cg@counts)[1]))
+head(SeuratObject::FetchData(cg, vars = colnames(cg@counts)[1]))
 
 # Subset
 cg_small <- subset(cg, nodes = rownames(cg@counts)[1:100])
