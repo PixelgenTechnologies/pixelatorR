@@ -72,6 +72,11 @@ test_that("FetchData.CellGraph works as expected", {
   fd_idx <- SeuratObject::FetchData(cg, vars = "CD3", cells = 1:2)
   expect_equal(rownames(fd_idx), node_names[1:2])
 
+  expect_no_warning(
+    fd_dup <- SeuratObject::FetchData(cg, vars = "CD3", cells = node_names[c(1, 1, 2)])
+  )
+  expect_equal(rownames(fd_dup), node_names[1:2])
+
   empty <- SeuratObject::FetchData(cg, vars = NULL)
   expect_equal(nrow(empty), 4)
   expect_equal(ncol(empty), 0)
@@ -97,4 +102,8 @@ test_that("FetchData.CellGraph fails with invalid input", {
   expect_error(SeuratObject::FetchData(cg, vars = "CD3", cells = "missing_node"))
   expect_error(SeuratObject::FetchData(cg, vars = "CD3", layer = "missing_layer"))
   expect_warning(SeuratObject::FetchData(cg, vars = c("CD3", "missing")))
+  expect_warning(
+    SeuratObject::FetchData(cg, vars = "CD3", cells = c(node_names[1], "missing_node")),
+    "1 node not present"
+  )
 })

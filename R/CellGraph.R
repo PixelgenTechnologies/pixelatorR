@@ -557,15 +557,14 @@ FetchData.CellGraph <- function(
     cells <- node_names[cells]
   }
   assert_vector(cells, type = "character", n = 1)
-  cells <- as.character(cells)
-  cells_orig <- cells
-  cells <- cells[!is.na(cells)]
+  cells <- unique(as.character(cells))
+  missing_cells <- setdiff(cells, node_names)
   cells <- intersect(cells, node_names)
   if (length(cells) == 0) {
     cli::cli_abort(c("x" = "None of the requested nodes were found in this {.cls CellGraph}."))
   }
-  if (length(cells) != length(cells_orig)) {
-    cli::cli_warn("Removing {length(cells_orig) - length(cells)} node{?s} not present in this {.cls CellGraph}.")
+  if (length(missing_cells) > 0) {
+    cli::cli_warn("Removing {length(missing_cells)} node{?s} not present in this {.cls CellGraph}.")
   }
 
   if (is.null(vars) || length(vars) == 0) {
