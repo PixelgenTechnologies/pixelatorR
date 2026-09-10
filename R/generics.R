@@ -240,16 +240,16 @@ ComputeLayout <- function(
   UseMethod(generic = "ComputeLayout", object = object)
 }
 
-#' Extract graph layout coordinates
+#' Fetch graph layout coordinates
 #'
-#' Extracts a stored 3D layout from \code{\link{CellGraph}} objects and
+#' Fetches a stored 3D layout from \code{\link{CellGraph}} objects and
 #' optionally joins node-level variables retrieved with
 #' \code{\link[SeuratObject]{FetchData}}.
 #'
 #' @param object An object
 #' @param ... Additional parameters passed to other methods
 #'
-#' @rdname ExtractLayout
+#' @rdname FetchLayoutData
 #'
 #' @return A \code{tbl_df} with columns \code{x}, \code{y}, \code{z} and any
 #' requested \code{vars}. Methods that extract from multiple components also
@@ -257,11 +257,11 @@ ComputeLayout <- function(
 #'
 #' @export
 #'
-ExtractLayout <- function(
+FetchLayoutData <- function(
   object,
   ...
 ) {
-  UseMethod(generic = "ExtractLayout", object = object)
+  UseMethod(generic = "FetchLayoutData", object = object)
 }
 
 #' Compute local proximity scores

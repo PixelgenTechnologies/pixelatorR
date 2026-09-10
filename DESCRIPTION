@@ -116,7 +116,7 @@ Collate:
     'graph_analysis.R'
     'graph_conversion.R'
     'graph_layout.R'
-    'extract_layout.R'
+    'fetch_layout_data.R'
     'graph_layout_visualization.R'
     'inspect_pxl_file.R'
     'isotype_analysis.R'
