@@ -59,13 +59,13 @@ Use \code{lapply.CellGraphList} to apply a function without dropping the
 \item \code{[}: Subset a \code{CellGraphList}. Unknown
 character names raise an error.
 
-\item \code{`[`(x, i) <- value}: Replace a subset of graphs. \code{NULL}
+\item \code{`[`(CellGraphList) <- value}: Replace a subset of graphs. \code{NULL}
 unloads the selected cells without dropping their names.
 
-\item \code{`[[`(x, i) <- value}: Replace a single graph. \code{NULL}
+\item \code{`[[`(CellGraphList) <- value}: Replace a single graph. \code{NULL}
 unloads that cell without dropping its name.
 
-\item \code{`names`(x) <- value}: Set names. Names must be unique and
+\item \code{names(CellGraphList) <- value}: Set names. Names must be unique and
 non-missing.
 
 \item \code{c(CellGraphList)}: Concatenate \code{CellGraphList} objects

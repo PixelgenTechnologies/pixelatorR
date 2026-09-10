@@ -1247,7 +1247,8 @@ subset.CellGraph <- function(
   vars_many <- names(vars_alt)[n_hits > 1]
   if (length(vars_many) > 0) {
     cli::cli_warn(
-      "Found the following features in more than one layer besides the default; they will not be included: {.val {vars_many}}"
+      "Found the following features in more than one layer besides the default;
+      they will not be included: {.val {vars_many}}"
     )
   }
   vars_one <- vars_alt[n_hits == 1]

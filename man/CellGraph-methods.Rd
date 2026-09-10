@@ -49,11 +49,11 @@
 
 \item{search}{Optional layer name or pattern passed to \code{\link[SeuratObject]{Layers}}}
 
+\item{...}{Currently not used}
+
 \item{layer}{Name of a node matrix layer. Use \code{"counts"} for the
 counts slot. For \code{FetchData}, \code{NULL} (default) selects
 \code{"counts"} when present, otherwise the first extra layer.}
-
-\item{...}{Currently not used}
 
 \item{value}{Replacement value}
 
@@ -93,7 +93,7 @@ packages
 }
 \section{Functions}{
 \itemize{
-\item \code{FetchData(object)}: Pull node-level data from a \code{CellGraph}
+\item \code{FetchData(CellGraph)}: Pull node-level data from a \code{CellGraph}
 
 \item \code{show(CellGraph)}: Show a \code{CellGraph} object
 

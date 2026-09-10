@@ -292,7 +292,8 @@ FetchLayoutData.Seurat <- function(
   if (length(not_loaded) > 0) {
     cli::cli_abort(
       c(
-        "x" = "{.cls CellGraph} object{?s} {?is/are} not loaded for {length(not_loaded)} component{?s}: {.val {head(not_loaded, 5)}}.",
+        "x" = "{.cls CellGraph} object{?s} {?is/are} not loaded for {length(not_loaded)}
+                component{?s}: {.val {head(not_loaded, 5)}}.",
         "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn FetchLayoutData}."
       ),
       call = call
