@@ -14,6 +14,22 @@ bipart_graph <-
   mutate(node_type = case_when(name %in% edge_list$upia ~ "A", TRUE ~ "B"))
 attr(bipart_graph, "type") <- "bipartite"
 
+# cli wraps abort messages at the console width, so collapse whitespace before
+# matching to keep the expected text independent of where the line breaks fall.
+expect_error_text <- function(object, pattern) {
+  message <- tryCatch(
+    {
+      object
+      NULL
+    },
+    error = function(e) conditionMessage(e)
+  )
+  if (is.null(message)) {
+    fail("Expected an error, but none was thrown.")
+  }
+  expect_match(gsub("[[:space:]]+", " ", message), pattern)
+}
+
 test_that("CreateCellGraphObject works as expected", {
   cg <- CreateCellGraphObject(cellgraph = bipart_graph)
   expect_s4_class(cg, "CellGraph")
@@ -264,7 +280,7 @@ test_that("constructor rejects variable name collisions across data sources", {
   counts <- make_counts()
   duplicate_counts <- counts
   colnames(duplicate_counts)[2] <- colnames(duplicate_counts)[1]
-  expect_error(
+  expect_error_text(
     CreateCellGraphObject(cellgraph = bipart_graph, counts = duplicate_counts),
     "Feature names in counts must be unique"
   )
@@ -273,7 +289,7 @@ test_that("constructor rejects variable name collisions across data sources", {
     m1 = seq_len(n_nodes),
     row.names = node_names
   )
-  expect_error(
+  expect_error_text(
     CreateCellGraphObject(
       cellgraph = bipart_graph,
       counts = counts,
@@ -284,12 +300,12 @@ test_that("constructor rejects variable name collisions across data sources", {
 
   colliding_graph <- bipart_graph %N>%
     dplyr::mutate(m1 = seq_len(n_nodes))
-  expect_error(
+  expect_error_text(
     CreateCellGraphObject(cellgraph = colliding_graph, counts = counts),
     "present in both cellgraph node table and counts/layers"
   )
 
-  expect_error(
+  expect_error_text(
     CreateCellGraphObject(
       cellgraph = bipart_graph,
       meta.data = data.frame(
@@ -309,7 +325,7 @@ test_that("constructor rejects variable name collisions across data sources", {
     key = "m"
   )
   colnames(reduction@embeddings) <- "m1"
-  expect_error(
+  expect_error_text(
     CreateCellGraphObject(
       cellgraph = bipart_graph,
       counts = counts,
@@ -318,7 +334,7 @@ test_that("constructor rejects variable name collisions across data sources", {
     "reduction 'pca'.*counts/layers"
   )
 
-  expect_error(
+  expect_error_text(
     CreateCellGraphObject(
       cellgraph = bipart_graph,
       reductions = list(first = reduction, second = reduction)
@@ -334,7 +350,7 @@ test_that("CellGraph setters reject variable name collisions", {
     meta.data = data.frame(cluster = rep("a", n_nodes), row.names = node_names)
   )
 
-  expect_error(
+  expect_error_text(
     SeuratObject::AddMetaData(cg, seq_len(n_nodes), col.name = "m1"),
     "meta.data and counts/layers"
   )
@@ -347,21 +363,21 @@ test_that("CellGraph setters reject variable name collisions", {
     ncol = 1,
     dimnames = list(node_names, "cluster")
   )
-  expect_error(
+  expect_error_text(
     SeuratObject::LayerData(cg, layer = "data") <- colliding_layer,
     "meta.data and counts/layers"
   )
 
   colliding_counts <- make_counts()
   colnames(colliding_counts)[1] <- "cluster"
-  expect_error(
+  expect_error_text(
     CellGraphData(cg, slot = "counts") <- colliding_counts,
     "meta.data and counts/layers"
   )
 
   colliding_graph <- bipart_graph %N>%
     dplyr::mutate(m1 = seq_len(n_nodes))
-  expect_error(
+  expect_error_text(
     CellGraphData(cg, slot = "cellgraph") <- colliding_graph,
     "cellgraph node table and counts/layers"
   )
@@ -375,16 +391,16 @@ test_that("CellGraph setters reject variable name collisions", {
     key = "m"
   )
   colnames(reduction@embeddings) <- "m1"
-  expect_error(
+  expect_error_text(
     cg[["pca"]] <- reduction,
     "reduction 'pca'.*counts/layers"
   )
 
-  expect_error(
+  expect_error_text(
     CellGraphData(cg, slot = "layers") <- list(data = colliding_layer),
     "meta.data and counts/layers"
   )
-  expect_error(
+  expect_error_text(
     CellGraphData(cg, slot = "meta.data") <- data.frame(
       m1 = seq_len(n_nodes),
       row.names = node_names
@@ -442,7 +458,7 @@ test_that("KeepLargestComponent.CellGraph accepts a single-node component", {
   expect_equal(igraph::gorder(cg_largest@cellgraph), 1)
 })
 
-test_that("legacy layout tables without row names get node IDs on access", {
+test_that("layout tables without row names get node IDs on subset", {
   layout <- tibble::tibble(x = seq_len(n_nodes), y = seq_len(n_nodes))
   cg <- CreateCellGraphObject(cellgraph = bipart_graph, layout = list(xy = layout))
   cg@layout$xy <- layout
