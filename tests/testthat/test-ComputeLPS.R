@@ -65,6 +65,7 @@ test_that("CellGraphList subset errors on unknown or missing names", {
   expect_error(cgl["not_a_cell"], "Unknown name")
   expect_error(cgl[c(names(cgl)[1], "not_a_cell")], "Unknown name")
   expect_error(cgl[NA_character_], "Unknown name")
+  expect_error(cgl[length(cgl) + 1L], "non-missing names")
   expect_error({
     names(cgl) <- c(names(cgl)[1], NA_character_)
   }, "non-missing names")
