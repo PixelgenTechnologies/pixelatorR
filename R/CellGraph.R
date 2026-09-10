@@ -925,10 +925,12 @@ subset.CellGraph <- function(
   meta_names <- if (is.null(meta)) character() else colnames(meta) %||% character()
 
   reductions <- slot(object, "reductions")
-  reduction_sources <- lapply(reductions, function(reduction) {
-    colnames(Embeddings(reduction)) %||% character()
-  })
-  names(reduction_sources) <- paste0("reduction '", names(reductions), "'")
+  reduction_sources <- list()
+  for (reduction_name in names(reductions)) {
+    reduction_sources[paste0("reduction '", reduction_name, "'")] <- list(
+      colnames(Embeddings(reductions[[reduction_name]])) %||% character()
+    )
+  }
 
   counts <- slot(object, "counts")
   matrix_sources <- list()
@@ -991,8 +993,8 @@ subset.CellGraph <- function(
         cli::cli_abort(
           c(
             "x" = paste0(
-              "Node-level variable name{?s} {.val {overlap}} {?is/are} ",
-              "present in both {source_x} and {source_y}."
+              "{cli::qty(length(overlap))}Node-level variable name{?s} ",
+              "{.val {overlap}} {?is/are} present in both {source_x} and {source_y}."
             ),
             "i" = paste0(
               "Names must be unique across the cellgraph node table, ",
