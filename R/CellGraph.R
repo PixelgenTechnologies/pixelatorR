@@ -940,15 +940,31 @@ subset.CellGraph <- function(
   names(reduction_sources) <- paste0("reduction '", names(reductions), "'")
 
   counts <- slot(object, "counts")
-  matrix_names <- if (is.null(counts)) {
-    character()
-  } else {
-    colnames(counts) %||% character()
+  matrix_sources <- list()
+  if (!is.null(counts)) {
+    matrix_sources["counts"] <- list(colnames(counts) %||% character())
   }
   layers <- slot(object, "layers")
-  for (layer in layers) {
-    matrix_names <- c(matrix_names, colnames(layer) %||% character())
+  for (layer_name in names(layers)) {
+    matrix_sources[paste0("layer '", layer_name, "'")] <- list(
+      colnames(layers[[layer_name]]) %||% character()
+    )
   }
+  for (source in names(matrix_sources)) {
+    duplicated_names <- unique(
+      matrix_sources[[source]][duplicated(matrix_sources[[source]])]
+    )
+    if (length(duplicated_names) > 0) {
+      cli::cli_abort(
+        c(
+          "x" = "Feature names in {source} must be unique.",
+          "i" = "Duplicated name{?s}: {.val {duplicated_names}}"
+        ),
+        call = call
+      )
+    }
+  }
+  matrix_names <- unique(unlist(matrix_sources, use.names = FALSE))
 
   sources <- c(
     list(
@@ -979,11 +995,13 @@ subset.CellGraph <- function(
     for (pair in source_pairs) {
       overlap <- intersect(sources[[pair[[1]]]], sources[[pair[[2]]]])
       if (length(overlap) > 0) {
+        source_x <- pair[[1]]
+        source_y <- pair[[2]]
         cli::cli_abort(
           c(
             "x" = paste0(
               "Node-level variable name{?s} {.val {overlap}} {?is/are} ",
-              "present in both {pair[[1]]} and {pair[[2]]}."
+              "present in both {source_x} and {source_y}."
             ),
             "i" = paste0(
               "Names must be unique across the cellgraph node table, ",

@@ -262,6 +262,13 @@ test_that("matrix layers may share feature names", {
 
 test_that("constructor rejects variable name collisions across data sources", {
   counts <- make_counts()
+  duplicate_counts <- counts
+  colnames(duplicate_counts)[2] <- colnames(duplicate_counts)[1]
+  expect_error(
+    CreateCellGraphObject(cellgraph = bipart_graph, counts = duplicate_counts),
+    "Feature names in counts must be unique"
+  )
+
   colliding_meta <- data.frame(
     m1 = seq_len(n_nodes),
     row.names = node_names
