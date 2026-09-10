@@ -11,29 +11,23 @@ NULL
 #' The CellGraph class is designed to hold information needed for working with
 #' PNA single-cell graphs.
 #'
-#' Node-level data are always aligned by **node name**, not by row position.
-#' When counts, layouts, layers, metadata, or reductions are added, rows are
-#' matched to the \code{name} vertex attribute of \code{cellgraph} and stored
-#' in that node order. Shuffling the graph or a matrix no longer silently
-#' breaks the mapping.
-#'
-#' Layouts are stored as \code{data.frame} objects with node IDs as row names.
-#' A \code{name} column is accepted on input and is converted to row names, so
-#' that stored layouts keep only their coordinate columns (typically \code{x},
-#' \code{y}, \code{z}). Layouts without node IDs still work if the number of
-#' rows matches the graph, which preserves objects created with earlier
-#' versions of pixelatorR.
+#' A \code{CellGraph} contains counts and a graph, and optionally layouts, layers,
+#' metadata, or reductions.
 #'
 #' @slot cellgraph A \code{tbl_graph} object corresponding to a cell graph
 #' @slot counts A \code{matrix}-like object with marker counts (nodes x markers).
-#' Row names are node names.
+#' Row names are node names. The counts matrix can be extracted as the
+#' \code{"counts"} layer via \code{\link[SeuratObject]{Layers}} /
+#' \code{\link[SeuratObject]{LayerData}}.
 #' @slot layout A named \code{list} of \code{data.frame} objects with coordinates
 #' for cell layouts. Row names are node names and the row order matches the
-#' graph node order.
+#' graph node order. A \code{name} column is accepted on input and converted to
+#' row names, so stored layouts keep only coordinate columns (typically
+#' \code{x}, \code{y}, \code{z}). Layouts without node IDs still work if the
+#' number of rows matches the graph.
 #' @slot layers A named \code{list} of additional numeric node matrices
 #' (nodes x features), analogous to layers on a Seurat
-#' \code{\link[SeuratObject]{Assay5}}. The counts matrix is not stored here;
-#' it remains in \code{counts} and is exposed as the \code{"counts"} layer
+#' \code{\link[SeuratObject]{Assay5}}. A layer can be extracted
 #' via \code{\link[SeuratObject]{Layers}} / \code{\link[SeuratObject]{LayerData}}.
 #' @slot meta.data A \code{data.frame} of node-level metadata (one row per node).
 #' Row names are node names. Columns may have mixed types.
@@ -110,7 +104,7 @@ setMethod(
 #' node names (order does not need to match).
 #' @param layout A named \code{list} of \code{data.frame} objects with cell
 #' layouts. Nodes are identified by row names or by a \code{name} column;
-#' otherwise the row order is assumed to follow the graph (legacy behavior).
+#' otherwise the row order is assumed to follow the graph.
 #' @param layers A named \code{list} of additional numeric node matrices
 #' (nodes x features). \code{"counts"} is reserved.
 #' @param meta.data A node-level \code{data.frame} or \code{tbl_df}. Either row
@@ -166,7 +160,7 @@ setMethod(
 #'   components = sel_comp, as_sparse = TRUE
 #' )[[1]]
 #'
-#' # Counts are matched by row name; pre-ordering is optional
+#' # Create a CellGraph object with graph and counts
 #' cg <- CreateCellGraphObject(cellgraph = component_graph, counts = counts)
 #' cg
 #'
@@ -483,7 +477,7 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
   if (length(overlap) > 0) {
     old_meta <- old_meta[, setdiff(colnames(old_meta), overlap), drop = FALSE]
   }
-  slot(object, "meta.data") <- cbind(old_meta, new_meta)
+  slot(object, "meta.data") <- .cbind_keep_names(old_meta, new_meta)
   slot(object, "meta.data") <- .align_meta_data(slot(object, "meta.data"), node_names)
   object
 }
@@ -649,10 +643,9 @@ FetchData.CellGraph <- function(
 #' @param object A \code{\link{CellGraph}} object
 #' @param x A \code{\link{CellGraph}} object
 #' @param i Name of a stored reduction
-#' @param j Unused
+#' @param j,drop Required by the S4 \code{[[} generic and ignored
 #' @param nodes A character vector of node names
 #' @param value Replacement value
-#' @param drop Unused
 #' @param ... Currently not used
 #'
 #' @return \code{FetchData}: a \code{data.frame} with nodes as rows and
@@ -790,7 +783,7 @@ subset.CellGraph <- function(
   ...
 ) {
   x <- .upgrade_cellgraph(x)
-  assert_vector(nodes, type = "character")
+  assert_vector(nodes, type = "character", n = 1)
   available_nodes <- .cg_node_names(slot(x, "cellgraph"))
   assert_x_in_y(nodes, available_nodes)
 
@@ -857,6 +850,12 @@ subset.CellGraph <- function(
 
 #' Upgrade CellGraph objects created with fewer slots
 #'
+#' Serialized objects from older pixelatorR versions only have
+#' \code{cellgraph}, \code{counts}, and \code{layout}. Slot access for
+#' \code{layers}, \code{meta.data}, or \code{reductions} would error
+#' without this reconstruction, even when the caller only needs an
+#' empty default.
+#'
 #' @noRd
 #'
 .upgrade_cellgraph <- function(object) {
@@ -880,7 +879,7 @@ subset.CellGraph <- function(
   if (is.null(slot(object, "meta.data"))) {
     slot(object, "meta.data") <- data.frame(row.names = .cg_node_names(slot(object, "cellgraph")))
   }
-  object
+  .ensure_node_ids_on_slots(object)
 }
 
 #' Match row names of a matrix to node names
@@ -1140,6 +1139,27 @@ subset.CellGraph <- function(
   aligned
 }
 
+#' Bind data.frames while keeping non-syntactic column names
+#'
+#' @noRd
+#'
+.cbind_keep_names <- function(...) {
+  dfs <- list(...)
+  dfs <- dfs[vapply(dfs, function(d) {
+    is.data.frame(d) && ncol(d) > 0
+  }, logical(1))]
+  if (length(dfs) == 0) {
+    return(NULL)
+  }
+  if (length(dfs) == 1) {
+    return(dfs[[1]])
+  }
+  kept_names <- unlist(lapply(dfs, names), use.names = FALSE)
+  out <- do.call(cbind, dfs)
+  names(out) <- kept_names
+  out
+}
+
 #' Bind fetched columns onto a node-level data.frame
 #'
 #' @noRd
@@ -1158,7 +1178,7 @@ subset.CellGraph <- function(
   if (ncol(data_fetched) == 0) {
     return(new_df)
   }
-  cbind(data_fetched, new_df)
+  .cbind_keep_names(data_fetched, new_df)
 }
 
 #' Fetch marker columns from a CellGraph layer
@@ -1183,7 +1203,11 @@ subset.CellGraph <- function(
   if (length(feature_vars) == 0) {
     return(NULL)
   }
-  as.data.frame(as.matrix(mat[cells, feature_vars, drop = FALSE]), stringsAsFactors = FALSE)
+  as.data.frame(
+    as.matrix(mat[cells, feature_vars, drop = FALSE]),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
 }
 
 #' Search remaining vars in layers other than the default
@@ -1218,7 +1242,15 @@ subset.CellGraph <- function(
     cli::cli_warn("Could not find {.val {var}} in the default layer, found in {.val {lyr}} instead")
     .fetch_layer_vars(object, lyr, var, cells)
   })
-  Reduce(cbind, pieces)
+  Reduce(function(left, right) {
+    if (is.null(left)) {
+      return(right)
+    }
+    if (is.null(right)) {
+      return(left)
+    }
+    .add_fetched_cols(left, right)
+  }, pieces)
 }
 
 #' Vertex attributes of a CellGraph as a node-level data.frame
@@ -1273,7 +1305,7 @@ subset.CellGraph <- function(
   if (length(cells_keep) == 0) {
     return(NULL)
   }
-  as.data.frame(emb[cells_keep, keyed, drop = FALSE], stringsAsFactors = FALSE)
+  as.data.frame(emb[cells_keep, keyed, drop = FALSE], stringsAsFactors = FALSE, check.names = FALSE)
 }
 
 #' Fetch a named reduction from a CellGraph
@@ -1317,14 +1349,20 @@ subset.CellGraph <- function(
 
   layouts <- slot(object, "layout")
   if (!is.null(layouts) && length(layouts) > 0) {
-    slot(object, "layout") <- lapply(layouts, function(ly) {
-      has_names <- !is.null(.explicit_rownames(ly)) || "name" %in% colnames(ly)
-      if (!has_names && nrow(ly) == length(node_names)) {
-        ly <- as.data.frame(ly, stringsAsFactors = FALSE, check.names = FALSE)
-        rownames(ly) <- node_names
+    layout_names <- names(layouts)
+    slot(object, "layout") <- lapply(seq_along(layouts), function(i) {
+      ly <- layouts[[i]]
+      nm <- if (!is.null(layout_names) && nzchar(layout_names[[i]])) {
+        layout_names[[i]]
+      } else {
+        "layout"
+      }
+      if (is.null(.explicit_rownames(ly)) || "name" %in% colnames(ly)) {
+        ly <- .align_layout(ly, node_names, layout_name = nm)
       }
       ly
     })
+    names(slot(object, "layout")) <- layout_names
   }
 
   meta <- slot(object, "meta.data")

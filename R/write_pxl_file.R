@@ -695,7 +695,7 @@ WriteMPX_pxl_file <- function(
   ))
 
   all_data <- lapply(names(cg_list), function(nm) {
-    cg <- cg_list[[nm]]
+    cg <- .upgrade_cellgraph(cg_list[[nm]])
 
     if (is.null(cg@layout)) {
       return(invisible(NULL))
@@ -708,7 +708,7 @@ WriteMPX_pxl_file <- function(
 
     # Add node names to layout tables
     layouts <- lapply(layouts, function(ly) {
-      node_names <- rownames(ly)
+      node_names <- .explicit_rownames(ly) %||% .cg_node_names(cg@cellgraph)
       # Layout tables are stored without the A/B suffix used in bipartite graphs
       if (attr(cg@cellgraph, "type") == "bipartite") {
         node_names <- stringr::str_replace(node_names, "-[A|B]", "")

@@ -85,6 +85,11 @@ test_that("FetchData.CellGraph keeps non-syntactic marker names", {
   fd_layer <- SeuratObject::FetchData(cg, vars = "f-2", layer = "data")
   expect_equal(colnames(fd_layer), "f-2")
   expect_equal(fd_layer[["f-2"]], unname(layer_mat[, "f-2"]))
+
+  fd_mixed <- SeuratObject::FetchData(cg, vars = c("HLA-DR", "cluster"))
+  expect_equal(colnames(fd_mixed), c("HLA-DR", "cluster"))
+  expect_equal(fd_mixed[["HLA-DR"]], as.numeric(counts[, "HLA-DR"]))
+  expect_equal(fd_mixed$cluster, meta$cluster)
 })
 
 test_that("FetchData.CellGraph fails with invalid input", {

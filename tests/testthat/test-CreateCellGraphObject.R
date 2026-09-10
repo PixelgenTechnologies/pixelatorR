@@ -244,3 +244,31 @@ test_that("subset.CellGraph keeps node-level slots aligned", {
   expect_true(all(small_names %in% keep))
   expect_equal(cg_small@layout$xy$x, layout$x[match(small_names, node_names)])
 })
+
+test_that("subset.CellGraph accepts a single node", {
+  cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+  one <- node_names[1]
+  cg_one <- subset(cg, nodes = one)
+  expect_equal(igraph::gorder(cg_one@cellgraph), 1)
+  expect_equal(cg_one@cellgraph %>% dplyr::pull(name), one)
+})
+
+test_that("KeepLargestComponent.CellGraph accepts a single-node component", {
+  g <- tidygraph::tbl_graph(
+    nodes = data.frame(name = c("a", "b", "c"), stringsAsFactors = FALSE),
+    edges = data.frame(from = integer(), to = integer())
+  )
+  attr(g, "type") <- "single"
+  cg <- CreateCellGraphObject(cellgraph = g)
+  expect_no_error(cg_largest <- KeepLargestComponent(cg, verbose = FALSE))
+  expect_equal(igraph::gorder(cg_largest@cellgraph), 1)
+})
+
+test_that("legacy layout tables without row names get node IDs on access", {
+  layout <- tibble::tibble(x = seq_len(n_nodes), y = seq_len(n_nodes))
+  cg <- CreateCellGraphObject(cellgraph = bipart_graph, layout = list(xy = layout))
+  cg@layout$xy <- layout
+
+  cg_small <- subset(cg, nodes = node_names[1:3])
+  expect_equal(rownames(cg_small@layout$xy), node_names[1:3])
+})

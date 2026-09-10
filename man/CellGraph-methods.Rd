@@ -78,9 +78,7 @@ requested variable.}
 
 \item{i}{Name of a stored reduction}
 
-\item{j}{Unused}
-
-\item{drop}{Unused}
+\item{j, drop}{Required by the S4 \code{[[} generic and ignored}
 
 \item{nodes}{A character vector of node names}
 }

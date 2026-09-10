@@ -18,7 +18,6 @@ cg_small <- cg_small_list[[1]]
 
 test_that("CreateCellGraphList works as expected", {
   expect_s3_class(cgl, "CellGraphList")
-  expect_s3_class(cgl, "vctrs_list_of")
   expect_type(cgl, "list")
   expect_equal(length(cgl), 2)
   expect_equal(names(cgl), names(cg_small_list))
@@ -41,6 +40,25 @@ test_that("CellGraphList subsetting, concatenation, and type checks work", {
   cgl_assigned[[1]] <- cg_small
   expect_s4_class(cgl_assigned[[1]], "CellGraph")
   expect_s3_class(cgl_assigned, "CellGraphList")
+})
+
+test_that("CellGraphList keeps NULL placeholders for unloaded graphs", {
+  cgl_null <- CreateCellGraphList(list(a = cg_small, b = NULL))
+  expect_s4_class(cgl_null[[1]], "CellGraph")
+  expect_null(cgl_null[[2]])
+  expect_equal(names(cgl_null), c("a", "b"))
+
+  cgl_unloaded <- cgl
+  cgl_unloaded[[1]] <- NULL
+  expect_null(cgl_unloaded[[1]])
+  expect_equal(length(cgl_unloaded), 2)
+  expect_equal(names(cgl_unloaded), names(cgl))
+  expect_s4_class(cgl_unloaded[[2]], "CellGraph")
+
+  combined <- c(cgl[1], list(unloaded = NULL))
+  expect_s3_class(combined, "CellGraphList")
+  expect_equal(names(combined), c(names(cgl)[1], "unloaded"))
+  expect_null(combined[["unloaded"]])
 })
 
 test_that("CreateCellGraphList fails when invalid input is provided", {
