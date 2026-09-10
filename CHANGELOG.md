@@ -14,6 +14,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
   forwards the same argument when illumination is enabled.
 
+### Updates
+
+- `render_rotating_layout()` defaults `light_direction` to `c(-0.6, 0.5, 0.62)`,
+  a key light above and to the viewer's left instead of on the camera axis. This
+  only affects renders with `use_illumination = TRUE`, which is not the default.
+  Because the mask is computed in layout coordinates, the lit side now turns with
+  the layout during a rotation; pass `light_direction = c(0, 0, 1)` for the
+  previous constant shading.
+
 ### Fixes
 
 - `assert_col_class()` now checks the column named by its `x` argument. Since

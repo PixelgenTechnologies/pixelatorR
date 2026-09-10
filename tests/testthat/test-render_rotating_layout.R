@@ -89,6 +89,13 @@ test_that("render_rotating_layout works as expected", {
     light_direction = c(1, 0, 0.3)
   ))
 
+  # Light along the rotation axis
+  expect_no_error(render_rotating_layout(xyz, gif_file,
+    frames = 2, show_first_frame = FALSE,
+    use_illumination = TRUE,
+    light_direction = c(0, 0, 1)
+  ))
+
   # Use illumination without normalizing the mask
   expect_no_error(render_rotating_layout(xyz, gif_file,
     frames = 2, show_first_frame = FALSE,
@@ -299,6 +306,17 @@ test_that("illumination helpers validate inputs", {
       c(0.5, 0.5)
     ),
     "same length|length"
+  )
+})
+
+test_that("render_rotating_layout defaults to an off-axis key light", {
+  expect_equal(
+    eval(formals(render_rotating_layout)$light_direction),
+    c(-0.6, 0.5, 0.62)
+  )
+  expect_equal(
+    eval(formals(heuristic_illumination)$light_direction),
+    c(0, 0, 1)
   )
 })
 
