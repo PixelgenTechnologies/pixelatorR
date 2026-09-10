@@ -124,8 +124,9 @@ matrix to search.
 \code{CellGraph} in a \code{CellGraphList}. Unlike
 \code{\link{FetchLayoutData}}, this does not require a stored layout and
 does not reserve coordinate names, so \code{vars} may include \code{x},
-\code{y}, or \code{z} when those columns exist on the graphs. Variables
-missing from a graph are filled with \code{NA}.
+\code{y}, or \code{z} when those columns exist on the graphs. \code{component}
+is reserved for the source graph ID. Variables missing from a graph are
+filled with \code{NA}.
 
 }}
 \examples{

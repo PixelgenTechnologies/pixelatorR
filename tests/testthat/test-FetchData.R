@@ -136,6 +136,8 @@ test_that("FetchData.CellGraphList works as expected", {
 
   fd_hyphen <- SeuratObject::FetchData(cgl, vars = "HLA-DR")
   expect_equal(colnames(fd_hyphen), c("component", "HLA-DR"))
+
+  expect_error(SeuratObject::FetchData(cgl, vars = "component"), "cannot include")
 })
 
 test_that("FetchData.CellGraphList validates loaded CellGraphs", {

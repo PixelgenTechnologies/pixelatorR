@@ -234,8 +234,9 @@ lapply.CellGraphList <- function(X, FUN, ...) {
 #' \code{CellGraph} in a \code{CellGraphList}. Unlike
 #' \code{\link{FetchLayoutData}}, this does not require a stored layout and
 #' does not reserve coordinate names, so \code{vars} may include \code{x},
-#' \code{y}, or \code{z} when those columns exist on the graphs. Variables
-#' missing from a graph are filled with \code{NA}.
+#' \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
+#' is reserved for the source graph ID. Variables missing from a graph are
+#' filled with \code{NA}.
 #' @method FetchData CellGraphList
 #' @export
 #'
@@ -249,6 +250,17 @@ FetchData.CellGraphList <- function(
 ) {
   cells <- .resolve_loaded_cellgraph_ids(object, cells, fn = "FetchData")
 
+  if (!is.null(vars) && length(vars) > 0) {
+    vars <- as.character(vars)
+    if ("component" %in% vars) {
+      cli::cli_abort(
+        c(
+          "x" = "{.arg vars} cannot include {.val component}.",
+          "i" = "{.val component} identifies the source {.cls CellGraph} in the result."
+        )
+      )
+    }
+  }
   if (isTRUE(clean)) {
     clean <- "all"
   } else if (isFALSE(clean)) {
