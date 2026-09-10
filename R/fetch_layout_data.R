@@ -13,8 +13,8 @@ NULL
 #' \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
 #' layer selection as \code{FetchData.CellGraph}.
 #'
-#' @rdname ExtractLayout
-#' @method ExtractLayout CellGraph
+#' @rdname FetchLayoutData
+#' @method FetchLayoutData CellGraph
 #'
 #' @examples
 #' library(pixelatorR)
@@ -24,14 +24,14 @@ NULL
 #' cg <- CellGraphs(se)[[1]]
 #'
 #' # Coordinates only
-#' layout <- ExtractLayout(cg)
+#' layout <- FetchLayoutData(cg)
 #'
 #' # Include marker counts
-#' layout <- ExtractLayout(cg, vars = "B2M")
+#' layout <- FetchLayoutData(cg, vars = "B2M")
 #'
 #' @export
 #'
-ExtractLayout.CellGraph <- function(
+FetchLayoutData.CellGraph <- function(
   object,
   layout_method = "wpmds_3d",
   vars = NULL,
@@ -67,21 +67,21 @@ ExtractLayout.CellGraph <- function(
   dplyr::bind_cols(coords, as_tibble(fetched, .name_repair = "minimal"))
 }
 
-#' @param cells Component IDs to extract. If \code{NULL}, all loaded
+#' @param cells Component IDs to fetch. If \code{NULL}, all loaded
 #' \code{\link{CellGraph}} objects are used. Unloaded graphs raise an error
 #' when they are included in \code{cells}.
 #'
-#' @rdname ExtractLayout
-#' @method ExtractLayout CellGraphList
+#' @rdname FetchLayoutData
+#' @method FetchLayoutData CellGraphList
 #'
 #' @examples
 #' # Combine layouts from a CellGraphList
 #' cgl <- CellGraphs(se)
-#' layout <- ExtractLayout(cgl, cells = colnames(se)[1], vars = "B2M")
+#' layout <- FetchLayoutData(cgl, cells = colnames(se)[1], vars = "B2M")
 #'
 #' @export
 #'
-ExtractLayout.CellGraphList <- function(
+FetchLayoutData.CellGraphList <- function(
   object,
   layout_method = "wpmds_3d",
   vars = NULL,
@@ -89,10 +89,10 @@ ExtractLayout.CellGraphList <- function(
   layer = NULL,
   ...
 ) {
-  cells <- .resolve_extract_layout_cells(object, cells)
+  cells <- .resolve_fetch_layout_data_cells(object, cells)
 
   dplyr::bind_rows(lapply(cells, function(nm) {
-    ExtractLayout(
+    FetchLayoutData(
       object[[nm]],
       layout_method = layout_method,
       vars = vars,
@@ -103,16 +103,16 @@ ExtractLayout.CellGraphList <- function(
   }))
 }
 
-#' @rdname ExtractLayout
-#' @method ExtractLayout PNAAssay
+#' @rdname FetchLayoutData
+#' @method FetchLayoutData PNAAssay
 #'
 #' @examples
 #' # PNAAssay method
-#' layout <- ExtractLayout(se[["PNA"]], cells = colnames(se)[1], vars = "B2M")
+#' layout <- FetchLayoutData(se[["PNA"]], cells = colnames(se)[1], vars = "B2M")
 #'
 #' @export
 #'
-ExtractLayout.PNAAssay <- function(
+FetchLayoutData.PNAAssay <- function(
   object,
   layout_method = "wpmds_3d",
   vars = NULL,
@@ -120,7 +120,7 @@ ExtractLayout.PNAAssay <- function(
   layer = NULL,
   ...
 ) {
-  ExtractLayout(
+  FetchLayoutData(
     CellGraphs(object),
     layout_method = layout_method,
     vars = vars,
@@ -130,25 +130,25 @@ ExtractLayout.PNAAssay <- function(
   )
 }
 
-#' @rdname ExtractLayout
-#' @method ExtractLayout PNAAssay5
+#' @rdname FetchLayoutData
+#' @method FetchLayoutData PNAAssay5
 #' @docType methods
 #' @export
 #'
-ExtractLayout.PNAAssay5 <- ExtractLayout.PNAAssay
+FetchLayoutData.PNAAssay5 <- FetchLayoutData.PNAAssay
 
-#' @param assay Name of assay to extract layouts from
+#' @param assay Name of assay to fetch layouts from
 #'
-#' @rdname ExtractLayout
-#' @method ExtractLayout Seurat
+#' @rdname FetchLayoutData
+#' @method FetchLayoutData Seurat
 #'
 #' @examples
 #' # Seurat method
-#' layout <- ExtractLayout(se, cells = colnames(se)[1], vars = "B2M")
+#' layout <- FetchLayoutData(se, cells = colnames(se)[1], vars = "B2M")
 #'
 #' @export
 #'
-ExtractLayout.Seurat <- function(
+FetchLayoutData.Seurat <- function(
   object,
   layout_method = "wpmds_3d",
   vars = NULL,
@@ -161,7 +161,7 @@ ExtractLayout.Seurat <- function(
   pixel_assay <- object[[assay]]
   assert_pixel_assay(pixel_assay)
 
-  ExtractLayout(
+  FetchLayoutData(
     CellGraphs(pixel_assay),
     layout_method = layout_method,
     vars = vars,
@@ -268,7 +268,7 @@ ExtractLayout.Seurat <- function(
 #'
 #' @noRd
 #'
-.resolve_extract_layout_cells <- function(object, cells, call = caller_env()) {
+.resolve_fetch_layout_data_cells <- function(object, cells, call = caller_env()) {
   available <- names(object)
   loaded <- vapply(object, function(x) inherits(x, "CellGraph"), logical(1))
   loaded_ids <- available[loaded]
@@ -278,7 +278,7 @@ ExtractLayout.Seurat <- function(
       cli::cli_abort(
         c(
           "x" = "No {.cls CellGraph} objects are loaded.",
-          "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn ExtractLayout}."
+          "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn FetchLayoutData}."
         ),
         call = call
       )
@@ -295,7 +295,7 @@ ExtractLayout.Seurat <- function(
     cli::cli_abort(
       c(
         "x" = "{.cls CellGraph} object{?s} {?is/are} not loaded for {length(not_loaded)} component{?s}: {.val {head(not_loaded, 5)}}.",
-        "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn ExtractLayout}."
+        "i" = "Load them with {.fn LoadCellGraphs} before calling {.fn FetchLayoutData}."
       ),
       call = call
     )

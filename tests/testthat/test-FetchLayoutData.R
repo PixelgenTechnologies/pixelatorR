@@ -47,8 +47,8 @@ cg_no_cluster <- CreateCellGraphObject(
   layout = list(wpmds_3d = layout)
 )
 
-test_that("ExtractLayout.CellGraph works as expected", {
-  expect_no_error(lyt <- ExtractLayout(cg))
+test_that("FetchLayoutData.CellGraph works as expected", {
+  expect_no_error(lyt <- FetchLayoutData(cg))
   expect_s3_class(lyt, "tbl_df")
   expect_equal(colnames(lyt), c("x", "y", "z"))
   expect_equal(nrow(lyt), 4)
@@ -56,47 +56,47 @@ test_that("ExtractLayout.CellGraph works as expected", {
   expect_equal(lyt$y, layout$y)
   expect_equal(lyt$z, layout$z)
 
-  expect_no_error(lyt_vars <- ExtractLayout(cg, vars = c("CD3", "cluster", "node_type")))
+  expect_no_error(lyt_vars <- FetchLayoutData(cg, vars = c("CD3", "cluster", "node_type")))
   expect_equal(colnames(lyt_vars), c("x", "y", "z", "CD3", "cluster", "node_type"))
   expect_equal(lyt_vars$CD3, as.numeric(counts[, "CD3"]))
   expect_equal(lyt_vars$cluster, meta$cluster)
   expect_equal(lyt_vars$node_type, c("umi1", "umi1", "umi2", "umi2"))
 })
 
-test_that("ExtractLayout.CellGraph fills missing vars with NA", {
-  expect_no_error(lyt <- ExtractLayout(cg, vars = c("CD3", "missing_var")))
+test_that("FetchLayoutData.CellGraph fills missing vars with NA", {
+  expect_no_error(lyt <- FetchLayoutData(cg, vars = c("CD3", "missing_var")))
   expect_equal(colnames(lyt), c("x", "y", "z", "CD3", "missing_var"))
   expect_equal(lyt$CD3, as.numeric(counts[, "CD3"]))
   expect_true(all(is.na(lyt$missing_var)))
 
-  expect_no_error(lyt_all_missing <- ExtractLayout(cg, vars = "not_a_variable"))
+  expect_no_error(lyt_all_missing <- FetchLayoutData(cg, vars = "not_a_variable"))
   expect_equal(colnames(lyt_all_missing), c("x", "y", "z", "not_a_variable"))
   expect_true(all(is.na(lyt_all_missing$not_a_variable)))
 })
 
-test_that("ExtractLayout.CellGraph keeps non-syntactic marker names", {
-  expect_no_error(lyt <- ExtractLayout(cg, vars = "HLA-DR"))
+test_that("FetchLayoutData.CellGraph keeps non-syntactic marker names", {
+  expect_no_error(lyt <- FetchLayoutData(cg, vars = "HLA-DR"))
   expect_equal(colnames(lyt), c("x", "y", "z", "HLA-DR"))
   expect_equal(lyt[["HLA-DR"]], as.numeric(counts[, "HLA-DR"]))
 })
 
-test_that("ExtractLayout.CellGraph fails with invalid input", {
-  expect_error(ExtractLayout(cg, layout_method = "missing_layout"))
-  expect_error(ExtractLayout(cg, vars = "x"))
+test_that("FetchLayoutData.CellGraph fails with invalid input", {
+  expect_error(FetchLayoutData(cg, layout_method = "missing_layout"))
+  expect_error(FetchLayoutData(cg, vars = "x"))
   cg_no_layout <- CreateCellGraphObject(cellgraph = bipart_graph, counts = counts)
-  expect_error(ExtractLayout(cg_no_layout))
+  expect_error(FetchLayoutData(cg_no_layout))
   cg_2d <- CreateCellGraphObject(
     cellgraph = bipart_graph,
     counts = counts,
     layout = list(wpmds = data.frame(x = 1:4, y = 1:4, row.names = node_names))
   )
-  expect_error(ExtractLayout(cg_2d, layout_method = "wpmds"))
+  expect_error(FetchLayoutData(cg_2d, layout_method = "wpmds"))
 })
 
 cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg_no_cluster))
 
-test_that("ExtractLayout.CellGraphList works as expected", {
-  expect_no_error(lyt <- ExtractLayout(cgl, vars = c("CD3", "cluster")))
+test_that("FetchLayoutData.CellGraphList works as expected", {
+  expect_no_error(lyt <- FetchLayoutData(cgl, vars = c("CD3", "cluster")))
   expect_s3_class(lyt, "tbl_df")
   expect_equal(colnames(lyt), c("component", "x", "y", "z", "CD3", "cluster"))
   expect_equal(nrow(lyt), 8)
@@ -105,42 +105,42 @@ test_that("ExtractLayout.CellGraphList works as expected", {
   expect_equal(lyt$cluster[1:4], meta$cluster)
   expect_true(all(is.na(lyt$cluster[5:8])))
 
-  expect_no_error(lyt_one <- ExtractLayout(cgl, cells = "cell_2", vars = "CD3"))
+  expect_no_error(lyt_one <- FetchLayoutData(cgl, cells = "cell_2", vars = "CD3"))
   expect_equal(unique(lyt_one$component), "cell_2")
   expect_equal(nrow(lyt_one), 4)
 })
 
-test_that("ExtractLayout.CellGraphList validates loaded CellGraphs", {
+test_that("FetchLayoutData.CellGraphList validates loaded CellGraphs", {
   cgl_mixed <- CreateCellGraphList(list(cell_1 = cg, cell_2 = NULL))
-  expect_no_error(lyt <- ExtractLayout(cgl_mixed))
+  expect_no_error(lyt <- FetchLayoutData(cgl_mixed))
   expect_equal(unique(lyt$component), "cell_1")
-  expect_error(ExtractLayout(cgl_mixed, cells = c("cell_1", "cell_2")))
-  expect_error(ExtractLayout(cgl_mixed, cells = "missing_cell"))
+  expect_error(FetchLayoutData(cgl_mixed, cells = c("cell_1", "cell_2")))
+  expect_error(FetchLayoutData(cgl_mixed, cells = "missing_cell"))
 
   cgl_empty <- CreateCellGraphList(list(cell_1 = NULL, cell_2 = NULL))
-  expect_error(ExtractLayout(cgl_empty))
+  expect_error(FetchLayoutData(cgl_empty))
 })
 
 se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 se <- LoadCellGraphs(se, cells = colnames(se)[1:2], add_layouts = TRUE, verbose = FALSE)
 cells <- colnames(se)[1:2]
 
-test_that("ExtractLayout.PNAAssay and Seurat methods work as expected", {
-  expect_no_error(lyt_assay <- ExtractLayout(se[["PNA"]], cells = cells[1], vars = "B2M"))
+test_that("FetchLayoutData.PNAAssay and Seurat methods work as expected", {
+  expect_no_error(lyt_assay <- FetchLayoutData(se[["PNA"]], cells = cells[1], vars = "B2M"))
   expect_s3_class(lyt_assay, "tbl_df")
   expect_true(all(c("component", "x", "y", "z", "B2M") %in% colnames(lyt_assay)))
   expect_equal(unique(lyt_assay$component), cells[1])
   expect_false(any(is.na(lyt_assay$x)))
   expect_false(any(is.na(lyt_assay$B2M)))
 
-  expect_no_error(lyt_seurat <- ExtractLayout(se, cells = cells, vars = "B2M"))
+  expect_no_error(lyt_seurat <- FetchLayoutData(se, cells = cells, vars = "B2M"))
   expect_equal(sort(unique(lyt_seurat$component)), sort(cells))
   expect_equal(nrow(lyt_seurat), sum(vapply(CellGraphs(se)[cells], function(x) length(Cells(x)), integer(1))))
 })
 
-test_that("ExtractLayout.PNAAssay and Seurat methods validate loaded CellGraphs", {
+test_that("FetchLayoutData.PNAAssay and Seurat methods validate loaded CellGraphs", {
   se_unloaded <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
-  expect_error(ExtractLayout(se_unloaded))
-  expect_error(ExtractLayout(se_unloaded[["PNA"]]))
-  expect_error(ExtractLayout(se, cells = colnames(se)[3]))
+  expect_error(FetchLayoutData(se_unloaded))
+  expect_error(FetchLayoutData(se_unloaded[["PNA"]]))
+  expect_error(FetchLayoutData(se, cells = colnames(se)[3]))
 })

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `ExtractLayout` to extract a stored 3D layout (`x`, `y`, `z`) from
+- `FetchLayoutData` to extract a stored 3D layout (`x`, `y`, `z`) from
   `CellGraph` objects, optionally joined with node-level variables from
   `FetchData`. Methods are provided for `CellGraph`, `CellGraphList`,
   `PNAAssay`, `PNAAssay5`, and `Seurat`. Missing `vars` are filled with `NA`.
