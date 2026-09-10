@@ -55,6 +55,7 @@ color_by_marker <- function(
 
   # Validate input parameters
   assert_class(cg, "CellGraph")
+  cg <- .upgrade_cellgraph(cg)
   assert_vector(markers, type = "character", n = 1)
   assert_vector(palette, type = "character", n = 1)
   assert_single_value(smooth_counts, type = "bool")
@@ -132,14 +133,14 @@ color_by_marker <- function(
     nNodes <- round(nNodes)
     set.seed(123)
 
-    nodes_keep <- sample(c(rep(TRUE, nNodes), rep(FALSE, length(cg@cellgraph) - nNodes)))
+    node_names <- .cg_node_names(g)
+    nodes_keep <- sample(c(rep(TRUE, nNodes), rep(FALSE, length(node_names) - nNodes)))
+    keep_names <- node_names[nodes_keep]
+    graph_type <- attr(g, "type")
     g <- g %>%
-      filter(nodes_keep)
-
-    cg@counts <- cg@counts[nodes_keep, ]
-    cg@layout <- lapply(cg@layout, function(x) {
-      x[nodes_keep, , drop = FALSE]
-    })
+      filter(name %in% keep_names)
+    attr(g, "type") <- graph_type
+    cg <- subset(cg, nodes = keep_names)
   }
 
   g <- g %>%

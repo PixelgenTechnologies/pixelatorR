@@ -252,13 +252,11 @@ FetchLayoutData.Seurat <- function(
   )
 
   for (v in vars) {
-    fetched[[v]] <- NA
-  }
-  if (ncol(fetched_data) > 0 && nrow(fetched_data) > 0) {
-    common_cells <- intersect(rownames(fetched_data), cells)
-    common_vars <- intersect(colnames(fetched_data), vars)
-    if (length(common_cells) > 0 && length(common_vars) > 0) {
-      fetched[common_cells, common_vars] <- fetched_data[common_cells, common_vars, drop = FALSE]
+    if (v %in% colnames(fetched_data) && nrow(fetched_data) > 0) {
+      idx <- match(cells, rownames(fetched_data))
+      fetched[[v]] <- fetched_data[[v]][idx]
+    } else {
+      fetched[[v]] <- NA
     }
   }
   fetched[, vars, drop = FALSE]

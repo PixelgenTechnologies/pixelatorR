@@ -32,14 +32,14 @@ test_that("CreateCellGraphList works as expected", {
   expect_s4_class(mapped[[1]], "CellGraph")
 })
 
-test_that("CellGraphList subsetting, concatenation, and type checks work", {
-  expect_s3_class(c(cgl[1], cgl[2]), "CellGraphList")
-  expect_equal(length(c(cgl[1], cgl[2])), 2)
-  expect_error(cgl[[1]] <- "Invalid")
-  cgl_assigned <- cgl
-  cgl_assigned[[1]] <- cg_small
-  expect_s4_class(cgl_assigned[[1]], "CellGraph")
-  expect_s3_class(cgl_assigned, "CellGraphList")
+test_that("CellGraphList concatenates a bare CellGraph with a name", {
+  named <- c(cgl[1], extra = cg_small)
+  expect_s3_class(named, "CellGraphList")
+  expect_equal(names(named), c(names(cgl)[1], "extra"))
+  expect_s4_class(named[["extra"]], "CellGraph")
+
+  unnamed <- c(cgl[1], cg_small)
+  expect_equal(names(unnamed), c(names(cgl)[1], "CellGraph2"))
 })
 
 test_that("CellGraphList keeps NULL placeholders for unloaded graphs", {

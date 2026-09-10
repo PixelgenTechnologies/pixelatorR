@@ -69,7 +69,9 @@ unloads that cell without dropping its name.
 non-missing.
 
 \item \code{c(CellGraphList)}: Concatenate \code{CellGraphList} objects
-with lists of \code{CellGraph} or \code{NULL}
+with lists of \code{CellGraph} or \code{NULL}. A bare \code{CellGraph}
+uses the argument name, or \code{CellGraph1}, \code{CellGraph2}, ...
+when unnamed.
 
 \item \code{as.list(CellGraphList)}: Convert to a named list
 

@@ -179,12 +179,18 @@ print.CellGraphList <- function(x, ...) {
 }
 
 #' @describeIn CellGraphList-methods Concatenate \code{CellGraphList} objects
-#' with lists of \code{CellGraph} or \code{NULL}
+#' with lists of \code{CellGraph} or \code{NULL}. A bare \code{CellGraph}
+#' uses the argument name, or \code{CellGraph1}, \code{CellGraph2}, ...
+#' when unnamed.
 #' @method c CellGraphList
 #' @export
 #'
 c.CellGraphList <- function(...) {
-  pieces <- lapply(list(...), function(elt) {
+  dots <- list(...)
+  dot_names <- names(dots) %||% rep("", length(dots))
+  pieces <- lapply(seq_along(dots), function(i) {
+    elt <- dots[[i]]
+    nm <- dot_names[[i]]
     if (is.null(elt)) {
       return(list())
     }
@@ -192,7 +198,10 @@ c.CellGraphList <- function(...) {
       return(unclass(elt))
     }
     if (inherits(elt, "CellGraph")) {
-      return(list(elt))
+      if (is.null(nm) || is.na(nm) || !nzchar(nm)) {
+        nm <- paste0("CellGraph", i)
+      }
+      return(stats::setNames(list(elt), nm))
     }
     if (is.list(elt)) {
       return(elt)

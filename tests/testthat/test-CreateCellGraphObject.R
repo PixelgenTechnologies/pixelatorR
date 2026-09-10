@@ -35,6 +35,16 @@ test_that("CellGraph initialize supplies default slot values", {
   expect_equal(rownames(cg@meta.data), bipart_graph %>% dplyr::pull(name))
 })
 
+test_that("upgrade fills per-node meta.data on empty tables", {
+  nodes <- bipart_graph %>% dplyr::pull(name)
+  cg <- CreateCellGraphObject(cellgraph = bipart_graph)
+  slot(cg, "meta.data") <- data.frame()
+  cg <- SeuratObject::AddMetaData(cg, metadata = seq_along(nodes), col.name = "idx")
+  expect_equal(nrow(cg@meta.data), length(nodes))
+  expect_equal(rownames(cg@meta.data), nodes)
+  expect_equal(cg@meta.data$idx, seq_along(nodes))
+})
+
 test_that("CreateCellGraphObject accepts named layout lists", {
   layout <- tibble::tibble(x = seq_len(length(bipart_graph)))
 

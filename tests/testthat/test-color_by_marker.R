@@ -43,6 +43,11 @@ test_that("color_by_marker works as expected", {
   # Test with nNodes
   expect_no_error(g_colored <- color_by_marker(cg, markers = "CD9", nNodes = 100))
   expect_equal(length(g_colored@cellgraph), 100)
+  expect_equal(nrow(g_colored@counts), 100)
+  expect_equal(nrow(g_colored@meta.data), 100)
+  if (!is.null(g_colored@layout)) {
+    expect_true(all(vapply(g_colored@layout, nrow, integer(1)) == 100))
+  }
 
   # Test with normalize FALSE
   expect_no_error(cg_colored <- color_by_marker(cg, markers = "CD9", normalize = FALSE))

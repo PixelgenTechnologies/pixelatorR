@@ -22,7 +22,7 @@ counts <- Matrix::Matrix(
 counts <- as(counts, "dgCMatrix")
 
 meta <- data.frame(
-  cluster = c("a", "a", "b", "b"),
+  cluster = factor(c("a", "a", "b", "b")),
   row.names = node_names,
   stringsAsFactors = FALSE
 )
@@ -60,6 +60,7 @@ test_that("FetchLayoutData.CellGraph works as expected", {
   expect_equal(colnames(lyt_vars), c("x", "y", "z", "CD3", "cluster", "node_type"))
   expect_equal(lyt_vars$CD3, as.numeric(counts[, "CD3"]))
   expect_equal(lyt_vars$cluster, meta$cluster)
+  expect_true(is.factor(lyt_vars$cluster))
   expect_equal(lyt_vars$node_type, c("umi1", "umi1", "umi2", "umi2"))
 })
 

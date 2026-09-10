@@ -35,6 +35,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CellGraphList` replacement and concatenation keep `NULL` placeholders for
   unloaded graphs (`x[[i]] <- NULL` unloads without dropping the name).
 - `[.CellGraphList` errors on unknown names instead of crashing on `NA` names.
+- `c.CellGraphList` names a bare `CellGraph` from the argument name, or
+  `CellGraph1`, `CellGraph2`, ... when unnamed.
+- `FetchLayoutData` keeps factor (and other classed) metadata columns.
+- `.upgrade_cellgraph()` fills per-node `meta.data` row names on objects that
+  still have an empty metadata table after the class gained new slots.
+- `color_by_marker(..., nNodes = )` subsets layers, metadata, and reductions
+  along with the graph, counts, and layouts.
 - Legacy layout tables without row names get node IDs on upgrade, so
   `WriteMPX_pxl_file()` can restore the `name` column.
 

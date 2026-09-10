@@ -862,7 +862,18 @@ subset.CellGraph <- function(
   if (!is(object, "CellGraph")) {
     return(object)
   }
-  if (!methods::.hasSlot(object, "layers")) {
+
+  # `.hasSlot()` checks the class definition, which always includes the new
+  # slots after this package version. Detect old instances by whether the
+  # object can actually supply those slots.
+  has_layers <- tryCatch(
+    {
+      slot(object, "layers")
+      TRUE
+    },
+    error = function(e) FALSE
+  )
+  if (!isTRUE(has_layers)) {
     object <- new(
       Class = "CellGraph",
       cellgraph = slot(object, "cellgraph"),
@@ -876,8 +887,14 @@ subset.CellGraph <- function(
   if (is.null(slot(object, "reductions"))) {
     slot(object, "reductions") <- list()
   }
-  if (is.null(slot(object, "meta.data"))) {
-    slot(object, "meta.data") <- data.frame(row.names = .cg_node_names(slot(object, "cellgraph")))
+
+  meta <- slot(object, "meta.data")
+  node_names <- character()
+  if (!is.null(slot(object, "cellgraph"))) {
+    node_names <- .cg_node_names(slot(object, "cellgraph"))
+  }
+  if (is.null(meta) || (nrow(meta) == 0 && ncol(meta) == 0 && length(node_names) > 0)) {
+    slot(object, "meta.data") <- data.frame(row.names = node_names)
   }
   .ensure_node_ids_on_slots(object)
 }
