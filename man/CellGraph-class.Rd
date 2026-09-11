@@ -19,7 +19,8 @@ layer features. Count and layer matrices are the exception: they may share
 feature names because callers select a layer explicitly.
 
 Objects serialized before these extra slots existed are not upgraded.
-Loading or using them will fail.
+Using one aborts with a message that names the missing slots and points
+to a \code{pixelatorR} version that still reads the old class.
 }
 \section{Slots}{
 

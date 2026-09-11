@@ -503,3 +503,34 @@ test_that("layout tables without row names get node IDs on subset", {
   cg_small <- subset(cg, nodes = node_names[1:3])
   expect_equal(rownames(cg_small@layout$xy), node_names[1:3])
 })
+
+test_that("CellGraph objects from older versions report why they fail", {
+  cg <- CreateCellGraphObject(cellgraph = bipart_graph, counts = make_counts())
+
+  # Objects saved before the class gained layers, meta.data, and reductions
+  # keep only the three original slots when they are read back from an RDS
+  legacy <- cg
+  attr(legacy, "layers") <- NULL
+  attr(legacy, "meta.data") <- NULL
+  attr(legacy, "reductions") <- NULL
+
+  expect_error_text(print(legacy), "no layers, meta.data, and reductions slots")
+  expect_error_text(print(legacy), "saved by pixelatorR 0.21.0 or earlier")
+  expect_error_text(print(legacy), "pixelatorR@v0.20.1")
+
+  expect_error_text(SeuratObject::Layers(legacy), "pixelatorR 0.21.0 or earlier")
+  expect_error_text(SeuratObject::Cells(legacy), "pixelatorR 0.21.0 or earlier")
+  expect_error_text(CellGraphData(legacy, slot = "counts"), "pixelatorR 0.21.0 or earlier")
+  expect_error_text(SeuratObject::FetchData(legacy, vars = "m1"), "pixelatorR 0.21.0 or earlier")
+  expect_error_text(subset(legacy, nodes = node_names[1]), "pixelatorR 0.21.0 or earlier")
+  expect_error_text(
+    SeuratObject::AddMetaData(legacy, metadata = seq_len(n_nodes), col.name = "idx"),
+    "pixelatorR 0.21.0 or earlier"
+  )
+  expect_error_text(FetchLayoutData(legacy), "pixelatorR 0.21.0 or earlier")
+
+  # Only the missing slots are named
+  partial <- cg
+  attr(partial, "reductions") <- NULL
+  expect_error_text(print(partial), "no reductions slot\\b")
+})

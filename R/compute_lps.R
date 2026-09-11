@@ -68,6 +68,7 @@ ComputeLPS.CellGraph <- function(
   method <- match.arg(method, choices = c("analytical", "permutation"))
   mode <- match.arg(mode, choices = c("self-clustering", "all", "any"))
   assert_single_value(name, type = "string")
+  .assert_current_cellgraph(object)
 
   counts <- slot(object, "counts")
   if (is.null(counts)) {

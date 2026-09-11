@@ -37,7 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   matrix features. Counts and layers may still share feature names because
   callers can select a specific layer.
 - `CellGraph` objects serialized before the extra slots existed are not
-  upgraded. Loading or using them fails.
+  upgraded. Using one aborts with a message naming the missing slots, the
+  version that wrote it, and a `pixelatorR` version that still reads it.
 
 ### Fixes
 

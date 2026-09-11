@@ -20,7 +20,8 @@ NULL
 #' feature names because callers select a layer explicitly.
 #'
 #' Objects serialized before these extra slots existed are not upgraded.
-#' Loading or using them will fail.
+#' Using one aborts with a message that names the missing slots and points
+#' to a \code{pixelatorR} version that still reads the old class.
 #'
 #' @slot cellgraph A \code{tbl_graph} object corresponding to a cell graph
 #' @slot counts A \code{matrix}-like object with marker counts (nodes x markers).
@@ -282,6 +283,7 @@ CellGraphData <- function(
 ) {
   assert_class(object, "CellGraph")
   assert_single_value(slot, type = "string")
+  .assert_current_cellgraph(object)
   slot <- .normalize_cellgraph_slot_name(slot)
   assert_is_one_of(slot, slotNames(x = object))
   return(slot(object = object, name = slot))
@@ -306,6 +308,7 @@ CellGraphData <- function(
   value
 ) {
   assert_class(object, "CellGraph")
+  .assert_current_cellgraph(object)
   slot <- .normalize_cellgraph_slot_name(slot)
   assert_is_one_of(slot, slotNames(x = object))
 
@@ -368,6 +371,7 @@ CellGraphData <- function(
 #' @export
 #'
 Layers.CellGraph <- function(object, search = NULL, ...) {
+  .assert_current_cellgraph(object)
   lyrs <- names(slot(object, "layers"))
   if (!is.null(slot(object, "counts"))) {
     lyrs <- c("counts", lyrs)
@@ -391,6 +395,7 @@ Layers.CellGraph <- function(object, search = NULL, ...) {
 #'
 LayerData.CellGraph <- function(object, layer = "counts", ...) {
   assert_single_value(layer, type = "string")
+  .assert_current_cellgraph(object)
   if (identical(layer, "counts")) {
     return(slot(object, "counts"))
   }
@@ -412,6 +417,7 @@ LayerData.CellGraph <- function(object, layer = "counts", ...) {
 #'
 "LayerData<-.CellGraph" <- function(object, layer = "counts", ..., value) {
   assert_single_value(layer, type = "string")
+  .assert_current_cellgraph(object)
   node_names <- .cg_node_names(slot(object, "cellgraph"))
   if (identical(layer, "counts")) {
     slot(object, "counts") <- .align_counts(value, node_names)
@@ -459,6 +465,7 @@ Stdev.CellGraph <- function(object, reduction = NULL, ...) {
 #' @export
 #'
 Cells.CellGraph <- function(x, ...) {
+  .assert_current_cellgraph(x)
   .cg_node_names(slot(x, "cellgraph"))
 }
 
@@ -473,6 +480,7 @@ Cells.CellGraph <- function(x, ...) {
 #' @export
 #'
 AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
+  .assert_current_cellgraph(object)
   node_names <- .cg_node_names(slot(object, "cellgraph"))
 
   if (is.null(metadata)) {
@@ -740,6 +748,7 @@ setMethod(
   f = "show",
   signature = "CellGraph",
   definition = function(object) {
+    .assert_current_cellgraph(object)
     graph_type <- attr(slot(object, "cellgraph"), "type")
     if (is.null(slot(object, "counts"))) {
       n_markers <- NULL
@@ -786,6 +795,7 @@ setMethod(
   f = "[[",
   signature = c("x" = "CellGraph", "i" = "character", "j" = "missing"),
   definition = function(x, i, j, ..., drop = TRUE) {
+    .assert_current_cellgraph(x)
     reductions <- slot(x, "reductions")
     if (!i %in% names(reductions)) {
       cli::cli_abort(
@@ -809,6 +819,7 @@ setMethod(
   f = "[[<-",
   signature = c("x" = "CellGraph", "i" = "character", "j" = "missing", "value" = "ANY"),
   definition = function(x, i, j, ..., value) {
+    .assert_current_cellgraph(x)
     node_names <- .cg_node_names(slot(x, "cellgraph"))
     if (is.null(value)) {
       slot(x, "reductions")[[i]] <- NULL
@@ -839,6 +850,7 @@ subset.CellGraph <- function(
   ...
 ) {
   assert_vector(nodes, type = "character", n = 1)
+  .assert_current_cellgraph(x)
   available_nodes <- .cg_node_names(slot(x, "cellgraph"))
   assert_x_in_y(nodes, available_nodes)
 
@@ -933,6 +945,7 @@ subset.CellGraph <- function(
 #' @noRd
 #'
 .validate_cellgraph_data_names <- function(object, call = caller_env()) {
+  .assert_current_cellgraph(object, call = call)
   graph <- slot(object, "cellgraph")
   graph_names <- if (is.null(graph)) {
     character()
@@ -1028,6 +1041,46 @@ subset.CellGraph <- function(
   }
 
   invisible(NULL)
+}
+
+#' Reject CellGraph objects created before the current slot layout
+#'
+#' Objects serialized by older versions only have \code{cellgraph},
+#' \code{counts}, and \code{layout}. Reading \code{layers},
+#' \code{meta.data}, or \code{reductions} on those instances fails with
+#' \code{no slot of name ...}, which says nothing about the cause, so
+#' check for the slots up front and report what to do instead.
+#'
+#' @param object A \code{CellGraph}, or another object (checked and ignored)
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{NULL}, invisibly
+#'
+#' @keywords internal
+#' @noRd
+#'
+.assert_current_cellgraph <- function(object, call = caller_env()) {
+  if (!is(object, "CellGraph")) {
+    return(invisible(NULL))
+  }
+  added_slots <- c("layers", "meta.data", "reductions")
+  missing_slots <- added_slots[!vapply(added_slots, function(nm) {
+    .hasSlot(object, nm)
+  }, logical(1))]
+  if (length(missing_slots) == 0) {
+    return(invisible(NULL))
+  }
+  cli::cli_abort(
+    c(
+      "x" = "This {.cls CellGraph} has no {.field {missing_slots}} slot{?s}.",
+      "i" = "It was saved by {.pkg pixelatorR} 0.21.0 or earlier, before
+             {.cls CellGraph} gained these slots. Such objects are not upgraded.",
+      "i" = "Load the cell graphs again from the PXL file with {.fn LoadCellGraphs},",
+      " " = "or read the object with a version that still supports the old class:",
+      " " = "{.code remotes::install_github(\"PixelgenTechnologies/pixelatorR@v0.20.1\")}"
+    ),
+    call = call
+  )
 }
 
 #' Node names for a tbl_graph
@@ -1686,6 +1739,7 @@ subset.CellGraph <- function(
 #' @noRd
 #'
 .get_cellgraph_reduction <- function(object, reduction = NULL, call = caller_env()) {
+  .assert_current_cellgraph(object, call = call)
   reductions <- slot(object, "reductions")
   if (length(reductions) == 0) {
     cli::cli_abort(c("x" = "This {.cls CellGraph} has no reductions."), call = call)
