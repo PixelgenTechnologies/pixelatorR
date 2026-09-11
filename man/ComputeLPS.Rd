@@ -123,7 +123,7 @@ are ignored on Windows) for parallel evaluations. See Details on performance
 in the documentation for \code{pbapply}. The default is \code{NULL},
 which means that no parallelization is used.}
 
-\item{assay}{Name of assay to compute local proximity scores for}
+\item{assay}{Name of PNAAssay containing the cell graphs to compute local proximity scores}
 }
 \value{
 An object with local proximity scores stored on each

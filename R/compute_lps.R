@@ -227,7 +227,7 @@ ComputeLPS.PNAAssay <- function(
 #'
 ComputeLPS.PNAAssay5 <- ComputeLPS.PNAAssay
 
-#' @param assay Name of assay to compute local proximity scores for
+#' @param assay Name of PNAAssay containing the cell graphs to compute local proximity scores
 #'
 #' @rdname ComputeLPS
 #' @method ComputeLPS Seurat
