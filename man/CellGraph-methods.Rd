@@ -150,7 +150,7 @@ cgl <- CellGraphs(se)
 head(SeuratObject::FetchData(cgl, vars = colnames(cg@counts)[1]))
 
 # Subset
-cg_small <- subset(cg, nodes = rownames(cg@counts)[1:100])
+cg_small <- subset(cg, nodes = Cells(cg)[1:100])
 cg_small
 
 }

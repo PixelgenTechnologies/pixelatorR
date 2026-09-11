@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `CellGraph` stores a central `nodes` ID vector and keeps counts, layouts,
+  layers, metadata, and reductions in that order without copying node IDs as
+  row names. `Cells()`, `LayerData()`, `Embeddings()`, and `FetchData()` still
+  label rows for the caller.
 - `CellGraph` now uses an `initialize()` method instead of a `setClass()`
   prototype for default slot values.
 - `NodeDimReduc` now uses an `initialize()` method instead of a `setClass()`

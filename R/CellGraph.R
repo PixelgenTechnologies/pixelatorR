@@ -24,22 +24,24 @@ NULL
 #' to a \code{pixelatorR} version that still reads the old class.
 #'
 #' @slot cellgraph A \code{tbl_graph} object corresponding to a cell graph
+#' @slot nodes Character vector of node IDs in graph order. This is the map
+#' used to align counts, layouts, layers, metadata, and reductions. Those
+#' tables are stored in this order without copying the IDs as row names.
 #' @slot counts A \code{matrix}-like object with marker counts (nodes x markers).
-#' Row names are node names. The counts matrix can be extracted as the
+#' Rows follow \code{nodes}. The counts matrix can be extracted as the
 #' \code{"counts"} layer via \code{\link[SeuratObject]{Layers}} /
 #' \code{\link[SeuratObject]{LayerData}}.
 #' @slot layout A named \code{list} of \code{data.frame} objects with coordinates
-#' for cell layouts. Row names are node names and the row order matches the
-#' graph node order. A \code{name} column is accepted on input and converted to
-#' row names, so stored layouts keep only coordinate columns (typically
-#' \code{x}, \code{y}, \code{z}). Layouts without node IDs still work if the
-#' number of rows matches the graph.
+#' for cell layouts. Rows follow \code{nodes}. A \code{name} column or explicit
+#' row names are accepted on input and used only to reorder; stored layouts keep
+#' coordinate columns (typically \code{x}, \code{y}, \code{z}). Layouts without
+#' node IDs still work if the number of rows matches the graph.
 #' @slot layers A named \code{list} of additional numeric node matrices
 #' (nodes x features), analogous to layers on a Seurat
 #' \code{\link[SeuratObject]{Assay5}}. A layer can be extracted
 #' via \code{\link[SeuratObject]{Layers}} / \code{\link[SeuratObject]{LayerData}}.
 #' @slot meta.data A \code{data.frame} of node-level metadata (one row per node).
-#' Row names are node names. Columns may have mixed types.
+#' Rows follow \code{nodes}. Columns may have mixed types.
 #' @slot reductions A named \code{list} of \code{\link{NodeDimReduc}} objects
 #'
 #' @name CellGraph-class
@@ -50,6 +52,7 @@ CellGraph <- setClass(
   Class = "CellGraph",
   slots = list(
     cellgraph = "ANY",
+    nodes = "character",
     counts = "ANY",
     layout = "ANY",
     layers = "list",
@@ -62,12 +65,13 @@ CellGraph <- setClass(
 #'
 #' Supplies default values for the extra slots so
 #' \code{methods::new("CellGraph")} and constructors can omit
-#' \code{layers}, \code{meta.data}, and \code{reductions}. When a graph is
-#' provided and \code{meta.data} has no columns, row names are set to the
-#' graph node names.
+#' \code{nodes}, \code{layers}, \code{meta.data}, and \code{reductions}.
+#' When a graph is provided, \code{nodes} is filled from the graph and an
+#' empty \code{meta.data} table has one row per node.
 #'
 #' @param .Object A \code{CellGraph} instance being constructed
 #' @param cellgraph A \code{tbl_graph}, or \code{NULL}
+#' @param nodes Character vector of node IDs
 #' @param counts A count matrix, or \code{NULL}
 #' @param layout A named list of layout tables, or \code{NULL}
 #' @param layers A named list of extra node matrices
@@ -86,6 +90,7 @@ setMethod(
   definition = function(
     .Object,
     cellgraph = NULL,
+    nodes = character(),
     counts = NULL,
     layout = NULL,
     layers = list(),
@@ -102,12 +107,19 @@ setMethod(
     if (is.null(meta.data)) {
       meta.data <- data.frame()
     }
+    if (is.null(nodes)) {
+      nodes <- character()
+    }
+    if (!is.null(cellgraph) && length(nodes) == 0) {
+      nodes <- .cg_node_names(cellgraph)
+    }
     if (!is.null(cellgraph) && ncol(as.data.frame(meta.data)) == 0) {
-      meta.data <- data.frame(row.names = .cg_node_names(cellgraph))
+      meta.data <- .empty_node_meta(length(nodes))
     }
     callNextMethod(
       .Object,
       cellgraph = cellgraph,
+      nodes = nodes,
       counts = counts,
       layout = layout,
       layers = layers,
@@ -136,7 +148,8 @@ setMethod(
 #' node names (order does not need to match).
 #' @param layout A named \code{list} of \code{data.frame} objects with cell
 #' layouts. Nodes are identified by row names or by a \code{name} column;
-#' otherwise the row order is assumed to follow the graph.
+#' otherwise the row order is assumed to follow the graph. Stored layouts
+#' keep that order and do not copy node IDs as row names.
 #' @param layers A named \code{list} of additional numeric node matrices
 #' (nodes x features). \code{"counts"} is reserved.
 #' @param meta.data A node-level \code{data.frame} or \code{tbl_df}. Either row
@@ -235,6 +248,7 @@ CreateCellGraphObject <- function(
   object <- new(
     Class = "CellGraph",
     cellgraph = cellgraph,
+    nodes = node_names,
     counts = .align_counts(counts, node_names),
     layout = .align_layout_list(layout, node_names),
     layers = .align_layers(layers, node_names),
@@ -312,8 +326,16 @@ CellGraphData <- function(
   .assert_current_cellgraph(object)
   slot <- .normalize_cellgraph_slot_name(slot)
   assert_is_one_of(slot, slotNames(x = object))
+  node_names <- .cg_node_map(object)
 
-  node_names <- .cg_node_names(slot(object, name = "cellgraph"))
+  if (slot == "nodes") {
+    cli::cli_abort(
+      c(
+        "x" = "The {.field nodes} map cannot be replaced directly.",
+        "i" = "Replace {.field cellgraph} or use {.fn subset}."
+      )
+    )
+  }
 
   if (slot == "cellgraph") {
     assert_class(value, "tbl_graph")
@@ -399,7 +421,7 @@ LayerData.CellGraph <- function(object, layer = "counts", ...) {
   assert_single_value(layer, type = "string")
   .assert_current_cellgraph(object)
   if (identical(layer, "counts")) {
-    return(slot(object, "counts"))
+    return(.with_row_ids(slot(object, "counts"), .cg_node_map(object)))
   }
   layers <- slot(object, "layers")
   if (!layer %in% names(layers)) {
@@ -410,7 +432,7 @@ LayerData.CellGraph <- function(object, layer = "counts", ...) {
       )
     )
   }
-  layers[[layer]]
+  .with_row_ids(layers[[layer]], .cg_node_map(object))
 }
 
 #' @rdname CellGraph-methods
@@ -420,7 +442,7 @@ LayerData.CellGraph <- function(object, layer = "counts", ...) {
 "LayerData<-.CellGraph" <- function(object, layer = "counts", ..., value) {
   assert_single_value(layer, type = "string")
   .assert_current_cellgraph(object)
-  node_names <- .cg_node_names(slot(object, "cellgraph"))
+  node_names <- .cg_node_map(object)
   if (identical(layer, "counts")) {
     slot(object, "counts") <- .align_counts(value, node_names)
     .validate_cellgraph_data_names(object)
@@ -443,7 +465,10 @@ LayerData.CellGraph <- function(object, layer = "counts", ...) {
 #' @export
 #'
 Embeddings.CellGraph <- function(object, reduction = NULL, ...) {
-  Embeddings(.get_cellgraph_reduction(object, reduction))
+  .with_row_ids(
+    Embeddings(.get_cellgraph_reduction(object, reduction)),
+    .cg_node_map(object)
+  )
 }
 
 #' @rdname CellGraph-methods
@@ -468,7 +493,7 @@ Stdev.CellGraph <- function(object, reduction = NULL, ...) {
 #'
 Cells.CellGraph <- function(x, ...) {
   .assert_current_cellgraph(x)
-  .cg_node_names(slot(x, "cellgraph"))
+  .cg_node_map(x)
 }
 
 #' @param metadata A vector, matrix, or \code{data.frame} of node metadata.
@@ -483,7 +508,7 @@ Cells.CellGraph <- function(x, ...) {
 #'
 AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
   .assert_current_cellgraph(object)
-  node_names <- .cg_node_names(slot(object, "cellgraph"))
+  node_names <- .cg_node_map(object)
 
   if (is.null(metadata)) {
     return(object)
@@ -602,7 +627,10 @@ FetchData.CellGraph <- function(
   meta <- slot(object, "meta.data")
   meta_vars <- intersect(vars, colnames(meta))
   if (length(meta_vars) > 0) {
-    data_fetched <- .add_fetched_cols(data_fetched, meta[cells, meta_vars, drop = FALSE])
+    data_fetched <- .add_fetched_cols(
+      data_fetched,
+      .with_row_ids(meta[.row_index(cells, node_names), meta_vars, drop = FALSE], cells)
+    )
   }
 
   # Pull remaining vars from graph vertex attributes
@@ -623,7 +651,7 @@ FetchData.CellGraph <- function(
       }
       data_fetched <- .add_fetched_cols(
         data_fetched,
-        .fetch_nodedimreduc_vars(reductions[[nm]], remaining, cells)
+        .fetch_nodedimreduc_vars(reductions[[nm]], remaining, cells, node_names)
       )
     }
   }
@@ -822,7 +850,7 @@ setMethod(
   signature = c("x" = "CellGraph", "i" = "character", "j" = "missing", "value" = "ANY"),
   definition = function(x, i, j, ..., value) {
     .assert_current_cellgraph(x)
-    node_names <- .cg_node_names(slot(x, "cellgraph"))
+    node_names <- .cg_node_map(x)
     if (is.null(value)) {
       slot(x, "reductions")[[i]] <- NULL
       return(x)
@@ -841,7 +869,7 @@ setMethod(
 #'
 #' @examples
 #' # Subset
-#' cg_small <- subset(cg, nodes = rownames(cg@counts)[1:100])
+#' cg_small <- subset(cg, nodes = Cells(cg)[1:100])
 #' cg_small
 #'
 #' @export
@@ -853,7 +881,7 @@ subset.CellGraph <- function(
 ) {
   assert_vector(nodes, type = "character", n = 1)
   .assert_current_cellgraph(x)
-  available_nodes <- .cg_node_names(slot(x, "cellgraph"))
+  available_nodes <- .cg_node_map(x)
   assert_x_in_y(nodes, available_nodes)
 
   x <- .ensure_node_ids_on_slots(x)
@@ -885,6 +913,94 @@ subset.CellGraph <- function(
     return("meta.data")
   }
   slot
+}
+
+#' Canonical node IDs for a CellGraph
+#'
+#' Prefers the \code{nodes} slot. Falls back to graph vertex names when
+#' the slot is empty.
+#'
+#' @param object A \code{CellGraph}
+#'
+#' @return Character vector of node IDs
+#'
+#' @keywords internal
+#' @noRd
+#'
+.cg_node_map <- function(object) {
+  nodes <- slot(object, "nodes")
+  if (length(nodes) > 0) {
+    return(nodes)
+  }
+  cellgraph <- slot(object, "cellgraph")
+  if (is.null(cellgraph)) {
+    return(character())
+  }
+  .cg_node_names(cellgraph)
+}
+
+#' Empty node metadata with one row per node
+#'
+#' Uses compact automatic row names so node IDs are not stored twice.
+#'
+#' @param n Number of nodes
+#'
+#' @return A zero-column \code{data.frame} with \code{n} rows
+#'
+#' @keywords internal
+#' @noRd
+#'
+.empty_node_meta <- function(n) {
+  as.data.frame(matrix(nrow = n, ncol = 0))
+}
+
+#' Drop stored row names from a node-level table
+#'
+#' @param x A matrix or data frame, or \code{NULL}
+#'
+#' @return \code{x} with \code{rownames} unset
+#'
+#' @keywords internal
+#' @noRd
+#'
+.drop_row_ids <- function(x) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  rownames(x) <- NULL
+  x
+}
+
+#' Attach node IDs as row names for user-facing extracts
+#'
+#' @param x A matrix or data frame, or \code{NULL}
+#' @param node_names Character vector of node IDs
+#'
+#' @return \code{x} with \code{rownames} set to \code{node_names}
+#'
+#' @keywords internal
+#' @noRd
+#'
+.with_row_ids <- function(x, node_names) {
+  if (is.null(x)) {
+    return(NULL)
+  }
+  rownames(x) <- node_names
+  x
+}
+
+#' Match requested node IDs to a name order
+#'
+#' @param cells Requested node IDs
+#' @param node_names Node IDs in stored row order
+#'
+#' @return Integer indices into \code{node_names}
+#'
+#' @keywords internal
+#' @noRd
+#'
+.row_index <- function(cells, node_names) {
+  match(cells, node_names)
 }
 
 #' Validate a tbl_graph for use in a CellGraph
@@ -1065,7 +1181,7 @@ subset.CellGraph <- function(
   if (!is(object, "CellGraph")) {
     return(invisible(NULL))
   }
-  added_slots <- c("layers", "meta.data", "reductions")
+  added_slots <- c("layers", "meta.data", "reductions", "nodes")
   missing_slots <- added_slots[!vapply(added_slots, function(nm) {
     .hasSlot(object, nm)
   }, logical(1))]
@@ -1158,8 +1274,7 @@ subset.CellGraph <- function(
         call = call
       )
     }
-    rownames(mat) <- node_names
-    return(mat)
+    return(.drop_row_ids(mat))
   }
   rownames(mat) <- as.character(rownames(mat))
   if (anyDuplicated(rownames(mat))) {
@@ -1175,7 +1290,7 @@ subset.CellGraph <- function(
       call = call
     )
   }
-  mat[node_names, , drop = FALSE]
+  .drop_row_ids(mat[node_names, , drop = FALSE])
 }
 
 #' Align the counts matrix
@@ -1301,15 +1416,15 @@ subset.CellGraph <- function(
 #' Accepts a data frame or matrix. Nodes are identified by row names or a
 #' \code{name} column (which is then dropped so only coordinates remain).
 #' If neither is present and \code{nrow} matches the graph, rows are assumed
-#' to follow node order. The result is a base \code{data.frame} with node
-#' IDs as row names.
+#' to follow node order. The result is a base \code{data.frame} in
+#' \code{node_names} order without stored node IDs as row names.
 #'
 #' @param layout A data frame or matrix of coordinates
 #' @param node_names Character vector of graph node names
 #' @param layout_name Name of this layout, used in error messages
 #' @param call Environment to report as the error caller
 #'
-#' @return A \code{data.frame} of coordinates with row names \code{node_names}
+#' @return A \code{data.frame} of coordinates in \code{node_names} order
 #'
 #' @keywords internal
 #' @noRd
@@ -1365,8 +1480,7 @@ subset.CellGraph <- function(
     )
   }
   layout <- layout[match(node_names, layout_names), , drop = FALSE]
-  rownames(layout) <- node_names
-  layout
+  .drop_row_ids(layout)
 }
 
 #' Align a named list of layouts
@@ -1415,11 +1529,11 @@ subset.CellGraph <- function(
 #'
 .align_meta_data <- function(meta, node_names, call = caller_env()) {
   if (is.null(meta)) {
-    return(data.frame(row.names = node_names))
+    return(.empty_node_meta(length(node_names)))
   }
   meta <- as.data.frame(meta, stringsAsFactors = FALSE, check.names = FALSE)
   if (ncol(meta) == 0) {
-    return(data.frame(row.names = node_names))
+    return(.empty_node_meta(length(node_names)))
   }
   meta_names <- .explicit_rownames(meta)
   if ("name" %in% colnames(meta) && is.null(meta_names)) {
@@ -1452,7 +1566,7 @@ subset.CellGraph <- function(
       call = call
     )
   }
-  meta[node_names, , drop = FALSE]
+  .drop_row_ids(meta[node_names, , drop = FALSE])
 }
 
 #' Align node metadata, filling nodes that are not covered
@@ -1501,8 +1615,7 @@ subset.CellGraph <- function(
     )
   }
   filled <- meta[match(node_names, meta_names), , drop = FALSE]
-  rownames(filled) <- node_names
-  filled
+  .drop_row_ids(filled)
 }
 
 #' Align a named list of NodeDimReduc objects
@@ -1618,7 +1731,7 @@ subset.CellGraph <- function(
     return(NULL)
   }
   as.data.frame(
-    as.matrix(mat[cells, feature_vars, drop = FALSE]),
+    as.matrix(mat[.row_index(cells, rownames(mat)), feature_vars, drop = FALSE]),
     stringsAsFactors = FALSE,
     check.names = FALSE
   )
@@ -1721,13 +1834,14 @@ subset.CellGraph <- function(
 #' @param object A \code{NodeDimReduc}
 #' @param vars Character vector of requested variable names
 #' @param cells Node names to keep as rows
+#' @param node_names Node IDs in embedding row order
 #'
 #' @return A data frame of embedding columns, or \code{NULL} if none match
 #'
 #' @keywords internal
 #' @noRd
 #'
-.fetch_nodedimreduc_vars <- function(object, vars, cells) {
+.fetch_nodedimreduc_vars <- function(object, vars, cells, node_names) {
   key <- Key(object)
   emb <- Embeddings(object)
   if (is.null(emb) || ncol(emb) == 0) {
@@ -1746,11 +1860,21 @@ subset.CellGraph <- function(
   if (length(keyed) == 0) {
     return(NULL)
   }
-  cells_keep <- intersect(cells, rownames(emb))
+  if (!is.null(rownames(emb))) {
+    node_names <- as.character(rownames(emb))
+  }
+  if (length(node_names) != nrow(emb)) {
+    return(NULL)
+  }
+  cells_keep <- intersect(cells, node_names)
   if (length(cells_keep) == 0) {
     return(NULL)
   }
-  as.data.frame(emb[cells_keep, keyed, drop = FALSE], stringsAsFactors = FALSE, check.names = FALSE)
+  as.data.frame(
+    .with_row_ids(emb[.row_index(cells_keep, node_names), keyed, drop = FALSE], cells_keep),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
 }
 
 #' Fetch a named reduction from a CellGraph
@@ -1807,11 +1931,13 @@ subset.CellGraph <- function(
   slot(object, "cellgraph") <- .cg_graph_with_node_names(slot(object, "cellgraph"))
   attr(slot(object, "cellgraph"), "type") <- graph_type
   node_names <- .cg_node_names(slot(object, "cellgraph"))
+  if (length(slot(object, "nodes")) == 0) {
+    slot(object, "nodes") <- node_names
+  }
 
   counts <- slot(object, "counts")
-  if (!is.null(counts) && is.null(rownames(counts)) && nrow(counts) == length(node_names)) {
-    rownames(counts) <- node_names
-    slot(object, "counts") <- counts
+  if (!is.null(counts) && !is.null(rownames(counts))) {
+    slot(object, "counts") <- .align_counts(counts, node_names)
   }
 
   layouts <- slot(object, "layout")
@@ -1824,7 +1950,7 @@ subset.CellGraph <- function(
       } else {
         "layout"
       }
-      if (is.null(.explicit_rownames(ly)) || "name" %in% colnames(ly)) {
+      if (!is.null(.explicit_rownames(ly)) || "name" %in% colnames(ly)) {
         ly <- .align_layout(ly, node_names, layout_name = nm)
       }
       ly
@@ -1834,20 +1960,21 @@ subset.CellGraph <- function(
 
   meta <- slot(object, "meta.data")
   if (ncol(meta) == 0) {
-    slot(object, "meta.data") <- data.frame(row.names = node_names)
-  } else if (is.null(.explicit_rownames(meta)) && nrow(meta) == length(node_names)) {
-    rownames(meta) <- node_names
-    slot(object, "meta.data") <- meta
+    slot(object, "meta.data") <- .empty_node_meta(length(node_names))
+  } else if (!is.null(.explicit_rownames(meta))) {
+    slot(object, "meta.data") <- .align_meta_data(meta, node_names)
   }
 
   layers <- slot(object, "layers")
   if (length(layers) > 0) {
-    slot(object, "layers") <- lapply(layers, function(mat) {
-      if (is.null(rownames(mat)) && nrow(mat) == length(node_names)) {
-        rownames(mat) <- node_names
+    slot(object, "layers") <- lapply(names(layers), function(nm) {
+      mat <- layers[[nm]]
+      if (!is.null(rownames(mat))) {
+        mat <- .align_node_matrix(mat, node_names, arg = nm)
       }
       mat
     })
+    names(slot(object, "layers")) <- names(layers)
   }
 
   object
@@ -1857,7 +1984,8 @@ subset.CellGraph <- function(
 #'
 #' After the graph is filtered or replaced, counts, layouts, layers,
 #' metadata, and reductions are aligned to the remaining node names so
-#' they stay in sync with the graph.
+#' they stay in sync with the graph. Stored tables are subset by the
+#' central \code{nodes} map, not by copied row names.
 #'
 #' @param object A \code{CellGraph}
 #' @param node_names Character vector of node names to keep, in graph order
@@ -1869,32 +1997,74 @@ subset.CellGraph <- function(
 #' @noRd
 #'
 .remap_cellgraph_nodes <- function(object, node_names, call = caller_env()) {
+  old_nodes <- .cg_node_map(object)
+  idx <- match(node_names, old_nodes)
+  if (anyNA(idx)) {
+    cli::cli_abort(
+      c("x" = "Cannot remap nodes that are missing from the {.field nodes} map."),
+      call = call
+    )
+  }
+
   counts <- slot(object, "counts")
   if (!is.null(counts)) {
-    slot(object, "counts") <- .align_counts(counts, node_names, call = call)
+    if (!is.null(rownames(counts))) {
+      slot(object, "counts") <- .align_counts(counts, node_names, call = call)
+    } else {
+      slot(object, "counts") <- .drop_row_ids(counts[idx, , drop = FALSE])
+    }
   }
 
   layouts <- slot(object, "layout")
   if (!is.null(layouts) && length(layouts) > 0) {
-    slot(object, "layout") <- .align_layout_list(layouts, node_names, call = call)
+    if (any(vapply(layouts, function(ly) {
+      !is.null(.explicit_rownames(ly)) || "name" %in% colnames(ly)
+    }, logical(1)))) {
+      slot(object, "layout") <- .align_layout_list(layouts, node_names, call = call)
+    } else {
+      slot(object, "layout") <- lapply(layouts, function(ly) {
+        .drop_row_ids(ly[idx, , drop = FALSE])
+      })
+    }
   }
 
   layers <- slot(object, "layers")
   if (length(layers) > 0) {
-    slot(object, "layers") <- .align_layers(layers, node_names, call = call)
+    slot(object, "layers") <- lapply(names(layers), function(nm) {
+      mat <- layers[[nm]]
+      if (!is.null(rownames(mat))) {
+        .align_node_matrix(mat, node_names, arg = nm, call = call)
+      } else {
+        .drop_row_ids(mat[idx, , drop = FALSE])
+      }
+    })
+    names(slot(object, "layers")) <- names(layers)
   }
 
   meta <- slot(object, "meta.data")
   if (ncol(meta) == 0) {
-    slot(object, "meta.data") <- data.frame(row.names = node_names)
-  } else {
+    slot(object, "meta.data") <- .empty_node_meta(length(node_names))
+  } else if (!is.null(.explicit_rownames(meta))) {
     slot(object, "meta.data") <- .align_meta_data(meta, node_names, call = call)
+  } else {
+    slot(object, "meta.data") <- .drop_row_ids(meta[idx, , drop = FALSE])
   }
 
   reductions <- slot(object, "reductions")
   if (length(reductions) > 0) {
-    slot(object, "reductions") <- .align_reductions(reductions, node_names, call = call)
+    slot(object, "reductions") <- lapply(names(reductions), function(nm) {
+      dr <- reductions[[nm]]
+      emb <- slot(dr, "embeddings")
+      if (!is.null(rownames(emb))) {
+        .align_node_dimreduc(dr, node_names, arg = nm, call = call)
+      } else {
+        slot(dr, "embeddings") <- .drop_row_ids(emb[idx, , drop = FALSE])
+        dr
+      }
+    })
+    names(slot(object, "reductions")) <- names(reductions)
   }
 
+  slot(object, "nodes") <- node_names
   object
 }

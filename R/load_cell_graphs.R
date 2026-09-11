@@ -396,7 +396,7 @@ LoadCellGraphs.MPXAssay <- function(
         coords <- coords[match(node_names, coords$name), ] %>%
           select(-all_of("name")) %>%
           as.data.frame()
-        rownames(coords) <- graph_node_names
+        rownames(coords) <- NULL
         cg@layout[[layout_type]] <- coords
       }
       return(cg)
@@ -565,6 +565,7 @@ LoadCellGraphs.PNAAssay <- function(
         cg <- cg_list[[nm]]
         counts <- marker_counts_list[[nm]]
         counts <- counts[match(cg@cellgraph %N>% pull(name), rownames(counts)), ]
+        rownames(counts) <- NULL
         cg@counts <- counts
         return(cg)
       }) %>%
@@ -594,7 +595,7 @@ LoadCellGraphs.PNAAssay <- function(
         layout <- layout[match(graph_node_names, layout$name), ] %>%
           select(-name) %>%
           as.data.frame()
-        rownames(layout) <- graph_node_names
+        rownames(layout) <- NULL
         cg@layout <- list(wpmds_3d = layout)
         return(cg)
       }) %>%

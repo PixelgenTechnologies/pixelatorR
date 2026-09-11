@@ -22,7 +22,8 @@ node names (order does not need to match).}
 
 \item{layout}{A named \code{list} of \code{data.frame} objects with cell
 layouts. Nodes are identified by row names or by a \code{name} column;
-otherwise the row order is assumed to follow the graph.}
+otherwise the row order is assumed to follow the graph. Stored layouts
+keep that order and do not copy node IDs as row names.}
 
 \item{layers}{A named \code{list} of additional numeric node matrices
 (nodes x features). \code{"counts"} is reserved.}

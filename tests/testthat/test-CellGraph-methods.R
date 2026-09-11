@@ -40,7 +40,7 @@ test_that("show.CellGraph works as expected", {
 
 # subset method
 test_that("subset.CellGraph works as expected", {
-  expect_no_error(cg_small <- subset(cg, nodes = rownames(cg@counts)[1:2000]))
+  expect_no_error(cg_small <- subset(cg, nodes = SeuratObject::Cells(cg)[1:2000]))
   expect_equal(cg_small@layout$pmds_3d %>% dim(), c(2000, 3))
   expect_equal(cg_small@counts %>% dim(), c(2000, 79))
   expect_equal(cg_small@cellgraph %>% length(), 2000)

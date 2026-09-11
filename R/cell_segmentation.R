@@ -114,8 +114,9 @@ segment_cell <- function(
   Matrix::diag(A_k) <- 1
 
   # Use all nodes for scoring; component filtering is applied after classification.
+  node_names <- Cells(cg)
   counts_segment <- cg@counts
-  A_k <- A_k[rownames(counts_segment), rownames(counts_segment)]
+  A_k <- A_k[node_names, node_names]
 
   # Classify nodes based on NNLS projection scores.
   node_classification <- .classify_nodes_nnls(
@@ -127,6 +128,7 @@ segment_cell <- function(
     spatial_smoothing_iter = spatial_smoothing_iter,
     verbose = verbose
   )
+  names(node_classification) <- node_names
 
   # Create cell1 and cell2 graphs by subsetting on classification and filtering components.
   # Index into node_classification by name to guard against any ordering divergence
@@ -187,7 +189,7 @@ segment_cell <- function(
   c2_nodes_keep <- g_c2 %>% pull(name)
 
   node_compartment_map <- tibble(
-    node = rownames(cg@counts)
+    node = Cells(cg)
   ) %>%
     mutate(group = if_else(
       node %in% interface_nodes, "interface", "other"
@@ -943,7 +945,7 @@ spatial_smoothing <- function(
     ncol = 1
   ) %>%
     as("dgCMatrix")
-  rownames(m) <- rownames(cg@counts)
+  rownames(m) <- Cells(cg)
   return(m)
 }
 

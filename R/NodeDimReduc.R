@@ -14,7 +14,9 @@ NULL
 #' list for method-specific extras.
 #'
 #' @slot embeddings A numeric \code{matrix} of node embeddings (nodes x dimensions).
-#' Row names are node names and column names use the reduction \code{key}.
+#' Row names are node names when the object is created. When the reduction
+#' is stored on a \code{\link{CellGraph}}, embedding rows follow the graph
+#' \code{nodes} map and row names are dropped.
 #' @slot loadings An optional numeric \code{matrix} of feature loadings
 #' (features x dimensions)
 #' @slot stdev A numeric vector of standard deviations (or eigenvalues) for

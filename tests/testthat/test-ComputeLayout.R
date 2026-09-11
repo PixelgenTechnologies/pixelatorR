@@ -99,7 +99,8 @@ for (assay_version in c("v3", "v5")) {
     )
     expect_s3_class(cg_layout@layout[["custom"]], "data.frame")
     expect_equal(colnames(cg_layout@layout[["custom"]]), c("x", "y", "z"))
-    expect_equal(rownames(cg_layout@layout[["custom"]]), node_names)
+    expect_lt(.row_names_info(cg_layout@layout[["custom"]]), 0L)
+    expect_equal(SeuratObject::Cells(cg_layout), node_names)
   })
 
   test_that("custom layout coordinates are matched to nodes by name", {
@@ -114,7 +115,8 @@ for (assay_version in c("v3", "v5")) {
       custom_layout_function = shuffled_fkn,
       custom_layout_function_args = list(dim = 3)
     )
-    expect_equal(rownames(cg_layout@layout[["custom"]]), node_names)
+    expect_equal(SeuratObject::Cells(cg_layout), node_names)
+    expect_lt(.row_names_info(cg_layout@layout[["custom"]]), 0L)
     expect_equal(
       as.numeric(as.matrix(cg_layout@layout[["custom"]])),
       as.numeric(coords[node_names, ])
@@ -126,7 +128,8 @@ for (assay_version in c("v3", "v5")) {
       custom_layout_function = unnamed_fkn,
       custom_layout_function_args = list(dim = 3)
     )
-    expect_equal(rownames(cg_layout@layout[["custom"]]), node_names)
+    expect_equal(SeuratObject::Cells(cg_layout), node_names)
+    expect_lt(.row_names_info(cg_layout@layout[["custom"]]), 0L)
     expect_equal(
       as.numeric(as.matrix(cg_layout@layout[["custom"]])),
       as.numeric(coords)
