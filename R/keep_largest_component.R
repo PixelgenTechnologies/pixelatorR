@@ -76,6 +76,7 @@ KeepLargestComponent.CellGraph <- function(
   verbose = TRUE,
   ...
 ) {
+  slot(object, name = "cellgraph") <- .cg_graph_with_node_names(slot(object, name = "cellgraph"))
   filtered_graph <- KeepLargestComponent(slot(object, name = "cellgraph"), verbose = verbose, ...)
   node_ids_filtered <- .cg_node_names(filtered_graph)
   subset(object, nodes = node_ids_filtered)

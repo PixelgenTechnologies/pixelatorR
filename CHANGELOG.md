@@ -59,6 +59,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   along with the graph, counts, and layouts.
 - Layout tables without row names get node IDs on subset so
   `WriteMPX_pxl_file()` can restore the `name` column.
+- `subset.CellGraph` and `KeepLargestComponent.CellGraph` work when the
+  graph has no `name` vertex attribute or when empty `meta.data` only has
+  automatic `"1"`, `"2"`, ... row names. Sequential IDs are written onto
+  the graph so remaining nodes keep those identities instead of being
+  re-indexed.
 
 ### Added
 

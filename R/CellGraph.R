@@ -228,6 +228,7 @@ CreateCellGraphObject <- function(
   assert_class(reductions, classes = "list", allow_null = TRUE)
 
   .validate_cellgraph(cellgraph, verbose = verbose)
+  cellgraph <- .cg_graph_with_node_names(cellgraph)
 
   node_names <- .cg_node_names(cellgraph)
 
@@ -317,6 +318,7 @@ CellGraphData <- function(
   if (slot == "cellgraph") {
     assert_class(value, "tbl_graph")
     .validate_cellgraph(value, verbose = FALSE)
+    value <- .cg_graph_with_node_names(value)
     object <- .ensure_node_ids_on_slots(object)
     object <- .remap_cellgraph_nodes(object, .cg_node_names(value))
     slot(object, name = "cellgraph") <- value
@@ -856,7 +858,7 @@ subset.CellGraph <- function(
 
   x <- .ensure_node_ids_on_slots(x)
   graph_type <- attr(x@cellgraph, "type")
-  x@cellgraph <- x@cellgraph %N>% filter(name %in% nodes)
+  x@cellgraph <- .cg_graph_with_node_names(x@cellgraph) %N>% filter(name %in% nodes)
   attr(x@cellgraph, "type") <- graph_type
   .remap_cellgraph_nodes(x, .cg_node_names(x@cellgraph))
 }
@@ -1100,6 +1102,29 @@ subset.CellGraph <- function(
     return(as.character(cellgraph %N>% pull(name)))
   }
   as.character(seq_along(cellgraph))
+}
+
+#' Ensure a tbl_graph has a name vertex attribute
+#'
+#' Graphs without \code{name} are identified by \code{"1"}, \code{"2"}, ...
+#' in node order. That identity is written onto the graph so later subsetting
+#' can filter on \code{name} and keep the original IDs after nodes are dropped.
+#'
+#' @param cellgraph A \code{tbl_graph}
+#'
+#' @return \code{cellgraph} with a \code{name} vertex attribute
+#'
+#' @keywords internal
+#' @noRd
+#'
+.cg_graph_with_node_names <- function(cellgraph) {
+  if ("name" %in% vertex_attr_names(cellgraph)) {
+    return(cellgraph)
+  }
+  graph_type <- attr(cellgraph, "type")
+  cellgraph <- cellgraph %N>% mutate(name = .cg_node_names(cellgraph))
+  attr(cellgraph, "type") <- graph_type
+  cellgraph
 }
 
 #' Match row names of a matrix to node names
@@ -1389,10 +1414,13 @@ subset.CellGraph <- function(
 #' @noRd
 #'
 .align_meta_data <- function(meta, node_names, call = caller_env()) {
-  if (is.null(meta) || (nrow(as.data.frame(meta)) == 0 && ncol(as.data.frame(meta)) == 0)) {
+  if (is.null(meta)) {
     return(data.frame(row.names = node_names))
   }
   meta <- as.data.frame(meta, stringsAsFactors = FALSE, check.names = FALSE)
+  if (ncol(meta) == 0) {
+    return(data.frame(row.names = node_names))
+  }
   meta_names <- .explicit_rownames(meta)
   if ("name" %in% colnames(meta) && is.null(meta_names)) {
     meta_names <- as.character(meta$name)
@@ -1775,6 +1803,9 @@ subset.CellGraph <- function(
 #' @noRd
 #'
 .ensure_node_ids_on_slots <- function(object) {
+  graph_type <- attr(slot(object, "cellgraph"), "type")
+  slot(object, "cellgraph") <- .cg_graph_with_node_names(slot(object, "cellgraph"))
+  attr(slot(object, "cellgraph"), "type") <- graph_type
   node_names <- .cg_node_names(slot(object, "cellgraph"))
 
   counts <- slot(object, "counts")
@@ -1802,7 +1833,9 @@ subset.CellGraph <- function(
   }
 
   meta <- slot(object, "meta.data")
-  if (ncol(meta) > 0 && is.null(.explicit_rownames(meta)) && nrow(meta) == length(node_names)) {
+  if (ncol(meta) == 0) {
+    slot(object, "meta.data") <- data.frame(row.names = node_names)
+  } else if (is.null(.explicit_rownames(meta)) && nrow(meta) == length(node_names)) {
     rownames(meta) <- node_names
     slot(object, "meta.data") <- meta
   }
@@ -1852,7 +1885,7 @@ subset.CellGraph <- function(
   }
 
   meta <- slot(object, "meta.data")
-  if (ncol(meta) == 0 && (nrow(meta) == 0 || !all(node_names %in% rownames(meta)))) {
+  if (ncol(meta) == 0) {
     slot(object, "meta.data") <- data.frame(row.names = node_names)
   } else {
     slot(object, "meta.data") <- .align_meta_data(meta, node_names, call = call)

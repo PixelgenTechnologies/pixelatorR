@@ -504,6 +504,71 @@ test_that("layout tables without row names get node IDs on subset", {
   expect_equal(rownames(cg_small@layout$xy), node_names[1:3])
 })
 
+make_single_graph <- function(node_ids = NULL) {
+  n <- if (is.null(node_ids)) 3L else length(node_ids)
+  nodes <- data.frame(node_type = rep("A", n), stringsAsFactors = FALSE)
+  if (!is.null(node_ids)) {
+    nodes$name <- node_ids
+  }
+  g <- tidygraph::tbl_graph(
+    nodes = nodes,
+    edges = data.frame(from = seq_len(n - 1L), to = seq_len(n - 1L) + 1L)
+  )
+  attr(g, "type") <- "single"
+  g
+}
+
+test_that("subset.CellGraph keeps sequential IDs on graphs without a name attribute", {
+  cg <- CreateCellGraphObject(cellgraph = make_single_graph())
+  expect_equal(cg@cellgraph %>% dplyr::pull(name), c("1", "2", "3"))
+
+  cg_small <- subset(cg, nodes = c("2", "3"))
+  expect_equal(cg_small@cellgraph %>% dplyr::pull(name), c("2", "3"))
+  expect_equal(rownames(cg_small@meta.data), c("2", "3"))
+})
+
+test_that("KeepLargestComponent.CellGraph works for graphs without a name attribute", {
+  g <- tidygraph::tbl_graph(
+    nodes = data.frame(node_type = c("A", "A", "A"), stringsAsFactors = FALSE),
+    edges = data.frame(from = 1L, to = 2L)
+  )
+  attr(g, "type") <- "single"
+  cg <- CreateCellGraphObject(cellgraph = g)
+  cg_largest <- KeepLargestComponent(cg, verbose = FALSE)
+  expect_equal(sort(cg_largest@cellgraph %>% dplyr::pull(name)), c("1", "2"))
+})
+
+test_that("subset.CellGraph rebuilds empty meta.data with automatic rownames", {
+  cg <- CreateCellGraphObject(cellgraph = make_single_graph(c("1", "2", "3")))
+  auto_meta <- data.frame(x = 1:3)
+  auto_meta$x <- NULL
+  expect_true(.row_names_info(auto_meta) < 0L)
+  cg@meta.data <- auto_meta
+
+  cg_small <- subset(cg, nodes = c("2", "3"))
+  expect_equal(rownames(cg_small@meta.data), c("2", "3"))
+})
+
+test_that("subset.CellGraph keeps character integer node names", {
+  cg <- CreateCellGraphObject(cellgraph = make_single_graph(c("1", "2", "3")))
+  cg_small <- subset(cg, nodes = c("1", "3"))
+  expect_equal(cg_small@cellgraph %>% dplyr::pull(name), c("1", "3"))
+  expect_equal(rownames(cg_small@meta.data), c("1", "3"))
+})
+
+test_that("automatic layout rownames follow graph order, not 1:n IDs", {
+  names <- c("umiA", "umiB", "umiC")
+  layout <- data.frame(x = c(10, 20, 30), y = c(1, 2, 3))
+  expect_true(.row_names_info(layout) < 0L)
+
+  cg <- CreateCellGraphObject(
+    cellgraph = make_single_graph(names),
+    layout = list(xy = layout)
+  )
+  expect_equal(rownames(cg@layout$xy), names)
+  expect_equal(cg@layout$xy$x, c(10, 20, 30))
+})
+
 test_that("CellGraph objects from older versions report why they fail", {
   cg <- CreateCellGraphObject(cellgraph = bipart_graph, counts = make_counts())
 
