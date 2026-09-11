@@ -5,7 +5,7 @@ NULL
 #'
 #' A named list of \code{\link{CellGraph}} objects. Unloaded graphs may be
 #' stored as \code{NULL}. See \code{\link{CellGraphList-methods}} for
-#' subsetting, replacement, concatenation, and mapping.
+#' subsetting, replacement, and concatenation.
 #'
 #' @param cellgraphs A named list of \code{\link{CellGraph}} objects.
 #' Unloaded graphs may be represented as \code{NULL}.
@@ -50,17 +50,14 @@ CreateCellGraphList <- function(cellgraphs = list()) {
 #' and replacement type-check elements against \code{\link{CellGraph}}.
 #' Unloaded graphs may be stored as \code{NULL}; \code{x[[i]] <- NULL} keeps
 #' the name and stores \code{NULL} rather than dropping the element.
-#' Use \code{lapply.CellGraphList} to apply a function without dropping the
-#' \code{CellGraphList} class (\code{base::lapply} is not an S3 generic).
 #'
-#' @param x,X A \code{\link{CellGraphList}} object
+#' @param x A \code{\link{CellGraphList}} object
 #' @param i Index to extract or replace
 #' @param value A \code{\link{CellGraph}}, \code{NULL}, or a list of those
-#' @param FUN A function to apply to each element
 #' @param ... Currently not used
 #'
-#' @return \code{[}, \code{[<-}, \code{[[<-}, \code{names<-}, \code{c}, and
-#' \code{lapply}: a \code{CellGraphList}. \code{as.list}: a named list.
+#' @return \code{[}, \code{[<-}, \code{[[<-}, \code{names<-}, and \code{c}:
+#' a \code{CellGraphList}. \code{as.list}: a named list.
 #' \code{print}: \code{x}, invisibly.
 #'
 #' @examples
@@ -82,9 +79,8 @@ CreateCellGraphList <- function(cellgraphs = list()) {
 #' # Unload a graph without dropping its name
 #' cgl[[1]] <- NULL
 #'
-#' # Concatenate and map while keeping the class
+#' # Concatenate while keeping the class
 #' c(cgl[1], cgl[2])
-#' lapply.CellGraphList(cgl, identity)
 #'
 #' @name CellGraphList-methods
 #' @rdname CellGraphList-methods
@@ -219,15 +215,6 @@ c.CellGraphList <- function(...) {
 #'
 as.list.CellGraphList <- function(x, ...) {
   unclass(x)
-}
-
-#' @describeIn CellGraphList-methods Apply a function to each element and
-#' return a \code{CellGraphList}. Called by name because \code{base::lapply}
-#' does not dispatch on class.
-#' @export lapply.CellGraphList
-#'
-lapply.CellGraphList <- function(X, FUN, ...) {
-  CreateCellGraphList(lapply(as.list.CellGraphList(X), FUN, ...))
 }
 
 #' @describeIn CellGraph-methods Pull node-level data from each loaded

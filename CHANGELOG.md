@@ -25,6 +25,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Removed `lapply.CellGraphList`. `base::lapply` is not an S3 generic, and
+  mapped elements need not remain `CellGraph` objects, so the result is a
+  plain list.
 - `CellGraph` now uses an `initialize()` method instead of a `setClass()`
   prototype for default slot values.
 

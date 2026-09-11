@@ -9,7 +9,6 @@
 \alias{names<-.CellGraphList}
 \alias{c.CellGraphList}
 \alias{as.list.CellGraphList}
-\alias{lapply.CellGraphList}
 \title{CellGraphList Methods}
 \usage{
 \method{print}{CellGraphList}(x, ...)
@@ -25,23 +24,19 @@
 \method{c}{CellGraphList}(...)
 
 \method{as.list}{CellGraphList}(x, ...)
-
-lapply.CellGraphList(X, FUN, ...)
 }
 \arguments{
-\item{x, X}{A \code{\link{CellGraphList}} object}
+\item{x}{A \code{\link{CellGraphList}} object}
 
 \item{...}{Currently not used}
 
 \item{i}{Index to extract or replace}
 
 \item{value}{A \code{\link{CellGraph}}, \code{NULL}, or a list of those}
-
-\item{FUN}{A function to apply to each element}
 }
 \value{
-\code{[}, \code{[<-}, \code{[[<-}, \code{names<-}, \code{c}, and
-\code{lapply}: a \code{CellGraphList}. \code{as.list}: a named list.
+\code{[}, \code{[<-}, \code{[[<-}, \code{names<-}, and \code{c}:
+a \code{CellGraphList}. \code{as.list}: a named list.
 \code{print}: \code{x}, invisibly.
 }
 \description{
@@ -49,8 +44,6 @@ Methods for \code{\link{CellGraphList}} objects. Subsetting, concatenation,
 and replacement type-check elements against \code{\link{CellGraph}}.
 Unloaded graphs may be stored as \code{NULL}; \code{x[[i]] <- NULL} keeps
 the name and stores \code{NULL} rather than dropping the element.
-Use \code{lapply.CellGraphList} to apply a function without dropping the
-\code{CellGraphList} class (\code{base::lapply} is not an S3 generic).
 }
 \section{Functions}{
 \itemize{
@@ -75,10 +68,6 @@ when unnamed.
 
 \item \code{as.list(CellGraphList)}: Convert to a named list
 
-\item \code{lapply.CellGraphList()}: Apply a function to each element and
-return a \code{CellGraphList}. Called by name because \code{base::lapply}
-does not dispatch on class.
-
 }}
 \examples{
 library(pixelatorR)
@@ -99,9 +88,8 @@ cgl[1]
 # Unload a graph without dropping its name
 cgl[[1]] <- NULL
 
-# Concatenate and map while keeping the class
+# Concatenate while keeping the class
 c(cgl[1], cgl[2])
-lapply.CellGraphList(cgl, identity)
 
 }
 \seealso{

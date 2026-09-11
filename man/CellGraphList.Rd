@@ -17,7 +17,7 @@ A \code{CellGraphList} object
 \description{
 A named list of \code{\link{CellGraph}} objects. Unloaded graphs may be
 stored as \code{NULL}. See \code{\link{CellGraphList-methods}} for
-subsetting, replacement, concatenation, and mapping.
+subsetting, replacement, and concatenation.
 }
 \examples{
 library(pixelatorR)
