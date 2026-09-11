@@ -34,9 +34,8 @@ as.CellGraphAssay <- function(
 #' @param object A \code{Seurat}, \code{CellGraphAssay} or \code{CellGraphAssay} object
 #' @param ... Arguments passed to other methods
 #'
-#' @return Returns a list of \code{\link{CellGraph}} objects. If there are
-#' no \code{\link{CellGraph}} objects present, returns a named list where each element
-#' is \code{NULL}.
+#' @return Returns a \code{\link{CellGraphList}}. Unloaded graphs are stored
+#' as \code{NULL} elements.
 #'
 #' @rdname CellGraphs
 #' @seealso [PolarizationScores()] and [ColocalizationScores()] for getting/setting spatial metrics
@@ -239,6 +238,54 @@ ComputeLayout <- function(
   ...
 ) {
   UseMethod(generic = "ComputeLayout", object = object)
+}
+
+#' Fetch graph layout coordinates
+#'
+#' Fetches a stored 3D layout from \code{\link{CellGraph}} objects and
+#' optionally joins node-level variables retrieved with
+#' \code{\link[SeuratObject]{FetchData}}.
+#'
+#' @param object An object
+#' @param ... Additional parameters passed to other methods
+#'
+#' @rdname FetchLayoutData
+#'
+#' @return A \code{tbl_df} with columns \code{x}, \code{y}, \code{z} and any
+#' requested \code{vars}. Methods that extract from multiple components also
+#' include a \code{component} column.
+#'
+#' @export
+#'
+FetchLayoutData <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "FetchLayoutData", object = object)
+}
+
+#' Compute local proximity scores
+#'
+#' Computes local proximity scores (LPS) for nodes in PNA cell graphs
+#' using \code{\link{local_proximity}} and stores the result on each
+#' \code{\link{CellGraph}}.
+#'
+#' @param object An object
+#' @param ... Additional parameters passed to other methods
+#'
+#' @rdname ComputeLPS
+#'
+#' @return An object with local proximity scores stored on each
+#' \code{\link{CellGraph}}. Matrix results are stored as a layer;
+#' vector results are stored in node \code{meta.data}.
+#'
+#' @export
+#'
+ComputeLPS <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "ComputeLPS", object = object)
 }
 
 #' Keep largest component

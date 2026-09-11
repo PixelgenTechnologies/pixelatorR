@@ -7,14 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [UNRELEASED]
 
-### Added
-
-- `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
-  layout `(x, y, z)` coordinates for the directional (key) light. The default
-  `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
-  forwards the same argument when illumination is enabled.
-
-### Updates
+### Updated
 
 - `render_rotating_layout()` defaults `light_direction` to `c(-0.6, 0.5, 0.62)`,
   a key light above and to the viewer's left instead of on the camera axis. This
@@ -29,6 +22,88 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pull()` evaluates its selection with the column names of the data in scope,
   the check was previously applied to a column literally named `x` whenever the
   data contained one.
+
+### Removed
+
+- `color_by_marker()` and `.add_coordinates_to_tbl_graph()`.
+- The `Cells()` method for `CellGraph` objects. A `CellGraph` holds one cell,
+  so its rows are nodes rather than cells. Use
+  `CellGraphData(cg, slot = "nodes")` for the node IDs.
+
+### Changed
+
+- `FetchData.CellGraphList` returns a base `data.frame` with node IDs as
+  row names instead of a tibble.
+- `CellGraph` stores a central `nodes` ID vector and keeps counts, layouts,
+  layers, metadata, and reductions in that order without copying node IDs as
+  row names. `LayerData()`, `Embeddings()`, and `FetchData()` still label rows
+  for the caller, and `CellGraphData(cg, slot = "nodes")` returns the IDs.
+- `CellGraph` now uses an `initialize()` method instead of a `setClass()`
+  prototype for default slot values.
+- `NodeDimReduc` now uses an `initialize()` method instead of a `setClass()`
+  prototype for default slot values.
+- `CellGraph` constructors and setters reject node-level variable name
+  collisions between the graph node table, `meta.data`, reductions, and
+  matrix features. Counts and layers may still share feature names because
+  callers can select a specific layer.
+- `CellGraph` objects serialized before the extra slots existed are not
+  upgraded. Using one aborts with a message naming the missing slots, the
+  version that wrote it, and a `pixelatorR` version that still reads it.
+
+### Fixes
+
+- `subset.CellGraph` and `KeepLargestComponent.CellGraph` accept a single node.
+- `FetchData.CellGraph` keeps non-syntactic column names such as `HLA-DR`.
+- `CellGraphList` replacement and concatenation keep `NULL` placeholders for
+  unloaded graphs (`x[[i]] <- NULL` unloads without dropping the name).
+- `[.CellGraphList` errors on unknown names instead of crashing on `NA` names.
+- `c.CellGraphList` names a bare `CellGraph` from the argument name, or
+  `CellGraph1`, `CellGraph2`, ... when unnamed.
+- `FetchLayoutData` keeps factor (and other classed) metadata columns.
+- `FetchData.CellGraphList` keeps factor, `Date`, and other classed columns
+  when a graph is missing the variable. The `NA` fill now takes the class
+  used by the graphs that had it instead of coercing the bound column.
+- `AddMetaData` on a `CellGraph` accepts metadata for a subset of the nodes.
+  Nodes without a value get `NA` and names that are not graph nodes are
+  dropped, matching `SeuratObject::AddMetaData`.
+- Graphs missing the `name` or `node_type` vertex attribute report that
+  instead of failing inside `cli` with a missing-argument error.
+- Layout tables without row names get node IDs on subset so
+  `WriteMPX_pxl_file()` can restore the `name` column.
+- Layout alignment strips MPX bipartite `-A`/`-B` node suffixes so
+  `CreateCellGraphObject` and layout setters accept the same unsuffixed
+  layout tables as `LoadCellGraphs`.
+- `subset.CellGraph` and `KeepLargestComponent.CellGraph` work when the
+  graph has no `name` vertex attribute or when empty `meta.data` only has
+  automatic `"1"`, `"2"`, ... row names. Sequential IDs are written onto
+  the graph so remaining nodes keep those identities instead of being
+  re-indexed.
+
+### Added
+
+- `FetchData.CellGraphList` to pull node-level variables from each loaded
+  graph and bind them with a `component` column. Unlike `FetchLayoutData`,
+  it does not require a stored layout and does not reserve `x`/`y`/`z`.
+  Variables missing from a graph are filled with `NA`.
+- `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
+  layout `(x, y, z)` coordinates for the directional (key) light. The default
+  `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
+  forwards the same argument when illumination is enabled.
+- `FetchData.CellGraph` to pull node-level metadata, graph vertex attributes,
+  reduction embeddings, and layer/marker values, following the same lookup order
+  as `FetchData.Seurat`.
+- `ComputeLPS` to compute local proximity scores with `local_proximity` and
+  store them on each `CellGraph`. Matrix results (default
+  `mode = "self-clustering"`) are stored as a layer; vector results are stored
+  in node `meta.data`. Methods are provided for `CellGraph`, `CellGraphList`,
+  `PNAAssay`, `PNAAssay5`, and `Seurat` (loaded cell graphs only).
+- `FetchLayoutData` to extract a stored 3D layout (`x`, `y`, `z`) from
+  `CellGraph` objects, optionally joined with node-level variables from
+  `FetchData`. Methods are provided for `CellGraph`, `CellGraphList`,
+  `PNAAssay`, `PNAAssay5`, and `Seurat`. Missing `vars` are filled with `NA`.
+- `CellGraphList`, a named list of `CellGraph` objects (subsetting,
+  concatenation, and replacement type-check elements; unloaded graphs may be
+  `NULL`; printing shows a short summary).
 
 ## [0.21.0] - 2026-09-04
 

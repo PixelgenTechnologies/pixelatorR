@@ -22,7 +22,10 @@ NULL
 #' @param custom_layout_function A custom function for layout computation. The
 #' function should take a \code{tbl_graph} object and a \code{dim} value as
 #' input and return a matrix of dimensions NxD, where N is the number of nodes
-#' and D is equal to \code{dim}. Note that this will override the \code{layout_method}.
+#' and D is equal to \code{dim}. If the matrix has row names, they are used to
+#' match the coordinates to the graph nodes; otherwise the rows are assumed to
+#' follow the graph node order. Note that this will override the
+#' \code{layout_method}.
 #' @param custom_layout_function_args A list of arguments passed to \code{custom_layout_function}.
 #' The \code{dim} is automatically passed to \code{custom_layout_function} and should not be
 #' included in \code{custom_layout_function_args}.
@@ -117,6 +120,19 @@ ComputeLayout.tbl_graph <- function(
     }
 
     .validate_custom_layout_function_results(layout, dim, n_nodes = length(object))
+
+    # Custom layout functions return a matrix. Order its rows by node name when
+    # the matrix provides them, then convert it to the same coordinate table
+    # that the built-in layout methods return.
+    if (!is.null(rownames(layout))) {
+      layout <- .align_matrix_rows(
+        layout,
+        node_names = .cg_node_names(object),
+        arg = "custom_layout_function"
+      )
+    }
+    layout <- layout %>%
+      as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_len(dim)])
   } else {
     # Check and select a layout method
     layout_method <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds", "spectral"))
@@ -216,8 +232,12 @@ ComputeLayout.CellGraph <- function(
     slot(object, name = "layout") <- list()
   }
 
-  # Add layout to CellGraph layout slot
-  slot(object, name = "layout")[[layout_name]] <- layout
+  # Add layout to CellGraph layout slot, aligned to graph node names
+  slot(object, name = "layout")[[layout_name]] <- .align_layout(
+    layout,
+    node_names = .cg_node_names(slot(object, name = "cellgraph")),
+    layout_name = layout_name
+  )
 
   return(object)
 }
