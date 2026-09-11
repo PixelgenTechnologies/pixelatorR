@@ -116,9 +116,11 @@ cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg_no_cluster))
 
 test_that("FetchData.CellGraphList works as expected", {
   expect_no_error(fd <- SeuratObject::FetchData(cgl, vars = c("CD3", "cluster", "node_type")))
-  expect_s3_class(fd, "tbl_df")
+  expect_s3_class(fd, "data.frame")
+  expect_false(inherits(fd, "tbl_df"))
   expect_equal(colnames(fd), c("component", "CD3", "cluster", "node_type"))
   expect_equal(nrow(fd), 8)
+  expect_equal(rownames(fd), paste(rep(c("cell_1", "cell_2"), each = 4), node_names, sep = ":"))
   expect_equal(unique(fd$component), c("cell_1", "cell_2"))
   expect_equal(fd$CD3, rep(as.numeric(counts[, "CD3"]), 2))
   expect_equal(fd$cluster[1:4], meta$cluster)

@@ -256,22 +256,30 @@ FetchData.CellGraphList <- function(
   }
   clean <- rlang::arg_match0(clean, values = c("all", "none"))
 
-  fetched <- dplyr::bind_rows(lapply(cells, function(nm) {
+  fetched <- do.call(rbind, lapply(cells, function(nm) {
     cg <- object[[nm]]
-    dplyr::mutate(
-      tibble::as_tibble(
-        .fetch_layout_vars(
-          object = cg,
-          vars = vars,
-          cells = Cells(cg),
-          layer = layer
-        ),
-        .name_repair = "minimal"
-      ),
+    node_ids <- Cells(cg)
+    df <- .fetch_layout_vars(
+      object = cg,
+      vars = vars,
+      cells = node_ids,
+      layer = layer
+    )
+    row_ids <- rownames(df)
+    if (is.null(row_ids) || length(row_ids) != nrow(df)) {
+      row_ids <- node_ids
+    }
+    data.frame(
       component = nm,
-      .before = 1
+      df,
+      stringsAsFactors = FALSE,
+      check.names = FALSE,
+      row.names = paste(nm, row_ids, sep = ":")
     )
   }))
+  if (is.null(fetched)) {
+    fetched <- data.frame(component = character(), stringsAsFactors = FALSE)
+  }
 
   value_cols <- setdiff(names(fetched), "component")
   if (identical(clean, "all") && length(value_cols) > 0 && nrow(fetched) > 0) {

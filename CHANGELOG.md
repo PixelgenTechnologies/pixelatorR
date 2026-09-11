@@ -23,8 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the check was previously applied to a column literally named `x` whenever the
   data contained one.
 
+### Removed
+
+- `color_by_marker()` and `.add_coordinates_to_tbl_graph()`.
+
 ### Changed
 
+- `FetchData.CellGraphList` returns a base `data.frame` with node IDs as
+  row names instead of a tibble.
 - `CellGraph` stores a central `nodes` ID vector and keeps counts, layouts,
   layers, metadata, and reductions in that order without copying node IDs as
   row names. `Cells()`, `LayerData()`, `Embeddings()`, and `FetchData()` still
@@ -56,8 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   dropped, matching `SeuratObject::AddMetaData`.
 - Graphs missing the `name` or `node_type` vertex attribute report that
   instead of failing inside `cli` with a missing-argument error.
-- `color_by_marker(..., nNodes = )` subsets layers, metadata, and reductions
-  along with the graph, counts, and layouts.
 - Layout tables without row names get node IDs on subset so
   `WriteMPX_pxl_file()` can restore the `name` column.
 - `subset.CellGraph` and `KeepLargestComponent.CellGraph` work when the

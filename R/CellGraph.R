@@ -740,8 +740,8 @@ FetchData.CellGraph <- function(
 #'
 #' @return \code{FetchData.CellGraph}: a \code{data.frame} with nodes as rows
 #' and requested variables as columns. \code{FetchData.CellGraphList}: a
-#' \code{tbl_df} with a \code{component} column identifying the source graph
-#' and the requested variables. \code{subset}: a \code{CellGraph} object
+#' \code{data.frame} with a \code{component} column identifying the source graph
+#' and the requested variables. Row names are \code{component:node}.
 #' containing only the specified nodes.
 #'
 #' @name CellGraph-methods
