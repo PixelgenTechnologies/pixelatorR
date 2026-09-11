@@ -153,6 +153,30 @@ test_that("FetchData.CellGraphList works as expected", {
   expect_equal(nrow(fd_clean), 4)
 })
 
+test_that("FetchData.CellGraphList keeps classed columns missing from a graph", {
+  cg_factor <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = counts,
+    meta.data = data.frame(
+      grp = factor(c("a", "a", "b", "b"), levels = c("a", "b", "c")),
+      day = as.Date("2020-01-01") + 0:3,
+      row.names = node_names
+    )
+  )
+  # The graph without the variables comes first, so the NA fill would
+  # otherwise set the column type for the whole result
+  cgl_classed <- CreateCellGraphList(list(cell_1 = cg_no_cluster, cell_2 = cg_factor))
+
+  fd <- SeuratObject::FetchData(cgl_classed, vars = c("grp", "day"), clean = FALSE)
+  expect_s3_class(fd$grp, "factor")
+  expect_equal(levels(fd$grp), c("a", "b", "c"))
+  expect_true(all(is.na(fd$grp[1:4])))
+  expect_equal(as.character(fd$grp[5:8]), c("a", "a", "b", "b"))
+  expect_s3_class(fd$day, "Date")
+  expect_true(all(is.na(fd$day[1:4])))
+  expect_equal(fd$day[5:8], as.Date("2020-01-01") + 0:3)
+})
+
 test_that("FetchData.CellGraphList validates loaded CellGraphs", {
   cgl_mixed <- CreateCellGraphList(list(cell_1 = cg, cell_2 = NULL))
   expect_no_error(fd <- SeuratObject::FetchData(cgl_mixed, vars = "CD3"))

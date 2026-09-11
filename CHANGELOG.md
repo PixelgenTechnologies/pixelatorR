@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `c.CellGraphList` names a bare `CellGraph` from the argument name, or
   `CellGraph1`, `CellGraph2`, ... when unnamed.
 - `FetchLayoutData` keeps factor (and other classed) metadata columns.
+- `FetchData.CellGraphList` keeps factor, `Date`, and other classed columns
+  when a graph is missing the variable. The `NA` fill now takes the class
+  used by the graphs that had it instead of coercing the bound column.
 - `AddMetaData` on a `CellGraph` accepts metadata for a subset of the nodes.
   Nodes without a value get `NA` and names that are not graph nodes are
   dropped, matching `SeuratObject::AddMetaData`.

@@ -256,7 +256,7 @@ FetchData.CellGraphList <- function(
   }
   clean <- rlang::arg_match0(clean, values = c("all", "none"))
 
-  fetched <- do.call(rbind, lapply(cells, function(nm) {
+  fetched <- do.call(rbind, .match_fill_classes(lapply(cells, function(nm) {
     cg <- object[[nm]]
     node_ids <- Cells(cg)
     df <- .fetch_layout_vars(
@@ -276,7 +276,7 @@ FetchData.CellGraphList <- function(
       check.names = FALSE,
       row.names = paste(nm, row_ids, sep = ":")
     )
-  }))
+  })))
   if (is.null(fetched)) {
     fetched <- data.frame(component = character(), stringsAsFactors = FALSE)
   }
@@ -290,6 +290,41 @@ FetchData.CellGraphList <- function(
     }
   }
   fetched
+}
+
+#' Give NA fill columns the class used by the graphs that had the variable
+#'
+#' \code{\link{.fetch_layout_vars}} fills a variable that a graph does not
+#' have with a bare logical \code{NA}. \code{rbind} then coerces the whole
+#' column to that type, so a factor would come back as character and a
+#' \code{POSIXct} as numeric. Filled columns are replaced with \code{NA} of
+#' the class found on a graph that did have the variable.
+#'
+#' @param frames A list of \code{data.frame} objects with identical columns
+#'
+#' @return \code{frames} with fill columns matched to the other frames
+#'
+#' @keywords internal
+#' @noRd
+#'
+.match_fill_classes <- function(frames) {
+  if (length(frames) < 2) {
+    return(frames)
+  }
+  is_fill <- function(x) is.logical(x) && !is.object(x) && all(is.na(x))
+  for (v in names(frames[[1]])) {
+    proto_at <- Position(function(df) !is_fill(df[[v]]), frames, nomatch = 0L)
+    if (proto_at == 0L) {
+      next
+    }
+    proto <- frames[[proto_at]][[v]]
+    for (i in seq_along(frames)) {
+      if (i != proto_at && is_fill(frames[[i]][[v]])) {
+        frames[[i]][[v]] <- proto[rep(NA_integer_, nrow(frames[[i]]))]
+      }
+    }
+  }
+  frames
 }
 
 #' Validate a list of CellGraph objects
