@@ -136,7 +136,7 @@ test_that("FetchLayoutData.PNAAssay and Seurat methods work as expected", {
 
   expect_no_error(lyt_seurat <- FetchLayoutData(se, cells = cells, vars = "B2M"))
   expect_equal(sort(unique(lyt_seurat$component)), sort(cells))
-  expect_equal(nrow(lyt_seurat), sum(vapply(CellGraphs(se)[cells], function(x) length(Cells(x)), integer(1))))
+  expect_equal(nrow(lyt_seurat), sum(vapply(CellGraphs(se)[cells], function(x) length(CellGraphData(x, slot = "nodes")), integer(1))))
 })
 
 test_that("FetchLayoutData.PNAAssay and Seurat methods validate loaded CellGraphs", {

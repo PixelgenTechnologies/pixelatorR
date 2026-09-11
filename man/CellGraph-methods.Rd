@@ -8,7 +8,6 @@
 \alias{Embeddings.CellGraph}
 \alias{Loadings.CellGraph}
 \alias{Stdev.CellGraph}
-\alias{Cells.CellGraph}
 \alias{AddMetaData.CellGraph}
 \alias{FetchData.CellGraph}
 \alias{CellGraph-methods}
@@ -30,8 +29,6 @@
 \method{Loadings}{CellGraph}(object, reduction = NULL, ...)
 
 \method{Stdev}{CellGraph}(object, reduction = NULL, ...)
-
-\method{Cells}{CellGraph}(x, ...)
 
 \method{AddMetaData}{CellGraph}(object, metadata, col.name = NULL, ...)
 
@@ -150,7 +147,7 @@ cgl <- CellGraphs(se)
 head(SeuratObject::FetchData(cgl, vars = colnames(cg@counts)[1]))
 
 # Subset
-cg_small <- subset(cg, nodes = Cells(cg)[1:100])
+cg_small <- subset(cg, nodes = CellGraphData(cg, slot = "nodes")[1:100])
 cg_small
 
 }

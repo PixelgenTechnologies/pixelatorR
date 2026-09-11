@@ -54,7 +54,7 @@ FetchLayoutData.CellGraph <- function(
   }
 
   layout <- .get_cellgraph_layout(object, layout_method)
-  node_names <- .explicit_rownames(layout) %||% Cells(object)
+  node_names <- .explicit_rownames(layout) %||% .cg_node_map(object)
 
   fetched <- .fetch_layout_vars(
     object = object,

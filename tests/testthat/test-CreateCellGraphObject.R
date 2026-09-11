@@ -60,7 +60,7 @@ test_that("AddMetaData fills per-node meta.data on empty tables", {
   slot(cg, "meta.data") <- data.frame()
   cg <- SeuratObject::AddMetaData(cg, metadata = seq_along(nodes), col.name = "idx")
   expect_equal(nrow(cg@meta.data), length(nodes))
-  expect_equal(SeuratObject::Cells(cg), nodes)
+  expect_equal(CellGraphData(cg, slot = "nodes"), nodes)
   expect_lt(.row_names_info(cg@meta.data), 0L)
   expect_equal(cg@meta.data$idx, seq_along(nodes))
 })
@@ -77,7 +77,7 @@ test_that("CreateCellGraphObject accepts named layout lists", {
   expect_false(inherits(cg@layout$example_layout, "tbl_df"))
   expect_equal(cg@layout$example_layout$x, layout$x)
   expect_equal(colnames(cg@layout$example_layout), "x")
-  expect_equal(SeuratObject::Cells(cg), bipart_graph %>% pull(name))
+  expect_equal(CellGraphData(cg, slot = "nodes"), bipart_graph %>% pull(name))
   expect_lt(.row_names_info(cg@layout$example_layout), 0L)
 })
 
@@ -127,7 +127,7 @@ test_that("CreateCellGraphObject aligns shuffled counts by node name", {
   counts <- make_counts(shuffled_names)
   cg <- CreateCellGraphObject(cellgraph = bipart_graph, counts = counts)
   expect_null(rownames(cg@counts))
-  expect_equal(SeuratObject::Cells(cg), node_names)
+  expect_equal(CellGraphData(cg, slot = "nodes"), node_names)
   expect_equal(as.matrix(cg@counts), {
     expected <- as.matrix(counts[node_names, ])
     dimnames(expected) <- dimnames(as.matrix(cg@counts))
@@ -147,7 +147,7 @@ test_that("CreateCellGraphObject aligns layouts with a name column", {
   expect_equal(cg@layout$example_layout$x, as.integer(match(node_names, rev(node_names))))
   expect_false("name" %in% colnames(cg@layout$example_layout))
   expect_lt(.row_names_info(cg@layout$example_layout), 0L)
-  expect_equal(SeuratObject::Cells(cg), node_names)
+  expect_equal(CellGraphData(cg, slot = "nodes"), node_names)
 })
 
 test_that("CreateCellGraphObject aligns MPX layouts without A/B suffixes", {
@@ -174,7 +174,7 @@ test_that("CreateCellGraphObject aligns MPX layouts without A/B suffixes", {
   expect_equal(cg@layout$pmds_3d$x, c(10, 10, 20, 20))
   expect_equal(cg@layout$pmds_3d$y, c(1, 1, 2, 2))
   expect_false("name" %in% colnames(cg@layout$pmds_3d))
-  expect_equal(SeuratObject::Cells(cg), suffixed)
+  expect_equal(CellGraphData(cg, slot = "nodes"), suffixed)
 
   layout_rownames <- data.frame(
     x = c(10, 20),
@@ -196,7 +196,7 @@ test_that("CreateCellGraphObject aligns layouts by row names", {
     layout = list(example_layout = layout)
   )
   expect_lt(.row_names_info(cg@layout$example_layout), 0L)
-  expect_equal(SeuratObject::Cells(cg), node_names)
+  expect_equal(CellGraphData(cg, slot = "nodes"), node_names)
   expect_equal(cg@layout$example_layout$x, layout[node_names, "x"])
 })
 
@@ -238,7 +238,7 @@ test_that("CreateCellGraphObject stores layers, meta.data and reductions", {
   expect_equal(rownames(SeuratObject::LayerData(cg, layer = "data")), node_names)
   expect_null(rownames(cg@layers$data))
   expect_lt(.row_names_info(cg@meta.data), 0L)
-  expect_equal(SeuratObject::Cells(cg), node_names)
+  expect_equal(CellGraphData(cg, slot = "nodes"), node_names)
   expect_equal(cg@meta.data$cluster[1], meta$cluster[match(node_names[1], meta$name)])
   expect_equal(names(cg@reductions), "pca")
   expect_equal(names(CellGraphData(cg, slot = "meta_data")), names(cg@meta.data))
@@ -254,7 +254,7 @@ test_that("CellGraphData<- stores the provided value and remaps shuffled graphs"
   replacement <- make_counts(rev(node_names)) * 10
   CellGraphData(cg, slot = "counts") <- replacement
   expect_null(rownames(CellGraphData(cg, slot = "counts")))
-  expect_equal(SeuratObject::Cells(cg), node_names)
+  expect_equal(CellGraphData(cg, slot = "nodes"), node_names)
   expect_equal(
     as.numeric(as.matrix(CellGraphData(cg, slot = "counts"))),
     as.numeric(as.matrix(replacement[node_names, ]))
@@ -265,7 +265,7 @@ test_that("CellGraphData<- stores the provided value and remaps shuffled graphs"
   CellGraphData(cg, slot = "cellgraph") <- shuffled_graph
   new_names <- shuffled_graph %>% dplyr::pull(name)
   expect_null(rownames(cg@counts))
-  expect_equal(SeuratObject::Cells(cg), new_names)
+  expect_equal(CellGraphData(cg, slot = "nodes"), new_names)
   expect_equal(as.numeric(as.matrix(cg@counts)), as.numeric(as.matrix(replacement[new_names, ])))
 })
 
@@ -303,7 +303,7 @@ test_that("AddMetaData annotates a subset of nodes", {
   names(partial) <- node_names[c(1, 3)]
   cg <- SeuratObject::AddMetaData(cg, metadata = partial, col.name = "score")
   expect_equal(nrow(cg@meta.data), n_nodes)
-  expect_equal(SeuratObject::Cells(cg), node_names)
+  expect_equal(CellGraphData(cg, slot = "nodes"), node_names)
   expect_equal(cg@meta.data$score[c(1, 3)], c(1, 3))
   expect_true(all(is.na(cg@meta.data$score[-c(1, 3)])))
 
@@ -519,7 +519,7 @@ test_that("subset.CellGraph keeps node-level slots aligned", {
   keep <- node_names[seq_len(min(50, n_nodes))]
   cg_small <- subset(cg, nodes = keep)
   small_names <- cg_small@cellgraph %>% dplyr::pull(name)
-  expect_equal(SeuratObject::Cells(cg_small), small_names)
+  expect_equal(CellGraphData(cg_small, slot = "nodes"), small_names)
   expect_null(rownames(cg_small@counts))
   expect_null(rownames(cg_small@layers$data))
   expect_lt(.row_names_info(cg_small@layout$xy), 0L)
@@ -554,7 +554,7 @@ test_that("layout tables without row names get node IDs on subset", {
   cg@layout$xy <- layout
 
   cg_small <- subset(cg, nodes = node_names[1:3])
-  expect_equal(SeuratObject::Cells(cg_small), node_names[1:3])
+  expect_equal(CellGraphData(cg_small, slot = "nodes"), node_names[1:3])
   expect_equal(cg_small@layout$xy$x, layout$x[1:3])
 })
 
@@ -578,7 +578,7 @@ test_that("subset.CellGraph keeps sequential IDs on graphs without a name attrib
 
   cg_small <- subset(cg, nodes = c("2", "3"))
   expect_equal(cg_small@cellgraph %>% dplyr::pull(name), c("2", "3"))
-  expect_equal(SeuratObject::Cells(cg_small), c("2", "3"))
+  expect_equal(CellGraphData(cg_small, slot = "nodes"), c("2", "3"))
   expect_equal(nrow(cg_small@meta.data), 2)
 })
 
@@ -601,7 +601,7 @@ test_that("subset.CellGraph rebuilds empty meta.data with automatic rownames", {
   cg@meta.data <- auto_meta
 
   cg_small <- subset(cg, nodes = c("2", "3"))
-  expect_equal(SeuratObject::Cells(cg_small), c("2", "3"))
+  expect_equal(CellGraphData(cg_small, slot = "nodes"), c("2", "3"))
   expect_equal(nrow(cg_small@meta.data), 2)
 })
 
@@ -609,7 +609,7 @@ test_that("subset.CellGraph keeps character integer node names", {
   cg <- CreateCellGraphObject(cellgraph = make_single_graph(c("1", "2", "3")))
   cg_small <- subset(cg, nodes = c("1", "3"))
   expect_equal(cg_small@cellgraph %>% dplyr::pull(name), c("1", "3"))
-  expect_equal(SeuratObject::Cells(cg_small), c("1", "3"))
+  expect_equal(CellGraphData(cg_small, slot = "nodes"), c("1", "3"))
 })
 
 test_that("automatic layout rownames follow graph order, not 1:n IDs", {
@@ -622,7 +622,7 @@ test_that("automatic layout rownames follow graph order, not 1:n IDs", {
     layout = list(xy = layout)
   )
   expect_lt(.row_names_info(cg@layout$xy), 0L)
-  expect_equal(SeuratObject::Cells(cg), names)
+  expect_equal(CellGraphData(cg, slot = "nodes"), names)
   expect_equal(cg@layout$xy$x, c(10, 20, 30))
 })
 
@@ -641,7 +641,7 @@ test_that("CellGraph objects from older versions report why they fail", {
   expect_error_text(print(legacy), "pixelatorR@v0.20.1")
 
   expect_error_text(SeuratObject::Layers(legacy), "pixelatorR 0.21.0 or earlier")
-  expect_error_text(SeuratObject::Cells(legacy), "pixelatorR 0.21.0 or earlier")
+  expect_error_text(CellGraphData(legacy, slot = "nodes"), "pixelatorR 0.21.0 or earlier")
   expect_error_text(CellGraphData(legacy, slot = "counts"), "pixelatorR 0.21.0 or earlier")
   expect_error_text(SeuratObject::FetchData(legacy, vars = "m1"), "pixelatorR 0.21.0 or earlier")
   expect_error_text(subset(legacy, nodes = node_names[1]), "pixelatorR 0.21.0 or earlier")

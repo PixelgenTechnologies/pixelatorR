@@ -114,7 +114,7 @@ segment_cell <- function(
   Matrix::diag(A_k) <- 1
 
   # Use all nodes for scoring; component filtering is applied after classification.
-  node_names <- Cells(cg)
+  node_names <- .cg_node_map(cg)
   counts_segment <- cg@counts
   A_k <- A_k[node_names, node_names]
 
@@ -189,7 +189,7 @@ segment_cell <- function(
   c2_nodes_keep <- g_c2 %>% pull(name)
 
   node_compartment_map <- tibble(
-    node = Cells(cg)
+    node = .cg_node_map(cg)
   ) %>%
     mutate(group = if_else(
       node %in% interface_nodes, "interface", "other"
@@ -945,7 +945,7 @@ spatial_smoothing <- function(
     ncol = 1
   ) %>%
     as("dgCMatrix")
-  rownames(m) <- Cells(cg)
+  rownames(m) <- .cg_node_map(cg)
   return(m)
 }
 

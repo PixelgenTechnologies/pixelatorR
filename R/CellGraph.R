@@ -491,15 +491,6 @@ Stdev.CellGraph <- function(object, reduction = NULL, ...) {
   Stdev(.get_cellgraph_reduction(object, reduction))
 }
 
-#' @rdname CellGraph-methods
-#' @method Cells CellGraph
-#' @export
-#'
-Cells.CellGraph <- function(x, ...) {
-  .assert_current_cellgraph(x)
-  .cg_node_map(x)
-}
-
 #' @param metadata A vector, matrix, or \code{data.frame} of node metadata.
 #' Nodes are matched by name, so metadata may cover a subset of the graph;
 #' the remaining nodes get \code{NA}. Names that are not graph nodes are
@@ -595,7 +586,7 @@ FetchData.CellGraph <- function(
   ...
 ) {
   .validate_cellgraph_data_names(object)
-  node_names <- Cells(object)
+  node_names <- .cg_node_map(object)
 
   if (isTRUE(clean)) {
     clean <- "all"
@@ -873,7 +864,7 @@ setMethod(
 #'
 #' @examples
 #' # Subset
-#' cg_small <- subset(cg, nodes = Cells(cg)[1:100])
+#' cg_small <- subset(cg, nodes = CellGraphData(cg, slot = "nodes")[1:100])
 #' cg_small
 #'
 #' @export

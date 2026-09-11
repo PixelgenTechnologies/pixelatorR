@@ -85,17 +85,17 @@ test_that("ComputeLPS.CellGraph stores a matrix as a layer", {
   expect_no_error(cg_lps <- ComputeLPS(cg_small, markers = c("B2M", "CD45")))
   expect_true("lps" %in% Layers(cg_lps))
   lps <- LayerData(cg_lps, layer = "lps")
-  expect_equal(nrow(lps), length(Cells(cg_small)))
+  expect_equal(nrow(lps), length(CellGraphData(cg_small, slot = "nodes")))
   expect_equal(ncol(lps), 2)
   expect_equal(colnames(lps), c("B2M", "CD45"))
-  expect_equal(rownames(lps), Cells(cg_small))
+  expect_equal(rownames(lps), CellGraphData(cg_small, slot = "nodes"))
 })
 
 test_that("ComputeLPS.CellGraph stores a vector in meta.data", {
   expect_no_error(cg_lps <- ComputeLPS(cg_small, markers = "B2M", mode = "all", name = "lps_b2m"))
   meta <- CellGraphData(cg_lps, slot = "meta.data")
   expect_true("lps_b2m" %in% colnames(meta))
-  expect_equal(nrow(meta), length(Cells(cg_small)))
+  expect_equal(nrow(meta), length(CellGraphData(cg_small, slot = "nodes")))
   expect_false("lps" %in% setdiff(Layers(cg_lps), "counts"))
 })
 

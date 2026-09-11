@@ -490,7 +490,8 @@ patch_detection <- function(
   }
 
   patch_counts <- cg@counts[, patch_markers, drop = FALSE] %>% Matrix::rowSums()
-  counts <- matrix(patch_counts, ncol = 1, dimnames = list(Cells(cg), "patch_counts")) %>% as("dgCMatrix")
+  counts <- matrix(patch_counts, ncol = 1, dimnames = list(.cg_node_map(cg), "patch_counts")) %>%
+    as("dgCMatrix")
 
   gi_mat <-
     local_G(

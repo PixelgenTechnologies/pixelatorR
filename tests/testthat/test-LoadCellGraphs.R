@@ -65,7 +65,7 @@ for (assay_version in c("v3", "v5")) {
     layouts <- seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(2470, 3))
     expect_equal(
-      Cells(seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]),
+      CellGraphData(seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]], slot = "nodes"),
       seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@cellgraph %>% pull(name)
     )
     expect_lt(.row_names_info(layouts[[1]]), 0L)
@@ -105,7 +105,7 @@ for (assay_version in c("v3", "v5")) {
     layouts <- seur_obj_pna[["PNA"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(43543, 3))
     expect_equal(
-      Cells(seur_obj_pna[["PNA"]]@cellgraphs[[1]]),
+      CellGraphData(seur_obj_pna[["PNA"]]@cellgraphs[[1]], slot = "nodes"),
       seur_obj_pna[["PNA"]]@cellgraphs[[1]]@cellgraph %>% pull(name)
     )
     expect_lt(.row_names_info(layouts[[1]]), 0L)

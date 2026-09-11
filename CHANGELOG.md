@@ -26,6 +26,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - `color_by_marker()` and `.add_coordinates_to_tbl_graph()`.
+- The `Cells()` method for `CellGraph` objects. A `CellGraph` holds one cell,
+  so its rows are nodes rather than cells. Use
+  `CellGraphData(cg, slot = "nodes")` for the node IDs.
 
 ### Changed
 
@@ -33,8 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   row names instead of a tibble.
 - `CellGraph` stores a central `nodes` ID vector and keeps counts, layouts,
   layers, metadata, and reductions in that order without copying node IDs as
-  row names. `Cells()`, `LayerData()`, `Embeddings()`, and `FetchData()` still
-  label rows for the caller.
+  row names. `LayerData()`, `Embeddings()`, and `FetchData()` still label rows
+  for the caller, and `CellGraphData(cg, slot = "nodes")` returns the IDs.
 - `CellGraph` now uses an `initialize()` method instead of a `setClass()`
   prototype for default slot values.
 - `NodeDimReduc` now uses an `initialize()` method instead of a `setClass()`

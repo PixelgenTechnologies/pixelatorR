@@ -204,7 +204,7 @@ local_proximity <- function(
   nB <- node_types["umi2"] %>% as.integer()
 
   # Sort count matrix according to the new node sorting
-  counts <- object@counts[match(g %>% pull(name), Cells(object)), , drop = FALSE]
+  counts <- object@counts[match(g %>% pull(name), .cg_node_map(object)), , drop = FALSE]
 
   # Validate markers
   assert_x_in_y(markers, colnames(counts))

@@ -258,7 +258,7 @@ FetchData.CellGraphList <- function(
 
   fetched <- do.call(rbind, .match_fill_classes(lapply(cells, function(nm) {
     cg <- object[[nm]]
-    node_ids <- Cells(cg)
+    node_ids <- .cg_node_map(cg)
     df <- .fetch_layout_vars(
       object = cg,
       vars = vars,

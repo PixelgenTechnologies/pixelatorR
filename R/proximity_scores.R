@@ -69,7 +69,7 @@ ComputeProximityScores.CellGraph <- function(
   nA <- node_types["umi1"] %>% as.integer()
   nB <- node_types["umi2"] %>% as.integer()
 
-  counts <- object@counts[match(g %>% pull(name), Cells(object)), , drop = FALSE]
+  counts <- object@counts[match(g %>% pull(name), .cg_node_map(object)), , drop = FALSE]
 
   # Get adjacency matrix. We only need the upper triangle
   if (k > 1L) {
