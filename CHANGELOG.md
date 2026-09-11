@@ -22,9 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pull()` evaluates its selection with the column names of the data in scope,
   the check was previously applied to a column literally named `x` whenever the
   data contained one.
-- Layout alignment strips MPX bipartite `-A`/`-B` node suffixes so
-  `CreateCellGraphObject` and layout setters accept the same unsuffixed
-  layout tables as `LoadCellGraphs`.
 
 ### Removed
 
@@ -67,6 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   instead of failing inside `cli` with a missing-argument error.
 - Layout tables without row names get node IDs on subset so
   `WriteMPX_pxl_file()` can restore the `name` column.
+- Layout alignment strips MPX bipartite `-A`/`-B` node suffixes so
+  `CreateCellGraphObject` and layout setters accept the same unsuffixed
+  layout tables as `LoadCellGraphs`.
 - `subset.CellGraph` and `KeepLargestComponent.CellGraph` work when the
   graph has no `name` vertex attribute or when empty `meta.data` only has
   automatic `"1"`, `"2"`, ... row names. Sequential IDs are written onto
