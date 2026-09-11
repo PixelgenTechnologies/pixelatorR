@@ -17,10 +17,6 @@ Node-level variable names must be unique across the graph node table,
 \code{meta.data}, and reduction embeddings, and must not overlap count or
 layer features. Count and layer matrices are the exception: they may share
 feature names because callers select a layer explicitly.
-
-Objects serialized before these extra slots existed are not upgraded.
-Using one aborts with a message that names the missing slots and points
-to a \code{pixelatorR} version that still reads the old class.
 }
 \section{Slots}{
 

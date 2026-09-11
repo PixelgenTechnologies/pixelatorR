@@ -286,11 +286,9 @@ FetchLayoutData.Seurat <- function(
   fetched[, vars, drop = FALSE]
 }
 
-#' Resolve component IDs and require loaded CellGraph objects
+#' Resolve component IDs for FetchLayoutData
 #'
-#' When \code{cells} is \code{NULL}, all loaded graphs in the
-#' \code{CellGraphList} are used. Requested IDs that are missing or still
-#' \code{NULL} abort with a message to run \code{LoadCellGraphs}.
+#' Forwards to \code{\link{.resolve_loaded_cellgraph_ids}} with \code{fn = "FetchLayoutData"}.
 #'
 #' @param object A \code{CellGraphList} (or named list of graphs)
 #' @param cells Component IDs to keep, or \code{NULL} for all loaded graphs

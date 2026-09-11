@@ -19,10 +19,6 @@ NULL
 #' layer features. Count and layer matrices are the exception: they may share
 #' feature names because callers select a layer explicitly.
 #'
-#' Objects serialized before these extra slots existed are not upgraded.
-#' Using one aborts with a message that names the missing slots and points
-#' to a \code{pixelatorR} version that still reads the old class.
-#'
 #' @slot cellgraph A \code{tbl_graph} object corresponding to a cell graph
 #' @slot nodes Character vector of node IDs in graph order. This is the map
 #' used to align counts, layouts, layers, metadata, and reductions. Those

@@ -101,17 +101,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `CellGraph` objects, optionally joined with node-level variables from
   `FetchData`. Methods are provided for `CellGraph`, `CellGraphList`,
   `PNAAssay`, `PNAAssay5`, and `Seurat`. Missing `vars` are filled with `NA`.
-- `FetchData.CellGraph` to pull node-level metadata, graph vertex attributes,
-  reduction embeddings, and layer/marker values, following the same lookup order
-  as `FetchData.Seurat`.
 - `CellGraphList`, a named list of `CellGraph` objects (subsetting,
   concatenation, and replacement type-check elements; unloaded graphs may be
   `NULL`; printing shows a short summary).
-- `ComputeLPS` to compute local proximity scores with `local_proximity` and
-  store them on each `CellGraph`. Matrix results (default
-  `mode = "self-clustering"`) are stored as a layer; vector results are stored
-  in node `meta.data`. Methods are provided for `CellGraph`, `CellGraphList`,
-  `PNAAssay`, `PNAAssay5`, and `Seurat` (loaded cell graphs only).
 
 ## [0.21.0] - 2026-09-04
 

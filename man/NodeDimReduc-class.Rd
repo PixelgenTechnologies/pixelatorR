@@ -18,7 +18,7 @@ list for method-specific extras.
 \item{\code{embeddings}}{A numeric \code{matrix} of node embeddings (nodes x dimensions).
 Row names are node names when the object is created. When the reduction
 is stored on a \code{\link{CellGraph}}, embedding rows follow the graph
-\code{nodes} map and row names are dropped. Column names use the reduction \code{key}.}
+\code{nodes} map and row names are dropped.}
 
 \item{\code{loadings}}{An optional numeric \code{matrix} of feature loadings
 (features x dimensions)}

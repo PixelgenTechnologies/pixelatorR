@@ -60,8 +60,6 @@ counts slot. For \code{FetchData}, \code{NULL} (default) selects
 \item{reduction}{Name of a stored \code{\link{NodeDimReduc}}. Defaults to
 the first reduction when \code{NULL}.}
 
-\item{x}{A \code{\link{CellGraph}} object}
-
 \item{metadata}{A vector, matrix, or \code{data.frame} of node metadata.
 Nodes are matched by name, so metadata may cover a subset of the graph;
 the remaining nodes get \code{NA}. Names that are not graph nodes are
@@ -84,6 +82,8 @@ requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
 \code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
 lack the requested variables still appear with \code{NA} values.}
 
+\item{x}{A \code{\link{CellGraph}} object}
+
 \item{i}{Name of a stored reduction}
 
 \item{j, drop}{Required by the S4 \code{[[} generic and ignored}
@@ -94,8 +94,8 @@ lack the requested variables still appear with \code{NA} values.}
 \code{FetchData.CellGraph}: a \code{data.frame} with nodes as rows
 and requested variables as columns. \code{FetchData.CellGraphList}: a
 \code{data.frame} with a \code{component} column identifying the source graph
-and the requested variables. Row names are \code{component:node}. \code{subset}: a \code{CellGraph} object
-containing only the specified nodes.
+and the requested variables. Row names are \code{component:node}.
+\code{subset}: a \code{CellGraph} object containing only the specified nodes.
 }
 \description{
 Methods for \code{\link{CellGraph}} objects for generics defined in other
