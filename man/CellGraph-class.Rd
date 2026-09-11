@@ -38,7 +38,8 @@ Rows follow \code{nodes}. The counts matrix can be extracted as the
 
 \item{\code{layout}}{A named \code{list} of \code{data.frame} objects with coordinates
 for cell layouts. Rows follow \code{nodes}. A \code{name} column or explicit
-row names are accepted on input and used only to reorder; stored layouts keep
+row names are accepted on input and used only to reorder; MPX bipartite
+layouts may omit \code{-A}/\code{-B} suffixes. Stored layouts keep
 coordinate columns (typically \code{x}, \code{y}, \code{z}). Layouts without
 node IDs still work if the number of rows matches the graph.}
 

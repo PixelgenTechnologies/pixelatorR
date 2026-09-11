@@ -386,8 +386,7 @@ LoadCellGraphs.MPXAssay <- function(
       for (layout_type in all_layout_types) {
         # Layout tables identify nodes without the A/B suffix used in the graph
         if (attr(cg@cellgraph, "type") == "bipartite") {
-          node_names <- graph_node_names %>%
-            stringr::str_replace("-[A|B]", "")
+          node_names <- .strip_bipartite_node_suffix(graph_node_names)
         } else {
           node_names <- graph_node_names
         }

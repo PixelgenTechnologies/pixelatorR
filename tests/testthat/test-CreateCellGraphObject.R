@@ -150,6 +150,41 @@ test_that("CreateCellGraphObject aligns layouts with a name column", {
   expect_equal(SeuratObject::Cells(cg), node_names)
 })
 
+test_that("CreateCellGraphObject aligns MPX layouts without A/B suffixes", {
+  suffixed <- c("umi1-A", "umi1-B", "umi2-A", "umi2-B")
+  g <- tidygraph::tbl_graph(
+    nodes = data.frame(
+      name = suffixed,
+      node_type = c("A", "B", "A", "B"),
+      stringsAsFactors = FALSE
+    ),
+    edges = data.frame(from = c(1L, 3L), to = c(2L, 4L))
+  )
+  attr(g, "type") <- "bipartite"
+
+  layout_named <- tibble::tibble(
+    name = c("umi2", "umi1"),
+    x = c(20, 10),
+    y = c(2, 1)
+  )
+  cg <- CreateCellGraphObject(
+    cellgraph = g,
+    layout = list(pmds_3d = layout_named)
+  )
+  expect_equal(cg@layout$pmds_3d$x, c(10, 10, 20, 20))
+  expect_equal(cg@layout$pmds_3d$y, c(1, 1, 2, 2))
+  expect_false("name" %in% colnames(cg@layout$pmds_3d))
+  expect_equal(SeuratObject::Cells(cg), suffixed)
+
+  layout_rownames <- data.frame(
+    x = c(10, 20),
+    y = c(1, 2),
+    row.names = c("umi1", "umi2")
+  )
+  CellGraphData(cg, slot = "layout") <- list(pmds_3d = layout_rownames)
+  expect_equal(cg@layout$pmds_3d$x, c(10, 10, 20, 20))
+})
+
 test_that("CreateCellGraphObject aligns layouts by row names", {
   layout <- data.frame(
     x = seq_len(n_nodes),

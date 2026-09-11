@@ -711,7 +711,7 @@ WriteMPX_pxl_file <- function(
       node_names <- .explicit_rownames(ly) %||% .cg_node_names(cg@cellgraph)
       # Layout tables are stored without the A/B suffix used in bipartite graphs
       if (attr(cg@cellgraph, "type") == "bipartite") {
-        node_names <- stringr::str_replace(node_names, "-[A|B]", "")
+        node_names <- .strip_bipartite_node_suffix(node_names)
       }
       ly %>%
         as_tibble() %>%

@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `pull()` evaluates its selection with the column names of the data in scope,
   the check was previously applied to a column literally named `x` whenever the
   data contained one.
+- Layout alignment strips MPX bipartite `-A`/`-B` node suffixes so
+  `CreateCellGraphObject` and layout setters accept the same unsuffixed
+  layout tables as `LoadCellGraphs`.
 
 ### Removed
 

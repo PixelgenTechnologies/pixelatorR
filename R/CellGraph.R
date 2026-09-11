@@ -33,7 +33,8 @@ NULL
 #' \code{\link[SeuratObject]{LayerData}}.
 #' @slot layout A named \code{list} of \code{data.frame} objects with coordinates
 #' for cell layouts. Rows follow \code{nodes}. A \code{name} column or explicit
-#' row names are accepted on input and used only to reorder; stored layouts keep
+#' row names are accepted on input and used only to reorder; MPX bipartite
+#' layouts may omit \code{-A}/\code{-B} suffixes. Stored layouts keep
 #' coordinate columns (typically \code{x}, \code{y}, \code{z}). Layouts without
 #' node IDs still work if the number of rows matches the graph.
 #' @slot layers A named \code{list} of additional numeric node matrices
@@ -148,8 +149,11 @@ setMethod(
 #' node names (order does not need to match).
 #' @param layout A named \code{list} of \code{data.frame} objects with cell
 #' layouts. Nodes are identified by row names or by a \code{name} column;
-#' otherwise the row order is assumed to follow the graph. Stored layouts
-#' keep that order and do not copy node IDs as row names.
+#' otherwise the row order is assumed to follow the graph. MPX bipartite
+#' layouts may use unsuffixed names while graph nodes keep \code{-A}/\code{-B};
+#' those names are matched after stripping the suffix, as in
+#' \code{\link{LoadCellGraphs}}. Stored layouts keep graph node order and do
+#' not copy node IDs as row names.
 #' @param layers A named \code{list} of additional numeric node matrices
 #' (nodes x features). \code{"counts"} is reserved.
 #' @param meta.data A node-level \code{data.frame} or \code{tbl_df}. Either row
@@ -1411,13 +1415,32 @@ subset.CellGraph <- function(
   as.character(attr(x, "row.names"))
 }
 
+#' Strip the \code{-A}/\code{-B} suffix used on MPX bipartite graph nodes.
+#'
+#' Layout tables in PXL files identify nodes without that suffix. Same
+#' pattern as \code{\link{LoadCellGraphs}} / \code{\link{WriteMPX_pxl_file}}.
+#'
+#' @param x Character node names
+#'
+#' @return \code{x} with the first \code{-A} or \code{-B} suffix removed
+#'
+#' @keywords internal
+#' @noRd
+#'
+.strip_bipartite_node_suffix <- function(x) {
+  stringr::str_replace(x, "-[A|B]", "")
+}
+
 #' Align a layout table to graph node order
 #'
 #' Accepts a data frame or matrix. Nodes are identified by row names or a
 #' \code{name} column (which is then dropped so only coordinates remain).
 #' If neither is present and \code{nrow} matches the graph, rows are assumed
-#' to follow node order. The result is a base \code{data.frame} in
-#' \code{node_names} order without stored node IDs as row names.
+#' to follow node order. When identifiers are present but do not match graph
+#' node IDs, \code{-A}/\code{-B} suffixes are stripped from the graph names
+#' so MPX bipartite layouts can share one row between the two partitions.
+#' The result is a base \code{data.frame} in \code{node_names} order without
+#' stored node IDs as row names.
 #'
 #' @param layout A data frame or matrix of coordinates
 #' @param node_names Character vector of graph node names
@@ -1469,17 +1492,23 @@ subset.CellGraph <- function(
       call = call
     )
   }
+  layout_keys <- node_names
   missing_nodes <- setdiff(node_names, layout_names)
   if (length(missing_nodes) > 0) {
-    cli::cli_abort(
-      c(
-        "x" = "The '{layout_name}' layout is missing {length(missing_nodes)} node{?s}.",
-        "i" = "Example: {.val {head(missing_nodes, 3)}}"
-      ),
-      call = call
-    )
+    stripped <- .strip_bipartite_node_suffix(node_names)
+    if (all(stripped %in% layout_names)) {
+      layout_keys <- stripped
+    } else {
+      cli::cli_abort(
+        c(
+          "x" = "The '{layout_name}' layout is missing {length(missing_nodes)} node{?s}.",
+          "i" = "Example: {.val {head(missing_nodes, 3)}}"
+        ),
+        call = call
+      )
+    }
   }
-  layout <- layout[match(node_names, layout_names), , drop = FALSE]
+  layout <- layout[match(layout_keys, layout_names), , drop = FALSE]
   .drop_row_ids(layout)
 }
 
