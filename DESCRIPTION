@@ -99,7 +99,6 @@ Collate:
     'colocalization_heatmap.R'
     'local_proximity_scores.R'
     'compute_lps.R'
-    'd3_graph_helpers.R'
     'density_scatter_plot.R'
     'differential_analysis_utils.R'
     'utils.R'
