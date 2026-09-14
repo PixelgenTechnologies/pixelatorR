@@ -74,8 +74,10 @@ and \code{z} coordinates.}
 
 \item{vars}{Optional character vector of node-level variables to fetch with
 \code{\link[SeuratObject]{FetchData}} (markers, metadata columns, graph
-vertex attributes, or reduction embeddings). Missing values are filled with
-\code{NA} rather than raising an error.}
+vertex attributes, or reduction embeddings). A variable that is present
+on some graphs and missing on others is filled with \code{NA}. A variable
+missing from every graph is omitted, with the same warning as
+\code{\link[SeuratObject]{FetchData}}.}
 
 \item{add_protein}{If \code{TRUE}, add a \code{protein} column with the
 marker label of each node. Labels are read from the one-hot counts matrix

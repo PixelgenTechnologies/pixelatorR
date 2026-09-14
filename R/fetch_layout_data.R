@@ -7,8 +7,10 @@ NULL
 #' and \code{z} coordinates.
 #' @param vars Optional character vector of node-level variables to fetch with
 #' \code{\link[SeuratObject]{FetchData}} (markers, metadata columns, graph
-#' vertex attributes, or reduction embeddings). Missing values are filled with
-#' \code{NA} rather than raising an error.
+#' vertex attributes, or reduction embeddings). A variable that is present
+#' on some graphs and missing on others is filled with \code{NA}. A variable
+#' missing from every graph is omitted, with the same warning as
+#' \code{\link[SeuratObject]{FetchData}}.
 #' @param add_protein If \code{TRUE}, add a \code{protein} column with the
 #' marker label of each node. Labels are read from the one-hot counts matrix
 #' using its sparse structure (the non-zero column name per row). Nodes with
@@ -46,37 +48,14 @@ FetchLayoutData.CellGraph <- function(
   layer = NULL,
   ...
 ) {
-  assert_single_value(layout_method, type = "string")
-  assert_vector(vars, type = "character", n = 1, allow_null = TRUE)
-  assert_single_value(add_protein, type = "bool")
-  assert_single_value(layer, type = "string", allow_null = TRUE)
-  .assert_current_cellgraph(object)
-
-  if (!is.null(vars)) {
-    vars <- as.character(vars)
-    reserved <- intersect(vars, c("x", "y", "z", "component", "protein"))
-    if (length(reserved) > 0) {
-      cli::cli_abort(
-        c("x" = "{.arg vars} cannot include reserved column name{?s} {.val {reserved}}.")
-      )
-    }
-  }
-
-  layout <- .get_cellgraph_layout(object, layout_method)
-  node_names <- .explicit_rownames(layout) %||% .cg_node_map(object)
-
-  fetched <- .fetch_layout_vars(
-    object = object,
+  .fetch_layout_data_graph(
+    object,
+    layout_method = layout_method,
     vars = vars,
-    cells = node_names,
-    layer = layer
+    add_protein = add_protein,
+    layer = layer,
+    warn_missing = TRUE
   )
-
-  coords <- as_tibble(layout[, c("x", "y", "z"), drop = FALSE])
-  if (isTRUE(add_protein)) {
-    coords$protein <- .node_protein_labels(object, nodes = node_names)
-  }
-  dplyr::bind_cols(coords, as_tibble(fetched, .name_repair = "minimal"))
 }
 
 #' @param cells Component IDs to fetch. If \code{NULL}, all loaded
@@ -104,17 +83,19 @@ FetchLayoutData.CellGraphList <- function(
 ) {
   cells <- .resolve_fetch_layout_data_cells(object, cells)
 
-  dplyr::bind_rows(lapply(cells, function(nm) {
-    FetchLayoutData(
+  fetched <- dplyr::bind_rows(lapply(cells, function(nm) {
+    .fetch_layout_data_graph(
       object[[nm]],
       layout_method = layout_method,
       vars = vars,
       add_protein = add_protein,
       layer = layer,
-      ...
+      warn_missing = FALSE
     ) %>%
       mutate(component = nm, .before = 1)
   }))
+  .warn_unfound_fetch_vars(vars, names(fetched))
+  fetched
 }
 
 #' @rdname FetchLayoutData
@@ -285,25 +266,129 @@ FetchLayoutData.Seurat <- function(
   all_labels[.row_index(nodes, node_map)]
 }
 
+#' Fetch a 3D layout and optional node variables from one CellGraph
+#'
+#' @param object A \code{CellGraph}
+#' @param layout_method Name of a stored layout
+#' @param vars Character vector of variable names, or \code{NULL}
+#' @param add_protein If \code{TRUE}, add a \code{protein} column
+#' @param layer Layer name passed to \code{FetchData}, or \code{NULL}
+#' @param warn_missing If \code{TRUE}, warn for requested variables that
+#' were not found on this graph
+#'
+#' @return A tibble of coordinates and fetched variables
+#'
+#' @keywords internal
+#' @noRd
+#'
+.fetch_layout_data_graph <- function(
+  object,
+  layout_method,
+  vars,
+  add_protein,
+  layer,
+  warn_missing
+) {
+  assert_single_value(layout_method, type = "string")
+  assert_vector(vars, type = "character", n = 1, allow_null = TRUE)
+  assert_single_value(add_protein, type = "bool")
+  assert_single_value(layer, type = "string", allow_null = TRUE)
+  .assert_current_cellgraph(object)
+
+  if (!is.null(vars)) {
+    vars <- as.character(vars)
+    reserved <- intersect(vars, c("x", "y", "z", "component", "protein"))
+    if (length(reserved) > 0) {
+      cli::cli_abort(
+        c("x" = "{.arg vars} cannot include reserved column name{?s} {.val {reserved}}.")
+      )
+    }
+  }
+
+  layout <- .get_cellgraph_layout(object, layout_method)
+  node_names <- .explicit_rownames(layout) %||% .cg_node_map(object)
+
+  fetched <- .fetch_layout_vars(
+    object = object,
+    vars = vars,
+    cells = node_names,
+    layer = layer,
+    fill_missing = FALSE
+  )
+  if (isTRUE(warn_missing)) {
+    .warn_unfound_fetch_vars(vars, names(fetched))
+  }
+
+  coords <- as_tibble(layout[, c("x", "y", "z"), drop = FALSE])
+  if (isTRUE(add_protein)) {
+    coords$protein <- .node_protein_labels(object, nodes = node_names)
+  }
+  dplyr::bind_cols(coords, as_tibble(fetched, .name_repair = "minimal"))
+}
+
+#' Warn for requested variables that were not found
+#'
+#' Matches the \code{FetchData.CellGraph} warning when some requested
+#' names are absent.
+#'
+#' @param vars Requested variable names, or \code{NULL}
+#' @param found Names present in the result (including reserved layout columns)
+#'
+#' @return \code{NULL}, invisibly
+#'
+#' @keywords internal
+#' @noRd
+#'
+.warn_unfound_fetch_vars <- function(vars, found) {
+  if (is.null(vars) || length(vars) == 0) {
+    return(invisible(NULL))
+  }
+  vars_missing <- setdiff(vars, found)
+  if (length(vars_missing) == 0) {
+    return(invisible(NULL))
+  }
+  m2 <- if (length(vars_missing) > 10) {
+    paste0(" (10 out of ", length(vars_missing), " shown)")
+  } else {
+    ""
+  }
+  cli::cli_warn(
+    "The following requested variables were not found{m2}: {.val {head(vars_missing, 10)}}"
+  )
+  invisible(NULL)
+}
+
 #' Fetch vars for layout rows, filling missing values with NA
 #'
 #' Calls \code{FetchData} on the \code{CellGraph} and aligns the result
 #' to \code{cells}. Variables that are missing stay \code{NA} instead of
-#' aborting. Classed columns such as factors are copied with \code{[[}
-#' so types are preserved.
+#' aborting when \code{fill_missing} is \code{TRUE}. Classed columns such
+#' as factors are copied with \code{[[} so types are preserved.
 #'
 #' @param object A \code{CellGraph}
 #' @param vars Character vector of variable names, or \code{NULL}
 #' @param cells Node names corresponding to layout rows
 #' @param layer Layer name passed to \code{FetchData}, or \code{NULL}
+#' @param fill_missing If \code{TRUE}, add a \code{NA} column for each
+#' requested variable that was not found. If \code{FALSE}, omit those
+#' columns so the caller can warn once after combining graphs.
 #' @param call Environment to report as the error caller
 #'
-#' @return A data frame with rows \code{cells} and columns \code{vars}
+#' @return A data frame with rows \code{cells} and columns for the
+#' requested variables that were found (and, when \code{fill_missing}
+#' is \code{TRUE}, \code{NA} columns for the rest)
 #'
 #' @keywords internal
 #' @noRd
 #'
-.fetch_layout_vars <- function(object, vars, cells, layer, call = caller_env()) {
+.fetch_layout_vars <- function(
+  object,
+  vars,
+  cells,
+  layer,
+  fill_missing = TRUE,
+  call = caller_env()
+) {
   fetched <- data.frame(row.names = cells, stringsAsFactors = FALSE, check.names = FALSE)
   if (is.null(vars) || length(vars) == 0) {
     return(fetched)
@@ -341,11 +426,12 @@ FetchLayoutData.Seurat <- function(
     if (v %in% colnames(fetched_data) && nrow(fetched_data) > 0) {
       idx <- match(cells, rownames(fetched_data))
       fetched[[v]] <- fetched_data[[v]][idx]
-    } else {
+    } else if (isTRUE(fill_missing)) {
       fetched[[v]] <- NA
     }
   }
-  fetched[, vars, drop = FALSE]
+  keep <- if (isTRUE(fill_missing)) vars else intersect(vars, names(fetched))
+  fetched[, keep, drop = FALSE]
 }
 
 #' Resolve component IDs for FetchLayoutData

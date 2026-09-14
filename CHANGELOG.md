@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- `FetchLayoutData()` now omits variables that are missing from every
+  `CellGraph` and warns with the same message as `FetchData()`. Variables
+  present on some graphs and missing on others are still filled with `NA`.
+
 - `ComputeLPS()` on a `CellGraphList` or assay now warns and leaves a graph
   unmodified when it has no counts, including the default `markers = NULL`
   path. Previously only an explicit `markers` vector was intersected first,

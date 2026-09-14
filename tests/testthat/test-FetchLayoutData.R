@@ -64,15 +64,20 @@ test_that("FetchLayoutData.CellGraph works as expected", {
   expect_equal(lyt_vars$node_type, c("umi1", "umi1", "umi2", "umi2"))
 })
 
-test_that("FetchLayoutData.CellGraph fills missing vars with NA", {
-  expect_no_error(lyt <- FetchLayoutData(cg, vars = c("CD3", "missing_var")))
-  expect_equal(colnames(lyt), c("x", "y", "z", "CD3", "missing_var"))
+test_that("FetchLayoutData.CellGraph drops vars missing from the graph", {
+  expect_warning(
+    lyt <- FetchLayoutData(cg, vars = c("CD3", "missing_var")),
+    "The following requested variables were not found"
+  )
+  expect_equal(colnames(lyt), c("x", "y", "z", "CD3"))
   expect_equal(lyt$CD3, as.numeric(counts[, "CD3"]))
-  expect_true(all(is.na(lyt$missing_var)))
+  expect_false("missing_var" %in% colnames(lyt))
 
-  expect_no_error(lyt_all_missing <- FetchLayoutData(cg, vars = "not_a_variable"))
-  expect_equal(colnames(lyt_all_missing), c("x", "y", "z", "not_a_variable"))
-  expect_true(all(is.na(lyt_all_missing$not_a_variable)))
+  expect_warning(
+    lyt_all_missing <- FetchLayoutData(cg, vars = "not_a_variable"),
+    "The following requested variables were not found"
+  )
+  expect_equal(colnames(lyt_all_missing), c("x", "y", "z"))
 })
 
 test_that("FetchLayoutData.CellGraph keeps non-syntactic marker names", {
@@ -162,6 +167,15 @@ test_that("FetchLayoutData.CellGraphList works as expected", {
   expect_equal(nrow(lyt_one), 4)
 })
 
+test_that("FetchLayoutData.CellGraphList drops vars missing from every graph", {
+  expect_warning(
+    lyt <- FetchLayoutData(cgl, vars = c("CD3", "missing_var")),
+    "The following requested variables were not found"
+  )
+  expect_equal(colnames(lyt), c("component", "x", "y", "z", "CD3"))
+  expect_false("missing_var" %in% colnames(lyt))
+})
+
 test_that("FetchLayoutData.CellGraphList validates loaded CellGraphs", {
   cgl_mixed <- CreateCellGraphList(list(cell_1 = cg, cell_2 = NULL))
   expect_no_error(lyt <- FetchLayoutData(cgl_mixed))
@@ -194,6 +208,13 @@ test_that("FetchLayoutData.PNAAssay and Seurat methods work as expected", {
   expect_no_error(lyt_seurat <- FetchLayoutData(se, cells = cells, vars = "B2M"))
   expect_equal(sort(unique(lyt_seurat$component)), sort(cells))
   expect_equal(nrow(lyt_seurat), sum(vapply(CellGraphs(se)[cells], function(x) length(CellGraphData(x, slot = "nodes")), integer(1))))
+
+  expect_warning(
+    lyt_invalid <- FetchLayoutData(se, cells = cells, vars = c("B2M", "Invalid"), add_protein = TRUE),
+    "The following requested variables were not found"
+  )
+  expect_true(all(c("component", "x", "y", "z", "protein", "B2M") %in% colnames(lyt_invalid)))
+  expect_false("Invalid" %in% colnames(lyt_invalid))
 })
 
 test_that("FetchLayoutData.PNAAssay and Seurat methods validate loaded CellGraphs", {
