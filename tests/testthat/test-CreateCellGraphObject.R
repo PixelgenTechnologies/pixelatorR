@@ -653,14 +653,17 @@ test_that("automatic layout rownames follow graph order, not 1:n IDs", {
 test_that("CellGraph objects from older versions report why they fail", {
   cg <- CreateCellGraphObject(cellgraph = bipart_graph, counts = make_counts())
 
-  # Objects saved before the class gained layers, meta.data, and reductions
-  # keep only the three original slots when they are read back from an RDS
+  # Objects saved before the class gained layers, meta.data, reductions,
+  # and nodes keep only the three original slots when they are read back
+  # from an RDS. slotNames() still lists the new slots from the class.
   legacy <- cg
   attr(legacy, "layers") <- NULL
   attr(legacy, "meta.data") <- NULL
   attr(legacy, "reductions") <- NULL
+  attr(legacy, "nodes") <- NULL
+  expect_true(all(c("layers", "meta.data", "reductions", "nodes") %in% slotNames(legacy)))
 
-  expect_error_text(print(legacy), "no layers, meta.data, and reductions slots")
+  expect_error_text(print(legacy), "no layers, meta.data, reductions, and nodes slots")
   expect_error_text(print(legacy), "saved by pixelatorR 0.21.0 or earlier")
   expect_error_text(print(legacy), "pixelatorR@v0.20.1")
 

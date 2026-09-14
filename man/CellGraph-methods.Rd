@@ -96,7 +96,9 @@ error when they are included in \code{cells}.}
 \item{clean}{If \code{TRUE}, remove nodes that are missing data for every
 requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
 \code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
-lack the requested variables still appear with \code{NA} values.}
+lack the requested variables still appear with \code{NA} values. A
+\code{protein} column added with \code{add_protein} is not treated as a
+requested variable.}
 
 \item{add_protein}{If \code{TRUE}, add a \code{protein} column with the
 marker label of each node from the one-hot counts matrix. Nodes with no
@@ -149,9 +151,11 @@ does not reserve coordinate names, so \code{vars} may include \code{x},
 \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 is reserved for the source graph ID. Node IDs are used as row names and
 must be unique across the graphs being combined. Variables missing from a
-graph are filled with \code{NA}. \code{clean} defaults to \code{FALSE} so
-those missing values are kept. \code{add_protein = TRUE} adds a
-\code{protein} column from the one-hot counts matrix of each graph.
+graph are filled with \code{NA}. Variables missing from every graph are
+omitted, with the same warning as \code{FetchData.CellGraph}. \code{clean}
+defaults to \code{FALSE} so those missing values are kept.
+\code{add_protein = TRUE} adds a \code{protein} column from the one-hot
+counts matrix of each graph.
 
 }}
 \examples{

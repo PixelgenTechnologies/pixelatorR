@@ -561,7 +561,9 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 #' @param clean If \code{TRUE}, remove nodes that are missing data for every
 #' requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
 #' \code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
-#' lack the requested variables still appear with \code{NA} values.
+#' lack the requested variables still appear with \code{NA} values. A
+#' \code{protein} column added with \code{add_protein} is not treated as a
+#' requested variable.
 #' @param add_protein If \code{TRUE}, add a \code{protein} column with the
 #' marker label of each node from the one-hot counts matrix. Nodes with no
 #' count are \code{NA}. \code{vars} cannot include \code{protein} when this
@@ -723,8 +725,8 @@ FetchData.CellGraph <- function(
   keep <- if (isTRUE(add_protein)) c("protein", found) else found
   data_fetched <- data_fetched[, keep, drop = FALSE]
 
-  if (identical(clean, "all")) {
-    no_data <- which(apply(data_fetched, 1L, function(x) all(is.na(x))))
+  if (identical(clean, "all") && length(found) > 0 && nrow(data_fetched) > 0) {
+    no_data <- which(apply(data_fetched[, found, drop = FALSE], 1L, function(x) all(is.na(x))))
     if (length(no_data) > 0) {
       cli::cli_warn("Removing {length(no_data)} node{?s} missing data for vars requested")
       data_fetched <- data_fetched[-no_data, , drop = FALSE]
@@ -1180,9 +1182,14 @@ subset.CellGraph <- function(
 #'
 #' Objects serialized by older versions only have \code{cellgraph},
 #' \code{counts}, and \code{layout}. Reading \code{layers},
-#' \code{meta.data}, or \code{reductions} on those instances fails with
-#' \code{no slot of name ...}, which says nothing about the cause, so
-#' check for the slots up front and report what to do instead.
+#' \code{meta.data}, \code{reductions}, or \code{nodes} on those instances
+#' fails with \code{no slot of name ...}, which says nothing about the
+#' cause, so check for the slots up front and report what to do instead.
+#'
+#' Presence is taken from the object's own attributes, not
+#' \code{\link[methods]{slotNames}}. \code{slotNames} follows the live class
+#' definition, which already lists the new slots, so an old RDS would look
+#' complete if we used that.
 #'
 #' @param object A \code{CellGraph}, or another object (checked and ignored)
 #' @param call Environment to report as the error caller
@@ -1197,9 +1204,7 @@ subset.CellGraph <- function(
     return(invisible(NULL))
   }
   added_slots <- c("layers", "meta.data", "reductions", "nodes")
-  missing_slots <- added_slots[!vapply(added_slots, function(nm) {
-    .hasSlot(object, nm)
-  }, logical(1))]
+  missing_slots <- setdiff(added_slots, names(attributes(object)))
   if (length(missing_slots) == 0) {
     return(invisible(NULL))
   }
