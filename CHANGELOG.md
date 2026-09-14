@@ -18,9 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
-- `FetchLayoutData()` now omits variables that are missing from every
-  `CellGraph` and warns with the same message as `FetchData()`. Variables
-  present on some graphs and missing on others are still filled with `NA`.
+- `FetchLayoutData()` and `FetchData.CellGraphList` omit variables that
+  are missing from every `CellGraph` and warn with the same message as
+  `FetchData.CellGraph`. Variables present on some graphs and missing on
+  others are still filled with `NA`.
 - `ComputeLPS()` on a `CellGraphList` or assay now warns and leaves a graph
   unmodified when it has no counts, including the default `markers = NULL`
   path. Previously only an explicit `markers` vector was intersected first,
@@ -65,7 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FetchData.CellGraphList` to pull node-level variables from each loaded
   graph and bind them with a `component` column. Unlike `FetchLayoutData`,
   it does not require a stored layout and does not reserve `x`/`y`/`z`.
-  Variables missing from a graph are filled with `NA`.
+  Variables missing from a graph are filled with `NA`. Variables missing
+  from every graph are omitted with a warning.
 - `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
   layout `(x, y, z)` coordinates for the directional (key) light. The default
   `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
