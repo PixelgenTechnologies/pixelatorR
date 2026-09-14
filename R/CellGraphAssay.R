@@ -367,7 +367,7 @@ CellGraphs.MPXAssay <- function(
   if (inherits(x = value, what = "list")) {
     assert_vectors_match(names(value), names(CellGraphs(object)))
     for (i in seq_along(value)) {
-      if (!inherits(x = value[[i]], what = c("CellGraph", "NULL"))) {
+      if (!.is_cellgraph_or_null(value[[i]])) {
         cli::cli_abort(
           c(
             "i" = "All elements of {.var value} must be of class {.cls CellGraph} or {.cls NULL}",
@@ -547,7 +547,7 @@ as.CellGraphAssay.Assay <- function(
     assert_non_empty_object(cellgraphs, classes = "list")
     assert_singles_match(length(cellgraphs), ncol(x))
     for (i in seq_along(cellgraphs)) {
-      if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
+      if (!.is_cellgraph_or_null(cellgraphs[[i]])) {
         cli::cli_abort(
           c(
             "i" = "All elements of {.var cellgraphs} must be of class {.cls CellGraph} or {.cls NULL}",
@@ -669,7 +669,7 @@ as.CellGraphAssay5.Assay5 <- function(
     assert_non_empty_object(cellgraphs, classes = "list")
     assert_singles_match(length(cellgraphs), ncol(x))
     for (i in seq_along(cellgraphs)) {
-      if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
+      if (!.is_cellgraph_or_null(cellgraphs[[i]])) {
         cli::cli_abort(
           c(
             "i" = "All elements of {.var cellgraphs} must be of class {.cls CellGraph} or {.cls NULL}",
