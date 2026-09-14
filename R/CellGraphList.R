@@ -360,7 +360,9 @@ FetchData.CellGraphList <- function(
 #' have with a bare logical \code{NA}. \code{rbind} then coerces the whole
 #' column to that type, so a factor would come back as character and a
 #' \code{POSIXct} as numeric. Filled columns are replaced with \code{NA} of
-#' the class found on a graph that did have the variable.
+#' the class found on a graph that did have the variable. Factor columns
+#' present on more than one graph get the union of their levels so
+#' \code{rbind} does not coerce them to character.
 #'
 #' @param frames A list of \code{data.frame} objects with identical columns
 #'
@@ -383,6 +385,18 @@ FetchData.CellGraphList <- function(
     for (i in seq_along(frames)) {
       if (i != proto_at && is_fill(frames[[i]][[v]])) {
         frames[[i]][[v]] <- proto[rep(NA_integer_, nrow(frames[[i]]))]
+      }
+    }
+    cols <- lapply(frames, `[[`, v)
+    if (all(vapply(cols, is.factor, logical(1)))) {
+      ordered <- any(vapply(cols, is.ordered, logical(1)))
+      lvls <- unique(unlist(lapply(cols, levels), use.names = FALSE))
+      for (i in seq_along(frames)) {
+        frames[[i]][[v]] <- factor(
+          as.character(frames[[i]][[v]]),
+          levels = lvls,
+          ordered = ordered
+        )
       }
     }
   }
