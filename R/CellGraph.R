@@ -1458,6 +1458,10 @@ subset.CellGraph <- function(
 #' to follow node order. When identifiers are present but do not match graph
 #' node IDs, \code{-A}/\code{-B} suffixes are stripped from the graph names
 #' so MPX bipartite layouts can share one row between the two partitions.
+#' Layouts written by \code{\link{WriteMPX_pxl_file}} label one row per graph
+#' node with those suffixes stripped, so names may repeat; those tables are
+#' kept in graph order. Duplicate names that are not already in graph order
+#' are collapsed to the first row per name, matching \code{LoadCellGraphs}.
 #' The result is a base \code{data.frame} in \code{node_names} order without
 #' stored node IDs as row names.
 #'
@@ -1502,19 +1506,27 @@ subset.CellGraph <- function(
         call = call
       )
     }
-    layout_names <- node_names
+    return(.drop_row_ids(layout))
+  }
+
+  stripped <- .strip_bipartite_node_suffix(node_names)
+  # PXL write-out labels one row per graph node with A/B suffixes stripped,
+  # so A and B copies of a UMI share a name. Those tables are already in
+  # graph order.
+  if (length(layout_names) == length(node_names) &&
+      (identical(layout_names, node_names) || identical(layout_names, stripped))) {
+    return(.drop_row_ids(layout))
   }
 
   if (anyDuplicated(layout_names)) {
-    cli::cli_abort(
-      c("x" = "Node names in the '{layout_name}' layout must be unique."),
-      call = call
-    )
+    keep <- !duplicated(layout_names)
+    layout <- layout[keep, , drop = FALSE]
+    layout_names <- layout_names[keep]
   }
+
   layout_keys <- node_names
   missing_nodes <- setdiff(node_names, layout_names)
   if (length(missing_nodes) > 0) {
-    stripped <- .strip_bipartite_node_suffix(node_names)
     if (all(stripped %in% layout_names)) {
       layout_keys <- stripped
     } else {
