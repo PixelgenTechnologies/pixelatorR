@@ -60,6 +60,18 @@ test_that("CellGraphList keeps NULL placeholders for unloaded graphs", {
   expect_null(combined[["unloaded"]])
 })
 
+test_that("CellGraphList [<- stores a bare CellGraph", {
+  replaced <- cgl
+  expect_no_warning(replaced[1] <- cg_small)
+  expect_s4_class(replaced[[1]], "CellGraph")
+  expect_s3_class(replaced, "CellGraphList")
+  expect_equal(length(replaced), length(cgl))
+
+  from_list <- cgl
+  expect_no_warning(from_list[1] <- cgl[1])
+  expect_s4_class(from_list[[1]], "CellGraph")
+})
+
 test_that("CellGraphList subset errors on unknown or missing names", {
   expect_error(cgl["not_a_cell"], "Unknown name")
   expect_error(cgl[c(names(cgl)[1], "not_a_cell")], "Unknown name")
