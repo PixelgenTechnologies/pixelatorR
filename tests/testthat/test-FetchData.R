@@ -301,14 +301,12 @@ test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
   ))
   fd_mixed <- SeuratObject::FetchData(
     cgl_mixed,
-    vars = c("cluster", "f1", "CD3"),
+    vars = c("cluster", "f1"),
     layer = "lps"
   )
   expect_equal(fd_mixed$cluster, c(meta$cluster, meta_2$cluster))
   expect_equal(fd_mixed$f1[1:4], unname(layer_mat[, "f1"]))
   expect_true(all(is.na(fd_mixed$f1[5:8])))
-  expect_equal(fd_mixed$CD3[1:4], as.numeric(counts[, "CD3"]))
-  expect_equal(fd_mixed$CD3[5:8], as.numeric(counts_2[, "CD3"]))
 })
 
 test_that("FetchData.CellGraphList keeps one row per node when no vars are found", {

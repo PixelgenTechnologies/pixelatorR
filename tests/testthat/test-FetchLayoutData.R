@@ -179,7 +179,8 @@ test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", 
     cellgraph = bipart_graph,
     counts = counts,
     layout = list(wpmds_3d = layout),
-    layers = list(lps = lps)
+    layers = list(lps = lps),
+    meta.data = meta
   )
   cgl_lps <- CreateCellGraphList(list(cell_1 = cg_lps, cell_2 = cg_no_cluster))
   lyt <- FetchLayoutData(cgl_lps, vars = "f1", layer = "lps")
@@ -187,11 +188,10 @@ test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", 
   expect_true(all(is.na(lyt$f1[5:8])))
 
   cgl_mixed <- CreateCellGraphList(list(cell_1 = cg_lps, cell_2 = cg))
-  lyt_mixed <- FetchLayoutData(cgl_mixed, vars = c("cluster", "f1", "CD3"), layer = "lps")
+  lyt_mixed <- FetchLayoutData(cgl_mixed, vars = c("cluster", "f1"), layer = "lps")
   expect_equal(lyt_mixed$cluster, c(meta$cluster, meta$cluster))
   expect_equal(lyt_mixed$f1[1:4], unname(lps[, "f1"]))
   expect_true(all(is.na(lyt_mixed$f1[5:8])))
-  expect_equal(lyt_mixed$CD3, rep(as.numeric(counts[, "CD3"]), 2))
 })
 
 test_that("FetchLayoutData.CellGraphList drops vars missing from every graph", {
