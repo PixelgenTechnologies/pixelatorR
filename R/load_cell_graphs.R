@@ -562,10 +562,10 @@ LoadCellGraphs.PNAAssay <- function(
       # Fill marker counts slot list with the loaded marker counts
       cg_list <- pblapply(names(cg_list), function(nm) {
         cg <- cg_list[[nm]]
-        counts <- marker_counts_list[[nm]]
-        counts <- counts[match(cg@cellgraph %N>% pull(name), rownames(counts)), ]
-        rownames(counts) <- NULL
-        cg@counts <- counts
+        cg@counts <- .align_counts(
+          marker_counts_list[[nm]],
+          node_names = cg@cellgraph %N>% pull(name)
+        )
         return(cg)
       }) %>%
         set_names(nm = names(cg_list))

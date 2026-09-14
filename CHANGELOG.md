@@ -54,6 +54,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 
 - `subset.CellGraph` and `KeepLargestComponent.CellGraph` accept a single node.
+- `LoadCellGraphs` on a PNA assay aligns marker counts with the same helper as
+  the constructors. A single-marker count matrix previously dropped to a
+  vector, losing the marker name and the matrix shape.
 - `FetchData.CellGraph` keeps non-syntactic column names such as `HLA-DR`.
 - `CellGraphList` replacement and concatenation keep `NULL` placeholders for
   unloaded graphs (`x[[i]] <- NULL` unloads without dropping the name).

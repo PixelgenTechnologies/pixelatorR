@@ -135,6 +135,16 @@ test_that("CreateCellGraphObject aligns shuffled counts by node name", {
   })
 })
 
+test_that("CreateCellGraphObject keeps a single-marker counts matrix", {
+  counts <- make_counts()[, "m1", drop = FALSE]
+  cg <- CreateCellGraphObject(cellgraph = bipart_graph, counts = counts[rev(node_names), , drop = FALSE])
+  expect_s4_class(cg@counts, "dgCMatrix")
+  expect_equal(dim(cg@counts), c(n_nodes, 1L))
+  expect_equal(colnames(cg@counts), "m1")
+  expect_null(rownames(cg@counts))
+  expect_equal(as.numeric(cg@counts[, 1]), as.numeric(counts[node_names, 1]))
+})
+
 test_that("CreateCellGraphObject aligns layouts with a name column", {
   layout <- tibble::tibble(
     name = rev(node_names),
