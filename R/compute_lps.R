@@ -14,9 +14,10 @@ NULL
 #' @param markers A character vector specifying the markers to use. If
 #' \code{NULL}, all markers in the count matrix of each \code{CellGraph}
 #' are used. Methods that iterate over multiple \code{CellGraph} objects
-#' keep the intersection with available markers. If none of the requested
-#' markers are present in a graph, a warning is emitted and that graph is
-#' left unmodified.
+#' keep the intersection with available markers. If a graph has no counts
+#' or none of the requested markers, a warning is emitted and that graph is
+#' left unmodified. The single-graph method still errors when counts are
+#' missing.
 #' @param method A character string specifying the method to use for
 #' computing the local proximity score. Options are \code{"analytical"}
 #' or \code{"permutation"}.
@@ -310,22 +311,29 @@ ComputeLPS.Seurat <- function(
   graph_id = NULL,
   ...
 ) {
-  if (!is.null(markers)) {
-    counts <- slot(object, "counts")
-    available <- if (is.null(counts)) character(0) else colnames(counts)
-    keep <- intersect(markers, available)
-    if (length(keep) == 0) {
-      graph_label <- graph_id %||% "CellGraph"
+  counts <- slot(object, "counts")
+  available <- if (is.null(counts)) character(0) else colnames(counts)
+  keep <- if (is.null(markers)) available else intersect(markers, available)
+  if (length(keep) == 0) {
+    graph_label <- graph_id %||% "CellGraph"
+    if (is.null(markers) || is.null(counts)) {
+      cli::cli_warn(
+        c(
+          "!" = "{.val {graph_label}} has no counts. Cannot compute local proximity scores.",
+          "i" = "Returning the {.cls CellGraph} unmodified."
+        )
+      )
+    } else {
       cli::cli_warn(
         c(
           "!" = "None of the requested markers are present in {.val {graph_label}}.",
           "i" = "Returning the {.cls CellGraph} unmodified."
         )
       )
-      return(object)
     }
-    markers <- keep
+    return(object)
   }
+  markers <- keep
 
   ComputeLPS(
     object,

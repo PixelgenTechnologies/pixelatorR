@@ -90,9 +90,10 @@ ComputeLPS(object, ...)
 \item{markers}{A character vector specifying the markers to use. If
 \code{NULL}, all markers in the count matrix of each \code{CellGraph}
 are used. Methods that iterate over multiple \code{CellGraph} objects
-keep the intersection with available markers. If none of the requested
-markers are present in a graph, a warning is emitted and that graph is
-left unmodified.}
+keep the intersection with available markers. If a graph has no counts
+or none of the requested markers, a warning is emitted and that graph is
+left unmodified. The single-graph method still errors when counts are
+missing.}
 
 \item{method}{A character string specifying the method to use for
 computing the local proximity score. Options are \code{"analytical"}

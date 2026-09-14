@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- `ComputeLPS()` on a `CellGraphList` or assay now warns and leaves a graph
+  unmodified when it has no counts, including the default `markers = NULL`
+  path. Previously only an explicit `markers` vector was intersected first,
+  so a missing count matrix aborted the whole batch.
+
 - `assert_col_class()` now checks the column named by its `x` argument. Since
   `pull()` evaluates its selection with the column names of the data in scope,
   the check was previously applied to a column literally named `x` whenever the

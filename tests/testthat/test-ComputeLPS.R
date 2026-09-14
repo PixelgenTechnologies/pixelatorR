@@ -120,6 +120,22 @@ test_that("ComputeLPS.CellGraphList warns when all markers are missing", {
   expect_false("lps" %in% setdiff(Layers(cgl_skip[[1]]), "counts"))
 })
 
+test_that("ComputeLPS.CellGraphList skips graphs without counts when markers is NULL", {
+  cg_no_counts <- CreateCellGraphObject(
+    cellgraph = CellGraphData(cg_small, slot = "cellgraph")
+  )
+  cgl_mixed <- CreateCellGraphList(list(
+    with_counts = cg_small,
+    no_counts = cg_no_counts
+  ))
+  expect_warning(
+    cgl_lps <- ComputeLPS(cgl_mixed, verbose = FALSE)
+  )
+  expect_true("lps" %in% Layers(cgl_lps[["with_counts"]]))
+  expect_false("lps" %in% setdiff(Layers(cgl_lps[["no_counts"]]), "counts"))
+  expect_null(CellGraphData(cgl_lps[["no_counts"]], slot = "counts"))
+})
+
 test_that("ComputeLPS.PNAAssay and Seurat only process loaded cellgraphs", {
   se_one <- se
   cgs <- lapply(CellGraphs(se_one), function(x) NULL)
