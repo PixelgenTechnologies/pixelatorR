@@ -418,6 +418,28 @@ test_that("FetchData.CellGraphList keeps classed columns missing from a graph", 
   expect_s3_class(fd$day, "Date")
   expect_true(all(is.na(fd$day[1:4])))
   expect_equal(fd$day[5:8], as.Date("2020-01-01") + 0:3)
+
+  cg_factor_a <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = counts,
+    meta.data = data.frame(
+      grp = factor(c("a", "a", "b", "b"), levels = c("a", "b")),
+      row.names = node_names
+    )
+  )
+  cg_factor_c <- CreateCellGraphObject(
+    cellgraph = bipart_graph_2,
+    counts = counts_2,
+    meta.data = data.frame(
+      grp = factor(c("c", "c", "d", "d"), levels = c("c", "d")),
+      row.names = node_names_2
+    )
+  )
+  cgl_levels <- CreateCellGraphList(list(cell_1 = cg_factor_a, cell_2 = cg_factor_c))
+  fd_levels <- SeuratObject::FetchData(cgl_levels, vars = "grp", clean = FALSE)
+  expect_s3_class(fd_levels$grp, "factor")
+  expect_equal(levels(fd_levels$grp), c("a", "b", "c", "d"))
+  expect_equal(as.character(fd_levels$grp), c("a", "a", "b", "b", "c", "c", "d", "d"))
 })
 
 test_that("FetchData.CellGraphList validates loaded CellGraphs", {

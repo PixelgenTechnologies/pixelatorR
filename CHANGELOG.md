@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FetchData.CellGraphList` always returns one row per node when no
   requested variables are present (including `vars = NULL`), so an
   empty bind no longer fails on a zero-column data frame.
+- `FetchData.CellGraphList` keeps factor columns when graphs use
+  different levels. Fill values still take the class from graphs that
+  had the variable, and factor levels are unioned so `rbind` does not
+  coerce the column to character.
 
 - `FetchData()` and `FetchLayoutData()` on a `CellGraphList` no longer
   abort when a requested `layer` is missing from some graphs. Only
