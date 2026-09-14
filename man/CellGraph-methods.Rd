@@ -153,8 +153,9 @@ is reserved for the source graph ID. Node IDs are used as row names and
 must be unique across the graphs being combined. Variables missing from a
 graph are filled with \code{NA}. Variables missing from every graph are
 omitted, with the same warning as \code{FetchData.CellGraph}. Graphs that
-do not have a requested \code{layer} are treated the same way. \code{clean}
-defaults to \code{FALSE} so those missing values are kept.
+do not have a requested \code{layer} omit only features from that layer;
+metadata, vertex attributes, reductions, and other layer values are kept.
+\code{clean} defaults to \code{FALSE} so those missing values are kept.
 \code{add_protein = TRUE} adds a \code{protein} column from the one-hot
 counts matrix of each graph.
 

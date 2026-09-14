@@ -590,6 +590,8 @@ FetchData.CellGraph <- function(
 ) {
   .validate_cellgraph_data_names(object)
   assert_single_value(add_protein, type = "bool")
+  missing_layer <- list(...)$missing_layer %||% "error"
+  missing_layer <- rlang::arg_match0(missing_layer, values = c("error", "omit"))
   node_names <- .cg_node_map(object)
 
   if (isTRUE(clean)) {
@@ -678,7 +680,18 @@ FetchData.CellGraph <- function(
       layer <- if ("counts" %in% available_layers) "counts" else available_layers[[1]]
     }
     assert_single_value(layer, type = "string")
-    if (!layer %in% available_layers) {
+    if (layer %in% available_layers) {
+      data_fetched <- .add_fetched_cols(
+        data_fetched,
+        .fetch_layer_vars(object, layer, remaining, cells)
+      )
+      remaining <- setdiff(vars, names(data_fetched))
+      other_layers <- setdiff(available_layers, layer)
+    } else if (identical(missing_layer, "omit")) {
+      # List FetchData / FetchLayoutData skip a missing requested layer
+      # without dropping metadata, reductions, or other layer values.
+      other_layers <- available_layers
+    } else {
       cli::cli_abort(
         c(
           "x" = "Unknown layer {.val {layer}}.",
@@ -686,12 +699,7 @@ FetchData.CellGraph <- function(
         )
       )
     }
-    data_fetched <- .add_fetched_cols(
-      data_fetched,
-      .fetch_layer_vars(object, layer, remaining, cells)
-    )
     remaining <- setdiff(vars, names(data_fetched))
-    other_layers <- setdiff(available_layers, layer)
     if (length(remaining) > 0 && length(other_layers) > 0) {
       data_fetched <- .add_fetched_cols(
         data_fetched,
@@ -699,12 +707,14 @@ FetchData.CellGraph <- function(
       )
     }
   } else if (!is.null(layer) && length(available_layers) == 0) {
-    cli::cli_abort(
-      c(
-        "x" = "Unknown layer {.val {layer}}.",
-        "i" = "This {.cls CellGraph} has no layers."
+    if (!identical(missing_layer, "omit")) {
+      cli::cli_abort(
+        c(
+          "x" = "Unknown layer {.val {layer}}.",
+          "i" = "This {.cls CellGraph} has no layers."
+        )
       )
-    )
+    }
   }
 
   vars_missing <- setdiff(vars, names(data_fetched))

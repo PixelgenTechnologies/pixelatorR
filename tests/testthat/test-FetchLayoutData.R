@@ -185,6 +185,13 @@ test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", 
   lyt <- FetchLayoutData(cgl_lps, vars = "f1", layer = "lps")
   expect_equal(lyt$f1[1:4], unname(lps[, "f1"]))
   expect_true(all(is.na(lyt$f1[5:8])))
+
+  cgl_mixed <- CreateCellGraphList(list(cell_1 = cg_lps, cell_2 = cg))
+  lyt_mixed <- FetchLayoutData(cgl_mixed, vars = c("cluster", "f1", "CD3"), layer = "lps")
+  expect_equal(lyt_mixed$cluster, c(meta$cluster, meta$cluster))
+  expect_equal(lyt_mixed$f1[1:4], unname(lps[, "f1"]))
+  expect_true(all(is.na(lyt_mixed$f1[5:8])))
+  expect_equal(lyt_mixed$CD3, rep(as.numeric(counts[, "CD3"]), 2))
 })
 
 test_that("FetchLayoutData.CellGraphList drops vars missing from every graph", {
