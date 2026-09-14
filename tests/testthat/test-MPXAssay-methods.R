@@ -17,6 +17,10 @@ for (assay_version in c("v3", "v5")) {
     cg_list <- cg_assay@cellgraphs
     expect_equal(cg_list %>% length(), 5)
     CellGraphs(cg_assay) <- NULL
+    cgs <- CellGraphs(cg_assay)
+    cgs[[1]] <- NULL
+    expect_no_error(CellGraphs(cg_assay) <- cgs)
+    expect_null(CellGraphs(cg_assay)[[1]])
   })
 
   test_that("CellGraphs.MPXAssay getter/setter fails when invalid input is provided", {

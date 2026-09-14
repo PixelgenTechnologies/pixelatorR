@@ -18,6 +18,10 @@ for (assay_version in c("v3", "v5")) {
     cg_list <- pna_assay@cellgraphs
     expect_equal(cg_list %>% length(), 5)
     CellGraphs(pna_assay) <- NULL
+    cgs <- CellGraphs(pna_assay)
+    cgs[[1]] <- NULL
+    expect_no_error(CellGraphs(pna_assay) <- cgs)
+    expect_null(CellGraphs(pna_assay)[[1]])
   })
 
   test_that("CellGraphs.PNAAssay getter/setter fails when invalid input is provided", {

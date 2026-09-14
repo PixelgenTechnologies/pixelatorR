@@ -25,6 +25,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   uses the same helper, so reloading a written PXL keeps distinct A/B
   coordinates instead of collapsing both partitions onto the first UMI match.
 
+- `CellGraphs<-` on MPX and PNA assays accepts `NULL` placeholders
+  with `is.null()`, matching `CreateCellGraphList`. Checking
+  `inherits(NULL, "NULL")` is not portable across R versions.
+
 - `FetchData.CellGraphList` always returns one row per node when no
   requested variables are present (including `vars = NULL`), so an
   empty bind no longer fails on a zero-column data frame.

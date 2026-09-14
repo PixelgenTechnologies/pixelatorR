@@ -403,6 +403,22 @@ FetchData.CellGraphList <- function(
   frames
 }
 
+#' Test whether an object is a CellGraph or an unloaded placeholder
+#'
+#' \code{inherits(NULL, "NULL")} is not portable across R versions, so
+#' unloaded graphs are detected with \code{is.null()}.
+#'
+#' @param x A candidate list element
+#'
+#' @return \code{TRUE} if \code{x} is \code{NULL} or a \code{CellGraph}
+#'
+#' @keywords internal
+#' @noRd
+#'
+.is_cellgraph_or_null <- function(x) {
+  is.null(x) || inherits(x, "CellGraph")
+}
+
 #' Validate a list of CellGraph objects
 #'
 #' Ensures every element is a \code{CellGraph} or \code{NULL}, and that
@@ -422,9 +438,7 @@ FetchData.CellGraphList <- function(
   if (length(cellgraphs) == 0) {
     return(invisible(NULL))
   }
-  is_ok <- vapply(cellgraphs, function(x) {
-    is.null(x) || inherits(x, "CellGraph")
-  }, logical(1))
+  is_ok <- vapply(cellgraphs, .is_cellgraph_or_null, logical(1))
   if (!all(is_ok)) {
     cli::cli_abort(
       c("x" = "All elements of {.arg cellgraphs} must be {.cls CellGraph} objects or {.cls NULL}."),
