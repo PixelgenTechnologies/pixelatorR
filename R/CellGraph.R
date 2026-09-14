@@ -1310,8 +1310,9 @@ subset.CellGraph <- function(
 #' Align a numeric node matrix used as a layer
 #'
 #' Coerces data frames to matrices, requires numeric values, and matches
-#' rows to graph node names. Used for extra \code{layers} on a
-#' \code{CellGraph}.
+#' rows to graph node names. Automatic data-frame row names (\code{"1"},
+#' \code{"2"}, ...) are ignored, matching layouts and \code{meta.data};
+#' explicit row names or a matching row count are used instead.
 #'
 #' @param mat A matrix, \code{Matrix}, or data frame
 #' @param node_names Character vector of graph node names
@@ -1325,7 +1326,9 @@ subset.CellGraph <- function(
 #'
 .align_node_matrix <- function(mat, node_names, arg = "layer", call = caller_env()) {
   if (inherits(mat, "data.frame")) {
+    row_ids <- .explicit_rownames(mat)
     mat <- as.matrix(mat)
+    rownames(mat) <- row_ids
   }
   if (!(is.matrix(mat) || inherits(mat, "Matrix"))) {
     cli::cli_abort(

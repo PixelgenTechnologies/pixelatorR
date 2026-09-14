@@ -306,6 +306,20 @@ test_that("LayerData and AddMetaData work on CellGraph objects", {
   expect_equal(names(cg@reductions), "umap")
 })
 
+test_that("layers from unnamed data.frames align by row order", {
+  layer_df <- data.frame(f1 = seq_len(n_nodes), f2 = seq_len(n_nodes) + 10)
+  expect_lt(.row_names_info(layer_df), 0L)
+  cg <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    layers = list(data = layer_df)
+  )
+  expect_equal(as.numeric(cg@layers$data[, "f1"]), seq_len(n_nodes))
+  expect_null(rownames(cg@layers$data))
+
+  SeuratObject::LayerData(cg, layer = "scaled") <- data.frame(z = seq_len(n_nodes) * 2)
+  expect_equal(as.vector(SeuratObject::LayerData(cg, layer = "scaled")), seq_len(n_nodes) * 2)
+})
+
 test_that("AddMetaData annotates a subset of nodes", {
   cg <- CreateCellGraphObject(cellgraph = bipart_graph)
 
