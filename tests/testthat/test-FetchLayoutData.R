@@ -140,6 +140,7 @@ test_that("FetchLayoutData.CellGraph fails with invalid input", {
   expect_error(FetchLayoutData(cg, layout_method = "missing_layout"))
   expect_error(FetchLayoutData(cg, vars = "protein"))
   expect_error(FetchLayoutData(cg, vars = "x"))
+  expect_error(FetchLayoutData(cg, vars = "CD3", layer = "missing_layer"))
   cg_no_layout <- CreateCellGraphObject(cellgraph = bipart_graph, counts = counts)
   expect_error(FetchLayoutData(cg_no_layout))
   cg_2d <- CreateCellGraphObject(
@@ -165,6 +166,25 @@ test_that("FetchLayoutData.CellGraphList works as expected", {
   expect_no_error(lyt_one <- FetchLayoutData(cgl, cells = "cell_2", vars = "CD3"))
   expect_equal(unique(lyt_one$component), "cell_2")
   expect_equal(nrow(lyt_one), 4)
+})
+
+test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", {
+  lps <- matrix(
+    seq_len(4),
+    nrow = 4,
+    ncol = 1,
+    dimnames = list(node_names, "f1")
+  )
+  cg_lps <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = counts,
+    layout = list(wpmds_3d = layout),
+    layers = list(lps = lps)
+  )
+  cgl_lps <- CreateCellGraphList(list(cell_1 = cg_lps, cell_2 = cg_no_cluster))
+  lyt <- FetchLayoutData(cgl_lps, vars = "f1", layer = "lps")
+  expect_equal(lyt$f1[1:4], unname(lps[, "f1"]))
+  expect_true(all(is.na(lyt$f1[5:8])))
 })
 
 test_that("FetchLayoutData.CellGraphList drops vars missing from every graph", {

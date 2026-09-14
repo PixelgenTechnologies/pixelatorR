@@ -312,7 +312,8 @@ FetchLayoutData.Seurat <- function(
     vars = vars,
     cells = node_names,
     layer = layer,
-    fill_missing = FALSE
+    fill_missing = FALSE,
+    missing_layer = if (isTRUE(warn_missing)) "error" else "omit"
   )
   if (isTRUE(warn_missing)) {
     .warn_unfound_fetch_vars(vars, names(fetched))
@@ -371,6 +372,9 @@ FetchLayoutData.Seurat <- function(
 #' @param fill_missing If \code{TRUE}, add a \code{NA} column for each
 #' requested variable that was not found. If \code{FALSE}, omit those
 #' columns so the caller can warn once after combining graphs.
+#' @param missing_layer What to do when \code{layer} is not present on this
+#' graph. \code{"error"} aborts. \code{"omit"} treats the requested
+#' variables as missing so a list method can continue with the other graphs.
 #' @param call Environment to report as the error caller
 #'
 #' @return A data frame with rows \code{cells} and columns for the
@@ -386,12 +390,14 @@ FetchLayoutData.Seurat <- function(
   cells,
   layer,
   fill_missing = TRUE,
+  missing_layer = "error",
   call = caller_env()
 ) {
   fetched <- data.frame(row.names = cells, stringsAsFactors = FALSE, check.names = FALSE)
   if (is.null(vars) || length(vars) == 0) {
     return(fetched)
   }
+  missing_layer <- rlang::arg_match0(missing_layer, values = c("error", "omit"))
 
   fetched_data <- tryCatch(
     withCallingHandlers(
@@ -412,6 +418,9 @@ FetchLayoutData.Seurat <- function(
     error = function(e) {
       msg <- conditionMessage(e)
       if (grepl("Unknown layer|has no layers", msg)) {
+        if (identical(missing_layer, "omit")) {
+          return(data.frame(row.names = cells, stringsAsFactors = FALSE, check.names = FALSE))
+        }
         cli::cli_abort(c("x" = "{msg}"), call = call)
       }
       if (grepl("None of the requested variables|None of the requested nodes", msg)) {

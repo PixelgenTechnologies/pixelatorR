@@ -134,6 +134,8 @@ print.CellGraphList <- function(x, ...) {
 `[<-.CellGraphList` <- function(x, i, value) {
   if (inherits(value, "CellGraphList")) {
     value <- as.list.CellGraphList(value)
+  } else if (inherits(value, "CellGraph")) {
+    value <- list(value)
   }
   x <- unclass(x)
   if (is.null(value)) {
@@ -225,7 +227,8 @@ as.list.CellGraphList <- function(x, ...) {
 #' is reserved for the source graph ID. Node IDs are used as row names and
 #' must be unique across the graphs being combined. Variables missing from a
 #' graph are filled with \code{NA}. Variables missing from every graph are
-#' omitted, with the same warning as \code{FetchData.CellGraph}. \code{clean}
+#' omitted, with the same warning as \code{FetchData.CellGraph}. Graphs that
+#' do not have a requested \code{layer} are treated the same way. \code{clean}
 #' defaults to \code{FALSE} so those missing values are kept.
 #' \code{add_protein = TRUE} adds a \code{protein} column from the one-hot
 #' counts matrix of each graph.
@@ -278,7 +281,8 @@ FetchData.CellGraphList <- function(
       vars = vars,
       cells = node_ids,
       layer = layer,
-      fill_missing = FALSE
+      fill_missing = FALSE,
+      missing_layer = "omit"
     )
     row_ids <- rownames(df)
     if (is.null(row_ids) || length(row_ids) != nrow(df)) {

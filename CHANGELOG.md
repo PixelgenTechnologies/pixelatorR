@@ -18,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- `FetchData()` and `FetchLayoutData()` on a `CellGraphList` no longer
+  abort when a requested `layer` is missing from some graphs. Those
+  graphs are treated as missing the variables, matching the skip path
+  after `ComputeLPS()` leaves a graph without an `lps` layer.
+- `[<-.CellGraphList` wraps a bare `CellGraph` in a list so
+  `cgl[1] <- cg` stores the graph without relying on deprecated S4
+  list embedding.
+
 - `FetchData(..., clean = TRUE)` only inspects requested `vars` when
   deciding which nodes to drop. A `protein` column from `add_protein`
   no longer keeps rows whose requested variables are all `NA`.

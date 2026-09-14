@@ -250,6 +250,33 @@ test_that("FetchData.CellGraphList works as expected", {
   expect_error(SeuratObject::FetchData(cgl, vars = "component"), "cannot include")
 })
 
+test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
+  node_names_2 <- paste0("m", 1:4)
+  bipart_graph_2 <- tidygraph::tbl_graph(
+    nodes = data.frame(
+      name = node_names_2,
+      node_type = c("umi1", "umi1", "umi2", "umi2"),
+      stringsAsFactors = FALSE
+    ),
+    edges = data.frame(from = c(1L, 2L, 3L), to = c(2L, 3L, 4L))
+  )
+  attr(bipart_graph_2, "type") <- "bipartite"
+  counts_2 <- counts
+  dimnames(counts_2) <- list(node_names_2, colnames(counts))
+  cgl_lps <- CreateCellGraphList(list(
+    cell_1 = CreateCellGraphObject(
+      cellgraph = bipart_graph,
+      counts = counts,
+      layers = list(lps = layer_mat)
+    ),
+    cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = counts_2)
+  ))
+  fd <- SeuratObject::FetchData(cgl_lps, vars = "f1", layer = "lps")
+  expect_equal(colnames(fd), c("component", "f1"))
+  expect_equal(fd$f1[1:4], unname(layer_mat[, "f1"]))
+  expect_true(all(is.na(fd$f1[5:8])))
+})
+
 test_that("FetchData.CellGraphList binds graphs with unique node IDs", {
   node_names_2 <- paste0("m", 1:4)
   bipart_graph_2 <- tidygraph::tbl_graph(
