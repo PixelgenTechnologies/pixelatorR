@@ -224,9 +224,11 @@ as.list.CellGraphList <- function(x, ...) {
 #' \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 #' is reserved for the source graph ID. Node IDs are used as row names and
 #' must be unique across the graphs being combined. Variables missing from a
-#' graph are filled with \code{NA}. \code{clean} defaults to \code{FALSE} so
-#' those missing values are kept. \code{add_protein = TRUE} adds a
-#' \code{protein} column from the one-hot counts matrix of each graph.
+#' graph are filled with \code{NA}. Variables missing from every graph are
+#' omitted, with the same warning as \code{FetchData.CellGraph}. \code{clean}
+#' defaults to \code{FALSE} so those missing values are kept.
+#' \code{add_protein = TRUE} adds a \code{protein} column from the one-hot
+#' counts matrix of each graph.
 #' @method FetchData CellGraphList
 #' @export
 #'
@@ -268,34 +270,55 @@ FetchData.CellGraphList <- function(
   }
   clean <- rlang::arg_match0(clean, values = c("all", "none"))
 
-  frames <- .match_fill_classes(lapply(cells, function(nm) {
+  pieces <- lapply(cells, function(nm) {
     cg <- object[[nm]]
     node_ids <- .cg_node_map(cg)
     df <- .fetch_layout_vars(
       object = cg,
       vars = vars,
       cells = node_ids,
-      layer = layer
+      layer = layer,
+      fill_missing = FALSE
     )
     row_ids <- rownames(df)
     if (is.null(row_ids) || length(row_ids) != nrow(df)) {
       row_ids <- node_ids
     }
+    list(nm = nm, df = df, row_ids = row_ids, node_ids = node_ids, cg = cg)
+  })
+  found <- unique(unlist(lapply(pieces, function(p) names(p$df)), use.names = FALSE))
+  .warn_unfound_fetch_vars(vars, found)
+  keep_vars <- if (is.null(vars) || length(vars) == 0) {
+    found
+  } else {
+    intersect(vars, found)
+  }
+
+  frames <- .match_fill_classes(lapply(pieces, function(p) {
+    df <- p$df
+    for (v in keep_vars) {
+      if (!v %in% names(df)) {
+        df[[v]] <- NA
+      }
+    }
+    if (length(keep_vars) > 0) {
+      df <- df[, keep_vars, drop = FALSE]
+    }
     if (isTRUE(add_protein)) {
       df <- data.frame(
-        protein = .node_protein_labels(cg, nodes = node_ids),
+        protein = .node_protein_labels(p$cg, nodes = p$node_ids),
         df,
         stringsAsFactors = FALSE,
         check.names = FALSE,
-        row.names = row_ids
+        row.names = p$row_ids
       )
     }
     data.frame(
-      component = nm,
+      component = p$nm,
       df,
       stringsAsFactors = FALSE,
       check.names = FALSE,
-      row.names = row_ids
+      row.names = p$row_ids
     )
   }))
   if (length(frames) > 1) {

@@ -149,9 +149,11 @@ does not reserve coordinate names, so \code{vars} may include \code{x},
 \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 is reserved for the source graph ID. Node IDs are used as row names and
 must be unique across the graphs being combined. Variables missing from a
-graph are filled with \code{NA}. \code{clean} defaults to \code{FALSE} so
-those missing values are kept. \code{add_protein = TRUE} adds a
-\code{protein} column from the one-hot counts matrix of each graph.
+graph are filled with \code{NA}. Variables missing from every graph are
+omitted, with the same warning as \code{FetchData.CellGraph}. \code{clean}
+defaults to \code{FALSE} so those missing values are kept.
+\code{add_protein = TRUE} adds a \code{protein} column from the one-hot
+counts matrix of each graph.
 
 }}
 \examples{

@@ -191,10 +191,19 @@ test_that("FetchData.CellGraphList works as expected", {
   expect_equal(nrow(fd_one), 4)
   expect_equal(rownames(fd_one), node_names)
 
-  fd_xyz <- SeuratObject::FetchData(cgl, vars = c("x", "CD3"), cells = "cell_1", clean = FALSE)
-  expect_equal(colnames(fd_xyz), c("component", "x", "CD3"))
-  expect_true(all(is.na(fd_xyz$x)))
+  expect_warning(
+    fd_xyz <- SeuratObject::FetchData(cgl, vars = c("x", "CD3"), cells = "cell_1", clean = FALSE),
+    "The following requested variables were not found"
+  )
+  expect_equal(colnames(fd_xyz), c("component", "CD3"))
   expect_equal(fd_xyz$CD3, as.numeric(counts[, "CD3"]))
+
+  expect_warning(
+    fd_invalid <- SeuratObject::FetchData(cgl, vars = c("CD3", "Invalid"), cells = "cell_1"),
+    "The following requested variables were not found"
+  )
+  expect_equal(colnames(fd_invalid), c("component", "CD3"))
+  expect_false("Invalid" %in% colnames(fd_invalid))
 
   fd_hyphen <- SeuratObject::FetchData(cgl, vars = "HLA-DR", cells = "cell_1")
   expect_equal(colnames(fd_hyphen), c("component", "HLA-DR"))
