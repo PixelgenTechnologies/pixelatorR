@@ -41,25 +41,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `FetchData()` for `CellGraph` and `CellGraphList` accepts
-  `add_protein = TRUE` to add a `protein` column from the one-hot node
-  counts matrix, matching `FetchLayoutData()`.
-
-- `FetchData.CellGraphList` returns a base `data.frame` with node IDs as
-  row names instead of a tibble. Combining graphs with duplicated node IDs
-  aborts.
-- `CellGraph` stores a central `nodes` ID vector and keeps counts, layouts,
-  layers, metadata, and reductions in that order without copying node IDs as
-  row names. `LayerData()`, `Embeddings()`, and `FetchData()` still label rows
-  for the caller, and `CellGraphData(cg, slot = "nodes")` returns the IDs.
-- `CellGraph` now uses an `initialize()` method instead of a `setClass()`
-  prototype for default slot values.
-- `NodeDimReduc` now uses an `initialize()` method instead of a `setClass()`
-  prototype for default slot values.
-- `CellGraph` constructors and setters reject node-level variable name
-  collisions between the graph node table, `meta.data`, reductions, and
-  matrix features. Counts and layers may still share feature names because
-  callers can select a specific layer.
 - `CellGraph` objects serialized before the extra slots existed are not
   upgraded. Using one aborts with a message naming the missing slots, the
   version that wrote it, and a `pixelatorR` version that still reads it.
