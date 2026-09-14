@@ -299,31 +299,26 @@ FetchData.CellGraphList <- function(
   }
 
   frames <- .match_fill_classes(lapply(pieces, function(p) {
-    df <- p$df
+    n <- length(p$node_ids)
+    df <- data.frame(
+      component = rep_len(p$nm, n),
+      stringsAsFactors = FALSE,
+      check.names = FALSE,
+      row.names = p$node_ids
+    )
+    if (isTRUE(add_protein)) {
+      df$protein <- .node_protein_labels(p$cg, nodes = p$node_ids)
+    }
+    fetched <- p$df
+    src_ids <- p$row_ids
     for (v in keep_vars) {
-      if (!v %in% names(df)) {
+      if (v %in% names(fetched) && nrow(fetched) > 0) {
+        df[[v]] <- fetched[[v]][match(p$node_ids, src_ids)]
+      } else {
         df[[v]] <- NA
       }
     }
-    if (length(keep_vars) > 0) {
-      df <- df[, keep_vars, drop = FALSE]
-    }
-    if (isTRUE(add_protein)) {
-      df <- data.frame(
-        protein = .node_protein_labels(p$cg, nodes = p$node_ids),
-        df,
-        stringsAsFactors = FALSE,
-        check.names = FALSE,
-        row.names = p$row_ids
-      )
-    }
-    data.frame(
-      component = p$nm,
-      df,
-      stringsAsFactors = FALSE,
-      check.names = FALSE,
-      row.names = p$row_ids
-    )
+    df
   }))
   if (length(frames) > 1) {
     all_ids <- unlist(lapply(frames, rownames), use.names = FALSE)

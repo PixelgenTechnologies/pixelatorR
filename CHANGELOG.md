@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- `FetchData.CellGraphList` always returns one row per node when no
+  requested variables are present (including `vars = NULL`), so an
+  empty bind no longer fails on a zero-column data frame.
+
 - `FetchData()` and `FetchLayoutData()` on a `CellGraphList` no longer
   abort when a requested `layer` is missing from some graphs. Those
   graphs are treated as missing the variables, matching the skip path
