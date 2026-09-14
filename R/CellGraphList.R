@@ -339,7 +339,11 @@ FetchData.CellGraphList <- function(
     fetched <- data.frame(component = character(), stringsAsFactors = FALSE)
   }
 
-  value_cols <- setdiff(names(fetched), "component")
+  skip_clean <- "component"
+  if (isTRUE(add_protein)) {
+    skip_clean <- c(skip_clean, "protein")
+  }
+  value_cols <- setdiff(names(fetched), skip_clean)
   if (identical(clean, "all") && length(value_cols) > 0 && nrow(fetched) > 0) {
     no_data <- which(apply(fetched[value_cols], 1L, function(x) all(is.na(x))))
     if (length(no_data) > 0) {

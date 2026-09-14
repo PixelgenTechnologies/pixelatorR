@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- `FetchData(..., clean = TRUE)` only inspects requested `vars` when
+  deciding which nodes to drop. A `protein` column from `add_protein`
+  no longer keeps rows whose requested variables are all `NA`.
+
 - `.assert_current_cellgraph()` detects missing slots from the object's
   own attributes, not `slotNames()`, so a `CellGraph` serialized before
   `nodes`, `layers`, `meta.data`, and `reductions` existed still gets the
