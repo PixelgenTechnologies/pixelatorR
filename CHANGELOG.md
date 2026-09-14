@@ -21,12 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FetchLayoutData()` now omits variables that are missing from every
   `CellGraph` and warns with the same message as `FetchData()`. Variables
   present on some graphs and missing on others are still filled with `NA`.
-
 - `ComputeLPS()` on a `CellGraphList` or assay now warns and leaves a graph
   unmodified when it has no counts, including the default `markers = NULL`
   path. Previously only an explicit `markers` vector was intersected first,
   so a missing count matrix aborted the whole batch.
-
 - `assert_col_class()` now checks the column named by its `x` argument. Since
   `pull()` evaluates its selection with the column names of the data in scope,
   the check was previously applied to a column literally named `x` whenever the
@@ -51,24 +49,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `LoadCellGraphs` on a PNA assay aligns marker counts with the same helper as
   the constructors. A single-marker count matrix previously dropped to a
   vector, losing the marker name and the matrix shape.
-- Layer tables supplied as unnamed `data.frame`s align by row order, matching
-  layouts and `meta.data`. Automatic `"1"`, `"2"`, ... row names are not
-  treated as node IDs.
-- `FetchData.CellGraph` keeps non-syntactic column names such as `HLA-DR`.
-- `CellGraphList` replacement and concatenation keep `NULL` placeholders for
-  unloaded graphs (`x[[i]] <- NULL` unloads without dropping the name).
-- `[.CellGraphList` errors on unknown names instead of crashing on `NA` names.
-- `c.CellGraphList` names a bare `CellGraph` from the argument name, or
-  `CellGraph1`, `CellGraph2`, ... when unnamed.
-- `FetchLayoutData` keeps factor (and other classed) metadata columns.
-- `FetchData.CellGraphList` keeps factor, `Date`, and other classed columns
-  when a graph is missing the variable. The `NA` fill now takes the class
-  used by the graphs that had it instead of coercing the bound column.
-- `AddMetaData` on a `CellGraph` accepts metadata for a subset of the nodes.
-  Nodes without a value get `NA` and names that are not graph nodes are
-  dropped, matching `SeuratObject::AddMetaData`.
-- Graphs missing the `name` or `node_type` vertex attribute report that
-  instead of failing inside `cli` with a missing-argument error.
 - Layout tables without row names get node IDs on subset so
   `WriteMPX_pxl_file()` can restore the `name` column.
 - Layout alignment strips MPX bipartite `-A`/`-B` node suffixes so
