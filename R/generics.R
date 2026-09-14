@@ -252,8 +252,9 @@ ComputeLayout <- function(
 #' @rdname FetchLayoutData
 #'
 #' @return A \code{tbl_df} with columns \code{x}, \code{y}, \code{z} and any
-#' requested \code{vars}. Methods that extract from multiple components also
-#' include a \code{component} column.
+#' requested \code{vars}. \code{add_protein = TRUE} also adds a \code{protein}
+#' column with the marker label of each node. Methods that extract from
+#' multiple components also include a \code{component} column.
 #'
 #' @export
 #'

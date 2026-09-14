@@ -81,8 +81,59 @@ test_that("FetchLayoutData.CellGraph keeps non-syntactic marker names", {
   expect_equal(lyt[["HLA-DR"]], as.numeric(counts[, "HLA-DR"]))
 })
 
+test_that("FetchLayoutData.CellGraph can add protein labels from one-hot counts", {
+  one_hot <- Matrix::sparseMatrix(
+    i = seq_len(4),
+    j = c(1L, 3L, 2L, 4L),
+    x = 1,
+    dims = c(4, 4),
+    dimnames = list(node_names, c("CD3", "CD4", "CD8", "HLA-DR"))
+  )
+  one_hot <- as(one_hot, "dgCMatrix")
+  cg_one_hot <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = one_hot,
+    layout = list(wpmds_3d = layout)
+  )
+
+  lyt <- FetchLayoutData(cg_one_hot, add_protein = TRUE)
+  expect_equal(colnames(lyt), c("x", "y", "z", "protein"))
+  expect_equal(lyt$protein, c("CD3", "CD8", "CD4", "HLA-DR"))
+
+  lyt_vars <- FetchLayoutData(cg_one_hot, vars = "node_type", add_protein = TRUE)
+  expect_equal(colnames(lyt_vars), c("x", "y", "z", "protein", "node_type"))
+
+  cg_empty <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    layout = list(wpmds_3d = layout)
+  )
+  lyt_empty <- FetchLayoutData(cg_empty, add_protein = TRUE)
+  expect_true(all(is.na(lyt_empty$protein)))
+})
+
+test_that("FetchLayoutData.CellGraphList forwards add_protein", {
+  one_hot <- Matrix::sparseMatrix(
+    i = seq_len(4),
+    j = c(1L, 1L, 2L, 2L),
+    x = 1,
+    dims = c(4, 4),
+    dimnames = list(node_names, c("CD3", "CD4", "CD8", "HLA-DR"))
+  )
+  one_hot <- as(one_hot, "dgCMatrix")
+  cg_one_hot <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = one_hot,
+    layout = list(wpmds_3d = layout)
+  )
+  cgl_one_hot <- CreateCellGraphList(list(cell_1 = cg_one_hot, cell_2 = cg_one_hot))
+  lyt <- FetchLayoutData(cgl_one_hot, add_protein = TRUE)
+  expect_equal(colnames(lyt), c("component", "x", "y", "z", "protein"))
+  expect_equal(lyt$protein, rep(c("CD3", "CD3", "CD4", "CD4"), 2))
+})
+
 test_that("FetchLayoutData.CellGraph fails with invalid input", {
   expect_error(FetchLayoutData(cg, layout_method = "missing_layout"))
+  expect_error(FetchLayoutData(cg, vars = "protein"))
   expect_error(FetchLayoutData(cg, vars = "x"))
   cg_no_layout <- CreateCellGraphObject(cellgraph = bipart_graph, counts = counts)
   expect_error(FetchLayoutData(cg_no_layout))
@@ -133,6 +184,12 @@ test_that("FetchLayoutData.PNAAssay and Seurat methods work as expected", {
   expect_equal(unique(lyt_assay$component), cells[1])
   expect_false(any(is.na(lyt_assay$x)))
   expect_false(any(is.na(lyt_assay$B2M)))
+
+  expect_no_error(lyt_protein <- FetchLayoutData(se[["PNA"]], cells = cells[1], add_protein = TRUE))
+  expect_true("protein" %in% colnames(lyt_protein))
+  expect_equal(nrow(lyt_protein), nrow(lyt_assay))
+  expect_true(is.character(lyt_protein$protein))
+  expect_gt(length(unique(lyt_protein$protein)), 1)
 
   expect_no_error(lyt_seurat <- FetchLayoutData(se, cells = cells, vars = "B2M"))
   expect_equal(sort(unique(lyt_seurat$component)), sort(cells))

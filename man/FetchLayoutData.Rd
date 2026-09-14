@@ -16,6 +16,7 @@ FetchLayoutData(object, ...)
   object,
   layout_method = "wpmds_3d",
   vars = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 )
@@ -25,6 +26,7 @@ FetchLayoutData(object, ...)
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 )
@@ -34,6 +36,7 @@ FetchLayoutData(object, ...)
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 )
@@ -43,6 +46,7 @@ FetchLayoutData(object, ...)
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 )
@@ -53,6 +57,7 @@ FetchLayoutData(object, ...)
   vars = NULL,
   cells = NULL,
   assay = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 )
@@ -72,6 +77,11 @@ and \code{z} coordinates.}
 vertex attributes, or reduction embeddings). Missing values are filled with
 \code{NA} rather than raising an error.}
 
+\item{add_protein}{If \code{TRUE}, add a \code{protein} column with the
+marker label of each node. Labels are read from the one-hot counts matrix
+using its sparse structure (the non-zero column name per row). Nodes with
+no count are \code{NA}.}
+
 \item{layer}{Name of a node matrix layer passed to
 \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
 layer selection as \code{FetchData.CellGraph}.}
@@ -84,13 +94,15 @@ when they are included in \code{cells}.}
 }
 \value{
 A \code{tbl_df} with columns \code{x}, \code{y}, \code{z} and any
-requested \code{vars}. Methods that extract from multiple components also
-include a \code{component} column.
+requested \code{vars}. \code{add_protein = TRUE} also adds a \code{protein}
+column with the marker label of each node. Methods that extract from
+multiple components also include a \code{component} column.
 }
 \description{
 Fetches a stored 3D layout from \code{\link{CellGraph}} objects and
 optionally joins node-level variables retrieved with
-\code{\link[SeuratObject]{FetchData}}.
+\code{\link[SeuratObject]{FetchData}}. Set \code{add_protein = TRUE} to
+include the protein label of each node from the one-hot counts matrix.
 }
 \examples{
 library(pixelatorR)
@@ -104,6 +116,9 @@ layout <- FetchLayoutData(cg)
 
 # Include marker counts
 layout <- FetchLayoutData(cg, vars = "B2M")
+
+# Include protein labels from the one-hot counts matrix
+layout <- FetchLayoutData(cg, add_protein = TRUE)
 
 # Combine layouts from a CellGraphList
 cgl <- CellGraphs(se)

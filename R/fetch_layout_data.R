@@ -9,6 +9,10 @@ NULL
 #' \code{\link[SeuratObject]{FetchData}} (markers, metadata columns, graph
 #' vertex attributes, or reduction embeddings). Missing values are filled with
 #' \code{NA} rather than raising an error.
+#' @param add_protein If \code{TRUE}, add a \code{protein} column with the
+#' marker label of each node. Labels are read from the one-hot counts matrix
+#' using its sparse structure (the non-zero column name per row). Nodes with
+#' no count are \code{NA}.
 #' @param layer Name of a node matrix layer passed to
 #' \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
 #' layer selection as \code{FetchData.CellGraph}.
@@ -29,23 +33,28 @@ NULL
 #' # Include marker counts
 #' layout <- FetchLayoutData(cg, vars = "B2M")
 #'
+#' # Include protein labels from the one-hot counts matrix
+#' layout <- FetchLayoutData(cg, add_protein = TRUE)
+#'
 #' @export
 #'
 FetchLayoutData.CellGraph <- function(
   object,
   layout_method = "wpmds_3d",
   vars = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 ) {
   assert_single_value(layout_method, type = "string")
   assert_vector(vars, type = "character", n = 1, allow_null = TRUE)
+  assert_single_value(add_protein, type = "bool")
   assert_single_value(layer, type = "string", allow_null = TRUE)
   .assert_current_cellgraph(object)
 
   if (!is.null(vars)) {
     vars <- as.character(vars)
-    reserved <- intersect(vars, c("x", "y", "z", "component"))
+    reserved <- intersect(vars, c("x", "y", "z", "component", "protein"))
     if (length(reserved) > 0) {
       cli::cli_abort(
         c("x" = "{.arg vars} cannot include reserved column name{?s} {.val {reserved}}.")
@@ -64,6 +73,9 @@ FetchLayoutData.CellGraph <- function(
   )
 
   coords <- as_tibble(layout[, c("x", "y", "z"), drop = FALSE])
+  if (isTRUE(add_protein)) {
+    coords$protein <- .node_protein_labels(object, nodes = node_names)
+  }
   dplyr::bind_cols(coords, as_tibble(fetched, .name_repair = "minimal"))
 }
 
@@ -86,6 +98,7 @@ FetchLayoutData.CellGraphList <- function(
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 ) {
@@ -96,6 +109,7 @@ FetchLayoutData.CellGraphList <- function(
       object[[nm]],
       layout_method = layout_method,
       vars = vars,
+      add_protein = add_protein,
       layer = layer,
       ...
     ) %>%
@@ -117,6 +131,7 @@ FetchLayoutData.PNAAssay <- function(
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 ) {
@@ -125,6 +140,7 @@ FetchLayoutData.PNAAssay <- function(
     layout_method = layout_method,
     vars = vars,
     cells = cells,
+    add_protein = add_protein,
     layer = layer,
     ...
   )
@@ -154,6 +170,7 @@ FetchLayoutData.Seurat <- function(
   vars = NULL,
   cells = NULL,
   assay = NULL,
+  add_protein = FALSE,
   layer = NULL,
   ...
 ) {
@@ -166,6 +183,7 @@ FetchLayoutData.Seurat <- function(
     layout_method = layout_method,
     vars = vars,
     cells = cells,
+    add_protein = add_protein,
     layer = layer,
     ...
   )
@@ -221,6 +239,50 @@ FetchLayoutData.Seurat <- function(
     )
   }
   layout
+}
+
+#' Protein labels from a one-hot node counts matrix
+#'
+#' Each node has a single protein. The counts matrix is one-hot encoded, so
+#' the label is the column name of the non-zero entry in that row. The
+#' compressed sparse column index is used so the dense matrix is never
+#' materialized.
+#'
+#' @param object A \code{CellGraph}
+#' @param nodes Node names to return labels for, in that order
+#' @param call Environment to report as the error caller
+#'
+#' @return A character vector of protein names, with \code{NA} for nodes
+#' that have no count
+#'
+#' @keywords internal
+#' @noRd
+#'
+.node_protein_labels <- function(object, nodes, call = caller_env()) {
+  node_map <- .cg_node_map(object)
+  labels <- rep(NA_character_, length(nodes))
+  counts <- slot(object, "counts")
+  if (is.null(counts) || nrow(counts) == 0L || ncol(counts) == 0L) {
+    return(labels)
+  }
+  if (!inherits(counts, "dgCMatrix")) {
+    counts <- as(counts, "dgCMatrix")
+  }
+  if (length(counts@i) == 0L) {
+    return(labels)
+  }
+  proteins <- colnames(counts)
+  if (is.null(proteins)) {
+    cli::cli_abort(
+      c("x" = "The counts matrix has no column names to use as protein labels."),
+      call = call
+    )
+  }
+  row_idx <- counts@i + 1L
+  col_idx <- rep.int(seq_len(ncol(counts)), diff(counts@p))
+  all_labels <- rep(NA_character_, nrow(counts))
+  all_labels[row_idx] <- proteins[col_idx]
+  all_labels[.row_index(nodes, node_map)]
 }
 
 #' Fetch vars for layout rows, filling missing values with NA

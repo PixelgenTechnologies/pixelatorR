@@ -99,7 +99,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PNAAssay`, `PNAAssay5`, and `Seurat` (loaded cell graphs only).
 - `FetchLayoutData` to extract a stored 3D layout (`x`, `y`, `z`) from
   `CellGraph` objects, optionally joined with node-level variables from
-  `FetchData`. Methods are provided for `CellGraph`, `CellGraphList`,
+  `FetchData`. `add_protein = TRUE` adds a `protein` column from the one-hot
+  node counts matrix. Methods are provided for `CellGraph`, `CellGraphList`,
   `PNAAssay`, `PNAAssay5`, and `Seurat`. Missing `vars` are filled with `NA`.
 - `CellGraphList`, a named list of `CellGraph` objects (subsetting,
   concatenation, and replacement type-check elements; unloaded graphs may be
