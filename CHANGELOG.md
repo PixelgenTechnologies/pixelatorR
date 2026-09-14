@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- `.assert_current_cellgraph()` detects missing slots from the object's
+  own attributes, not `slotNames()`, so a `CellGraph` serialized before
+  `nodes`, `layers`, `meta.data`, and `reductions` existed still gets the
+  named upgrade message.
+
 - `FetchLayoutData()` and `FetchData.CellGraphList` omit variables that
   are missing from every `CellGraph` and warn with the same message as
   `FetchData.CellGraph`. Variables present on some graphs and missing on
