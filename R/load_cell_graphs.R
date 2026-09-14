@@ -384,19 +384,15 @@ LoadCellGraphs.MPXAssay <- function(
       cg@layout <- list()
       graph_node_names <- cg@cellgraph %N>% pull(name)
       for (layout_type in all_layout_types) {
-        # Layout tables identify nodes without the A/B suffix used in the graph
-        if (attr(cg@cellgraph, "type") == "bipartite") {
-          node_names <- .strip_bipartite_node_suffix(graph_node_names)
-        } else {
-          node_names <- graph_node_names
-        }
-        # Rearrange layout node coordinates to match CellGraph node order
         coords <- precomputed_layouts_merged[[layout_type]][[nm]]
-        coords <- coords[match(node_names, coords$name), ] %>%
-          select(-all_of("name")) %>%
-          as.data.frame()
-        rownames(coords) <- NULL
-        cg@layout[[layout_type]] <- coords
+        # Align by node name. Native MPX bipartite tables store one row per UMI
+        # (A/B share coordinates). WriteMPX_pxl_file stores one row per graph
+        # node, so duplicate stripped names keep distinct A/B coordinates.
+        cg@layout[[layout_type]] <- .align_layout(
+          layout = coords,
+          node_names = graph_node_names,
+          layout_name = layout_type
+        )
       }
       return(cg)
     }) %>%

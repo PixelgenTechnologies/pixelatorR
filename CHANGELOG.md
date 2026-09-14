@@ -21,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Layout alignment accepts bipartite tables whose `name` values repeat
   after `-A`/`-B` suffixes are stripped, as written by
   `WriteMPX_pxl_file()`. Rows already in graph order are kept; other
-  duplicates reuse the first row per name, matching `LoadCellGraphs`.
+  duplicates reuse the first row per name. `LoadCellGraphs(..., add_layouts = TRUE)`
+  uses the same helper, so reloading a written PXL keeps distinct A/B
+  coordinates instead of collapsing both partitions onto the first UMI match.
 
 - `FetchData.CellGraphList` always returns one row per node when no
   requested variables are present (including `vars = NULL`), so an

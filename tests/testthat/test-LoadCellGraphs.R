@@ -69,6 +69,17 @@ for (assay_version in c("v3", "v5")) {
       seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@cellgraph %>% pull(name)
     )
     expect_lt(.row_names_info(layouts[[1]]), 0L)
+    # WriteMPX stores one layout row per graph node. Reloading must keep
+    # distinct A/B coordinates instead of collapsing both onto the first UMI hit.
+    node_names <- CellGraphData(seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]], slot = "nodes")
+    stripped <- sub("-[AB]$", "", node_names)
+    dup_umi <- names(which(table(stripped) == 2L))[1]
+    dup_idx <- which(stripped == dup_umi)
+    expect_equal(length(dup_idx), 2L)
+    expect_false(isTRUE(all.equal(
+      layouts[[1]][dup_idx[1], , drop = FALSE],
+      layouts[[1]][dup_idx[2], , drop = FALSE]
+    )))
     expect_equal(
       layouts[[1]] %>% head() %>% tibble::as_tibble(),
       structure(
