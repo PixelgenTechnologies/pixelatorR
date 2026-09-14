@@ -222,9 +222,10 @@ as.list.CellGraphList <- function(x, ...) {
 #' \code{\link{FetchLayoutData}}, this does not require a stored layout and
 #' does not reserve coordinate names, so \code{vars} may include \code{x},
 #' \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
-#' is reserved for the source graph ID. Variables missing from a graph are
-#' filled with \code{NA}. \code{clean} defaults to \code{FALSE} so those
-#' missing values are kept.
+#' is reserved for the source graph ID. Node IDs are used as row names and
+#' must be unique across the graphs being combined. Variables missing from a
+#' graph are filled with \code{NA}. \code{clean} defaults to \code{FALSE} so
+#' those missing values are kept.
 #' @method FetchData CellGraphList
 #' @export
 #'
@@ -256,7 +257,7 @@ FetchData.CellGraphList <- function(
   }
   clean <- rlang::arg_match0(clean, values = c("all", "none"))
 
-  fetched <- do.call(rbind, .match_fill_classes(lapply(cells, function(nm) {
+  frames <- .match_fill_classes(lapply(cells, function(nm) {
     cg <- object[[nm]]
     node_ids <- .cg_node_map(cg)
     df <- .fetch_layout_vars(
@@ -274,9 +275,23 @@ FetchData.CellGraphList <- function(
       df,
       stringsAsFactors = FALSE,
       check.names = FALSE,
-      row.names = paste(nm, row_ids, sep = ":")
+      row.names = row_ids
     )
-  })))
+  }))
+  if (length(frames) > 1) {
+    all_ids <- unlist(lapply(frames, rownames), use.names = FALSE)
+    dup <- unique(all_ids[duplicated(all_ids)])
+    if (length(dup) > 0) {
+      cli::cli_abort(
+        c(
+          "x" = "Node IDs are duplicated across {.cls CellGraph} objects.",
+          "i" = "Example: {.val {head(dup, 3)}}",
+          "i" = "Each node ID can appear in only one component when combining with {.fn FetchData}."
+        )
+      )
+    }
+  }
+  fetched <- do.call(rbind, frames)
   if (is.null(fetched)) {
     fetched <- data.frame(component = character(), stringsAsFactors = FALSE)
   }

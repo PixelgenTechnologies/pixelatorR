@@ -115,52 +115,94 @@ cg_no_cluster <- CreateCellGraphObject(
 cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg_no_cluster))
 
 test_that("FetchData.CellGraphList works as expected", {
-  expect_no_error(fd <- SeuratObject::FetchData(cgl, vars = c("CD3", "cluster", "node_type")))
-  expect_s3_class(fd, "data.frame")
-  expect_false(inherits(fd, "tbl_df"))
-  expect_equal(colnames(fd), c("component", "CD3", "cluster", "node_type"))
-  expect_equal(nrow(fd), 8)
-  expect_equal(rownames(fd), paste(rep(c("cell_1", "cell_2"), each = 4), node_names, sep = ":"))
-  expect_equal(unique(fd$component), c("cell_1", "cell_2"))
-  expect_equal(fd$CD3, rep(as.numeric(counts[, "CD3"]), 2))
-  expect_equal(fd$cluster[1:4], meta$cluster)
-  expect_true(all(is.na(fd$cluster[5:8])))
-  expect_equal(fd$node_type, rep(c("umi1", "umi1", "umi2", "umi2"), 2))
+  expect_error(
+    SeuratObject::FetchData(cgl, vars = c("CD3", "cluster", "node_type")),
+    "duplicated"
+  )
 
   fd_one <- SeuratObject::FetchData(cgl, vars = "CD3", cells = "cell_2")
+  expect_s3_class(fd_one, "data.frame")
+  expect_false(inherits(fd_one, "tbl_df"))
   expect_equal(unique(fd_one$component), "cell_2")
   expect_equal(nrow(fd_one), 4)
+  expect_equal(rownames(fd_one), node_names)
 
-  fd_xyz <- SeuratObject::FetchData(cgl, vars = c("x", "CD3"), clean = FALSE)
+  fd_xyz <- SeuratObject::FetchData(cgl, vars = c("x", "CD3"), cells = "cell_1", clean = FALSE)
   expect_equal(colnames(fd_xyz), c("component", "x", "CD3"))
   expect_true(all(is.na(fd_xyz$x)))
-  expect_equal(fd_xyz$CD3, rep(as.numeric(counts[, "CD3"]), 2))
+  expect_equal(fd_xyz$CD3, as.numeric(counts[, "CD3"]))
 
-  fd_hyphen <- SeuratObject::FetchData(cgl, vars = "HLA-DR")
+  fd_hyphen <- SeuratObject::FetchData(cgl, vars = "HLA-DR", cells = "cell_1")
   expect_equal(colnames(fd_hyphen), c("component", "HLA-DR"))
 
   expect_error(SeuratObject::FetchData(cgl, vars = "component"), "cannot include")
+})
 
-  fd_cluster <- SeuratObject::FetchData(cgl, vars = "cluster")
-  expect_equal(nrow(fd_cluster), 8)
-  expect_equal(unique(fd_cluster$component), c("cell_1", "cell_2"))
-  expect_true(all(is.na(fd_cluster$cluster[5:8])))
+test_that("FetchData.CellGraphList binds graphs with unique node IDs", {
+  node_names_2 <- paste0("m", 1:4)
+  bipart_graph_2 <- tidygraph::tbl_graph(
+    nodes = data.frame(
+      name = node_names_2,
+      node_type = c("umi1", "umi1", "umi2", "umi2"),
+      stringsAsFactors = FALSE
+    ),
+    edges = data.frame(from = c(1L, 2L, 3L), to = c(2L, 3L, 4L))
+  )
+  attr(bipart_graph_2, "type") <- "bipartite"
+  counts_2 <- counts
+  dimnames(counts_2) <- list(node_names_2, colnames(counts))
+  meta_2 <- data.frame(
+    cluster = c("c", "c", "d", "d"),
+    row.names = node_names_2,
+    stringsAsFactors = FALSE
+  )
+  cg_2 <- CreateCellGraphObject(
+    cellgraph = bipart_graph_2,
+    counts = counts_2,
+    meta.data = meta_2
+  )
+  cgl_unique <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg_2))
 
+  fd <- SeuratObject::FetchData(cgl_unique, vars = c("CD3", "cluster", "node_type"))
+  expect_equal(colnames(fd), c("component", "CD3", "cluster", "node_type"))
+  expect_equal(nrow(fd), 8)
+  expect_equal(rownames(fd), c(node_names, node_names_2))
+  expect_equal(unique(fd$component), c("cell_1", "cell_2"))
+  expect_equal(fd$CD3, c(as.numeric(counts[, "CD3"]), as.numeric(counts_2[, "CD3"])))
+  expect_equal(fd$cluster, c(meta$cluster, meta_2$cluster))
+  expect_equal(fd$node_type, rep(c("umi1", "umi1", "umi2", "umi2"), 2))
+
+  cgl_missing <- CreateCellGraphList(list(
+    cell_1 = cg,
+    cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = counts_2)
+  ))
   expect_warning(
-    fd_clean <- SeuratObject::FetchData(cgl, vars = "cluster", clean = TRUE)
+    fd_clean <- SeuratObject::FetchData(cgl_missing, vars = "cluster", clean = TRUE)
   )
   expect_equal(unique(fd_clean$component), "cell_1")
   expect_equal(nrow(fd_clean), 4)
 })
 
 test_that("FetchData.CellGraphList keeps classed columns missing from a graph", {
+  node_names_2 <- paste0("m", 1:4)
+  bipart_graph_2 <- tidygraph::tbl_graph(
+    nodes = data.frame(
+      name = node_names_2,
+      node_type = c("umi1", "umi1", "umi2", "umi2"),
+      stringsAsFactors = FALSE
+    ),
+    edges = data.frame(from = c(1L, 2L, 3L), to = c(2L, 3L, 4L))
+  )
+  attr(bipart_graph_2, "type") <- "bipartite"
+  counts_2 <- counts
+  dimnames(counts_2) <- list(node_names_2, colnames(counts))
   cg_factor <- CreateCellGraphObject(
-    cellgraph = bipart_graph,
-    counts = counts,
+    cellgraph = bipart_graph_2,
+    counts = counts_2,
     meta.data = data.frame(
       grp = factor(c("a", "a", "b", "b"), levels = c("a", "b", "c")),
       day = as.Date("2020-01-01") + 0:3,
-      row.names = node_names
+      row.names = node_names_2
     )
   )
   # The graph without the variables comes first, so the NA fill would

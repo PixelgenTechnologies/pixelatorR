@@ -732,7 +732,8 @@ FetchData.CellGraph <- function(
 #' @return \code{FetchData.CellGraph}: a \code{data.frame} with nodes as rows
 #' and requested variables as columns. \code{FetchData.CellGraphList}: a
 #' \code{data.frame} with a \code{component} column identifying the source graph
-#' and the requested variables. Row names are \code{component:node}.
+#' and the requested variables. Row names are node IDs and must be unique
+#' across the combined graphs.
 #' \code{subset}: a \code{CellGraph} object containing only the specified nodes.
 #'
 #' @name CellGraph-methods

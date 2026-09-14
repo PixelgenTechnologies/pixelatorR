@@ -33,7 +33,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - `FetchData.CellGraphList` returns a base `data.frame` with node IDs as
-  row names instead of a tibble.
+  row names instead of a tibble. Combining graphs with duplicated node IDs
+  aborts.
 - `CellGraph` stores a central `nodes` ID vector and keeps counts, layouts,
   layers, metadata, and reductions in that order without copying node IDs as
   row names. `LayerData()`, `Embeddings()`, and `FetchData()` still label rows

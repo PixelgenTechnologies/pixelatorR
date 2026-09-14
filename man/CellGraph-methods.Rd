@@ -94,7 +94,8 @@ lack the requested variables still appear with \code{NA} values.}
 \code{FetchData.CellGraph}: a \code{data.frame} with nodes as rows
 and requested variables as columns. \code{FetchData.CellGraphList}: a
 \code{data.frame} with a \code{component} column identifying the source graph
-and the requested variables. Row names are \code{component:node}.
+and the requested variables. Row names are node IDs and must be unique
+across the combined graphs.
 \code{subset}: a \code{CellGraph} object containing only the specified nodes.
 }
 \description{
@@ -124,9 +125,10 @@ matrix to search.
 \code{\link{FetchLayoutData}}, this does not require a stored layout and
 does not reserve coordinate names, so \code{vars} may include \code{x},
 \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
-is reserved for the source graph ID. Variables missing from a graph are
-filled with \code{NA}. \code{clean} defaults to \code{FALSE} so those
-missing values are kept.
+is reserved for the source graph ID. Node IDs are used as row names and
+must be unique across the graphs being combined. Variables missing from a
+graph are filled with \code{NA}. \code{clean} defaults to \code{FALSE} so
+those missing values are kept.
 
 }}
 \examples{
