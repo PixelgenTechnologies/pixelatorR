@@ -12,9 +12,8 @@ NULL
 #' missing from every graph is omitted, with the same warning as
 #' \code{\link[SeuratObject]{FetchData}}.
 #' @param add_protein If \code{TRUE}, add a \code{protein} column with the
-#' marker label of each node. Labels are read from the one-hot counts matrix
-#' using its sparse structure (the non-zero column name per row). Nodes with
-#' no count are \code{NA}.
+#' marker label of each node. Labels are read from the protein counts matrix. 
+#' Nodes with no count are \code{NA}.
 #' @param layer Name of a node matrix layer passed to
 #' \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
 #' layer selection as \code{FetchData.CellGraph}.
@@ -35,7 +34,7 @@ NULL
 #' # Include marker counts
 #' layout <- FetchLayoutData(cg, vars = "B2M")
 #'
-#' # Include protein labels from the one-hot counts matrix
+#' # Include protein labels
 #' layout <- FetchLayoutData(cg, add_protein = TRUE)
 #'
 #' @export
@@ -222,7 +221,7 @@ FetchLayoutData.Seurat <- function(
   layout
 }
 
-#' Protein labels from a one-hot node counts matrix
+#' Protein labels from a one-hot encoded node counts matrix
 #'
 #' Each node has a single protein. The counts matrix is one-hot encoded, so
 #' the label is the column name of the non-zero entry in that row. The

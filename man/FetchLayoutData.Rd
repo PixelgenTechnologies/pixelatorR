@@ -80,9 +80,8 @@ missing from every graph is omitted, with the same warning as
 \code{\link[SeuratObject]{FetchData}}.}
 
 \item{add_protein}{If \code{TRUE}, add a \code{protein} column with the
-marker label of each node. Labels are read from the one-hot counts matrix
-using its sparse structure (the non-zero column name per row). Nodes with
-no count are \code{NA}.}
+marker label of each node. Labels are read from the protein counts matrix.
+Nodes with no count are \code{NA}.}
 
 \item{layer}{Name of a node matrix layer passed to
 \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
@@ -103,8 +102,7 @@ multiple components also include a \code{component} column.
 \description{
 Fetches a stored 3D layout from \code{\link{CellGraph}} objects and
 optionally joins node-level variables retrieved with
-\code{\link[SeuratObject]{FetchData}}. Set \code{add_protein = TRUE} to
-include the protein label of each node from the one-hot counts matrix.
+\code{\link[SeuratObject]{FetchData}}.
 }
 \examples{
 library(pixelatorR)
@@ -119,7 +117,7 @@ layout <- FetchLayoutData(cg)
 # Include marker counts
 layout <- FetchLayoutData(cg, vars = "B2M")
 
-# Include protein labels from the one-hot counts matrix
+# Include protein labels
 layout <- FetchLayoutData(cg, add_protein = TRUE)
 
 # Combine layouts from a CellGraphList
