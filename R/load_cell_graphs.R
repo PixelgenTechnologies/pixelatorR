@@ -1,6 +1,34 @@
 #' @include generics.R
 NULL
 
+#' Attach precomputed layout tables to a CellGraph
+#'
+#' Aligns each named layout with graph node order. Native MPX bipartite
+#' tables store one row per UMI (A/B share coordinates). Tables written by
+#' \code{\link{WriteMPX_pxl_file}} store one row per graph node, so duplicate
+#' stripped names keep distinct A/B coordinates.
+#'
+#' @param cg A \code{CellGraph} object
+#' @param layouts Named list of layout tables for this cell
+#'
+#' @return \code{cg} with \code{@layout} replaced
+#'
+#' @keywords internal
+#' @noRd
+#'
+.attach_precomputed_layouts <- function(cg, layouts) {
+  graph_node_names <- cg@cellgraph %N>% pull(name)
+  cg@layout <- list()
+  for (layout_type in names(layouts)) {
+    cg@layout[[layout_type]] <- .align_layout(
+      layout = layouts[[layout_type]],
+      node_names = graph_node_names,
+      layout_name = layout_type
+    )
+  }
+  cg
+}
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Load methods
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -380,21 +408,8 @@ LoadCellGraphs.MPXAssay <- function(
   # Add layouts to the list of cellgraphs if layouts were loaded
   if (add_layouts) {
     cg_list_full <- lapply(names(cg_list_full), function(nm) {
-      cg <- cg_list_full[[nm]]
-      cg@layout <- list()
-      graph_node_names <- cg@cellgraph %N>% pull(name)
-      for (layout_type in all_layout_types) {
-        coords <- precomputed_layouts_merged[[layout_type]][[nm]]
-        # Align by node name. Native MPX bipartite tables store one row per UMI
-        # (A/B share coordinates). WriteMPX_pxl_file stores one row per graph
-        # node, so duplicate stripped names keep distinct A/B coordinates.
-        cg@layout[[layout_type]] <- .align_layout(
-          layout = coords,
-          node_names = graph_node_names,
-          layout_name = layout_type
-        )
-      }
-      return(cg)
+      layouts <- lapply(precomputed_layouts_merged[all_layout_types], function(ly) ly[[nm]])
+      .attach_precomputed_layouts(cg_list_full[[nm]], layouts)
     }) %>%
       set_names(nm = names(cg_list_full))
   }
