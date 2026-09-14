@@ -151,7 +151,7 @@ print.CellGraphList <- function(x, ...) {
 #' @export
 #'
 `[[<-.CellGraphList` <- function(x, i, value) {
-  if (!(is.null(value) || inherits(value, "CellGraph"))) {
+  if (!.is_cellgraph_or_null(value)) {
     cli::cli_abort(
       c("x" = "Replacement values must be {.cls CellGraph} objects or {.cls NULL}.")
     )
