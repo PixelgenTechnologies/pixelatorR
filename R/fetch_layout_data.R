@@ -16,7 +16,9 @@ NULL
 #' Nodes with no count are \code{NA}.
 #' @param layer Name of a node matrix layer passed to
 #' \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
-#' layer selection as \code{FetchData.CellGraph}.
+#' layer selection as \code{FetchData.CellGraph}. On a \code{CellGraphList},
+#' a missing layer omits only that layer's features; other requested
+#' variables are still returned.
 #'
 #' @rdname FetchLayoutData
 #' @method FetchLayoutData CellGraph
@@ -406,7 +408,8 @@ FetchLayoutData.Seurat <- function(
         vars = vars,
         cells = cells,
         layer = layer,
-        clean = FALSE
+        clean = FALSE,
+        missing_layer = missing_layer
       ),
       warning = function(w) {
         msg <- conditionMessage(w)

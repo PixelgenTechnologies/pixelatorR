@@ -30,9 +30,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   empty bind no longer fails on a zero-column data frame.
 
 - `FetchData()` and `FetchLayoutData()` on a `CellGraphList` no longer
-  abort when a requested `layer` is missing from some graphs. Those
-  graphs are treated as missing the variables, matching the skip path
-  after `ComputeLPS()` leaves a graph without an `lps` layer.
+  abort when a requested `layer` is missing from some graphs. Only
+  features from that layer are treated as missing; metadata, vertex
+  attributes, reductions, and values from other layers are kept. This
+  matches the skip path after `ComputeLPS()` leaves a graph without
+  an `lps` layer.
 - `[<-.CellGraphList` wraps a bare `CellGraph` in a list so
   `cgl[1] <- cg` stores the graph without relying on deprecated S4
   list embedding.
