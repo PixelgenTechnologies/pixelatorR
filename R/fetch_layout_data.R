@@ -12,7 +12,7 @@ NULL
 #' missing from every graph is omitted, with the same warning as
 #' \code{\link[SeuratObject]{FetchData}}.
 #' @param add_protein If \code{TRUE}, add a \code{protein} column with the
-#' marker label of each node. Labels are read from the protein counts matrix. 
+#' marker label of each node. Labels are read from the protein counts matrix.
 #' Nodes with no count are \code{NA}.
 #' @param layer Name of a node matrix layer passed to
 #' \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
