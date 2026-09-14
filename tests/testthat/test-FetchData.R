@@ -277,6 +277,36 @@ test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
   expect_true(all(is.na(fd$f1[5:8])))
 })
 
+test_that("FetchData.CellGraphList keeps one row per node when no vars are found", {
+  node_names_2 <- paste0("m", 1:4)
+  bipart_graph_2 <- tidygraph::tbl_graph(
+    nodes = data.frame(
+      name = node_names_2,
+      node_type = c("umi1", "umi1", "umi2", "umi2"),
+      stringsAsFactors = FALSE
+    ),
+    edges = data.frame(from = c(1L, 2L, 3L), to = c(2L, 3L, 4L))
+  )
+  attr(bipart_graph_2, "type") <- "bipartite"
+  cgl_unique <- CreateCellGraphList(list(
+    cell_1 = cg,
+    cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2)
+  ))
+
+  expect_warning(
+    fd_missing <- SeuratObject::FetchData(cgl_unique, vars = "Invalid"),
+    "The following requested variables were not found"
+  )
+  expect_equal(colnames(fd_missing), "component")
+  expect_equal(nrow(fd_missing), 8)
+  expect_equal(rownames(fd_missing), c(node_names, node_names_2))
+  expect_equal(fd_missing$component, rep(c("cell_1", "cell_2"), each = 4))
+
+  fd_empty <- SeuratObject::FetchData(cgl_unique, vars = NULL)
+  expect_equal(colnames(fd_empty), "component")
+  expect_equal(nrow(fd_empty), 8)
+})
+
 test_that("FetchData.CellGraphList binds graphs with unique node IDs", {
   node_names_2 <- paste0("m", 1:4)
   bipart_graph_2 <- tidygraph::tbl_graph(
