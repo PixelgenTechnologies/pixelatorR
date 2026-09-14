@@ -8,6 +8,7 @@ CLR
 CMD
 CellGraph
 CellGraphAssay
+CellGraphList
 CellGraphs
 Colocalization
 ColocalizationScores
@@ -41,6 +42,7 @@ LCC
 LCCs
 LM
 LNE
+LPS
 Leijonancker
 LogNormalize
 MDS
@@ -51,6 +53,7 @@ Mulè
 NMF
 NNLS
 NaturalBlue
+NodeDimReduc
 NxD
 ORCID
 Ooijen
@@ -128,6 +131,7 @@ edgelists
 efe
 eigen
 eigensolver
+embeddings
 eq
 et
 extdata
@@ -176,6 +180,7 @@ pseudocolor
 pseudocount
 pxl
 reachability
+renderer
 renormalization
 residualization
 residualize
@@ -195,6 +200,7 @@ uei
 umi
 unmix
 unmixing
+unsuffixed
 upia
 upias
 upib

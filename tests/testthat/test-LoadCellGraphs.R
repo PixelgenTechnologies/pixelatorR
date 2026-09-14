@@ -65,7 +65,12 @@ for (assay_version in c("v3", "v5")) {
     layouts <- seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(2470, 3))
     expect_equal(
-      layouts[[1]] %>% head(),
+      CellGraphData(seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]], slot = "nodes"),
+      seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@cellgraph %>% pull(name)
+    )
+    expect_lt(.row_names_info(layouts[[1]]), 0L)
+    expect_equal(
+      layouts[[1]] %>% head() %>% tibble::as_tibble(),
       structure(
         list(
           x = c(
@@ -100,7 +105,12 @@ for (assay_version in c("v3", "v5")) {
     layouts <- seur_obj_pna[["PNA"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(43543, 3))
     expect_equal(
-      layouts[[1]] %>% head(),
+      CellGraphData(seur_obj_pna[["PNA"]]@cellgraphs[[1]], slot = "nodes"),
+      seur_obj_pna[["PNA"]]@cellgraphs[[1]]@cellgraph %>% pull(name)
+    )
+    expect_lt(.row_names_info(layouts[[1]]), 0L)
+    expect_equal(
+      layouts[[1]] %>% head() %>% tibble::as_tibble(),
       structure(
         list(
           x = c(
@@ -209,3 +219,37 @@ for (assay_version in c("v3", "v5")) {
     expect_error(LoadCellGraphs(seur_obj_mpx, cells = rep(colnames(seur_obj_mpx)[1], 2)))
   })
 }
+
+test_that(".attach_precomputed_layouts keeps distinct A/B coordinates", {
+  suffixed <- c("umi1-A", "umi1-B", "umi2-A", "umi2-B")
+  g <- tidygraph::tbl_graph(
+    nodes = data.frame(
+      name = suffixed,
+      node_type = c("A", "B", "A", "B"),
+      stringsAsFactors = FALSE
+    ),
+    edges = data.frame(from = c(1L, 3L), to = c(2L, 4L))
+  )
+  attr(g, "type") <- "bipartite"
+  cg <- CreateCellGraphObject(cellgraph = g)
+
+  # Native MPX: one row per UMI, A and B share coordinates
+  unique_umi <- data.frame(
+    name = c("umi2", "umi1"),
+    x = c(20, 10),
+    y = c(2, 1)
+  )
+  cg_unique <- pixelatorR:::.attach_precomputed_layouts(cg, list(pmds = unique_umi))
+  expect_equal(cg_unique@layout$pmds$x, c(10, 10, 20, 20))
+  expect_equal(cg_unique@layout$pmds$y, c(1, 1, 2, 2))
+
+  # WriteMPX: one row per graph node with stripped names, distinct A/B coords
+  written <- data.frame(
+    name = c("umi1", "umi1", "umi2", "umi2"),
+    x = c(10, 11, 20, 21),
+    y = c(1, 1.1, 2, 2.1)
+  )
+  cg_written <- pixelatorR:::.attach_precomputed_layouts(cg, list(pmds = written))
+  expect_equal(cg_written@layout$pmds$x, c(10, 11, 20, 21))
+  expect_equal(cg_written@layout$pmds$y, c(1, 1.1, 2, 2.1))
+})
