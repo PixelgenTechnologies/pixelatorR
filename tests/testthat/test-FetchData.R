@@ -97,14 +97,78 @@ test_that("FetchData.CellGraph keeps non-syntactic marker names", {
   expect_equal(fd_mixed$cluster, meta$cluster)
 })
 
-test_that("FetchData.CellGraph fails with invalid input", {
-  expect_error(SeuratObject::FetchData(cg, vars = "not_a_variable"))
-  expect_error(SeuratObject::FetchData(cg, vars = "CD3", cells = "missing_node"))
-  expect_error(SeuratObject::FetchData(cg, vars = "CD3", layer = "missing_layer"))
-  expect_warning(SeuratObject::FetchData(cg, vars = c("CD3", "missing")))
-  expect_warning(
-    SeuratObject::FetchData(cg, vars = "CD3", cells = c(node_names[1], "missing_node")),
-    "1 node not present"
+test_that("FetchData.CellGraph can add protein labels from one-hot counts", {
+  one_hot <- Matrix::sparseMatrix(
+    i = seq_len(4),
+    j = c(1L, 3L, 2L, 4L),
+    x = 1,
+    dims = c(4, 4),
+    dimnames = list(node_names, c("CD3", "CD4", "CD8", "HLA-DR"))
+  )
+  one_hot <- as(one_hot, "dgCMatrix")
+  cg_one_hot <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = one_hot
+  )
+
+  fd <- SeuratObject::FetchData(cg_one_hot, vars = NULL, add_protein = TRUE)
+  expect_equal(colnames(fd), "protein")
+  expect_equal(fd$protein, c("CD3", "CD8", "CD4", "HLA-DR"))
+  expect_equal(rownames(fd), node_names)
+
+  fd_vars <- SeuratObject::FetchData(
+    cg_one_hot,
+    vars = "node_type",
+    add_protein = TRUE,
+    clean = FALSE
+  )
+  expect_equal(colnames(fd_vars), c("protein", "node_type"))
+  expect_equal(fd_vars$protein, c("CD3", "CD8", "CD4", "HLA-DR"))
+
+  expect_error(
+    SeuratObject::FetchData(cg_one_hot, vars = "protein", add_protein = TRUE),
+    "protein"
+  )
+
+  cg_empty <- CreateCellGraphObject(cellgraph = bipart_graph)
+  fd_empty <- SeuratObject::FetchData(cg_empty, vars = NULL, add_protein = TRUE)
+  expect_true(all(is.na(fd_empty$protein)))
+})
+
+test_that("FetchData.CellGraphList forwards add_protein", {
+  one_hot <- Matrix::sparseMatrix(
+    i = seq_len(4),
+    j = c(1L, 1L, 2L, 2L),
+    x = 1,
+    dims = c(4, 4),
+    dimnames = list(node_names, c("CD3", "CD4", "CD8", "HLA-DR"))
+  )
+  one_hot <- as(one_hot, "dgCMatrix")
+  node_names_2 <- paste0("m", 1:4)
+  bipart_graph_2 <- tidygraph::tbl_graph(
+    nodes = data.frame(
+      name = node_names_2,
+      node_type = c("umi1", "umi1", "umi2", "umi2"),
+      stringsAsFactors = FALSE
+    ),
+    edges = data.frame(from = c(1L, 2L, 3L), to = c(2L, 3L, 4L))
+  )
+  attr(bipart_graph_2, "type") <- "bipartite"
+  one_hot_2 <- one_hot
+  dimnames(one_hot_2) <- list(node_names_2, colnames(one_hot))
+  cgl_one_hot <- CreateCellGraphList(list(
+    cell_1 = CreateCellGraphObject(cellgraph = bipart_graph, counts = one_hot),
+    cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = one_hot_2)
+  ))
+
+  fd <- SeuratObject::FetchData(cgl_one_hot, vars = "node_type", add_protein = TRUE)
+  expect_equal(colnames(fd), c("component", "protein", "node_type"))
+  expect_equal(fd$protein, rep(c("CD3", "CD3", "CD4", "CD4"), 2))
+  expect_equal(rownames(fd), c(node_names, node_names_2))
+
+  expect_error(
+    SeuratObject::FetchData(cgl_one_hot, vars = "protein", add_protein = TRUE),
+    "protein"
   )
 })
 

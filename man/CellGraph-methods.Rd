@@ -32,7 +32,15 @@
 
 \method{AddMetaData}{CellGraph}(object, metadata, col.name = NULL, ...)
 
-\method{FetchData}{CellGraph}(object, vars, cells = NULL, layer = NULL, clean = TRUE, ...)
+\method{FetchData}{CellGraph}(
+  object,
+  vars,
+  cells = NULL,
+  layer = NULL,
+  clean = TRUE,
+  add_protein = FALSE,
+  ...
+)
 
 \S4method{show}{CellGraph}(object)
 
@@ -42,7 +50,15 @@
 
 \method{subset}{CellGraph}(x, nodes, ...)
 
-\method{FetchData}{CellGraphList}(object, vars, cells = NULL, layer = NULL, clean = FALSE, ...)
+\method{FetchData}{CellGraphList}(
+  object,
+  vars,
+  cells = NULL,
+  layer = NULL,
+  clean = FALSE,
+  add_protein = FALSE,
+  ...
+)
 }
 \arguments{
 \item{object}{A \code{\link{CellGraph}} or \code{\link{CellGraphList}} object}
@@ -82,6 +98,11 @@ requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
 \code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
 lack the requested variables still appear with \code{NA} values.}
 
+\item{add_protein}{If \code{TRUE}, add a \code{protein} column with the
+marker label of each node from the one-hot counts matrix. Nodes with no
+count are \code{NA}. \code{vars} cannot include \code{protein} when this
+is \code{TRUE}.}
+
 \item{x}{A \code{\link{CellGraph}} object}
 
 \item{i}{Name of a stored reduction}
@@ -95,7 +116,8 @@ lack the requested variables still appear with \code{NA} values.}
 and requested variables as columns. \code{FetchData.CellGraphList}: a
 \code{data.frame} with a \code{component} column identifying the source graph
 and the requested variables. Row names are node IDs and must be unique
-across the combined graphs.
+across the combined graphs. \code{add_protein = TRUE} also adds a
+\code{protein} column with the marker label of each node.
 \code{subset}: a \code{CellGraph} object containing only the specified nodes.
 }
 \description{
@@ -128,7 +150,8 @@ does not reserve coordinate names, so \code{vars} may include \code{x},
 is reserved for the source graph ID. Node IDs are used as row names and
 must be unique across the graphs being combined. Variables missing from a
 graph are filled with \code{NA}. \code{clean} defaults to \code{FALSE} so
-those missing values are kept.
+those missing values are kept. \code{add_protein = TRUE} adds a
+\code{protein} column from the one-hot counts matrix of each graph.
 
 }}
 \examples{

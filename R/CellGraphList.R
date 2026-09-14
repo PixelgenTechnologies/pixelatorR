@@ -225,7 +225,8 @@ as.list.CellGraphList <- function(x, ...) {
 #' is reserved for the source graph ID. Node IDs are used as row names and
 #' must be unique across the graphs being combined. Variables missing from a
 #' graph are filled with \code{NA}. \code{clean} defaults to \code{FALSE} so
-#' those missing values are kept.
+#' those missing values are kept. \code{add_protein = TRUE} adds a
+#' \code{protein} column from the one-hot counts matrix of each graph.
 #' @method FetchData CellGraphList
 #' @export
 #'
@@ -235,9 +236,11 @@ FetchData.CellGraphList <- function(
   cells = NULL,
   layer = NULL,
   clean = FALSE,
+  add_protein = FALSE,
   ...
 ) {
   cells <- .resolve_loaded_cellgraph_ids(object, cells, fn = "FetchData")
+  assert_single_value(add_protein, type = "bool")
 
   if (!is.null(vars) && length(vars) > 0) {
     vars <- as.character(vars)
@@ -246,6 +249,14 @@ FetchData.CellGraphList <- function(
         c(
           "x" = "{.arg vars} cannot include {.val component}.",
           "i" = "{.val component} identifies the source {.cls CellGraph} in the result."
+        )
+      )
+    }
+    if (isTRUE(add_protein) && "protein" %in% vars) {
+      cli::cli_abort(
+        c(
+          "x" = "{.arg vars} cannot include reserved column name {.val protein}.",
+          "i" = "Protein labels are added with {.arg add_protein} = {.code TRUE}."
         )
       )
     }
@@ -269,6 +280,15 @@ FetchData.CellGraphList <- function(
     row_ids <- rownames(df)
     if (is.null(row_ids) || length(row_ids) != nrow(df)) {
       row_ids <- node_ids
+    }
+    if (isTRUE(add_protein)) {
+      df <- data.frame(
+        protein = .node_protein_labels(cg, nodes = node_ids),
+        df,
+        stringsAsFactors = FALSE,
+        check.names = FALSE,
+        row.names = row_ids
+      )
     }
     data.frame(
       component = nm,

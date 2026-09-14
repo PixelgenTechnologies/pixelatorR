@@ -41,6 +41,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `FetchData()` for `CellGraph` and `CellGraphList` accepts
+  `add_protein = TRUE` to add a `protein` column from the one-hot node
+  counts matrix, matching `FetchLayoutData()`.
+
 - `FetchData.CellGraphList` returns a base `data.frame` with node IDs as
   row names instead of a tibble. Combining graphs with duplicated node IDs
   aborts.
