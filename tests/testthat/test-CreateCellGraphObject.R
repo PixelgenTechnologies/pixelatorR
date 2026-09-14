@@ -193,6 +193,16 @@ test_that("CreateCellGraphObject aligns MPX layouts without A/B suffixes", {
   )
   CellGraphData(cg, slot = "layout") <- list(pmds_3d = layout_rownames)
   expect_equal(cg@layout$pmds_3d$x, c(10, 10, 20, 20))
+
+  # WriteMPX labels one row per graph node after stripping -A/-B, so names repeat
+  layout_written <- data.frame(
+    name = c("umi1", "umi1", "umi2", "umi2"),
+    x = c(10, 11, 20, 21),
+    y = c(1, 1.1, 2, 2.1)
+  )
+  CellGraphData(cg, slot = "layout") <- list(pmds_3d = layout_written)
+  expect_equal(cg@layout$pmds_3d$x, c(10, 11, 20, 21))
+  expect_equal(cg@layout$pmds_3d$y, c(1, 1.1, 2, 2.1))
 })
 
 test_that("CreateCellGraphObject aligns layouts by row names", {

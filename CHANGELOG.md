@@ -18,6 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- Layout alignment accepts bipartite tables whose `name` values repeat
+  after `-A`/`-B` suffixes are stripped, as written by
+  `WriteMPX_pxl_file()`. Rows already in graph order are kept; other
+  duplicates reuse the first row per name, matching `LoadCellGraphs`.
+
 - `FetchData.CellGraphList` always returns one row per node when no
   requested variables are present (including `vars = NULL`), so an
   empty bind no longer fails on a zero-column data frame.
