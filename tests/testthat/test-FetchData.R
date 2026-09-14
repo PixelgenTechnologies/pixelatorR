@@ -133,6 +133,24 @@ test_that("FetchData.CellGraph can add protein labels from one-hot counts", {
   cg_empty <- CreateCellGraphObject(cellgraph = bipart_graph)
   fd_empty <- SeuratObject::FetchData(cg_empty, vars = NULL, add_protein = TRUE)
   expect_true(all(is.na(fd_empty$protein)))
+
+  cg_na <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = one_hot,
+    meta.data = data.frame(score = c(1, NA, 2, NA), row.names = node_names)
+  )
+  expect_warning(
+    fd_clean <- SeuratObject::FetchData(
+      cg_na,
+      vars = "score",
+      add_protein = TRUE,
+      clean = TRUE
+    ),
+    "missing data for vars requested"
+  )
+  expect_equal(rownames(fd_clean), node_names[c(1, 3)])
+  expect_equal(fd_clean$score, c(1, 2))
+  expect_equal(fd_clean$protein, c("CD3", "CD4"))
 })
 
 test_that("FetchData.CellGraphList forwards add_protein", {
@@ -170,6 +188,27 @@ test_that("FetchData.CellGraphList forwards add_protein", {
     SeuratObject::FetchData(cgl_one_hot, vars = "protein", add_protein = TRUE),
     "protein"
   )
+
+  cgl_clean <- CreateCellGraphList(list(
+    cell_1 = CreateCellGraphObject(
+      cellgraph = bipart_graph,
+      counts = one_hot,
+      meta.data = data.frame(score = c(1, 2, 3, 4), row.names = node_names)
+    ),
+    cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = one_hot_2)
+  ))
+  expect_warning(
+    fd_list_clean <- SeuratObject::FetchData(
+      cgl_clean,
+      vars = "score",
+      add_protein = TRUE,
+      clean = TRUE
+    ),
+    "missing data for vars requested"
+  )
+  expect_equal(unique(fd_list_clean$component), "cell_1")
+  expect_equal(nrow(fd_list_clean), 4)
+  expect_true("protein" %in% colnames(fd_list_clean))
 })
 
 cg_no_cluster <- CreateCellGraphObject(

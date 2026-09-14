@@ -561,7 +561,9 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 #' @param clean If \code{TRUE}, remove nodes that are missing data for every
 #' requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
 #' \code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
-#' lack the requested variables still appear with \code{NA} values.
+#' lack the requested variables still appear with \code{NA} values. A
+#' \code{protein} column added with \code{add_protein} is not treated as a
+#' requested variable.
 #' @param add_protein If \code{TRUE}, add a \code{protein} column with the
 #' marker label of each node from the one-hot counts matrix. Nodes with no
 #' count are \code{NA}. \code{vars} cannot include \code{protein} when this
@@ -723,8 +725,8 @@ FetchData.CellGraph <- function(
   keep <- if (isTRUE(add_protein)) c("protein", found) else found
   data_fetched <- data_fetched[, keep, drop = FALSE]
 
-  if (identical(clean, "all")) {
-    no_data <- which(apply(data_fetched, 1L, function(x) all(is.na(x))))
+  if (identical(clean, "all") && length(found) > 0 && nrow(data_fetched) > 0) {
+    no_data <- which(apply(data_fetched[, found, drop = FALSE], 1L, function(x) all(is.na(x))))
     if (length(no_data) > 0) {
       cli::cli_warn("Removing {length(no_data)} node{?s} missing data for vars requested")
       data_fetched <- data_fetched[-no_data, , drop = FALSE]
