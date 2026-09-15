@@ -14,20 +14,30 @@
 #' A marker is kept if at least `min_cell_fraction` of cells are positive.
 #' Isotype controls are always dropped from the result.
 #'
-#' When `group_column` is set, the isotype median and whether each cell is
-#' positive are computed independently in each group.
+#' The isotype median is computed from the cells that enter a given call to
+#' the filter. Without `group_column`, that is all cells in `object`. With
+#' `group_column` (for example cell type), the median, positivity, and
+#' `min_cell_fraction` rule are computed independently in each group so a
+#' marker that is absent in one type does not pull the cutoff down for
+#' another. Unused factor levels are omitted.
+#'
+#' `isotype_ratio = 1.5` and `min_cell_fraction = 0.05` are moderately
+#' permissive starting defaults, not values fit from a multi-cell-type
+#' benchmark. Raise either one for a stricter panel.
 #'
 #' @param object A `Seurat` object with a `counts` layer.
 #' @param isotype_markers Character vector of isotype control marker names
 #'   (for example `c("mIgG1", "mIgG2a", "mIgG2b")`).
 #' @param isotype_ratio Numeric relative cutoff versus the median isotype CPM,
-#'   or `NULL` to skip this cutoff. Default is `1.5`.
+#'   or `NULL` to skip this cutoff. Default is `1.5` (marker CPM must exceed
+#'   1.5 times the isotype median).
 #' @param abundance_threshold Numeric absolute CPM cutoff, or `NULL` to skip
 #'   this cutoff. Default is `NULL`.
 #' @param min_cell_fraction Minimum fraction of cells that must be positive
 #'   for a marker to be kept. Default is `0.05`.
-#' @param group_column Optional metadata column name. If provided, the
-#'   function returns a named list with one result per group.
+#' @param group_column Optional metadata column name (typically cell type).
+#'   If provided, the isotype median is computed within each group and the
+#'   function returns a named list with one result per observed group.
 #' @param return_stats Logical; if `TRUE`, return a tibble of per-marker
 #'   statistics (including a `kept` column) instead of marker names.
 #'
@@ -62,7 +72,7 @@
 #'   min_cell_fraction = 0.05
 #' )
 #'
-#' # Per-group filtering
+#' # Per-group filtering (isotype median computed within each group)
 #' seur$sample <- c("S1", "S1", "S2", "S2", "S2")
 #' kept_by_sample <- FindAbundantMarkers(
 #'   object = seur,
@@ -171,10 +181,6 @@ FindAbundantMarkers <- function(
   results <- list()
   for (grp in unique_groups) {
     cells_in_group <- which(group_ids == grp)
-    if (length(cells_in_group) == 0) {
-      cli::cli_warn("Skipping empty group {.val {grp}}.")
-      next
-    }
     results[[as.character(grp)]] <- filter_one(
       counts_mat[, cells_in_group, drop = FALSE]
     )
