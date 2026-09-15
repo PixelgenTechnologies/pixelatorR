@@ -164,4 +164,18 @@ test_that("FindAbundantMarkers works as expected", {
       group_column = "missing_column"
     )
   )
+
+  seur$sample_f <- factor(seur$sample, levels = c("S1", "S2", "S3"))
+  expect_equal(
+    FindAbundantMarkers(
+      seur,
+      isotype_markers = isotype_markers,
+      group_column = "sample_f"
+    ),
+    FindAbundantMarkers(
+      seur,
+      isotype_markers = isotype_markers,
+      group_column = "sample"
+    )
+  )
 })
