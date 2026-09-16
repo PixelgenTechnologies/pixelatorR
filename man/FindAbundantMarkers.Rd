@@ -15,9 +15,8 @@ FindAbundantMarkers(
 )
 }
 \arguments{
-\item{object}{A \code{Seurat} object with counts. Split Assay5 layers from
-\code{merge()} (for example \code{counts.1}, \code{counts.2}) are joined in a local
-copy via \code{JoinLayers()}; \code{object} is not modified.}
+\item{object}{A \code{Seurat} object with a \code{counts} layer. Call \code{JoinLayers()}
+first if the object was merged and still has split layers.}
 
 \item{isotype_markers}{Character vector of isotype control marker names
 (for example \code{c("mIgG1", "mIgG2a", "mIgG2b")}).}
