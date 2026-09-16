@@ -21,14 +21,14 @@ FindAbundantMarkers(
 (for example \code{c("mIgG1", "mIgG2a", "mIgG2b")}).}
 
 \item{isotype_ratio}{Numeric relative cutoff versus the median isotype CPM,
-or \code{NULL} to skip this cutoff. Default is \code{1.5} (marker CPM must exceed
-1.5 times the isotype median).}
+or \code{NULL} to skip this cutoff. Default is \code{1.5}.}
 
 \item{abundance_threshold}{Numeric absolute CPM cutoff, or \code{NULL} to skip
 this cutoff. Default is \code{NULL}.}
 
 \item{min_cell_fraction}{Minimum fraction of cells that must be positive
-for a marker to be kept. Default is \code{0.05}.}
+for a marker to be kept. Default is \code{0.05}, small enough to keep markers
+that are abundant only in a minority population of a mixed sample.}
 
 \item{group_column}{Optional metadata column name (typically cell type).
 If provided, the isotype median is computed within each group and the
@@ -67,9 +67,10 @@ the filter. Without \code{group_column}, that is all cells in \code{object}. Wit
 marker that is absent in one type does not pull the cutoff down for
 another. Unused factor levels are omitted.
 
-\code{isotype_ratio = 1.5} and \code{min_cell_fraction = 0.05} are moderately
-permissive starting defaults, not values fit from a multi-cell-type
-benchmark. Raise either one for a stricter panel.
+\code{isotype_ratio} defaults to \code{1.5}, matching the relative cutoff used by
+the original marker-filter helper. \code{min_cell_fraction} defaults to \code{0.05}
+so markers that are abundant only in a small population can still be
+kept when the function is applied to a whole sample.
 }
 \examples{
 

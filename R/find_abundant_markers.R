@@ -21,20 +21,21 @@
 #' marker that is absent in one type does not pull the cutoff down for
 #' another. Unused factor levels are omitted.
 #'
-#' `isotype_ratio = 1.5` and `min_cell_fraction = 0.05` are moderately
-#' permissive starting defaults, not values fit from a multi-cell-type
-#' benchmark. Raise either one for a stricter panel.
+#' `isotype_ratio` defaults to `1.5`, matching the relative cutoff used by
+#' the original marker-filter helper. `min_cell_fraction` defaults to `0.05`
+#' so markers that are abundant only in a small population can still be
+#' kept when the function is applied to a whole sample.
 #'
 #' @param object A `Seurat` object with a `counts` layer.
 #' @param isotype_markers Character vector of isotype control marker names
 #'   (for example `c("mIgG1", "mIgG2a", "mIgG2b")`).
 #' @param isotype_ratio Numeric relative cutoff versus the median isotype CPM,
-#'   or `NULL` to skip this cutoff. Default is `1.5` (marker CPM must exceed
-#'   1.5 times the isotype median).
+#'   or `NULL` to skip this cutoff. Default is `1.5`.
 #' @param abundance_threshold Numeric absolute CPM cutoff, or `NULL` to skip
 #'   this cutoff. Default is `NULL`.
 #' @param min_cell_fraction Minimum fraction of cells that must be positive
-#'   for a marker to be kept. Default is `0.05`.
+#'   for a marker to be kept. Default is `0.05`, small enough to keep markers
+#'   that are abundant only in a minority population of a mixed sample.
 #' @param group_column Optional metadata column name (typically cell type).
 #'   If provided, the isotype median is computed within each group and the
 #'   function returns a named list with one result per observed group.
