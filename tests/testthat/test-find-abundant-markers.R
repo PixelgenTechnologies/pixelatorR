@@ -178,8 +178,20 @@ test_that("FindAbundantMarkers works as expected", {
       group_column = "sample"
     )
   )
+})
 
-  seur_merged <- merge(seur, seur, add.cell.ids = c("A", "B"))
+test_that("FindAbundantMarkers requires JoinLayers after merge on Assay5", {
+  options(Seurat.object.assay.version = "v5")
+  on.exit(options(Seurat.object.assay.version = "v3"), add = TRUE)
+
+  seur_v5 <- suppressWarnings(ReadPNA_Seurat(
+    minimal_pna_pxl_file(),
+    overwrite = TRUE,
+    load_proximity_scores = FALSE,
+    verbose = FALSE
+  ))
+  seur_merged <- suppressWarnings(merge(seur_v5, seur_v5, add.cell.ids = c("A", "B")))
+
   expect_error(
     FindAbundantMarkers(
       seur_merged,
@@ -188,7 +200,7 @@ test_that("FindAbundantMarkers works as expected", {
   )
 
   seur_joined <- JoinLayers(seur_merged)
-  seur_joined$batch <- rep(c("A", "B"), each = ncol(seur))
+  seur_joined$batch <- rep(c("A", "B"), each = ncol(seur_v5))
   expect_equal(
     names(FindAbundantMarkers(
       seur_joined,
