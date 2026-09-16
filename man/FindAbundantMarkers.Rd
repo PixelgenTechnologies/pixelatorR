@@ -27,10 +27,12 @@ or \code{NULL} to skip this cutoff. Default is \code{1.5}.}
 this cutoff. Default is \code{NULL}.}
 
 \item{min_cell_fraction}{Minimum fraction of cells that must be positive
-for a marker to be kept. Default is \code{0.05}.}
+for a marker to be kept. Default is \code{0.05}, small enough to keep markers
+that are abundant only in a minority population of a mixed sample.}
 
-\item{group_column}{Optional metadata column name. If provided, the
-function returns a named list with one result per group.}
+\item{group_column}{Optional metadata column name (typically cell type).
+If provided, the isotype median is computed within each group and the
+function returns a named list with one result per observed group.}
 
 \item{return_stats}{Logical; if \code{TRUE}, return a tibble of per-marker
 statistics (including a \code{kept} column) instead of marker names.}
@@ -58,8 +60,17 @@ overrides the other. At least one cutoff is required.
 A marker is kept if at least \code{min_cell_fraction} of cells are positive.
 Isotype controls are always dropped from the result.
 
-When \code{group_column} is set, the isotype median and whether each cell is
-positive are computed independently in each group.
+The isotype median is computed from the cells that enter a given call to
+the filter. Without \code{group_column}, that is all cells in \code{object}. With
+\code{group_column} (for example cell type), the median, positivity, and
+\code{min_cell_fraction} rule are computed independently in each group so a
+marker that is absent in one type does not pull the cutoff down for
+another. Unused factor levels are omitted.
+
+\code{isotype_ratio} defaults to \code{1.5}, matching the relative cutoff used by
+the original marker-filter helper. \code{min_cell_fraction} defaults to \code{0.05}
+so markers that are abundant only in a small population can still be
+kept when the function is applied to a whole sample.
 }
 \examples{
 
@@ -88,7 +99,7 @@ kept_and <- FindAbundantMarkers(
   min_cell_fraction = 0.05
 )
 
-# Per-group filtering
+# Per-group filtering (isotype median computed within each group)
 seur$sample <- c("S1", "S1", "S2", "S2", "S2")
 kept_by_sample <- FindAbundantMarkers(
   object = seur,
