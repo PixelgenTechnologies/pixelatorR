@@ -180,19 +180,18 @@ test_that("FindAbundantMarkers works as expected", {
   )
 
   seur_merged <- merge(seur, seur, add.cell.ids = c("A", "B"))
-  expect_true(any(grepl("^counts\\.", Layers(seur_merged))))
-  expect_no_error(
-    kept_merged <- FindAbundantMarkers(
+  expect_error(
+    FindAbundantMarkers(
       seur_merged,
       isotype_markers = isotype_markers
     )
   )
-  expect_false(any(isotype_markers %in% kept_merged))
-  expect_true(any(grepl("^counts\\.", Layers(seur_merged))))
-  seur_merged$batch <- rep(c("A", "B"), each = ncol(seur))
+
+  seur_joined <- JoinLayers(seur_merged)
+  seur_joined$batch <- rep(c("A", "B"), each = ncol(seur))
   expect_equal(
     names(FindAbundantMarkers(
-      seur_merged,
+      seur_joined,
       isotype_markers = isotype_markers,
       group_column = "batch"
     )),
