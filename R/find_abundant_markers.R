@@ -26,7 +26,9 @@
 #' so markers that are abundant only in a small population can still be
 #' kept when the function is applied to a whole sample.
 #'
-#' @param object A `Seurat` object with a `counts` layer.
+#' @param object A `Seurat` object with counts. Split Assay5 layers from
+#'   `merge()` (for example `counts.1`, `counts.2`) are joined in a local
+#'   copy via `JoinLayers()`; `object` is not modified.
 #' @param isotype_markers Character vector of isotype control marker names
 #'   (for example `c("mIgG1", "mIgG2a", "mIgG2b")`).
 #' @param isotype_ratio Numeric relative cutoff versus the median isotype CPM,
@@ -112,7 +114,18 @@ FindAbundantMarkers <- function(
     )
   }
 
-  assert_x_in_y("counts", Layers(object))
+  count_layers <- grep("^counts", Layers(object), value = TRUE)
+  if (length(count_layers) == 0L) {
+    cli::cli_abort(
+      c(
+        "i" = "A counts layer is required.",
+        "x" = "No layers matching {.val counts} were found in {.arg object}."
+      )
+    )
+  }
+  if (length(count_layers) > 1L || !identical(count_layers, "counts")) {
+    object <- JoinLayers(object)
+  }
   counts_mat <- LayerData(object, layer = "counts")
 
   filter_one <- function(mat) {
