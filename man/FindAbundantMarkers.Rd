@@ -15,7 +15,8 @@ FindAbundantMarkers(
 )
 }
 \arguments{
-\item{object}{A \code{Seurat} object with a \code{counts} layer.}
+\item{object}{A \code{Seurat} object with a \code{counts} layer. Call \code{JoinLayers()}
+first if the object was merged and still has split layers.}
 
 \item{isotype_markers}{Character vector of isotype control marker names
 (for example \code{c("mIgG1", "mIgG2a", "mIgG2b")}).}
@@ -45,7 +46,10 @@ named list of the same, one element per group.
 \description{
 Identifies markers that are positive in a sufficient fraction of cells.
 A cell is positive for a marker if that cell's counts-per-million (CPM)
-clears \strong{every} cutoff that is supplied:
+clears \strong{every} cutoff that is supplied. CPM is computed from counts
+plus a pseudocount of 1, so no entry is zero:
+\eqn{\mathrm{CPM}_{g,c} = 10^6 (x_{g,c} + 1) / \sum_{g'}(x_{g',c} + 1)},
+where \eqn{x_{g,c}} is the count for marker \eqn{g} in cell \eqn{c}.
 }
 \details{
 \itemize{

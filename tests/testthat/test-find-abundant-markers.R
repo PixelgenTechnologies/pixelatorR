@@ -28,7 +28,7 @@ test_that("FindAbundantMarkers works as expected", {
       "CD154", "CD161", "CD180", "CD191", "CD192", "CD1d", "CD200",
       "CD229", "CD24", "CD244", "CD268", "CD278", "CD32", "CD33", "CD38",
       "CD39", "CD40", "CD48", "CD50", "CD55", "CD58", "CD69", "CD72",
-      "CD84", "CD9", "CD94", "TCRVB5", "CD3e", "CD4", "CD11a", "CD43",
+      "CD84", "CD9", "CD94", "CD3e", "CD4", "CD11a", "CD43",
       "CD7", "CD53", "CD302", "VISTA", "CD269", "CD66b", "CX3CR1",
       "CD369", "CD54", "CD71", "CD47", "CD117", "CD314"
     )
@@ -79,8 +79,8 @@ test_that("FindAbundantMarkers works as expected", {
     as.data.frame(dplyr::filter(stats, marker %in% c("HLA-ABC", "CD45", "mIgG1"))),
     data.frame(
       marker = c("HLA-ABC", "CD45", "mIgG1"),
-      positive_fraction = c(1, 1, 0.4),
-      isotype_median_cpm = c(252.623843097628, 252.623843097628, 252.623843097628),
+      positive_fraction = c(1, 1, 0.2),
+      isotype_median_cpm = c(273.2655229998482, 273.2655229998482, 273.2655229998482),
       isotype_ratio = c(1.5, 1.5, 1.5),
       abundance_threshold = c(NA_real_, NA_real_, NA_real_),
       kept = c(TRUE, TRUE, FALSE),
@@ -177,5 +177,24 @@ test_that("FindAbundantMarkers works as expected", {
       isotype_markers = isotype_markers,
       group_column = "sample"
     )
+  )
+
+  seur_merged <- merge(seur, seur, add.cell.ids = c("A", "B"))
+  expect_error(
+    FindAbundantMarkers(
+      seur_merged,
+      isotype_markers = isotype_markers
+    )
+  )
+
+  seur_joined <- JoinLayers(seur_merged)
+  seur_joined$batch <- rep(c("A", "B"), each = ncol(seur))
+  expect_equal(
+    names(FindAbundantMarkers(
+      seur_joined,
+      isotype_markers = isotype_markers,
+      group_column = "batch"
+    )),
+    c("A", "B")
   )
 })

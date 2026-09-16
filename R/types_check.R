@@ -516,7 +516,9 @@ assert_col_class <- function(
     "`data` must be a data.frame-like object`" =
       inherits(data, c("data.frame", "tbl_lazy"))
   )
-  col_x <- data %>% pull(all_of(x))
+  # !! is required here: pull() evaluates its selection with the column names
+  # of data in scope, so an unquoted x would be shadowed by a column named "x"
+  col_x <- data %>% pull(all_of(!!x))
   if (!inherits(col_x, classes)) {
     cli::cli_abort(
       c(
