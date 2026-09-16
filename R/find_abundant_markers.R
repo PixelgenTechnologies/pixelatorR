@@ -2,7 +2,10 @@
 #'
 #' Identifies markers that are positive in a sufficient fraction of cells.
 #' A cell is positive for a marker if that cell's counts-per-million (CPM)
-#' clears **every** cutoff that is supplied:
+#' clears **every** cutoff that is supplied. CPM is computed from counts
+#' plus a pseudocount of 1, so no entry is zero:
+#' \eqn{\mathrm{CPM}_{g,c} = 10^6 (x_{g,c} + 1) / \sum_{g'}(x_{g',c} + 1)},
+#' where \eqn{x_{g,c}} is the count for marker \eqn{g} in cell \eqn{c}.
 #'
 #' - If `isotype_ratio` is set, CPM must be greater than
 #'   `isotype_ratio` times the median CPM of `isotype_markers`.
@@ -129,16 +132,17 @@ FindAbundantMarkers <- function(
   counts_mat <- LayerData(object, layer = "counts")
 
   filter_one <- function(mat) {
-    lib_sizes <- Matrix::colSums(mat)
-    if (any(lib_sizes <= 0)) {
+    raw_lib_sizes <- Matrix::colSums(mat)
+    if (any(raw_lib_sizes <= 0)) {
       cli::cli_abort(
         c(
           "i" = "All cells must have a positive library size in the counts layer.",
-          "x" = "Found {sum(lib_sizes <= 0)} cell(s) with zero counts."
+          "x" = "Found {sum(raw_lib_sizes <= 0)} cell(s) with zero counts."
         )
       )
     }
-    cpm <- Matrix::t(Matrix::t(mat) / lib_sizes) * 1e6
+    lib_sizes <- raw_lib_sizes + nrow(mat)
+    cpm <- Matrix::t((Matrix::t(mat) + 1) / lib_sizes) * 1e6
 
     isotype_cpm <- as.vector(as.matrix(cpm[isotype_markers, , drop = FALSE]))
     isotype_median_cpm <- stats::median(isotype_cpm)

@@ -11,7 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `FindAbundantMarkers` to keep markers whose CPM exceeds an isotype-relative
   ratio and/or an absolute abundance threshold in at least
-  `min_cell_fraction` of cells.
+  `min_cell_fraction` of cells. CPM uses a per-marker pseudocount of 1
+  (`(x + 1) / sum(x + 1) * 1e6`).
 - `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
   layout `(x, y, z)` coordinates for the directional (key) light. The default
   `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
