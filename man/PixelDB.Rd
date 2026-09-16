@@ -524,10 +524,15 @@ loading \code{CellGraph} objects into memory. Since PXL files are opened
 read-only, the result is materialized as a temporary table that exists
 for the lifetime of this connection. By default, the temporary table is
 named \code{proximity} and shadows a persisted table with the same name.
+
+By default, the method returns observed and expected join counts together
+with the \code{log2_ratio}. Z-scores and p-values are optional because they
+require DuckDB's stochastic extension.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PixelDB$compute_proximity_scores(
   components = NULL,
   markers = NULL,
+  calc_z_score = FALSE,
   name = "proximity"
 )}\if{html}{\out{</div>}}
 }
@@ -540,6 +545,9 @@ named \code{proximity} and shadows a persisted table with the same name.
 
 \item{\code{markers}}{A character vector of marker names to include, or
 \code{NULL} to include all markers.}
+
+\item{\code{calc_z_score}}{Logical indicating whether to calculate z-scores and
+p-values. Default is \code{FALSE}.}
 
 \item{\code{name}}{Name of the temporary table in which to store the results.}
 }

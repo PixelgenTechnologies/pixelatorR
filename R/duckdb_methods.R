@@ -381,10 +381,16 @@ PixelDB <- R6Class(
     #' for the lifetime of this connection. By default, the temporary table is
     #' named \code{proximity} and shadows a persisted table with the same name.
     #'
+    #' By default, the method returns observed and expected join counts together
+    #' with the \code{log2_ratio}. Z-scores and p-values are optional because they
+    #' require DuckDB's stochastic extension.
+    #'
     #' @param components A character vector of component names to include, or
     #' \code{NULL} to include all components.
     #' @param markers A character vector of marker names to include, or
     #' \code{NULL} to include all markers.
+    #' @param calc_z_score Logical indicating whether to calculate z-scores and
+    #' p-values. Default is \code{FALSE}.
     #' @param name Name of the temporary table in which to store the results.
     #'
     #' @examples
@@ -400,22 +406,26 @@ PixelDB <- R6Class(
     compute_proximity_scores = function(
       components = NULL,
       markers = NULL,
+      calc_z_score = FALSE,
       name = "proximity"
     ) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
       assert_vector(markers, "character", n = 1, allow_null = TRUE)
+      assert_single_value(calc_z_score, "bool")
       assert_single_value(name, "string")
 
-      # The stochastic extension supplies dist_normal_cdf(), which is used for
-      # the two-sided p-value. It may already be installed by DuckDB.
-      tryCatch(
-        DBI::dbExecute(private$con, "LOAD stochastic"),
-        error = function(e) {
-          DBI::dbExecute(private$con, "INSTALL stochastic FROM community")
-          DBI::dbExecute(private$con, "LOAD stochastic")
-        }
-      )
+      if (calc_z_score) {
+        # The stochastic extension supplies dist_normal_cdf(), which is used for
+        # the two-sided p-value. It may already be installed by DuckDB.
+        tryCatch(
+          DBI::dbExecute(private$con, "LOAD stochastic"),
+          error = function(e) {
+            DBI::dbExecute(private$con, "INSTALL stochastic FROM community")
+            DBI::dbExecute(private$con, "LOAD stochastic")
+          }
+        )
+      }
 
       edgelist_columns <- DBI::dbListFields(private$con, "edgelist")
       required_columns <- c("component", "umi1", "umi2", "marker_1", "marker_2")
@@ -483,6 +493,35 @@ PixelDB <- R6Class(
         collapse = ", "
       )
       final_join_sql <- join_group_sql("obs", "exp")
+      if (calc_z_score) {
+        expected_var_sql <- paste(
+          ",",
+          "t1.f_umi1 * t2.f_umi2 *",
+          "(1 - (t1.f_umi1 * t2.f_umi2)) * ge.n_edges AS exp_count_var"
+        )
+        expected_sd_sql <- ", SQRT(SUM(exp_count_var)) AS join_count_expected_sd"
+        result_sd_sql <- paste(
+          ",",
+          "GREATEST(COALESCE(exp.join_count_expected_sd, 0), 1e-6)",
+          "AS join_count_expected_sd"
+        )
+        z_score_sql <- paste(
+          "(join_count - join_count_expected_mean) / join_count_expected_sd",
+          "AS join_count_z,",
+          "2 * (",
+          "  1 - dist_normal_cdf(",
+          "    0.0,",
+          "    join_count_expected_sd,",
+          "    ABS(join_count - join_count_expected_mean)",
+          "  )",
+          ") AS join_count_p,"
+        )
+      } else {
+        expected_var_sql <- ""
+        expected_sd_sql <- ""
+        result_sd_sql <- ""
+        z_score_sql <- ""
+      }
 
       analysis_query <- glue::glue(
         "
@@ -555,9 +594,8 @@ PixelDB <- R6Class(
             {t1_group_sql},
             LEAST(t1.marker_1, t2.marker_2) AS marker_A,
             GREATEST(t1.marker_1, t2.marker_2) AS marker_B,
-            t1.f_umi1 * t2.f_umi2 * ge.n_edges AS exp_count_raw,
-            t1.f_umi1 * t2.f_umi2 *
-              (1 - (t1.f_umi1 * t2.f_umi2)) * ge.n_edges AS exp_count_var
+            t1.f_umi1 * t2.f_umi2 * ge.n_edges AS exp_count_raw
+            {expected_var_sql}
           FROM stats_m1 t1
           JOIN stats_m2 t2 ON {t1_t2_join_sql}
           JOIN group_edges ge ON {t1_ge_join_sql}
@@ -568,8 +606,8 @@ PixelDB <- R6Class(
             {group_sql},
             marker_A,
             marker_B,
-            SUM(exp_count_raw) AS join_count_expected_mean,
-            SQRT(SUM(exp_count_var)) AS join_count_expected_sd
+            SUM(exp_count_raw) AS join_count_expected_mean
+            {expected_sd_sql}
           FROM expected_calc
           GROUP BY {group_sql}, marker_A, marker_B
         ),
@@ -589,9 +627,8 @@ PixelDB <- R6Class(
             COALESCE(obs.marker_A, exp.marker_A) AS marker_1,
             COALESCE(obs.marker_B, exp.marker_B) AS marker_2,
             COALESCE(obs.join_count, 0) AS join_count,
-            COALESCE(exp.join_count_expected_mean, 0) AS join_count_expected_mean,
-            GREATEST(COALESCE(exp.join_count_expected_sd, 0), 1e-6)
-              AS join_count_expected_sd
+            COALESCE(exp.join_count_expected_mean, 0) AS join_count_expected_mean
+            {result_sd_sql}
           FROM observed_agg obs
           FULL OUTER JOIN expected_agg exp
             ON {final_join_sql}
@@ -600,15 +637,7 @@ PixelDB <- R6Class(
         )
         SELECT
           *,
-          (join_count - join_count_expected_mean) / join_count_expected_sd
-            AS join_count_z,
-          2 * (
-            1 - dist_normal_cdf(
-              0.0,
-              join_count_expected_sd,
-              ABS(join_count - join_count_expected_mean)
-            )
-          ) AS join_count_p,
+          {z_score_sql}
           LOG2(
             GREATEST(join_count, 1) /
             GREATEST(join_count_expected_mean, 1)
