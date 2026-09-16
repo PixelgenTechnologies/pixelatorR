@@ -443,6 +443,12 @@ PixelDB <- R6Class(
           collapse = " AND "
         )
       }
+      am_group_sql <- qualified_group_sql("am")
+      t1_group_sql <- qualified_group_sql("t1")
+      am_rm1_join_sql <- join_group_sql("am", "rm1")
+      am_rm2_join_sql <- join_group_sql("am", "rm2")
+      t1_t2_join_sql <- join_group_sql("t1", "t2")
+      t1_ge_join_sql <- join_group_sql("t1", "ge")
 
       sql_values <- function(values) {
         paste(DBI::dbQuoteString(private$con, unique(values)), collapse = ", ")
@@ -511,13 +517,13 @@ PixelDB <- R6Class(
         ),
         stats_m1 AS (
           SELECT
-            {qualified_group_sql("am")},
+            {am_group_sql},
             am.marker AS marker_1,
             COALESCE(rm1.marker_1_count, 0) AS marker_1_count,
             COALESCE(rm1.f_umi1, 0.0) AS f_umi1
           FROM all_markers am
           LEFT JOIN raw_stats_m1 rm1
-            ON {join_group_sql("am", "rm1")}
+            ON {am_rm1_join_sql}
             AND am.marker = rm1.marker_1
         ),
         unique_m2 AS (
@@ -535,26 +541,26 @@ PixelDB <- R6Class(
         ),
         stats_m2 AS (
           SELECT
-            {qualified_group_sql("am")},
+            {am_group_sql},
             am.marker AS marker_2,
             COALESCE(rm2.marker_2_count, 0) AS marker_2_count,
             COALESCE(rm2.f_umi2, 0.0) AS f_umi2
           FROM all_markers am
           LEFT JOIN raw_stats_m2 rm2
-            ON {join_group_sql("am", "rm2")}
+            ON {am_rm2_join_sql}
             AND am.marker = rm2.marker_2
         ),
         expected_calc AS (
           SELECT
-            {qualified_group_sql("t1")},
+            {t1_group_sql},
             LEAST(t1.marker_1, t2.marker_2) AS marker_A,
             GREATEST(t1.marker_1, t2.marker_2) AS marker_B,
             t1.f_umi1 * t2.f_umi2 * ge.n_edges AS exp_count_raw,
             t1.f_umi1 * t2.f_umi2 *
               (1 - (t1.f_umi1 * t2.f_umi2)) * ge.n_edges AS exp_count_var
           FROM stats_m1 t1
-          JOIN stats_m2 t2 ON {join_group_sql("t1", "t2")}
-          JOIN group_edges ge ON {join_group_sql("t1", "ge")}
+          JOIN stats_m2 t2 ON {t1_t2_join_sql}
+          JOIN group_edges ge ON {t1_ge_join_sql}
           WHERE {marker_filter_expected}
         ),
         expected_agg AS (
