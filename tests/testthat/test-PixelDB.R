@@ -287,6 +287,8 @@ test_that("PixelDB methods fails with invalid input", {
   expect_error(db$compute_proximity_scores(markers = 1))
   expect_error(db$compute_proximity_scores(name = c("one", "two")))
   expect_error(db$compute_proximity_scores(calc_z_score = "Invalid"))
+  expect_error(db$compute_proximity_scores(min_marker_count = -1L))
+  expect_error(db$compute_proximity_scores(batch_size = 0L))
   expect_error(db$components_edgelist("Invalid"))
   expect_error(db$components_edgelist("3898b03349c6e28d", umi_data_type = "Invalid"))
   expect_error(db$components_edgelist("3898b03349c6e28d", include_all_columns = "Invalid"))

@@ -391,6 +391,14 @@ PixelDB <- R6Class(
     #' \code{NULL} to include all markers.
     #' @param calc_z_score Logical indicating whether to calculate z-scores and
     #' p-values. Default is \code{FALSE}.
+    #' @param min_marker_count An integer specifying the minimum total marker count
+    #'   (sum of UMI counts across umi1 and umi2) for a marker to be considered in proximity pair
+    #'   expansion. Defaults to \code{10L}. Set to \code{NULL} or \code{0L} to include all markers.
+    #'   Note that all edges are retained for computing expected frequencies and observed join counts
+    #'   to prevent bias.
+    #' @param batch_size An integer indicating the number of components to
+    #' process in each batch, or \code{NULL} to process all requested components
+    #' in a single query. Defaults to \code{100}.
     #' @param name Name of the temporary table in which to store the results.
     #'
     #' @examples
@@ -407,12 +415,22 @@ PixelDB <- R6Class(
       components = NULL,
       markers = NULL,
       calc_z_score = FALSE,
+      min_marker_count = 10L,
+      batch_size = 100L,
       name = "proximity"
     ) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
       assert_vector(markers, "character", n = 1, allow_null = TRUE)
       assert_single_value(calc_z_score, "bool")
+      assert_single_value(min_marker_count, "int", allow_null = TRUE)
+      if (!is.null(min_marker_count) && min_marker_count < 0L) {
+        cli::cli_abort(c("x" = "{.arg min_marker_count} must be a non-negative integer or NULL."))
+      }
+      assert_single_value(batch_size, "int", allow_null = TRUE)
+      if (!is.null(batch_size) && batch_size < 1L) {
+        cli::cli_abort(c("x" = "{.arg batch_size} must be a positive integer."))
+      }
       assert_single_value(name, "string")
 
       if (calc_z_score) {
@@ -438,212 +456,80 @@ PixelDB <- R6Class(
         )
       }
 
-      # Newer, multi-sample PXL files include `sample`; legacy files do not.
-      # Include it in every grouping and join when available.
-      group_columns <- c(
-        if ("sample" %in% edgelist_columns) "sample",
-        "component"
-      )
-      group_sql <- paste(group_columns, collapse = ", ")
-      qualified_group_sql <- function(alias) {
-        paste0(alias, ".", group_columns, collapse = ", ")
-      }
-      join_group_sql <- function(left, right) {
-        paste0(left, ".", group_columns, " = ", right, ".", group_columns,
-          collapse = " AND "
-        )
-      }
-      am_group_sql <- qualified_group_sql("am")
-      t1_group_sql <- qualified_group_sql("t1")
-      am_rm1_join_sql <- join_group_sql("am", "rm1")
-      am_rm2_join_sql <- join_group_sql("am", "rm2")
-      t1_t2_join_sql <- join_group_sql("t1", "t2")
-      t1_ge_join_sql <- join_group_sql("t1", "ge")
-
-      sql_values <- function(values) {
-        paste(DBI::dbQuoteString(private$con, unique(values)), collapse = ", ")
-      }
-      component_filter <- if (is.null(components)) {
-        "TRUE"
-      } else {
-        glue::glue("component IN ({sql_values(components)})")
-      }
-      marker_filter_expected <- if (is.null(markers)) {
-        "TRUE"
-      } else {
-        marker_values <- sql_values(markers)
-        glue::glue(
-          "t1.marker_1 IN ({marker_values}) ",
-          "AND t2.marker_2 IN ({marker_values})"
-        )
-      }
-      marker_filter_observed <- if (is.null(markers)) {
-        "TRUE"
-      } else {
-        marker_values <- sql_values(markers)
-        glue::glue(
-          "marker_1 IN ({marker_values}) ",
-          "AND marker_2 IN ({marker_values})"
-        )
+      # If components is NULL and batching is enabled, resolve all component IDs
+      all_components <- components
+      if (!is.null(batch_size)) {
+        if (is.null(all_components)) {
+          all_tables <- DBI::dbListTables(private$con)
+          if ("__adata__obs" %in% all_tables) {
+            all_components <- DBI::dbGetQuery(
+              private$con,
+              "SELECT index AS component FROM __adata__obs"
+            )[["component"]]
+          } else {
+            all_components <- DBI::dbGetQuery(
+              private$con,
+              "SELECT DISTINCT component FROM edgelist"
+            )[["component"]]
+          }
+        }
       }
 
-      coalesced_group_sql <- paste0(
-        "COALESCE(obs.", group_columns, ", exp.", group_columns, ") AS ",
-        group_columns,
-        collapse = ", "
-      )
-      final_join_sql <- join_group_sql("obs", "exp")
-      if (calc_z_score) {
-        expected_var_sql <- paste(
-          ",",
-          "t1.f_umi1 * t2.f_umi2 *",
-          "(1 - (t1.f_umi1 * t2.f_umi2)) * ge.n_edges AS exp_count_var"
+      # If batching is applicable (more components than batch_size)
+      if (!is.null(batch_size) && length(all_components) > batch_size) {
+        component_batches <- split(
+          all_components,
+          ceiling(seq_along(all_components) / batch_size)
         )
-        expected_sd_sql <- ", SQRT(SUM(exp_count_var)) AS join_count_expected_sd"
-        result_sd_sql <- paste(
-          ",",
-          "GREATEST(COALESCE(exp.join_count_expected_sd, 0), 1e-6)",
-          "AS join_count_expected_sd"
+        n_batches <- length(component_batches)
+        table_name <- as.character(DBI::dbQuoteIdentifier(private$con, name))
+
+        pb <- cli_progress_bar(
+          "Computing proximity scores",
+          total = n_batches,
+          .auto_close = FALSE
         )
-        z_score_sql <- paste(
-          "(join_count - join_count_expected_mean) / join_count_expected_sd",
-          "AS join_count_z,",
-          "2 * (",
-          "  1 - dist_normal_cdf(",
-          "    0.0,",
-          "    join_count_expected_sd,",
-          "    ABS(join_count - join_count_expected_mean)",
-          "  )",
-          ") AS join_count_p,"
-        )
-      } else {
-        expected_var_sql <- ""
-        expected_sd_sql <- ""
-        result_sd_sql <- ""
-        z_score_sql <- ""
+
+        for (b in seq_along(component_batches)) {
+          batch_comps <- component_batches[[b]]
+          batch_query <- private$build_proximity_query(
+            components = batch_comps,
+            markers = markers,
+            calc_z_score = calc_z_score,
+            min_marker_count = min_marker_count,
+            edgelist_columns = edgelist_columns
+          )
+
+          if (b == 1L) {
+            DBI::dbExecute(
+              private$con,
+              glue::glue(
+                "CREATE OR REPLACE TEMPORARY TABLE {table_name} AS ",
+                "{batch_query}"
+              )
+            )
+          } else {
+            DBI::dbExecute(
+              private$con,
+              glue::glue(
+                "INSERT INTO {table_name} ",
+                "{batch_query}"
+              )
+            )
+          }
+          cli_progress_update(id = pb)
+        }
+        cli_progress_done(id = pb)
+
+        return(tbl(private$con, name))
       }
 
-      analysis_query <- glue::glue(
-        "
-        WITH
-        current_edgelist AS (
-          SELECT *
-          FROM edgelist
-          WHERE {component_filter}
-        ),
-        group_edges AS (
-          SELECT {group_sql}, COUNT(*) AS n_edges
-          FROM current_edgelist
-          GROUP BY {group_sql}
-        ),
-        all_markers AS (
-          SELECT {group_sql}, marker_1 AS marker FROM current_edgelist
-          UNION
-          SELECT {group_sql}, marker_2 AS marker FROM current_edgelist
-        ),
-        unique_m1 AS (
-          SELECT DISTINCT {group_sql}, umi1, marker_1 FROM current_edgelist
-        ),
-        raw_stats_m1 AS (
-          SELECT
-            {group_sql},
-            marker_1,
-            COUNT(*) AS marker_1_count,
-            COUNT(*) * 1.0 /
-              SUM(COUNT(*)) OVER (PARTITION BY {group_sql}) AS f_umi1
-          FROM unique_m1
-          GROUP BY {group_sql}, marker_1
-        ),
-        stats_m1 AS (
-          SELECT
-            {am_group_sql},
-            am.marker AS marker_1,
-            COALESCE(rm1.marker_1_count, 0) AS marker_1_count,
-            COALESCE(rm1.f_umi1, 0.0) AS f_umi1
-          FROM all_markers am
-          LEFT JOIN raw_stats_m1 rm1
-            ON {am_rm1_join_sql}
-            AND am.marker = rm1.marker_1
-        ),
-        unique_m2 AS (
-          SELECT DISTINCT {group_sql}, umi2, marker_2 FROM current_edgelist
-        ),
-        raw_stats_m2 AS (
-          SELECT
-            {group_sql},
-            marker_2,
-            COUNT(*) AS marker_2_count,
-            COUNT(*) * 1.0 /
-              SUM(COUNT(*)) OVER (PARTITION BY {group_sql}) AS f_umi2
-          FROM unique_m2
-          GROUP BY {group_sql}, marker_2
-        ),
-        stats_m2 AS (
-          SELECT
-            {am_group_sql},
-            am.marker AS marker_2,
-            COALESCE(rm2.marker_2_count, 0) AS marker_2_count,
-            COALESCE(rm2.f_umi2, 0.0) AS f_umi2
-          FROM all_markers am
-          LEFT JOIN raw_stats_m2 rm2
-            ON {am_rm2_join_sql}
-            AND am.marker = rm2.marker_2
-        ),
-        expected_calc AS (
-          SELECT
-            {t1_group_sql},
-            LEAST(t1.marker_1, t2.marker_2) AS marker_A,
-            GREATEST(t1.marker_1, t2.marker_2) AS marker_B,
-            t1.f_umi1 * t2.f_umi2 * ge.n_edges AS exp_count_raw
-            {expected_var_sql}
-          FROM stats_m1 t1
-          JOIN stats_m2 t2 ON {t1_t2_join_sql}
-          JOIN group_edges ge ON {t1_ge_join_sql}
-          WHERE {marker_filter_expected}
-        ),
-        expected_agg AS (
-          SELECT
-            {group_sql},
-            marker_A,
-            marker_B,
-            SUM(exp_count_raw) AS join_count_expected_mean
-            {expected_sd_sql}
-          FROM expected_calc
-          GROUP BY {group_sql}, marker_A, marker_B
-        ),
-        observed_agg AS (
-          SELECT
-            {group_sql},
-            LEAST(marker_1, marker_2) AS marker_A,
-            GREATEST(marker_1, marker_2) AS marker_B,
-            COUNT(*) AS join_count
-          FROM current_edgelist
-          WHERE {marker_filter_observed}
-          GROUP BY {group_sql}, marker_A, marker_B
-        ),
-        results AS (
-          SELECT
-            {coalesced_group_sql},
-            COALESCE(obs.marker_A, exp.marker_A) AS marker_1,
-            COALESCE(obs.marker_B, exp.marker_B) AS marker_2,
-            COALESCE(obs.join_count, 0) AS join_count,
-            COALESCE(exp.join_count_expected_mean, 0) AS join_count_expected_mean
-            {result_sd_sql}
-          FROM observed_agg obs
-          FULL OUTER JOIN expected_agg exp
-            ON {final_join_sql}
-            AND obs.marker_A = exp.marker_A
-            AND obs.marker_B = exp.marker_B
-        )
-        SELECT
-          *,
-          {z_score_sql}
-          LOG2(
-            GREATEST(join_count, 1) /
-            GREATEST(join_count_expected_mean, 1)
-          ) AS log2_ratio
-        FROM results
-        "
+      analysis_query <- private$build_proximity_query(
+        components = components,
+        markers = markers,
+        calc_z_score = calc_z_score,
+        min_marker_count = min_marker_count,
+        edgelist_columns = edgelist_columns
       )
 
       table_name <- as.character(DBI::dbQuoteIdentifier(private$con, name))
@@ -990,6 +876,213 @@ PixelDB <- R6Class(
   private = list(
     file = NULL,
     con = NULL,
+    build_proximity_query = function(components, markers, calc_z_score, min_marker_count, edgelist_columns) {
+      group_columns <- c(
+        if ("sample" %in% edgelist_columns) "sample",
+        "component"
+      )
+      group_sql <- paste(group_columns, collapse = ", ")
+      qualified_group_sql <- function(alias) {
+        paste0(alias, ".", group_columns, collapse = ", ")
+      }
+      join_group_sql <- function(left, right) {
+        paste0(left, ".", group_columns, " = ", right, ".", group_columns,
+          collapse = " AND "
+        )
+      }
+      am_group_sql <- qualified_group_sql("am")
+      t1_group_sql <- qualified_group_sql("t1")
+      am_s1_join_sql <- join_group_sql("am", "s1")
+      am_s2_join_sql <- join_group_sql("am", "s2")
+      t1_t2_join_sql <- join_group_sql("t1", "t2")
+      t1_ge_join_sql <- join_group_sql("t1", "ge")
+
+      sql_values <- function(values) {
+        paste(DBI::dbQuoteString(private$con, unique(values)), collapse = ", ")
+      }
+      component_filter <- if (is.null(components)) {
+        "TRUE"
+      } else {
+        glue::glue("component IN ({sql_values(components)})")
+      }
+      marker_filter_expected <- if (is.null(markers)) {
+        "TRUE"
+      } else {
+        glue::glue("marker IN ({sql_values(markers)})")
+      }
+      marker_filter_observed <- if (is.null(markers)) {
+        "TRUE"
+      } else {
+        marker_values <- sql_values(markers)
+        glue::glue(
+          "marker_1 IN ({marker_values}) ",
+          "AND marker_2 IN ({marker_values})"
+        )
+      }
+
+      min_marker_filter_sql <- if (!is.null(min_marker_count) && min_marker_count > 0L) {
+        glue::glue(
+          "WHERE (t1.marker_1_count + t1.marker_2_count) >= {min_marker_count} ",
+          "AND (t2.marker_1_count + t2.marker_2_count) >= {min_marker_count}"
+        )
+      } else {
+        ""
+      }
+
+      coalesced_group_sql <- paste0(
+        "exp.", group_columns, " AS ",
+        group_columns,
+        collapse = ", "
+      )
+      final_join_sql <- join_group_sql("exp", "obs")
+      if (calc_z_score) {
+        expected_sd_sql <- paste(
+          ",",
+          "CASE",
+          "  WHEN t1.marker = t2.marker THEN",
+          "    SQRT(t1.f_umi1 * t2.f_umi2 * (1.0 - (t1.f_umi1 * t2.f_umi2)) * ge.n_edges)",
+          "  ELSE",
+          "    SQRT(",
+          "      (t1.f_umi1 * t2.f_umi2 * (1.0 - (t1.f_umi1 * t2.f_umi2)) +",
+          "       t2.f_umi1 * t1.f_umi2 * (1.0 - (t2.f_umi1 * t1.f_umi2))) * ge.n_edges",
+          "    )",
+          "END AS join_count_expected_sd"
+        )
+        result_sd_sql <- paste(
+          ",",
+          "GREATEST(COALESCE(exp.join_count_expected_sd, 0), 1e-6)",
+          "AS join_count_expected_sd"
+        )
+        z_score_sql <- paste(
+          "(join_count - join_count_expected_mean) / join_count_expected_sd",
+          "AS join_count_z,",
+          "2 * (",
+          "  1 - dist_normal_cdf(",
+          "    0.0,",
+          "    join_count_expected_sd,",
+          "    ABS(join_count - join_count_expected_mean)",
+          "  )",
+          ") AS join_count_p,"
+        )
+      } else {
+        expected_sd_sql <- ""
+        result_sd_sql <- ""
+        z_score_sql <- ""
+      }
+
+      glue::glue(
+        "
+        WITH
+        current_edgelist AS (
+          SELECT {group_sql}, umi1, umi2, marker_1, marker_2
+          FROM edgelist
+          WHERE {component_filter}
+        ),
+        group_edges AS (
+          SELECT {group_sql}, COUNT(*) AS n_edges
+          FROM current_edgelist
+          GROUP BY {group_sql}
+        ),
+        unique_m1 AS (
+          SELECT DISTINCT {group_sql}, umi1, marker_1 FROM current_edgelist
+        ),
+        stats_m1 AS (
+          SELECT
+            {group_sql},
+            marker_1 AS marker,
+            COUNT(*) AS marker_1_count,
+            COUNT(*) * 1.0 /
+              SUM(COUNT(*)) OVER (PARTITION BY {group_sql}) AS f_umi1
+          FROM unique_m1
+          GROUP BY {group_sql}, marker_1
+        ),
+        unique_m2 AS (
+          SELECT DISTINCT {group_sql}, umi2, marker_2 FROM current_edgelist
+        ),
+        stats_m2 AS (
+          SELECT
+            {group_sql},
+            marker_2 AS marker,
+            COUNT(*) AS marker_2_count,
+            COUNT(*) * 1.0 /
+              SUM(COUNT(*)) OVER (PARTITION BY {group_sql}) AS f_umi2
+          FROM unique_m2
+          GROUP BY {group_sql}, marker_2
+        ),
+        all_markers AS (
+          SELECT {group_sql}, marker FROM stats_m1 WHERE {marker_filter_expected}
+          UNION
+          SELECT {group_sql}, marker FROM stats_m2 WHERE {marker_filter_expected}
+        ),
+        combined_stats AS (
+          SELECT
+            {am_group_sql},
+            am.marker,
+            COALESCE(s1.f_umi1, 0.0) AS f_umi1,
+            COALESCE(s2.f_umi2, 0.0) AS f_umi2,
+            COALESCE(s1.marker_1_count, 0) AS marker_1_count,
+            COALESCE(s2.marker_2_count, 0) AS marker_2_count
+          FROM all_markers am
+          LEFT JOIN stats_m1 s1
+            ON {am_s1_join_sql}
+            AND am.marker = s1.marker
+          LEFT JOIN stats_m2 s2
+            ON {am_s2_join_sql}
+            AND am.marker = s2.marker
+        ),
+        observed_agg AS (
+          SELECT
+            {group_sql},
+            LEAST(marker_1, marker_2) AS marker_A,
+            GREATEST(marker_1, marker_2) AS marker_B,
+            COUNT(*) AS join_count
+          FROM current_edgelist
+          WHERE {marker_filter_observed}
+          GROUP BY {group_sql}, marker_A, marker_B
+        ),
+        expected_agg AS (
+          SELECT
+            {t1_group_sql},
+            t1.marker AS marker_A,
+            t2.marker AS marker_B,
+            CASE
+              WHEN t1.marker = t2.marker THEN t1.f_umi1 * t2.f_umi2 * ge.n_edges
+              ELSE (t1.f_umi1 * t2.f_umi2 + t2.f_umi1 * t1.f_umi2) * ge.n_edges
+            END AS join_count_expected_mean
+            {expected_sd_sql}
+          FROM combined_stats t1
+          JOIN combined_stats t2
+            ON {t1_t2_join_sql}
+            AND t1.marker <= t2.marker
+          JOIN group_edges ge
+            ON {t1_ge_join_sql}
+          {min_marker_filter_sql}
+        ),
+        results AS (
+          SELECT
+            {coalesced_group_sql},
+            exp.marker_A AS marker_1,
+            exp.marker_B AS marker_2,
+            COALESCE(obs.join_count, 0) AS join_count,
+            exp.join_count_expected_mean
+            {result_sd_sql}
+          FROM expected_agg exp
+          LEFT JOIN observed_agg obs
+            ON {final_join_sql}
+            AND obs.marker_A = exp.marker_A
+            AND obs.marker_B = exp.marker_B
+        )
+        SELECT
+          *,
+          {z_score_sql}
+          LOG2(
+            GREATEST(join_count, 1) /
+            GREATEST(join_count_expected_mean, 1)
+          ) AS log2_ratio
+        FROM results
+        "
+      )
+    },
     finalize = function() {
       if (DBI::dbIsValid(private$con)) {
         DBI::dbDisconnect(private$con)

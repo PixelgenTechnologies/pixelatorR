@@ -533,6 +533,8 @@ require DuckDB's stochastic extension.
   components = NULL,
   markers = NULL,
   calc_z_score = FALSE,
+  min_marker_count = 10L,
+  batch_size = 100L,
   name = "proximity"
 )}\if{html}{\out{</div>}}
 }
@@ -548,6 +550,16 @@ require DuckDB's stochastic extension.
 
 \item{\code{calc_z_score}}{Logical indicating whether to calculate z-scores and
 p-values. Default is \code{FALSE}.}
+
+\item{\code{min_marker_count}}{An integer specifying the minimum total marker count
+(sum of UMI counts across umi1 and umi2) for a marker to be considered in proximity pair
+expansion. Defaults to \code{10L}. Set to \code{NULL} or \code{0L} to include all markers.
+Note that all edges are retained for computing expected frequencies and observed join counts
+to prevent bias.}
+
+\item{\code{batch_size}}{An integer indicating the number of components to
+process in each batch, or \code{NULL} to process all requested components
+in a single query. Defaults to \code{100}.}
 
 \item{\code{name}}{Name of the temporary table in which to store the results.}
 }
