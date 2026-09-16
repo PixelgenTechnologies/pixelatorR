@@ -120,6 +120,18 @@ prox \%>\% head()
 
 
 ## ------------------------------------------------
+## Method `PixelDB$compute_proximity_scores`
+## ------------------------------------------------
+
+db <- PixelDB$new(pxl_file)
+proximity <- db$compute_proximity_scores(
+  components = "0a45497c6bfbfb22",
+  markers = c("B2M", "HLA-ABC")
+)
+proximity \%>\% head()
+
+
+## ------------------------------------------------
 ## Method `PixelDB$cell_meta`
 ## ------------------------------------------------
 
@@ -200,6 +212,7 @@ db$close()
 \item \href{#method-PixelDB-fetch_table_subset}{\code{PixelDB$fetch_table_subset()}}
 \item \href{#method-PixelDB-counts}{\code{PixelDB$counts()}}
 \item \href{#method-PixelDB-proximity}{\code{PixelDB$proximity()}}
+\item \href{#method-PixelDB-compute_proximity_scores}{\code{PixelDB$compute_proximity_scores()}}
 \item \href{#method-PixelDB-cell_meta}{\code{PixelDB$cell_meta()}}
 \item \href{#method-PixelDB-protein_meta}{\code{PixelDB$protein_meta()}}
 \item \href{#method-PixelDB-run_meta}{\code{PixelDB$run_meta()}}
@@ -493,6 +506,56 @@ A \code{tbl_df} with the proximity scores
 \preformatted{# Fetch the proximity scores
 prox <- db$proximity()
 prox \%>\% head()
+
+}
+\if{html}{\out{</div>}}
+
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-PixelDB-compute_proximity_scores"></a>}}
+\if{latex}{\out{\hypertarget{method-PixelDB-compute_proximity_scores}{}}}
+\subsection{Method \code{compute_proximity_scores()}}{
+Compute analytical proximity scores directly from the edgelist
+
+The calculation is performed entirely in DuckDB and does not require
+loading \code{CellGraph} objects into memory. Since PXL files are opened
+read-only, the result is materialized as a temporary table that exists
+for the lifetime of this connection. By default, the temporary table is
+named \code{proximity} and shadows a persisted table with the same name.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{PixelDB$compute_proximity_scores(
+  components = NULL,
+  markers = NULL,
+  name = "proximity"
+)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{components}}{A character vector of component names to include, or
+\code{NULL} to include all components.}
+
+\item{\code{markers}}{A character vector of marker names to include, or
+\code{NULL} to include all markers.}
+
+\item{\code{name}}{Name of the temporary table in which to store the results.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{tbl_lazy} referring to the temporary proximity table
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{db <- PixelDB$new(pxl_file)
+proximity <- db$compute_proximity_scores(
+  components = "0a45497c6bfbfb22",
+  markers = c("B2M", "HLA-ABC")
+)
+proximity \%>\% head()
 
 }
 \if{html}{\out{</div>}}

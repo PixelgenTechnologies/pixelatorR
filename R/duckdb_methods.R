@@ -373,6 +373,256 @@ PixelDB <- R6Class(
       return(proximity_scores)
     },
     #' @description
+    #' Compute analytical proximity scores directly from the edgelist
+    #'
+    #' The calculation is performed entirely in DuckDB and does not require
+    #' loading \code{CellGraph} objects into memory. Since PXL files are opened
+    #' read-only, the result is materialized as a temporary table that exists
+    #' for the lifetime of this connection. By default, the temporary table is
+    #' named \code{proximity} and shadows a persisted table with the same name.
+    #'
+    #' @param components A character vector of component names to include, or
+    #' \code{NULL} to include all components.
+    #' @param markers A character vector of marker names to include, or
+    #' \code{NULL} to include all markers.
+    #' @param name Name of the temporary table in which to store the results.
+    #'
+    #' @examples
+    #' db <- PixelDB$new(pxl_file)
+    #' proximity <- db$compute_proximity_scores(
+    #'   components = "0a45497c6bfbfb22",
+    #'   markers = c("B2M", "HLA-ABC")
+    #' )
+    #' proximity %>% head()
+    #'
+    #' @return A \code{tbl_lazy} referring to the temporary proximity table
+    #'
+    compute_proximity_scores = function(
+      components = NULL,
+      markers = NULL,
+      name = "proximity"
+    ) {
+      self$check_connection()
+      assert_vector(components, "character", n = 1, allow_null = TRUE)
+      assert_vector(markers, "character", n = 1, allow_null = TRUE)
+      assert_single_value(name, "string")
+
+      # The stochastic extension supplies dist_normal_cdf(), which is used for
+      # the two-sided p-value. It may already be installed by DuckDB.
+      tryCatch(
+        DBI::dbExecute(private$con, "LOAD stochastic"),
+        error = function(e) {
+          DBI::dbExecute(private$con, "INSTALL stochastic FROM community")
+          DBI::dbExecute(private$con, "LOAD stochastic")
+        }
+      )
+
+      edgelist_columns <- DBI::dbListFields(private$con, "edgelist")
+      required_columns <- c("component", "umi1", "umi2", "marker_1", "marker_2")
+      missing_columns <- setdiff(required_columns, edgelist_columns)
+      if (length(missing_columns) > 0) {
+        cli::cli_abort(
+          c(
+            "x" = "The edgelist is missing required column{?s}: {.field {missing_columns}}."
+          )
+        )
+      }
+
+      # Newer, multi-sample PXL files include `sample`; legacy files do not.
+      # Include it in every grouping and join when available.
+      group_columns <- c(
+        if ("sample" %in% edgelist_columns) "sample",
+        "component"
+      )
+      group_sql <- paste(group_columns, collapse = ", ")
+      qualified_group_sql <- function(alias) {
+        paste0(alias, ".", group_columns, collapse = ", ")
+      }
+      join_group_sql <- function(left, right) {
+        paste0(left, ".", group_columns, " = ", right, ".", group_columns,
+          collapse = " AND "
+        )
+      }
+
+      sql_values <- function(values) {
+        paste(DBI::dbQuoteString(private$con, unique(values)), collapse = ", ")
+      }
+      component_filter <- if (is.null(components)) {
+        "TRUE"
+      } else {
+        glue::glue("component IN ({sql_values(components)})")
+      }
+      marker_filter_expected <- if (is.null(markers)) {
+        "TRUE"
+      } else {
+        marker_values <- sql_values(markers)
+        glue::glue(
+          "t1.marker_1 IN ({marker_values}) ",
+          "AND t2.marker_2 IN ({marker_values})"
+        )
+      }
+      marker_filter_observed <- if (is.null(markers)) {
+        "TRUE"
+      } else {
+        marker_values <- sql_values(markers)
+        glue::glue(
+          "marker_1 IN ({marker_values}) ",
+          "AND marker_2 IN ({marker_values})"
+        )
+      }
+
+      coalesced_group_sql <- paste0(
+        "COALESCE(obs.", group_columns, ", exp.", group_columns, ") AS ",
+        group_columns,
+        collapse = ", "
+      )
+      final_join_sql <- join_group_sql("obs", "exp")
+
+      analysis_query <- glue::glue(
+        "
+        WITH
+        current_edgelist AS (
+          SELECT *
+          FROM edgelist
+          WHERE {component_filter}
+        ),
+        group_edges AS (
+          SELECT {group_sql}, COUNT(*) AS n_edges
+          FROM current_edgelist
+          GROUP BY {group_sql}
+        ),
+        all_markers AS (
+          SELECT {group_sql}, marker_1 AS marker FROM current_edgelist
+          UNION
+          SELECT {group_sql}, marker_2 AS marker FROM current_edgelist
+        ),
+        unique_m1 AS (
+          SELECT DISTINCT {group_sql}, umi1, marker_1 FROM current_edgelist
+        ),
+        raw_stats_m1 AS (
+          SELECT
+            {group_sql},
+            marker_1,
+            COUNT(*) AS marker_1_count,
+            COUNT(*) * 1.0 /
+              SUM(COUNT(*)) OVER (PARTITION BY {group_sql}) AS f_umi1
+          FROM unique_m1
+          GROUP BY {group_sql}, marker_1
+        ),
+        stats_m1 AS (
+          SELECT
+            {qualified_group_sql("am")},
+            am.marker AS marker_1,
+            COALESCE(rm1.marker_1_count, 0) AS marker_1_count,
+            COALESCE(rm1.f_umi1, 0.0) AS f_umi1
+          FROM all_markers am
+          LEFT JOIN raw_stats_m1 rm1
+            ON {join_group_sql("am", "rm1")}
+            AND am.marker = rm1.marker_1
+        ),
+        unique_m2 AS (
+          SELECT DISTINCT {group_sql}, umi2, marker_2 FROM current_edgelist
+        ),
+        raw_stats_m2 AS (
+          SELECT
+            {group_sql},
+            marker_2,
+            COUNT(*) AS marker_2_count,
+            COUNT(*) * 1.0 /
+              SUM(COUNT(*)) OVER (PARTITION BY {group_sql}) AS f_umi2
+          FROM unique_m2
+          GROUP BY {group_sql}, marker_2
+        ),
+        stats_m2 AS (
+          SELECT
+            {qualified_group_sql("am")},
+            am.marker AS marker_2,
+            COALESCE(rm2.marker_2_count, 0) AS marker_2_count,
+            COALESCE(rm2.f_umi2, 0.0) AS f_umi2
+          FROM all_markers am
+          LEFT JOIN raw_stats_m2 rm2
+            ON {join_group_sql("am", "rm2")}
+            AND am.marker = rm2.marker_2
+        ),
+        expected_calc AS (
+          SELECT
+            {qualified_group_sql("t1")},
+            LEAST(t1.marker_1, t2.marker_2) AS marker_A,
+            GREATEST(t1.marker_1, t2.marker_2) AS marker_B,
+            t1.f_umi1 * t2.f_umi2 * ge.n_edges AS exp_count_raw,
+            t1.f_umi1 * t2.f_umi2 *
+              (1 - (t1.f_umi1 * t2.f_umi2)) * ge.n_edges AS exp_count_var
+          FROM stats_m1 t1
+          JOIN stats_m2 t2 ON {join_group_sql("t1", "t2")}
+          JOIN group_edges ge ON {join_group_sql("t1", "ge")}
+          WHERE {marker_filter_expected}
+        ),
+        expected_agg AS (
+          SELECT
+            {group_sql},
+            marker_A,
+            marker_B,
+            SUM(exp_count_raw) AS join_count_expected_mean,
+            SQRT(SUM(exp_count_var)) AS join_count_expected_sd
+          FROM expected_calc
+          GROUP BY {group_sql}, marker_A, marker_B
+        ),
+        observed_agg AS (
+          SELECT
+            {group_sql},
+            LEAST(marker_1, marker_2) AS marker_A,
+            GREATEST(marker_1, marker_2) AS marker_B,
+            COUNT(*) AS join_count
+          FROM current_edgelist
+          WHERE {marker_filter_observed}
+          GROUP BY {group_sql}, marker_A, marker_B
+        ),
+        results AS (
+          SELECT
+            {coalesced_group_sql},
+            COALESCE(obs.marker_A, exp.marker_A) AS marker_1,
+            COALESCE(obs.marker_B, exp.marker_B) AS marker_2,
+            COALESCE(obs.join_count, 0) AS join_count,
+            COALESCE(exp.join_count_expected_mean, 0) AS join_count_expected_mean,
+            GREATEST(COALESCE(exp.join_count_expected_sd, 0), 1e-6)
+              AS join_count_expected_sd
+          FROM observed_agg obs
+          FULL OUTER JOIN expected_agg exp
+            ON {final_join_sql}
+            AND obs.marker_A = exp.marker_A
+            AND obs.marker_B = exp.marker_B
+        )
+        SELECT
+          *,
+          (join_count - join_count_expected_mean) / join_count_expected_sd
+            AS join_count_z,
+          2 * (
+            1 - dist_normal_cdf(
+              0.0,
+              join_count_expected_sd,
+              ABS(join_count - join_count_expected_mean)
+            )
+          ) AS join_count_p,
+          LOG2(
+            GREATEST(join_count, 1) /
+            GREATEST(join_count_expected_mean, 1)
+          ) AS log2_ratio
+        FROM results
+        "
+      )
+
+      table_name <- as.character(DBI::dbQuoteIdentifier(private$con, name))
+      DBI::dbExecute(
+        private$con,
+        glue::glue(
+          "CREATE OR REPLACE TEMPORARY TABLE {table_name} AS ",
+          "{analysis_query}"
+        )
+      )
+
+      return(tbl(private$con, name))
+    },
+    #' @description
     #' Fetches the __adata__obs meta data
     #'
     #' @examples
