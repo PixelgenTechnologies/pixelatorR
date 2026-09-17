@@ -390,7 +390,8 @@ FetchLayoutData.Seurat <- function(
   }
   m2 <- .missing_fetch_vars_n(missing_some)
   cli::cli_warn(
-    "The following requested variables were missing from some graphs and were filled with NA{m2}: {.val {head(missing_some, 10)}}"
+    "The following requested variables were missing from some graphs and were
+     filled with NA{m2}: {.val {head(missing_some, 10)}}"
   )
   invisible(NULL)
 }
@@ -476,7 +477,13 @@ FetchLayoutData.Seurat <- function(
         }
         cli::cli_abort(c("x" = "{msg}"), call = call)
       }
-      if (grepl("None of the requested variables|The following requested variables were not found|None of the requested nodes", msg)) {
+      no_match <- paste(
+        "None of the requested variables",
+        "The following requested variables were not found",
+        "None of the requested nodes",
+        sep = "|"
+      )
+      if (grepl(no_match, msg)) {
         return(data.frame(row.names = cells, stringsAsFactors = FALSE, check.names = FALSE))
       }
       cli::cli_abort(c("x" = "{msg}"), call = call)

@@ -1,3 +1,17 @@
+# testthat's expect_warning() consumes every warning, so a call that warns
+# twice needs the messages collected to check both.
+capture_warning_messages <- function(expr) {
+  messages <- character()
+  value <- withCallingHandlers(
+    expr,
+    warning = function(w) {
+      messages <<- c(messages, conditionMessage(w))
+      invokeRestart("muffleWarning")
+    }
+  )
+  list(value = value, messages = messages)
+}
+
 node_names <- paste0("n", 1:4)
 bipart_graph <- tidygraph::tbl_graph(
   nodes = data.frame(
@@ -202,18 +216,17 @@ test_that("FetchData.CellGraphList forwards add_marker", {
     ),
     cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = one_hot_2)
   ))
-  expect_warning(
-    expect_warning(
-      fd_list_clean <- SeuratObject::FetchData(
-        cgl_clean,
-        vars = "score",
-        add_marker = TRUE,
-        clean = TRUE
-      ),
-      "missing from some graphs"
-    ),
-    "missing data for vars requested"
+  captured <- capture_warning_messages(
+    SeuratObject::FetchData(
+      cgl_clean,
+      vars = "score",
+      add_marker = TRUE,
+      clean = TRUE
+    )
   )
+  fd_list_clean <- captured$value
+  expect_match(captured$messages, "missing from some graphs", all = FALSE)
+  expect_match(captured$messages, "missing data for vars requested", all = FALSE)
   expect_equal(unique(fd_list_clean$component), "cell_1")
   expect_equal(nrow(fd_list_clean), 4)
   expect_true("marker" %in% colnames(fd_list_clean))
@@ -400,13 +413,12 @@ test_that("FetchData.CellGraphList binds graphs with unique node IDs", {
     cell_1 = cg,
     cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = counts_2)
   ))
-  expect_warning(
-    expect_warning(
-      fd_clean <- SeuratObject::FetchData(cgl_missing, vars = "cluster", clean = TRUE),
-      "missing from some graphs"
-    ),
-    "missing data for vars requested"
+  captured <- capture_warning_messages(
+    SeuratObject::FetchData(cgl_missing, vars = "cluster", clean = TRUE)
   )
+  fd_clean <- captured$value
+  expect_match(captured$messages, "missing from some graphs", all = FALSE)
+  expect_match(captured$messages, "missing data for vars requested", all = FALSE)
   expect_equal(unique(fd_clean$component), "cell_1")
   expect_equal(nrow(fd_clean), 4)
 })
