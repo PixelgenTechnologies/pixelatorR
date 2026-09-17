@@ -64,20 +64,16 @@ test_that("FetchLayoutData.CellGraph works as expected", {
   expect_equal(lyt_vars$node_type, c("umi1", "umi1", "umi2", "umi2"))
 })
 
-test_that("FetchLayoutData.CellGraph drops vars missing from the graph", {
-  expect_warning(
-    lyt <- FetchLayoutData(cg, vars = c("CD3", "missing_var")),
+test_that("FetchLayoutData.CellGraph aborts when vars are missing from the graph", {
+  expect_error(
+    FetchLayoutData(cg, vars = c("CD3", "missing_var")),
     "The following requested variables were not found"
   )
-  expect_equal(colnames(lyt), c("x", "y", "z", "CD3"))
-  expect_equal(lyt$CD3, as.numeric(counts[, "CD3"]))
-  expect_false("missing_var" %in% colnames(lyt))
 
-  expect_warning(
-    lyt_all_missing <- FetchLayoutData(cg, vars = "not_a_variable"),
+  expect_error(
+    FetchLayoutData(cg, vars = "not_a_variable"),
     "The following requested variables were not found"
   )
-  expect_equal(colnames(lyt_all_missing), c("x", "y", "z"))
 })
 
 test_that("FetchLayoutData.CellGraph keeps non-syntactic marker names", {
@@ -86,7 +82,7 @@ test_that("FetchLayoutData.CellGraph keeps non-syntactic marker names", {
   expect_equal(lyt[["HLA-DR"]], as.numeric(counts[, "HLA-DR"]))
 })
 
-test_that("FetchLayoutData.CellGraph can add protein labels from one-hot counts", {
+test_that("FetchLayoutData.CellGraph can add marker labels from one-hot counts", {
   one_hot <- Matrix::sparseMatrix(
     i = seq_len(4),
     j = c(1L, 3L, 2L, 4L),
@@ -101,22 +97,22 @@ test_that("FetchLayoutData.CellGraph can add protein labels from one-hot counts"
     layout = list(wpmds_3d = layout)
   )
 
-  lyt <- FetchLayoutData(cg_one_hot, add_protein = TRUE)
-  expect_equal(colnames(lyt), c("x", "y", "z", "protein"))
-  expect_equal(lyt$protein, c("CD3", "CD8", "CD4", "HLA-DR"))
+  lyt <- FetchLayoutData(cg_one_hot, add_marker = TRUE)
+  expect_equal(colnames(lyt), c("x", "y", "z", "marker"))
+  expect_equal(lyt$marker, c("CD3", "CD8", "CD4", "HLA-DR"))
 
-  lyt_vars <- FetchLayoutData(cg_one_hot, vars = "node_type", add_protein = TRUE)
-  expect_equal(colnames(lyt_vars), c("x", "y", "z", "protein", "node_type"))
+  lyt_vars <- FetchLayoutData(cg_one_hot, vars = "node_type", add_marker = TRUE)
+  expect_equal(colnames(lyt_vars), c("x", "y", "z", "marker", "node_type"))
 
   cg_empty <- CreateCellGraphObject(
     cellgraph = bipart_graph,
     layout = list(wpmds_3d = layout)
   )
-  lyt_empty <- FetchLayoutData(cg_empty, add_protein = TRUE)
-  expect_true(all(is.na(lyt_empty$protein)))
+  lyt_empty <- FetchLayoutData(cg_empty, add_marker = TRUE)
+  expect_true(all(is.na(lyt_empty$marker)))
 })
 
-test_that("FetchLayoutData.CellGraphList forwards add_protein", {
+test_that("FetchLayoutData.CellGraphList forwards add_marker", {
   one_hot <- Matrix::sparseMatrix(
     i = seq_len(4),
     j = c(1L, 1L, 2L, 2L),
@@ -131,14 +127,14 @@ test_that("FetchLayoutData.CellGraphList forwards add_protein", {
     layout = list(wpmds_3d = layout)
   )
   cgl_one_hot <- CreateCellGraphList(list(cell_1 = cg_one_hot, cell_2 = cg_one_hot))
-  lyt <- FetchLayoutData(cgl_one_hot, add_protein = TRUE)
-  expect_equal(colnames(lyt), c("component", "x", "y", "z", "protein"))
-  expect_equal(lyt$protein, rep(c("CD3", "CD3", "CD4", "CD4"), 2))
+  lyt <- FetchLayoutData(cgl_one_hot, add_marker = TRUE)
+  expect_equal(colnames(lyt), c("component", "x", "y", "z", "marker"))
+  expect_equal(lyt$marker, rep(c("CD3", "CD3", "CD4", "CD4"), 2))
 })
 
 test_that("FetchLayoutData.CellGraph fails with invalid input", {
   expect_error(FetchLayoutData(cg, layout_method = "missing_layout"))
-  expect_error(FetchLayoutData(cg, vars = "protein"))
+  expect_error(FetchLayoutData(cg, vars = "marker"))
   expect_error(FetchLayoutData(cg, vars = "x"))
   expect_error(FetchLayoutData(cg, vars = "CD3", layer = "missing_layer"))
   cg_no_layout <- CreateCellGraphObject(cellgraph = bipart_graph, counts = counts)
@@ -154,7 +150,10 @@ test_that("FetchLayoutData.CellGraph fails with invalid input", {
 cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg_no_cluster))
 
 test_that("FetchLayoutData.CellGraphList works as expected", {
-  expect_no_error(lyt <- FetchLayoutData(cgl, vars = c("CD3", "cluster")))
+  expect_warning(
+    lyt <- FetchLayoutData(cgl, vars = c("CD3", "cluster")),
+    "missing from some graphs"
+  )
   expect_s3_class(lyt, "tbl_df")
   expect_equal(colnames(lyt), c("component", "x", "y", "z", "CD3", "cluster"))
   expect_equal(nrow(lyt), 8)
@@ -183,24 +182,28 @@ test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", 
     meta.data = meta
   )
   cgl_lps <- CreateCellGraphList(list(cell_1 = cg_lps, cell_2 = cg_no_cluster))
-  lyt <- FetchLayoutData(cgl_lps, vars = "f1", layer = "lps")
+  expect_warning(
+    lyt <- FetchLayoutData(cgl_lps, vars = "f1", layer = "lps"),
+    "missing from some graphs"
+  )
   expect_equal(lyt$f1[1:4], unname(lps[, "f1"]))
   expect_true(all(is.na(lyt$f1[5:8])))
 
   cgl_mixed <- CreateCellGraphList(list(cell_1 = cg_lps, cell_2 = cg))
-  lyt_mixed <- FetchLayoutData(cgl_mixed, vars = c("cluster", "f1"), layer = "lps")
+  expect_warning(
+    lyt_mixed <- FetchLayoutData(cgl_mixed, vars = c("cluster", "f1"), layer = "lps"),
+    "missing from some graphs"
+  )
   expect_equal(lyt_mixed$cluster, c(meta$cluster, meta$cluster))
   expect_equal(lyt_mixed$f1[1:4], unname(lps[, "f1"]))
   expect_true(all(is.na(lyt_mixed$f1[5:8])))
 })
 
-test_that("FetchLayoutData.CellGraphList drops vars missing from every graph", {
-  expect_warning(
-    lyt <- FetchLayoutData(cgl, vars = c("CD3", "missing_var")),
+test_that("FetchLayoutData.CellGraphList aborts when vars are missing from every graph", {
+  expect_error(
+    FetchLayoutData(cgl, vars = c("CD3", "missing_var")),
     "The following requested variables were not found"
   )
-  expect_equal(colnames(lyt), c("component", "x", "y", "z", "CD3"))
-  expect_false("missing_var" %in% colnames(lyt))
 })
 
 test_that("FetchLayoutData.CellGraphList validates loaded CellGraphs", {
@@ -226,22 +229,20 @@ test_that("FetchLayoutData.PNAAssay and Seurat methods work as expected", {
   expect_false(any(is.na(lyt_assay$x)))
   expect_false(any(is.na(lyt_assay$B2M)))
 
-  expect_no_error(lyt_protein <- FetchLayoutData(se[["PNA"]], cells = cells[1], add_protein = TRUE))
-  expect_true("protein" %in% colnames(lyt_protein))
+  expect_no_error(lyt_protein <- FetchLayoutData(se[["PNA"]], cells = cells[1], add_marker = TRUE))
+  expect_true("marker" %in% colnames(lyt_protein))
   expect_equal(nrow(lyt_protein), nrow(lyt_assay))
-  expect_true(is.character(lyt_protein$protein))
-  expect_gt(length(unique(lyt_protein$protein)), 1)
+  expect_true(is.character(lyt_protein$marker))
+  expect_gt(length(unique(lyt_protein$marker)), 1)
 
   expect_no_error(lyt_seurat <- FetchLayoutData(se, cells = cells, vars = "B2M"))
   expect_equal(sort(unique(lyt_seurat$component)), sort(cells))
   expect_equal(nrow(lyt_seurat), sum(vapply(CellGraphs(se)[cells], function(x) length(CellGraphData(x, slot = "nodes")), integer(1))))
 
-  expect_warning(
-    lyt_invalid <- FetchLayoutData(se, cells = cells, vars = c("B2M", "Invalid"), add_protein = TRUE),
+  expect_error(
+    FetchLayoutData(se, cells = cells, vars = c("B2M", "Invalid"), add_marker = TRUE),
     "The following requested variables were not found"
   )
-  expect_true(all(c("component", "x", "y", "z", "protein", "B2M") %in% colnames(lyt_invalid)))
-  expect_false("Invalid" %in% colnames(lyt_invalid))
 })
 
 test_that("FetchLayoutData.PNAAssay and Seurat methods validate loaded CellGraphs", {

@@ -48,7 +48,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   list embedding.
 
 - `FetchData(..., clean = TRUE)` only inspects requested `vars` when
-  deciding which nodes to drop. A `protein` column from `add_protein`
+  deciding which nodes to drop. A `marker` column from `add_marker`
   no longer keeps rows whose requested variables are all `NA`.
 
 - `.assert_current_cellgraph()` detects missing slots from the object's
@@ -56,10 +56,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `nodes`, `layers`, `meta.data`, and `reductions` existed still gets the
   named upgrade message.
 
-- `FetchLayoutData()` and `FetchData.CellGraphList` omit variables that
-  are missing from every `CellGraph` and warn with the same message as
-  `FetchData.CellGraph`. Variables present on some graphs and missing on
-  others are still filled with `NA`.
+- `FetchData()` and `FetchLayoutData()` abort when a requested variable
+  is missing from every graph, so a misspelled name fails immediately.
+  Variables present on some graphs and missing on others are still
+  filled with `NA`, and now also warn.
+
+- `add_protein` is now `add_marker` on `FetchData` and
+  `FetchLayoutData`. The added column is `marker`.
 - `ComputeLPS()` on a `CellGraphList` or assay now warns and leaves a graph
   unmodified when it has no counts, including the default `markers = NULL`
   path. Previously only an explicit `markers` vector was intersected first,
@@ -104,8 +107,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FetchData.CellGraphList` to pull node-level variables from each loaded
   graph and bind them with a `component` column. Unlike `FetchLayoutData`,
   it does not require a stored layout and does not reserve `x`/`y`/`z`.
-  Variables missing from a graph are filled with `NA`. Variables missing
-  from every graph are omitted with a warning.
+  Variables missing from a graph are filled with `NA` and warn. Variables
+  missing from every graph abort.
 - `heuristic_illumination()` now takes `light_direction`, a length-3 vector in
   layout `(x, y, z)` coordinates for the directional (key) light. The default
   `c(0, 0, 1)` keeps the previous positive-z lighting. `render_rotating_layout()`
@@ -120,9 +123,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `PNAAssay`, `PNAAssay5`, and `Seurat` (loaded cell graphs only).
 - `FetchLayoutData` to extract a stored 3D layout (`x`, `y`, `z`) from
   `CellGraph` objects, optionally joined with node-level variables from
-  `FetchData`. `add_protein = TRUE` adds a `protein` column from the one-hot
+  `FetchData`. `add_marker = TRUE` adds a `marker` column from the one-hot
   node counts matrix. Methods are provided for `CellGraph`, `CellGraphList`,
-  `PNAAssay`, `PNAAssay5`, and `Seurat`. Missing `vars` are filled with `NA`.
+  `PNAAssay`, `PNAAssay5`, and `Seurat`. A variable missing from every graph
+  aborts; a variable missing from some graphs is filled with `NA` and warns.
 - `CellGraphList`, a named list of `CellGraph` objects (subsetting,
   concatenation, and replacement type-check elements; unloaded graphs may be
   `NULL`; printing shows a short summary).

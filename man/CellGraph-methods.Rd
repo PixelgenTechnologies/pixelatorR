@@ -38,7 +38,7 @@
   cells = NULL,
   layer = NULL,
   clean = TRUE,
-  add_protein = FALSE,
+  add_marker = FALSE,
   ...
 )
 
@@ -56,7 +56,7 @@
   cells = NULL,
   layer = NULL,
   clean = FALSE,
-  add_protein = FALSE,
+  add_marker = FALSE,
   ...
 )
 }
@@ -85,7 +85,9 @@ dropped.}
 
 \item{vars}{Variables to fetch: marker names, node metadata columns,
 graph vertex attributes, or reduction embedding columns (for example
-\code{"PC_1"}).}
+\code{"PC_1"}). A variable missing from the graph (or from every graph
+in a list) aborts. A variable present on some graphs in a list and
+missing on others is filled with \code{NA} and a warning is issued.}
 
 \item{cells}{For \code{FetchData.CellGraph}, nodes to collect (default is
 all nodes). Numeric indices are allowed, matching
@@ -97,12 +99,12 @@ error when they are included in \code{cells}.}
 requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
 \code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
 lack the requested variables still appear with \code{NA} values. A
-\code{protein} column added with \code{add_protein} is not treated as a
+\code{marker} column added with \code{add_marker} is not treated as a
 requested variable.}
 
-\item{add_protein}{If \code{TRUE}, add a \code{protein} column with the
+\item{add_marker}{If \code{TRUE}, add a \code{marker} column with the
 marker label of each node from the one-hot counts matrix. Nodes with no
-count are \code{NA}. \code{vars} cannot include \code{protein} when this
+count are \code{NA}. \code{vars} cannot include \code{marker} when this
 is \code{TRUE}.}
 
 \item{x}{A \code{\link{CellGraph}} object}
@@ -118,8 +120,8 @@ is \code{TRUE}.}
 and requested variables as columns. \code{FetchData.CellGraphList}: a
 \code{data.frame} with a \code{component} column identifying the source graph
 and the requested variables. Row names are node IDs and must be unique
-across the combined graphs. \code{add_protein = TRUE} also adds a
-\code{protein} column with the marker label of each node.
+across the combined graphs. \code{add_marker = TRUE} also adds a
+\code{marker} column with the marker label of each node.
 \code{subset}: a \code{CellGraph} object containing only the specified nodes.
 }
 \description{
@@ -151,12 +153,12 @@ does not reserve coordinate names, so \code{vars} may include \code{x},
 \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 is reserved for the source graph ID. Node IDs are used as row names and
 must be unique across the graphs being combined. Variables missing from a
-graph are filled with \code{NA}. Variables missing from every graph are
-omitted, with the same warning as \code{FetchData.CellGraph}. Graphs that
+graph are filled with \code{NA} and a warning is issued. Variables
+missing from every graph abort. Graphs that
 do not have a requested \code{layer} omit only features from that layer;
 metadata, vertex attributes, reductions, and other layer values are kept.
 \code{clean} defaults to \code{FALSE} so those missing values are kept.
-\code{add_protein = TRUE} adds a \code{protein} column from the one-hot
+\code{add_marker = TRUE} adds a \code{marker} column from the one-hot
 counts matrix of each graph.
 
 }}

@@ -552,7 +552,9 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 
 #' @param vars Variables to fetch: marker names, node metadata columns,
 #' graph vertex attributes, or reduction embedding columns (for example
-#' \code{"PC_1"}).
+#' \code{"PC_1"}). A variable missing from the graph (or from every graph
+#' in a list) aborts. A variable present on some graphs in a list and
+#' missing on others is filled with \code{NA} and a warning is issued.
 #' @param cells For \code{FetchData.CellGraph}, nodes to collect (default is
 #' all nodes). Numeric indices are allowed, matching
 #' \code{\link[SeuratObject]{FetchData}}. For \code{FetchData.CellGraphList},
@@ -562,11 +564,11 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 #' requested variable. \code{FetchData.CellGraph} defaults to \code{TRUE}.
 #' \code{FetchData.CellGraphList} defaults to \code{FALSE} so graphs that
 #' lack the requested variables still appear with \code{NA} values. A
-#' \code{protein} column added with \code{add_protein} is not treated as a
+#' \code{marker} column added with \code{add_marker} is not treated as a
 #' requested variable.
-#' @param add_protein If \code{TRUE}, add a \code{protein} column with the
+#' @param add_marker If \code{TRUE}, add a \code{marker} column with the
 #' marker label of each node from the one-hot counts matrix. Nodes with no
-#' count are \code{NA}. \code{vars} cannot include \code{protein} when this
+#' count are \code{NA}. \code{vars} cannot include \code{marker} when this
 #' is \code{TRUE}.
 #'
 #' @details
@@ -585,11 +587,11 @@ FetchData.CellGraph <- function(
   cells = NULL,
   layer = NULL,
   clean = TRUE,
-  add_protein = FALSE,
+  add_marker = FALSE,
   ...
 ) {
   .validate_cellgraph_data_names(object)
-  assert_single_value(add_protein, type = "bool")
+  assert_single_value(add_marker, type = "bool")
   missing_layer <- list(...)$missing_layer %||% "error"
   missing_layer <- rlang::arg_match0(missing_layer, values = c("error", "omit"))
   node_names <- .cg_node_map(object)
@@ -621,19 +623,19 @@ FetchData.CellGraph <- function(
   } else {
     assert_vector(vars, type = "character", n = 1)
     vars <- as.character(vars)
-    if (isTRUE(add_protein) && "protein" %in% vars) {
+    if (isTRUE(add_marker) && "marker" %in% vars) {
       cli::cli_abort(
         c(
-          "x" = "{.arg vars} cannot include reserved column name {.val protein}.",
-          "i" = "Protein labels are added with {.arg add_protein} = {.code TRUE}."
+          "x" = "{.arg vars} cannot include reserved column name {.val marker}.",
+          "i" = "Marker labels are added with {.arg add_marker} = {.code TRUE}."
         )
       )
     }
   }
 
   data_fetched <- data.frame(row.names = cells)
-  if (isTRUE(add_protein)) {
-    data_fetched[["protein"]] <- .node_protein_labels(object, nodes = cells)
+  if (isTRUE(add_marker)) {
+    data_fetched[["marker"]] <- .node_marker_labels(object, nodes = cells)
   }
   if (is.null(vars)) {
     return(data_fetched)
@@ -718,21 +720,19 @@ FetchData.CellGraph <- function(
   }
 
   vars_missing <- setdiff(vars, names(data_fetched))
-  m2 <- if (length(vars_missing) > 10) {
-    paste0(" (10 out of ", length(vars_missing), " shown)")
-  } else {
-    ""
-  }
-  if (length(vars_missing) == length(vars) && !isTRUE(add_protein)) {
+  if (length(vars_missing) > 0 && !identical(missing_layer, "omit")) {
+    m2 <- if (length(vars_missing) > 10) {
+      paste0(" (10 out of ", length(vars_missing), " shown)")
+    } else {
+      ""
+    }
     cli::cli_abort(
-      c("x" = "None of the requested variables were found{m2}: {.val {head(vars_missing, 10)}}")
+      c("x" = "The following requested variables were not found{m2}: {.val {head(vars_missing, 10)}}")
     )
-  } else if (length(vars_missing) > 0) {
-    cli::cli_warn("The following requested variables were not found{m2}: {.val {head(vars_missing, 10)}}")
   }
 
   found <- intersect(vars, names(data_fetched))
-  keep <- if (isTRUE(add_protein)) c("protein", found) else found
+  keep <- if (isTRUE(add_marker)) c("marker", found) else found
   data_fetched <- data_fetched[, keep, drop = FALSE]
 
   if (identical(clean, "all") && length(found) > 0 && nrow(data_fetched) > 0) {
@@ -767,8 +767,8 @@ FetchData.CellGraph <- function(
 #' and requested variables as columns. \code{FetchData.CellGraphList}: a
 #' \code{data.frame} with a \code{component} column identifying the source graph
 #' and the requested variables. Row names are node IDs and must be unique
-#' across the combined graphs. \code{add_protein = TRUE} also adds a
-#' \code{protein} column with the marker label of each node.
+#' across the combined graphs. \code{add_marker = TRUE} also adds a
+#' \code{marker} column with the marker label of each node.
 #' \code{subset}: a \code{CellGraph} object containing only the specified nodes.
 #'
 #' @name CellGraph-methods

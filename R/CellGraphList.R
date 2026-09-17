@@ -226,12 +226,12 @@ as.list.CellGraphList <- function(x, ...) {
 #' \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 #' is reserved for the source graph ID. Node IDs are used as row names and
 #' must be unique across the graphs being combined. Variables missing from a
-#' graph are filled with \code{NA}. Variables missing from every graph are
-#' omitted, with the same warning as \code{FetchData.CellGraph}. Graphs that
+#' graph are filled with \code{NA} and a warning is issued. Variables
+#' missing from every graph abort. Graphs that
 #' do not have a requested \code{layer} omit only features from that layer;
 #' metadata, vertex attributes, reductions, and other layer values are kept.
 #' \code{clean} defaults to \code{FALSE} so those missing values are kept.
-#' \code{add_protein = TRUE} adds a \code{protein} column from the one-hot
+#' \code{add_marker = TRUE} adds a \code{marker} column from the one-hot
 #' counts matrix of each graph.
 #' @method FetchData CellGraphList
 #' @export
@@ -242,11 +242,11 @@ FetchData.CellGraphList <- function(
   cells = NULL,
   layer = NULL,
   clean = FALSE,
-  add_protein = FALSE,
+  add_marker = FALSE,
   ...
 ) {
   cells <- .resolve_loaded_cellgraph_ids(object, cells, fn = "FetchData")
-  assert_single_value(add_protein, type = "bool")
+  assert_single_value(add_marker, type = "bool")
 
   if (!is.null(vars) && length(vars) > 0) {
     vars <- as.character(vars)
@@ -258,11 +258,11 @@ FetchData.CellGraphList <- function(
         )
       )
     }
-    if (isTRUE(add_protein) && "protein" %in% vars) {
+    if (isTRUE(add_marker) && "marker" %in% vars) {
       cli::cli_abort(
         c(
-          "x" = "{.arg vars} cannot include reserved column name {.val protein}.",
-          "i" = "Protein labels are added with {.arg add_protein} = {.code TRUE}."
+          "x" = "{.arg vars} cannot include reserved column name {.val marker}.",
+          "i" = "Marker labels are added with {.arg add_marker} = {.code TRUE}."
         )
       )
     }
@@ -291,12 +291,18 @@ FetchData.CellGraphList <- function(
     }
     list(nm = nm, df = df, row_ids = row_ids, node_ids = node_ids, cg = cg)
   })
-  found <- unique(unlist(lapply(pieces, function(p) names(p$df)), use.names = FALSE))
-  .warn_unfound_fetch_vars(vars, found)
+  found_by_graph <- lapply(pieces, function(p) {
+    if (is.null(vars) || length(vars) == 0) {
+      character()
+    } else {
+      intersect(vars, names(p$df))
+    }
+  })
+  .report_list_fetch_vars(vars, found_by_graph)
   keep_vars <- if (is.null(vars) || length(vars) == 0) {
-    found
+    unique(unlist(lapply(pieces, function(p) names(p$df)), use.names = FALSE))
   } else {
-    intersect(vars, found)
+    vars
   }
 
   frames <- .match_fill_classes(lapply(pieces, function(p) {
@@ -307,8 +313,8 @@ FetchData.CellGraphList <- function(
       check.names = FALSE,
       row.names = p$node_ids
     )
-    if (isTRUE(add_protein)) {
-      df$protein <- .node_protein_labels(p$cg, nodes = p$node_ids)
+    if (isTRUE(add_marker)) {
+      df$marker <- .node_marker_labels(p$cg, nodes = p$node_ids)
     }
     fetched <- p$df
     src_ids <- p$row_ids
@@ -340,8 +346,8 @@ FetchData.CellGraphList <- function(
   }
 
   skip_clean <- "component"
-  if (isTRUE(add_protein)) {
-    skip_clean <- c(skip_clean, "protein")
+  if (isTRUE(add_marker)) {
+    skip_clean <- c(skip_clean, "marker")
   }
   value_cols <- setdiff(names(fetched), skip_clean)
   if (identical(clean, "all") && length(value_cols) > 0 && nrow(fetched) > 0) {

@@ -16,7 +16,7 @@ FetchLayoutData(object, ...)
   object,
   layout_method = "wpmds_3d",
   vars = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 )
@@ -26,7 +26,7 @@ FetchLayoutData(object, ...)
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 )
@@ -36,7 +36,7 @@ FetchLayoutData(object, ...)
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 )
@@ -46,7 +46,7 @@ FetchLayoutData(object, ...)
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 )
@@ -57,7 +57,7 @@ FetchLayoutData(object, ...)
   vars = NULL,
   cells = NULL,
   assay = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 )
@@ -75,12 +75,11 @@ and \code{z} coordinates.}
 \item{vars}{Optional character vector of node-level variables to fetch with
 \code{\link[SeuratObject]{FetchData}} (markers, metadata columns, graph
 vertex attributes, or reduction embeddings). A variable that is present
-on some graphs and missing on others is filled with \code{NA}. A variable
-missing from every graph is omitted, with the same warning as
-\code{\link[SeuratObject]{FetchData}}.}
+on some graphs and missing on others is filled with \code{NA} and a
+warning is issued. A variable missing from every graph aborts.}
 
-\item{add_protein}{If \code{TRUE}, add a \code{protein} column with the
-marker label of each node. Labels are read from the protein counts matrix.
+\item{add_marker}{If \code{TRUE}, add a \code{marker} column with the
+marker label of each node. Labels are read from the counts matrix.
 Nodes with no count are \code{NA}.}
 
 \item{layer}{Name of a node matrix layer passed to
@@ -97,7 +96,7 @@ when they are included in \code{cells}.}
 }
 \value{
 A \code{tbl_df} with columns \code{x}, \code{y}, \code{z} and any
-requested \code{vars}. \code{add_protein = TRUE} also adds a \code{protein}
+requested \code{vars}. \code{add_marker = TRUE} also adds a \code{marker}
 column with the marker label of each node. Methods that extract from
 multiple components also include a \code{component} column.
 }
@@ -119,8 +118,8 @@ layout <- FetchLayoutData(cg)
 # Include marker counts
 layout <- FetchLayoutData(cg, vars = "B2M")
 
-# Include protein labels
-layout <- FetchLayoutData(cg, add_protein = TRUE)
+# Include marker labels
+layout <- FetchLayoutData(cg, add_marker = TRUE)
 
 # Combine layouts from a CellGraphList
 cgl <- CellGraphs(se)

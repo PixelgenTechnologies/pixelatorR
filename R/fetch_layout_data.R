@@ -8,11 +8,10 @@ NULL
 #' @param vars Optional character vector of node-level variables to fetch with
 #' \code{\link[SeuratObject]{FetchData}} (markers, metadata columns, graph
 #' vertex attributes, or reduction embeddings). A variable that is present
-#' on some graphs and missing on others is filled with \code{NA}. A variable
-#' missing from every graph is omitted, with the same warning as
-#' \code{\link[SeuratObject]{FetchData}}.
-#' @param add_protein If \code{TRUE}, add a \code{protein} column with the
-#' marker label of each node. Labels are read from the protein counts matrix.
+#' on some graphs and missing on others is filled with \code{NA} and a
+#' warning is issued. A variable missing from every graph aborts.
+#' @param add_marker If \code{TRUE}, add a \code{marker} column with the
+#' marker label of each node. Labels are read from the counts matrix.
 #' Nodes with no count are \code{NA}.
 #' @param layer Name of a node matrix layer passed to
 #' \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
@@ -36,8 +35,8 @@ NULL
 #' # Include marker counts
 #' layout <- FetchLayoutData(cg, vars = "B2M")
 #'
-#' # Include protein labels
-#' layout <- FetchLayoutData(cg, add_protein = TRUE)
+#' # Include marker labels
+#' layout <- FetchLayoutData(cg, add_marker = TRUE)
 #'
 #' @export
 #'
@@ -45,7 +44,7 @@ FetchLayoutData.CellGraph <- function(
   object,
   layout_method = "wpmds_3d",
   vars = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 ) {
@@ -53,7 +52,7 @@ FetchLayoutData.CellGraph <- function(
     object,
     layout_method = layout_method,
     vars = vars,
-    add_protein = add_protein,
+    add_marker = add_marker,
     layer = layer,
     warn_missing = TRUE
   )
@@ -78,25 +77,31 @@ FetchLayoutData.CellGraphList <- function(
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 ) {
   cells <- .resolve_fetch_layout_data_cells(object, cells)
 
-  fetched <- dplyr::bind_rows(lapply(cells, function(nm) {
-    .fetch_layout_data_graph(
+  pieces <- lapply(cells, function(nm) {
+    df <- .fetch_layout_data_graph(
       object[[nm]],
       layout_method = layout_method,
       vars = vars,
-      add_protein = add_protein,
+      add_marker = add_marker,
       layer = layer,
       warn_missing = FALSE
     ) %>%
       mutate(component = nm, .before = 1)
-  }))
-  .warn_unfound_fetch_vars(vars, names(fetched))
-  fetched
+    found <- if (is.null(vars) || length(vars) == 0) {
+      character()
+    } else {
+      intersect(vars, names(df))
+    }
+    list(df = df, found = found)
+  })
+  .report_list_fetch_vars(vars, lapply(pieces, `[[`, "found"))
+  dplyr::bind_rows(lapply(pieces, `[[`, "df"))
 }
 
 #' @rdname FetchLayoutData
@@ -113,7 +118,7 @@ FetchLayoutData.PNAAssay <- function(
   layout_method = "wpmds_3d",
   vars = NULL,
   cells = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 ) {
@@ -122,7 +127,7 @@ FetchLayoutData.PNAAssay <- function(
     layout_method = layout_method,
     vars = vars,
     cells = cells,
-    add_protein = add_protein,
+    add_marker = add_marker,
     layer = layer,
     ...
   )
@@ -152,7 +157,7 @@ FetchLayoutData.Seurat <- function(
   vars = NULL,
   cells = NULL,
   assay = NULL,
-  add_protein = FALSE,
+  add_marker = FALSE,
   layer = NULL,
   ...
 ) {
@@ -165,7 +170,7 @@ FetchLayoutData.Seurat <- function(
     layout_method = layout_method,
     vars = vars,
     cells = cells,
-    add_protein = add_protein,
+    add_marker = add_marker,
     layer = layer,
     ...
   )
@@ -223,24 +228,23 @@ FetchLayoutData.Seurat <- function(
   layout
 }
 
-#' Protein labels from a one-hot encoded node counts matrix
+#' Marker labels from a one-hot encoded node counts matrix
 #'
-#' Each node has a single protein. The counts matrix is one-hot encoded, so
-#' the label is the column name of the non-zero entry in that row. The
-#' compressed sparse column index is used so the dense matrix is never
-#' materialized.
+#' Each node has a single marker. The counts matrix is one-hot encoded, so
+#' the non-zero column of each row is that node's label. Labels are read
+#' from the sparse index rather than densifying the matrix.
 #'
 #' @param object A \code{CellGraph}
-#' @param nodes Node names to return labels for, in that order
+#' @param nodes Node names to label, in result order
 #' @param call Environment to report as the error caller
 #'
-#' @return A character vector of protein names, with \code{NA} for nodes
+#' @return A character vector of marker names, with \code{NA} for nodes
 #' that have no count
 #'
 #' @keywords internal
 #' @noRd
 #'
-.node_protein_labels <- function(object, nodes, call = caller_env()) {
+.node_marker_labels <- function(object, nodes, call = caller_env()) {
   node_map <- .cg_node_map(object)
   labels <- rep(NA_character_, length(nodes))
   counts <- slot(object, "counts")
@@ -253,17 +257,17 @@ FetchLayoutData.Seurat <- function(
   if (length(counts@i) == 0L) {
     return(labels)
   }
-  proteins <- colnames(counts)
-  if (is.null(proteins)) {
+  markers <- colnames(counts)
+  if (is.null(markers)) {
     cli::cli_abort(
-      c("x" = "The counts matrix has no column names to use as protein labels."),
+      c("x" = "The counts matrix has no column names to use as marker labels."),
       call = call
     )
   }
   row_idx <- counts@i + 1L
   col_idx <- rep.int(seq_len(ncol(counts)), diff(counts@p))
   all_labels <- rep(NA_character_, nrow(counts))
-  all_labels[row_idx] <- proteins[col_idx]
+  all_labels[row_idx] <- markers[col_idx]
   all_labels[.row_index(nodes, node_map)]
 }
 
@@ -272,10 +276,10 @@ FetchLayoutData.Seurat <- function(
 #' @param object A \code{CellGraph}
 #' @param layout_method Name of a stored layout
 #' @param vars Character vector of variable names, or \code{NULL}
-#' @param add_protein If \code{TRUE}, add a \code{protein} column
+#' @param add_marker If \code{TRUE}, add a \code{marker} column
 #' @param layer Layer name passed to \code{FetchData}, or \code{NULL}
-#' @param warn_missing If \code{TRUE}, warn for requested variables that
-#' were not found on this graph
+#' @param warn_missing If \code{TRUE}, abort when requested variables were
+#' not found on this graph
 #'
 #' @return A tibble of coordinates and fetched variables
 #'
@@ -286,19 +290,19 @@ FetchLayoutData.Seurat <- function(
   object,
   layout_method,
   vars,
-  add_protein,
+  add_marker,
   layer,
   warn_missing
 ) {
   assert_single_value(layout_method, type = "string")
   assert_vector(vars, type = "character", n = 1, allow_null = TRUE)
-  assert_single_value(add_protein, type = "bool")
+  assert_single_value(add_marker, type = "bool")
   assert_single_value(layer, type = "string", allow_null = TRUE)
   .assert_current_cellgraph(object)
 
   if (!is.null(vars)) {
     vars <- as.character(vars)
-    reserved <- intersect(vars, c("x", "y", "z", "component", "protein"))
+    reserved <- intersect(vars, c("x", "y", "z", "component", "marker"))
     if (length(reserved) > 0) {
       cli::cli_abort(
         c("x" = "{.arg vars} cannot include reserved column name{?s} {.val {reserved}}.")
@@ -318,46 +322,91 @@ FetchLayoutData.Seurat <- function(
     missing_layer = if (isTRUE(warn_missing)) "error" else "omit"
   )
   if (isTRUE(warn_missing)) {
-    .warn_unfound_fetch_vars(vars, names(fetched))
+    .abort_unfound_fetch_vars(vars, names(fetched))
   }
 
   coords <- as_tibble(layout[, c("x", "y", "z"), drop = FALSE])
-  if (isTRUE(add_protein)) {
-    coords$protein <- .node_protein_labels(object, nodes = node_names)
+  if (isTRUE(add_marker)) {
+    coords$marker <- .node_marker_labels(object, nodes = node_names)
   }
   dplyr::bind_cols(coords, as_tibble(fetched, .name_repair = "minimal"))
 }
 
-#' Warn for requested variables that were not found
-#'
-#' Matches the \code{FetchData.CellGraph} warning when some requested
-#' names are absent.
+#' Abort when requested variables were not found
 #'
 #' @param vars Requested variable names, or \code{NULL}
-#' @param found Names present in the result (including reserved layout columns)
+#' @param found Names present in the result
+#' @param call Environment to report as the error caller
 #'
 #' @return \code{NULL}, invisibly
 #'
 #' @keywords internal
 #' @noRd
 #'
-.warn_unfound_fetch_vars <- function(vars, found) {
-  if (is.null(vars) || length(vars) == 0) {
-    return(invisible(NULL))
-  }
-  vars_missing <- setdiff(vars, found)
+.abort_unfound_fetch_vars <- function(vars, found, call = caller_env()) {
+  vars_missing <- .missing_fetch_vars(vars, found)
   if (length(vars_missing) == 0) {
     return(invisible(NULL))
   }
-  m2 <- if (length(vars_missing) > 10) {
+  m2 <- .missing_fetch_vars_n(vars_missing)
+  cli::cli_abort(
+    c("x" = "The following requested variables were not found{m2}: {.val {head(vars_missing, 10)}}"),
+    call = call
+  )
+}
+
+#' Report list FetchData / FetchLayoutData variable coverage
+#'
+#' Variables missing from every graph abort. Variables present on some
+#' graphs and missing on others warn; the caller fills those with \code{NA}.
+#'
+#' @param vars Requested variable names, or \code{NULL}
+#' @param found_by_graph List of character vectors of variables found on
+#' each graph
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{NULL}, invisibly
+#'
+#' @keywords internal
+#' @noRd
+#'
+.report_list_fetch_vars <- function(vars, found_by_graph, call = caller_env()) {
+  if (is.null(vars) || length(vars) == 0) {
+    return(invisible(NULL))
+  }
+  found_any <- unique(unlist(found_by_graph, use.names = FALSE))
+  .abort_unfound_fetch_vars(vars, found_any, call = call)
+  n_graphs <- length(found_by_graph)
+  if (n_graphs == 0) {
+    return(invisible(NULL))
+  }
+  n_hits <- vapply(vars, function(v) {
+    sum(vapply(found_by_graph, function(found) v %in% found, logical(1)))
+  }, integer(1))
+  missing_some <- vars[n_hits > 0 & n_hits < n_graphs]
+  if (length(missing_some) == 0) {
+    return(invisible(NULL))
+  }
+  m2 <- .missing_fetch_vars_n(missing_some)
+  cli::cli_warn(
+    "The following requested variables were missing from some graphs and were filled with NA{m2}: {.val {head(missing_some, 10)}}"
+  )
+  invisible(NULL)
+}
+
+.missing_fetch_vars <- function(vars, found) {
+  if (is.null(vars) || length(vars) == 0) {
+    return(character())
+  }
+  setdiff(vars, found)
+}
+
+.missing_fetch_vars_n <- function(vars_missing) {
+  if (length(vars_missing) > 10) {
     paste0(" (10 out of ", length(vars_missing), " shown)")
   } else {
     ""
   }
-  cli::cli_warn(
-    "The following requested variables were not found{m2}: {.val {head(vars_missing, 10)}}"
-  )
-  invisible(NULL)
 }
 
 #' Fetch vars for layout rows, filling missing values with NA
@@ -426,7 +475,7 @@ FetchLayoutData.Seurat <- function(
         }
         cli::cli_abort(c("x" = "{msg}"), call = call)
       }
-      if (grepl("None of the requested variables|None of the requested nodes", msg)) {
+      if (grepl("None of the requested variables|The following requested variables were not found|None of the requested nodes", msg)) {
         return(data.frame(row.names = cells, stringsAsFactors = FALSE, check.names = FALSE))
       }
       cli::cli_abort(c("x" = "{msg}"), call = call)
