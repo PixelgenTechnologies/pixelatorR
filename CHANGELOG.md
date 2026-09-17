@@ -40,9 +40,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FetchData()` and `FetchLayoutData()` on a `CellGraphList` no longer
   abort when a requested `layer` is missing from some graphs. Only
   features from that layer are treated as missing; metadata, vertex
-  attributes, reductions, and values from other layers are kept. This
-  matches the skip path after `ComputeLPS()` leaves a graph without
-  an `lps` layer.
+  attributes, and reductions are kept. Remaining names are not looked
+  up in `counts` or other layers, so shared marker names (for example
+  after `ComputeLPS()`) are filled with `NA` instead of raw counts.
 - `[<-.CellGraphList` wraps a bare `CellGraph` in a list so
   `cgl[1] <- cg` stores the graph without relying on deprecated S4
   list embedding.

@@ -229,7 +229,8 @@ as.list.CellGraphList <- function(x, ...) {
 #' graph are filled with \code{NA} and a warning is issued. Variables
 #' missing from every graph abort. Graphs that
 #' do not have a requested \code{layer} omit only features from that layer;
-#' metadata, vertex attributes, reductions, and other layer values are kept.
+#' metadata, vertex attributes, and reductions are kept. Remaining names
+#' are not looked up in \code{counts} or other layers.
 #' \code{clean} defaults to \code{FALSE} so those missing values are kept.
 #' \code{add_marker = TRUE} adds a \code{marker} column from the one-hot
 #' counts matrix of each graph.
