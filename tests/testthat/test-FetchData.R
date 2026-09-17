@@ -312,6 +312,28 @@ test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
   expect_equal(fd_mixed$cluster, c(meta$cluster, meta_2$cluster))
   expect_equal(fd_mixed$f1[1:4], unname(layer_mat[, "f1"]))
   expect_true(all(is.na(fd_mixed$f1[5:8])))
+
+  lps_cd3 <- matrix(
+    c(100, 200, 300, 400),
+    nrow = 4,
+    ncol = 1,
+    dimnames = list(node_names, "CD3")
+  )
+  cgl_shared <- CreateCellGraphList(list(
+    cell_1 = CreateCellGraphObject(
+      cellgraph = bipart_graph,
+      counts = counts,
+      layers = list(lps = lps_cd3)
+    ),
+    cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = counts_2)
+  ))
+  expect_warning(
+    fd_shared <- SeuratObject::FetchData(cgl_shared, vars = "CD3", layer = "lps"),
+    "missing from some graphs"
+  )
+  expect_equal(fd_shared$CD3[1:4], unname(lps_cd3[, "CD3"]))
+  expect_true(all(is.na(fd_shared$CD3[5:8])))
+  expect_false(isTRUE(all.equal(fd_shared$CD3[5:8], as.numeric(counts_2[, "CD3"]))))
 })
 
 test_that("FetchData.CellGraphList keeps one row per node when no vars are requested", {

@@ -85,8 +85,9 @@ Nodes with no count are \code{NA}.}
 \item{layer}{Name of a node matrix layer passed to
 \code{\link[SeuratObject]{FetchData}}. \code{NULL} (default) uses the same
 layer selection as \code{FetchData.CellGraph}. On a \code{CellGraphList},
-a missing layer omits only that layer's features; other requested
-variables are still returned.}
+a missing layer omits only that layer's features; metadata and other
+requested variables are still returned. Remaining names are not looked
+up in \code{counts} or other layers.}
 
 \item{cells}{Component IDs to fetch. If \code{NULL}, all loaded
 \code{\link{CellGraph}} objects are used. Unloaded graphs raise an error

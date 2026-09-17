@@ -197,6 +197,26 @@ test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", 
   expect_equal(lyt_mixed$cluster, c(meta$cluster, meta$cluster))
   expect_equal(lyt_mixed$f1[1:4], unname(lps[, "f1"]))
   expect_true(all(is.na(lyt_mixed$f1[5:8])))
+
+  lps_cd3 <- matrix(
+    c(100, 200, 300, 400),
+    nrow = 4,
+    ncol = 1,
+    dimnames = list(node_names, "CD3")
+  )
+  cg_lps_cd3 <- CreateCellGraphObject(
+    cellgraph = bipart_graph,
+    counts = counts,
+    layout = list(wpmds_3d = layout),
+    layers = list(lps = lps_cd3)
+  )
+  cgl_shared <- CreateCellGraphList(list(cell_1 = cg_lps_cd3, cell_2 = cg_no_cluster))
+  expect_warning(
+    lyt_shared <- FetchLayoutData(cgl_shared, vars = "CD3", layer = "lps"),
+    "missing from some graphs"
+  )
+  expect_equal(lyt_shared$CD3[1:4], unname(lps_cd3[, "CD3"]))
+  expect_true(all(is.na(lyt_shared$CD3[5:8])))
 })
 
 test_that("FetchLayoutData.CellGraphList aborts when vars are missing from every graph", {

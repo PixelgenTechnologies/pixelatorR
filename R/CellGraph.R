@@ -690,9 +690,11 @@ FetchData.CellGraph <- function(
       remaining <- setdiff(vars, names(data_fetched))
       other_layers <- setdiff(available_layers, layer)
     } else if (identical(missing_layer, "omit")) {
-      # List FetchData / FetchLayoutData skip a missing requested layer
-      # without dropping metadata, reductions, or other layer values.
-      other_layers <- available_layers
+      # Skip the missing requested layer. Do not search counts or other
+      # layers for remaining names: those matrices often share marker
+      # names with LPS, so a fallback would mix scores with raw counts.
+      # Metadata, vertex attributes, and reductions are already attached.
+      other_layers <- character()
     } else {
       cli::cli_abort(
         c(
