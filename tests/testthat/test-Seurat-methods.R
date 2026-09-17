@@ -6,6 +6,7 @@ test_that("CellGraphs.Seurat getter/setter works as expected", {
   )
   cg_list <- CellGraphs(se)
   expect_type(cg_list, "list")
+  expect_s3_class(cg_list, "CellGraphList")
   expect_equal(cg_list %>% length(), 5)
   CellGraphs(se) <- cg_list
 })

@@ -204,7 +204,7 @@ local_proximity <- function(
   nB <- node_types["umi2"] %>% as.integer()
 
   # Sort count matrix according to the new node sorting
-  counts <- object@counts[g %>% pull(name), , drop = FALSE]
+  counts <- object@counts[match(g %>% pull(name), .cg_node_map(object)), , drop = FALSE]
 
   # Validate markers
   assert_x_in_y(markers, colnames(counts))
@@ -245,11 +245,19 @@ local_proximity <- function(
   log2_ratio <- log2((local_stat_obs + k - 1) / (local_stat_exp + k - 1))
 
   # Sort results to match input graph
+  orig_names <- object@cellgraph %N>% pull(name)
+  sorted_names <- g %>% pull(name)
+  idx <- match(orig_names, sorted_names)
   log2_ratio <- switch(mode,
-    "self-clustering" = log2_ratio[object@cellgraph %N>% pull(name), ],
-    "all" = log2_ratio[object@cellgraph %N>% pull(name)],
-    "any" = log2_ratio[object@cellgraph %N>% pull(name)]
+    "self-clustering" = log2_ratio[idx, , drop = FALSE],
+    "all" = log2_ratio[idx],
+    "any" = log2_ratio[idx]
   )
+  if (!is.null(dim(log2_ratio))) {
+    rownames(log2_ratio) <- orig_names
+  } else {
+    names(log2_ratio) <- orig_names
+  }
 
   return(log2_ratio)
 }

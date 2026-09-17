@@ -9,14 +9,45 @@
 The CellGraph class is designed to hold information needed for working with
 PNA single-cell graphs.
 }
+\details{
+A \code{CellGraph} contains counts and a graph, and optionally layouts, layers,
+metadata, or reductions.
+
+Node-level variable names must be unique across the graph node table,
+\code{meta.data}, and reduction embeddings, and must not overlap count or
+layer features. Count and layer matrices are the exception: they may share
+feature names because callers select a layer explicitly.
+}
 \section{Slots}{
 
 \describe{
 \item{\code{cellgraph}}{A \code{tbl_graph} object corresponding to a cell graph}
 
-\item{\code{counts}}{A \code{matrix}-like object with marker counts}
+\item{\code{nodes}}{Character vector of node IDs in graph order. This is the map
+used to align counts, layouts, layers, metadata, and reductions. Those
+tables are stored in this order without copying the IDs as row names.}
 
-\item{\code{layout}}{A \code{list} of \code{tbl_df} objects with coordinates for cell layouts}
+\item{\code{counts}}{A \code{matrix}-like object with marker counts (nodes x markers).
+Rows follow \code{nodes}. The counts matrix can be extracted as the
+\code{"counts"} layer via \code{\link[SeuratObject]{Layers}} /
+\code{\link[SeuratObject]{LayerData}}.}
+
+\item{\code{layout}}{A named \code{list} of \code{data.frame} objects with coordinates
+for cell layouts. Rows follow \code{nodes}. A \code{name} column or explicit
+row names are accepted on input and used only to reorder; MPX bipartite
+layouts may omit \code{-A}/\code{-B} suffixes. Stored layouts keep
+coordinate columns (typically \code{x}, \code{y}, \code{z}). Layouts without
+node IDs still work if the number of rows matches the graph.}
+
+\item{\code{layers}}{A named \code{list} of additional numeric node matrices
+(nodes x features), analogous to layers on a Seurat
+\code{\link[SeuratObject]{Assay5}}. A layer can be extracted
+via \code{\link[SeuratObject]{Layers}} / \code{\link[SeuratObject]{LayerData}}.}
+
+\item{\code{meta.data}}{A \code{data.frame} of node-level metadata (one row per node).
+Rows follow \code{nodes}. Columns may have mixed types.}
+
+\item{\code{reductions}}{A named \code{list} of \code{\link{NodeDimReduc}} objects}
 }}
 
 \concept{cellgraph}
