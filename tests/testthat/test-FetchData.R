@@ -82,8 +82,8 @@ test_that("FetchData.CellGraph works as expected", {
   expect_equal(ncol(empty), 0)
 
   expect_error(
-    SeuratObject::FetchData(cg, vars = "CD3", layer = "lps"),
-    "Unknown layer"
+    SeuratObject::FetchData(cg, vars = c("CD3", "not_a_variable")),
+    "The following requested variables were not found"
   )
 })
 
@@ -102,7 +102,7 @@ test_that("FetchData.CellGraph keeps non-syntactic marker names", {
   expect_equal(fd_mixed$cluster, meta$cluster)
 })
 
-test_that("FetchData.CellGraph can add protein labels from one-hot counts", {
+test_that("FetchData.CellGraph can add marker labels from one-hot counts", {
   one_hot <- Matrix::sparseMatrix(
     i = seq_len(4),
     j = c(1L, 3L, 2L, 4L),
@@ -116,28 +116,28 @@ test_that("FetchData.CellGraph can add protein labels from one-hot counts", {
     counts = one_hot
   )
 
-  fd <- SeuratObject::FetchData(cg_one_hot, vars = NULL, add_protein = TRUE)
-  expect_equal(colnames(fd), "protein")
-  expect_equal(fd$protein, c("CD3", "CD8", "CD4", "HLA-DR"))
+  fd <- SeuratObject::FetchData(cg_one_hot, vars = NULL, add_marker = TRUE)
+  expect_equal(colnames(fd), "marker")
+  expect_equal(fd$marker, c("CD3", "CD8", "CD4", "HLA-DR"))
   expect_equal(rownames(fd), node_names)
 
   fd_vars <- SeuratObject::FetchData(
     cg_one_hot,
     vars = "node_type",
-    add_protein = TRUE,
+    add_marker = TRUE,
     clean = FALSE
   )
-  expect_equal(colnames(fd_vars), c("protein", "node_type"))
-  expect_equal(fd_vars$protein, c("CD3", "CD8", "CD4", "HLA-DR"))
+  expect_equal(colnames(fd_vars), c("marker", "node_type"))
+  expect_equal(fd_vars$marker, c("CD3", "CD8", "CD4", "HLA-DR"))
 
   expect_error(
-    SeuratObject::FetchData(cg_one_hot, vars = "protein", add_protein = TRUE),
-    "protein"
+    SeuratObject::FetchData(cg_one_hot, vars = "marker", add_marker = TRUE),
+    "marker"
   )
 
   cg_empty <- CreateCellGraphObject(cellgraph = bipart_graph)
-  fd_empty <- SeuratObject::FetchData(cg_empty, vars = NULL, add_protein = TRUE)
-  expect_true(all(is.na(fd_empty$protein)))
+  fd_empty <- SeuratObject::FetchData(cg_empty, vars = NULL, add_marker = TRUE)
+  expect_true(all(is.na(fd_empty$marker)))
 
   cg_na <- CreateCellGraphObject(
     cellgraph = bipart_graph,
@@ -148,17 +148,17 @@ test_that("FetchData.CellGraph can add protein labels from one-hot counts", {
     fd_clean <- SeuratObject::FetchData(
       cg_na,
       vars = "score",
-      add_protein = TRUE,
+      add_marker = TRUE,
       clean = TRUE
     ),
     "missing data for vars requested"
   )
   expect_equal(rownames(fd_clean), node_names[c(1, 3)])
   expect_equal(fd_clean$score, c(1, 2))
-  expect_equal(fd_clean$protein, c("CD3", "CD4"))
+  expect_equal(fd_clean$marker, c("CD3", "CD4"))
 })
 
-test_that("FetchData.CellGraphList forwards add_protein", {
+test_that("FetchData.CellGraphList forwards add_marker", {
   one_hot <- Matrix::sparseMatrix(
     i = seq_len(4),
     j = c(1L, 1L, 2L, 2L),
@@ -184,14 +184,14 @@ test_that("FetchData.CellGraphList forwards add_protein", {
     cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = one_hot_2)
   ))
 
-  fd <- SeuratObject::FetchData(cgl_one_hot, vars = "node_type", add_protein = TRUE)
-  expect_equal(colnames(fd), c("component", "protein", "node_type"))
-  expect_equal(fd$protein, rep(c("CD3", "CD3", "CD4", "CD4"), 2))
+  fd <- SeuratObject::FetchData(cgl_one_hot, vars = "node_type", add_marker = TRUE)
+  expect_equal(colnames(fd), c("component", "marker", "node_type"))
+  expect_equal(fd$marker, rep(c("CD3", "CD3", "CD4", "CD4"), 2))
   expect_equal(rownames(fd), c(node_names, node_names_2))
 
   expect_error(
-    SeuratObject::FetchData(cgl_one_hot, vars = "protein", add_protein = TRUE),
-    "protein"
+    SeuratObject::FetchData(cgl_one_hot, vars = "marker", add_marker = TRUE),
+    "marker"
   )
 
   cgl_clean <- CreateCellGraphList(list(
@@ -203,17 +203,20 @@ test_that("FetchData.CellGraphList forwards add_protein", {
     cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = one_hot_2)
   ))
   expect_warning(
-    fd_list_clean <- SeuratObject::FetchData(
-      cgl_clean,
-      vars = "score",
-      add_protein = TRUE,
-      clean = TRUE
+    expect_warning(
+      fd_list_clean <- SeuratObject::FetchData(
+        cgl_clean,
+        vars = "score",
+        add_marker = TRUE,
+        clean = TRUE
+      ),
+      "missing from some graphs"
     ),
     "missing data for vars requested"
   )
   expect_equal(unique(fd_list_clean$component), "cell_1")
   expect_equal(nrow(fd_list_clean), 4)
-  expect_true("protein" %in% colnames(fd_list_clean))
+  expect_true("marker" %in% colnames(fd_list_clean))
 })
 
 cg_no_cluster <- CreateCellGraphObject(
@@ -235,19 +238,15 @@ test_that("FetchData.CellGraphList works as expected", {
   expect_equal(nrow(fd_one), 4)
   expect_equal(rownames(fd_one), node_names)
 
-  expect_warning(
-    fd_xyz <- SeuratObject::FetchData(cgl, vars = c("x", "CD3"), cells = "cell_1", clean = FALSE),
+  expect_error(
+    SeuratObject::FetchData(cgl, vars = c("x", "CD3"), cells = "cell_1", clean = FALSE),
     "The following requested variables were not found"
   )
-  expect_equal(colnames(fd_xyz), c("component", "CD3"))
-  expect_equal(fd_xyz$CD3, as.numeric(counts[, "CD3"]))
 
-  expect_warning(
-    fd_invalid <- SeuratObject::FetchData(cgl, vars = c("CD3", "Invalid"), cells = "cell_1"),
+  expect_error(
+    SeuratObject::FetchData(cgl, vars = c("CD3", "Invalid"), cells = "cell_1"),
     "The following requested variables were not found"
   )
-  expect_equal(colnames(fd_invalid), c("component", "CD3"))
-  expect_false("Invalid" %in% colnames(fd_invalid))
 
   fd_hyphen <- SeuratObject::FetchData(cgl, vars = "HLA-DR", cells = "cell_1")
   expect_equal(colnames(fd_hyphen), c("component", "HLA-DR"))
@@ -276,7 +275,10 @@ test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
     ),
     cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = counts_2)
   ))
-  fd <- SeuratObject::FetchData(cgl_lps, vars = "f1", layer = "lps")
+  expect_warning(
+    fd <- SeuratObject::FetchData(cgl_lps, vars = "f1", layer = "lps"),
+    "missing from some graphs"
+  )
   expect_equal(colnames(fd), c("component", "f1"))
   expect_equal(fd$f1[1:4], unname(layer_mat[, "f1"]))
   expect_true(all(is.na(fd$f1[5:8])))
@@ -299,17 +301,20 @@ test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
       meta.data = meta_2
     )
   ))
-  fd_mixed <- SeuratObject::FetchData(
-    cgl_mixed,
-    vars = c("cluster", "f1"),
-    layer = "lps"
+  expect_warning(
+    fd_mixed <- SeuratObject::FetchData(
+      cgl_mixed,
+      vars = c("cluster", "f1"),
+      layer = "lps"
+    ),
+    "missing from some graphs"
   )
   expect_equal(fd_mixed$cluster, c(meta$cluster, meta_2$cluster))
   expect_equal(fd_mixed$f1[1:4], unname(layer_mat[, "f1"]))
   expect_true(all(is.na(fd_mixed$f1[5:8])))
 })
 
-test_that("FetchData.CellGraphList keeps one row per node when no vars are found", {
+test_that("FetchData.CellGraphList keeps one row per node when no vars are requested", {
   node_names_2 <- paste0("m", 1:4)
   bipart_graph_2 <- tidygraph::tbl_graph(
     nodes = data.frame(
@@ -325,14 +330,10 @@ test_that("FetchData.CellGraphList keeps one row per node when no vars are found
     cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2)
   ))
 
-  expect_warning(
-    fd_missing <- SeuratObject::FetchData(cgl_unique, vars = "Invalid"),
+  expect_error(
+    SeuratObject::FetchData(cgl_unique, vars = "Invalid"),
     "The following requested variables were not found"
   )
-  expect_equal(colnames(fd_missing), "component")
-  expect_equal(nrow(fd_missing), 8)
-  expect_equal(rownames(fd_missing), c(node_names, node_names_2))
-  expect_equal(fd_missing$component, rep(c("cell_1", "cell_2"), each = 4))
 
   fd_empty <- SeuratObject::FetchData(cgl_unique, vars = NULL)
   expect_equal(colnames(fd_empty), "component")
@@ -378,7 +379,11 @@ test_that("FetchData.CellGraphList binds graphs with unique node IDs", {
     cell_2 = CreateCellGraphObject(cellgraph = bipart_graph_2, counts = counts_2)
   ))
   expect_warning(
-    fd_clean <- SeuratObject::FetchData(cgl_missing, vars = "cluster", clean = TRUE)
+    expect_warning(
+      fd_clean <- SeuratObject::FetchData(cgl_missing, vars = "cluster", clean = TRUE),
+      "missing from some graphs"
+    ),
+    "missing data for vars requested"
   )
   expect_equal(unique(fd_clean$component), "cell_1")
   expect_equal(nrow(fd_clean), 4)
@@ -410,7 +415,10 @@ test_that("FetchData.CellGraphList keeps classed columns missing from a graph", 
   # otherwise set the column type for the whole result
   cgl_classed <- CreateCellGraphList(list(cell_1 = cg_no_cluster, cell_2 = cg_factor))
 
-  fd <- SeuratObject::FetchData(cgl_classed, vars = c("grp", "day"), clean = FALSE)
+  expect_warning(
+    fd <- SeuratObject::FetchData(cgl_classed, vars = c("grp", "day"), clean = FALSE),
+    "missing from some graphs"
+  )
   expect_s3_class(fd$grp, "factor")
   expect_equal(levels(fd$grp), c("a", "b", "c"))
   expect_true(all(is.na(fd$grp[1:4])))
