@@ -167,7 +167,10 @@ See \code{?layout_with_pmds} for details}
 \item{custom_layout_function}{A custom function for layout computation. The
 function should take a \code{tbl_graph} object and a \code{dim} value as
 input and return a matrix of dimensions NxD, where N is the number of nodes
-and D is equal to \code{dim}. Note that this will override the \code{layout_method}.}
+and D is equal to \code{dim}. If the matrix has row names, they are used to
+match the coordinates to the graph nodes; otherwise the rows are assumed to
+follow the graph node order. Note that this will override the
+\code{layout_method}.}
 
 \item{custom_layout_function_args}{A list of arguments passed to \code{custom_layout_function}.
 The \code{dim} is automatically passed to \code{custom_layout_function} and should not be
