@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [UNRELEASED]
+## [0.21.0]
 
 ### Updated
 
@@ -16,6 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the layout during a rotation; pass `light_direction = c(0, 0, 1)` for the
   previous constant shading.
 
+### Removed
+
+- `color_by_marker()` and `.add_coordinates_to_tbl_graph()`.
+
+### Changed
+
+- CellGraph node-level data is aligned by a central nodes ID map, not by copying 
+  those IDs onto every table as row names. The class also stores extra numeric layers, 
+  mixed-type node metadata, and dimensionality reductions. `CellGraph` objects 
+  serialized before the extra slots existed are not upgraded. Using one aborts 
+  with a message naming the missing slots, the version that wrote it, and a 
+  `pixelatorR` version that still reads it.
+
 ### Fixes
 
 - Layout alignment accepts bipartite tables whose `name` values repeat
@@ -24,69 +37,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   duplicates reuse the first row per name. `LoadCellGraphs(..., add_layouts = TRUE)`
   uses the same helper, so reloading a written PXL keeps distinct A/B
   coordinates instead of collapsing both partitions onto the first UMI match.
-
 - `CellGraphs<-` on MPX and PNA assays accepts `NULL` placeholders
   with `is.null()`, matching `CreateCellGraphList`. Checking
   `inherits(NULL, "NULL")` is not portable across R versions.
-
-- `FetchData.CellGraphList` always returns one row per node when no
-  requested variables are present (including `vars = NULL`), so an
-  empty bind no longer fails on a zero-column data frame.
-- `FetchData.CellGraphList` keeps factor columns when graphs use
-  different levels. Fill values still take the class from graphs that
-  had the variable, and factor levels are unioned so `rbind` does not
-  coerce the column to character.
-
-- `FetchData()` and `FetchLayoutData()` on a `CellGraphList` no longer
-  abort when a requested `layer` is missing from some graphs. Only
-  features from that layer are treated as missing; metadata, vertex
-  attributes, and reductions are kept. Remaining names are not looked
-  up in `counts` or other layers, so shared marker names (for example
-  after `ComputeLPS()`) are filled with `NA` instead of raw counts.
-- `[<-.CellGraphList` wraps a bare `CellGraph` in a list so
-  `cgl[1] <- cg` stores the graph without relying on deprecated S4
-  list embedding.
-
-- `FetchData(..., clean = TRUE)` only inspects requested `vars` when
-  deciding which nodes to drop. A `marker` column from `add_marker`
-  no longer keeps rows whose requested variables are all `NA`.
-
-- `.assert_current_cellgraph()` detects missing slots from the object's
-  own attributes, not `slotNames()`, so a `CellGraph` serialized before
-  `nodes`, `layers`, `meta.data`, and `reductions` existed still gets the
-  named upgrade message.
-
-- `FetchData()` and `FetchLayoutData()` abort when a requested variable
-  is missing from every graph, so a misspelled name fails immediately.
-  Variables present on some cells and missing on others are filled with
-  `NA`, and a warning names the missing cells.
-
-- `add_protein` is now `add_marker` on `FetchData` and
-  `FetchLayoutData`. The added column is `marker`.
-- `ComputeLPS()` on a `CellGraphList` or assay now warns and leaves a graph
-  unmodified when it has no counts, including the default `markers = NULL`
-  path. Previously only an explicit `markers` vector was intersected first,
-  so a missing count matrix aborted the whole batch.
 - `assert_col_class()` now checks the column named by its `x` argument. Since
   `pull()` evaluates its selection with the column names of the data in scope,
   the check was previously applied to a column literally named `x` whenever the
   data contained one.
-
-### Removed
-
-- `color_by_marker()` and `.add_coordinates_to_tbl_graph()`.
-- The `Cells()` method for `CellGraph` objects. A `CellGraph` holds one cell,
-  so its rows are nodes rather than cells. Use
-  `CellGraphData(cg, slot = "nodes")` for the node IDs.
-
-### Changed
-
-- `CellGraph` objects serialized before the extra slots existed are not
-  upgraded. Using one aborts with a message naming the missing slots, the
-  version that wrote it, and a `pixelatorR` version that still reads it.
-
-### Fixes
-
 - `subset.CellGraph` and `KeepLargestComponent.CellGraph` accept a single node.
 - `LoadCellGraphs` on a PNA assay aligns marker counts with the same helper as
   the constructors. A single-marker count matrix previously dropped to a
