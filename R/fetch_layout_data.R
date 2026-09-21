@@ -407,15 +407,14 @@ FetchLayoutData.Seurat <- function(
       ""
     }
     cli::format_inline(
-      "{.val {v}} is missing from {n_miss} cell{?s}{extra}: {.val {head(missing_ids, 5)}}"
+      "{.val {v}}: missing from {n_miss} cell{?s}{extra}: {.val {head(missing_ids, 5)}}"
     )
   }, character(1))
   names(bullets) <- rep("i", length(bullets))
   m2 <- .missing_fetch_vars_n(missing_some)
   cli::cli_warn(
     c(
-      "{.qty {length(missing_some)}}The following requested variable{?s} {?was/were}
-       missing from some cells and {?was/were} filled with NA{m2}.",
+      "Filled missing values with NA for {length(missing_some)} requested variable{?s}{m2}.",
       bullets
     ),
     call = call

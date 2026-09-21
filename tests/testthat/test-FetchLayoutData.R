@@ -184,7 +184,7 @@ test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", 
   cgl_lps <- CreateCellGraphList(list(cell_1 = cg_lps, cell_2 = cg_no_cluster))
   expect_warning(
     lyt <- FetchLayoutData(cgl_lps, vars = "f1", layer = "lps"),
-    "filled with NA"
+    "Filled missing values with NA"
   )
   expect_equal(lyt$f1[1:4], unname(lps[, "f1"]))
   expect_true(all(is.na(lyt$f1[5:8])))
@@ -192,7 +192,7 @@ test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", 
   cgl_mixed <- CreateCellGraphList(list(cell_1 = cg_lps, cell_2 = cg))
   expect_warning(
     lyt_mixed <- FetchLayoutData(cgl_mixed, vars = c("cluster", "f1"), layer = "lps"),
-    "filled with NA"
+    "Filled missing values with NA"
   )
   expect_equal(lyt_mixed$cluster, c(meta$cluster, meta$cluster))
   expect_equal(lyt_mixed$f1[1:4], unname(lps[, "f1"]))
@@ -213,7 +213,7 @@ test_that("FetchLayoutData.CellGraphList omits a missing layer on some graphs", 
   cgl_shared <- CreateCellGraphList(list(cell_1 = cg_lps_cd3, cell_2 = cg_no_cluster))
   expect_warning(
     lyt_shared <- FetchLayoutData(cgl_shared, vars = "CD3", layer = "lps"),
-    "filled with NA"
+    "Filled missing values with NA"
   )
   expect_equal(lyt_shared$CD3[1:4], unname(lps_cd3[, "CD3"]))
   expect_true(all(is.na(lyt_shared$CD3[5:8])))
