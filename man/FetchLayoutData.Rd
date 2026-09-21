@@ -75,8 +75,8 @@ and \code{z} coordinates.}
 \item{vars}{Optional character vector of node-level variables to fetch with
 \code{\link[SeuratObject]{FetchData}} (markers, metadata columns, graph
 vertex attributes, or reduction embeddings). A variable that is present
-on some graphs and missing on others is filled with \code{NA} and a
-warning is issued. A variable missing from every graph aborts.}
+on some cells and missing on others is filled with \code{NA} and a
+warning names those cells. A variable missing from every cell aborts.}
 
 \item{add_marker}{If \code{TRUE}, add a \code{marker} column with the
 marker label of each node. Labels are read from the counts matrix.

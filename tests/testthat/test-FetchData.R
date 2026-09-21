@@ -225,7 +225,8 @@ test_that("FetchData.CellGraphList forwards add_marker", {
     )
   )
   fd_list_clean <- captured$value
-  expect_match(captured$messages, "missing from some graphs", all = FALSE)
+  expect_match(captured$messages, "filled with NA", all = FALSE)
+  expect_match(captured$messages, "score.*missing from 1 cell", all = FALSE)
   expect_match(captured$messages, "missing data for vars requested", all = FALSE)
   expect_equal(unique(fd_list_clean$component), "cell_1")
   expect_equal(nrow(fd_list_clean), 4)
@@ -290,7 +291,7 @@ test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
   ))
   expect_warning(
     fd <- SeuratObject::FetchData(cgl_lps, vars = "f1", layer = "lps"),
-    "missing from some graphs"
+    "filled with NA"
   )
   expect_equal(colnames(fd), c("component", "f1"))
   expect_equal(fd$f1[1:4], unname(layer_mat[, "f1"]))
@@ -320,7 +321,7 @@ test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
       vars = c("cluster", "f1"),
       layer = "lps"
     ),
-    "missing from some graphs"
+    "filled with NA"
   )
   expect_equal(fd_mixed$cluster, c(meta$cluster, meta_2$cluster))
   expect_equal(fd_mixed$f1[1:4], unname(layer_mat[, "f1"]))
@@ -342,7 +343,7 @@ test_that("FetchData.CellGraphList omits a missing layer on some graphs", {
   ))
   expect_warning(
     fd_shared <- SeuratObject::FetchData(cgl_shared, vars = "CD3", layer = "lps"),
-    "missing from some graphs"
+    "filled with NA"
   )
   expect_equal(fd_shared$CD3[1:4], unname(lps_cd3[, "CD3"]))
   expect_true(all(is.na(fd_shared$CD3[5:8])))
@@ -417,7 +418,8 @@ test_that("FetchData.CellGraphList binds graphs with unique node IDs", {
     SeuratObject::FetchData(cgl_missing, vars = "cluster", clean = TRUE)
   )
   fd_clean <- captured$value
-  expect_match(captured$messages, "missing from some graphs", all = FALSE)
+  expect_match(captured$messages, "filled with NA", all = FALSE)
+  expect_match(captured$messages, "cluster.*missing from 1 cell", all = FALSE)
   expect_match(captured$messages, "missing data for vars requested", all = FALSE)
   expect_equal(unique(fd_clean$component), "cell_1")
   expect_equal(nrow(fd_clean), 4)
@@ -451,7 +453,7 @@ test_that("FetchData.CellGraphList keeps classed columns missing from a graph", 
 
   expect_warning(
     fd <- SeuratObject::FetchData(cgl_classed, vars = c("grp", "day"), clean = FALSE),
-    "missing from some graphs"
+    "filled with NA"
   )
   expect_s3_class(fd$grp, "factor")
   expect_equal(levels(fd$grp), c("a", "b", "c"))

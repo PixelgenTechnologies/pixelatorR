@@ -8,8 +8,8 @@ NULL
 #' @param vars Optional character vector of node-level variables to fetch with
 #' \code{\link[SeuratObject]{FetchData}} (markers, metadata columns, graph
 #' vertex attributes, or reduction embeddings). A variable that is present
-#' on some graphs and missing on others is filled with \code{NA} and a
-#' warning is issued. A variable missing from every graph aborts.
+#' on some cells and missing on others is filled with \code{NA} and a
+#' warning names those cells. A variable missing from every cell aborts.
 #' @param add_marker If \code{TRUE}, add a \code{marker} column with the
 #' marker label of each node. Labels are read from the counts matrix.
 #' Nodes with no count are \code{NA}.
@@ -101,7 +101,9 @@ FetchLayoutData.CellGraphList <- function(
     }
     list(df = df, found = found)
   })
-  .report_list_fetch_vars(vars, lapply(pieces, `[[`, "found"))
+  found_by_graph <- lapply(pieces, `[[`, "found")
+  names(found_by_graph) <- cells
+  .report_list_fetch_vars(vars, found_by_graph)
   dplyr::bind_rows(lapply(pieces, `[[`, "df"))
 }
 
@@ -358,12 +360,13 @@ FetchLayoutData.Seurat <- function(
 
 #' Report list FetchData / FetchLayoutData variable coverage
 #'
-#' Variables missing from every graph abort. Variables present on some
-#' graphs and missing on others warn; the caller fills those with \code{NA}.
+#' Variables missing from every cell abort. Variables present on some
+#' cells and missing on others warn, naming the cells that were filled
+#' with \code{NA}.
 #'
 #' @param vars Requested variable names, or \code{NULL}
-#' @param found_by_graph List of character vectors of variables found on
-#' each graph
+#' @param found_by_graph Named list of character vectors of variables
+#' found on each cell. Names are cell / component IDs.
 #' @param call Environment to report as the error caller
 #'
 #' @return \code{NULL}, invisibly
@@ -388,10 +391,34 @@ FetchLayoutData.Seurat <- function(
   if (length(missing_some) == 0) {
     return(invisible(NULL))
   }
+  cell_ids <- names(found_by_graph)
+  if (is.null(cell_ids) || any(!nzchar(cell_ids))) {
+    cell_ids <- as.character(seq_along(found_by_graph))
+  }
+  shown_vars <- head(missing_some, 10)
+  bullets <- vapply(shown_vars, function(v) {
+    missing_ids <- cell_ids[
+      !vapply(found_by_graph, function(found) v %in% found, logical(1))
+    ]
+    n_miss <- length(missing_ids)
+    extra <- if (n_miss > 5) {
+      paste0(" (5 out of ", n_miss, " shown)")
+    } else {
+      ""
+    }
+    cli::format_inline(
+      "{.val {v}} is missing from {n_miss} cell{?s}{extra}: {.val {head(missing_ids, 5)}}"
+    )
+  }, character(1))
+  names(bullets) <- rep("i", length(bullets))
   m2 <- .missing_fetch_vars_n(missing_some)
   cli::cli_warn(
-    "The following requested variables were missing from some graphs and were
-     filled with NA{m2}: {.val {head(missing_some, 10)}}"
+    c(
+      "{.qty {length(missing_some)}}The following requested variable{?s} {?was/were}
+       missing from some cells and {?was/were} filled with NA{m2}.",
+      bullets
+    ),
+    call = call
   )
   invisible(NULL)
 }

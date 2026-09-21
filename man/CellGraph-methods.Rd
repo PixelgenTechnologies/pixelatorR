@@ -85,9 +85,10 @@ dropped.}
 
 \item{vars}{Variables to fetch: marker names, node metadata columns,
 graph vertex attributes, or reduction embedding columns (for example
-\code{"PC_1"}). A variable missing from the graph (or from every graph
-in a list) aborts. A variable present on some graphs in a list and
-missing on others is filled with \code{NA} and a warning is issued.}
+\code{"PC_1"}). A variable missing from the graph (or from every cell
+in a list) aborts. A variable present on some cells in a list and
+missing on others is filled with \code{NA} and a warning names those
+cells.}
 
 \item{cells}{For \code{FetchData.CellGraph}, nodes to collect (default is
 all nodes). Numeric indices are allowed, matching
@@ -153,8 +154,8 @@ does not reserve coordinate names, so \code{vars} may include \code{x},
 \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 is reserved for the source graph ID. Node IDs are used as row names and
 must be unique across the graphs being combined. Variables missing from a
-graph are filled with \code{NA} and a warning is issued. Variables
-missing from every graph abort. Graphs that
+graph are filled with \code{NA} and a warning names the cells that
+lacked the variable. Variables missing from every graph abort. Graphs that
 do not have a requested \code{layer} omit only features from that layer;
 metadata, vertex attributes, and reductions are kept. Remaining names
 are not looked up in \code{counts} or other layers.

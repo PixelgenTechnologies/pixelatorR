@@ -552,9 +552,10 @@ AddMetaData.CellGraph <- function(object, metadata, col.name = NULL, ...) {
 
 #' @param vars Variables to fetch: marker names, node metadata columns,
 #' graph vertex attributes, or reduction embedding columns (for example
-#' \code{"PC_1"}). A variable missing from the graph (or from every graph
-#' in a list) aborts. A variable present on some graphs in a list and
-#' missing on others is filled with \code{NA} and a warning is issued.
+#' \code{"PC_1"}). A variable missing from the graph (or from every cell
+#' in a list) aborts. A variable present on some cells in a list and
+#' missing on others is filled with \code{NA} and a warning names those
+#' cells.
 #' @param cells For \code{FetchData.CellGraph}, nodes to collect (default is
 #' all nodes). Numeric indices are allowed, matching
 #' \code{\link[SeuratObject]{FetchData}}. For \code{FetchData.CellGraphList},

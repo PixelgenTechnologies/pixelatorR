@@ -226,8 +226,8 @@ as.list.CellGraphList <- function(x, ...) {
 #' \code{y}, or \code{z} when those columns exist on the graphs. \code{component}
 #' is reserved for the source graph ID. Node IDs are used as row names and
 #' must be unique across the graphs being combined. Variables missing from a
-#' graph are filled with \code{NA} and a warning is issued. Variables
-#' missing from every graph abort. Graphs that
+#' graph are filled with \code{NA} and a warning names the cells that
+#' lacked the variable. Variables missing from every graph abort. Graphs that
 #' do not have a requested \code{layer} omit only features from that layer;
 #' metadata, vertex attributes, and reductions are kept. Remaining names
 #' are not looked up in \code{counts} or other layers.
@@ -299,6 +299,7 @@ FetchData.CellGraphList <- function(
       intersect(vars, names(p$df))
     }
   })
+  names(found_by_graph) <- vapply(pieces, `[[`, character(1), "nm")
   .report_list_fetch_vars(vars, found_by_graph)
   keep_vars <- if (is.null(vars) || length(vars) == 0) {
     unique(unlist(lapply(pieces, function(p) names(p$df)), use.names = FALSE))

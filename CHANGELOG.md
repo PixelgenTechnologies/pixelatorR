@@ -58,8 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `FetchData()` and `FetchLayoutData()` abort when a requested variable
   is missing from every graph, so a misspelled name fails immediately.
-  Variables present on some graphs and missing on others are still
-  filled with `NA`, and now also warn.
+  Variables present on some cells and missing on others are filled with
+  `NA`, and a warning names the missing cells.
 
 - `add_protein` is now `add_marker` on `FetchData` and
   `FetchLayoutData`. The added column is `marker`.
@@ -126,7 +126,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `FetchData`. `add_marker = TRUE` adds a `marker` column from the one-hot
   node counts matrix. Methods are provided for `CellGraph`, `CellGraphList`,
   `PNAAssay`, `PNAAssay5`, and `Seurat`. A variable missing from every graph
-  aborts; a variable missing from some graphs is filled with `NA` and warns.
+  aborts; a variable missing from some cells is filled with `NA` and a
+  warning names those cells.
 - `CellGraphList`, a named list of `CellGraph` objects (subsetting,
   concatenation, and replacement type-check elements; unloaded graphs may be
   `NULL`; printing shows a short summary).
