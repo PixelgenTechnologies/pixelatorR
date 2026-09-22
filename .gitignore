@@ -8,5 +8,7 @@
 environment_arm.yml
 *.pdf
 .positai
-.cursor
+.cursor/*
+!.cursor/environment.json
+!.cursor/install.sh
 /demos/
