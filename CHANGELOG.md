@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to 
+  avoid bloating the `meta.data` slot. Detailed meta data can be loaded by setting 
+  `detailed_meta_data = TRUE`.
+
 ## [0.21.0]
 
 ### Updated

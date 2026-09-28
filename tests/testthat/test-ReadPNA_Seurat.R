@@ -20,6 +20,10 @@ for (assay_version in c("v3", "v5")) {
 
     expect_no_error(suppressWarnings(seur_obj <- ReadPNA_Seurat(pxl_file, return_pna_assay = FALSE, verbose = FALSE)))
     expect_s4_class(seur_obj[["PNA"]], ifelse(assay_version == "v3", "Assay", "Assay5"))
+
+    # Including detailed meta data
+    expect_no_error(suppressWarnings(seur_obj_detailed_meta <- ReadPNA_Seurat(pxl_file, detailed_meta_data = TRUE, verbose = FALSE)))
+    expect_true(ncol(seur_obj_detailed_meta[[]]) > ncol(seur_obj[[]]))
   })
 
   test_that("ReadPNA_Seurat fails with invalid input", {
@@ -32,7 +36,7 @@ for (assay_version in c("v3", "v5")) {
 
   test_that("ReadPNA_Seurat fails when X collapses to a vector (1 cell)", {
     # Inject an error by subsetting X to have only one cell
-    trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1]), at = 13, print = FALSE)
+    trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1, drop = FALSE]), at = 14, print = FALSE)
     on.exit(untrace(ReadPNA_Seurat), add = TRUE)
 
     expect_error(
@@ -43,7 +47,7 @@ for (assay_version in c("v3", "v5")) {
 
   test_that("ReadPNA_Seurat fails when X is a 1-column matrix", {
     # Inject an error by subsetting X to have only one cell, keeping it as a matrix
-    trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1, drop = FALSE]), at = 13, print = FALSE)
+    trace(ReadPNA_Seurat, tracer = quote(X <- X[, 1, drop = FALSE]), at = 14, print = FALSE)
     on.exit(untrace(ReadPNA_Seurat), add = TRUE)
 
     expect_error(

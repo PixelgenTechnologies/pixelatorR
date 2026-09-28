@@ -10,6 +10,7 @@ ReadPNA_Seurat(
   return_pna_assay = TRUE,
   load_proximity_scores = TRUE,
   calc_log2_ratio = TRUE,
+  detailed_meta_data = FALSE,
   verbose = TRUE,
   ...
 )
@@ -32,6 +33,11 @@ memory. This parameter only have an effect if \code{return_pna_assay = TRUE}.}
 
 \item{calc_log2_ratio}{A logical specifying whether to calculate and add
 a log2ratio column to the output table. Default is \code{TRUE}}
+
+\item{detailed_meta_data}{Logical specifying whether to load detailed meta data.
+If \code{FALSE} (default), only a subset of the meta data columns will be loaded,
+including those used for quality control. The additional columns are mostly useful
+for troubleshooting.}
 
 \item{verbose}{Print messages}
 
