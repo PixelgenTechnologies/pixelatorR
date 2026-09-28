@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cell_plot_rgl()` used to return, and `"plotly"` returns the Plotly widget.
   Code that relied on `cell_plot_interactive()` drawing with Plotly must pass
   `renderer = "plotly"`.
+- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to 
+  avoid bloating the `meta.data` slot. Detailed meta data can be loaded by setting 
+  `detailed_meta_data = TRUE`.
 
 ### Removed
 
@@ -120,9 +123,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   serialized before the extra slots existed are not upgraded. Using one aborts 
   with a message naming the missing slots, the version that wrote it, and a 
   `pixelatorR` version that still reads it.
-- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to 
-  avoid bloating the `meta.data` slot. Detailed meta data can be loaded by setting 
-  `detailed_meta_data = TRUE`.
 
 ### Fixes
 
