@@ -60,8 +60,10 @@ for (assay_version in c("v3", "v5")) {
     })
     expect_s4_class(seur_obj_pna, "Seurat")
 
-    # Data set with pre-computed layouts
-    seur_obj_mpx_precomputed <- LoadCellGraphs(seur_obj_mpx_precomputed, cells = colnames(seur_obj_mpx_precomputed)[1], add_layouts = TRUE)
+    # Data set with pre-computed layouts (add_layouts is deprecated but still functional)
+    lifecycle::expect_deprecated(
+      seur_obj_mpx_precomputed <- LoadCellGraphs(seur_obj_mpx_precomputed, cells = colnames(seur_obj_mpx_precomputed)[1], add_layouts = TRUE)
+    )
     layouts <- seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(2470, 3))
     expect_equal(
@@ -101,7 +103,9 @@ for (assay_version in c("v3", "v5")) {
       )
     )
 
-    seur_obj_pna <- LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1], add_layouts = TRUE, verbose = FALSE, force = TRUE)
+    lifecycle::expect_deprecated(
+      seur_obj_pna <- LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1], add_layouts = TRUE, verbose = FALSE, force = TRUE)
+    )
     layouts <- seur_obj_pna[["PNA"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(43543, 3))
     expect_equal(
@@ -211,7 +215,7 @@ for (assay_version in c("v3", "v5")) {
     expect_error(LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], load_as = "invalid"))
     expect_error(LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], assay = "invalid"))
     expect_error(LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], add_marker_counts = "invalid"))
-    expect_error(LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], add_layouts = "invalid"))
+    expect_error(suppressWarnings(LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], add_layouts = "invalid")))
     expect_error(LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], force = "invalid"))
     expect_error(LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], chunk_size = "invalid"))
 
@@ -219,6 +223,30 @@ for (assay_version in c("v3", "v5")) {
     expect_error(LoadCellGraphs(seur_obj_mpx, cells = rep(colnames(seur_obj_mpx)[1], 2)))
   })
 }
+
+test_that("LoadCellGraphs warns when the deprecated add_layouts argument is used", {
+  # Supplying add_layouts (with any value) triggers a deprecation warning ...
+  lifecycle::expect_deprecated(
+    LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1], add_layouts = TRUE, force = TRUE, verbose = FALSE),
+    regexp = "add_layouts"
+  )
+  lifecycle::expect_deprecated(
+    LoadCellGraphs(seur_obj_pna[["PNA"]], cells = colnames(seur_obj_pna)[1], add_layouts = FALSE, force = TRUE, verbose = FALSE),
+    regexp = "add_layouts"
+  )
+
+  # ... but the deprecated argument still works
+  lifecycle::expect_deprecated(
+    seur_obj_pna <- LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1], add_layouts = TRUE, force = TRUE, verbose = FALSE)
+  )
+  expect_named(CellGraphs(seur_obj_pna)[[1]]@layout, "wpmds_3d")
+
+  # No warning when add_layouts is not supplied
+  expect_no_condition(
+    LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1], force = TRUE, verbose = FALSE),
+    class = "lifecycle_warning_deprecated"
+  )
+})
 
 test_that(".attach_precomputed_layouts keeps distinct A/B coordinates", {
   suffixed <- c("umi1-A", "umi1-B", "umi2-A", "umi2-B")

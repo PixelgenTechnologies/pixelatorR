@@ -30,7 +30,7 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -43,7 +43,7 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -56,7 +56,7 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -68,7 +68,7 @@ LoadCellGraphs(object, ...)
   object,
   cells = colnames(object),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -80,7 +80,7 @@ LoadCellGraphs(object, ...)
   object,
   cells = colnames(object),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -94,7 +94,7 @@ LoadCellGraphs(object, ...)
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -121,7 +121,9 @@ Note that this option is ignored for the \code{data.frame} method when \code{dat
 
 \item{verbose}{Print messages}
 
-\item{add_layouts}{Load layouts from the PXL file if available.}
+\item{add_layouts}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} Load layouts from the
+PXL file if available. This argument is deprecated and will be removed in a
+future release. Supplying it triggers a warning once per R session.}
 
 \item{force}{Force load graph(s) if they are already loaded}
 

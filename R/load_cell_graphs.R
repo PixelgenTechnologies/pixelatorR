@@ -29,6 +29,44 @@ NULL
   cg
 }
 
+#' Resolve the deprecated \code{add_layouts} argument
+#'
+#' Signals a deprecation warning when \code{add_layouts} is supplied and
+#' returns the value to use. The warning is rate-limited by \code{lifecycle}
+#' (once per R session by default) through a shared \code{id}, so it is only
+#' shown once regardless of which \code{LoadCellGraphs} method is called.
+#'
+#' @param add_layouts The value passed to the \code{add_layouts} argument
+#' @param env,user_env Environments forwarded to \code{lifecycle::deprecate_warn}
+#'
+#' @return A single logical
+#'
+#' @keywords internal
+#' @noRd
+#'
+.resolve_deprecated_add_layouts <- function(
+  add_layouts,
+  env = caller_env(),
+  user_env = caller_env(2)
+) {
+  if (!lifecycle::is_present(add_layouts)) {
+    return(FALSE)
+  }
+  lifecycle::deprecate_warn(
+    when = "0.21.0",
+    what = "LoadCellGraphs(add_layouts)",
+    details = c(
+      "The argument will be removed in a future release.",
+      "Layouts can be computed with `ComputeLayout()`."
+    ),
+    id = "pixelatorR-LoadCellGraphs-add_layouts",
+    env = env,
+    user_env = user_env
+  )
+  assert_single_value(add_layouts, type = "bool", call = env)
+  add_layouts
+}
+
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Load methods
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -207,7 +245,9 @@ LoadCellGraphs.FileSystemDataset <- function(
 }
 
 
-#' @param add_layouts Load layouts from the PXL file if available.
+#' @param add_layouts `r lifecycle::badge("deprecated")` Load layouts from the
+#' PXL file if available. This argument is deprecated and will be removed in a
+#' future release. Supplying it triggers a warning once per R session.
 #' @param force Force load graph(s) if they are already loaded
 #' @param cl A cluster object created by makeCluster, or an integer
 #' to indicate number of child-processes (integer values are ignored
@@ -225,7 +265,7 @@ LoadCellGraphs.MPXAssay <- function(
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -234,6 +274,7 @@ LoadCellGraphs.MPXAssay <- function(
 ) {
   # Validate input parameters
   assert_vector(cells, type = "character", n = 1)
+  add_layouts <- .resolve_deprecated_add_layouts(add_layouts)
 
   # Make sure that cells doesn't contain duplicated values
   if (sum(duplicated(cells)) > 0) {
@@ -456,7 +497,7 @@ LoadCellGraphs.PNAAssay <- function(
   object,
   cells = colnames(object),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -465,6 +506,7 @@ LoadCellGraphs.PNAAssay <- function(
 ) {
   # Validate input parameters
   assert_vector(cells, type = "character", n = 1)
+  add_layouts <- .resolve_deprecated_add_layouts(add_layouts)
   assert_unique(cells)
   assert_x_in_y(cells, colnames(object))
 
@@ -653,7 +695,7 @@ LoadCellGraphs.Seurat <- function(
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,

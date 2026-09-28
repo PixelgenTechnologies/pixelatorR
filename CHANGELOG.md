@@ -35,6 +35,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.21.0]
 
+### Deprecated
+
+- The `add_layouts` argument of `LoadCellGraphs()` is deprecated and will be
+  removed in a future release. It still works, but supplying it now signals a
+  `lifecycle` deprecation warning once per R session.
+
 ### Updated
 
 - `render_rotating_layout()` defaults `light_direction` to `c(-0.6, 0.5, 0.62)`,
