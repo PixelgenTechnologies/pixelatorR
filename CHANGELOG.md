@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Experimental `cell_plot()` recipes for cell-layout visualization, moved from
+  `pixelatorRinternal`. A recipe stores data, column mappings, and presentation
+  instructions. Modify it with `cell_grid()`, `cell_node_scale_color()`,
+  `cell_node_scale_size()`, `cell_node_scale_alpha()`, `cell_node_depth()`,
+  `cell_illuminate()`, `cell_theme()`, `cell_annotation()`, and
+  `cell_coord_rotate()`. `build_cell_plot()` resolves mappings, scales, and
+  illumination without drawing. Printing a recipe draws a ggplot, and
+  `summary()` inspects it without drawing. `cell_plot_interactive()` draws a
+  Plotly widget, `cell_plot_rgl()` draws a native rgl scene (`rgl` and `later`),
+  and `cell_plot_animate()` encodes a rotating GIF or video after
+  `cell_coord_rotate()` (`gifski` or `av`).
+
 ## [0.21.0]
 
 ### Updated
