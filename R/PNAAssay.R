@@ -1277,8 +1277,10 @@ merge.PNAAssay <- function(
     for (i in 2:length(ob_features)) {
       if (!all(ob_features[[i]] == ob_features[[1]])) {
         cli_alert_danger(
-          "Meta features are not the same across objects. ",
-          "Cannot merge meta.features slots."
+          c(
+            "Meta features are not the same across objects. ",
+            "Slot @meta.features will be empty in the merged object."
+          )
         )
         can_merge_meta_features <- FALSE
         break
@@ -1287,9 +1289,11 @@ merge.PNAAssay <- function(
 
     if (can_merge_meta_features) {
       meta_features <- objects[[1]]@meta.features %>% select(any_of(c("control", "marker", "nuclear")))
+    } else {
+      meta_features <- data.frame()
     }
 
-    # Place meta.features in CellGraphAssay
+    # Place meta.features in PNAAssay
     merged_pna_assay@meta.features <- meta_features
   }
 
