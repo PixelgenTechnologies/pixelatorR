@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Experimental `cell_plot()` recipes for cell-layout visualization. A recipe
+  stores data, column mappings, constant aesthetics, and presentation
+  instructions. `color`, `size`, and `alpha` accept a column or one constant
+  value. `illumination_mask` limits illumination to selected rows. Modify a
+  recipe with `cell_grid()`, `cell_node_scale_color()`,
+  `cell_node_scale_size()`, `cell_node_scale_alpha()`, `cell_node_depth()`,
+  `cell_illuminate()`, `cell_theme()`, `cell_annotation()`, and
+  `cell_coord_rotate()`. Categorical size and alpha scales accept a named
+  value per level. `build_cell_plot()` resolves mappings, scales, and
+  illumination without drawing, and drops rows with missing mapped size or
+  alpha. Printing a recipe or calling `autoplot()` draws a ggplot, and
+  `summary()` inspects it without drawing. `cell_plot_interactive()` draws a
+  Plotly widget, `cell_plot_rgl()` draws a native rgl scene (`rgl` and
+  `later`), and `cell_plot_animate()` encodes a rotating GIF or video after
+  `cell_coord_rotate()` (`gifski` or `av`).
+
 ## [0.21.0]
 
 ### Updated
