@@ -43,9 +43,8 @@ CellGraphs(object, ...) <- value
 replace the current cellgraphs}
 }
 \value{
-Returns a list of \code{\link{CellGraph}} objects. If there are
-no \code{\link{CellGraph}} objects present, returns a named list where each element
-is \code{NULL}.
+Returns a \code{\link{CellGraphList}}. Unloaded graphs are stored
+as \code{NULL} elements.
 }
 \description{
 Get and set \code{\link{CellGraph}} lists for different objects.
