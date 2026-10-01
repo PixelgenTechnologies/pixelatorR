@@ -38,7 +38,10 @@
 #' Inside a knitr HTML chunk, a missing html size is the chunk `fig.width` or
 #' `fig.height` in inches multiplied by `dpi`. Outside knitr, an html widget
 #' without `width` and `height` fills the viewer or browser element it is
-#' shown in, and its layout is computed for a 1000 by 1000 canvas.
+#' shown in. Titles, strips, and legends are refitted whenever the widget is
+#' resized, so the title stays at the left edge and the legend keeps its
+#' size. The window has no resize hook: its chrome is laid out once for the
+#' initial window size and drifts if the window is resized afterwards.
 #'
 #' @return For `"window"`, the rgl device id, invisibly. For `"html"`, an
 #' htmlwidget.
@@ -76,7 +79,8 @@ cell_plot_rgl <- function(
     return(.cell_rgl_html_widget(built, width = width, height = height))
   }
   size <- .cell_rgl_canvas_pixels(width, height)
-  return(.render_cell_plot_rgl(built, size = size))
+  rendered <- .render_cell_plot_rgl(built, size = size)
+  return(invisible(rendered$device))
 }
 
 #' Draw a cell plot into an rgl htmlwidget
@@ -85,7 +89,9 @@ cell_plot_rgl <- function(
 #' [rgl::rglwidget()], and closes the device. The snapshot keeps the scene
 #' after the device closes. When neither the caller nor a knitr HTML chunk
 #' sets a size, the widget carries no size of its own, so htmlwidgets lets it
-#' fill the IDE viewer and follow the viewer when it is resized.
+#' fill the IDE viewer and follow the viewer when it is resized. A render hook
+#' refits the chrome regions to the canvas they are actually shown on, see
+#' `.cell_rgl_chrome_fit_js`.
 #'
 #' @param object A `cell_plot_built` object.
 #' @param width,height Checked canvas sizes in pixels, or `NULL`.
@@ -104,15 +110,97 @@ cell_plot_rgl <- function(
     windowRect = c(0, 0, size$width, size$height)
   )
   on.exit(.cell_rgl_close_html_device(device, previous), add = TRUE)
-  .render_cell_plot_rgl(object, device = device, webgl = TRUE)
+  rendered <- .render_cell_plot_rgl(object, device = device)
   # A knitr PDF or Word chunk would otherwise ask for a raster snapshot.
   # A null device cannot draw one, and this output is the widget itself.
-  return(rgl::rglwidget(
+  widget <- rgl::rglwidget(
     width = if (sized) size$width,
     height = if (sized) size$height,
     snapshot = FALSE
-  ))
+  )
+  if (length(rendered$chrome) > 0L) {
+    widget <- htmlwidgets::onRender(
+      widget,
+      htmlwidgets::JS(.cell_rgl_chrome_fit_js),
+      data = list(chrome = rendered$chrome)
+    )
+  }
+  return(widget)
 }
+
+#' JavaScript that keeps rgl chrome anchored while the canvas resizes
+#'
+#' Chrome regions are drawn in pixel coordinates for the canvas size at render
+#' time. rgl scales every subscene viewport with the canvas but keeps the
+#' camera, so on a differently sized canvas it fits the region's bounding box
+#' to the shorter viewport side and centers it. A title row then drifts
+#' toward the middle, or off the left edge when the canvas grows taller.
+#'
+#' The hook runs once after the widget renders and again after every resize.
+#' For each chrome subscene it recomputes `zoom` so one scene unit is one
+#' canvas pixel, mirroring rgl's own orthographic projection (observer
+#' distance minus the padded bounding radius is the half-length that spans
+#' the shorter viewport side), and sets a translation in `userMatrix` that
+#' pins left-anchored regions to the viewport's left edge while keeping them
+#' centered vertically. Chrome is drawn in pixel units relative to the
+#' region's left edge and vertical center, so this keeps titles and legends
+#' at their designed size and place. Strip labels stay centered. The data
+#' panels are untouched.
+#'
+#' @noRd
+.cell_rgl_chrome_fit_js <- "
+function(el, x, data) {
+  var rgl = el.rglinstance;
+  if (!rgl) {
+    return;
+  }
+  var chrome = [].concat(data.chrome);
+  var fit = function() {
+    for (var i = 0; i < chrome.length; i++) {
+      var sub = rgl.getObj(chrome[i].id);
+      if (!sub || sub.type !== 'subscene') {
+        continue;
+      }
+      var vp = sub.par3d.viewport,
+          width = vp.width * rgl.canvas.width,
+          height = vp.height * rgl.canvas.height,
+          bbox = sub.par3d.bbox,
+          scale = sub.par3d.scale,
+          ranges = [(bbox[1] - bbox[0]) * scale[0] / 2,
+                    (bbox[3] - bbox[2]) * scale[1] / 2,
+                    (bbox[5] - bbox[4]) * scale[2] / 2],
+          radius = Math.sqrt(ranges[0] * ranges[0] +
+                             ranges[1] * ranges[1] +
+                             ranges[2] * ranges[2]) * 1.1,
+          distance = sub.par3d.observer[2];
+      if (radius <= 0) {
+        radius = 1;
+      }
+      var near = distance - radius,
+          far = distance + radius;
+      if (far < 0) {
+        far = 1;
+      }
+      if (near < far / 100) {
+        near = far / 100;
+      }
+      sub.par3d.zoom = Math.min(width, height) / (2 * near);
+      var userMatrix = new CanvasMatrix4();
+      if (chrome[i].anchor === 'left') {
+        userMatrix.translate((2 * ranges[0] - width) / 2, 0, 0);
+      }
+      sub.par3d.userMatrix = userMatrix;
+    }
+  };
+  var resize = rgl.resize;
+  rgl.resize = function(element) {
+    resize.call(this, element);
+    fit();
+  };
+  fit();
+  rgl.drawScene();
+}
+"
 
 #' Close the null device used for an rgl htmlwidget
 #'
@@ -234,17 +322,17 @@ cell_plot_rgl <- function(
 #' is opened.
 #' @param size List with `width` and `height` in pixels for a new window.
 #' Ignored when `device` is given.
-#' @param webgl Whether the scene will be shown through [rgl::rglwidget()]
-#' rather than in the window. Chrome camera fitting differs between the two.
 #'
-#' @return The rgl device id, returned invisibly.
+#' @return A list with `device`, the rgl device id, and `chrome`, a list with
+#' one entry per chrome subscene giving its `id` and how its content is
+#' anchored when the canvas is resized: `"left"` for the title and legend,
+#' `"center"` for facet strips.
 #'
 #' @noRd
 .render_cell_plot_rgl <- function(
   object,
   device = NULL,
-  size = .cell_rgl_canvas_pixels(NULL, NULL),
-  webgl = FALSE
+  size = .cell_rgl_canvas_pixels(NULL, NULL)
 ) {
   pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
 
@@ -457,8 +545,7 @@ cell_plot_rgl <- function(
       angle = 0,
       text_color = text_color,
       text_size = text_size,
-      background_color = strip_background_color,
-      webgl = webgl
+      background_color = strip_background_color
     )
   }
   for (row_index in seq_along(row_strip_ids)) {
@@ -468,8 +555,7 @@ cell_plot_rgl <- function(
       angle = .cell_plot_row_strip_angle,
       text_color = text_color,
       text_size = text_size,
-      background_color = strip_background_color,
-      webgl = webgl
+      background_color = strip_background_color
     )
   }
   if (!is.null(corner_id)) {
@@ -479,8 +565,7 @@ cell_plot_rgl <- function(
       angle = 0,
       text_color = text_color,
       text_size = text_size,
-      background_color = background_color,
-      webgl = webgl
+      background_color = background_color
     )
   }
   if (!is.null(title_id)) {
@@ -490,8 +575,7 @@ cell_plot_rgl <- function(
       subtitle = subtitle,
       text_color = text_color,
       text_size = text_size,
-      background_color = background_color,
-      webgl = webgl
+      background_color = background_color
     )
   }
   if (!is.null(legend_id)) {
@@ -501,12 +585,21 @@ cell_plot_rgl <- function(
       text_size = text_size,
       background_color = background_color,
       categorical_legend = categorical_legend,
-      continuous_legend = continuous_legend,
-      webgl = webgl
+      continuous_legend = continuous_legend
     )
   }
 
-  return(invisible(as.integer(device)))
+  chrome <- c(
+    lapply(
+      c(col_strip_ids, row_strip_ids, corner_id),
+      function(id) list(id = as.integer(id), anchor = "center")
+    ),
+    lapply(
+      c(title_id, legend_id),
+      function(id) list(id = as.integer(id), anchor = "left")
+    )
+  )
+  return(invisible(list(device = as.integer(device), chrome = chrome)))
 }
 
 #' Build a layout matrix for faceted rgl chrome
@@ -645,17 +738,16 @@ cell_plot_rgl <- function(
 #' visible frame. rgl fits the bounding sphere of the box to the shorter
 #' viewport side, which leaves a tall or wide region mostly empty, so the
 #' zoom is set to the factor that makes the box itself fill the viewport.
-#' WebGL encloses a sphere 1.1 times larger than the window does, which the
-#' `webgl` flag compensates for.
+#' This fit is exact for the window at its initial size; the html widget
+#' refits chrome in the browser, see `.cell_rgl_chrome_fit_js`.
 #'
 #' @param subscene Subscene id to draw in.
 #' @param background_color Background color for the region.
-#' @param webgl Whether the scene is drawn for an htmlwidget.
 #'
 #' @return A list with the viewport `width` and `height` in pixels.
 #'
 #' @noRd
-.cell_rgl_prepare_chrome <- function(subscene, background_color, webgl) {
+.cell_rgl_prepare_chrome <- function(subscene, background_color) {
   rgl::useSubscene3d(subscene)
   viewport <- as.numeric(rgl::par3d("viewport", subscene = subscene))
   width <- max(viewport[[3]], 1)
@@ -682,21 +774,9 @@ cell_plot_rgl <- function(
   # the viewport. Zooming by shorter side over diagonal maps the box edge
   # there instead.
   zoom <- min(width, height) / sqrt(width^2 + height^2)
-  if (webgl) {
-    zoom <- zoom / .cell_rgl_webgl_enclose_factor
-  }
   rgl::view3d(theta = 0, phi = 0, fov = 0, zoom = zoom)
   return(list(width = width, height = height))
 }
-
-#' Orthographic fit ratio between rgl's WebGL and window renderers
-#'
-#' rgl's WebGL projection encloses a bounding sphere 1.1 times the scene
-#' radius while keeping the same observer distance, so its orthographic
-#' half-length is 0.9 times the one the window uses.
-#'
-#' @noRd
-.cell_rgl_webgl_enclose_factor <- 0.9
 
 #' Convert a theme text size into an rgl cex
 #'
@@ -725,7 +805,6 @@ cell_plot_rgl <- function(
 #' @param label Facet level label.
 #' @param angle Text rotation in degrees.
 #' @param text_color,text_size,background_color Theme values.
-#' @param webgl Whether the scene is drawn for an htmlwidget.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -736,13 +815,11 @@ cell_plot_rgl <- function(
   angle,
   text_color,
   text_size,
-  background_color,
-  webgl
+  background_color
 ) {
   region <- .cell_rgl_prepare_chrome(
     subscene = subscene,
-    background_color = background_color,
-    webgl = webgl
+    background_color = background_color
   )
   if (!nzchar(label)) {
     return(invisible(NULL))
@@ -763,12 +840,13 @@ cell_plot_rgl <- function(
 #' Draw a title in a reserved rgl layout region
 #'
 #' The title and subtitle are left-aligned at the region's left edge, as in
-#' ggplot, with a margin of one text size in pixels.
+#' ggplot, with a margin of one text size in pixels. Both lines sit a fixed
+#' number of pixels from the region's vertical center, so they stay together
+#' however tall the region is.
 #'
 #' @param subscene Subscene id for the title.
 #' @param title,subtitle Optional plot title and subtitle text.
 #' @param text_color,text_size,background_color Theme values.
-#' @param webgl Whether the scene is drawn for an htmlwidget.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -779,20 +857,20 @@ cell_plot_rgl <- function(
   subtitle,
   text_color,
   text_size,
-  background_color,
-  webgl
+  background_color
 ) {
   region <- .cell_rgl_prepare_chrome(
     subscene = subscene,
-    background_color = background_color,
-    webgl = webgl
+    background_color = background_color
   )
   cex <- .cell_rgl_text_cex(text_size)
   left <- text_size
+  middle <- region$height / 2
+  offset <- text_size * 0.8
   if (!is.null(title)) {
     rgl::text3d(
       x = left,
-      y = region$height * if (is.null(subtitle)) 0.5 else 0.64,
+      y = middle + if (is.null(subtitle)) 0 else offset,
       z = 0,
       texts = title,
       adj = c(0, 0.5),
@@ -804,7 +882,7 @@ cell_plot_rgl <- function(
   if (!is.null(subtitle)) {
     rgl::text3d(
       x = left,
-      y = region$height * if (is.null(title)) 0.5 else 0.28,
+      y = middle - if (is.null(title)) 0 else offset,
       z = 0,
       texts = subtitle,
       adj = c(0, 0.5),
@@ -821,7 +899,6 @@ cell_plot_rgl <- function(
 #' @param text_color,text_size,background_color Theme values.
 #' @param categorical_legend Optional list with `title`, `labels`, and `colors`.
 #' @param continuous_legend Optional list with `title`, `limits`, and `colors`.
-#' @param webgl Whether the scene is drawn for an htmlwidget.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -832,13 +909,11 @@ cell_plot_rgl <- function(
   text_size,
   background_color,
   categorical_legend = NULL,
-  continuous_legend = NULL,
-  webgl
+  continuous_legend = NULL
 ) {
   region <- .cell_rgl_prepare_chrome(
     subscene = subscene,
-    background_color = background_color,
-    webgl = webgl
+    background_color = background_color
   )
   if (!is.null(continuous_legend)) {
     .cell_rgl_draw_colorbar(
@@ -861,7 +936,8 @@ cell_plot_rgl <- function(
 #' Draw a categorical legend with point swatches
 #'
 #' Rows are spaced by the text size in pixels and the block, including its
-#' title, is centered vertically in the legend region.
+#' title, is centered vertically in the legend region. Swatches and labels
+#' sit a fixed number of pixels from the region's left edge.
 #'
 #' @param categorical_legend List with `title`, `labels`, and `colors`.
 #' @param text_color Theme text color.
@@ -887,11 +963,11 @@ cell_plot_rgl <- function(
   line <- text_size * 1.8
   n_rows <- n_labels + if (has_title) 1.4 else 0
   top <- region$height / 2 + n_rows * line / 2
-  swatch_x <- region$width * 0.16
-  label_x <- region$width * 0.28
+  swatch_x <- text_size * 1.6
+  label_x <- text_size * 2.8
   if (has_title) {
     rgl::text3d(
-      x = swatch_x,
+      x = text_size,
       y = top - line * 0.5,
       z = 0,
       texts = title,
@@ -947,8 +1023,9 @@ cell_plot_rgl <- function(
 #'
 #' Numeric mappings render as stacked [rgl::quads3d()] with vertex colors,
 #' rather than a discrete key. Ticks are [rgl::segments3d()] and labels are
-#' [rgl::text3d()]. Positions are fractions of the legend region's width and
-#' height in pixels.
+#' [rgl::text3d()]. The bar is sized in multiples of the text size, like a
+#' ggplot legend, left-aligned one text size from the region's edge and
+#' centered vertically.
 #'
 #' @param continuous_legend List with `title`, `limits`, and `colors`.
 #' @param text_color Theme text color.
@@ -969,8 +1046,8 @@ cell_plot_rgl <- function(
   if (length(colors) == 0L) {
     colors <- "#000000"
   }
-  bar_x <- c(0.18, 0.3) * region$width
-  bar_y <- c(0.3, 0.7) * region$height
+  bar_x <- text_size * c(1, 2.4)
+  bar_y <- region$height / 2 + text_size * c(-10, 10)
   if (length(colors) == 1L) {
     rgl::quads3d(
       x = c(bar_x[[1]], bar_x[[2]], bar_x[[2]], bar_x[[1]]),
@@ -1034,10 +1111,11 @@ cell_plot_rgl <- function(
   title <- continuous_legend$title
   if (!is.null(title) && nzchar(title)) {
     rgl::text3d(
-      x = mean(bar_x),
-      y = 0.77 * region$height,
+      x = bar_x[[1]],
+      y = bar_y[[2]] + text_size * 2.2,
       z = 0,
       texts = title,
+      adj = c(0, 0.5),
       color = text_color,
       cex = .cell_rgl_text_cex(text_size) * 0.9
     )

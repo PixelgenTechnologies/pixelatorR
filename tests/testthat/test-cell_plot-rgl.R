@@ -945,6 +945,43 @@ test_that("rgl html output returns a widget", {
       devices = before
     )
   )
+  # A plain scene has no chrome, so no render hook is attached.
+  expect_equal(length(widget$jsHooks$render), 0L)
+
+  # Chrome regions are refitted in the browser: the hook lists every
+  # orthographic subscene with how its content is anchored.
+  chrome_widget <- cell_plot(
+    tibble::tibble(x = c(0, 1), y = c(1, 0), z = c(-1, 1), g = c("a", "b")),
+    color = g
+  ) |>
+    cell_grid(cols = g) |>
+    cell_annotation(title = "Title") |>
+    cell_plot_rgl(output = "html")
+  hook <- chrome_widget$jsHooks$render[[1]]
+  chrome_subscenes <- Filter(
+    function(object) {
+      identical(object$type, "subscene") && identical(object$par3d$FOV, 0)
+    },
+    chrome_widget$x$objects
+  )
+  chrome_ids <- sort(vapply(
+    chrome_subscenes,
+    function(object) as.integer(object$id),
+    integer(1)
+  ))
+  hook_ids <- vapply(hook$data$chrome, function(entry) entry$id, integer(1))
+  expect_equal(
+    list(
+      code = hook$code,
+      ids = sort(hook_ids),
+      anchors = vapply(hook$data$chrome, function(entry) entry$anchor, character(1))
+    ),
+    list(
+      code = htmlwidgets::JS(.cell_rgl_chrome_fit_js),
+      ids = unname(chrome_ids),
+      anchors = c("center", "center", "left", "left")
+    )
+  )
 
   # Without a size the widget fills the viewer, so it carries no fixed size,
   # while the layout was still computed on a 1000 by 1000 canvas.

@@ -22,7 +22,10 @@ size, 1000 by 1000 when not given. For \code{"html"} it is the canvas size.
 Inside a knitr HTML chunk, a missing html size is the chunk \code{fig.width} or
 \code{fig.height} in inches multiplied by \code{dpi}. Outside knitr, an html widget
 without \code{width} and \code{height} fills the viewer or browser element it is
-shown in, and its layout is computed for a 1000 by 1000 canvas.}
+shown in. Titles, strips, and legends are refitted whenever the widget is
+resized, so the title stays at the left edge and the legend keeps its
+size. The window has no resize hook: its chrome is laid out once for the
+initial window size and drifts if the window is resized afterwards.}
 }
 \value{
 For \code{"window"}, the rgl device id, invisibly. For \code{"html"}, an
