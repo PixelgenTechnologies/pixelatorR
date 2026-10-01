@@ -207,6 +207,14 @@ test_that("Cell plot recipes and modifiers work as expected", {
   grid_only <- cell_grid(base_plot, rows = cell, cols = cell)
   expect_equal(nrow(grid_only$data), nrow(base_plot$data))
   expect_equal(grid_only$data, base_plot$data)
+  expect_equal(
+    pixelatorR:::.cell_plot_panel_rows(plot_data, grid_only$grid),
+    structure(
+      list(1L, 2L),
+      ptype = integer(0),
+      class = c("vctrs_list_of", "vctrs_vctr", "list")
+    )
+  )
   expect_error(
     cell_node_scale_color(base_plot, colors = "not-a-color")
   )

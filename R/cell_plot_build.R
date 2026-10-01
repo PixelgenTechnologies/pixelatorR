@@ -226,7 +226,8 @@ build_cell_plot <- function(object) {
 #' Find the data rows belonging to each cell plot panel
 #'
 #' Groups rows using the panel columns recorded by [cell_grid()]. Without a
-#' grid, all rows belong to one panel.
+#' grid, all rows belong to one panel. A column used for both rows and columns
+#' is grouped once, which is the same set of non-empty panels.
 #'
 #' @param data Cell plot data.
 #' @param grid Optional panel grid specification.
@@ -235,7 +236,10 @@ build_cell_plot <- function(object) {
 #'
 #' @noRd
 .cell_plot_panel_rows <- function(data, grid) {
-  panel_columns <- unname(unlist(grid[c("rows", "cols")], use.names = FALSE))
+  panel_columns <- unique(unname(unlist(
+    grid[c("rows", "cols")],
+    use.names = FALSE
+  )))
   if (length(panel_columns) == 0) {
     return(list(seq_len(nrow(data))))
   }
