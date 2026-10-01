@@ -52,7 +52,8 @@
 #' @export
 cell_plot_rgl <- function(object) {
   .validate_cell_plot(object)
-  rlang::check_installed(c("rgl", "later"))
+  expect_rgl()
+  expect_later()
 
   object$mapping$arrange <- NULL
   return(.render_cell_plot_rgl(build_cell_plot(object)))

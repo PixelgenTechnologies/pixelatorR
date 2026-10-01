@@ -81,7 +81,7 @@
 #'
 #' @noRd
 .cell_ambient_occlusion_illumination <- function(coordinates, k) {
-  rlang::check_installed("FNN")
+  pixelatorR:::expect_FNN()
   neighbor_distances <- FNN::get.knn(coordinates, k = k)$nn.dist
   ambient_occlusion <- rowMeans(sqrt(neighbor_distances))
   return(.cell_safe_rescale(ambient_occlusion, to = c(1, 0)))

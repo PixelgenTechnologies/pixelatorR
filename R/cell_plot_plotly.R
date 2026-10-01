@@ -34,7 +34,7 @@
 #' @export
 cell_plot_interactive <- function(object) {
   .validate_cell_plot(object)
-  rlang::check_installed("plotly")
+  expect_plotly()
 
   object$mapping$arrange <- NULL
   return(.render_cell_plot_plotly(build_cell_plot(object)))

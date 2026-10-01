@@ -147,3 +147,23 @@ expect_FNN <- function(...) {
 expect_sparseMatrixStats <- function(...) {
   rlang::check_installed("sparseMatrixStats", ...)
 }
+
+expect_av <- function(...) {
+  rlang::check_installed("av", ...)
+}
+
+expect_gifski <- function(...) {
+  rlang::check_installed("gifski", ...)
+}
+
+expect_later <- function(...) {
+  rlang::check_installed("later", ...)
+}
+
+expect_plotly <- function(...) {
+  rlang::check_installed("plotly", ...)
+}
+
+expect_rgl <- function(...) {
+  rlang::check_installed("rgl", ...)
+}

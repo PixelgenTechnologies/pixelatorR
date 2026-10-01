@@ -36,7 +36,7 @@
 #' @export
 build_cell_plot <- function(object) {
   .validate_cell_plot(object)
-  rlang::check_installed("scales")
+  expect_scales()
 
   mapping <- object$mapping
   data <- object$data

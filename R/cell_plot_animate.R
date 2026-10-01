@@ -111,9 +111,9 @@ cell_plot_animate <- function(
 
   extension <- tolower(fs::path_ext(file))
   if (identical(extension, "gif")) {
-    rlang::check_installed("gifski")
+    expect_gifski()
   } else {
-    rlang::check_installed("av")
+    expect_av()
   }
 
   built <- build_cell_plot(object)
