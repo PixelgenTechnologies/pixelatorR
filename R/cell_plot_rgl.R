@@ -23,18 +23,22 @@
 #'
 #' `output = "window"` opens an rgl device and returns the device id invisibly.
 #' `output = "html"` draws the same scene on a null device and returns an rgl
-#' htmlwidget for Quarto, R Markdown, and `htmlwidgets::saveWidget()`. Legends
-#' are native scene objects and do not support Plotly-style interactive legend
-#' filtering. Title, strip, and legend text uses rgl's own font.
+#' htmlwidget for Quarto, R Markdown, and `htmlwidgets::saveWidget()`. Printed
+#' at the console, the widget opens in the IDE viewer, fills it, and follows
+#' it when the pane is resized. Legends are native scene objects and do not
+#' support Plotly-style interactive legend filtering. Title and legend text
+#' uses rgl's own font. Facet strip labels are rasterized with base graphics,
+#' because rgl text cannot be rotated for the row strips.
 #'
 #' @param object A `cell_plot` recipe.
 #' @param output `"window"` opens a local rgl window. `"html"` returns an
 #' htmlwidget.
-#' @param width,height Canvas size in pixels, used when `output` is `"html"`.
-#' The default is a 1000 by 1000 pixel square, the same size as the local
-#' window. Inside a knitr HTML chunk, a missing size is the chunk `fig.width`
-#' or `fig.height` in inches multiplied by `dpi`. Passing `width` or `height`
-#' replaces that size. `"window"` does not use these arguments.
+#' @param width,height Size in pixels. For `"window"` this is the window
+#' size, 1000 by 1000 when not given. For `"html"` it is the canvas size.
+#' Inside a knitr HTML chunk, a missing html size is the chunk `fig.width` or
+#' `fig.height` in inches multiplied by `dpi`. Outside knitr, an html widget
+#' without `width` and `height` fills the viewer or browser element it is
+#' shown in, and its layout is computed for a 1000 by 1000 canvas.
 #'
 #' @return For `"window"`, the rgl device id, invisibly. For `"html"`, an
 #' htmlwidget.
@@ -63,43 +67,36 @@ cell_plot_rgl <- function(
   .validate_cell_plot(object)
   expect_rgl()
   output <- rlang::arg_match(output)
-  if (
-    identical(output, "window") && (!is.null(width) || !is.null(height))
-  ) {
-    cli::cli_abort(
-      c(
-        "x" = "{.arg width} and {.arg height} apply when {.arg output} is {.val html}."
-      )
-    )
-  }
+  width <- .cell_rgl_check_px(width, arg = "width")
+  height <- .cell_rgl_check_px(height, arg = "height")
 
   object$mapping$arrange <- NULL
   built <- build_cell_plot(object)
   if (identical(output, "html")) {
     return(.cell_rgl_html_widget(built, width = width, height = height))
   }
-  return(.render_cell_plot_rgl(built))
+  size <- .cell_rgl_canvas_pixels(width, height)
+  return(.render_cell_plot_rgl(built, size = size))
 }
 
 #' Draw a cell plot into an rgl htmlwidget
 #'
-#' Opens a null device at the requested pixel size, draws the built plot,
-#' snapshots it with [rgl::rglwidget()], and closes the device. The snapshot
-#' keeps the scene after the device closes.
+#' Opens a null device, draws the built plot, snapshots it with
+#' [rgl::rglwidget()], and closes the device. The snapshot keeps the scene
+#' after the device closes. When neither the caller nor a knitr HTML chunk
+#' sets a size, the widget carries no size of its own, so htmlwidgets lets it
+#' fill the IDE viewer and follow the viewer when it is resized.
 #'
 #' @param object A `cell_plot_built` object.
-#' @param width,height Requested canvas size in pixels, or `NULL` to resolve
-#' the knitr or default size.
+#' @param width,height Checked canvas sizes in pixels, or `NULL`.
 #'
 #' @return An rgl htmlwidget.
 #'
 #' @noRd
 .cell_rgl_html_widget <- function(object, width, height) {
-  size <- .cell_rgl_html_pixels(
-    width,
-    height,
-    call = rlang::caller_env()
-  )
+  chunk <- .cell_rgl_knitr_html_px()
+  sized <- !is.null(width) || !is.null(height) || !is.null(chunk)
+  size <- .cell_rgl_canvas_pixels(width, height, fallback = chunk)
   previous <- as.integer(rgl::cur3d())
   device <- rgl::open3d(
     useNULL = TRUE,
@@ -111,8 +108,8 @@ cell_plot_rgl <- function(
   # A knitr PDF or Word chunk would otherwise ask for a raster snapshot.
   # A null device cannot draw one, and this output is the widget itself.
   return(rgl::rglwidget(
-    width = size$width,
-    height = size$height,
+    width = if (sized) size$width,
+    height = if (sized) size$height,
     snapshot = FALSE
   ))
 }
@@ -141,47 +138,35 @@ cell_plot_rgl <- function(
   return(invisible(NULL))
 }
 
-#' Pixel size of an rgl html canvas
+#' Pixel size of an rgl canvas
 #'
-#' An explicit size wins. Otherwise a knitr HTML chunk supplies
-#' `fig.width * dpi` and `fig.height * dpi`. Outside that chunk the canvas is
-#' the same 1000 by 1000 pixel square as the local window.
+#' An explicit size wins, then the `fallback`, then a 1000 by 1000 square.
 #'
-#' @param width,height Requested sizes in pixels, or `NULL`.
-#' @param call Calling environment used for validation errors.
+#' @param width,height Checked sizes in pixels, or `NULL`.
+#' @param fallback Optional list with `width` and `height` used for a missing
+#' dimension, such as the knitr chunk figure size.
 #'
 #' @return A list with integer `width` and `height`.
 #'
 #' @noRd
-.cell_rgl_html_pixels <- function(width, height, call = rlang::caller_env()) {
-  width <- .cell_rgl_check_html_px(width, arg = "width", call = call)
-  height <- .cell_rgl_check_html_px(height, arg = "height", call = call)
-  chunk <- .cell_rgl_knitr_html_px()
+.cell_rgl_canvas_pixels <- function(width, height, fallback = NULL) {
   if (is.null(width)) {
-    width <- if (is.null(chunk)) {
-      .cell_rgl_default_canvas_px
-    } else {
-      chunk$width
-    }
+    width <- fallback$width %||% .cell_rgl_default_canvas_px
   }
   if (is.null(height)) {
-    height <- if (is.null(chunk)) {
-      .cell_rgl_default_canvas_px
-    } else {
-      chunk$height
-    }
+    height <- fallback$height %||% .cell_rgl_default_canvas_px
   }
-  return(list(width = width, height = height))
+  return(list(width = as.integer(width), height = as.integer(height)))
 }
 
 #' Default rgl canvas size in pixels
 #'
-#' Matches the local window opened with `windowRect = c(100, 100, 1100, 1100)`.
+#' Used for both the local window and the html canvas when no size is given.
 #'
 #' @noRd
 .cell_rgl_default_canvas_px <- 1000L
 
-#' Check one html canvas dimension
+#' Check one canvas dimension
 #'
 #' @param value A pixel count, or `NULL` when the caller did not set it.
 #' @param arg Argument name used in the error.
@@ -190,7 +175,7 @@ cell_plot_rgl <- function(
 #' @return `NULL`, or one positive integer pixel count.
 #'
 #' @noRd
-.cell_rgl_check_html_px <- function(value, arg, call = rlang::caller_env()) {
+.cell_rgl_check_px <- function(value, arg, call = rlang::caller_env()) {
   if (is.null(value)) {
     return(NULL)
   }
@@ -247,11 +232,17 @@ cell_plot_rgl <- function(
 #' @param object A `cell_plot_built` object with a mapped `z` coordinate.
 #' @param device An open rgl device to draw into. When `NULL`, a local window
 #' is opened.
+#' @param size List with `width` and `height` in pixels for a new window.
+#' Ignored when `device` is given.
 #'
 #' @return The rgl device id, returned invisibly.
 #'
 #' @noRd
-.render_cell_plot_rgl <- function(object, device = NULL) {
+.render_cell_plot_rgl <- function(
+  object,
+  device = NULL,
+  size = .cell_rgl_canvas_pixels(NULL, NULL)
+) {
   pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
 
   mapping <- object$mapping
@@ -338,7 +329,9 @@ cell_plot_rgl <- function(
   }
 
   if (is.null(device)) {
-    device <- rgl::open3d(windowRect = c(100, 100, 1100, 1100))
+    device <- rgl::open3d(
+      windowRect = c(100, 100, 100 + size$width, 100 + size$height)
+    )
   } else {
     rgl::set3d(device, silent = TRUE)
   }
@@ -642,13 +635,11 @@ cell_plot_rgl <- function(
 #'
 #' @param subscene Subscene id to draw in.
 #' @param background_color Background color for the region.
-#' @param angle Rotation of the subscene in degrees. Row strips use 90 so a
-#' horizontal label reads upward.
 #'
 #' @return `subscene`, invisibly.
 #'
 #' @noRd
-.cell_rgl_prepare_chrome <- function(subscene, background_color, angle = 0) {
+.cell_rgl_prepare_chrome <- function(subscene, background_color) {
   rgl::useSubscene3d(subscene)
   rgl::bg3d(color = background_color)
   rgl::par3d(
@@ -669,11 +660,6 @@ cell_plot_rgl <- function(
     lit = FALSE
   )
   rgl::view3d(theta = 0, phi = 0, fov = 0, zoom = 1)
-  if (angle != 0) {
-    rgl::par3d(
-      userMatrix = rgl::rotationMatrix(angle * pi / 180, 0, 0, 1)
-    )
-  }
   return(invisible(subscene))
 }
 
@@ -695,7 +681,10 @@ cell_plot_rgl <- function(
 #'
 #' The strip is a separate subscene from the data panel, so points cannot cover
 #' its text. A gray background follows the default [ggplot2::facet_grid()]
-#' appearance. Row strip labels rotate the subscene so the text reads upward.
+#' appearance. rgl text always faces the screen upright, so labels are drawn
+#' through [rgl::plotmath3d()], which rasterizes the label with base graphics
+#' at the requested angle and places it as a fixed-size sprite. Column strips
+#' use the same path so both strip kinds share one font.
 #'
 #' @param subscene Subscene id for the strip.
 #' @param label Facet level label.
@@ -715,20 +704,21 @@ cell_plot_rgl <- function(
 ) {
   .cell_rgl_prepare_chrome(
     subscene = subscene,
-    background_color = background_color,
-    angle = angle
+    background_color = background_color
   )
-  if (nzchar(label)) {
-    rgl::text3d(
-      x = 0.5,
-      y = 0.5,
-      z = 0,
-      texts = label,
-      adj = 0.5,
-      color = text_color,
-      cex = .cell_rgl_text_cex(text_size)
-    )
+  if (!nzchar(label)) {
+    return(invisible(NULL))
   }
+  rgl::plotmath3d(
+    x = 0.5,
+    y = 0.5,
+    z = 0,
+    text = label,
+    adj = 0.5,
+    cex = .cell_rgl_text_cex(text_size),
+    srt = angle,
+    col = text_color
+  )
   return(invisible(NULL))
 }
 

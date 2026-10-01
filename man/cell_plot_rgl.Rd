@@ -17,11 +17,12 @@ cell_plot_rgl(
 \item{output}{\code{"window"} opens a local rgl window. \code{"html"} returns an
 htmlwidget.}
 
-\item{width, height}{Canvas size in pixels, used when \code{output} is \code{"html"}.
-The default is a 1000 by 1000 pixel square, the same size as the local
-window. Inside a knitr HTML chunk, a missing size is the chunk \code{fig.width}
-or \code{fig.height} in inches multiplied by \code{dpi}. Passing \code{width} or \code{height}
-replaces that size. \code{"window"} does not use these arguments.}
+\item{width, height}{Size in pixels. For \code{"window"} this is the window
+size, 1000 by 1000 when not given. For \code{"html"} it is the canvas size.
+Inside a knitr HTML chunk, a missing html size is the chunk \code{fig.width} or
+\code{fig.height} in inches multiplied by \code{dpi}. Outside knitr, an html widget
+without \code{width} and \code{height} fills the viewer or browser element it is
+shown in, and its layout is computed for a 1000 by 1000 canvas.}
 }
 \value{
 For \code{"window"}, the rgl device id, invisibly. For \code{"html"}, an
@@ -52,9 +53,12 @@ categorical mappings use a discrete legend.
 
 \code{output = "window"} opens an rgl device and returns the device id invisibly.
 \code{output = "html"} draws the same scene on a null device and returns an rgl
-htmlwidget for Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. Legends
-are native scene objects and do not support Plotly-style interactive legend
-filtering. Title, strip, and legend text uses rgl's own font.
+htmlwidget for Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. Printed
+at the console, the widget opens in the IDE viewer, fills it, and follows
+it when the pane is resized. Legends are native scene objects and do not
+support Plotly-style interactive legend filtering. Title and legend text
+uses rgl's own font. Facet strip labels are rasterized with base graphics,
+because rgl text cannot be rotated for the row strips.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

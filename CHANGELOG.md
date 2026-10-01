@@ -10,14 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - `cell_plot_rgl(output = "html")` returns an rgl htmlwidget. `width` and
-  `height` set the canvas in pixels. In a knitr HTML chunk, a missing size
-  follows the chunk figure size.
+  `height` set the window or canvas in pixels. In a knitr HTML chunk, a
+  missing size follows the chunk figure size. Printed at the console, an
+  unsized widget fills the IDE viewer and follows its size.
 
 ### Changed
 
 - `cell_plot_rgl()` draws titles, facet strips, and color legends as native rgl
   objects in orthographic regions. Those regions no longer rotate or zoom the
-  data panels, and `later` is no longer required.
+  data panels, and `later` is no longer required. Row strip labels read
+  upward, as in the other renderers.
 
 ## [0.22.0] - 2026-10-01
 

@@ -460,22 +460,37 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
     unique(lapply(summary$panels, function(panel) panel$zoom)),
     list(1)
   )
-  # Data markers stay the unlit points primitive. Chrome contributes text
-  # and the continuous legend's quads, with no bgplot3d textures.
+  # Data markers stay the unlit points primitive. Chrome contributes text,
+  # rotated row-label sprites, and the continuous legend's quads, with no
+  # bgplot3d background textures.
+  panel_types <- unlist(lapply(
+    rgl::scene3d()$rootSubscene$subscenes[vapply(
+      all_subscenes,
+      function(subscene) subscene$id %in% panel_ids,
+      logical(1)
+    )],
+    rgl_subscene_object_types,
+    scene = rgl::scene3d()
+  ))
   expect_equal(
     c(
-      any(summary$object_types == "points"),
+      any(panel_types == "points"),
+      any(panel_types %in% c("spheres", "sprites", "mesh3d")),
       any(summary$object_types == "text"),
       any(summary$object_types == "quads"),
-      any(summary$object_types %in% c("spheres", "sprites", "mesh3d"))
+      any(summary$object_types == "sprites")
     ),
-    c(TRUE, TRUE, TRUE, FALSE)
+    c(TRUE, FALSE, TRUE, TRUE, TRUE)
   )
   expect_false(any(vapply(
     rgl::scene3d()$objects,
     function(object) {
       texture <- object$material$texture
-      return(is.character(texture) && any(nzchar(texture)))
+      return(
+        identical(object$type, "background") &&
+          is.character(texture) &&
+          any(nzchar(texture))
+      )
     },
     logical(1)
   )))
@@ -754,31 +769,61 @@ test_that("rgl chrome is native text and legend geometry", {
   }
   subscenes <- scene$rootSubscene$subscenes
   texts <- unlist(lapply(subscenes, subscene_texts), use.names = FALSE)
-  expect_true(all(c("a", "b", "m1", "m2", "Spectral layout") %in% texts))
+  expect_equal(
+    c(
+      "Spectral layout" %in% texts,
+      any(c("a", "b", "m1", "m2") %in% texts)
+    ),
+    c(TRUE, FALSE)
+  )
 
-  find_subscene <- function(label) {
-    matches <- Filter(
-      function(subscene) label %in% subscene_texts(subscene),
-      subscenes
+  # Strip labels are fixed-size sprites carrying a rasterized label, so row
+  # labels can be rotated and both strip kinds share one font.
+  strips <- Filter(
+    function(subscene) {
+      "sprites" %in% rgl_subscene_object_types(subscene, scene)
+    },
+    subscenes
+  )
+  expect_equal(length(strips), 4L)
+  strip_sprites <- lapply(strips, function(subscene) {
+    ids <- as.character(subscene$objects)
+    sprite <- Find(
+      function(id) identical(scene$objects[[id]]$type, "sprites"),
+      ids
     )
-    return(matches[[1]])
-  }
-  column_strip <- find_subscene("a")
-  row_strip <- find_subscene("m1")
+    return(scene$objects[[sprite]])
+  })
   expect_equal(
-    column_strip$par3d$viewport[[4]],
-    row_strip$par3d$viewport[[3]]
+    vapply(strip_sprites, function(sprite) sprite$fixedSize, logical(1)),
+    rep(TRUE, 4)
   )
   expect_equal(
-    row_strip$par3d$userMatrix,
-    rgl::rotationMatrix(
-      pixelatorR:::.cell_plot_row_strip_angle * pi / 180,
-      0,
-      0,
-      1
-    )
+    vapply(
+      strip_sprites,
+      function(sprite) file.exists(sprite$material$texture),
+      logical(1)
+    ),
+    rep(TRUE, 4)
   )
-  expect_equal(column_strip$par3d$userMatrix, diag(4))
+  # Column strips are wide and short; row strips are narrow and tall. The row
+  # strip width matches the column strip height.
+  strip_viewports <- lapply(strips, function(subscene) {
+    as.numeric(subscene$par3d$viewport)
+  })
+  is_column_strip <- vapply(
+    strip_viewports,
+    function(viewport) viewport[[3]] > viewport[[4]],
+    logical(1)
+  )
+  expect_equal(sum(is_column_strip), 2L)
+  column_strip <- strip_viewports[is_column_strip][[1]]
+  row_strip <- strip_viewports[!is_column_strip][[1]]
+  expect_equal(column_strip[[4]], row_strip[[3]])
+  expect_equal(
+    lapply(strips, function(subscene) subscene$par3d$userMatrix),
+    rep(list(diag(4)), 4)
+  )
 
   legend <- Find(
     function(subscene) {
@@ -818,8 +863,23 @@ test_that("rgl html output returns a widget", {
   }
 
   expect_error(cell_plot_rgl(recipe, output = "png"), regexp = "output")
-  expect_error(cell_plot_rgl(recipe, width = 200), regexp = "html")
+  expect_error(cell_plot_rgl(recipe, width = 0), regexp = "width")
+  expect_error(cell_plot_rgl(recipe, height = 2.5), regexp = "height")
   expect_equal(open_devices(), integer())
+
+  # The window takes the requested size and otherwise stays 1000 by 1000.
+  sized_window <- cell_plot_rgl(recipe, width = 800, height = 600)
+  expect_equal(
+    as.numeric(rgl::par3d("windowRect", dev = sized_window)),
+    c(100, 100, 900, 700)
+  )
+  rgl::close3d()
+  default_window <- cell_plot_rgl(recipe)
+  expect_equal(
+    as.numeric(rgl::par3d("windowRect", dev = default_window)),
+    c(100, 100, 1100, 1100)
+  )
+  rgl::close3d()
 
   before <- open_devices()
   widget <- cell_plot_rgl(recipe, output = "html", width = 640, height = 480)
@@ -847,10 +907,25 @@ test_that("rgl html output returns a widget", {
     )
   )
 
+  # Without a size the widget fills the viewer, so it carries no fixed size,
+  # while the layout was still computed on a 1000 by 1000 canvas.
   default_widget <- cell_plot_rgl(recipe, output = "html")
+  default_subscene <- default_widget$x$objects[[
+    as.character(default_widget$x$rootSubscene)
+  ]]
   expect_equal(
-    list(width = default_widget$width, height = default_widget$height),
-    list(width = 1000, height = 1000)
+    list(
+      width = default_widget$width,
+      height = default_widget$height,
+      viewer_fill = default_widget$sizingPolicy$viewer$fill,
+      window = as.numeric(default_subscene$par3d$windowRect)
+    ),
+    list(
+      width = NULL,
+      height = NULL,
+      viewer_fill = TRUE,
+      window = c(0, 0, 1000, 1000)
+    )
   )
   expect_equal(open_devices(), before)
 
@@ -873,7 +948,7 @@ test_that("rgl html output returns a widget", {
   options(knitr.in.progress = TRUE)
   knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
   pdf_widget <- cell_plot_rgl(recipe, output = "html")
-  expect_equal(pdf_widget$width, 1000)
+  expect_null(pdf_widget$width)
   knitr::opts_knit$set(rmarkdown.pandoc.to = "html")
   chunk_widget <- cell_plot_rgl(recipe, output = "html", width = 220)
   expect_equal(
