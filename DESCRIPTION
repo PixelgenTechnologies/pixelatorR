@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.21.0
+Version: 0.22.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
@@ -33,7 +33,6 @@ Imports:
     stringr,
     patchwork,
     ggraph,
-    plotly,
     fs,
     pbapply,
     jsonlite,
@@ -41,11 +40,7 @@ Imports:
     R6,
     DBI,
     duckdb (>= 1.5.0),
-    bit64,
-    grDevices,
-    graphics,
-    stats,
-    utils
+    bit64
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -53,6 +48,7 @@ Suggests:
     graphlayouts,
     scales,
     pheatmap,
+    plotly,
     ComplexHeatmap,
     dbplyr,
     reticulate,
@@ -68,6 +64,8 @@ Suggests:
     pcaMethods,
     gifski,
     av,
+    later,
+    rgl,
     magick,
     ragg,
     png,
@@ -94,6 +92,15 @@ Collate:
     'analysis-utils.R'
     'annotate.R'
     'cell_count_plot.R'
+    'cell_plot.R'
+    'cell_plot_animate.R'
+    'cell_plot_base.R'
+    'cell_plot_build.R'
+    'cell_plot_ggplot.R'
+    'cell_plot_illumination.R'
+    'cell_plot_modifiers.R'
+    'cell_plot_plotly.R'
+    'cell_plot_rgl.R'
     'cell_segmentation.R'
     'coarsened_pmds.R'
     'colocalization_heatmap.R'
@@ -134,6 +141,7 @@ Collate:
     'pixelatorR_style.R'
     'proximity_scores.R'
     'read_edgelist.R'
+    'reexports.R'
     'remove_cell_graphs.R'
     'render_rotating_layout.R'
     'restore_paths.R'

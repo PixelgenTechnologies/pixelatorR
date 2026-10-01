@@ -63,6 +63,11 @@ list of \code{ggplot} objects.}
 An object of class \code{patchwork}
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
+Deprecated. Use \code{\link[=cell_plot]{cell_plot()}} instead.
+
 Plot 2D component graph layouts computed with \code{\link{ComputeLayout}} and
 optionally color nodes by certain attributes. Edges can also be visualized
 by setting \code{map_edges}; however, since component graphs tend to be very
@@ -71,6 +76,8 @@ large, this can take a long time to draw.
 \examples{
 library(pixelatorR)
 
+# Use cell_plot() instead
+\dontrun{
 # MPX
 pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
@@ -84,8 +91,9 @@ seur <- ReadPNA_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
 seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
 Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3e")
+}
 
 }
 \seealso{
-\code{\link[=Plot2DGraphM]{Plot2DGraphM()}}
+\code{\link[=cell_plot]{cell_plot()}}, \code{\link[=Plot2DGraphM]{Plot2DGraphM()}}
 }

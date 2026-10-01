@@ -45,17 +45,19 @@
 #'   mode = "markers"
 #' )
 #'
-#' # or using ComputeLayout and Plot3DGraph
+#' # or using ComputeLayout and cell_plot()
 #' seur_obj <- seur_obj %>%
 #'   # Compute weighted pMDS layout
 #'   ComputeLayout(layout_method = "wpmds", dim = 3)
 #'
-#' # Create 3D plot
+#' # Use cell_plot() instead of Plot3DGraph()
+#' \dontrun{
 #' Plot3DGraph(seur_obj,
 #'   layout_method = "wpmds_3d",
 #'   cell_id = colnames(seur_obj)[1],
 #'   marker = "CD3E"
 #' )
+#' }
 #'
 #' @export
 #'

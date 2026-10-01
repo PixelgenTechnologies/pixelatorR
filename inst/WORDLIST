@@ -70,6 +70,7 @@ PXL
 Pixelation
 Pixelator
 Pixelgen
+Plotly
 PolarizationScores
 ProximityScores
 RCVCMP
@@ -77,6 +78,7 @@ RSpectra
 SCSP
 SeuratObject
 Simonetti
+Summarise
 Syst
 Thiagarajan
 Tomasz
@@ -109,6 +111,7 @@ clr
 codecov
 colocalization
 colocation
+colorbar
 colour
 colours
 covary
@@ -141,12 +144,14 @@ flv
 fs
 ggplot
 gi
+gifski
 gini
 gstari
 hjust
 hochberg
 holm
 hommel
+htmlwidget
 https
 isotype
 json
@@ -155,6 +160,7 @@ labelled
 linegraph
 linegraphs
 makeCluster
+millimetres
 mkv
 morans
 mov
@@ -181,10 +187,12 @@ pseudocount
 pxl
 reachability
 renderer
+renderers
 renormalization
 residualization
 residualize
 residualizes
+rgl
 sampleID
 scalable
 seurat
@@ -193,13 +201,17 @@ subgraphs
 subtypes
 svd
 th
+themeable
 tibble
 tidyverse
 tp
 uei
 umi
+unilluminated
+unmapped
 unmix
 unmixing
+unrotated
 unsuffixed
 upia
 upias
