@@ -4,13 +4,28 @@
 \alias{cell_plot_rgl}
 \title{Render a cell plot with rgl}
 \usage{
-cell_plot_rgl(object)
+cell_plot_rgl(
+  object,
+  output = c("window", "html"),
+  width = NULL,
+  height = NULL
+)
 }
 \arguments{
 \item{object}{A \code{cell_plot} recipe.}
+
+\item{output}{\code{"window"} opens a local rgl window. \code{"html"} returns an
+htmlwidget.}
+
+\item{width, height}{Canvas size in pixels, used when \code{output} is \code{"html"}.
+The default is a 1000 by 1000 pixel square, the same size as the local
+window. Inside a knitr HTML chunk, a missing size is the chunk \code{fig.width}
+or \code{fig.height} in inches multiplied by \code{dpi}. Passing \code{width} or \code{height}
+replaces that size. \code{"window"} does not use these arguments.}
 }
 \value{
-The rgl device id, returned invisibly.
+For \code{"window"}, the rgl device id, invisibly. For \code{"html"}, an
+htmlwidget.
 }
 \description{
 Builds a \code{\link[=cell_plot]{cell_plot()}} recipe and draws it as an interactive native 3D
@@ -35,10 +50,11 @@ while legends are drawn from the unilluminated color scale metadata.
 Numeric color mappings use a continuous colorbar;
 categorical mappings use a discrete legend.
 
-Unlike \code{\link[=cell_plot_interactive]{cell_plot_interactive()}}, this renderer opens an rgl device rather
-than returning an htmlwidget. Legends are native scene objects and do not
-support Plotly-style interactive legend filtering. Title, strip, and legend
-text uses rgl's own font.
+\code{output = "window"} opens an rgl device and returns the device id invisibly.
+\code{output = "html"} draws the same scene on a null device and returns an rgl
+htmlwidget for Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. Legends
+are native scene objects and do not support Plotly-style interactive legend
+filtering. Title, strip, and legend text uses rgl's own font.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

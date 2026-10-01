@@ -65,6 +65,7 @@ Suggests:
     gifski,
     av,
     rgl,
+    knitr,
     magick,
     ragg,
     png,

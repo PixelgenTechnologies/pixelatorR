@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `cell_plot_rgl(output = "html")` returns an rgl htmlwidget. `width` and
+  `height` set the canvas in pixels. In a knitr HTML chunk, a missing size
+  follows the chunk figure size.
+
 ### Changed
 
 - `cell_plot_rgl()` draws titles, facet strips, and color legends as native rgl
