@@ -95,7 +95,11 @@ build_cell_plot <- function(object) {
     if (!has_usable_color) {
       cli::cli_abort(
         c(
-          "x" = "Mapped {.arg color} column {.str {mapping$color}} has no usable values after rows with missing {.field size} or {.field alpha} were removed."
+          "x" = paste(
+            "Mapped {.arg color} column {.str {mapping$color}} has no",
+            "usable values after rows with missing {.field size} or",
+            "{.field alpha} were removed."
+          )
         )
       )
     }
