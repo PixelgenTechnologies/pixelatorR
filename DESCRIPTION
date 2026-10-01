@@ -64,7 +64,6 @@ Suggests:
     pcaMethods,
     gifski,
     av,
-    later,
     rgl,
     magick,
     ragg,

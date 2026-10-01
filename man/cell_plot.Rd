@@ -29,13 +29,15 @@ column.}
 \item{color}{Optional column mapping or constant color for every node.
 Character, factor, numeric, and integer columns are supported, where
 character and factor columns are treated as categorical and numeric and
-integer columns as continuous. A character value is read as a column name
+integer columns as continuous. Missing numeric values are kept. Non-finite
+values such as \code{Inf} are not. A character value is read as a column name
 when \code{data} has that column and otherwise as one fully opaque color.}
 
 \item{size, alpha}{Optional column mappings or constant values for node size
 and alpha. Character, factor, numeric, and integer columns are supported,
-where character and factor columns are treated as categorical levels. One
-finite number sets a constant relative size or a constant alpha between zero
+where character and factor columns are treated as categorical levels.
+Missing numeric values are kept. Non-finite values such as \code{Inf} are not.
+One finite number sets a constant relative size or a constant alpha between zero
 and one. Category-specific sizes and alphas are set with
 \code{\link[=cell_node_scale_size]{cell_node_scale_size()}} and \code{\link[=cell_node_scale_alpha]{cell_node_scale_alpha()}}.}
 

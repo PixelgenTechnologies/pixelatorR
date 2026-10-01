@@ -48,8 +48,8 @@ rgl_subscene_object_types <- function(subscene, scene) {
 }
 
 rgl_is_data_panel <- function(subscene, scene) {
-  types <- rgl_subscene_object_types(subscene, scene)
-  return(any(types %in% c("points", "lines")))
+  modes <- unname(as.character(subscene$par3d$mouseMode))
+  return("trackball" %in% modes)
 }
 
 rgl_collect_data_panels <- function(subscene, scene) {
@@ -430,41 +430,55 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
     },
     logical(1)
   )))
-  # Strip, title, and legend regions cover a large part of the window, so they
-  # must forward drags and wheel events to the data panels instead of
-  # swallowing them. Every subscene keeps an interactive wheel mode and
-  # listens on behalf of the data panels only.
+  # Title, strips, and the legend are orthographic and ignore the pointer.
+  # They do not listen for the data panels, so dragging them does not move
+  # the plot.
   all_subscenes <- rgl::scene3d()$rootSubscene$subscenes
-  expect_true(all(vapply(
-    all_subscenes,
+  chrome_subscenes <- Filter(
     function(subscene) {
       modes <- unname(as.character(subscene$par3d$mouseMode))
-      return(all(c("trackball", "zoom") %in% modes) && !all(modes == "none"))
+      return(!"trackball" %in% modes)
+    },
+    all_subscenes
+  )
+  expect_equal(length(chrome_subscenes), 7L)
+  expect_true(all(vapply(
+    chrome_subscenes,
+    function(subscene) {
+      modes <- unname(as.character(subscene$par3d$mouseMode))
+      return(all(modes == "none") && identical(subscene$par3d$FOV, 0))
     },
     logical(1)
   )))
   expect_equal(
-    unique(lapply(
-      all_subscenes,
-      function(subscene) sort(as.integer(subscene$par3d$listeners))
-    )),
-    list(sort(as.integer(panel_ids)))
+    lapply(chrome_subscenes, function(subscene) {
+      as.integer(subscene$par3d$listeners)
+    }),
+    lapply(chrome_subscenes, function(subscene) as.integer(subscene$id))
   )
   expect_equal(
     unique(lapply(summary$panels, function(panel) panel$zoom)),
     list(1)
   )
-  # Same efficient unlit points primitive as plot3d(type = "p"),
-  # not spheres/sprites. Facet+chrome scenes also include bbox lines and
-  # bgplot3d quads.
+  # Data markers stay the unlit points primitive. Chrome contributes text
+  # and the continuous legend's quads, with no bgplot3d textures.
   expect_equal(
-    any(summary$object_types == "points"),
-    TRUE
+    c(
+      any(summary$object_types == "points"),
+      any(summary$object_types == "text"),
+      any(summary$object_types == "quads"),
+      any(summary$object_types %in% c("spheres", "sprites", "mesh3d"))
+    ),
+    c(TRUE, TRUE, TRUE, FALSE)
   )
-  expect_equal(
-    any(summary$object_types %in% c("spheres", "sprites", "mesh3d")),
-    FALSE
-  )
+  expect_false(any(vapply(
+    rgl::scene3d()$objects,
+    function(object) {
+      texture <- object$material$texture
+      return(is.character(texture) && any(nzchar(texture)))
+    },
+    logical(1)
+  )))
 
   expect_equal(
     pixelatorR:::.cell_plot_default_theme$strip_background_color,
@@ -669,18 +683,29 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
     limits = c(2, 2),
     colors = c("#000000", "#FFFFFF")
   )
+  rgl::open3d()
   expect_no_error({
-    grDevices::pdf(NULL)
-    on.exit(grDevices::dev.off(), add = TRUE)
     pixelatorR:::.cell_rgl_draw_colorbar(
       flat_legend,
-      text_color = "black"
+      text_color = "black",
+      text_size = 11
     )
     pixelatorR:::.cell_rgl_draw_colorbar(
-      list(title = "marker", limits = c(NA_real_, NA_real_), colors = flat_legend$colors),
-      text_color = "black"
+      list(
+        title = "marker",
+        limits = c(NA_real_, NA_real_),
+        colors = flat_legend$colors
+      ),
+      text_color = "black",
+      text_size = 11
     )
   })
+  expect_true(any(vapply(
+    rgl::scene3d()$objects,
+    function(object) identical(object$type, "quads"),
+    logical(1)
+  )))
+  rgl::close3d()
 
   na_facet <- tibble::tibble(
     x = c(0, 1),
@@ -697,31 +722,10 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
   expect_equal(rgl_plot_summary(na_facet)$n_panels, 2L)
 })
 
-test_that("rgl text overlays are redrawn when the window is resized", {
-  skip_if_not_installed("png")
+test_that("rgl chrome is native text and legend geometry", {
   old_options <- options(rgl.useNULL = TRUE)
   on.exit(options(old_options), add = TRUE)
   on.exit(try(rgl::close3d(), silent = TRUE), add = TRUE)
-
-  # bgplot3d() rasterizes text at the size of the subscene it is drawn in, so
-  # the bitmap dimensions show whether an overlay still matches its viewport.
-  overlay_sizes <- function() {
-    scene <- rgl::scene3d()
-    backgrounds <- Filter(
-      function(object) identical(object$type, "background"),
-      scene$objects
-    )
-    sizes <- lapply(backgrounds, function(object) {
-      texture <- object$material$texture
-      if (is.null(texture) || !file.exists(texture)) {
-        return(NULL)
-      }
-      dimensions <- dim(png::readPNG(texture))
-      return(c(width = dimensions[2], height = dimensions[1]))
-    })
-    sizes <- do.call(rbind, unname(sizes))
-    return(sizes[order(sizes[, "width"], sizes[, "height"]), , drop = FALSE])
-  }
 
   faceted <- tibble::tibble(
     x = c(0, 1, 2, 3),
@@ -734,167 +738,63 @@ test_that("rgl text overlays are redrawn when the window is resized", {
     cell_plot(color = marker) |>
     cell_node_scale_color(colors = c("black", "white"), limits = c(0, 3)) |>
     cell_grid(cols = cell, rows = panel) |>
-    cell_annotation(title = "Spectral layout")
+    cell_annotation(title = "Spectral layout") |>
+    cell_plot_rgl()
 
-  device <- cell_plot_rgl(faceted)
-  initial_sizes <- overlay_sizes()
-  expect_equal(nrow(initial_sizes), 7L)
-  registered <- get(
-    as.character(device),
-    envir = pixelatorR:::.cell_rgl_chrome_registry
-  )
-  subscene_viewport <- function(subscene_id) {
-    subscenes <- rgl::scene3d()$rootSubscene$subscenes
-    matching <- Filter(
-      function(subscene) identical(subscene$id, subscene_id),
+  scene <- rgl::scene3d()
+  subscene_texts <- function(subscene) {
+    texts <- lapply(as.character(subscene$objects), function(id) {
+      object <- scene$objects[[id]]
+      if (is.null(object) || !identical(object$type, "text")) {
+        return(character())
+      }
+      return(as.character(object$texts))
+    })
+    return(unlist(texts, use.names = FALSE))
+  }
+  subscenes <- scene$rootSubscene$subscenes
+  texts <- unlist(lapply(subscenes, subscene_texts), use.names = FALSE)
+  expect_true(all(c("a", "b", "m1", "m2", "Spectral layout") %in% texts))
+
+  find_subscene <- function(label) {
+    matches <- Filter(
+      function(subscene) label %in% subscene_texts(subscene),
       subscenes
     )
-    return(as.numeric(matching[[1]]$par3d$viewport))
+    return(matches[[1]])
   }
-  strip_dimensions <- function() {
-    col_strip <- subscene_viewport(registered$chrome[[1]]$subscene)
-    row_strip <- subscene_viewport(registered$chrome[[3]]$subscene)
-    return(c(
-      row_strip_width = row_strip[[3]],
-      col_strip_height = col_strip[[4]]
-    ))
-  }
+  column_strip <- find_subscene("a")
+  row_strip <- find_subscene("m1")
   expect_equal(
-    unname(strip_dimensions()),
-    rep(unname(strip_dimensions()[[1]]), 2)
+    column_strip$par3d$viewport[[4]],
+    row_strip$par3d$viewport[[3]]
   )
-  old_texture_files <- registered$resources$texture_files
-  expect_equal(file.exists(old_texture_files), rep(TRUE, 7))
-  scene_object_count <- function(type) {
-    sum(vapply(
-      rgl::scene3d()$objects,
-      function(object) identical(object$type, type),
-      logical(1)
-    ))
-  }
-  backgrounds_before_resize <- scene_object_count("background")
-  quads_before_resize <- scene_object_count("quads")
   expect_equal(
-    all(registered$resources$object_ids %in% as.integer(names(rgl::scene3d()$objects))),
-    TRUE
-  )
-
-  # The poll waits for the new size to remain stable before repainting.
-  pixelatorR:::.cell_rgl_cancel_poll()
-  rgl::par3d(windowRect = c(0, 0, 1400, 1400))
-  pixelatorR:::.cell_rgl_resize_poll()
-  expect_equal(overlay_sizes(), initial_sizes)
-  pixelatorR:::.cell_rgl_resize_poll()
-  refreshed_sizes <- overlay_sizes()
-  expect_equal(unname(refreshed_sizes > initial_sizes), matrix(TRUE, nrow = 7, ncol = 2))
-  expect_equal(file.exists(old_texture_files), rep(FALSE, 7))
-  expect_equal(
-    unname(strip_dimensions()),
-    rep(unname(strip_dimensions()[[1]]), 2)
-  )
-
-  expect_equal(scene_object_count("background"), backgrounds_before_resize)
-  expect_equal(scene_object_count("quads"), quads_before_resize)
-
-  # Every repainted overlay matches the subscene it belongs to.
-  scene <- rgl::scene3d()
-  for (subscene in scene$rootSubscene$subscenes) {
-    for (object_id in subscene$objects) {
-      object <- scene$objects[[as.character(object_id)]]
-      texture <- object$material$texture
-      if (!is.null(texture) && file.exists(texture)) {
-        dimensions <- dim(png::readPNG(texture))
-        expect_equal(
-          unname(c(width = dimensions[2], height = dimensions[1])),
-          unname(subscene$par3d$viewport[3:4])
-        )
-      }
-    }
-  }
-
-  expect_equal(ls(pixelatorR:::.cell_rgl_chrome_registry), as.character(device))
-
-  # A repaint that fails on an open window keeps its overlays and stays tracked,
-  # because deleting live textures would blank titles, strips, and legends.
-  registered <- get(
-    as.character(device),
-    envir = pixelatorR:::.cell_rgl_chrome_registry
-  )
-  live_texture_files <- registered$resources$texture_files
-  failing <- registered
-  failing$chrome <- list(list(
-    subscene = registered$chrome[[1]]$subscene,
-    draw = function() stop("overlay repaint failed")
-  ))
-  assign(
-    as.character(device),
-    failing,
-    envir = pixelatorR:::.cell_rgl_chrome_registry
-  )
-  rgl::par3d(windowRect = c(0, 0, 1200, 1200))
-  pixelatorR:::.cell_rgl_resize_poll()
-  expect_equal(pixelatorR:::.cell_rgl_resize_poll(), TRUE)
-  expect_equal(
-    ls(pixelatorR:::.cell_rgl_chrome_registry),
-    as.character(device)
-  )
-  expect_equal(file.exists(live_texture_files), rep(TRUE, 7))
-
-  assign(
-    as.character(device),
-    registered,
-    envir = pixelatorR:::.cell_rgl_chrome_registry
-  )
-
-  # If a later overlay throws after an earlier one has already drawn, the new
-  # objects and texture files must be discarded so retries do not leak copies.
-  backgrounds_before_partial_failure <- scene_object_count("background")
-  quads_before_partial_failure <- scene_object_count("quads")
-  partial_failure <- registered
-  partial_failure$chrome <- list(
-    registered$chrome[[1]],
-    list(
-      subscene = registered$chrome[[1]]$subscene,
-      draw = function() stop("later overlay failed")
+    row_strip$par3d$userMatrix,
+    rgl::rotationMatrix(
+      pixelatorR:::.cell_plot_row_strip_angle * pi / 180,
+      0,
+      0,
+      1
     )
   )
-  assign(
-    as.character(device),
-    partial_failure,
-    envir = pixelatorR:::.cell_rgl_chrome_registry
-  )
-  rgl::par3d(windowRect = c(0, 0, 1000, 1000))
-  pixelatorR:::.cell_rgl_resize_poll()
-  expect_equal(pixelatorR:::.cell_rgl_resize_poll(), TRUE)
-  backgrounds_after_partial_failure <- scene_object_count("background")
-  quads_after_partial_failure <- scene_object_count("quads")
-  expect_equal(
-    backgrounds_after_partial_failure <= backgrounds_before_partial_failure,
-    TRUE
-  )
-  expect_equal(
-    quads_after_partial_failure <= quads_before_partial_failure,
-    TRUE
-  )
-  expect_equal(pixelatorR:::.cell_rgl_resize_poll(), TRUE)
-  expect_equal(scene_object_count("background"), backgrounds_after_partial_failure)
-  expect_equal(scene_object_count("quads"), quads_after_partial_failure)
-  expect_equal(file.exists(live_texture_files), rep(TRUE, 7))
-  expect_equal(
-    ls(pixelatorR:::.cell_rgl_chrome_registry),
-    as.character(device)
-  )
+  expect_equal(column_strip$par3d$userMatrix, diag(4))
 
-  assign(
-    as.character(device),
-    registered,
-    envir = pixelatorR:::.cell_rgl_chrome_registry
+  legend <- Find(
+    function(subscene) {
+      types <- rgl_subscene_object_types(subscene, scene)
+      return(any(types == "quads"))
+    },
+    subscenes
   )
-
-  # Closing the last device drops its resources and stops polling.
-  rgl::close3d()
-  expect_equal(pixelatorR:::.cell_rgl_resize_poll(), FALSE)
-  expect_equal(ls(pixelatorR:::.cell_rgl_chrome_registry), character())
-  expect_equal(isTRUE(pixelatorR:::.cell_rgl_poll_state$queued), FALSE)
-  expect_null(pixelatorR:::.cell_rgl_poll_state$cancel)
+  expect_false(is.null(legend))
+  expect_equal(legend$par3d$mouseMode, c(
+    none = "none",
+    left = "none",
+    right = "none",
+    middle = "none",
+    wheel = "none"
+  ))
+  expect_equal(as.integer(legend$par3d$listeners), as.integer(legend$id))
 })
+

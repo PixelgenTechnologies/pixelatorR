@@ -20,9 +20,9 @@ bounded number of pixel-size bins to keep the scene responsive.
 Panel grids use \code{\link[rgl:mfrow3d]{rgl::layout3d()}} with shared mouse control among data
 panels. Facet labels are drawn in dedicated themeable strip regions along
 the top (columns) and side (rows), so points cannot cover them. Plot titles
-and color legends also use reserved full-window chrome regions. Rotating and
-scroll-zooming work with the pointer anywhere in the window, including over
-the strips, title, and legend, and always drive every data panel together.
+and color legends also use reserved regions. Pointer rotation and
+scroll-zooming stay on the data panels, which move together. Titles, strips,
+and legends are orthographic and do not rotate or zoom the panels.
 Panel grids support at most 10 rows and 20 columns.
 }
 \details{
@@ -31,17 +31,14 @@ viewpoint appear in front. The rgl backend does not provide hover labels or
 interactive legend filtering. The \code{arrange} and \code{depth} mappings and
 \code{\link[=cell_coord_rotate]{cell_coord_rotate()}} are ignored. Markers use the rendered colors
 resolved by \code{\link[=build_cell_plot]{build_cell_plot()}}, including illumination when requested,
-while legends are drawn from the unilluminated color scale metadata as
-static 2D overlays. Numeric color mappings use a continuous colorbar;
+while legends are drawn from the unilluminated color scale metadata.
+Numeric color mappings use a continuous colorbar;
 categorical mappings use a discrete legend.
 
 Unlike \code{\link[=cell_plot_interactive]{cell_plot_interactive()}}, this renderer opens an rgl device rather
-than returning an htmlwidget. Legends are drawn with \code{\link[rgl:bgplot3d]{rgl::bgplot3d()}} and
-do not support Plotly-style interactive legend filtering.
-
-\code{\link[rgl:bgplot3d]{rgl::bgplot3d()}} renders text into a bitmap sized for the window it was
-drawn in. Titles, facet strips, and legends are redrawn automatically at
-the new size shortly after the window stops changing.
+than returning an htmlwidget. Legends are native scene objects and do not
+support Plotly-style interactive legend filtering. Title, strip, and legend
+text uses rgl's own font.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

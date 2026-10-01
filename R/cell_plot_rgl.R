@@ -7,9 +7,9 @@
 #' Panel grids use [rgl::layout3d()] with shared mouse control among data
 #' panels. Facet labels are drawn in dedicated themeable strip regions along
 #' the top (columns) and side (rows), so points cannot cover them. Plot titles
-#' and color legends also use reserved full-window chrome regions. Rotating and
-#' scroll-zooming work with the pointer anywhere in the window, including over
-#' the strips, title, and legend, and always drive every data panel together.
+#' and color legends also use reserved regions. Pointer rotation and
+#' scroll-zooming stay on the data panels, which move together. Titles, strips,
+#' and legends are orthographic and do not rotate or zoom the panels.
 #' Panel grids support at most 10 rows and 20 columns.
 #'
 #' Occlusion follows the scene camera, so markers closer to the current
@@ -17,17 +17,14 @@
 #' interactive legend filtering. The `arrange` and `depth` mappings and
 #' [cell_coord_rotate()] are ignored. Markers use the rendered colors
 #' resolved by [build_cell_plot()], including illumination when requested,
-#' while legends are drawn from the unilluminated color scale metadata as
-#' static 2D overlays. Numeric color mappings use a continuous colorbar;
+#' while legends are drawn from the unilluminated color scale metadata.
+#' Numeric color mappings use a continuous colorbar;
 #' categorical mappings use a discrete legend.
 #'
 #' Unlike [cell_plot_interactive()], this renderer opens an rgl device rather
-#' than returning an htmlwidget. Legends are drawn with [rgl::bgplot3d()] and
-#' do not support Plotly-style interactive legend filtering.
-#'
-#' [rgl::bgplot3d()] renders text into a bitmap sized for the window it was
-#' drawn in. Titles, facet strips, and legends are redrawn automatically at
-#' the new size shortly after the window stops changing.
+#' than returning an htmlwidget. Legends are native scene objects and do not
+#' support Plotly-style interactive legend filtering. Title, strip, and legend
+#' text uses rgl's own font.
 #'
 #' @param object A `cell_plot` recipe.
 #'
@@ -51,7 +48,6 @@
 cell_plot_rgl <- function(object) {
   .validate_cell_plot(object)
   expect_rgl()
-  expect_later()
 
   object$mapping$arrange <- NULL
   return(.render_cell_plot_rgl(build_cell_plot(object)))
@@ -63,8 +59,8 @@ cell_plot_rgl <- function(object) {
 #' Colors come from .cell_plot_rendered_colors() so builder-baked illumination
 #' matches ggplot, Plotly, and base. Panel grids become an [rgl::layout3d()]
 #' arrangement that keeps every row and column level, including empty panels.
-#' Facet labels use dedicated gray strip regions; title and legend chrome use
-#' reserved regions so placement does not depend on the upper-left panel.
+#' Facet labels, titles, and legends are native objects in orthographic
+#' subscenes, so placement does not depend on the upper-left panel.
 #'
 #' @param object A `cell_plot_built` object with a mapped `z` coordinate.
 #'
@@ -158,34 +154,27 @@ cell_plot_rgl <- function(object) {
   }
 
   device <- rgl::open3d(windowRect = c(100, 100, 1100, 1100))
-  # Overlays are bitmaps tied to the viewport they were drawn in, so keep the
-  # drawing calls around to repaint them whenever the window size changes.
-  chrome <- list()
 
   title_id <- NULL
   legend_id <- NULL
   corner_id <- NULL
   col_strip_ids <- integer()
   row_strip_ids <- integer()
-  resize_layout <- NULL
   if (!has_layout) {
     panel_ids <- rgl::subsceneInfo()$id
   } else {
     parent_id <- rgl::currentSubscene3d()
-    layout_args <- list(
-      n_row = n_row,
-      n_col = n_col,
-      need_col_strips = !is.null(facet_cols),
-      need_row_strips = !is.null(facet_rows),
-      need_title = need_title,
-      need_legend = need_legend,
-      need_subtitle = !is.null(subtitle)
-    )
     layout <- do.call(
       .cell_rgl_facet_layout,
-      c(
-        layout_args,
-        list(viewport = rgl::par3d("viewport", subscene = parent_id))
+      list(
+        n_row = n_row,
+        n_col = n_col,
+        need_col_strips = !is.null(facet_cols),
+        need_row_strips = !is.null(facet_rows),
+        need_title = need_title,
+        need_legend = need_legend,
+        need_subtitle = !is.null(subtitle),
+        viewport = rgl::par3d("viewport", subscene = parent_id)
       )
     )
     # mouseMode = "replace" is required: layout3d() defaults to inherited
@@ -198,23 +187,6 @@ cell_plot_rgl <- function(object) {
       sharedMouse = FALSE,
       mouseMode = "replace"
     )
-    if (!is.null(facet_cols) && !is.null(facet_rows)) {
-      resize_layout <- function() {
-        viewport <- rgl::par3d("viewport", subscene = parent_id)
-        resized_layout <- do.call(
-          .cell_rgl_facet_layout,
-          c(layout_args, list(viewport = viewport))
-        )
-        .cell_rgl_set_layout_viewports(
-          ids = ids,
-          mat = resized_layout$mat,
-          widths = resized_layout$widths,
-          heights = resized_layout$heights,
-          parent_viewport = viewport
-        )
-        return(invisible(NULL))
-      }
-    }
     panel_ids <- ids[seq_len(n_panels)]
     chrome_index <- n_panels
     if (!is.null(facet_cols)) {
@@ -237,10 +209,7 @@ cell_plot_rgl <- function(object) {
       chrome_index <- chrome_index + 1L
       legend_id <- ids[[chrome_index]]
     }
-    .cell_rgl_set_listeners(
-      c(panel_ids, col_strip_ids, corner_id, row_strip_ids, title_id, legend_id),
-      panel_ids = panel_ids
-    )
+    .cell_rgl_set_listeners(panel_ids, panel_ids = panel_ids)
   }
 
   for (panel_index in seq_len(n_panels)) {
@@ -298,10 +267,8 @@ cell_plot_rgl <- function(object) {
   }
 
   for (col_index in seq_along(col_strip_ids)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
+    .cell_rgl_draw_strip(
       subscene = col_strip_ids[[col_index]],
-      fn = .cell_rgl_strip_overlay,
       label = .cell_plot_facet_label(col_levels[[col_index]]),
       angle = 0,
       text_color = text_color,
@@ -310,10 +277,8 @@ cell_plot_rgl <- function(object) {
     )
   }
   for (row_index in seq_along(row_strip_ids)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
+    .cell_rgl_draw_strip(
       subscene = row_strip_ids[[row_index]],
-      fn = .cell_rgl_strip_overlay,
       label = .cell_plot_facet_label(row_levels[[row_index]]),
       angle = .cell_plot_row_strip_angle,
       text_color = text_color,
@@ -322,10 +287,8 @@ cell_plot_rgl <- function(object) {
     )
   }
   if (!is.null(corner_id)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
+    .cell_rgl_draw_strip(
       subscene = corner_id,
-      fn = .cell_rgl_strip_overlay,
       label = "",
       angle = 0,
       text_color = text_color,
@@ -333,12 +296,9 @@ cell_plot_rgl <- function(object) {
       background_color = background_color
     )
   }
-
   if (!is.null(title_id)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
+    .cell_rgl_draw_title(
       subscene = title_id,
-      fn = .cell_rgl_title_overlay,
       title = title,
       subtitle = subtitle,
       text_color = text_color,
@@ -347,10 +307,8 @@ cell_plot_rgl <- function(object) {
     )
   }
   if (!is.null(legend_id)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
+    .cell_rgl_draw_legend(
       subscene = legend_id,
-      fn = .cell_rgl_legend_overlay,
       text_color = text_color,
       text_size = text_size,
       background_color = background_color,
@@ -358,14 +316,6 @@ cell_plot_rgl <- function(object) {
       continuous_legend = continuous_legend
     )
   }
-
-  resources <- .cell_rgl_draw_chrome(chrome)
-  .cell_rgl_register_chrome(
-    device = device,
-    chrome = chrome,
-    resources = resources,
-    resize = resize_layout
-  )
 
   return(invisible(as.integer(device)))
 }
@@ -476,51 +426,10 @@ cell_plot_rgl <- function(object) {
   return(list(mat = mat, widths = widths, heights = heights))
 }
 
-#' Resize rgl layout subscenes
+#' Connect rgl data panels so they share one camera
 #'
-#' Converts layout weights into pixel viewports and applies them to existing
-#' subscenes. This keeps facet-strip dimensions synchronized when an rgl window
-#' is resized without rebuilding the scenes or their contents.
-#'
-#' @param ids Subscene ids indexed by the integer ids in `mat`.
-#' @param mat Integer layout matrix.
-#' @param widths,heights Relative layout dimensions.
-#' @param parent_viewport Four-value rgl parent viewport.
-#'
-#' @return `ids`, invisibly.
-#'
-#' @noRd
-.cell_rgl_set_layout_viewports <- function(
-  ids,
-  mat,
-  widths,
-  heights,
-  parent_viewport
-) {
-  parent_viewport <- as.numeric(parent_viewport)
-  pixel_widths <- parent_viewport[[3L]] * widths / sum(widths)
-  pixel_heights <- parent_viewport[[4L]] * heights / sum(heights)
-  x_positions <- c(0, cumsum(pixel_widths))
-  y_positions <- rev(c(0, cumsum(rev(pixel_heights))))[-1L]
-
-  for (id_index in seq_along(ids)) {
-    rows <- range(row(mat)[mat == id_index])
-    cols <- range(col(mat)[mat == id_index])
-    viewport <- c(
-      x = x_positions[[cols[[1L]]]],
-      y = y_positions[[rows[[2L]]]],
-      width = sum(pixel_widths[seq.int(cols[[1L]], cols[[2L]])]),
-      height = sum(pixel_heights[seq.int(rows[[1L]], rows[[2L]])])
-    )
-    rgl::par3d(viewport = viewport, subscene = ids[[id_index]])
-  }
-  return(invisible(ids))
-}
-
-#' Connect rgl subscene mouse actions to the data panels
-#'
-#' Data panels listen together, while chrome forwards its mouse actions to the
-#' data panels without moving itself.
+#' Each data panel listens to every data panel. Title, strip, and legend
+#' subscenes are left alone, so pointer movement there does not move the plot.
 #'
 #' @param subscene_ids Integer vector of subscene ids to configure.
 #' @param panel_ids Integer vector of data-panel subscene ids.
@@ -535,606 +444,365 @@ cell_plot_rgl <- function(object) {
   return(invisible(subscene_ids))
 }
 
-#' Record an overlay drawing call so it can be repainted later
+#' Prepare an orthographic rgl chrome subscene
 #'
-#' [rgl::bgplot3d()] rasterizes into a bitmap sized for the subscene viewport
-#' it was drawn in, so overlays must be redrawn to survive a window resize.
-#' Each entry stores the target subscene together with a zero-argument closure
-#' that repaints it.
+#' Titles, strips, and legends keep a fixed camera. `FOV = 0` is orthographic,
+#' and every mouse button is `none`, so the region cannot rotate or zoom the
+#' data panels. A zero-length segment pair establishes a unit square without
+#' drawing a visible frame. [rgl::text3d()] ignores that extent, so the square
+#' is what the camera fits.
 #'
-#' @param chrome List of existing overlay entries.
-#' @param subscene Subscene id the overlay belongs to.
-#' @param fn Drawing function to call.
-#' @param ... Arguments passed to `fn`.
+#' @param subscene Subscene id to draw in.
+#' @param background_color Background color for the region.
+#' @param angle Rotation of the subscene in degrees. Row strips use 90 so a
+#' horizontal label reads upward.
 #'
-#' @return `chrome` with one entry appended.
-#'
-#' @noRd
-.cell_rgl_add_chrome <- function(chrome, subscene, fn, ...) {
-  force(fn)
-  args <- list(...)
-  entry <- list(
-    subscene = subscene,
-    draw = function() {
-      return(invisible(do.call(fn, args)))
-    }
-  )
-  return(c(chrome, list(entry)))
-}
-
-#' Paint every recorded overlay at the current window size
-#'
-#' Overlays are drawn into their own subscenes, so the current subscene is
-#' restored afterwards to avoid leaking a chrome subscene to the caller.
-#'
-#' @param chrome List of overlay entries from .cell_rgl_add_chrome().
-#'
-#' @return A list with `object_ids` and `texture_files`, invisibly.
+#' @return `subscene`, invisibly.
 #'
 #' @noRd
-.cell_rgl_draw_chrome <- function(chrome) {
-  resources <- list(object_ids = integer(), texture_files = character())
-  if (length(chrome) == 0L) {
-    return(invisible(resources))
-  }
-  current_subscene <- rgl::currentSubscene3d()
-  finished <- FALSE
-  on.exit(
-    {
-      rgl::useSubscene3d(current_subscene)
-      if (!finished) {
-        .cell_rgl_remove_chrome(resources)
-      }
-    },
-    add = TRUE
-  )
-  for (entry in chrome) {
-    rgl::useSubscene3d(entry$subscene)
-    background_id <- as.integer(entry$draw())
-    resources$object_ids <- unique(c(
-      resources$object_ids,
-      background_id,
-      as.integer(rgl::rgl.attrib(background_id, "ids"))
-    ))
-    resources$texture_files <- unique(c(
-      resources$texture_files,
-      rgl::material3d("texture", id = background_id)
-    ))
-  }
-  finished <- TRUE
-  return(invisible(resources))
-}
-
-#' Remove resources belonging to old rgl overlays
-#'
-#' [rgl::bgplot3d()] creates both a background object and a textured quad.
-#' Removing only the returned background id leaves the quad in the scene, so
-#' all recorded object ids and their temporary texture files are discarded
-#' together after a replacement overlay has been drawn.
-#'
-#' @param resources A list with `object_ids` and `texture_files`.
-#'
-#' @return `NULL`, invisibly.
-#'
-#' @noRd
-.cell_rgl_remove_chrome <- function(resources) {
-  if (length(resources$object_ids) > 0L) {
-    live_ids <- as.integer(names(rgl::scene3d()$objects))
-    object_ids <- intersect(as.integer(resources$object_ids), live_ids)
-    if (length(object_ids) > 0L) {
-      rgl::pop3d(id = object_ids)
-    }
-  }
-  if (length(resources$texture_files) > 0L) {
-    unlink(resources$texture_files)
-  }
-  return(invisible(NULL))
-}
-
-#' Drop one device from the rgl chrome registry
-#'
-#' Deletes its temporary texture files before removing the registry entry.
-#' Scene objects need no cleanup here because this path is used when the
-#' associated device has closed or has no overlays.
-#'
-#' @param key Character device id used as the registry key.
-#'
-#' @return `TRUE` when an entry was removed, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_drop_chrome <- function(key) {
-  if (!exists(key, envir = .cell_rgl_chrome_registry, inherits = FALSE)) {
-    return(invisible(FALSE))
-  }
-  state <- get(key, envir = .cell_rgl_chrome_registry)
-  unlink(state$resources$texture_files)
-  rm(list = key, envir = .cell_rgl_chrome_registry)
-  if (length(ls(envir = .cell_rgl_chrome_registry)) == 0L) {
-    .cell_rgl_cancel_poll()
-  }
-  return(invisible(TRUE))
-}
-
-#' Registry of rgl devices with redrawable text overlays
-#'
-#' Keyed by device id, each element holds the overlay entries for that device
-#' and the window rectangle they were last drawn at.
-#'
-#' @noRd
-.cell_rgl_chrome_registry <- new.env(parent = emptyenv())
-
-#' Seconds between idle checks of the rgl window size
-#'
-#' Dragging a window border produces no R command and no rgl event, so the
-#' window size is polled while R is idle. The interval also acts as the
-#' debounce window: a resize is repainted once the size holds still for one
-#' full interval, so dragging repaints once at the end instead of continuously.
-#'
-#' @noRd
-.cell_rgl_poll_interval <- 0.25
-
-#' Whether an idle poll is already queued
-#'
-#' Guards against stacking [later::later()] callbacks, which would poll faster
-#' and faster every time a plot is drawn.
-#'
-#' @noRd
-.cell_rgl_poll_state <- new.env(parent = emptyenv())
-
-#' Track a device so its overlays can be redrawn
-#'
-#' Registering with an empty `chrome` clears any previous registration.
-#'
-#' @param device rgl device id.
-#' @param chrome List of overlay entries from .cell_rgl_add_chrome().
-#' @param resources Current overlay object ids and texture files.
-#' @param resize Optional zero-argument function that updates subscene geometry
-#' after a window resize.
-#'
-#' @return `TRUE` if the device is now tracked, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_register_chrome <- function(
-  device,
-  chrome,
-  resources,
-  resize = NULL
-) {
-  key <- as.character(device)
-  .cell_rgl_drop_chrome(key)
-  if (length(chrome) == 0L) {
-    return(invisible(FALSE))
-  }
-  assign(
-    key,
-    list(
-      chrome = chrome,
-      resources = resources,
-      resize = resize,
-      window_rect = as.numeric(rgl::par3d("windowRect", dev = device))
+.cell_rgl_prepare_chrome <- function(subscene, background_color, angle = 0) {
+  rgl::useSubscene3d(subscene)
+  rgl::bg3d(color = background_color)
+  rgl::par3d(
+    FOV = 0,
+    mouseMode = c(
+      left = "none",
+      right = "none",
+      middle = "none",
+      wheel = "none"
     ),
-    envir = .cell_rgl_chrome_registry
+    subscene = subscene
   )
-  .cell_rgl_schedule_poll()
-  return(invisible(TRUE))
-}
-
-#' Queue the next idle check of the rgl window size
-#'
-#' [later::later()] runs its callbacks while R is idle, including while the
-#' console sits at the prompt, which is the only time a border drag can be
-#' noticed. Polling stops once no device is tracked.
-#'
-#' @return `TRUE` if a poll was queued, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_schedule_poll <- function() {
-  if (isTRUE(.cell_rgl_poll_state$queued)) {
-    return(invisible(FALSE))
-  }
-  if (length(ls(envir = .cell_rgl_chrome_registry)) == 0L) {
-    .cell_rgl_cancel_poll()
-    return(invisible(FALSE))
-  }
-  .cell_rgl_poll_state$queued <- TRUE
-  .cell_rgl_poll_state$cancel <- later::later(
-    function() {
-      .cell_rgl_poll_state$queued <- FALSE
-      .cell_rgl_poll_state$cancel <- NULL
-      .cell_rgl_resize_poll()
-      .cell_rgl_schedule_poll()
-      return(invisible(NULL))
-    },
-    delay = .cell_rgl_poll_interval
+  rgl::segments3d(
+    x = c(0, 0, 1, 1),
+    y = c(0, 0, 1, 1),
+    z = c(0, 0, 0, 0),
+    color = background_color,
+    lit = FALSE
   )
-  return(invisible(TRUE))
-}
-
-#' Cancel the queued rgl resize poll
-#'
-#' [later::later()] returns a cancellation closure. Invoking it prevents a
-#' queued idle callback from running after the last watched window closes or
-#' the package unloads.
-#'
-#' @return `TRUE` when a callback was cancelled, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_cancel_poll <- function() {
-  cancel <- .cell_rgl_poll_state$cancel
-  if (is.function(cancel)) {
-    cancel()
-  }
-  .cell_rgl_poll_state$cancel <- NULL
-  .cell_rgl_poll_state$queued <- FALSE
-  return(invisible(is.function(cancel)))
-}
-
-#' Poll tracked devices and redraw overlays after settled resizes
-#'
-#' Closed devices are dropped. Changed devices are repainted only after their
-#' window dimensions remain stable across two polls. An open device that fails
-#' to repaint keeps its overlays and is retried on the next poll.
-#'
-#' @return `TRUE` while at least one device is still tracked.
-#'
-#' @noRd
-.cell_rgl_resize_poll <- function() {
-  keys <- ls(envir = .cell_rgl_chrome_registry)
-  open_devices <- as.integer(rgl::rgl.dev.list())
-  for (key in keys) {
-    device <- as.integer(key)
-    if (!device %in% open_devices) {
-      .cell_rgl_drop_chrome(key)
-      next
-    }
-    # A failed repaint must not stop resize handling for the other devices, and
-    # must not discard the overlays an open window is still displaying, so the
-    # device stays tracked and is retried on the next poll.
-    tryCatch(
-      .cell_rgl_check_device(key, device),
-      error = function(condition) NULL
+  rgl::view3d(theta = 0, phi = 0, fov = 0, zoom = 1)
+  if (angle != 0) {
+    rgl::par3d(
+      userMatrix = rgl::rotationMatrix(angle * pi / 180, 0, 0, 1)
     )
   }
-  keep_watching <- length(ls(envir = .cell_rgl_chrome_registry)) > 0L
-  if (!keep_watching) {
-    .cell_rgl_cancel_poll()
-  }
-  return(keep_watching)
+  return(invisible(subscene))
 }
 
-#' Repaint one tracked device if its window size changed and has settled
+#' Convert a theme text size into an rgl cex
 #'
-#' @param key Registry key for the device.
-#' @param device rgl device id.
+#' Theme text size uses the same point size as the ggplot theme, where 11 is
+#' the default. rgl draws its own font at `cex = 1` for that default.
 #'
-#' @return `TRUE` if the device was repainted, `FALSE` otherwise, invisibly.
+#' @param text_size Theme text size.
 #'
-#' @noRd
-.cell_rgl_check_device <- function(key, device) {
-  state <- get(key, envir = .cell_rgl_chrome_registry)
-  window_rect <- as.numeric(rgl::par3d("windowRect", dev = device))
-  if (isTRUE(all.equal(window_rect, state$window_rect))) {
-    if (!is.null(state$pending_rect)) {
-      state$pending_rect <- NULL
-      assign(key, state, envir = .cell_rgl_chrome_registry)
-    }
-    return(invisible(FALSE))
-  }
-  if (!isTRUE(all.equal(window_rect, state$pending_rect))) {
-    # Size is still changing, so the drag is not finished yet.
-    state$pending_rect <- window_rect
-    assign(key, state, envir = .cell_rgl_chrome_registry)
-    return(invisible(FALSE))
-  }
-  .cell_rgl_redraw_chrome(device)
-  return(invisible(TRUE))
-}
-
-#' Repaint the overlays of one tracked rgl device
-#'
-#' @param device rgl device id.
-#'
-#' @return `TRUE` if overlays were repainted, `FALSE` otherwise, invisibly.
+#' @return A cex multiplier.
 #'
 #' @noRd
-.cell_rgl_redraw_chrome <- function(device) {
-  key <- as.character(device)
-  if (!exists(key, envir = .cell_rgl_chrome_registry, inherits = FALSE)) {
-    return(invisible(FALSE))
-  }
-  if (!device %in% rgl::rgl.dev.list()) {
-    .cell_rgl_drop_chrome(key)
-    return(invisible(FALSE))
-  }
-
-  state <- get(key, envir = .cell_rgl_chrome_registry)
-  previous_device <- as.integer(rgl::cur3d())
-  if (previous_device != device) {
-    rgl::set3d(device, silent = TRUE)
-    on.exit(
-      if (previous_device %in% rgl::rgl.dev.list()) {
-        rgl::set3d(previous_device, silent = TRUE)
-      },
-      add = TRUE
-    )
-  }
-
-  if (is.function(state$resize)) {
-    state$resize()
-  }
-  resources <- .cell_rgl_draw_chrome(state$chrome)
-  .cell_rgl_remove_chrome(state$resources)
-  state$resources <- resources
-  state$window_rect <- as.numeric(rgl::par3d("windowRect", dev = device))
-  state$pending_rect <- NULL
-  assign(key, state, envir = .cell_rgl_chrome_registry)
-  return(invisible(TRUE))
+.cell_rgl_text_cex <- function(text_size) {
+  return(text_size / 11)
 }
 
 #' Draw a facet label in a dedicated rgl strip
 #'
 #' The strip is a separate subscene from the data panel, so points cannot cover
 #' its text. A gray background follows the default [ggplot2::facet_grid()]
-#' appearance. Row strip labels are rotated vertically.
+#' appearance. Row strip labels rotate the subscene so the text reads upward.
 #'
+#' @param subscene Subscene id for the strip.
 #' @param label Facet level label.
 #' @param angle Text rotation in degrees.
 #' @param text_color,text_size,background_color Theme values.
 #'
-#' @return The value returned by [rgl::bgplot3d()], invisibly.
+#' @return `NULL`, invisibly.
 #'
 #' @noRd
-.cell_rgl_strip_overlay <- function(
+.cell_rgl_draw_strip <- function(
+  subscene,
   label,
   angle,
   text_color,
   text_size,
   background_color
 ) {
-  return(invisible(rgl::bgplot3d(
-    {
-      graphics::par(
-        mar = c(0, 0, 0, 0),
-        bg = background_color,
-        fg = text_color,
-        cex = text_size / 11
-      )
-      graphics::plot(
-        0,
-        0,
-        type = "n",
-        xlim = c(0, 1),
-        ylim = c(0, 1),
-        axes = FALSE,
-        xlab = "",
-        ylab = "",
-        xaxs = "i",
-        yaxs = "i"
-      )
-      graphics::text(
-        x = 0.5,
-        y = 0.5,
-        labels = label,
-        srt = angle,
-        col = text_color
-      )
-    },
-    bg.color = background_color
-  )))
+  .cell_rgl_prepare_chrome(
+    subscene = subscene,
+    background_color = background_color,
+    angle = angle
+  )
+  if (nzchar(label)) {
+    rgl::text3d(
+      x = 0.5,
+      y = 0.5,
+      z = 0,
+      texts = label,
+      adj = 0.5,
+      color = text_color,
+      cex = .cell_rgl_text_cex(text_size)
+    )
+  }
+  return(invisible(NULL))
 }
 
 #' Draw a title in a reserved rgl layout region
 #'
+#' @param subscene Subscene id for the title.
 #' @param title,subtitle Optional plot title and subtitle text.
 #' @param text_color,text_size,background_color Theme values.
 #'
-#' @return The value returned by [rgl::bgplot3d()], invisibly.
+#' @return `NULL`, invisibly.
 #'
 #' @noRd
-.cell_rgl_title_overlay <- function(
+.cell_rgl_draw_title <- function(
+  subscene,
   title,
   subtitle,
   text_color,
   text_size,
   background_color
 ) {
-  return(invisible(rgl::bgplot3d(
-    {
-      graphics::par(
-        mar = c(0, 1, 0, 1),
-        bg = background_color,
-        fg = text_color,
-        cex = text_size / 11
-      )
-      graphics::plot(
-        0,
-        0,
-        type = "n",
-        xlim = c(0, 1),
-        ylim = c(0, 1),
-        axes = FALSE,
-        xlab = "",
-        ylab = "",
-        xaxs = "i",
-        yaxs = "i"
-      )
-      if (!is.null(title)) {
-        graphics::text(
-          x = 0.02,
-          y = if (is.null(subtitle)) 0.5 else 0.65,
-          labels = title,
-          adj = c(0, 0.5),
-          col = text_color,
-          cex = 1.2,
-          font = 2
-        )
-      }
-      if (!is.null(subtitle)) {
-        graphics::text(
-          x = 0.02,
-          y = if (is.null(title)) 0.5 else 0.25,
-          labels = subtitle,
-          adj = c(0, 0.5),
-          col = text_color
-        )
-      }
-    },
-    bg.color = background_color
-  )))
+  .cell_rgl_prepare_chrome(
+    subscene = subscene,
+    background_color = background_color
+  )
+  cex <- .cell_rgl_text_cex(text_size)
+  if (!is.null(title)) {
+    rgl::text3d(
+      x = 0.02,
+      y = if (is.null(subtitle)) 0.5 else 0.65,
+      z = 0,
+      texts = title,
+      adj = c(0, 0.5),
+      color = text_color,
+      cex = cex * 1.2,
+      font = 2
+    )
+  }
+  if (!is.null(subtitle)) {
+    rgl::text3d(
+      x = 0.02,
+      y = if (is.null(title)) 0.5 else 0.25,
+      z = 0,
+      texts = subtitle,
+      adj = c(0, 0.5),
+      color = text_color,
+      cex = cex
+    )
+  }
+  return(invisible(NULL))
 }
 
 #' Draw a legend in a reserved rgl layout region
 #'
+#' @param subscene Subscene id for the legend.
 #' @param text_color,text_size,background_color Theme values.
 #' @param categorical_legend Optional list with `title`, `labels`, and `colors`.
 #' @param continuous_legend Optional list with `title`, `limits`, and `colors`.
 #'
-#' @return The value returned by [rgl::bgplot3d()], invisibly.
+#' @return `NULL`, invisibly.
 #'
 #' @noRd
-.cell_rgl_legend_overlay <- function(
+.cell_rgl_draw_legend <- function(
+  subscene,
   text_color,
   text_size,
   background_color,
   categorical_legend = NULL,
   continuous_legend = NULL
 ) {
-  return(invisible(rgl::bgplot3d(
-    {
-      graphics::par(
-        mar = c(0, 0, 0, 0),
-        bg = background_color,
-        fg = text_color,
-        col.axis = text_color,
-        col.lab = text_color,
-        cex = text_size / 11
-      )
-      if (!is.null(continuous_legend)) {
-        .cell_rgl_draw_colorbar(continuous_legend, text_color = text_color)
-      } else if (!is.null(categorical_legend)) {
-        graphics::plot(
-          0,
-          0,
-          type = "n",
-          xlim = c(0, 1),
-          ylim = c(0, 1),
-          axes = FALSE,
-          xlab = "",
-          ylab = "",
-          xaxs = "i",
-          yaxs = "i"
-        )
-        graphics::legend(
-          "center",
-          legend = categorical_legend$labels,
-          col = categorical_legend$colors,
-          pch = 16,
-          title = categorical_legend$title,
-          bty = "n",
-          text.col = text_color,
-          title.col = text_color
-        )
-      }
-    },
-    bg.color = background_color
-  )))
+  .cell_rgl_prepare_chrome(
+    subscene = subscene,
+    background_color = background_color
+  )
+  if (!is.null(continuous_legend)) {
+    .cell_rgl_draw_colorbar(
+      continuous_legend = continuous_legend,
+      text_color = text_color,
+      text_size = text_size
+    )
+  } else if (!is.null(categorical_legend)) {
+    .cell_rgl_draw_discrete_legend(
+      categorical_legend = categorical_legend,
+      text_color = text_color,
+      text_size = text_size
+    )
+  }
+  return(invisible(NULL))
+}
+
+#' Draw a categorical legend with point swatches
+#'
+#' @param categorical_legend List with `title`, `labels`, and `colors`.
+#' @param text_color Theme text color.
+#' @param text_size Theme text size.
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @noRd
+.cell_rgl_draw_discrete_legend <- function(
+  categorical_legend,
+  text_color,
+  text_size
+) {
+  labels <- categorical_legend$labels
+  n_labels <- length(labels)
+  if (n_labels == 0L) {
+    return(invisible(NULL))
+  }
+  ys <- if (n_labels == 1L) {
+    0.42
+  } else {
+    seq(0.72, 0.12, length.out = n_labels)
+  }
+  rgl::points3d(
+    x = rep(0.16, n_labels),
+    y = ys,
+    z = rep(0, n_labels),
+    color = categorical_legend$colors,
+    size = text_size * 0.8,
+    lit = FALSE
+  )
+  rgl::text3d(
+    x = rep(0.28, n_labels),
+    y = ys,
+    z = rep(0, n_labels),
+    texts = labels,
+    adj = c(0, 0.5),
+    color = text_color,
+    cex = .cell_rgl_text_cex(text_size)
+  )
+  title <- categorical_legend$title
+  if (!is.null(title) && nzchar(title)) {
+    rgl::text3d(
+      x = 0.16,
+      y = 0.86,
+      z = 0,
+      texts = title,
+      adj = c(0, 0.5),
+      color = text_color,
+      cex = .cell_rgl_text_cex(text_size)
+    )
+  }
+  return(invisible(NULL))
+}
+
+#' Limits used to place a continuous colorbar
+#'
+#' Constant or non-finite limits cannot position ticks. They expand to a short
+#' range around the repeated value, or to `c(0, 1)` when nothing is finite.
+#'
+#' @param limits Numeric color-scale limits.
+#'
+#' @return A length-two finite, strictly increasing range.
+#'
+#' @noRd
+.cell_rgl_colorbar_limits <- function(limits) {
+  if (length(limits) < 2L || any(!is.finite(limits))) {
+    return(c(0, 1))
+  }
+  if (limits[[1]] == limits[[2]]) {
+    pad <- max(abs(limits[[1]]) * 0.05, 1e-6)
+    return(c(limits[[1]] - pad, limits[[2]] + pad))
+  }
+  return(limits)
 }
 
 #' Draw a continuous colorbar for a numeric color scale
 #'
-#' Numeric mappings render as a continuous ramp rather than a discrete
-#' `legend()` key, matching [cell_plot_interactive()]. The bar, ticks, and
-#' title are positioned in relative coordinates so the bar keeps its
-#' proportions in a narrow legend region.
+#' Numeric mappings render as stacked [rgl::quads3d()] with vertex colors,
+#' rather than a discrete key. Ticks are [rgl::segments3d()] and labels are
+#' [rgl::text3d()]. Positions are fractions of the legend's unit square.
 #'
 #' @param continuous_legend List with `title`, `limits`, and `colors`.
 #' @param text_color Theme text color.
+#' @param text_size Theme text size.
 #'
 #' @return `NULL`, invisibly.
 #'
 #' @noRd
 .cell_rgl_draw_colorbar <- function(
   continuous_legend,
-  text_color
+  text_color,
+  text_size
 ) {
-  n_stops <- max(100L, length(continuous_legend$colors))
-  legend_colors <- grDevices::colorRampPalette(continuous_legend$colors)(
-    n_stops
-  )
-  # image()/seq() need finite, strictly increasing limits. Constant or
-  # all-non-finite color scales otherwise abort during faceted legend layout.
-  limits <- continuous_legend$limits
-  if (length(limits) < 2L || any(!is.finite(limits))) {
-    limits <- c(0, 1)
-  } else if (limits[1] == limits[2]) {
-    pad <- max(abs(limits[1]) * 0.05, 1e-6)
-    limits <- c(limits[1] - pad, limits[2] + pad)
+  limits <- .cell_rgl_colorbar_limits(continuous_legend$limits)
+  colors <- continuous_legend$colors
+  if (length(colors) == 0L) {
+    colors <- "#000000"
   }
-  continuous_legend$limits <- limits
-
-  # A reserved legend region can be only a few dozen pixels wide. Base
-  # graphics margins are measured in text lines, so they would consume the
-  # whole region and collapse the bar into a thin strip with a clipped
-  # title. Place the bar in relative coordinates instead.
-  graphics::par(mar = c(0, 0, 0, 0))
-  graphics::plot(
-    0,
-    0,
-    type = "n",
-    xlim = c(0, 1),
-    ylim = c(0, 1),
-    axes = FALSE,
-    xlab = "",
-    ylab = "",
-    xaxs = "i",
-    yaxs = "i"
-  )
   bar_x <- c(0.18, 0.3)
   bar_y <- c(0.3, 0.7)
-  title_y <- 0.77
-  label_cex <- 0.85
-  title_cex <- 0.9
-
-  graphics::rasterImage(
-    # Raster rows are painted from top to bottom, while scale colors are
-    # ordered from low to high. Reverse them so high values appear at the top,
-    # matching ggplot2's default vertical colorbar.
-    grDevices::as.raster(matrix(rev(legend_colors), ncol = 1L)),
-    xleft = bar_x[1],
-    ybottom = bar_y[1],
-    xright = bar_x[2],
-    ytop = bar_y[2],
-    interpolate = TRUE
-  )
+  if (length(colors) == 1L) {
+    rgl::quads3d(
+      x = c(bar_x[[1]], bar_x[[2]], bar_x[[2]], bar_x[[1]]),
+      y = c(bar_y[[1]], bar_y[[1]], bar_y[[2]], bar_y[[2]]),
+      z = rep(0, 4),
+      color = colors,
+      lit = FALSE
+    )
+  } else {
+    ys <- seq(bar_y[[1]], bar_y[[2]], length.out = length(colors))
+    for (stop_index in seq_len(length(colors) - 1L)) {
+      rgl::quads3d(
+        x = c(bar_x[[1]], bar_x[[2]], bar_x[[2]], bar_x[[1]]),
+        y = c(
+          ys[[stop_index]],
+          ys[[stop_index]],
+          ys[[stop_index + 1L]],
+          ys[[stop_index + 1L]]
+        ),
+        z = rep(0, 4),
+        color = c(
+          colors[[stop_index]],
+          colors[[stop_index]],
+          colors[[stop_index + 1L]],
+          colors[[stop_index + 1L]]
+        ),
+        lit = FALSE
+      )
+    }
+  }
 
   tick_values <- pretty(limits, n = 4)
   tick_values <- tick_values[
-    tick_values >= limits[1] & tick_values <= limits[2]
+    tick_values >= limits[[1]] & tick_values <= limits[[2]]
   ]
-  tick_y <- stats::approx(x = limits, y = bar_y, xout = tick_values)$y
-  tick_length <- diff(bar_x) * 0.2
-  graphics::segments(
-    bar_x[2],
-    tick_y,
-    bar_x[2] + tick_length,
-    tick_y,
-    col = text_color
-  )
-  graphics::text(
-    x = bar_x[2] + tick_length * 1.4,
-    y = tick_y,
-    labels = tick_values,
-    adj = c(0, 0.5),
-    col = text_color,
-    cex = label_cex
-  )
-  graphics::text(
-    x = mean(bar_x),
-    y = title_y,
-    labels = continuous_legend$title,
-    col = text_color,
-    cex = title_cex
-  )
+  if (length(tick_values) > 0L) {
+    tick_y <- stats::approx(x = limits, y = bar_y, xout = tick_values)$y
+    tick_length <- diff(bar_x) * 0.2
+    n_ticks <- length(tick_values)
+    rgl::segments3d(
+      x = as.vector(rbind(
+        rep(bar_x[[2]], n_ticks),
+        rep(bar_x[[2]] + tick_length, n_ticks)
+      )),
+      y = as.vector(rbind(tick_y, tick_y)),
+      z = rep(0, 2 * n_ticks),
+      color = text_color,
+      lit = FALSE
+    )
+    rgl::text3d(
+      x = rep(bar_x[[2]] + tick_length * 1.4, n_ticks),
+      y = tick_y,
+      z = rep(0, n_ticks),
+      texts = format(tick_values, trim = TRUE, scientific = FALSE),
+      adj = c(0, 0.5),
+      color = text_color,
+      cex = .cell_rgl_text_cex(text_size) * 0.85
+    )
+  }
+
+  title <- continuous_legend$title
+  if (!is.null(title) && nzchar(title)) {
+    rgl::text3d(
+      x = mean(bar_x),
+      y = 0.77,
+      z = 0,
+      texts = title,
+      color = text_color,
+      cex = .cell_rgl_text_cex(text_size) * 0.9
+    )
+  }
   return(invisible(NULL))
 }
 

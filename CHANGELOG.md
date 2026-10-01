@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `cell_plot_rgl()` draws titles, facet strips, and color legends as native rgl
+  objects in orthographic regions. Those regions no longer rotate or zoom the
+  data panels, and `later` is no longer required.
+
 ## [0.22.0] - 2026-10-01
 
 ### Added
