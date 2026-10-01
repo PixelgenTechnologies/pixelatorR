@@ -237,8 +237,10 @@ cg_assay <- ComputeLayout(seur[["PNA"]], layout_method = "cpmds")
 # Seurat method
 seur <- ComputeLayout(seur)
 
-# Visualize with Plot3DGraph
+# Use cell_plot() to visualize the layout
+\dontrun{
 Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "cpmds_3d")
+}
 
 }
 \seealso{

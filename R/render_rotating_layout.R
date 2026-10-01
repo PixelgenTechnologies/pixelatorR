@@ -1,7 +1,9 @@
 #' Create a rotating 3D layout video
 #'
 #' @description
-#' `r lifecycle::badge("experimental")`
+#' `r lifecycle::badge("deprecated")`
+#'
+#' Deprecated. Use [cell_plot()] and [cell_plot_animate()] instead.
 #'
 #' \code{render_rotating_layout} can be used to generate a rotating 3D scatter
 #' plot from a tibble with node layout coordinates. \code{render_rotating_layout}
@@ -190,6 +192,8 @@
 #' se <- se %>%
 #'   LoadCellGraphs(add_layouts = TRUE)
 #'
+#' # Use cell_plot() and cell_plot_animate() instead
+#' \dontrun{
 #' # Create a gif from a 3D layout
 #' cg <- CellGraphs(se)[[3]]
 #' df <- cg@layout$wpmds_3d %>%
@@ -208,6 +212,7 @@
 #'   show_first_frame = FALSE
 #' )
 #' magick::image_read(temp_gif)
+#' }
 #'
 #' \dontrun{
 #' # Include multiple facets
@@ -309,6 +314,13 @@ render_rotating_layout <- function(
   normalize_illumination = TRUE,
   light_direction = c(-0.6, 0.5, 0.62)
 ) {
+  lifecycle::deprecate_warn(
+    when = "0.22.0",
+    what = "render_rotating_layout()",
+    with = "cell_plot()",
+    details = "Build a cell_plot() recipe and pass it to cell_plot_animate()."
+  )
+
   if (fs::path_ext(file) == "gif") {
     rlang::check_installed("gifski")
   } else {
@@ -1755,8 +1767,8 @@ scale_layout <- function(
 #' )
 #' illum <- heuristic_illumination(layout)
 #'
-#' # Create a temporary GIF file and render a rotating layout
-#' # using the computed illumination as node values
+#' # Use cell_plot() and cell_plot_animate() to render a rotating layout
+#' \dontrun{
 #' temp_gif <- fs::file_temp(ext = ".gif")
 #' render_rotating_layout(
 #'   data = layout %>%
@@ -1773,6 +1785,7 @@ scale_layout <- function(
 #'   boomerang = TRUE,
 #'   show_first_frame = FALSE
 #' )
+#' }
 #'
 #' @export
 heuristic_illumination <- function(

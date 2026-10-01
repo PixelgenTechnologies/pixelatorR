@@ -1,5 +1,9 @@
 #' Plot 2D graph layouts
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' Deprecated. Use [cell_plot()] instead.
+#'
 #' Plot 2D component graph layouts computed with \code{\link{ComputeLayout}} and
 #' optionally color nodes by certain attributes. Edges can also be visualized
 #' by setting \code{map_edges}; however, since component graphs tend to be very
@@ -34,11 +38,13 @@
 #'
 #' @return An object of class \code{patchwork}
 #'
-#' @seealso [Plot2DGraphM()]
+#' @seealso [cell_plot()], [Plot2DGraphM()]
 #'
 #' @examples
 #' library(pixelatorR)
 #'
+#' # Use cell_plot() instead
+#' \dontrun{
 #' # MPX
 #' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
@@ -52,6 +58,7 @@
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
 #' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
 #' Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3e")
+#' }
 #'
 #' @export
 #'
@@ -72,6 +79,14 @@ Plot2DGraph <- function(
   return_plot_list = FALSE,
   ...
 ) {
+  if (!identical(rlang::caller_fn(), Plot2DGraphM)) {
+    lifecycle::deprecate_warn(
+      when = "0.22.0",
+      what = "Plot2DGraph()",
+      with = "cell_plot()"
+    )
+  }
+
   assert_class(object, "Seurat")
   assert_vector(colors)
   assert_single_value(map_nodes, type = "bool")
@@ -290,6 +305,10 @@ Plot2DGraph <- function(
 
 #' Plot multiple markers on multiple graphs
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' Deprecated. Use [cell_plot()] with [cell_grid()] instead.
+#'
 #' In contrast to \code{\link{Plot2DGraph}}, which only draw 1 marker at the time,
 #' this function makes it possible to arrange plots into a grid with markers in rows
 #' and components in columns. The color scales are fixed for each marker so that their
@@ -306,11 +325,13 @@ Plot2DGraph <- function(
 #'
 #' @return A \code{patchwork} object
 #'
-#' @seealso [Plot2DGraph()]
+#' @seealso [cell_plot()], [Plot2DGraph()]
 #'
 #' @examples
 #' library(pixelatorR)
 #'
+#' # Use cell_plot() with cell_grid() instead
+#' \dontrun{
 #' # MPX
 #' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
@@ -324,6 +345,7 @@ Plot2DGraph <- function(
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[2:3], add_layouts = TRUE)
 #' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
 #' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
+#' }
 #'
 #' @export
 #'
@@ -346,6 +368,12 @@ Plot2DGraphM <- function(
   titles_col = "black",
   ...
 ) {
+  lifecycle::deprecate_warn(
+    when = "0.22.0",
+    what = "Plot2DGraphM()",
+    with = "cell_plot()"
+  )
+
   assert_vector(cells, type = "character", n = 1)
   assert_vector(markers, type = "character", n = 1)
   assert_single_value(titles_size, type = "numeric")
@@ -477,6 +505,10 @@ Plot2DGraphM <- function(
 
 #' Plot 3D graph layouts
 #'
+#' `r lifecycle::badge("deprecated")`
+#'
+#' Deprecated. Use [cell_plot()] instead.
+#'
 #' Plot a 3D component graph layout computed with \code{\link{ComputeLayout}} and
 #' color nodes by a marker.
 #'
@@ -506,9 +538,13 @@ Plot2DGraphM <- function(
 #'
 #' @return A interactive 3D plot of a component graph layout as a \code{plotly} object
 #'
+#' @seealso [cell_plot()]
+#'
 #' @examples
 #' library(pixelatorR)
 #'
+#' # Use cell_plot() instead
+#' \dontrun{
 #' # MPX
 #' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
@@ -521,6 +557,7 @@ Plot2DGraphM <- function(
 #' seur <- ReadPNA_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[1], add_layouts = TRUE)
 #' Plot3DGraph(seur, cell_id = colnames(seur)[1], marker = "CD16", layout_method = "wpmds_3d")
+#' }
 #'
 #' @export
 #'
@@ -539,6 +576,12 @@ Plot3DGraph <- function(
   show_Bnodes = FALSE,
   ...
 ) {
+  lifecycle::deprecate_warn(
+    when = "0.22.0",
+    what = "Plot3DGraph()",
+    with = "cell_plot()"
+  )
+
   # Validate input parameters
   assert_class(object, "Seurat")
   assert_vector(colors, type = "character")

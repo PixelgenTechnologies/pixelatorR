@@ -176,7 +176,9 @@ layout coordinates, not camera coordinates; see the illumination section.}
 Exports an animation of a rotating 3D scatter plot.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+Deprecated. Use \code{\link[=cell_plot]{cell_plot()}} and \code{\link[=cell_plot_animate]{cell_plot_animate()}} instead.
 
 \code{render_rotating_layout} can be used to generate a rotating 3D scatter
 plot from a tibble with node layout coordinates. \code{render_rotating_layout}
@@ -274,6 +276,8 @@ se <- ReadPNA_Seurat(pxl_file)
 se <- se \%>\%
   LoadCellGraphs(add_layouts = TRUE)
 
+# Use cell_plot() and cell_plot_animate() instead
+\dontrun{
 # Create a gif from a 3D layout
 cg <- CellGraphs(se)[[3]]
 df <- cg@layout$wpmds_3d \%>\%
@@ -292,6 +296,7 @@ render_rotating_layout(
   show_first_frame = FALSE
 )
 magick::image_read(temp_gif)
+}
 
 \dontrun{
 # Include multiple facets

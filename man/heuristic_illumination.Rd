@@ -84,8 +84,8 @@ layout <- tibble::tibble(
 )
 illum <- heuristic_illumination(layout)
 
-# Create a temporary GIF file and render a rotating layout
-# using the computed illumination as node values
+# Use cell_plot() and cell_plot_animate() to render a rotating layout
+\dontrun{
 temp_gif <- fs::file_temp(ext = ".gif")
 render_rotating_layout(
   data = layout \%>\%
@@ -102,5 +102,6 @@ render_rotating_layout(
   boomerang = TRUE,
   show_first_frame = FALSE
 )
+}
 
 }

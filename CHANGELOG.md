@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `later`), and `cell_plot_animate()` encodes a rotating GIF or video after
   `cell_coord_rotate()` (`gifski` or `av`).
 
+### Deprecated
+
+- `Plot2DGraph()`, `Plot2DGraphM()`, `Plot3DGraph()`, and
+  `render_rotating_layout()` are deprecated. Use `cell_plot()` instead.
+  Rotating animations use `cell_plot_animate()`.
+
 ## [0.21.0]
 
 ### Updated
