@@ -542,6 +542,70 @@ cell_illuminate <- function(
     type = "bool",
     arg = "lock_light"
   )
+  pixelatorR:::assert_vector(
+    clamp_quantiles,
+    type = "numeric",
+    n = 2,
+    arg = "clamp_quantiles"
+  )
+  pixelatorR:::assert_length(
+    clamp_quantiles,
+    n = 2,
+    arg_x = "clamp_quantiles"
+  )
+  pixelatorR:::assert_within_limits(
+    clamp_quantiles,
+    limits = c(0, 1),
+    arg = "clamp_quantiles"
+  )
+  if (
+    any(!is.finite(clamp_quantiles)) ||
+      clamp_quantiles[[1]] >= clamp_quantiles[[2]]
+  ) {
+    cli::cli_abort(
+      c(
+        "i" = "{.arg clamp_quantiles} must be two finite quantiles in increasing order."
+      )
+    )
+  }
+  illumination_weights <- c(
+    directional_light_weight = directional_light_weight,
+    volume_shading_weight = volume_shading_weight,
+    ambient_occlusion_weight = ambient_occlusion_weight
+  )
+  for (weight_name in names(illumination_weights)) {
+    pixelatorR:::assert_single_value(
+      illumination_weights[[weight_name]],
+      type = "numeric",
+      arg = weight_name
+    )
+    pixelatorR:::assert_within_limits(
+      illumination_weights[[weight_name]],
+      limits = c(0, Inf),
+      arg = weight_name
+    )
+    if (!is.finite(illumination_weights[[weight_name]])) {
+      cli::cli_abort(c("i" = "{.arg {weight_name}} must be finite."))
+    }
+  }
+  if (sum(illumination_weights) == 0) {
+    cli::cli_abort(
+      c("i" = "At least one illumination weight must be positive.")
+    )
+  }
+  pixelatorR:::assert_single_value(
+    ambient_occlusion_k,
+    type = "integer",
+    arg = "ambient_occlusion_k"
+  )
+  pixelatorR:::assert_within_limits(
+    ambient_occlusion_k,
+    limits = c(1, Inf),
+    arg = "ambient_occlusion_k"
+  )
+  if (!is.finite(ambient_occlusion_k)) {
+    cli::cli_abort(c("i" = "{.arg ambient_occlusion_k} must be finite."))
+  }
 
   specification <- list(
     clamp_quantiles = clamp_quantiles,

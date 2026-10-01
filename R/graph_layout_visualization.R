@@ -691,6 +691,7 @@ Plot3DGraph <- function(
   }
 
   # Plot 3D graph using plotly
+  expect_plotly()
   fig <- plotly::plot_ly(layout,
     x = ~x,
     y = ~y,

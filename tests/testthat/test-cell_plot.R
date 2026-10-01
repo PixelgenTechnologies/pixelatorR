@@ -188,7 +188,12 @@ test_that("Cell plot recipes and modifiers work as expected", {
     cell_plot(dplyr::mutate(plot_data, abundance = NA_character_), size = abundance)
   )
   expect_error(
-    cell_plot(dplyr::mutate(plot_data, confidence = Inf), alpha = confidence)
+    cell_plot(dplyr::mutate(plot_data, confidence = Inf), alpha = confidence),
+    "finite"
+  )
+  expect_error(
+    cell_plot(dplyr::mutate(plot_data, marker = c(1, Inf)), color = marker),
+    "finite"
   )
   expect_error(cell_plot(plot_data, illumination_mask = marker))
   expect_error(
@@ -226,6 +231,20 @@ test_that("Cell plot recipes and modifiers work as expected", {
   expect_error(cell_illuminate(base_plot, light_direction = c(0, 0, 0)))
   expect_error(cell_illuminate(base_plot, light_direction = c(0, 1)))
   expect_error(cell_illuminate(base_plot, lock_light = "yes"))
+  expect_error(
+    cell_illuminate(
+      base_plot,
+      directional_light_weight = 0,
+      volume_shading_weight = 0,
+      ambient_occlusion_weight = 0
+    ),
+    "positive"
+  )
+  expect_error(
+    cell_illuminate(base_plot, clamp_quantiles = c(0.9, 0.1)),
+    "increasing"
+  )
+  expect_error(cell_illuminate(base_plot, ambient_occlusion_k = 0))
   expect_error(cell_theme(base_plot, text_size = 0))
   expect_error(cell_theme(base_plot, strip_background_color = "not-a-color"))
   expect_error(cell_annotation(base_plot))

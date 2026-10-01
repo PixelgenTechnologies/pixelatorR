@@ -33,7 +33,6 @@ Imports:
     stringr,
     patchwork,
     ggraph,
-    plotly,
     fs,
     pbapply,
     jsonlite,
@@ -41,11 +40,7 @@ Imports:
     R6,
     DBI,
     duckdb (>= 1.5.0),
-    bit64,
-    grDevices,
-    graphics,
-    stats,
-    utils
+    bit64
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -53,6 +48,7 @@ Suggests:
     graphlayouts,
     scales,
     pheatmap,
+    plotly,
     ComplexHeatmap,
     dbplyr,
     reticulate,

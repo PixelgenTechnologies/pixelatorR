@@ -21,8 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   illumination without drawing, and drops rows with missing mapped size or
   alpha. Printing a recipe or calling `autoplot()` draws a ggplot, and
   `summary()` inspects it without drawing. `cell_plot_interactive()` draws a
-  Plotly widget, `cell_plot_rgl()` draws a native rgl scene (`rgl` and
-  `later`), and `cell_plot_animate()` encodes a rotating GIF or video after
+  Plotly widget (`plotly`), `cell_plot_rgl()` draws a native rgl scene (`rgl`
+  and `later`), and `cell_plot_animate()` encodes a rotating GIF or video after
   `cell_coord_rotate()` (`gifski` or `av`).
 
 ### Deprecated

@@ -762,6 +762,21 @@ test_that("build_cell_plot drops rows with NA in size or alpha with a warning", 
   expect_equal(length(built_illum$color$illuminated), 3)
   expect_equal(built_illum$color$illuminated, kept_illum$color$illuminated)
 
+  color_after_drop <- tibble::tibble(
+    x = c(1, 2),
+    y = c(1, 2),
+    z = c(1, 2),
+    s = c(NA_real_, 1),
+    c = c(1, NA_real_)
+  )
+  expect_warning(
+    expect_error(
+      cell_plot(color_after_drop, size = s, color = c) |> build_cell_plot(),
+      "no usable values"
+    ),
+    "Removed 1 row"
+  )
+
   pair_df <- tibble::tibble(
     x = c(0, 1),
     y = c(0, 1),

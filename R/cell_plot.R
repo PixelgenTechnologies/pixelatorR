@@ -45,12 +45,14 @@
 #' @param color Optional column mapping or constant color for every node.
 #' Character, factor, numeric, and integer columns are supported, where
 #' character and factor columns are treated as categorical and numeric and
-#' integer columns as continuous. A character value is read as a column name
+#' integer columns as continuous. Missing numeric values are kept. Non-finite
+#' values such as `Inf` are not. A character value is read as a column name
 #' when `data` has that column and otherwise as one fully opaque color.
 #' @param size,alpha Optional column mappings or constant values for node size
 #' and alpha. Character, factor, numeric, and integer columns are supported,
-#' where character and factor columns are treated as categorical levels. One
-#' finite number sets a constant relative size or a constant alpha between zero
+#' where character and factor columns are treated as categorical levels.
+#' Missing numeric values are kept. Non-finite values such as `Inf` are not.
+#' One finite number sets a constant relative size or a constant alpha between zero
 #' and one. Category-specific sizes and alphas are set with
 #' [cell_node_scale_size()] and [cell_node_scale_alpha()].
 #' @param arrange An optional column mapping used to order points in projected
@@ -196,6 +198,13 @@ cell_plot <- function(
       classes = c("numeric", "integer", "character", "factor"),
       arg = column
     )
+    if (is.numeric(values) && any(!is.na(values) & !is.finite(values))) {
+      cli::cli_abort(
+        c(
+          "x" = "Mapped {.arg {aesthetic}} column {.str {column}} must contain only finite or missing values."
+        )
+      )
+    }
     has_usable_value <- if (is.numeric(values)) {
       any(is.finite(values))
     } else {

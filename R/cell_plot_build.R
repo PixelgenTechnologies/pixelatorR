@@ -86,6 +86,20 @@ build_cell_plot <- function(object) {
   } else {
     data[[mapping$color]]
   }
+  if (!is.null(color_values)) {
+    has_usable_color <- if (is.numeric(color_values)) {
+      any(is.finite(color_values))
+    } else {
+      any(!is.na(color_values))
+    }
+    if (!has_usable_color) {
+      cli::cli_abort(
+        c(
+          "x" = "Mapped {.arg color} column {.str {mapping$color}} has no usable values after rows with missing {.field size} or {.field alpha} were removed."
+        )
+      )
+    }
+  }
   color_scale <- .build_cell_color_scale(
     values = color_values,
     specification = object$color,
@@ -597,13 +611,11 @@ build_cell_plot <- function(object) {
 ) {
   if (scale_type == "continuous") {
     if (!any(is.finite(values))) {
-      return(list(
-        colors = colors,
-        limits = limits %||% c(NA_real_, NA_real_),
-        na_color = na_color,
-        type = "continuous",
-        resolved = rep(.cell_colors_to_hex(na_color), length(values))
-      ))
+      cli::cli_abort(
+        c(
+          "x" = "A continuous color scale needs at least one finite mapped value."
+        )
+      )
     }
     limits <- limits %||% range(values, na.rm = TRUE)
     resolved <- scales::gradient_n_pal(colors)(
