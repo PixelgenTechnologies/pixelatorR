@@ -92,17 +92,16 @@ paths — they are always available after
 MPX will be deprecated in the future, so only PNA test data should be
 used for new tests.
 
-| Helper | Data type | Cells | Description |
-|----|----|----|----|
-| [`minimal_mpx_pxl_file()`](reference/mpx_dataset.md) | MPX | 5 | 5 immune cells (MPX protocol) |
-| [`minimal_pna_pxl_file()`](reference/pna_dataset.md) | PNA | 5 | 5 PBMC cells (PNA protocol) |
+| Helper                                               | Data type | Cells | Description                   |
+|------------------------------------------------------|-----------|-------|-------------------------------|
+| [`minimal_mpx_pxl_file()`](reference/mpx_dataset.md) | MPX       | 5     | 5 immune cells (MPX protocol) |
+| [`minimal_pna_pxl_file()`](reference/pna_dataset.md) | PNA       | 5     | 5 PBMC cells (PNA protocol)   |
 
 ### Loading Test Data
 
 Choose the reader that fits the function under test:
 
 ``` r
-
 # Seurat object (PNA)
 seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE,
                        load_proximity_scores = FALSE, verbose = FALSE)
@@ -120,7 +119,6 @@ edgelist <- ReadPNA_edgelist(minimal_pna_pxl_file())
 When testing Seurat methods that require merged data:
 
 ``` r
-
 seur1 <- seur2 <- ReadPNA_Seurat(pxl_file, overwrite = TRUE)
 seur1$sample <- "Sample1"
 seur2$sample <- "Sample2"
@@ -130,7 +128,6 @@ seur_merged <- merge(seur1, seur2, add.cell.ids = c("Sample1", "Sample2"))
 When testing CellGraph-level functions:
 
 ``` r
-
 seur <- ReadPNA_Seurat(minimal_pna_pxl_file())
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
 cg <- CellGraphs(seur)[[1]]
@@ -145,7 +142,6 @@ globally. If a test needs v5 behavior, set the option locally and
 restore it:
 
 ``` r
-
 test_that("function works with Assay5", {
   options(Seurat.object.assay.version = "v5")
   on.exit(options(Seurat.object.assay.version = "v3"), add = TRUE)
@@ -166,7 +162,6 @@ Compare a small slice of output to a hardcoded expected value. This
 catches regressions in the actual computation.
 
 ``` r
-
 # Compare first few rows/columns of a matrix result
 expect_equal(result[1:5, 1:3], expected_snippet)
 
@@ -187,7 +182,6 @@ When full data comparison is impractical, combine structural checks with
 partial data:
 
 ``` r
-
 expect_s3_class(result, "tbl_df")
 expect_equal(names(result), c("marker_1", "marker_2", "estimate", "p_adj"))
 expect_equal(result$marker_1[1:3], c("CD3E", "CD4", "CD8"))
@@ -198,7 +192,6 @@ expect_equal(result$marker_1[1:3], c("CD3E", "CD4", "CD8"))
 Only as a supplement, never as the sole test:
 
 ``` r
-
 expect_identical(dim(result), c(100L, 5L))
 expect_type(result, "double")
 ```
@@ -209,7 +202,6 @@ Run the function in an interactive R session with the test data and
 capture a small representative output:
 
 ``` r
-
 result <- my_function(test_data)
 dput(result[1:5, 1:3])  # Copy this into the test as the expected value
 ```
@@ -275,7 +267,6 @@ Some functions produce expected warnings or verbose messages. Suppress
 these to keep test output clean:
 
 ``` r
-
 expect_no_error(suppressWarnings(result <- noisy_function(data)))
 ```
 
@@ -288,7 +279,6 @@ Some functions are S4 generics with methods for different classes
 method in a separate `test_that()` block:
 
 ``` r
-
 test_that("RunDPA works as expected on a data.frame", { ... })
 test_that("RunDPA works as expected on a Seurat object", { ... })
 ```
@@ -367,7 +357,6 @@ When asked to generate a test file for function `foo`:
 Here is a full example for `ColocalizationHeatmap`:
 
 ``` r
-
 library(dplyr)
 prox <- ReadPNA_proximity(minimal_pna_pxl_file())
 prox_summarized <- prox %>%
@@ -430,27 +419,18 @@ test_that("ColocalizationHeatmap fails with invalid input", {
 
 Before finalizing a test file, verify:
 
-File is named `test-<function_name>.R`
-
-Data setup is outside `test_that()` blocks
-
-At least one `test_that(... "works as expected" ...)` block exists
-
-At least one `test_that(... "fails with invalid input" ...)` block
-exists
-
-Tests compare actual output data (not just dimensions/classes)
-
-Expected values were obtained by running the function with test data
-
-Each invalid-input test uses `expect_error()`
-
-No
-[`library(pixelatorR)`](https://pixelgentechnologies.github.io/pixelatorR/)
-call in the test file
-
-Extra [`library()`](https://rdrr.io/r/base/library.html) calls only for
-packages actually used (e.g., `dplyr`, `Seurat`)
-
-Tests pass when run with
-[`testthat::test_file()`](https://testthat.r-lib.org/reference/test_file.html)
+- File is named `test-<function_name>.R`
+- Data setup is outside `test_that()` blocks
+- At least one `test_that(... "works as expected" ...)` block exists
+- At least one `test_that(... "fails with invalid input" ...)` block
+  exists
+- Tests compare actual output data (not just dimensions/classes)
+- Expected values were obtained by running the function with test data
+- Each invalid-input test uses `expect_error()`
+- No
+  [`library(pixelatorR)`](https://pixelgentechnologies.github.io/pixelatorR/)
+  call in the test file
+- Extra [`library()`](https://rdrr.io/r/base/library.html) calls only
+  for packages actually used (e.g., `dplyr`, `Seurat`)
+- Tests pass when run with
+  [`testthat::test_file()`](https://testthat.r-lib.org/reference/test_file.html)

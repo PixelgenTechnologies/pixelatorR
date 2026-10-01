@@ -5,7 +5,15 @@ Create a CellGraph object
 ## Usage
 
 ``` r
-CreateCellGraphObject(cellgraph, counts = NULL, layout = NULL, verbose = FALSE)
+CreateCellGraphObject(
+  cellgraph,
+  counts = NULL,
+  layout = NULL,
+  layers = NULL,
+  meta.data = NULL,
+  reductions = NULL,
+  verbose = FALSE
+)
 ```
 
 ## Arguments
@@ -16,11 +24,32 @@ CreateCellGraphObject(cellgraph, counts = NULL, layout = NULL, verbose = FALSE)
 
 - counts:
 
-  A `dgCMatrix` with marker counts
+  A `dgCMatrix` with marker counts. Rows are matched to graph node names
+  (order does not need to match).
 
 - layout:
 
-  A named `list` of `tbl_df` objects with cell layouts
+  A named `list` of `data.frame` objects with cell layouts. Nodes are
+  identified by row names or by a `name` column; otherwise the row order
+  is assumed to follow the graph. MPX bipartite layouts may use
+  unsuffixed names while graph nodes keep `-A`/`-B`; those names are
+  matched after stripping the suffix, as in
+  [`LoadCellGraphs`](LoadCellGraphs.md). Stored layouts keep graph node
+  order and do not copy node IDs as row names.
+
+- layers:
+
+  A named `list` of additional numeric node matrices (nodes x features).
+  `"counts"` is reserved.
+
+- meta.data:
+
+  A node-level `data.frame` or `tbl_df`. Either row names or a `name`
+  column must identify nodes.
+
+- reductions:
+
+  A named `list` of [`NodeDimReduc`](NodeDimReduc-class.md) objects
 
 - verbose:
 
@@ -30,16 +59,31 @@ CreateCellGraphObject(cellgraph, counts = NULL, layout = NULL, verbose = FALSE)
 
 A `CellGraph` object
 
+## Details
+
+Node-level variable names must not clash between the graph node table,
+`meta.data`, reduction embeddings, and matrix features. Count and layer
+matrices may share feature names because methods such as
+[`FetchData`](https://satijalab.github.io/seurat-object/reference/FetchData.html)
+select a specific layer.
+
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
 # Open a database connection (PXL file)
 db <- PixelDB$new(minimal_pna_pxl_file())
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 # Select a component ID and load the edgelist
 sel_comp <- db$cell_meta() %>%
@@ -74,9 +118,6 @@ cg
 counts <- db$components_marker_counts(
   components = sel_comp, as_sparse = TRUE
 )[[1]]
-node_names <- component_graph %>% pull(name)
-# Ensure that the counts matrix rows match the graph node names
-counts <- counts[node_names, ]
 
 # Create a CellGraph object with graph and counts
 cg <- CreateCellGraphObject(cellgraph = component_graph, counts = counts)
@@ -89,11 +130,8 @@ layout <- db$components_layout(
   components = sel_comp
 )[[1]]
 #> ℹ Fetching 1 component layouts...
-# Ensure that the layout table rows match the graph node names
-layout <- layout[match(node_names, layout$name), ] %>%
-  select(-name)
 
-# Create a CellGraph object with graph, counts and layout
+# Layouts with a name column or node row names are matched automatically
 cg <- CreateCellGraphObject(
   cellgraph = component_graph,
   counts = counts,

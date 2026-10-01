@@ -209,30 +209,62 @@ cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
   LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE) %>%
   CellGraphs() %>%
   .[[1]]
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 ComputeProximityScores(cg) %>%
   filter(join_count_z > 3)
 #> # A tibble: 167 × 7
-#>    join_count join_count_expected_mean join_count_expected_sd marker_1 marker_2
-#>         <dbl>                    <dbl>                  <dbl> <chr>    <chr>   
-#>  1       1159                  903.                    28.9   CD24     CD24    
-#>  2         47                   12.8                    2.69  CD82     CD82    
-#>  3        172                   50.8                    5.62  CD35     CD35    
-#>  4         33                   12.6                    2.62  CD37     CD82    
-#>  5         13                    3.06                   1.27  CD37     CD37    
-#>  6          5                    1.14                   0.804 CD328    CD35    
-#>  7       6778                 6127.                    89.4   CD24     CD59    
-#>  8      11204                10197.                   103.    CD59     CD59    
-#>  9         16                    6.53                   1.88  CD82     Siglec-9
-#> 10          4                    0.830                  0.654 Siglec-9 Siglec-9
+#>    join_count join_count_expected_mean join_count_expected_sd marker_1 marker_2 
+#>         <dbl>                    <dbl>                  <dbl> <chr>    <chr>    
+#>  1        216                    72.1                    6.84 B2M      B2M      
+#>  2         41                    26.7                    3.96 CD18     CD18     
+#>  3        455                   360.                    17.4  CD16     CD18     
+#>  4       2016                  1210.                    34.4  CD16     CD16     
+#>  5      11204                 10197.                   103.   CD59     CD59     
+#>  6          9                     3.10                   1.34 B2M      HLA-DR-D…
+#>  7        334                   107.                     8.21 B2M      HLA-ABC  
+#>  8        172                    39.1                    4.88 HLA-ABC  HLA-ABC  
+#>  9        277                   230.                    14.0  CD16     CD55     
+#> 10        107                    44.1                    5.15 B2M      CD32     
 #> # ℹ 157 more rows
 #> # ℹ 2 more variables: join_count_z <dbl>, log2_ratio <dbl>
 
 library(ggplot2)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
   LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 # Compute proximity scores for selected cells
 proximity_scores <- ComputeProximityScores(se, cells = colnames(se)[1:2])

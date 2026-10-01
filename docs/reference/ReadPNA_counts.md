@@ -31,6 +31,14 @@ library(pixelatorR)
 # Load example counts
 pxl_file <- minimal_pna_pxl_file()
 counts <- ReadPNA_counts(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 counts[1:5, 1:5]
 #> 5 x 5 sparse Matrix of class "dgCMatrix"
 #>         0a45497c6bfbfb22 2708240b908e2eba c3c393e9a17c1981 d4074c845bb62800

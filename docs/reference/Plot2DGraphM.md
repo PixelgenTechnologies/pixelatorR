@@ -1,10 +1,6 @@
 # Plot multiple markers on multiple graphs
 
-In contrast to [`Plot2DGraph`](Plot2DGraph.md), which only draw 1 marker
-at the time, this function makes it possible to arrange plots into a
-grid with markers in rows and components in columns. The color scales
-are fixed for each marker so that their limits are the same across all
-components.
+**\[deprecated\]**
 
 ## Usage
 
@@ -107,42 +103,40 @@ Plot2DGraphM(
 
 A `patchwork` object
 
+## Details
+
+Deprecated. Use [`cell_plot()`](cell_plot.md) with
+[`cell_grid()`](cell_grid.md) instead.
+
+In contrast to [`Plot2DGraph`](Plot2DGraph.md), which only draw 1 marker
+at the time, this function makes it possible to arrange plots into a
+grid with markers in rows and components in columns. The color scales
+are fixed for each marker so that their limits are the same across all
+components.
+
 ## See also
 
-[`Plot2DGraph()`](Plot2DGraph.md)
+[`cell_plot()`](cell_plot.md), [`Plot2DGraph()`](Plot2DGraph.md)
 
 ## Examples
 
 ``` r
 library(pixelatorR)
 
+# Use cell_plot() with cell_grid() instead
+if (FALSE) { # \dontrun{
 # MPX
 pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
-#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 seur <- LoadCellGraphs(seur, load_as = "Anode")
-#> →    Loading CellGraphs for 5 cells from sample 1
-#> ✔ Successfully loaded 5 CellGraph object(s).
 seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-#> ℹ Computing layouts for 5 graphs
 Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
-#> ✖ 'CD20' is missing from node count matrix for component RCVCMP0000487
-
 
 # PNA
 pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file)
-#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[2:3], add_layouts = TRUE)
-#> ℹ Fetching edgelists for 2 cells 
-#> → Creating <CellGraph> objects
-#> → Fetching marker counts
-#> → Adding marker counts to <CellGraph> object(s)
-#> → Fetching layouts
-#> → Adding layouts to <CellGraph> object(s)
-#> ✔ Successfully loaded 2 <CellGraph> object(s).
 seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-#> ℹ Computing layouts for 2 graphs
 Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
-
+} # }
 ```

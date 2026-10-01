@@ -237,40 +237,20 @@ dca_markers <- RunDCA(seur_merged,
 #> ℹ Splitting data by: marker_1, marker_2
 #> ℹ Running 10 tests for the following comparison:
 #>   - Sample1 vs Sample2
-#> Warning: Got the following message when running wilcox.test test for marker 'CD19/CD20': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD19/CD4': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD19/CD45RA': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD19/CD8': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD20/CD4': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD20/CD45RA': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD20/CD8': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD4/CD45RA': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD4/CD8': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD45RA/CD8': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
 dca_markers
 #> # A tibble: 10 × 15
-#>      estimate data_type target  reference    n1    n2 statistic     p p_adj
-#>         <dbl> <chr>     <chr>   <chr>     <int> <int>     <dbl> <dbl> <dbl>
-#>  1  0         pearson_z Sample1 Sample2       4     4       8       1     1
-#>  2  0         pearson_z Sample1 Sample2       5     5      12.5     1     1
-#>  3 -0.0000165 pearson_z Sample1 Sample2       5     5      12.5     1     1
-#>  4  0         pearson_z Sample1 Sample2       5     5      12.5     1     1
-#>  5  0         pearson_z Sample1 Sample2       4     4       8       1     1
-#>  6  0         pearson_z Sample1 Sample2       4     4       8       1     1
-#>  7  0         pearson_z Sample1 Sample2       4     4       8       1     1
-#>  8  0         pearson_z Sample1 Sample2       5     5      12.5     1     1
-#>  9  0         pearson_z Sample1 Sample2       5     5      12.5     1     1
-#> 10 -0.0000464 pearson_z Sample1 Sample2       5     5      12.5     1     1
+#>    estimate data_type target  reference    n1    n2 statistic     p p_adj
+#>       <dbl> <chr>     <chr>   <chr>     <int> <int>     <dbl> <dbl> <dbl>
+#>  1        0 pearson_z Sample1 Sample2       4     4       8       1     1
+#>  2        0 pearson_z Sample1 Sample2       5     5      12.5     1     1
+#>  3        0 pearson_z Sample1 Sample2       5     5      12.5     1     1
+#>  4        0 pearson_z Sample1 Sample2       5     5      12.5     1     1
+#>  5        0 pearson_z Sample1 Sample2       4     4       8       1     1
+#>  6        0 pearson_z Sample1 Sample2       4     4       8       1     1
+#>  7        0 pearson_z Sample1 Sample2       4     4       8       1     1
+#>  8        0 pearson_z Sample1 Sample2       5     5      12.5     1     1
+#>  9        0 pearson_z Sample1 Sample2       5     5      12.5     1     1
+#> 10        0 pearson_z Sample1 Sample2       5     5      12.5     1     1
 #> # ℹ 6 more variables: conf.low <dbl>, conf.high <dbl>, method <chr>,
 #> #   alternative <chr>, marker_1 <chr>, marker_2 <chr>
 ```

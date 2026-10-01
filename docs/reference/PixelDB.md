@@ -598,7 +598,6 @@ Nothing
 ## Examples
 
 ``` r
-
 ## ------------------------------------------------
 ## Method `PixelDB$new`
 ## ------------------------------------------------
@@ -607,6 +606,14 @@ library(dplyr)
 
 pxl_file <- minimal_pna_pxl_file()
 db <- PixelDB$new(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 
 ## ------------------------------------------------
@@ -614,6 +621,14 @@ db <- PixelDB$new(pxl_file)
 ## ------------------------------------------------
 
 db <- PixelDB$new(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 db$info()
 #> # A tibble: 10 × 6
 #>    database         schema name              column_names column_types temporary
@@ -658,6 +673,14 @@ db$query("SELECT * FROM proximity") %>% head()
 
 db$close()
 db$reconnect()
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Connected
 
 
@@ -862,11 +885,11 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name                    CD80 `HLA-ABC`  CD58
-#>   <chr>                  <dbl>     <dbl> <dbl>
-#> 1 43372172436709610-umi1     1         0     0
-#> 2 39111557519986331-umi1     0         1     0
-#> 3 26874559125404499-umi1     0         1     0
+#>   name                     B2M  CD18  CD16
+#>   <chr>                  <dbl> <dbl> <dbl>
+#> 1 34739343391810798-umi1     1     0     0
+#> 2 54399852680662356-umi1     0     1     0
+#> 3 46889202488405884-umi1     0     0     1
 
 
 ## ------------------------------------------------
@@ -877,8 +900,8 @@ db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpXxUDE2/filebadb28d4ed52.parquet 
-#>                                                                                 TRUE 
+#> /tmp/RtmpmC3mql/file396740d36cf9.parquet 
+#>                                     TRUE 
 
 
 ## ------------------------------------------------

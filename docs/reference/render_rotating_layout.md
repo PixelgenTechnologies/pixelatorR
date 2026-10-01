@@ -1,6 +1,9 @@
 # Create a rotating 3D layout video
 
-**\[experimental\]**
+**\[deprecated\]**
+
+Deprecated. Use [`cell_plot()`](cell_plot.md) and
+[`cell_plot_animate()`](cell_plot_animate.md) instead.
 
 `render_rotating_layout` can be used to generate a rotating 3D scatter
 plot from a tibble with node layout coordinates.
@@ -45,7 +48,8 @@ render_rotating_layout(
   illumination_ambient = 0.3,
   illumination_sat_boost = 0.6,
   illumination_shadow_colors = NULL,
-  normalize_illumination = TRUE
+  normalize_illumination = TRUE,
+  light_direction = c(-0.6, 0.5, 0.62)
 )
 ```
 
@@ -53,8 +57,8 @@ render_rotating_layout(
 
 - data:
 
-  A tibble (`tbl_df`) with columns 'x', 'y', 'z', and 'node_val'. The
-  'node_val' column can be either a numeric or a factor.
+  A `data.frame`-like object with columns 'x', 'y', 'z', and 'node_val'.
+  The 'node_val' column can be either a numeric or a factor.
 
 - file:
 
@@ -233,6 +237,16 @@ render_rotating_layout(
   A logical value indicating whether the illumination mask should be
   rescaled to `[0, 1]` per cell. Default is `TRUE`.
 
+- light_direction:
+
+  A numeric vector of length 3 in layout `(x, y, z)` coordinates giving
+  the directional light axis passed to
+  [`heuristic_illumination`](heuristic_illumination.md). Internally
+  normalized to unit length. Default is `c(-0.6, 0.5, 0.62)`, a key
+  light above and to the viewer's left. Use `c(0, 0, 1)` to light along
+  the rotation axis. Lighting is in layout coordinates, not camera
+  coordinates; see the illumination section.
+
 ## Value
 
 Exports an animation of a rotating 3D scatter plot.
@@ -302,6 +316,22 @@ ignored. `PixelgenGradient(n, "NaturalBlue")` works well as a shadow
 palette while `colors` carries the marker signal. Set
 `normalize_illumination = FALSE` to use raw output from
 `heuristic_illumination` instead of rescaling the mask to `[0, 1]`.
+Directional lighting uses `light_direction` in layout `(x, y, z)`
+coordinates, not camera coordinates. Frames are drawn with x across the
+screen, z up the screen, and y as depth, so from the camera's point of
+view `+x` is to the right, `+z` is up, and `+y` is toward the viewer.
+The default `c(-0.6, 0.5, 0.62)` places the key light above and to the
+viewer's left, slightly in front of the layout (roughly 38 degrees above
+the horizon), which reads like afternoon sunlight rather than the flat
+head-on look of a light on the camera axis.
+
+The mask is computed once, before the points are rotated, so the key
+light is fixed relative to the layout rather than the camera. With the
+default direction the lit side therefore turns with the layout over a
+full rotation, and the camera-facing side is brightest near the start
+and end of the turn and dimmest around the halfway point. Pass
+`light_direction = c(0, 0, 1)` to light along the rotation axis instead,
+which keeps the apparent shading constant for the whole rotation.
 
 ## Examples
 
@@ -312,6 +342,8 @@ se <- ReadPNA_Seurat(pxl_file)
 se <- se %>%
   LoadCellGraphs(add_layouts = TRUE)
 
+# Use cell_plot() and cell_plot_animate() instead
+if (FALSE) { # \dontrun{
 # Create a gif from a 3D layout
 cg <- CellGraphs(se)[[3]]
 df <- cg@layout$wpmds_3d %>%
@@ -329,39 +361,8 @@ render_rotating_layout(
   label_grid_axes = FALSE,
   show_first_frame = FALSE
 )
-#> ! The following parameters are not supported with graphics_use = 'base':
-#> ggplot_theme, label_grid_axes, title
-#> Titles, text annotations and color bar will be missing from the plot.
-#> 
-#> ── Rendering frames... 
-#> 
-#> ── Creating video... 
-#> ✔ The video has been saved to:
-#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpXxUDE2/filebadb751a6d9d.gif
 magick::image_read(temp_gif)
-#> # A tibble: 20 × 7
-#>    format width height colorspace matte filesize density
-#>    <chr>  <int>  <int> <chr>      <lgl>    <int> <chr>  
-#>  1 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  2 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  3 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  4 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  5 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  6 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  7 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  8 GIF      500    500 sRGB       TRUE         0 +72x+72
-#>  9 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 10 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 11 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 12 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 13 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 14 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 15 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 16 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 17 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 18 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 19 GIF      500    500 sRGB       TRUE         0 +72x+72
-#> 20 GIF      500    500 sRGB       TRUE         0 +72x+72
+} # }
 
 if (FALSE) { # \dontrun{
 # Include multiple facets

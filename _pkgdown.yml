@@ -70,6 +70,26 @@ reference:
     - Plot2DGraph
     - Plot2DGraphM
     - Plot3DGraph
+  - subtitle: Cell plots
+  - contents:
+    - cell_plot
+    - build_cell_plot
+    - autoplot.cell_plot
+    - print.cell_plot
+    - summary.cell_plot
+    - print.summary.cell_plot
+    - cell_grid
+    - cell_node_scale_color
+    - cell_node_scale_size
+    - cell_node_scale_alpha
+    - cell_node_depth
+    - cell_illuminate
+    - cell_theme
+    - cell_annotation
+    - cell_coord_rotate
+    - cell_plot_interactive
+    - cell_plot_rgl
+    - cell_plot_animate
   - subtitle: Graph layouts
   - contents:
     - ComputeLayout
@@ -162,12 +182,17 @@ reference:
     - as.PNAAssay5
     - CellGraph
     - CreateCellGraphObject
+    - CellGraphList
+    - CellGraphList-methods
+    - FetchLayoutData
+    - ComputeLPS
+    - NodeDimReduc-methods
+    - CreateNodeDimReducObject
   - subtitle: Graph functions
   - contents:
     - edgelist_to_simple_Anode_graph
     - edgelist_to_simple_bipart_graph
     - node_markers_counts
-    - color_by_marker
     - compute_transition_probabilities
     - edge_weights_for_pmds
     - local_G
@@ -182,6 +207,7 @@ reference:
     - MPXAssay
     - PNAAssay
     - PNAAssay5
+    - NodeDimReduc-class
   - subtitle: Colors
   - contents:
     - PixelgenAccentColors
@@ -192,7 +218,6 @@ reference:
     - color-themes
     - create_discrete_palette
     - theme_pixelgen
-    - show_accent_colors
     - Pixelgen_cell_palette
     - heuristic_illumination
   - subtitle: Misc

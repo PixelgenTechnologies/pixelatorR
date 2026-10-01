@@ -18,7 +18,6 @@ show(object)
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)

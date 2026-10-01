@@ -1,10 +1,6 @@
 # Plot 2D graph layouts
 
-Plot 2D component graph layouts computed with
-[`ComputeLayout`](ComputeLayout.md) and optionally color nodes by
-certain attributes. Edges can also be visualized by setting `map_edges`;
-however, since component graphs tend to be very large, this can take a
-long time to draw.
+**\[deprecated\]**
 
 ## Usage
 
@@ -98,39 +94,39 @@ Plot2DGraph(
 
 An object of class `patchwork`
 
+## Details
+
+Deprecated. Use [`cell_plot()`](cell_plot.md) instead.
+
+Plot 2D component graph layouts computed with
+[`ComputeLayout`](ComputeLayout.md) and optionally color nodes by
+certain attributes. Edges can also be visualized by setting `map_edges`;
+however, since component graphs tend to be very large, this can take a
+long time to draw.
+
 ## See also
 
-[`Plot2DGraphM()`](Plot2DGraphM.md)
+[`cell_plot()`](cell_plot.md), [`Plot2DGraphM()`](Plot2DGraphM.md)
 
 ## Examples
 
 ``` r
 library(pixelatorR)
 
+# Use cell_plot() instead
+if (FALSE) { # \dontrun{
 # MPX
 pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
-#> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 seur <- LoadCellGraphs(seur, load_as = "Anode")
-#> →    Loading CellGraphs for 5 cells from sample 1
-#> ✔ Successfully loaded 5 CellGraph object(s).
 seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-#> ℹ Computing layouts for 5 graphs
 Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3E")
-
 
 # PNA
 pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file)
-#> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
-#> ℹ Fetching edgelists for 1 cells 
-#> → Creating <CellGraph> objects
-#> → Fetching marker counts
-#> → Adding marker counts to <CellGraph> object(s)
-#> ✔ Successfully loaded 1 <CellGraph> object(s).
 seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-#> ℹ Computing layouts for 1 graphs
 Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3e")
-
+} # }
 ```

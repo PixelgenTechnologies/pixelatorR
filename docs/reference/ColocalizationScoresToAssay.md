@@ -114,7 +114,7 @@ library(SeuratObject)
 # Load example data as a Seurat object
 pxl_file <- minimal_mpx_pxl_file()
 col_scores <- ReadMPX_colocalization(pxl_file)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /tmp/RtmppHUdNr/temp_libpath390c4bb01867/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading colocalization data
 #> ✔ Returning a 'tbl_df' object
 

@@ -18,7 +18,9 @@ CellGraphData(object, slot = "cellgraph") <- value
 
 - slot:
 
-  Information to pull from object (cellgraph, meta_data, layout)
+  Information to pull from object (`cellgraph`, `counts`, `layout`,
+  `layers`, `meta.data`, `reductions`). `meta_data` is accepted as an
+  alias for `meta.data`.
 
 - value:
 
@@ -33,7 +35,6 @@ CellGraphData(object, slot = "cellgraph") <- value
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 library(dplyr)
 #> 
@@ -52,7 +53,23 @@ library(tidygraph)
 #>     filter
 
 se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpmC3mql/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 cg <- CellGraphs(se)[[1]]
 
 # Get slot data

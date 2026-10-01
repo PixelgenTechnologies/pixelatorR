@@ -64,10 +64,63 @@
   scatter / pseudocolor plot.
 - [`AbundanceColocalizationPlot()`](AbundanceColocalizationPlot.md) :
   Create an abundance/colocalization scatterplot
-- [`Plot2DGraph()`](Plot2DGraph.md) : Plot 2D graph layouts
-- [`Plot2DGraphM()`](Plot2DGraphM.md) : Plot multiple markers on
-  multiple graphs
-- [`Plot3DGraph()`](Plot3DGraph.md) : Plot 3D graph layouts
+- [`Plot2DGraph()`](Plot2DGraph.md) **\[deprecated\]** : Plot 2D graph
+  layouts
+- [`Plot2DGraphM()`](Plot2DGraphM.md) **\[deprecated\]** : Plot multiple
+  markers on multiple graphs
+- [`Plot3DGraph()`](Plot3DGraph.md) **\[deprecated\]** : Plot 3D graph
+  layouts
+
+### Cell plots
+
+- [`cell_plot()`](cell_plot.md) : Create a cell plot recipe
+
+- [`build_cell_plot()`](build_cell_plot.md) : Build a cell plot recipe
+
+- [`autoplot(`*`<cell_plot>`*`)`](autoplot.cell_plot.md) :
+
+  Create a complete ggplot from a `cell_plot` recipe
+
+- [`print(`*`<cell_plot>`*`)`](print.cell_plot.md) : Print a cell plot
+  recipe
+
+- [`summary(`*`<cell_plot>`*`)`](summary.cell_plot.md) : Summarise a
+  cell plot recipe
+
+- [`print(`*`<summary.cell_plot>`*`)`](print.summary.cell_plot.md) :
+  Print a cell plot summary
+
+- [`cell_grid()`](cell_grid.md) : Arrange a cell plot in a panel grid
+
+- [`cell_node_scale_color()`](cell_node_scale_color.md) : Set the cell
+  plot node color scale
+
+- [`cell_node_scale_size()`](cell_node_scale_size.md) : Set the cell
+  plot node size scale
+
+- [`cell_node_scale_alpha()`](cell_node_scale_alpha.md) : Set the cell
+  plot node alpha scale
+
+- [`cell_node_depth()`](cell_node_depth.md) : Set the cell plot node
+  depth scale
+
+- [`cell_illuminate()`](cell_illuminate.md) : Add illumination to a cell
+  plot
+
+- [`cell_theme()`](cell_theme.md) : Set the cell plot theme
+
+- [`cell_annotation()`](cell_annotation.md) : Annotate a cell plot
+
+- [`cell_coord_rotate()`](cell_coord_rotate.md) : Add rotating
+  coordinates to a cell plot
+
+- [`cell_plot_interactive()`](cell_plot_interactive.md) : Render a cell
+  plot as an interactive Plotly widget
+
+- [`cell_plot_rgl()`](cell_plot_rgl.md) : Render a cell plot with rgl
+
+- [`cell_plot_animate()`](cell_plot_animate.md) : Render a rotating cell
+  plot animation
 
 ### Graph layouts
 
@@ -83,7 +136,7 @@
   [`project_layout_coordinates_on_unit_sphere()`](layout_coordinates_utils.md)
   : Layout Coordinates Utility Functions
 - [`render_rotating_layout()`](render_rotating_layout.md)
-  **\[experimental\]** : Create a rotating 3D layout video
+  **\[deprecated\]** : Create a rotating 3D layout video
 - [`scale_layout()`](scale_layout.md) : Scale layout coordinates
 - [`fast_pmds()`](fast_pmds.md) : Fast pMDS implementation using
   RSpectra
@@ -271,30 +324,47 @@
 - [`CreateCellGraphObject()`](CreateCellGraphObject.md) : Create a
   CellGraph object
 
+- [`CreateCellGraphList()`](CellGraphList.md) : The CellGraphList class
+
+- [`print(`*`<CellGraphList>`*`)`](CellGraphList-methods.md)
+  [`` `[`( ``*`<CellGraphList>`*`)`](CellGraphList-methods.md)
+  [`` `[<-`( ``*`<CellGraphList>`*`)`](CellGraphList-methods.md)
+  [`` `[[<-`( ``*`<CellGraphList>`*`)`](CellGraphList-methods.md)
+  [`` `names<-`( ``*`<CellGraphList>`*`)`](CellGraphList-methods.md)
+  [`c(`*`<CellGraphList>`*`)`](CellGraphList-methods.md)
+  [`as.list(`*`<CellGraphList>`*`)`](CellGraphList-methods.md) :
+  CellGraphList Methods
+
+- [`FetchLayoutData()`](FetchLayoutData.md) : Fetch graph layout
+  coordinates
+
+- [`ComputeLPS()`](ComputeLPS.md) : Compute local proximity scores
+
+- [`show(`*`<NodeDimReduc>`*`)`](NodeDimReduc-methods.md)
+  [`Embeddings(`*`<NodeDimReduc>`*`)`](NodeDimReduc-methods.md)
+  [`Loadings(`*`<NodeDimReduc>`*`)`](NodeDimReduc-methods.md)
+  [`Stdev(`*`<NodeDimReduc>`*`)`](NodeDimReduc-methods.md)
+  [`Key(`*`<NodeDimReduc>`*`)`](NodeDimReduc-methods.md)
+  [`Cells(`*`<NodeDimReduc>`*`)`](NodeDimReduc-methods.md) :
+  NodeDimReduc Methods
+
+- [`CreateNodeDimReducObject()`](CreateNodeDimReducObject.md) : Create a
+  NodeDimReduc object
+
 ### Graph functions
 
 - [`edgelist_to_simple_Anode_graph()`](graph-conversion.md)
   **\[deprecated\]** : A-node projection
-
 - [`edgelist_to_simple_bipart_graph()`](edgelist_to_simple_bipart_graph.md)
   : Create a simple bipartite graph from an edgelist
-
 - [`node_markers_counts()`](node_markers_counts.md) **\[deprecated\]** :
   Calculate antibody counts per A-node
-
-- [`color_by_marker()`](color_by_marker.md) **\[deprecated\]** :
-
-  Add node colors to a `CellGraph`
-
 - [`compute_transition_probabilities()`](compute_transition_probabilities.md)
   : Compute transition probabilities
-
 - [`cos_distance_weights()`](edge-weights-pmds.md)
   [`prob_distance_weights()`](edge-weights-pmds.md) **\[experimental\]**
   : Calculate edge weights for pMDS
-
 - [`local_G()`](local_G.md) : Calculate Local G
-
 - [`expand_adjacency_matrix()`](expand_adjacency_matrix.md) : Expand an
   adjacency matrix to include higher-order neighborhoods
 
@@ -316,6 +386,8 @@
   : The PNAAssay class
 - [`PNAAssay5-class`](PNAAssay5-class.md)
   [`PNAAssay5`](PNAAssay5-class.md) : The PNAAssay5 class
+- [`NodeDimReduc-class`](NodeDimReduc-class.md)
+  [`NodeDimReduc`](NodeDimReduc-class.md) : The NodeDimReduc class
 
 ### Colors
 
@@ -349,8 +421,19 @@
   Single Cell Data
 - [`minimal_mpx_pxl_file()`](mpx_dataset.md) : Five Cells MPX Test data
 - [`minimal_pna_pxl_file()`](pna_dataset.md) : Five Cells PNA Test data
-- [`show(`*`<CellGraph>`*`)`](CellGraph-methods.md)
-  [`subset(`*`<CellGraph>`*`)`](CellGraph-methods.md) : CellGraph
+- [`Layers(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`LayerData(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`` `LayerData<-`( ``*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`Embeddings(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`Loadings(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`Stdev(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`AddMetaData(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`FetchData(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`show(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`` `[[`( ``*`<CellGraph>`*`,`*`<character>`*`,`*`<missing>`*`)`](CellGraph-methods.md)
+  [`` `[[<-`( ``*`<CellGraph>`*`,`*`<character>`*`,`*`<missing>`*`,`*`<ANY>`*`)`](CellGraph-methods.md)
+  [`subset(`*`<CellGraph>`*`)`](CellGraph-methods.md)
+  [`FetchData(`*`<CellGraphList>`*`)`](CellGraph-methods.md) : CellGraph
   Methods
 - [`RenameCells(`*`<CellGraphAssay>`*`)`](CellGraphAssay-methods.md)
   [`show(`*`<CellGraphAssay>`*`)`](CellGraphAssay-methods.md)

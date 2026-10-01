@@ -49,13 +49,12 @@ Other data-loaders: [`ReadMPX_Seurat()`](ReadMPX_Seurat.md),
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 
 # Load example data
 pxl_file <- minimal_mpx_pxl_file()
 polarization <- ReadMPX_item(pxl_file, items = "polarization")
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /tmp/RtmppHUdNr/temp_libpath390c4bb01867/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading polarization data
 #> ✔ Returning a 'tbl_df' object
 polarization
@@ -76,7 +75,7 @@ polarization
 
 # Alternative 2
 polarization <- ReadMPX_polarization(pxl_file)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /tmp/RtmppHUdNr/temp_libpath390c4bb01867/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading polarization data
 #> ✔ Returning a 'tbl_df' object
 ```

@@ -92,7 +92,6 @@ A ggplot object.
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 library(Seurat)
 
