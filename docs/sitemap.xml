@@ -10,7 +10,6 @@
 <url><loc>/articles/load_data.html</loc></url>
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
-<url><loc>/pull_request_template.html</loc></url>
 <url><loc>/reference/AbundanceColocalizationPlot.html</loc></url>
 <url><loc>/reference/AnnotateCells.html</loc></url>
 <url><loc>/reference/CalculateDispersion.html</loc></url>
@@ -72,7 +71,6 @@
 <url><loc>/reference/PredictDoublets.html</loc></url>
 <url><loc>/reference/ProximityScores.html</loc></url>
 <url><loc>/reference/ProximityScoresToAssay.html</loc></url>
-<url><loc>/reference/PseudocolorPlot.html</loc></url>
 <url><loc>/reference/ReadMPX_Seurat.html</loc></url>
 <url><loc>/reference/ReadMPX_arrow_edgelist.html</loc></url>
 <url><loc>/reference/ReadMPX_counts.html</loc></url>
@@ -119,7 +117,6 @@
 <url><loc>/reference/cell_plot_rgl.html</loc></url>
 <url><loc>/reference/cell_theme.html</loc></url>
 <url><loc>/reference/color-themes.html</loc></url>
-<url><loc>/reference/color_by_marker.html</loc></url>
 <url><loc>/reference/compute_transition_probabilities.html</loc></url>
 <url><loc>/reference/cos_dist.html</loc></url>
 <url><loc>/reference/create_discrete_palette.html</loc></url>
@@ -157,14 +154,12 @@
 <url><loc>/reference/print.cell_plot.html</loc></url>
 <url><loc>/reference/print.pixelator_metadata.html</loc></url>
 <url><loc>/reference/print.summary.cell_plot.html</loc></url>
-<url><loc>/reference/pxl_dataset.html</loc></url>
 <url><loc>/reference/read_pbmc_reference.html</loc></url>
 <url><loc>/reference/reexports.html</loc></url>
 <url><loc>/reference/render_rotating_layout.html</loc></url>
 <url><loc>/reference/scale_layout.html</loc></url>
 <url><loc>/reference/segment_cell.html</loc></url>
 <url><loc>/reference/sequencing_saturation.html</loc></url>
-<url><loc>/reference/show-CellGraph-method.html</loc></url>
 <url><loc>/reference/show_accent_colors.html</loc></url>
 <url><loc>/reference/spatial_smoothing.html</loc></url>
 <url><loc>/reference/summary.cell_plot.html</loc></url>

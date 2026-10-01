@@ -210,7 +210,7 @@ cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
   CellGraphs() %>%
   .[[1]]
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -219,7 +219,7 @@ cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -230,18 +230,18 @@ cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
 ComputeProximityScores(cg) %>%
   filter(join_count_z > 3)
 #> # A tibble: 167 × 7
-#>    join_count join_count_expected_mean join_count_expected_sd marker_1 marker_2 
-#>         <dbl>                    <dbl>                  <dbl> <chr>    <chr>    
-#>  1        216                    72.1                    6.84 B2M      B2M      
-#>  2         41                    26.7                    3.96 CD18     CD18     
-#>  3        455                   360.                    17.4  CD16     CD18     
-#>  4       2016                  1210.                    34.4  CD16     CD16     
-#>  5      11204                 10197.                   103.   CD59     CD59     
-#>  6          9                     3.10                   1.34 B2M      HLA-DR-D…
-#>  7        334                   107.                     8.21 B2M      HLA-ABC  
-#>  8        172                    39.1                    4.88 HLA-ABC  HLA-ABC  
-#>  9        277                   230.                    14.0  CD16     CD55     
-#> 10        107                    44.1                    5.15 B2M      CD32     
+#>    join_count join_count_expected_mean join_count_expected_sd marker_1 marker_2
+#>         <dbl>                    <dbl>                  <dbl> <chr>    <chr>   
+#>  1        216                     72.1                   6.84 B2M      B2M     
+#>  2       2016                   1210.                   34.4  CD16     CD16    
+#>  3      11204                  10197.                  103.   CD59     CD59    
+#>  4        455                    360.                   17.4  CD16     CD18    
+#>  5         41                     26.7                   3.96 CD18     CD18    
+#>  6        253                     81.1                   7.16 B2M      CD44    
+#>  7         59                     13.1                   2.74 CD44     CD44    
+#>  8        334                    107.                    8.21 B2M      HLA-ABC 
+#>  9        197                     55.4                   5.78 CD44     HLA-ABC 
+#> 10        172                     39.1                   4.88 HLA-ABC  HLA-ABC 
 #> # ℹ 157 more rows
 #> # ℹ 2 more variables: join_count_z <dbl>, log2_ratio <dbl>
 
@@ -249,7 +249,7 @@ library(ggplot2)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
   LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -258,7 +258,7 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
 #> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

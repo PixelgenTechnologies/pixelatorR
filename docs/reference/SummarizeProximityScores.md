@@ -91,7 +91,7 @@ library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
 se <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -106,12 +106,12 @@ SummarizeProximityScores(proximity_table) %>% head()
 #> # A tibble: 6 × 7
 #>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
 #>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
-#> 1 CD56     CD56                    4       5               1          0.8
-#> 2 CD56     mIgG2b                  4       5               1          0.8
-#> 3 CD56     NKp80                   4       5               1          0.8
-#> 4 CD56     CD85j                   4       5               1          0.8
-#> 5 CD56     CD80                    4       5               1          0.8
-#> 6 CD56     CD70                    2       5               3          0.4
+#> 1 CD56     Siglec-9                4       5               1          0.8
+#> 2 CD56     CD79a                   4       5               1          0.8
+#> 3 CD56     HLA-ABC                 4       5               1          0.8
+#> 4 CD56     GPR56                   3       5               2          0.6
+#> 5 CD56     CD82                    4       5               1          0.8
+#> 6 CD56     IgD                     4       5               1          0.8
 #> # ℹ 1 more variable: mean_log2_ratio <dbl>
 
 # Switch to median
@@ -132,12 +132,12 @@ SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) %>% head(
 #> # A tibble: 6 × 7
 #>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
 #>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
-#> 1 CD56     CD6                     4       5               1          0.8
-#> 2 CD56     mIgG1                   4       5               1          0.8
-#> 3 CD56     CD89                    4       5               1          0.8
-#> 4 CD56     CD57                    3       5               2          0.6
-#> 5 CD56     CD73                    4       5               1          0.8
-#> 6 CD56     CD81                    4       5               1          0.8
+#> 1 CD56     Siglec-9                4       5               1          0.8
+#> 2 CD56     CD79a                   4       5               1          0.8
+#> 3 CD56     HLA-ABC                 4       5               1          0.8
+#> 4 CD56     GPR56                   3       5               2          0.6
+#> 5 CD56     CD82                    4       5               1          0.8
+#> 6 CD56     IgD                     4       5               1          0.8
 #> # ℹ 1 more variable: mean_log2_ratio <dbl>
 
 # Return lists which can be used to compute custom summary statistics
@@ -155,15 +155,15 @@ SummarizeProximityScores(proximity_table, detailed = TRUE) %>%
 #> # A tibble: 12,561 × 6
 #>    marker_1 marker_2    sd   iqr   mad   q90
 #>    <chr>    <chr>    <dbl> <dbl> <dbl> <dbl>
-#>  1 CD56     Siglec-9 0      0        0 0    
-#>  2 CD56     CD79a    0      0        0 0    
-#>  3 CD56     HLA-ABC  0.790  1.13     0 0    
-#>  4 CD56     GPR56    0      0        0 0    
-#>  5 CD56     CD82     0      0        0 0    
-#>  6 CD56     IgD      0      0        0 0    
-#>  7 CD56     CD8      0      0        0 0    
-#>  8 CD56     mIgG2a   0      0        0 0    
-#>  9 CD56     CD9      0.447  0        0 0.600
-#> 10 CD56     CD94     0      0        0 0    
+#>  1 CD56     CD71     0     0         0 0    
+#>  2 CD56     IgM      0     0         0 0    
+#>  3 CD56     TCRva7.2 0     0         0 0    
+#>  4 CD56     KLRG1    0     0         0 0    
+#>  5 CD56     CD93     0     0         0 0    
+#>  6 CD56     HLA-DR   0.128 0         0 0    
+#>  7 CD56     CD69     0     0         0 0    
+#>  8 CD56     CD59     0.826 0.258     0 0    
+#>  9 CD56     CD62P    0     0         0 0    
+#> 10 CD56     CX3CR1   0.709 0         0 0.951
 #> # ℹ 12,551 more rows
 ```

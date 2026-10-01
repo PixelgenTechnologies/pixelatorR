@@ -201,7 +201,7 @@ share feature names because `layer` selects the matrix to search.
 library(pixelatorR)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -210,7 +210,7 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 #> ℹ See ?duckdb_storage for details and alternatives.
 se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

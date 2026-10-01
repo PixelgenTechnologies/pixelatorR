@@ -92,7 +92,7 @@ library(pixelatorR)
 pxl_file <- minimal_pna_pxl_file()
 se <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -109,7 +109,7 @@ proximity_table_filtered <- FilterProximityScores(
   background_threshold_pct = 0.001
 )
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

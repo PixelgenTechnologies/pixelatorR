@@ -125,7 +125,7 @@ WriteMPX_pxl_file(se_merged, pxl_file)
 #> ✔ Exported merged edge list
 #> ✔ Exported merged meta data
 #> ✔ Exported anndata file
-#> ℹ Saving PXL file to /tmp/RtmpmC3mql/small.pxl
+#> ℹ Saving PXL file to /tmp/RtmpjKKHFf/small.pxl
 #> ✔ Finished!
 
 # Read the new PXL file

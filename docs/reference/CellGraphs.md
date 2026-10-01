@@ -70,9 +70,9 @@ library(tidygraph)
 
 pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
-#> ℹ Loading count data from /tmp/RtmppHUdNr/temp_libpath390c4bb01867/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading count data from /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/extdata/five_cells/five_cells.pxl
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-#> ℹ Loading item(s) from: /tmp/RtmppHUdNr/temp_libpath390c4bb01867/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 components <- colnames(counts)
@@ -121,7 +121,7 @@ library(pixelatorR)
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

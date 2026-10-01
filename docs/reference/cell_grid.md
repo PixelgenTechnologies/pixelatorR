@@ -42,7 +42,7 @@ Other cell-plot-modifiers: [`cell_annotation()`](cell_annotation.md),
 library(dplyr)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file())
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -53,7 +53,7 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file())
 se <- LoadCellGraphs(se, cells = colnames(se)[3:4], verbose = FALSE) |>
   ComputeLayout(layout_method = "cpmds")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

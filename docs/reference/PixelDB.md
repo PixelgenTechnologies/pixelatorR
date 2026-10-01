@@ -607,7 +607,7 @@ library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
 db <- PixelDB$new(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -622,7 +622,7 @@ db <- PixelDB$new(pxl_file)
 
 db <- PixelDB$new(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -674,7 +674,7 @@ db$query("SELECT * FROM proximity") %>% head()
 db$close()
 db$reconnect()
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -885,11 +885,11 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name                     B2M  CD18  CD16
+#>   name                     B2M  CD16  CD59
 #>   <chr>                  <dbl> <dbl> <dbl>
-#> 1 34739343391810798-umi1     1     0     0
-#> 2 54399852680662356-umi1     0     1     0
-#> 3 46889202488405884-umi1     0     0     1
+#> 1 24100734673138903-umi1     1     0     0
+#> 2 45574678819918116-umi1     0     1     0
+#> 3 10817808575594837-umi1     0     1     0
 
 
 ## ------------------------------------------------
@@ -900,7 +900,7 @@ db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> /tmp/RtmpmC3mql/file396740d36cf9.parquet 
+#> /tmp/RtmpjKKHFf/file4d6b7d73ebba.parquet 
 #>                                     TRUE 
 
 

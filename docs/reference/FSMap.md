@@ -72,7 +72,7 @@ library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -84,7 +84,7 @@ FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <chr>                                                 
-#> 1 <tibble [5 × 2]>      1 /tmp/RtmppHUdNr/temp_libpath390c4bb01867/pixelatorR/e…
+#> 1 <tibble [5 × 2]>      1 /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/e…
 
 # If the PXL has been moved, we can update the fs_map
 # Here we copy the test PXL file to a temporary location
@@ -99,9 +99,9 @@ FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) %>%
 # Now the fs_map has been updated with the correct path
 FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
-#>   id_map           sample pxl_file                           
-#>   <list>            <int> <fs::path>                         
-#> 1 <tibble [5 × 2]>      1 /tmp/RtmpmC3mql/file3967329e131.pxl
+#>   id_map           sample pxl_file                            
+#>   <list>            <int> <fs::path>                          
+#> 1 <tibble [5 × 2]>      1 /tmp/RtmpjKKHFf/file4d6b2e9145ef.pxl
 
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
@@ -112,7 +112,7 @@ FSMap(seur_obj)
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <chr>                                                 
-#> 1 <tibble [5 × 2]>      1 /tmp/RtmppHUdNr/temp_libpath390c4bb01867/pixelatorR/e…
+#> 1 <tibble [5 × 2]>      1 /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/e…
 
 library(pixelatorR)
 
@@ -120,7 +120,7 @@ library(pixelatorR)
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

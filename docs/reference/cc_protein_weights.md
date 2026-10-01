@@ -150,7 +150,7 @@ CD36, CD62P, and CD9 are often masked.
 library(dplyr)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file())
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

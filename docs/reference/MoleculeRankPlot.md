@@ -84,7 +84,7 @@ pxl_file_pna <- minimal_pna_pxl_file()
 
 seur_obj_pna <- ReadPNA_Seurat(pxl_file_pna)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpmC3mql/duckdb
+#> ℹ /tmp/RtmpjKKHFf/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
