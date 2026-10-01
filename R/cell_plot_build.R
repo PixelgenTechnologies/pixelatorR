@@ -1,7 +1,5 @@
 #' Build a cell plot recipe
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Resolves mappings, constants, scales, illumination, and display defaults
 #' without drawing a plot. The returned object has the same top-level fields as
 #' the input recipe, with data ordered by the `arrange` mapping. Rows with

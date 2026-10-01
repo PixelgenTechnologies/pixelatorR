@@ -13,14 +13,12 @@ cell_plot_interactive(object)
 A Plotly htmlwidget.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Builds a \code{\link[=cell_plot]{cell_plot()}} recipe and draws it as an interactive 3D scatter.
 Node sizes are converted from backend-neutral relative units to Plotly
 marker diameters in pixels.
 Panel grids support at most 10 rows and 20 columns.
-
+}
+\details{
 Occlusion follows the scene camera, so markers closer to the current
 viewpoint appear in front. The \code{arrange} and \code{depth} mappings and
 \code{\link[=cell_coord_rotate]{cell_coord_rotate()}} are ignored. Markers use the rendered colors

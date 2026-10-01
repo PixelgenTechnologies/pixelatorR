@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Experimental `cell_plot()` recipes for cell-layout visualization. A recipe
+- `cell_plot()` recipes for cell-layout visualization. A recipe
   stores data, column mappings, constant aesthetics, and presentation
   instructions. `color`, `size`, and `alpha` accept a column or one constant
   value. `illumination_mask` limits illumination to selected rows. Modify a

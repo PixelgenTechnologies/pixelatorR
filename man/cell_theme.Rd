@@ -28,9 +28,6 @@ ggplot2-like gray \code{"#D9D9D9"}.}
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Sets the backend-neutral appearance shared by cell plot renderers. The
 contract contains \code{background_color}, \code{strip_background_color},
 \code{text_color}, and \code{text_size}. Backends translate these values to their own

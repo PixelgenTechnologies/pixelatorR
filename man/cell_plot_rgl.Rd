@@ -13,9 +13,6 @@ cell_plot_rgl(object)
 The rgl device id, returned invisibly.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Builds a \code{\link[=cell_plot]{cell_plot()}} recipe and draws it as an interactive native 3D
 scatter using \link[rgl:rgl-package]{rgl::rgl}. Node sizes are converted from backend-neutral relative
 units to rgl point diameters in pixels. Continuous sizes are grouped into a
@@ -27,7 +24,8 @@ and color legends also use reserved full-window chrome regions. Rotating and
 scroll-zooming work with the pointer anywhere in the window, including over
 the strips, title, and legend, and always drive every data panel together.
 Panel grids support at most 10 rows and 20 columns.
-
+}
+\details{
 Occlusion follows the scene camera, so markers closer to the current
 viewpoint appear in front. The rgl backend does not provide hover labels or
 interactive legend filtering. The \code{arrange} and \code{depth} mappings and

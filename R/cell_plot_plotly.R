@@ -1,7 +1,5 @@
 #' Render a cell plot as an interactive Plotly widget
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Builds a [cell_plot()] recipe and draws it as an interactive 3D scatter.
 #' Node sizes are converted from backend-neutral relative units to Plotly
 #' marker diameters in pixels.

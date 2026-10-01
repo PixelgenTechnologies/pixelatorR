@@ -15,9 +15,6 @@ cell_annotation(object, title = NULL, subtitle = NULL, legend_title = NULL)
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Sets title, subtitle, and color legend title text shared by cell plot
 renderers. Annotation content is equivalent across backends, although
 placement and typography may differ. When \code{legend_title} is omitted, the

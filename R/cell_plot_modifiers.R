@@ -1,7 +1,5 @@
 #' Arrange a cell plot in a panel grid
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Defines panel rows and columns using existing categorical columns. Named
 #' arguments are preferred because they make grid orientation explicit. Facet
 #' values may be character, factor, or integer columns. This modifier records
@@ -58,8 +56,6 @@ cell_grid <- function(object, rows = NULL, cols = NULL) {
 }
 
 #' Set the cell plot node color scale
-#'
-#' `r lifecycle::badge("experimental")`
 #'
 #' Controls how a column mapped with `cell_plot(color = ...)` is represented.
 #' Continuous versus categorical scales can be selected explicitly, or inferred
@@ -178,8 +174,6 @@ cell_node_scale_color <- function(
 
 #' Set the cell plot node size scale
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Sets the output sizes for a column mapped with `cell_plot(size = ...)`.
 #' Numeric and integer columns are scaled continuously. Character and factor
 #' columns are treated as categorical levels.
@@ -258,8 +252,6 @@ cell_node_scale_size <- function(object, sizes = c(2, 6), limits = NULL) {
 
 #' Set the cell plot node depth scale
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Tunes depth sizing for ggplot projections. Apparent point diameter scales
 #' with inverse camera distance so that a point twice as far from the camera is
 #' drawn at half the diameter. The point at mean depth keeps the constant node
@@ -322,8 +314,6 @@ cell_node_depth <- function(object, focal_distance = 1.5) {
 .cell_plot_default_focal_distance <- formals(cell_node_depth)$focal_distance
 
 #' Set the cell plot node alpha scale
-#'
-#' `r lifecycle::badge("experimental")`
 #'
 #' Defines the output alphas for a column mapped with `cell_plot(alpha = ...)`.
 #' Numeric and integer columns are scaled continuously. Character and factor
@@ -442,8 +432,6 @@ cell_node_scale_alpha <- function(object, alphas = c(0.2, 1), limits = NULL) {
 }
 
 #' Add illumination to a cell plot
-#'
-#' `r lifecycle::badge("experimental")`
 #'
 #' Records geometry-based illumination parameters. During [build_cell_plot()],
 #' directional light, radial volume shading, and ambient occlusion are
@@ -572,8 +560,6 @@ cell_illuminate <- function(
 
 #' Set the cell plot theme
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Sets the backend-neutral appearance shared by cell plot renderers. The
 #' contract contains `background_color`, `strip_background_color`,
 #' `text_color`, and `text_size`. Backends translate these values to their own
@@ -669,8 +655,6 @@ cell_theme <- function(
 
 #' Annotate a cell plot
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Sets title, subtitle, and color legend title text shared by cell plot
 #' renderers. Annotation content is equivalent across backends, although
 #' placement and typography may differ. When `legend_title` is omitted, the
@@ -744,8 +728,6 @@ cell_annotation <- function(
 }
 
 #' Add rotating coordinates to a cell plot
-#'
-#' `r lifecycle::badge("experimental")`
 #'
 #' Records rotation geometry for an animation renderer. This sets a rotation
 #' sequence rather than a single static view. The number of frames belongs to

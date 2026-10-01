@@ -57,9 +57,6 @@ retain their unilluminated colors. Missing values are not allowed.}
 A \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Creates a cell-layout visualization recipe. The recipe stores data, column
 mappings, and optional rendering instructions without drawing a plot. Add
 instructions with the \verb{cell_*()} modifier functions. Printing the recipe
@@ -67,7 +64,8 @@ builds and renders a ggplot. \code{\link[=cell_plot_interactive]{cell_plot_inter
 recipe as a 3D Plotly widget. \code{\link[=cell_plot_rgl]{cell_plot_rgl()}} draws it as a native rgl
 scene. \code{\link[=cell_plot_animate]{cell_plot_animate()}} encodes a rotating GIF or video after
 \code{\link[=cell_coord_rotate]{cell_coord_rotate()}}. \code{\link[=summary]{summary()}} inspects the recipe without drawing.
-
+}
+\details{
 A \code{cell_plot} is an S3 list with a fixed set of fields:
 \itemize{
 \item \code{data}: the visualization tibble

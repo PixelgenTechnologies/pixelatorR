@@ -1,7 +1,5 @@
 #' Render a rotating cell plot animation
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Builds a [cell_plot()] recipe once, draws one frame per rotation angle, and
 #' encodes a GIF or video. Rotation geometry comes from [cell_coord_rotate()].
 #' File type, size, resolution, frame rate, and the frame backend belong here.

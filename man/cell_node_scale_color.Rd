@@ -29,9 +29,6 @@ continuous scale or a character vector of levels for a categorical scale.}
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Controls how a column mapped with \code{cell_plot(color = ...)} is represented.
 Continuous versus categorical scales can be selected explicitly, or inferred
 from the mapped column. Palette, limits, and missing-value color are recorded
@@ -40,7 +37,8 @@ span the observed range unless \code{limits} are supplied. A continuous scale is
 therefore centered on zero only when \code{limits} are symmetric around zero, as
 in \code{limits = c(-2, 2)}. Palette and missing-value colors must be fully
 opaque. Node opacity is controlled with \code{\link[=cell_node_scale_alpha]{cell_node_scale_alpha()}}.
-
+}
+\details{
 This modifier requires a color mapping. One color shared by every point is
 set with \code{cell_plot(color = "red")} instead.
 }

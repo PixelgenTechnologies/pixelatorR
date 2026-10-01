@@ -1,7 +1,5 @@
 #' Render a cell plot with rgl
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Builds a [cell_plot()] recipe and draws it as an interactive native 3D
 #' scatter using [rgl]. Node sizes are converted from backend-neutral relative
 #' units to rgl point diameters in pixels. Continuous sizes are grouped into a

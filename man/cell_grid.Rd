@@ -16,9 +16,6 @@ and columns. At least one must be supplied.}
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Defines panel rows and columns using existing categorical columns. Named
 arguments are preferred because they make grid orientation explicit. Facet
 values may be character, factor, or integer columns. This modifier records

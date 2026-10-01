@@ -1,7 +1,5 @@
 #' Create a cell plot recipe
 #'
-#' `r lifecycle::badge("experimental")`
-#'
 #' Creates a cell-layout visualization recipe. The recipe stores data, column
 #' mappings, and optional rendering instructions without drawing a plot. Add
 #' instructions with the `cell_*()` modifier functions. Printing the recipe

@@ -31,9 +31,6 @@ calculates the centroid independently within each \code{\link[=cell_grid]{cell_g
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Records rotation geometry for an animation renderer. This sets a rotation
 sequence rather than a single static view. The number of frames belongs to
 \code{\link[=cell_plot_animate]{cell_plot_animate()}}, not this modifier. Printed ggplot and Plotly views keep

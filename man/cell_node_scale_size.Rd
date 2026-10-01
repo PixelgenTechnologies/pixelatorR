@@ -21,13 +21,11 @@ ordered numeric values. Named categorical sizes cannot be combined with
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Sets the output sizes for a column mapped with \code{cell_plot(size = ...)}.
 Numeric and integer columns are scaled continuously. Character and factor
 columns are treated as categorical levels.
-
+}
+\details{
 A length-2 \code{sizes} vector is an output range. \code{\link[=build_cell_plot]{build_cell_plot()}} normalizes
 continuous values, and interpolated categorical levels, to that interval.
 Rows with missing values in a mapped size column are dropped at build time

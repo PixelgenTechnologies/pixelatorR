@@ -16,14 +16,12 @@ mapped depth column. Defaults to \code{1.5}.}
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Tunes depth sizing for ggplot projections. Apparent point diameter scales
 with inverse camera distance so that a point twice as far from the camera is
 drawn at half the diameter. The point at mean depth keeps the constant node
 size from \verb{cell_plot(size = <number>)} (or \code{1} when no constant is set).
-
+}
+\details{
 Depth sizing is on by default because \code{depth} is mapped to the \code{z} column.
 It is turned off with \code{cell_plot(depth = NULL)}, which also makes this
 modifier an error. \code{focal_distance} controls the strength of the effect.

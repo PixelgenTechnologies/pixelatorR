@@ -39,13 +39,11 @@ sequentially.}
 The output path, invisibly.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Builds a \code{\link[=cell_plot]{cell_plot()}} recipe once, draws one frame per rotation angle, and
 encodes a GIF or video. Rotation geometry comes from \code{\link[=cell_coord_rotate]{cell_coord_rotate()}}.
 File type, size, resolution, frame rate, and the frame backend belong here.
-
+}
+\details{
 GIF output uses gifski. Any other extension is encoded with av. The parent
 directory of \code{file} must already exist. An existing file is overwritten.
 }

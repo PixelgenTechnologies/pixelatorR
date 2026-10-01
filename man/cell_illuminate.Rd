@@ -55,15 +55,13 @@ illumination calculated from the unrotated coordinates.}
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Records geometry-based illumination parameters. During \code{\link[=build_cell_plot]{build_cell_plot()}},
 directional light, radial volume shading, and ambient occlusion are
 calculated independently within each non-empty panel after color-scale
 training. The resulting mask changes rendered point colors, while the
 unilluminated scale remains the source for the legend.
-
+}
+\details{
 Illumination masks are normalized within each panel. The requested number of
 ambient-occlusion neighbors is capped to the available points. Singleton
 panels and panels with a constant mask retain their original colors. Colors

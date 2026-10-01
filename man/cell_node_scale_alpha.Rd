@@ -21,13 +21,11 @@ ordered numeric values. Named categorical alphas cannot be combined with
 A modified \code{cell_plot} recipe.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Defines the output alphas for a column mapped with \code{cell_plot(alpha = ...)}.
 Numeric and integer columns are scaled continuously. Character and factor
 columns are treated as categorical levels.
-
+}
+\details{
 A length-2 \code{alphas} vector is an output range. \code{\link[=build_cell_plot]{build_cell_plot()}}
 normalizes continuous values, and interpolated categorical levels, to that
 interval. Rows with missing values in a mapped alpha column are dropped at

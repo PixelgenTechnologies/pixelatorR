@@ -14,9 +14,6 @@ A \code{cell_plot_built} object containing resolved plot data and
 rendering instructions.
 }
 \description{
-\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#experimental}{\figure{lifecycle-experimental.svg}{options: alt='[Experimental]'}}}{\strong{[Experimental]}}
-}
-\details{
 Resolves mappings, constants, scales, illumination, and display defaults
 without drawing a plot. The returned object has the same top-level fields as
 the input recipe, with data ordered by the \code{arrange} mapping. Rows with
