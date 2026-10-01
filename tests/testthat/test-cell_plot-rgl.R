@@ -703,7 +703,8 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
     pixelatorR:::.cell_rgl_draw_colorbar(
       flat_legend,
       text_color = "black",
-      text_size = 11
+      text_size = 11,
+      region = list(width = 280, height = 1000)
     )
     pixelatorR:::.cell_rgl_draw_colorbar(
       list(
@@ -712,7 +713,8 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
         colors = flat_legend$colors
       ),
       text_color = "black",
-      text_size = 11
+      text_size = 11,
+      region = list(width = 280, height = 1000)
     )
   })
   expect_true(any(vapply(
@@ -841,6 +843,43 @@ test_that("rgl chrome is native text and legend geometry", {
     wheel = "none"
   ))
   expect_equal(as.integer(legend$par3d$listeners), as.integer(legend$id))
+
+  # Every chrome region is laid out in its own pixel coordinates and the
+  # camera is zoomed so that rectangle fills the viewport: its far corner
+  # projects to the top-right of normalized device space in the window.
+  chrome <- Filter(
+    function(subscene) {
+      !"trackball" %in% as.character(subscene$par3d$mouseMode)
+    },
+    subscenes
+  )
+  expect_equal(length(chrome), 7L)
+  corners <- lapply(chrome, function(subscene) {
+    rgl::useSubscene3d(subscene$id)
+    viewport <- as.numeric(subscene$par3d$viewport)
+    projection <- rgl::rgl.projection()
+    corner <- projection$proj %*% projection$model %*%
+      c(viewport[[3]], viewport[[4]], 0, 1)
+    return(as.numeric(corner[1:2] / corner[4]))
+  })
+  expect_equal(corners, rep(list(c(1, 1)), 7L), tolerance = 1e-5)
+
+  # The title sits at the left edge of its region, one text size in.
+  title_subscene <- Find(
+    function(subscene) "Spectral layout" %in% subscene_texts(subscene),
+    subscenes
+  )
+  title_object <- Find(
+    function(object) {
+      identical(object$type, "text") && "Spectral layout" %in% object$texts
+    },
+    scene$objects
+  )
+  expect_equal(
+    as.numeric(title_object$vertices[1, c("x", "y")]),
+    c(11, 0.5 * title_subscene$par3d$viewport[[4]])
+  )
+  expect_equal(as.numeric(title_object$adj[1]), 0)
 })
 
 test_that("rgl html output returns a widget", {

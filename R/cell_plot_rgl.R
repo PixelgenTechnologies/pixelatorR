@@ -104,7 +104,7 @@ cell_plot_rgl <- function(
     windowRect = c(0, 0, size$width, size$height)
   )
   on.exit(.cell_rgl_close_html_device(device, previous), add = TRUE)
-  .render_cell_plot_rgl(object, device = device)
+  .render_cell_plot_rgl(object, device = device, webgl = TRUE)
   # A knitr PDF or Word chunk would otherwise ask for a raster snapshot.
   # A null device cannot draw one, and this output is the widget itself.
   return(rgl::rglwidget(
@@ -234,6 +234,8 @@ cell_plot_rgl <- function(
 #' is opened.
 #' @param size List with `width` and `height` in pixels for a new window.
 #' Ignored when `device` is given.
+#' @param webgl Whether the scene will be shown through [rgl::rglwidget()]
+#' rather than in the window. Chrome camera fitting differs between the two.
 #'
 #' @return The rgl device id, returned invisibly.
 #'
@@ -241,7 +243,8 @@ cell_plot_rgl <- function(
 .render_cell_plot_rgl <- function(
   object,
   device = NULL,
-  size = .cell_rgl_canvas_pixels(NULL, NULL)
+  size = .cell_rgl_canvas_pixels(NULL, NULL),
+  webgl = FALSE
 ) {
   pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
 
@@ -454,7 +457,8 @@ cell_plot_rgl <- function(
       angle = 0,
       text_color = text_color,
       text_size = text_size,
-      background_color = strip_background_color
+      background_color = strip_background_color,
+      webgl = webgl
     )
   }
   for (row_index in seq_along(row_strip_ids)) {
@@ -464,7 +468,8 @@ cell_plot_rgl <- function(
       angle = .cell_plot_row_strip_angle,
       text_color = text_color,
       text_size = text_size,
-      background_color = strip_background_color
+      background_color = strip_background_color,
+      webgl = webgl
     )
   }
   if (!is.null(corner_id)) {
@@ -474,7 +479,8 @@ cell_plot_rgl <- function(
       angle = 0,
       text_color = text_color,
       text_size = text_size,
-      background_color = background_color
+      background_color = background_color,
+      webgl = webgl
     )
   }
   if (!is.null(title_id)) {
@@ -484,7 +490,8 @@ cell_plot_rgl <- function(
       subtitle = subtitle,
       text_color = text_color,
       text_size = text_size,
-      background_color = background_color
+      background_color = background_color,
+      webgl = webgl
     )
   }
   if (!is.null(legend_id)) {
@@ -494,7 +501,8 @@ cell_plot_rgl <- function(
       text_size = text_size,
       background_color = background_color,
       categorical_legend = categorical_legend,
-      continuous_legend = continuous_legend
+      continuous_legend = continuous_legend,
+      webgl = webgl
     )
   }
 
@@ -629,18 +637,29 @@ cell_plot_rgl <- function(
 #'
 #' Titles, strips, and legends keep a fixed camera. `FOV = 0` is orthographic,
 #' and every mouse button is `none`, so the region cannot rotate or zoom the
-#' data panels. A zero-length segment pair establishes a unit square without
-#' drawing a visible frame. [rgl::text3d()] ignores that extent, so the square
-#' is what the camera fits.
+#' data panels.
+#'
+#' Chrome is laid out in the region's own pixel coordinates: `x` runs from 0
+#' to the viewport width and `y` from 0 to its height. A zero-length segment
+#' pair at two opposite corners sets that bounding box without drawing a
+#' visible frame. rgl fits the bounding sphere of the box to the shorter
+#' viewport side, which leaves a tall or wide region mostly empty, so the
+#' zoom is set to the factor that makes the box itself fill the viewport.
+#' WebGL encloses a sphere 1.1 times larger than the window does, which the
+#' `webgl` flag compensates for.
 #'
 #' @param subscene Subscene id to draw in.
 #' @param background_color Background color for the region.
+#' @param webgl Whether the scene is drawn for an htmlwidget.
 #'
-#' @return `subscene`, invisibly.
+#' @return A list with the viewport `width` and `height` in pixels.
 #'
 #' @noRd
-.cell_rgl_prepare_chrome <- function(subscene, background_color) {
+.cell_rgl_prepare_chrome <- function(subscene, background_color, webgl) {
   rgl::useSubscene3d(subscene)
+  viewport <- as.numeric(rgl::par3d("viewport", subscene = subscene))
+  width <- max(viewport[[3]], 1)
+  height <- max(viewport[[4]], 1)
   rgl::bg3d(color = background_color)
   rgl::par3d(
     FOV = 0,
@@ -653,15 +672,31 @@ cell_plot_rgl <- function(
     subscene = subscene
   )
   rgl::segments3d(
-    x = c(0, 0, 1, 1),
-    y = c(0, 0, 1, 1),
+    x = c(0, 0, width, width),
+    y = c(0, 0, height, height),
     z = c(0, 0, 0, 0),
     color = background_color,
     lit = FALSE
   )
-  rgl::view3d(theta = 0, phi = 0, fov = 0, zoom = 1)
-  return(invisible(subscene))
+  # The window maps the half-diagonal of the box to the shorter half-side of
+  # the viewport. Zooming by shorter side over diagonal maps the box edge
+  # there instead.
+  zoom <- min(width, height) / sqrt(width^2 + height^2)
+  if (webgl) {
+    zoom <- zoom / .cell_rgl_webgl_enclose_factor
+  }
+  rgl::view3d(theta = 0, phi = 0, fov = 0, zoom = zoom)
+  return(list(width = width, height = height))
 }
+
+#' Orthographic fit ratio between rgl's WebGL and window renderers
+#'
+#' rgl's WebGL projection encloses a bounding sphere 1.1 times the scene
+#' radius while keeping the same observer distance, so its orthographic
+#' half-length is 0.9 times the one the window uses.
+#'
+#' @noRd
+.cell_rgl_webgl_enclose_factor <- 0.9
 
 #' Convert a theme text size into an rgl cex
 #'
@@ -690,6 +725,7 @@ cell_plot_rgl <- function(
 #' @param label Facet level label.
 #' @param angle Text rotation in degrees.
 #' @param text_color,text_size,background_color Theme values.
+#' @param webgl Whether the scene is drawn for an htmlwidget.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -700,18 +736,20 @@ cell_plot_rgl <- function(
   angle,
   text_color,
   text_size,
-  background_color
+  background_color,
+  webgl
 ) {
-  .cell_rgl_prepare_chrome(
+  region <- .cell_rgl_prepare_chrome(
     subscene = subscene,
-    background_color = background_color
+    background_color = background_color,
+    webgl = webgl
   )
   if (!nzchar(label)) {
     return(invisible(NULL))
   }
   rgl::plotmath3d(
-    x = 0.5,
-    y = 0.5,
+    x = region$width / 2,
+    y = region$height / 2,
     z = 0,
     text = label,
     adj = 0.5,
@@ -724,9 +762,13 @@ cell_plot_rgl <- function(
 
 #' Draw a title in a reserved rgl layout region
 #'
+#' The title and subtitle are left-aligned at the region's left edge, as in
+#' ggplot, with a margin of one text size in pixels.
+#'
 #' @param subscene Subscene id for the title.
 #' @param title,subtitle Optional plot title and subtitle text.
 #' @param text_color,text_size,background_color Theme values.
+#' @param webgl Whether the scene is drawn for an htmlwidget.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -737,17 +779,20 @@ cell_plot_rgl <- function(
   subtitle,
   text_color,
   text_size,
-  background_color
+  background_color,
+  webgl
 ) {
-  .cell_rgl_prepare_chrome(
+  region <- .cell_rgl_prepare_chrome(
     subscene = subscene,
-    background_color = background_color
+    background_color = background_color,
+    webgl = webgl
   )
   cex <- .cell_rgl_text_cex(text_size)
+  left <- text_size
   if (!is.null(title)) {
     rgl::text3d(
-      x = 0.02,
-      y = if (is.null(subtitle)) 0.5 else 0.65,
+      x = left,
+      y = region$height * if (is.null(subtitle)) 0.5 else 0.64,
       z = 0,
       texts = title,
       adj = c(0, 0.5),
@@ -758,8 +803,8 @@ cell_plot_rgl <- function(
   }
   if (!is.null(subtitle)) {
     rgl::text3d(
-      x = 0.02,
-      y = if (is.null(title)) 0.5 else 0.25,
+      x = left,
+      y = region$height * if (is.null(title)) 0.5 else 0.28,
       z = 0,
       texts = subtitle,
       adj = c(0, 0.5),
@@ -776,6 +821,7 @@ cell_plot_rgl <- function(
 #' @param text_color,text_size,background_color Theme values.
 #' @param categorical_legend Optional list with `title`, `labels`, and `colors`.
 #' @param continuous_legend Optional list with `title`, `limits`, and `colors`.
+#' @param webgl Whether the scene is drawn for an htmlwidget.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -786,23 +832,27 @@ cell_plot_rgl <- function(
   text_size,
   background_color,
   categorical_legend = NULL,
-  continuous_legend = NULL
+  continuous_legend = NULL,
+  webgl
 ) {
-  .cell_rgl_prepare_chrome(
+  region <- .cell_rgl_prepare_chrome(
     subscene = subscene,
-    background_color = background_color
+    background_color = background_color,
+    webgl = webgl
   )
   if (!is.null(continuous_legend)) {
     .cell_rgl_draw_colorbar(
       continuous_legend = continuous_legend,
       text_color = text_color,
-      text_size = text_size
+      text_size = text_size,
+      region = region
     )
   } else if (!is.null(categorical_legend)) {
     .cell_rgl_draw_discrete_legend(
       categorical_legend = categorical_legend,
       text_color = text_color,
-      text_size = text_size
+      text_size = text_size,
+      region = region
     )
   }
   return(invisible(NULL))
@@ -810,9 +860,13 @@ cell_plot_rgl <- function(
 
 #' Draw a categorical legend with point swatches
 #'
+#' Rows are spaced by the text size in pixels and the block, including its
+#' title, is centered vertically in the legend region.
+#'
 #' @param categorical_legend List with `title`, `labels`, and `colors`.
 #' @param text_color Theme text color.
 #' @param text_size Theme text size.
+#' @param region List with the region `width` and `height` in pixels.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -820,20 +874,36 @@ cell_plot_rgl <- function(
 .cell_rgl_draw_discrete_legend <- function(
   categorical_legend,
   text_color,
-  text_size
+  text_size,
+  region
 ) {
   labels <- categorical_legend$labels
   n_labels <- length(labels)
   if (n_labels == 0L) {
     return(invisible(NULL))
   }
-  ys <- if (n_labels == 1L) {
-    0.42
-  } else {
-    seq(0.72, 0.12, length.out = n_labels)
+  title <- categorical_legend$title
+  has_title <- !is.null(title) && nzchar(title)
+  line <- text_size * 1.8
+  n_rows <- n_labels + if (has_title) 1.4 else 0
+  top <- region$height / 2 + n_rows * line / 2
+  swatch_x <- region$width * 0.16
+  label_x <- region$width * 0.28
+  if (has_title) {
+    rgl::text3d(
+      x = swatch_x,
+      y = top - line * 0.5,
+      z = 0,
+      texts = title,
+      adj = c(0, 0.5),
+      color = text_color,
+      cex = .cell_rgl_text_cex(text_size)
+    )
+    top <- top - line * 1.4
   }
+  ys <- top - (seq_len(n_labels) - 0.5) * line
   rgl::points3d(
-    x = rep(0.16, n_labels),
+    x = rep(swatch_x, n_labels),
     y = ys,
     z = rep(0, n_labels),
     color = categorical_legend$colors,
@@ -841,7 +911,7 @@ cell_plot_rgl <- function(
     lit = FALSE
   )
   rgl::text3d(
-    x = rep(0.28, n_labels),
+    x = rep(label_x, n_labels),
     y = ys,
     z = rep(0, n_labels),
     texts = labels,
@@ -849,18 +919,6 @@ cell_plot_rgl <- function(
     color = text_color,
     cex = .cell_rgl_text_cex(text_size)
   )
-  title <- categorical_legend$title
-  if (!is.null(title) && nzchar(title)) {
-    rgl::text3d(
-      x = 0.16,
-      y = 0.86,
-      z = 0,
-      texts = title,
-      adj = c(0, 0.5),
-      color = text_color,
-      cex = .cell_rgl_text_cex(text_size)
-    )
-  }
   return(invisible(NULL))
 }
 
@@ -889,11 +947,13 @@ cell_plot_rgl <- function(
 #'
 #' Numeric mappings render as stacked [rgl::quads3d()] with vertex colors,
 #' rather than a discrete key. Ticks are [rgl::segments3d()] and labels are
-#' [rgl::text3d()]. Positions are fractions of the legend's unit square.
+#' [rgl::text3d()]. Positions are fractions of the legend region's width and
+#' height in pixels.
 #'
 #' @param continuous_legend List with `title`, `limits`, and `colors`.
 #' @param text_color Theme text color.
 #' @param text_size Theme text size.
+#' @param region List with the region `width` and `height` in pixels.
 #'
 #' @return `NULL`, invisibly.
 #'
@@ -901,15 +961,16 @@ cell_plot_rgl <- function(
 .cell_rgl_draw_colorbar <- function(
   continuous_legend,
   text_color,
-  text_size
+  text_size,
+  region
 ) {
   limits <- .cell_rgl_colorbar_limits(continuous_legend$limits)
   colors <- continuous_legend$colors
   if (length(colors) == 0L) {
     colors <- "#000000"
   }
-  bar_x <- c(0.18, 0.3)
-  bar_y <- c(0.3, 0.7)
+  bar_x <- c(0.18, 0.3) * region$width
+  bar_y <- c(0.3, 0.7) * region$height
   if (length(colors) == 1L) {
     rgl::quads3d(
       x = c(bar_x[[1]], bar_x[[2]], bar_x[[2]], bar_x[[1]]),
@@ -974,7 +1035,7 @@ cell_plot_rgl <- function(
   if (!is.null(title) && nzchar(title)) {
     rgl::text3d(
       x = mean(bar_x),
-      y = 0.77,
+      y = 0.77 * region$height,
       z = 0,
       texts = title,
       color = text_color,
