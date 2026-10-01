@@ -4,8 +4,8 @@
 #' mappings, and optional rendering instructions without drawing a plot. Add
 #' instructions with the `cell_*()` modifier functions. Printing the recipe
 #' builds and renders a ggplot. [cell_plot_interactive()] draws the same
-#' recipe as a 3D Plotly widget. [cell_plot_rgl()] draws it as a native rgl
-#' scene. [cell_plot_animate()] encodes a rotating GIF or video after
+#' recipe as a 3D Plotly widget. [cell_plot_rgl()] returns it as an rgl
+#' htmlwidget. [cell_plot_animate()] encodes a rotating GIF or video after
 #' [cell_coord_rotate()]. [summary()] inspects the recipe without drawing.
 #'
 #' A `cell_plot` is an S3 list with a fixed set of fields:

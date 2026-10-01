@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `cell_plot_rgl(output = "html")` returns an rgl htmlwidget. `width` and
-  `height` set the window or canvas in pixels. In a knitr HTML chunk, a
-  missing size follows the chunk figure size. Printed at the console, an
-  unsized widget fills the IDE viewer and follows its size; titles, strips,
-  and legends are refitted on every resize so they keep their place and size.
+- `cell_plot_rgl()` returns an rgl htmlwidget. `width` and `height` set the
+  canvas in pixels. In a knitr HTML chunk, a missing size follows the chunk
+  figure size. Printed at the console, an unsized widget fills the IDE viewer
+  and follows its size; titles, strips, and legends are refitted on every
+  resize so they keep their place and size.
 
 ### Changed
 

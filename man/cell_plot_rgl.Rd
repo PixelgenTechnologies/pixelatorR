@@ -4,32 +4,19 @@
 \alias{cell_plot_rgl}
 \title{Render a cell plot with rgl}
 \usage{
-cell_plot_rgl(
-  object,
-  output = c("window", "html"),
-  width = NULL,
-  height = NULL
-)
+cell_plot_rgl(object, width = NULL, height = NULL)
 }
 \arguments{
 \item{object}{A \code{cell_plot} recipe.}
 
-\item{output}{\code{"window"} opens a local rgl window. \code{"html"} returns an
-htmlwidget.}
-
-\item{width, height}{Size in pixels. For \code{"window"} this is the window
-size, 1000 by 1000 when not given. For \code{"html"} it is the canvas size.
-Inside a knitr HTML chunk, a missing html size is the chunk \code{fig.width} or
-\code{fig.height} in inches multiplied by \code{dpi}. Outside knitr, an html widget
+\item{width, height}{Canvas size in pixels, 1000 by 1000 when not given.
+Inside a knitr HTML chunk, a missing size is the chunk \code{fig.width} or
+\code{fig.height} in inches multiplied by \code{dpi}. Outside knitr, a widget
 without \code{width} and \code{height} fills the viewer or browser element it is
-shown in. Titles, strips, and legends are refitted whenever the widget is
-resized, so the title stays at the left edge and the legend keeps its
-size. The window has no resize hook: its chrome is laid out once for the
-initial window size and drifts if the window is resized afterwards.}
+shown in.}
 }
 \value{
-For \code{"window"}, the rgl device id, invisibly. For \code{"html"}, an
-htmlwidget.
+An htmlwidget.
 }
 \description{
 Builds a \code{\link[=cell_plot]{cell_plot()}} recipe and draws it as an interactive native 3D
@@ -54,14 +41,15 @@ while legends are drawn from the unilluminated color scale metadata.
 Numeric color mappings use a continuous colorbar;
 categorical mappings use a discrete legend.
 
-\code{output = "window"} opens an rgl device and returns the device id invisibly.
-\code{output = "html"} draws the same scene on a null device and returns an rgl
-htmlwidget for Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. Printed
+The scene is drawn on a null device and returned as an rgl htmlwidget for
+the IDE viewer, Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. Printed
 at the console, the widget opens in the IDE viewer, fills it, and follows
-it when the pane is resized. Legends are native scene objects and do not
-support Plotly-style interactive legend filtering. Title and legend text
-uses rgl's own font. Facet strip labels are rasterized with base graphics,
-because rgl text cannot be rotated for the row strips.
+it when the pane is resized. Titles, strips, and legends are refitted on
+that resize, so the title stays at the left edge and the legend keeps its
+size. Legends are native scene objects and do not support Plotly-style
+interactive legend filtering. Title and legend text uses rgl's own font.
+Facet strip labels are rasterized with base graphics, because rgl text
+cannot be rotated for the row strips.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

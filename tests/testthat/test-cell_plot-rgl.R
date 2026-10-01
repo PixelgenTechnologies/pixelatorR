@@ -119,6 +119,21 @@ rgl_plot_summary <- function(scene) {
   ))
 }
 
+# Draws on a null device and leaves it open, so scene3d() and rgl.attrib()
+# can read the result. cell_plot_rgl() returns a widget and closes its device.
+render_rgl_scene <- function(object) {
+  object$mapping$arrange <- NULL
+  built <- build_cell_plot(object)
+  canvas <- pixelatorR:::.cell_rgl_default_canvas_px
+  rgl::open3d(
+    useNULL = TRUE,
+    silent = TRUE,
+    windowRect = c(0, 0, canvas, canvas)
+  )
+  pixelatorR:::.render_cell_plot_rgl(built, device = rgl::cur3d())
+  return(rgl::scene3d())
+}
+
 test_that("rgl cell plots work as expected", {
   old_options <- options(rgl.useNULL = TRUE)
   on.exit(options(old_options), add = TRUE)
@@ -150,14 +165,12 @@ test_that("rgl cell plots work as expected", {
     ) |>
     cell_annotation(title = "Cells", subtitle = "demo") |>
     cell_coord_rotate() |>
-    cell_illuminate() |>
-    cell_plot_rgl()
+    cell_illuminate()
 
-  expect_equal(continuous, as.integer(rgl::cur3d()))
-  continuous_summary <- rgl_plot_summary(continuous)
+  continuous_summary <- rgl_plot_summary(render_rgl_scene(continuous))
   expect_equal(continuous_summary$n_panels, 1L)
   expect_equal(continuous_summary$n_root_subscenes, 3L)
-  expect_equal(continuous_summary$windowRect, c(100, 100, 1100, 1100))
+  expect_equal(continuous_summary$windowRect, c(0, 0, 1000, 1000))
   expect_equal(
     continuous_summary$panels[[1]]$points,
     list(
@@ -184,9 +197,7 @@ test_that("rgl cell plots work as expected", {
   )
 
   rgl::close3d()
-  constant <- cell_plot(plot_data) |>
-    cell_plot_rgl()
-  constant_summary <- rgl_plot_summary(constant)
+  constant_summary <- rgl_plot_summary(render_rgl_scene(cell_plot(plot_data)))
   expect_equal(
     constant_summary$panels[[1]]$points[[1]][c("color", "size", "rgba")],
     list(
@@ -204,9 +215,10 @@ test_that("rgl cell plots work as expected", {
   expect_equal(constant_summary$background_colors, "#FFFFFF")
 
   rgl::close3d()
-  mixed <- cell_plot(plot_data, color = cell) |>
-    cell_node_scale_color(colors = c(a = "red", b = "blue")) |>
-    cell_plot_rgl()
+  mixed <- render_rgl_scene(
+    cell_plot(plot_data, color = cell) |>
+      cell_node_scale_color(colors = c(a = "red", b = "blue"))
+  )
   expect_equal(
     rgl_plot_summary(mixed)$panels[[1]]$points[[1]][c("x", "y", "z", "rgba")],
     list(
@@ -223,11 +235,11 @@ test_that("rgl cell plots work as expected", {
   )
 
   rgl::close3d()
-  categorical <- cell_plot(plot_data, color = cell) |>
-    cell_node_scale_color(colors = c(a = "red", b = "blue")) |>
-    cell_grid(cols = cell) |>
-    cell_plot_rgl()
-  categorical_summary <- rgl_plot_summary(categorical)
+  categorical_summary <- rgl_plot_summary(render_rgl_scene(
+    cell_plot(plot_data, color = cell) |>
+      cell_node_scale_color(colors = c(a = "red", b = "blue")) |>
+      cell_grid(cols = cell)
+  ))
   expect_equal(categorical_summary$n_panels, 2L)
   expect_equal(
     lapply(categorical_summary$panels, function(panel) {
@@ -262,18 +274,18 @@ test_that("rgl cell plots ignore depth sizing and arrangement", {
     z = c(-1, 1)
   )
 
-  without_depth <- cell_plot(plot_data, size = 2, depth = NULL) |>
-    cell_plot_rgl()
-  without_depth <- rgl_plot_summary(without_depth)
+  without_depth <- rgl_plot_summary(render_rgl_scene(
+    cell_plot(plot_data, size = 2, depth = NULL)
+  ))
   rgl::close3d()
-  with_depth <- cell_plot(plot_data, size = 2) |>
-    cell_node_depth(focal_distance = 0.2) |>
-    cell_plot_rgl()
-  with_depth <- rgl_plot_summary(with_depth)
+  with_depth <- rgl_plot_summary(render_rgl_scene(
+    cell_plot(plot_data, size = 2) |>
+      cell_node_depth(focal_distance = 0.2)
+  ))
   rgl::close3d()
-  arranged <- cell_plot(plot_data, arrange = x) |>
-    cell_plot_rgl()
-  arranged <- rgl_plot_summary(arranged)
+  arranged <- rgl_plot_summary(render_rgl_scene(
+    cell_plot(plot_data, arrange = x)
+  ))
 
   expect_equal(
     without_depth$panels[[1]]$points[[1]]$size,
@@ -302,10 +314,9 @@ test_that("rgl cell plot grids work as expected", {
     panel = factor(c("b", NA, "a"), levels = c("a", "b", "unused"))
   ) |>
     cell_plot() |>
-    cell_grid(rows = panel) |>
-    cell_plot_rgl()
+    cell_grid(rows = panel)
 
-  na_summary <- rgl_plot_summary(na_factor)
+  na_summary <- rgl_plot_summary(render_rgl_scene(na_factor))
   expect_equal(na_summary$n_panels, 4L)
   expect_equal(
     lapply(na_summary$panels, function(panel) {
@@ -353,19 +364,20 @@ test_that("rgl cell plot grids work as expected", {
   )
 
   rgl::close3d()
-  one_level <- tibble::tibble(
-    x = c(0, 1),
-    y = c(0, 1),
-    z = c(0, 1),
-    panel = "only"
-  ) |>
-    cell_plot() |>
-    cell_grid(cols = panel) |>
-    cell_plot_rgl()
+  one_level <- rgl_plot_summary(render_rgl_scene(
+    tibble::tibble(
+      x = c(0, 1),
+      y = c(0, 1),
+      z = c(0, 1),
+      panel = "only"
+    ) |>
+      cell_plot() |>
+      cell_grid(cols = panel)
+  ))
   expect_equal(
     list(
-      n_panels = rgl_plot_summary(one_level)$n_panels,
-      n_root_subscenes = rgl_plot_summary(one_level)$n_root_subscenes
+      n_panels = one_level$n_panels,
+      n_root_subscenes = one_level$n_root_subscenes
     ),
     list(n_panels = 1L, n_root_subscenes = 2L)
   )
@@ -388,10 +400,10 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
   faceted <- cell_plot(plot_data, color = marker) |>
     cell_node_scale_color(colors = c("black", "white"), limits = c(0, 2)) |>
     cell_grid(rows = row, cols = col) |>
-    cell_annotation(title = "Facet title") |>
-    cell_plot_rgl()
+    cell_annotation(title = "Facet title")
 
-  summary <- rgl_plot_summary(faceted)
+  scene <- render_rgl_scene(faceted)
+  summary <- rgl_plot_summary(scene)
   expect_equal(summary$n_panels, 4L)
   # Four dedicated facet strips, the strip-corner cell, a title, and a legend
   # sit outside the four data panels, so points cannot cover facet text.
@@ -433,7 +445,7 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
   # Title, strips, and the legend are orthographic and ignore the pointer.
   # They do not listen for the data panels, so dragging them does not move
   # the plot.
-  all_subscenes <- rgl::scene3d()$rootSubscene$subscenes
+  all_subscenes <- scene$rootSubscene$subscenes
   chrome_subscenes <- Filter(
     function(subscene) {
       modes <- unname(as.character(subscene$par3d$mouseMode))
@@ -464,13 +476,13 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
   # rotated row-label sprites, and the continuous legend's quads, with no
   # bgplot3d background textures.
   panel_types <- unlist(lapply(
-    rgl::scene3d()$rootSubscene$subscenes[vapply(
+    scene$rootSubscene$subscenes[vapply(
       all_subscenes,
       function(subscene) subscene$id %in% panel_ids,
       logical(1)
     )],
     rgl_subscene_object_types,
-    scene = rgl::scene3d()
+    scene = scene
   ))
   expect_equal(
     c(
@@ -483,7 +495,7 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
     c(TRUE, FALSE, TRUE, TRUE, TRUE)
   )
   expect_false(any(vapply(
-    rgl::scene3d()$objects,
+    scene$objects,
     function(object) {
       texture <- object$material$texture
       return(
@@ -578,7 +590,7 @@ test_that("rgl cell plots use builder-baked illumination colors", {
   expect_equal(length(unique(rendered)) > 1L, TRUE)
   expect_equal(rendered, built$color$illuminated)
 
-  scene <- cell_plot_rgl(recipe)
+  scene <- render_rgl_scene(recipe)
   summary <- rgl_plot_summary(scene)
   scene_rgba <- do.call(
     rbind,
@@ -682,16 +694,15 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
   legend_log <- tempfile()
   legend_con <- file(legend_log, open = "wt")
   sink(legend_con, type = "message")
-  wide_device <- cell_plot_rgl(wide_categorical)
+  wide_widget <- cell_plot_rgl(wide_categorical)
   sink(type = "message")
   close(legend_con)
-  expect_equal(as.integer(wide_device), as.integer(rgl::cur3d()))
+  expect_s3_class(wide_widget, "htmlwidget")
   expect_equal(
     any(grepl("figure margins too large", readLines(legend_log), fixed = TRUE)),
     FALSE
   )
   unlink(legend_log)
-  rgl::close3d()
 
   flat_legend <- list(
     title = "marker",
@@ -733,10 +744,9 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
   ) |>
     cell_plot(color = marker) |>
     cell_node_scale_color(colors = c("black", "white"), limits = c(1, 1)) |>
-    cell_grid(cols = panel) |>
-    cell_plot_rgl()
-  expect_equal(na_facet, as.integer(rgl::cur3d()))
-  expect_equal(rgl_plot_summary(na_facet)$n_panels, 2L)
+    cell_grid(cols = panel)
+
+  expect_equal(rgl_plot_summary(render_rgl_scene(na_facet))$n_panels, 2L)
 })
 
 test_that("rgl chrome is native text and legend geometry", {
@@ -755,10 +765,9 @@ test_that("rgl chrome is native text and legend geometry", {
     cell_plot(color = marker) |>
     cell_node_scale_color(colors = c("black", "white"), limits = c(0, 3)) |>
     cell_grid(cols = cell, rows = panel) |>
-    cell_annotation(title = "Spectral layout") |>
-    cell_plot_rgl()
+    cell_annotation(title = "Spectral layout")
 
-  scene <- rgl::scene3d()
+  scene <- render_rgl_scene(faceted)
   subscene_texts <- function(subscene) {
     texts <- lapply(as.character(subscene$objects), function(id) {
       object <- scene$objects[[id]]
@@ -901,27 +910,12 @@ test_that("rgl html output returns a widget", {
     return(devices)
   }
 
-  expect_error(cell_plot_rgl(recipe, output = "png"), regexp = "output")
   expect_error(cell_plot_rgl(recipe, width = 0), regexp = "width")
   expect_error(cell_plot_rgl(recipe, height = 2.5), regexp = "height")
   expect_equal(open_devices(), integer())
 
-  # The window takes the requested size and otherwise stays 1000 by 1000.
-  sized_window <- cell_plot_rgl(recipe, width = 800, height = 600)
-  expect_equal(
-    as.numeric(rgl::par3d("windowRect", dev = sized_window)),
-    c(100, 100, 900, 700)
-  )
-  rgl::close3d()
-  default_window <- cell_plot_rgl(recipe)
-  expect_equal(
-    as.numeric(rgl::par3d("windowRect", dev = default_window)),
-    c(100, 100, 1100, 1100)
-  )
-  rgl::close3d()
-
   before <- open_devices()
-  widget <- cell_plot_rgl(recipe, output = "html", width = 640, height = 480)
+  widget <- cell_plot_rgl(recipe, width = 640, height = 480)
   expect_s3_class(widget, "htmlwidget")
   expect_equal(
     list(width = widget$width, height = widget$height),
@@ -956,7 +950,7 @@ test_that("rgl html output returns a widget", {
   ) |>
     cell_grid(cols = g) |>
     cell_annotation(title = "Title") |>
-    cell_plot_rgl(output = "html")
+    cell_plot_rgl()
   hook <- chrome_widget$jsHooks$render[[1]]
   chrome_subscenes <- Filter(
     function(object) {
@@ -985,7 +979,7 @@ test_that("rgl html output returns a widget", {
 
   # Without a size the widget fills the viewer, so it carries no fixed size,
   # while the layout was still computed on a 1000 by 1000 canvas.
-  default_widget <- cell_plot_rgl(recipe, output = "html")
+  default_widget <- cell_plot_rgl(recipe)
   default_subscene <- default_widget$x$objects[[
     as.character(default_widget$x$rootSubscene)
   ]]
@@ -1023,10 +1017,10 @@ test_that("rgl html output returns a widget", {
   knitr::opts_current$set(fig.width = 4, fig.height = 3, dpi = 100)
   options(knitr.in.progress = TRUE)
   knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  pdf_widget <- cell_plot_rgl(recipe, output = "html")
+  pdf_widget <- cell_plot_rgl(recipe)
   expect_null(pdf_widget$width)
   knitr::opts_knit$set(rmarkdown.pandoc.to = "html")
-  chunk_widget <- cell_plot_rgl(recipe, output = "html", width = 220)
+  chunk_widget <- cell_plot_rgl(recipe, width = 220)
   expect_equal(
     list(width = chunk_widget$width, height = chunk_widget$height),
     list(width = 220, height = 300)

@@ -21,30 +21,24 @@
 #' Numeric color mappings use a continuous colorbar;
 #' categorical mappings use a discrete legend.
 #'
-#' `output = "window"` opens an rgl device and returns the device id invisibly.
-#' `output = "html"` draws the same scene on a null device and returns an rgl
-#' htmlwidget for Quarto, R Markdown, and `htmlwidgets::saveWidget()`. Printed
+#' The scene is drawn on a null device and returned as an rgl htmlwidget for
+#' the IDE viewer, Quarto, R Markdown, and `htmlwidgets::saveWidget()`. Printed
 #' at the console, the widget opens in the IDE viewer, fills it, and follows
-#' it when the pane is resized. Legends are native scene objects and do not
-#' support Plotly-style interactive legend filtering. Title and legend text
-#' uses rgl's own font. Facet strip labels are rasterized with base graphics,
-#' because rgl text cannot be rotated for the row strips.
+#' it when the pane is resized. Titles, strips, and legends are refitted on
+#' that resize, so the title stays at the left edge and the legend keeps its
+#' size. Legends are native scene objects and do not support Plotly-style
+#' interactive legend filtering. Title and legend text uses rgl's own font.
+#' Facet strip labels are rasterized with base graphics, because rgl text
+#' cannot be rotated for the row strips.
 #'
 #' @param object A `cell_plot` recipe.
-#' @param output `"window"` opens a local rgl window. `"html"` returns an
-#' htmlwidget.
-#' @param width,height Size in pixels. For `"window"` this is the window
-#' size, 1000 by 1000 when not given. For `"html"` it is the canvas size.
-#' Inside a knitr HTML chunk, a missing html size is the chunk `fig.width` or
-#' `fig.height` in inches multiplied by `dpi`. Outside knitr, an html widget
+#' @param width,height Canvas size in pixels, 1000 by 1000 when not given.
+#' Inside a knitr HTML chunk, a missing size is the chunk `fig.width` or
+#' `fig.height` in inches multiplied by `dpi`. Outside knitr, a widget
 #' without `width` and `height` fills the viewer or browser element it is
-#' shown in. Titles, strips, and legends are refitted whenever the widget is
-#' resized, so the title stays at the left edge and the legend keeps its
-#' size. The window has no resize hook: its chrome is laid out once for the
-#' initial window size and drifts if the window is resized afterwards.
+#' shown in.
 #'
-#' @return For `"window"`, the rgl device id, invisibly. For `"html"`, an
-#' htmlwidget.
+#' @return An htmlwidget.
 #'
 #' @seealso [cell_plot()], [cell_plot_interactive()]
 #'
@@ -61,26 +55,15 @@
 #'   cell_plot_rgl()
 #'
 #' @export
-cell_plot_rgl <- function(
-  object,
-  output = c("window", "html"),
-  width = NULL,
-  height = NULL
-) {
+cell_plot_rgl <- function(object, width = NULL, height = NULL) {
   .validate_cell_plot(object)
   expect_rgl()
-  output <- rlang::arg_match(output)
   width <- .cell_rgl_check_px(width, arg = "width")
   height <- .cell_rgl_check_px(height, arg = "height")
 
   object$mapping$arrange <- NULL
   built <- build_cell_plot(object)
-  if (identical(output, "html")) {
-    return(.cell_rgl_html_widget(built, width = width, height = height))
-  }
-  size <- .cell_rgl_canvas_pixels(width, height)
-  rendered <- .render_cell_plot_rgl(built, size = size)
-  return(invisible(rendered$device))
+  return(.cell_rgl_html_widget(built, width = width, height = height))
 }
 
 #' Draw a cell plot into an rgl htmlwidget
@@ -318,10 +301,7 @@ function(el, x, data) {
 #' subscenes, so placement does not depend on the upper-left panel.
 #'
 #' @param object A `cell_plot_built` object with a mapped `z` coordinate.
-#' @param device An open rgl device to draw into. When `NULL`, a local window
-#' is opened.
-#' @param size List with `width` and `height` in pixels for a new window.
-#' Ignored when `device` is given.
+#' @param device An open rgl device to draw into.
 #'
 #' @return A list with `device`, the rgl device id, and `chrome`, a list with
 #' one entry per chrome subscene giving its `id` and how its content is
@@ -329,11 +309,7 @@ function(el, x, data) {
 #' `"center"` for facet strips.
 #'
 #' @noRd
-.render_cell_plot_rgl <- function(
-  object,
-  device = NULL,
-  size = .cell_rgl_canvas_pixels(NULL, NULL)
-) {
+.render_cell_plot_rgl <- function(object, device) {
   pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
 
   mapping <- object$mapping
@@ -419,13 +395,7 @@ function(el, x, data) {
     )
   }
 
-  if (is.null(device)) {
-    device <- rgl::open3d(
-      windowRect = c(100, 100, 100 + size$width, 100 + size$height)
-    )
-  } else {
-    rgl::set3d(device, silent = TRUE)
-  }
+  rgl::set3d(device, silent = TRUE)
 
   title_id <- NULL
   legend_id <- NULL

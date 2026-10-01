@@ -63,8 +63,8 @@ Creates a cell-layout visualization recipe. The recipe stores data, column
 mappings, and optional rendering instructions without drawing a plot. Add
 instructions with the \verb{cell_*()} modifier functions. Printing the recipe
 builds and renders a ggplot. \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} draws the same
-recipe as a 3D Plotly widget. \code{\link[=cell_plot_rgl]{cell_plot_rgl()}} draws it as a native rgl
-scene. \code{\link[=cell_plot_animate]{cell_plot_animate()}} encodes a rotating GIF or video after
+recipe as a 3D Plotly widget. \code{\link[=cell_plot_rgl]{cell_plot_rgl()}} returns it as an rgl
+htmlwidget. \code{\link[=cell_plot_animate]{cell_plot_animate()}} encodes a rotating GIF or video after
 \code{\link[=cell_coord_rotate]{cell_coord_rotate()}}. \code{\link[=summary]{summary()}} inspects the recipe without drawing.
 }
 \details{
