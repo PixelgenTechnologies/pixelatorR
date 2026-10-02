@@ -681,10 +681,11 @@ function(el, x, data) {
 
 #' Draw rgl points grouped by pixel size
 #'
-#' Uses the same unlit `points` primitive as [rgl::plot3d()] `type = "p"`.
-#' [rgl::points3d()] accepts only a scalar point size, so nodes are split into
-#' a bounded number of size groups while
-#' preserving per-node color and alpha vectors within each group.
+#' Uses the same unlit `points` primitive as [rgl::plot3d()] `type = "p"`,
+#' with `point_antialias` so WebGL draws round points. [rgl::points3d()]
+#' accepts only a scalar point size, so nodes are split into a bounded number
+#' of size groups while preserving per-node color and alpha vectors within
+#' each group.
 #'
 #' @param x,y,z Node coordinates.
 #' @param color Hex colors.
@@ -707,7 +708,8 @@ function(el, x, data) {
         z = z[idx],
         size = groups$size[[as.character(key)]],
         color = color[idx],
-        alpha = alpha[idx]
+        alpha = alpha[idx],
+        point_antialias = TRUE
       )
     )
   }

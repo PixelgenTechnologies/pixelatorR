@@ -7,6 +7,7 @@ rgl_point_summary <- function(object_id, scene) {
     y = as.numeric(obj$vertices[, "y"]),
     z = as.numeric(obj$vertices[, "z"]),
     size = as.numeric(obj$material$size),
+    round = isTRUE(obj$material$point_antialias),
     color = unname(as.character(
       if (is.null(obj$material$color)) character() else obj$material$color
     )),
@@ -181,6 +182,7 @@ test_that("rgl cell plots work as expected", {
         y = 1,
         z = -1,
         size = 2 * 96 / 25.4,
+        round = TRUE,
         color = character(),
         rgba = data.frame(r = 0, g = 0, b = 0, a = 0.356862753629684)
       ),
@@ -190,6 +192,7 @@ test_that("rgl cell plots work as expected", {
         y = 0,
         z = 1,
         size = 6 * 96 / 25.4,
+        round = TRUE,
         color = "#FFFFFF",
         rgba = data.frame(r = 1, g = 1, b = 1, a = 1)
       )
