@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `cell_plot_rgl()` does not use `later`.
 
+### Deprecated
+
+- The `add_layouts` argument of `LoadCellGraphs()` is deprecated and will be
+  removed in a future release. It still works, but supplying it now signals a
+  `lifecycle` deprecation warning once per R session.
+
 ## [0.22.0] - 2026-10-01
 
 ### Added
