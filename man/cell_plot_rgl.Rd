@@ -11,7 +11,8 @@ cell_plot_rgl(object, width = NULL, height = NULL)
 
 \item{width, height}{Canvas size in pixels, 1000 by 1000 when not given.
 Inside a knitr HTML chunk, a missing size is the chunk \code{fig.width} or
-\code{fig.height} in inches multiplied by \code{dpi}. Outside knitr, a widget
+\code{fig.height} in inches multiplied by \code{dpi}. That sizing needs the suggested
+package knitr, which Quarto and R Markdown install. Outside knitr, a widget
 without \code{width} and \code{height} fills the viewer or browser element it is
 shown in.}
 }
@@ -46,7 +47,8 @@ the IDE viewer, Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. Printe
 at the console, the widget opens in the IDE viewer, fills it, and follows
 it when the pane is resized. Titles, strips, and legends are refitted on
 that resize, so the title stays at the left edge and the legend keeps its
-size. Legends are native scene objects and do not support Plotly-style
+size. The title row stays exactly as tall as the title and subtitle.
+Legends are native scene objects and do not support Plotly-style
 interactive legend filtering. Title and legend text uses rgl's own font.
 Facet strip labels are rasterized with base graphics, because rgl text
 cannot be rotated for the row strips.

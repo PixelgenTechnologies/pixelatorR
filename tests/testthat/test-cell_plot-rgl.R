@@ -517,10 +517,16 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
     need_col_strips = TRUE,
     need_row_strips = TRUE,
     need_title = TRUE,
-    need_legend = TRUE
+    need_legend = TRUE,
+    text_size = 11,
+    viewport = c(width = 1000, height = 1000)
   )
   expect_equal(
-    both_strips,
+    list(
+      mat = both_strips$mat,
+      title_px = both_strips$title_px,
+      title_row = 1000 * both_strips$heights[[1]] / sum(both_strips$heights)
+    ),
     list(
       mat = matrix(
         c(
@@ -531,9 +537,17 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
         ),
         nrow = 4L
       ),
-      widths = c(0.107547169811321, 1, 1, 0.28),
-      heights = c(0.12, 0.1, 1, 1)
+      title_px = 36,
+      title_row = 36
     )
+  )
+  expect_equal(
+    pixelatorR:::.cell_rgl_title_row_px(
+      text_size = 11,
+      has_title = TRUE,
+      has_subtitle = TRUE
+    ),
+    50.6
   )
   rectangular_strips <- pixelatorR:::.cell_rgl_facet_layout(
     n_row = 2L,
@@ -968,12 +982,20 @@ test_that("rgl html output returns a widget", {
     list(
       code = hook$code,
       ids = sort(hook_ids),
-      anchors = vapply(hook$data$chrome, function(entry) entry$anchor, character(1))
+      anchors = vapply(
+        hook$data$chrome,
+        function(entry) entry$anchor,
+        character(1)
+      ),
+      title_px = hook$data$titlePx,
+      layout_height = hook$data$layoutHeight
     ),
     list(
       code = htmlwidgets::JS(.cell_rgl_chrome_fit_js),
       ids = unname(chrome_ids),
-      anchors = c("center", "center", "left", "left")
+      anchors = c("center", "center", "left", "left"),
+      title_px = 36,
+      layout_height = 1000
     )
   )
 

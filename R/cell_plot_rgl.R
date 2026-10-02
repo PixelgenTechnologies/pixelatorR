@@ -26,7 +26,8 @@
 #' at the console, the widget opens in the IDE viewer, fills it, and follows
 #' it when the pane is resized. Titles, strips, and legends are refitted on
 #' that resize, so the title stays at the left edge and the legend keeps its
-#' size. Legends are native scene objects and do not support Plotly-style
+#' size. The title row stays exactly as tall as the title and subtitle.
+#' Legends are native scene objects and do not support Plotly-style
 #' interactive legend filtering. Title and legend text uses rgl's own font.
 #' Facet strip labels are rasterized with base graphics, because rgl text
 #' cannot be rotated for the row strips.
@@ -34,7 +35,8 @@
 #' @param object A `cell_plot` recipe.
 #' @param width,height Canvas size in pixels, 1000 by 1000 when not given.
 #' Inside a knitr HTML chunk, a missing size is the chunk `fig.width` or
-#' `fig.height` in inches multiplied by `dpi`. Outside knitr, a widget
+#' `fig.height` in inches multiplied by `dpi`. That sizing needs the suggested
+#' package knitr, which Quarto and R Markdown install. Outside knitr, a widget
 #' without `width` and `height` fills the viewer or browser element it is
 #' shown in.
 #'
@@ -105,7 +107,11 @@ cell_plot_rgl <- function(object, width = NULL, height = NULL) {
     widget <- htmlwidgets::onRender(
       widget,
       htmlwidgets::JS(.cell_rgl_chrome_fit_js),
-      data = list(chrome = rendered$chrome)
+      data = list(
+        chrome = rendered$chrome,
+        titlePx = rendered$title_px,
+        layoutHeight = rendered$layout_height
+      )
     )
   }
   return(widget)
@@ -120,15 +126,16 @@ cell_plot_rgl <- function(object, width = NULL, height = NULL) {
 #' toward the middle, or off the left edge when the canvas grows taller.
 #'
 #' The hook runs once after the widget renders and again after every resize.
-#' For each chrome subscene it recomputes `zoom` so one scene unit is one
-#' canvas pixel, mirroring rgl's own orthographic projection (observer
-#' distance minus the padded bounding radius is the half-length that spans
-#' the shorter viewport side), and sets a translation in `userMatrix` that
-#' pins left-anchored regions to the viewport's left edge while keeping them
-#' centered vertically. Chrome is drawn in pixel units relative to the
-#' region's left edge and vertical center, so this keeps titles and legends
-#' at their designed size and place. Strip labels stay centered. The data
-#' panels are untouched.
+#' The title row keeps the pixel height it was drawn at, and every other row
+#' takes the space that remains. For each chrome subscene it then recomputes
+#' `zoom` so one scene unit is one canvas pixel, mirroring rgl's own
+#' orthographic projection (observer distance minus the padded bounding
+#' radius is the half-length that spans the shorter viewport side), and sets
+#' a translation in `userMatrix` that pins left-anchored regions to the
+#' viewport's left edge while keeping them centered vertically. Chrome is
+#' drawn in pixel units relative to the region's left edge and vertical
+#' center, so this keeps titles and legends at their designed size and
+#' place. Strip labels stay centered. The data panels are untouched.
 #'
 #' @noRd
 .cell_rgl_chrome_fit_js <- "
@@ -138,7 +145,51 @@ function(el, x, data) {
     return;
   }
   var chrome = [].concat(data.chrome);
+  var reflow = function() {
+    var titlePx = data.titlePx,
+        baseHeight = data.layoutHeight,
+        H = rgl.canvas.height,
+        T, ids, k, sub, src, vp0, top0, height0, bot0, span, top, height;
+    if (!(titlePx > 0) || !(baseHeight > titlePx) || !(H > 1)) {
+      return;
+    }
+    T = Math.min(titlePx, H - 1);
+    ids = Object.keys(rgl.scene.objects);
+    for (k = 0; k < ids.length; k++) {
+      sub = rgl.scene.objects[ids[k]];
+      if (!sub || sub.type !== 'subscene' || !sub.par3d || !sub.par3d.viewport) {
+        continue;
+      }
+      if (!sub.cellRglViewport) {
+        src = sub.par3d.viewport;
+        sub.cellRglViewport = {
+          x: src.x, y: src.y, width: src.width, height: src.height
+        };
+      }
+      vp0 = sub.cellRglViewport;
+      if (vp0.width >= 0.999 && vp0.height >= 0.999) {
+        continue;
+      }
+      top0 = (1 - vp0.y - vp0.height) * baseHeight;
+      height0 = vp0.height * baseHeight;
+      bot0 = top0 + height0;
+      if (height0 >= baseHeight - 1) {
+        top = 0;
+        height = H;
+      } else if (bot0 <= titlePx + 0.5) {
+        top = 0;
+        height = T;
+      } else {
+        span = baseHeight - titlePx;
+        top = T + (top0 - titlePx) / span * (H - T);
+        height = height0 / span * (H - T);
+      }
+      sub.par3d.viewport.y = (H - top - height) / H;
+      sub.par3d.viewport.height = height / H;
+    }
+  };
   var fit = function() {
+    reflow();
     for (var i = 0; i < chrome.length; i++) {
       var sub = rgl.getObj(chrome[i].id);
       if (!sub || sub.type !== 'subscene') {
@@ -263,7 +314,8 @@ function(el, x, data) {
 #' Figure size of the current knitr HTML chunk
 #'
 #' Returns pixel sizes only while knitr is rendering an HTML document. Other
-#' outputs, including PDF and Word, keep the default canvas.
+#' outputs, including PDF and Word, keep the default canvas. A knitr render
+#' without knitr installed stops and asks for the package.
 #'
 #' @return A list with integer `width` and `height`, or `NULL` when the chunk
 #' size does not apply.
@@ -273,9 +325,7 @@ function(el, x, data) {
   if (!isTRUE(getOption("knitr.in.progress"))) {
     return(NULL)
   }
-  if (!requireNamespace("knitr", quietly = TRUE)) {
-    return(NULL)
-  }
+  expect_knitr()
   if (!isTRUE(knitr::is_html_output())) {
     return(NULL)
   }
@@ -303,10 +353,11 @@ function(el, x, data) {
 #' @param object A `cell_plot_built` object with a mapped `z` coordinate.
 #' @param device An open rgl device to draw into.
 #'
-#' @return A list with `device`, the rgl device id, and `chrome`, a list with
-#' one entry per chrome subscene giving its `id` and how its content is
-#' anchored when the canvas is resized: `"left"` for the title and legend,
-#' `"center"` for facet strips.
+#' @return A list with `device`, the rgl device id, `chrome`, a list with one
+#' entry per chrome subscene giving its `id` and how its content is anchored
+#' when the canvas is resized (`"left"` for the title and legend, `"center"`
+#' for facet strips), `title_px`, the title row height in pixels or `NULL`,
+#' and `layout_height`, the canvas height that row was measured against.
 #'
 #' @noRd
 .render_cell_plot_rgl <- function(object, device) {
@@ -415,7 +466,9 @@ function(el, x, data) {
         need_row_strips = !is.null(facet_rows),
         need_title = need_title,
         need_legend = need_legend,
-        need_subtitle = !is.null(subtitle),
+        has_title = !is.null(title),
+        has_subtitle = !is.null(subtitle),
+        text_size = text_size,
         viewport = rgl::par3d("viewport", subscene = parent_id)
       )
     )
@@ -569,7 +622,12 @@ function(el, x, data) {
       function(id) list(id = as.integer(id), anchor = "left")
     )
   )
-  return(invisible(list(device = as.integer(device), chrome = chrome)))
+  return(invisible(list(
+    device = as.integer(device),
+    chrome = chrome,
+    title_px = if (has_layout) layout$title_px,
+    layout_height = if (has_layout) layout$layout_height
+  )))
 }
 
 #' Build a layout matrix for faceted rgl chrome
@@ -584,11 +642,14 @@ function(el, x, data) {
 #' @param n_row,n_col Panel grid dimensions.
 #' @param need_col_strips,need_row_strips Whether to reserve facet strips.
 #' @param need_title,need_legend Whether to reserve title and legend regions.
-#' @param need_subtitle Whether the title region also contains a subtitle.
+#' @param has_title,has_subtitle Whether the title row draws a title, a
+#' subtitle, or both. The row is as many pixels tall as those lines need.
+#' @param text_size Theme text size used to measure the title row.
 #' @param viewport Parent viewport as either width and height or the four-value
 #' rgl viewport vector.
 #'
-#' @return A list with `mat`, `widths`, and `heights`.
+#' @return A list with `mat`, `widths`, `heights`, `title_px`, and
+#' `layout_height`. `title_px` is `NULL` when there is no title row.
 #'
 #' @noRd
 .cell_rgl_facet_layout <- function(
@@ -598,7 +659,9 @@ function(el, x, data) {
   need_row_strips,
   need_title,
   need_legend,
-  need_subtitle = FALSE,
+  has_title = TRUE,
+  has_subtitle = FALSE,
+  text_size = 11,
   viewport = c(width = 1, height = 1)
 ) {
   n_panels <- n_row * n_col
@@ -647,25 +710,39 @@ function(el, x, data) {
     mat[, layout_cols] <- chrome_id
   }
 
+  viewport <- as.numeric(viewport)
+  if (length(viewport) == 4L) {
+    viewport <- viewport[3:4]
+  }
+  viewport_width <- max(viewport[[1]], 1)
+  viewport_height <- max(viewport[[2]], 1)
   widths <- c(
     if (need_row_strips) 0.1,
     rep(1, n_col),
     if (need_legend) 0.28
   )
   heights <- c(
-    if (need_title) {
-      if (need_subtitle) 0.18 else 0.12
-    },
+    if (need_title) 0,
     if (need_col_strips) 0.1,
     rep(1, n_row)
   )
-  if (need_col_strips && need_row_strips) {
-    viewport <- as.numeric(viewport)
-    if (length(viewport) == 4L) {
-      viewport <- viewport[3:4]
+  title_px <- NULL
+  if (need_title) {
+    title_px <- .cell_rgl_title_row_px(
+      text_size = text_size,
+      has_title = has_title,
+      has_subtitle = has_subtitle
+    )
+    rest <- sum(heights[-1L])
+    room <- viewport_height - title_px
+    fitted <- title_px
+    if (room < 1) {
+      fitted <- viewport_height / 2
+      room <- viewport_height - fitted
     }
-    viewport_width <- viewport[[1]]
-    viewport_height <- viewport[[2]]
+    heights[[1L]] <- fitted * rest / room
+  }
+  if (need_col_strips && need_row_strips) {
     col_strip_row <- as.integer(need_title) + 1L
     col_strip_height <- viewport_height *
       heights[[col_strip_row]] / sum(heights)
@@ -675,7 +752,58 @@ function(el, x, data) {
         (viewport_width - col_strip_height)
     }
   }
-  return(list(mat = mat, widths = widths, heights = heights))
+  return(list(
+    mat = mat,
+    widths = widths,
+    heights = heights,
+    title_px = title_px,
+    layout_height = viewport_height
+  ))
+}
+
+#' Pixel height of an rgl title row
+#'
+#' rgl draws widget text at a fixed screen size. The font is 20px per `cex`
+#' and the text quad is placed with a scale of `0.75` over the viewport, so
+#' the quad extends `15 * cex` pixels either side of its anchor. A title line
+#' uses 1.2 times the theme cex. Two lines also include the gap between their
+#' anchors.
+#'
+#' @param text_size Theme text size. 11 matches rgl `cex` 1.
+#' @param has_title,has_subtitle Whether each line is drawn.
+#'
+#' @return Height in pixels.
+#'
+#' @noRd
+.cell_rgl_title_row_px <- function(text_size, has_title, has_subtitle) {
+  half_px <- function(cex) {
+    return(15 * cex)
+  }
+  if (has_title && has_subtitle) {
+    return(
+      2 * .cell_rgl_title_line_gap(text_size) +
+        half_px(.cell_rgl_text_cex(text_size) * 1.2) +
+        half_px(.cell_rgl_text_cex(text_size))
+    )
+  }
+  if (has_title) {
+    return(2 * half_px(.cell_rgl_text_cex(text_size) * 1.2))
+  }
+  return(2 * half_px(.cell_rgl_text_cex(text_size)))
+}
+
+#' Gap between the title and subtitle anchors
+#'
+#' Measured in scene pixels. One scene unit is one canvas pixel once the
+#' chrome camera has been fitted.
+#'
+#' @param text_size Theme text size.
+#'
+#' @return Distance from the row center to each line, in pixels.
+#'
+#' @noRd
+.cell_rgl_title_line_gap <- function(text_size) {
+  return(text_size * 0.8)
 }
 
 #' Connect rgl data panels so they share one camera
@@ -836,7 +964,7 @@ function(el, x, data) {
   cex <- .cell_rgl_text_cex(text_size)
   left <- text_size
   middle <- region$height / 2
-  offset <- text_size * 0.8
+  offset <- .cell_rgl_title_line_gap(text_size)
   if (!is.null(title)) {
     rgl::text3d(
       x = left,
