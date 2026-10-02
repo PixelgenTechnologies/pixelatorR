@@ -25,12 +25,8 @@ scatter using \link[rgl:rgl-package]{rgl::rgl}. Node sizes are converted from ba
 units to rgl point diameters in pixels. Continuous sizes are grouped into a
 bounded number of pixel-size bins to keep the scene responsive.
 Panel grids use \code{\link[rgl:mfrow3d]{rgl::layout3d()}} with shared mouse control among data
-panels. Facet labels are drawn in dedicated themeable strip regions along
-the top (columns) and side (rows), so points cannot cover them. Plot titles
-and color legends also use reserved regions. Pointer rotation and
-scroll-zooming stay on the data panels, which move together. Titles, strips,
-and legends are orthographic and do not rotate or zoom the panels.
-Panel grids support at most 10 rows and 20 columns.
+panels. Pointer rotation and scroll-zooming stay on the data panels, which
+move together. Panel grids support at most 10 rows and 20 columns.
 }
 \details{
 Occlusion follows the scene camera, so markers closer to the current
@@ -45,13 +41,18 @@ categorical mappings use a discrete legend.
 The scene is drawn on a null device and returned as an rgl htmlwidget for
 the IDE viewer, Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. Printed
 at the console, the widget opens in the IDE viewer, fills it, and follows
-it when the pane is resized. Titles, strips, and legends are refitted on
-that resize, so the title stays at the left edge and the legend keeps its
-size. The title row stays exactly as tall as the title and subtitle.
-Legends are native scene objects and do not support Plotly-style
-interactive legend filtering. Title and legend text uses rgl's own font.
-Facet strip labels are rasterized with base graphics, because rgl text
-cannot be rotated for the row strips.
+it when the pane is resized.
+
+Titles, facet strips, and legends are HTML elements laid over the WebGL
+canvas rather than objects in the scene, so they are drawn by the browser
+in its own fonts at the display's native resolution and can be selected
+and copied. Their sizes follow the theme text size in points, as in the
+ggplot renderer: the title row is exactly as tall as the title and
+subtitle, strips are one line of text with the ggplot strip margin, and
+the legend is as wide as its labels. The data panels fill whatever space
+remains and are laid out again whenever the canvas is resized. Because the
+chrome lives outside the scene, \code{\link[rgl:scene3d]{rgl::scene3d()}} snapshots and rgl's own
+image export contain only the data panels.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}

@@ -5,12 +5,8 @@
 #' units to rgl point diameters in pixels. Continuous sizes are grouped into a
 #' bounded number of pixel-size bins to keep the scene responsive.
 #' Panel grids use [rgl::layout3d()] with shared mouse control among data
-#' panels. Facet labels are drawn in dedicated themeable strip regions along
-#' the top (columns) and side (rows), so points cannot cover them. Plot titles
-#' and color legends also use reserved regions. Pointer rotation and
-#' scroll-zooming stay on the data panels, which move together. Titles, strips,
-#' and legends are orthographic and do not rotate or zoom the panels.
-#' Panel grids support at most 10 rows and 20 columns.
+#' panels. Pointer rotation and scroll-zooming stay on the data panels, which
+#' move together. Panel grids support at most 10 rows and 20 columns.
 #'
 #' Occlusion follows the scene camera, so markers closer to the current
 #' viewpoint appear in front. The rgl backend does not provide hover labels or
@@ -24,13 +20,18 @@
 #' The scene is drawn on a null device and returned as an rgl htmlwidget for
 #' the IDE viewer, Quarto, R Markdown, and `htmlwidgets::saveWidget()`. Printed
 #' at the console, the widget opens in the IDE viewer, fills it, and follows
-#' it when the pane is resized. Titles, strips, and legends are refitted on
-#' that resize, so the title stays at the left edge and the legend keeps its
-#' size. The title row stays exactly as tall as the title and subtitle.
-#' Legends are native scene objects and do not support Plotly-style
-#' interactive legend filtering. Title and legend text uses rgl's own font.
-#' Facet strip labels are rasterized with base graphics, because rgl text
-#' cannot be rotated for the row strips.
+#' it when the pane is resized.
+#'
+#' Titles, facet strips, and legends are HTML elements laid over the WebGL
+#' canvas rather than objects in the scene, so they are drawn by the browser
+#' in its own fonts at the display's native resolution and can be selected
+#' and copied. Their sizes follow the theme text size in points, as in the
+#' ggplot renderer: the title row is exactly as tall as the title and
+#' subtitle, strips are one line of text with the ggplot strip margin, and
+#' the legend is as wide as its labels. The data panels fill whatever space
+#' remains and are laid out again whenever the canvas is resized. Because the
+#' chrome lives outside the scene, [rgl::scene3d()] snapshots and rgl's own
+#' image export contain only the data panels.
 #'
 #' @param object A `cell_plot` recipe.
 #' @param width,height Canvas size in pixels, 1000 by 1000 when not given.
@@ -74,9 +75,10 @@ cell_plot_rgl <- function(object, width = NULL, height = NULL) {
 #' [rgl::rglwidget()], and closes the device. The snapshot keeps the scene
 #' after the device closes. When neither the caller nor a knitr HTML chunk
 #' sets a size, the widget carries no size of its own, so htmlwidgets lets it
-#' fill the IDE viewer and follow the viewer when it is resized. A render hook
-#' refits the chrome regions to the canvas they are actually shown on, see
-#' `.cell_rgl_chrome_fit_js`.
+#' fill the IDE viewer and follow the viewer when it is resized. When the plot
+#' has a title, facet strips, or a legend, a render hook adds them as HTML
+#' over the canvas and fits the data panels around them, see
+#' `.cell_rgl_chrome_js`.
 #'
 #' @param object A `cell_plot_built` object.
 #' @param width,height Checked canvas sizes in pixels, or `NULL`.
@@ -103,135 +105,192 @@ cell_plot_rgl <- function(object, width = NULL, height = NULL) {
     height = if (sized) size$height,
     snapshot = FALSE
   )
-  if (length(rendered$chrome) > 0L) {
+  if (!is.null(rendered$chrome)) {
     widget <- htmlwidgets::onRender(
       widget,
-      htmlwidgets::JS(.cell_rgl_chrome_fit_js),
-      data = list(
-        chrome = rendered$chrome,
-        titlePx = rendered$title_px,
-        layoutHeight = rendered$layout_height
-      )
+      htmlwidgets::JS(.cell_rgl_chrome_js),
+      data = rendered$chrome
     )
   }
   return(widget)
 }
 
-#' JavaScript that keeps rgl chrome anchored while the canvas resizes
+#' JavaScript that draws rgl chrome as HTML and fits the panels around it
 #'
-#' Chrome regions are drawn in pixel coordinates for the canvas size at render
-#' time. rgl scales every subscene viewport with the canvas but keeps the
-#' camera, so on a differently sized canvas it fits the region's bounding box
-#' to the shorter viewport side and centers it. A title row then drifts
-#' toward the middle, or off the left edge when the canvas grows taller.
+#' Runs once after the widget renders and again after every resize and
+#' canvas restart. It adds one absolutely positioned layer over the canvas
+#' holding the title block, one strip per facet level, and the legend, all
+#' built from the specification produced by `.cell_rgl_chrome_spec()`. Text
+#' is set through `textContent`, so labels are never interpreted as HTML.
 #'
-#' The hook runs once after the widget renders and again after every resize.
-#' The title row keeps the pixel height it was drawn at, and every other row
-#' takes the space that remains. For each chrome subscene it then recomputes
-#' `zoom` so one scene unit is one canvas pixel, mirroring rgl's own
-#' orthographic projection (observer distance minus the padded bounding
-#' radius is the half-length that spans the shorter viewport side), and sets
-#' a translation in `userMatrix` that pins left-anchored regions to the
-#' viewport's left edge while keeping them centered vertically. Chrome is
-#' drawn in pixel units relative to the region's left edge and vertical
-#' center, so this keeps titles and legends at their designed size and
-#' place. Strip labels stay centered. The data panels are untouched.
+#' Sizes come from the browser's own layout: the title block and legend are
+#' measured after their text is set, and the strip thickness is the height of
+#' a strip label with its padding. The data panels, drawn by rgl as a grid of
+#' subscenes, then get viewports that fill the rectangle left of the legend
+#' and below the title and column strips. The layer ignores the pointer, and
+#' each chrome element accepts it, so text can be selected and dragging on a
+#' title or legend does not move the plot. Row strip labels read upward. A
+#' canvas restart removes every child of the widget element, so the layer is
+#' re-attached whenever the layout runs.
 #'
 #' @noRd
-.cell_rgl_chrome_fit_js <- "
+.cell_rgl_chrome_js <- "
 function(el, x, data) {
   var rgl = el.rglinstance;
   if (!rgl) {
     return;
   }
-  var chrome = [].concat(data.chrome);
-  var reflow = function() {
-    var titlePx = data.titlePx,
-        baseHeight = data.layoutHeight,
+  var theme = data.theme,
+      block = 'position:absolute;box-sizing:border-box;pointer-events:auto;',
+      make = function(parent, css, text) {
+        var node = document.createElement('div');
+        node.style.cssText = css;
+        if (text !== null && text !== undefined) {
+          node.textContent = String(text);
+        }
+        parent.appendChild(node);
+        return node;
+      },
+      i;
+  if (window.getComputedStyle(el).position === 'static') {
+    el.style.position = 'relative';
+  }
+  var layer = make(el,
+    'position:absolute;left:0;top:0;overflow:hidden;pointer-events:none;' +
+    'font-family:sans-serif;line-height:1.2;color:' + theme.textColor + ';' +
+    'font-size:' + theme.textSize + 'pt;');
+
+  var title = null;
+  if (data.title !== null || data.subtitle !== null) {
+    title = make(layer, block + 'left:0;top:0;padding:0.5em 0.75em;white-space:nowrap;');
+    if (data.title !== null) {
+      make(title, 'font-size:1.2em;font-weight:bold;', data.title);
+    }
+    if (data.subtitle !== null) {
+      make(title, '', data.subtitle);
+    }
+  }
+
+  var stripCss = block + 'display:flex;align-items:center;justify-content:center;' +
+        'overflow:hidden;font-size:0.8em;background:' + theme.stripBackgroundColor + ';',
+      labelCss = 'flex-shrink:0;white-space:nowrap;',
+      colStrips = [], rowStrips = [], colLabels = [], rowLabels = [], strip;
+  for (i = 0; i < (data.colStrips || []).length; i++) {
+    strip = make(layer, stripCss);
+    colLabels.push(make(strip, labelCss + 'padding:0.5em;', data.colStrips[i]));
+    colStrips.push(strip);
+  }
+  for (i = 0; i < (data.rowStrips || []).length; i++) {
+    strip = make(layer, stripCss);
+    rowLabels.push(make(strip,
+      labelCss + 'padding:0.5em;writing-mode:vertical-rl;transform:rotate(180deg);',
+      data.rowStrips[i]));
+    rowStrips.push(strip);
+  }
+
+  var legend = null;
+  if (data.legend !== null) {
+    legend = make(layer, block + 'right:0;padding:0.75em;white-space:nowrap;');
+    if (data.legend.title !== null && data.legend.title !== '') {
+      make(legend, 'margin-bottom:0.5em;', data.legend.title);
+    }
+    if (data.legend.type === 'discrete') {
+      for (i = 0; i < data.legend.labels.length; i++) {
+        var row = make(legend, 'display:flex;align-items:center;font-size:0.8em;line-height:1.7;');
+        make(row, 'flex-shrink:0;width:1em;height:1em;border-radius:50%;margin-right:0.5em;' +
+          'background:' + data.legend.colors[i] + ';');
+        make(row, '', data.legend.labels[i]);
+      }
+    } else {
+      var colors = data.legend.colors,
+          fill = colors.length > 1 ? 'linear-gradient(to top,' + colors.join(',') + ')' : colors[0],
+          body = make(legend, 'display:flex;align-items:stretch;height:12em;padding:0.5em 0;'),
+          ticks, tick, labels = [], labelWidth = 0;
+      make(body, 'width:1.4em;background:' + fill + ';');
+      ticks = make(body, 'position:relative;font-size:0.8em;');
+      for (i = 0; i < data.legend.ticks.length; i++) {
+        tick = data.legend.ticks[i];
+        make(ticks, 'position:absolute;left:0;width:0.4em;height:1px;background:' +
+          theme.textColor + ';bottom:' + (tick.at * 100) + '%;');
+        labels.push(make(ticks,
+          'position:absolute;left:0.7em;transform:translateY(50%);bottom:' + (tick.at * 100) + '%;',
+          tick.label));
+      }
+      for (i = 0; i < labels.length; i++) {
+        labelWidth = Math.max(labelWidth, labels[i].offsetWidth);
+      }
+      ticks.style.width = 'calc(0.7em + ' + labelWidth + 'px)';
+    }
+  }
+
+  var layout = function() {
+    var W = rgl.canvas.width,
         H = rgl.canvas.height,
-        T, ids, k, sub, src, vp0, top0, height0, bot0, span, top, height;
-    if (!(titlePx > 0) || !(baseHeight > titlePx) || !(H > 1)) {
-      return;
+        legendW = legend ? legend.offsetWidth : 0,
+        titleH = 0, stripPx = 0, r, c, sub;
+    if (layer.parentNode !== el) {
+      el.appendChild(layer);
     }
-    T = Math.min(titlePx, H - 1);
-    ids = Object.keys(rgl.scene.objects);
-    for (k = 0; k < ids.length; k++) {
-      sub = rgl.scene.objects[ids[k]];
-      if (!sub || sub.type !== 'subscene' || !sub.par3d || !sub.par3d.viewport) {
-        continue;
-      }
-      if (!sub.cellRglViewport) {
-        src = sub.par3d.viewport;
-        sub.cellRglViewport = {
-          x: src.x, y: src.y, width: src.width, height: src.height
-        };
-      }
-      vp0 = sub.cellRglViewport;
-      if (vp0.width >= 0.999 && vp0.height >= 0.999) {
-        continue;
-      }
-      top0 = (1 - vp0.y - vp0.height) * baseHeight;
-      height0 = vp0.height * baseHeight;
-      bot0 = top0 + height0;
-      if (height0 >= baseHeight - 1) {
-        top = 0;
-        height = H;
-      } else if (bot0 <= titlePx + 0.5) {
-        top = 0;
-        height = T;
-      } else {
-        span = baseHeight - titlePx;
-        top = T + (top0 - titlePx) / span * (H - T);
-        height = height0 / span * (H - T);
-      }
-      sub.par3d.viewport.y = (H - top - height) / H;
-      sub.par3d.viewport.height = height / H;
+    layer.style.width = W + 'px';
+    layer.style.height = H + 'px';
+    if (title) {
+      title.style.width = Math.max(W - legendW, 0) + 'px';
+      titleH = title.offsetHeight;
     }
-  };
-  var fit = function() {
-    reflow();
-    for (var i = 0; i < chrome.length; i++) {
-      var sub = rgl.getObj(chrome[i].id);
-      if (!sub || sub.type !== 'subscene') {
+    for (i = 0; i < colLabels.length; i++) {
+      stripPx = Math.max(stripPx, colLabels[i].offsetHeight);
+    }
+    for (i = 0; i < rowLabels.length; i++) {
+      stripPx = Math.max(stripPx, rowLabels[i].offsetWidth);
+    }
+    stripPx = Math.ceil(stripPx);
+    var colStripH = colStrips.length ? stripPx : 0,
+        rowStripW = rowStrips.length ? stripPx : 0,
+        left = rowStripW,
+        top = titleH + colStripH,
+        panelW = Math.max(W - left - legendW, 1),
+        panelH = Math.max(H - top, 1),
+        cellW = panelW / data.nCol,
+        cellH = panelH / data.nRow;
+    for (i = 0; i < data.panels.length; i++) {
+      sub = rgl.getObj(data.panels[i]);
+      if (!sub || !sub.par3d || !sub.par3d.viewport) {
         continue;
       }
-      var vp = sub.par3d.viewport,
-          width = vp.width * rgl.canvas.width,
-          height = vp.height * rgl.canvas.height,
-          bbox = sub.par3d.bbox,
-          scale = sub.par3d.scale,
-          ranges = [(bbox[1] - bbox[0]) * scale[0] / 2,
-                    (bbox[3] - bbox[2]) * scale[1] / 2,
-                    (bbox[5] - bbox[4]) * scale[2] / 2],
-          radius = Math.sqrt(ranges[0] * ranges[0] +
-                             ranges[1] * ranges[1] +
-                             ranges[2] * ranges[2]) * 1.1,
-          distance = sub.par3d.observer[2];
-      if (radius <= 0) {
-        radius = 1;
-      }
-      var near = distance - radius,
-          far = distance + radius;
-      if (far < 0) {
-        far = 1;
-      }
-      if (near < far / 100) {
-        near = far / 100;
-      }
-      sub.par3d.zoom = Math.min(width, height) / (2 * near);
-      var userMatrix = new CanvasMatrix4();
-      if (chrome[i].anchor === 'left') {
-        userMatrix.translate((2 * ranges[0] - width) / 2, 0, 0);
-      }
-      sub.par3d.userMatrix = userMatrix;
+      r = Math.floor(i / data.nCol);
+      c = i % data.nCol;
+      sub.par3d.viewport.x = (left + c * cellW) / W;
+      sub.par3d.viewport.y = (H - top - (r + 1) * cellH) / H;
+      sub.par3d.viewport.width = cellW / W;
+      sub.par3d.viewport.height = cellH / H;
+    }
+    for (c = 0; c < colStrips.length; c++) {
+      colStrips[c].style.left = (left + c * cellW) + 'px';
+      colStrips[c].style.top = titleH + 'px';
+      colStrips[c].style.width = cellW + 'px';
+      colStrips[c].style.height = colStripH + 'px';
+    }
+    for (r = 0; r < rowStrips.length; r++) {
+      rowStrips[r].style.left = '0px';
+      rowStrips[r].style.top = (top + r * cellH) + 'px';
+      rowStrips[r].style.width = rowStripW + 'px';
+      rowStrips[r].style.height = cellH + 'px';
+    }
+    if (legend) {
+      legend.style.top = Math.max(top + (panelH - legend.offsetHeight) / 2, 0) + 'px';
     }
   };
-  var resize = rgl.resize;
+  var resize = rgl.resize,
+      restart = rgl.restartCanvas;
   rgl.resize = function(element) {
     resize.call(this, element);
-    fit();
+    layout();
   };
-  fit();
+  rgl.restartCanvas = function() {
+    restart.call(this);
+    layout();
+  };
+  layout();
   rgl.drawScene();
 }
 "
@@ -283,7 +342,7 @@ function(el, x, data) {
 
 #' Default rgl canvas size in pixels
 #'
-#' Used for both the local window and the html canvas when no size is given.
+#' Used for the html canvas when no size is given.
 #'
 #' @noRd
 .cell_rgl_default_canvas_px <- 1000L
@@ -347,17 +406,18 @@ function(el, x, data) {
 #' Colors come from .cell_plot_rendered_colors() so builder-baked illumination
 #' matches ggplot, Plotly, and base. Panel grids become an [rgl::layout3d()]
 #' arrangement that keeps every row and column level, including empty panels.
-#' Facet labels, titles, and legends are native objects in orthographic
-#' subscenes, so placement does not depend on the upper-left panel.
+#' The scene holds only the data panels. Titles, facet strips, and legends are
+#' described by the returned `chrome` specification and drawn as HTML by the
+#' widget's render hook, which also shrinks the panel grid to make room for
+#' them. The root subscene carries the background color for that room and
+#' ignores the pointer, so dragging beside the panels does not move them.
 #'
 #' @param object A `cell_plot_built` object with a mapped `z` coordinate.
 #' @param device An open rgl device to draw into.
 #'
-#' @return A list with `device`, the rgl device id, `chrome`, a list with one
-#' entry per chrome subscene giving its `id` and how its content is anchored
-#' when the canvas is resized (`"left"` for the title and legend, `"center"`
-#' for facet strips), `title_px`, the title row height in pixels or `NULL`,
-#' and `layout_height`, the canvas height that row was measured against.
+#' @return A list with `device`, the rgl device id, and `chrome`, the list
+#' from `.cell_rgl_chrome_spec()` or `NULL` when the plot has no title,
+#' strips, or legend.
 #'
 #' @noRd
 .render_cell_plot_rgl <- function(object, device) {
@@ -416,17 +476,14 @@ function(el, x, data) {
   n_col <- length(col_levels)
   n_panels <- n_row * n_col
   background_color <- object$theme$background_color
-  text_color <- object$theme$text_color
-  text_size <- object$theme$text_size
-  strip_background_color <- object$theme$strip_background_color
 
   title <- object$annotation$title
   subtitle <- object$annotation$subtitle
-  need_title <- !is.null(title) || !is.null(subtitle)
   need_legend <- !is.null(mapping$color)
-  has_layout <- !is.null(facet_rows) ||
+  has_chrome <- !is.null(facet_rows) ||
     !is.null(facet_cols) ||
-    need_title ||
+    !is.null(title) ||
+    !is.null(subtitle) ||
     need_legend
   legend_title <- .cell_plot_legend_title(object)
   categorical_legend <- if (need_legend && categorical) {
@@ -448,68 +505,34 @@ function(el, x, data) {
 
   rgl::set3d(device, silent = TRUE)
 
-  title_id <- NULL
-  legend_id <- NULL
-  corner_id <- NULL
-  col_strip_ids <- integer()
-  row_strip_ids <- integer()
-  if (!has_layout) {
+  if (!has_chrome) {
     panel_ids <- rgl::subsceneInfo()$id
   } else {
     parent_id <- rgl::currentSubscene3d()
-    layout <- do.call(
-      .cell_rgl_facet_layout,
-      list(
-        n_row = n_row,
-        n_col = n_col,
-        need_col_strips = !is.null(facet_cols),
-        need_row_strips = !is.null(facet_rows),
-        need_title = need_title,
-        need_legend = need_legend,
-        has_title = !is.null(title),
-        has_subtitle = !is.null(subtitle),
-        text_size = text_size,
-        viewport = rgl::par3d("viewport", subscene = parent_id)
-      )
-    )
     # mouseMode = "replace" is required: layout3d() defaults to inherited
-    # mouse handling, so disabling chrome mouse would write through to the
-    # parent and kill trackball/zoom on every data panel.
-    ids <- rgl::layout3d(
-      layout$mat,
-      widths = layout$widths,
-      heights = layout$heights,
+    # mouse handling, so disabling the root mouse below would write through
+    # to every data panel and kill trackball/zoom there.
+    panel_ids <- rgl::layout3d(
+      matrix(seq_len(n_panels), nrow = n_row, ncol = n_col, byrow = TRUE),
       sharedMouse = FALSE,
       mouseMode = "replace"
     )
-    panel_ids <- ids[seq_len(n_panels)]
-    chrome_index <- n_panels
-    if (!is.null(facet_cols)) {
-      col_strip_ids <- ids[chrome_index + seq_len(n_col)]
-      chrome_index <- chrome_index + n_col
-    }
-    if (!is.null(facet_cols) && !is.null(facet_rows)) {
-      chrome_index <- chrome_index + 1L
-      corner_id <- ids[[chrome_index]]
-    }
-    if (!is.null(facet_rows)) {
-      row_strip_ids <- ids[chrome_index + seq_len(n_row)]
-      chrome_index <- chrome_index + n_row
-    }
-    if (need_title) {
-      chrome_index <- chrome_index + 1L
-      title_id <- ids[[chrome_index]]
-    }
-    if (need_legend) {
-      chrome_index <- chrome_index + 1L
-      legend_id <- ids[[chrome_index]]
-    }
+    panel_ids <- as.integer(panel_ids[seq_len(n_panels)])
     .cell_rgl_set_listeners(panel_ids, panel_ids = panel_ids)
+    rgl::useSubscene3d(parent_id)
+    rgl::bg3d(color = background_color)
+    rgl::par3d(
+      mouseMode = c(
+        left = "none",
+        right = "none",
+        middle = "none",
+        wheel = "none"
+      ),
+      subscene = parent_id
+    )
   }
 
   for (panel_index in seq_len(n_panels)) {
-    # Select panels by id so title/legend chrome cells in the layout3d
-    # subscene list cannot shift which data panel is current.
     rgl::useSubscene3d(panel_ids[[panel_index]])
 
     row_index <- ((panel_index - 1L) %/% n_col) + 1L
@@ -561,539 +584,103 @@ function(el, x, data) {
     rgl::view3d(zoom = 1)
   }
 
-  for (col_index in seq_along(col_strip_ids)) {
-    .cell_rgl_draw_strip(
-      subscene = col_strip_ids[[col_index]],
-      label = .cell_plot_facet_label(col_levels[[col_index]]),
-      angle = 0,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = strip_background_color
-    )
-  }
-  for (row_index in seq_along(row_strip_ids)) {
-    .cell_rgl_draw_strip(
-      subscene = row_strip_ids[[row_index]],
-      label = .cell_plot_facet_label(row_levels[[row_index]]),
-      angle = .cell_plot_row_strip_angle,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = strip_background_color
-    )
-  }
-  if (!is.null(corner_id)) {
-    .cell_rgl_draw_strip(
-      subscene = corner_id,
-      label = "",
-      angle = 0,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = background_color
-    )
-  }
-  if (!is.null(title_id)) {
-    .cell_rgl_draw_title(
-      subscene = title_id,
+  chrome <- NULL
+  if (has_chrome) {
+    chrome <- .cell_rgl_chrome_spec(
+      panel_ids = panel_ids,
+      n_row = n_row,
+      n_col = n_col,
       title = title,
       subtitle = subtitle,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = background_color
-    )
-  }
-  if (!is.null(legend_id)) {
-    .cell_rgl_draw_legend(
-      subscene = legend_id,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = background_color,
+      col_labels = if (!is.null(facet_cols)) {
+        vapply(col_levels, .cell_plot_facet_label, character(1))
+      },
+      row_labels = if (!is.null(facet_rows)) {
+        vapply(row_levels, .cell_plot_facet_label, character(1))
+      },
       categorical_legend = categorical_legend,
-      continuous_legend = continuous_legend
+      continuous_legend = continuous_legend,
+      theme = object$theme
     )
   }
-
-  chrome <- c(
-    lapply(
-      c(col_strip_ids, row_strip_ids, corner_id),
-      function(id) list(id = as.integer(id), anchor = "center")
-    ),
-    lapply(
-      c(title_id, legend_id),
-      function(id) list(id = as.integer(id), anchor = "left")
-    )
-  )
-  return(invisible(list(
-    device = as.integer(device),
-    chrome = chrome,
-    title_px = if (has_layout) layout$title_px,
-    layout_height = if (has_layout) layout$layout_height
-  )))
+  return(invisible(list(device = as.integer(device), chrome = chrome)))
 }
 
-#' Build a layout matrix for faceted rgl chrome
+#' Describe rgl chrome for the HTML render hook
 #'
-#' Reserves dedicated column and row facet strips around an `n_row` by `n_col`
-#' panel grid, plus optional title and legend regions. When both strips are
-#' present, the strip-corner cell is also reserved so pointer events there
-#' reach a subscene instead of the unwired root. Panel cells are numbered
-#' first, followed by column strips, the strip corner, row strips, title, and
-#' legend, so [rgl::layout3d()] returns ids in that order.
+#' Collects everything `.cell_rgl_chrome_js` needs to draw the title block,
+#' facet strips, and legend and to place the data panels around them. Vectors
+#' that the hook indexes are wrapped in lists so they serialize as JSON arrays
+#' even when they hold one element. Colors are converted to hexadecimal, since
+#' R color names such as `"grey85"` are not CSS colors. Colorbar ticks are
+#' chosen here with [pretty()] so the hook only positions them.
 #'
+#' @param panel_ids Data panel subscene ids in row-major order.
 #' @param n_row,n_col Panel grid dimensions.
-#' @param need_col_strips,need_row_strips Whether to reserve facet strips.
-#' @param need_title,need_legend Whether to reserve title and legend regions.
-#' @param has_title,has_subtitle Whether the title row draws a title, a
-#' subtitle, or both. The row is as many pixels tall as those lines need.
-#' @param text_size Theme text size used to measure the title row.
-#' @param viewport Parent viewport as either width and height or the four-value
-#' rgl viewport vector.
-#'
-#' @return A list with `mat`, `widths`, `heights`, `title_px`, and
-#' `layout_height`. `title_px` is `NULL` when there is no title row.
-#'
-#' @noRd
-.cell_rgl_facet_layout <- function(
-  n_row,
-  n_col,
-  need_col_strips,
-  need_row_strips,
-  need_title,
-  need_legend,
-  has_title = TRUE,
-  has_subtitle = FALSE,
-  text_size = 11,
-  viewport = c(width = 1, height = 1)
-) {
-  n_panels <- n_row * n_col
-  layout_rows <- n_row +
-    as.integer(need_col_strips) +
-    as.integer(need_title)
-  layout_cols <- n_col +
-    as.integer(need_row_strips) +
-    as.integer(need_legend)
-  mat <- matrix(0L, nrow = layout_rows, ncol = layout_cols)
-
-  panel_index <- 0L
-  row_offset <- as.integer(need_title) + as.integer(need_col_strips)
-  col_offset <- as.integer(need_row_strips)
-  for (row_index in seq_len(n_row)) {
-    for (col_index in seq_len(n_col)) {
-      panel_index <- panel_index + 1L
-      mat[row_index + row_offset, col_index + col_offset] <- panel_index
-    }
-  }
-
-  chrome_id <- n_panels
-  if (need_col_strips) {
-    strip_row <- as.integer(need_title) + 1L
-    for (col_index in seq_len(n_col)) {
-      chrome_id <- chrome_id + 1L
-      mat[strip_row, col_index + col_offset] <- chrome_id
-    }
-  }
-  if (need_col_strips && need_row_strips) {
-    chrome_id <- chrome_id + 1L
-    mat[as.integer(need_title) + 1L, 1L] <- chrome_id
-  }
-  if (need_row_strips) {
-    for (row_index in seq_len(n_row)) {
-      chrome_id <- chrome_id + 1L
-      mat[row_index + row_offset, 1L] <- chrome_id
-    }
-  }
-  if (need_title) {
-    chrome_id <- chrome_id + 1L
-    mat[1L, seq_len(n_col + col_offset)] <- chrome_id
-  }
-  if (need_legend) {
-    chrome_id <- chrome_id + 1L
-    mat[, layout_cols] <- chrome_id
-  }
-
-  viewport <- as.numeric(viewport)
-  if (length(viewport) == 4L) {
-    viewport <- viewport[3:4]
-  }
-  viewport_width <- max(viewport[[1]], 1)
-  viewport_height <- max(viewport[[2]], 1)
-  widths <- c(
-    if (need_row_strips) 0.1,
-    rep(1, n_col),
-    if (need_legend) 0.28
-  )
-  heights <- c(
-    if (need_title) 0,
-    if (need_col_strips) 0.1,
-    rep(1, n_row)
-  )
-  title_px <- NULL
-  if (need_title) {
-    title_px <- .cell_rgl_title_row_px(
-      text_size = text_size,
-      has_title = has_title,
-      has_subtitle = has_subtitle
-    )
-    rest <- sum(heights[-1L])
-    room <- viewport_height - title_px
-    fitted <- title_px
-    if (room < 1) {
-      fitted <- viewport_height / 2
-      room <- viewport_height - fitted
-    }
-    heights[[1L]] <- fitted * rest / room
-  }
-  if (need_col_strips && need_row_strips) {
-    col_strip_row <- as.integer(need_title) + 1L
-    col_strip_height <- viewport_height *
-      heights[[col_strip_row]] / sum(heights)
-    other_width_weight <- sum(widths[-1L])
-    if (col_strip_height < viewport_width) {
-      widths[[1L]] <- col_strip_height * other_width_weight /
-        (viewport_width - col_strip_height)
-    }
-  }
-  return(list(
-    mat = mat,
-    widths = widths,
-    heights = heights,
-    title_px = title_px,
-    layout_height = viewport_height
-  ))
-}
-
-#' Pixel height of an rgl title row
-#'
-#' rgl draws widget text at a fixed screen size. The font is 20px per `cex`
-#' and the text quad is placed with a scale of `0.75` over the viewport, so
-#' the quad extends `15 * cex` pixels either side of its anchor. A title line
-#' uses 1.2 times the theme cex. Two lines also include the gap between their
-#' anchors.
-#'
-#' @param text_size Theme text size. 11 matches rgl `cex` 1.
-#' @param has_title,has_subtitle Whether each line is drawn.
-#'
-#' @return Height in pixels.
-#'
-#' @noRd
-.cell_rgl_title_row_px <- function(text_size, has_title, has_subtitle) {
-  half_px <- function(cex) {
-    return(15 * cex)
-  }
-  if (has_title && has_subtitle) {
-    return(
-      2 * .cell_rgl_title_line_gap(text_size) +
-        half_px(.cell_rgl_text_cex(text_size) * 1.2) +
-        half_px(.cell_rgl_text_cex(text_size))
-    )
-  }
-  if (has_title) {
-    return(2 * half_px(.cell_rgl_text_cex(text_size) * 1.2))
-  }
-  return(2 * half_px(.cell_rgl_text_cex(text_size)))
-}
-
-#' Gap between the title and subtitle anchors
-#'
-#' Measured in scene pixels. One scene unit is one canvas pixel once the
-#' chrome camera has been fitted.
-#'
-#' @param text_size Theme text size.
-#'
-#' @return Distance from the row center to each line, in pixels.
-#'
-#' @noRd
-.cell_rgl_title_line_gap <- function(text_size) {
-  return(text_size * 0.8)
-}
-
-#' Connect rgl data panels so they share one camera
-#'
-#' Each data panel listens to every data panel. Title, strip, and legend
-#' subscenes are left alone, so pointer movement there does not move the plot.
-#'
-#' @param subscene_ids Integer vector of subscene ids to configure.
-#' @param panel_ids Integer vector of data-panel subscene ids.
-#'
-#' @return `subscene_ids`, invisibly.
-#'
-#' @noRd
-.cell_rgl_set_listeners <- function(subscene_ids, panel_ids) {
-  for (id in subscene_ids) {
-    rgl::par3d(listeners = panel_ids, subscene = id)
-  }
-  return(invisible(subscene_ids))
-}
-
-#' Prepare an orthographic rgl chrome subscene
-#'
-#' Titles, strips, and legends keep a fixed camera. `FOV = 0` is orthographic,
-#' and every mouse button is `none`, so the region cannot rotate or zoom the
-#' data panels.
-#'
-#' Chrome is laid out in the region's own pixel coordinates: `x` runs from 0
-#' to the viewport width and `y` from 0 to its height. A zero-length segment
-#' pair at two opposite corners sets that bounding box without drawing a
-#' visible frame. rgl fits the bounding sphere of the box to the shorter
-#' viewport side, which leaves a tall or wide region mostly empty, so the
-#' zoom is set to the factor that makes the box itself fill the viewport.
-#' This fit is exact for the window at its initial size; the html widget
-#' refits chrome in the browser, see `.cell_rgl_chrome_fit_js`.
-#'
-#' @param subscene Subscene id to draw in.
-#' @param background_color Background color for the region.
-#'
-#' @return A list with the viewport `width` and `height` in pixels.
-#'
-#' @noRd
-.cell_rgl_prepare_chrome <- function(subscene, background_color) {
-  rgl::useSubscene3d(subscene)
-  viewport <- as.numeric(rgl::par3d("viewport", subscene = subscene))
-  width <- max(viewport[[3]], 1)
-  height <- max(viewport[[4]], 1)
-  rgl::bg3d(color = background_color)
-  rgl::par3d(
-    FOV = 0,
-    mouseMode = c(
-      left = "none",
-      right = "none",
-      middle = "none",
-      wheel = "none"
-    ),
-    subscene = subscene
-  )
-  rgl::segments3d(
-    x = c(0, 0, width, width),
-    y = c(0, 0, height, height),
-    z = c(0, 0, 0, 0),
-    color = background_color,
-    lit = FALSE
-  )
-  # The window maps the half-diagonal of the box to the shorter half-side of
-  # the viewport. Zooming by shorter side over diagonal maps the box edge
-  # there instead.
-  zoom <- min(width, height) / sqrt(width^2 + height^2)
-  rgl::view3d(theta = 0, phi = 0, fov = 0, zoom = zoom)
-  return(list(width = width, height = height))
-}
-
-#' Convert a theme text size into an rgl cex
-#'
-#' Theme text size uses the same point size as the ggplot theme, where 11 is
-#' the default. rgl draws its own font at `cex = 1` for that default.
-#'
-#' @param text_size Theme text size.
-#'
-#' @return A cex multiplier.
-#'
-#' @noRd
-.cell_rgl_text_cex <- function(text_size) {
-  return(text_size / 11)
-}
-
-#' Draw a facet label in a dedicated rgl strip
-#'
-#' The strip is a separate subscene from the data panel, so points cannot cover
-#' its text. A gray background follows the default [ggplot2::facet_grid()]
-#' appearance. rgl text always faces the screen upright, so labels are drawn
-#' through [rgl::plotmath3d()], which rasterizes the label with base graphics
-#' at the requested angle and places it as a fixed-size sprite. Column strips
-#' use the same path so both strip kinds share one font.
-#'
-#' @param subscene Subscene id for the strip.
-#' @param label Facet level label.
-#' @param angle Text rotation in degrees.
-#' @param text_color,text_size,background_color Theme values.
-#'
-#' @return `NULL`, invisibly.
-#'
-#' @noRd
-.cell_rgl_draw_strip <- function(
-  subscene,
-  label,
-  angle,
-  text_color,
-  text_size,
-  background_color
-) {
-  region <- .cell_rgl_prepare_chrome(
-    subscene = subscene,
-    background_color = background_color
-  )
-  if (!nzchar(label)) {
-    return(invisible(NULL))
-  }
-  rgl::plotmath3d(
-    x = region$width / 2,
-    y = region$height / 2,
-    z = 0,
-    text = label,
-    adj = 0.5,
-    cex = .cell_rgl_text_cex(text_size),
-    srt = angle,
-    col = text_color
-  )
-  return(invisible(NULL))
-}
-
-#' Draw a title in a reserved rgl layout region
-#'
-#' The title and subtitle are left-aligned at the region's left edge, as in
-#' ggplot, with a margin of one text size in pixels. Both lines sit a fixed
-#' number of pixels from the region's vertical center, so they stay together
-#' however tall the region is.
-#'
-#' @param subscene Subscene id for the title.
-#' @param title,subtitle Optional plot title and subtitle text.
-#' @param text_color,text_size,background_color Theme values.
-#'
-#' @return `NULL`, invisibly.
-#'
-#' @noRd
-.cell_rgl_draw_title <- function(
-  subscene,
-  title,
-  subtitle,
-  text_color,
-  text_size,
-  background_color
-) {
-  region <- .cell_rgl_prepare_chrome(
-    subscene = subscene,
-    background_color = background_color
-  )
-  cex <- .cell_rgl_text_cex(text_size)
-  left <- text_size
-  middle <- region$height / 2
-  offset <- .cell_rgl_title_line_gap(text_size)
-  if (!is.null(title)) {
-    rgl::text3d(
-      x = left,
-      y = middle + if (is.null(subtitle)) 0 else offset,
-      z = 0,
-      texts = title,
-      adj = c(0, 0.5),
-      color = text_color,
-      cex = cex * 1.2,
-      font = 2
-    )
-  }
-  if (!is.null(subtitle)) {
-    rgl::text3d(
-      x = left,
-      y = middle - if (is.null(title)) 0 else offset,
-      z = 0,
-      texts = subtitle,
-      adj = c(0, 0.5),
-      color = text_color,
-      cex = cex
-    )
-  }
-  return(invisible(NULL))
-}
-
-#' Draw a legend in a reserved rgl layout region
-#'
-#' @param subscene Subscene id for the legend.
-#' @param text_color,text_size,background_color Theme values.
+#' @param title,subtitle Plot title and subtitle, or `NULL`.
+#' @param col_labels,row_labels Facet strip labels per column and row, or
+#' `NULL` when that direction is not faceted.
 #' @param categorical_legend Optional list with `title`, `labels`, and `colors`.
 #' @param continuous_legend Optional list with `title`, `limits`, and `colors`.
+#' @param theme The plot theme list.
 #'
-#' @return `NULL`, invisibly.
+#' @return A list with `panels`, `nRow`, `nCol`, `title`, `subtitle`,
+#' `colStrips`, `rowStrips`, `legend`, and `theme`. `legend` is `NULL` or a
+#' list with `type` `"discrete"` (`title`, `labels`, `colors`) or
+#' `"continuous"` (`title`, `colors`, `ticks`), where each tick has `at`, its
+#' position along the bar from 0 at the bottom to 1 at the top, and `label`.
 #'
 #' @noRd
-.cell_rgl_draw_legend <- function(
-  subscene,
-  text_color,
-  text_size,
-  background_color,
-  categorical_legend = NULL,
-  continuous_legend = NULL
+.cell_rgl_chrome_spec <- function(
+  panel_ids,
+  n_row,
+  n_col,
+  title,
+  subtitle,
+  col_labels,
+  row_labels,
+  categorical_legend,
+  continuous_legend,
+  theme
 ) {
-  region <- .cell_rgl_prepare_chrome(
-    subscene = subscene,
-    background_color = background_color
-  )
+  legend <- NULL
   if (!is.null(continuous_legend)) {
-    .cell_rgl_draw_colorbar(
-      continuous_legend = continuous_legend,
-      text_color = text_color,
-      text_size = text_size,
-      region = region
+    colors <- continuous_legend$colors
+    if (length(colors) == 0L) {
+      colors <- "#000000"
+    }
+    legend <- list(
+      type = "continuous",
+      title = continuous_legend$title,
+      colors = as.list(colors),
+      ticks = .cell_rgl_colorbar_ticks(
+        .cell_rgl_colorbar_limits(continuous_legend$limits)
+      )
     )
   } else if (!is.null(categorical_legend)) {
-    .cell_rgl_draw_discrete_legend(
-      categorical_legend = categorical_legend,
-      text_color = text_color,
-      text_size = text_size,
-      region = region
+    legend <- list(
+      type = "discrete",
+      title = categorical_legend$title,
+      labels = as.list(as.character(categorical_legend$labels)),
+      colors = as.list(categorical_legend$colors)
     )
   }
-  return(invisible(NULL))
-}
-
-#' Draw a categorical legend with point swatches
-#'
-#' Rows are spaced by the text size in pixels and the block, including its
-#' title, is centered vertically in the legend region. Swatches and labels
-#' sit a fixed number of pixels from the region's left edge.
-#'
-#' @param categorical_legend List with `title`, `labels`, and `colors`.
-#' @param text_color Theme text color.
-#' @param text_size Theme text size.
-#' @param region List with the region `width` and `height` in pixels.
-#'
-#' @return `NULL`, invisibly.
-#'
-#' @noRd
-.cell_rgl_draw_discrete_legend <- function(
-  categorical_legend,
-  text_color,
-  text_size,
-  region
-) {
-  labels <- categorical_legend$labels
-  n_labels <- length(labels)
-  if (n_labels == 0L) {
-    return(invisible(NULL))
-  }
-  title <- categorical_legend$title
-  has_title <- !is.null(title) && nzchar(title)
-  line <- text_size * 1.8
-  n_rows <- n_labels + if (has_title) 1.4 else 0
-  top <- region$height / 2 + n_rows * line / 2
-  swatch_x <- text_size * 1.6
-  label_x <- text_size * 2.8
-  if (has_title) {
-    rgl::text3d(
-      x = text_size,
-      y = top - line * 0.5,
-      z = 0,
-      texts = title,
-      adj = c(0, 0.5),
-      color = text_color,
-      cex = .cell_rgl_text_cex(text_size)
+  return(list(
+    panels = as.list(as.integer(panel_ids)),
+    nRow = as.integer(n_row),
+    nCol = as.integer(n_col),
+    title = title,
+    subtitle = subtitle,
+    colStrips = if (!is.null(col_labels)) as.list(col_labels),
+    rowStrips = if (!is.null(row_labels)) as.list(row_labels),
+    legend = legend,
+    theme = list(
+      textSize = theme$text_size,
+      textColor = .cell_colors_to_hex(theme$text_color),
+      backgroundColor = .cell_colors_to_hex(theme$background_color),
+      stripBackgroundColor = .cell_colors_to_hex(theme$strip_background_color)
     )
-    top <- top - line * 1.4
-  }
-  ys <- top - (seq_len(n_labels) - 0.5) * line
-  rgl::points3d(
-    x = rep(swatch_x, n_labels),
-    y = ys,
-    z = rep(0, n_labels),
-    color = categorical_legend$colors,
-    size = text_size * 0.8,
-    lit = FALSE
-  )
-  rgl::text3d(
-    x = rep(label_x, n_labels),
-    y = ys,
-    z = rep(0, n_labels),
-    texts = labels,
-    adj = c(0, 0.5),
-    color = text_color,
-    cex = .cell_rgl_text_cex(text_size)
-  )
-  return(invisible(NULL))
+  ))
 }
 
 #' Limits used to place a continuous colorbar
@@ -1117,108 +704,42 @@ function(el, x, data) {
   return(limits)
 }
 
-#' Draw a continuous colorbar for a numeric color scale
+#' Tick marks for a continuous colorbar
 #'
-#' Numeric mappings render as stacked [rgl::quads3d()] with vertex colors,
-#' rather than a discrete key. Ticks are [rgl::segments3d()] and labels are
-#' [rgl::text3d()]. The bar is sized in multiples of the text size, like a
-#' ggplot legend, left-aligned one text size from the region's edge and
-#' centered vertically.
+#' Uses [pretty()] breaks that fall inside the limits.
 #'
-#' @param continuous_legend List with `title`, `limits`, and `colors`.
-#' @param text_color Theme text color.
-#' @param text_size Theme text size.
-#' @param region List with the region `width` and `height` in pixels.
+#' @param limits Finite, strictly increasing length-two range.
 #'
-#' @return `NULL`, invisibly.
+#' @return A list with one entry per tick holding `at`, the position along
+#' the bar from 0 to 1, and `label`, the formatted value.
 #'
 #' @noRd
-.cell_rgl_draw_colorbar <- function(
-  continuous_legend,
-  text_color,
-  text_size,
-  region
-) {
-  limits <- .cell_rgl_colorbar_limits(continuous_legend$limits)
-  colors <- continuous_legend$colors
-  if (length(colors) == 0L) {
-    colors <- "#000000"
-  }
-  bar_x <- text_size * c(1, 2.4)
-  bar_y <- region$height / 2 + text_size * c(-10, 10)
-  if (length(colors) == 1L) {
-    rgl::quads3d(
-      x = c(bar_x[[1]], bar_x[[2]], bar_x[[2]], bar_x[[1]]),
-      y = c(bar_y[[1]], bar_y[[1]], bar_y[[2]], bar_y[[2]]),
-      z = rep(0, 4),
-      color = colors,
-      lit = FALSE
-    )
-  } else {
-    ys <- seq(bar_y[[1]], bar_y[[2]], length.out = length(colors))
-    for (stop_index in seq_len(length(colors) - 1L)) {
-      rgl::quads3d(
-        x = c(bar_x[[1]], bar_x[[2]], bar_x[[2]], bar_x[[1]]),
-        y = c(
-          ys[[stop_index]],
-          ys[[stop_index]],
-          ys[[stop_index + 1L]],
-          ys[[stop_index + 1L]]
-        ),
-        z = rep(0, 4),
-        color = c(
-          colors[[stop_index]],
-          colors[[stop_index]],
-          colors[[stop_index + 1L]],
-          colors[[stop_index + 1L]]
-        ),
-        lit = FALSE
-      )
-    }
-  }
+.cell_rgl_colorbar_ticks <- function(limits) {
+  values <- pretty(limits, n = 4)
+  values <- values[values >= limits[[1]] & values <= limits[[2]]]
+  labels <- format(values, trim = TRUE, scientific = FALSE)
+  at <- (values - limits[[1]]) / diff(limits)
+  return(lapply(
+    seq_along(values),
+    function(i) list(at = at[[i]], label = labels[[i]])
+  ))
+}
 
-  tick_values <- pretty(limits, n = 4)
-  tick_values <- tick_values[
-    tick_values >= limits[[1]] & tick_values <= limits[[2]]
-  ]
-  if (length(tick_values) > 0L) {
-    tick_y <- stats::approx(x = limits, y = bar_y, xout = tick_values)$y
-    tick_length <- diff(bar_x) * 0.2
-    n_ticks <- length(tick_values)
-    rgl::segments3d(
-      x = as.vector(rbind(
-        rep(bar_x[[2]], n_ticks),
-        rep(bar_x[[2]] + tick_length, n_ticks)
-      )),
-      y = as.vector(rbind(tick_y, tick_y)),
-      z = rep(0, 2 * n_ticks),
-      color = text_color,
-      lit = FALSE
-    )
-    rgl::text3d(
-      x = rep(bar_x[[2]] + tick_length * 1.4, n_ticks),
-      y = tick_y,
-      z = rep(0, n_ticks),
-      texts = format(tick_values, trim = TRUE, scientific = FALSE),
-      adj = c(0, 0.5),
-      color = text_color,
-      cex = .cell_rgl_text_cex(text_size) * 0.85
-    )
+#' Connect rgl data panels so they share one camera
+#'
+#' Each data panel listens to every data panel.
+#'
+#' @param subscene_ids Integer vector of subscene ids to configure.
+#' @param panel_ids Integer vector of data-panel subscene ids.
+#'
+#' @return `subscene_ids`, invisibly.
+#'
+#' @noRd
+.cell_rgl_set_listeners <- function(subscene_ids, panel_ids) {
+  for (id in subscene_ids) {
+    rgl::par3d(listeners = panel_ids, subscene = id)
   }
-
-  title <- continuous_legend$title
-  if (!is.null(title) && nzchar(title)) {
-    rgl::text3d(
-      x = bar_x[[1]],
-      y = bar_y[[2]] + text_size * 2.2,
-      z = 0,
-      texts = title,
-      adj = c(0, 0.5),
-      color = text_color,
-      cex = .cell_rgl_text_cex(text_size) * 0.9
-    )
-  }
-  return(invisible(NULL))
+  return(invisible(subscene_ids))
 }
 
 #' Maximum number of rgl point-size groups

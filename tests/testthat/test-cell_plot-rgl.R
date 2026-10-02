@@ -169,7 +169,8 @@ test_that("rgl cell plots work as expected", {
 
   continuous_summary <- rgl_plot_summary(render_rgl_scene(continuous))
   expect_equal(continuous_summary$n_panels, 1L)
-  expect_equal(continuous_summary$n_root_subscenes, 3L)
+  # The title and legend are HTML, so the scene holds only the panel grid.
+  expect_equal(continuous_summary$n_root_subscenes, 1L)
   expect_equal(continuous_summary$windowRect, c(0, 0, 1000, 1000))
   expect_equal(
     continuous_summary$panels[[1]]$points,
@@ -379,7 +380,7 @@ test_that("rgl cell plot grids work as expected", {
       n_panels = one_level$n_panels,
       n_root_subscenes = one_level$n_root_subscenes
     ),
-    list(n_panels = 1L, n_root_subscenes = 2L)
+    list(n_panels = 1L, n_root_subscenes = 1L)
   )
 })
 
@@ -405,9 +406,9 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
   scene <- render_rgl_scene(faceted)
   summary <- rgl_plot_summary(scene)
   expect_equal(summary$n_panels, 4L)
-  # Four dedicated facet strips, the strip-corner cell, a title, and a legend
-  # sit outside the four data panels, so points cannot cover facet text.
-  expect_equal(summary$n_root_subscenes, 11L)
+  # Strips, title, and legend are HTML over the canvas, so the scene holds
+  # exactly the four data panels.
+  expect_equal(summary$n_root_subscenes, 4L)
   expect_equal(
     lapply(summary$panels, function(panel) {
       if (length(panel$points) == 0) {
@@ -431,9 +432,9 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
     lapply(summary$panels, function(panel) sort(panel$listeners)),
     rep(list(sort(as.integer(panel_ids))), 4)
   )
-  # layout3d() chrome must use mouseMode="replace"; otherwise disabling
-  # title/legend mouse writes through the inherited parent and leaves every
-  # data panel with mouseMode all "none" (non-interactive spin/zoom).
+  # layout3d() panels must use mouseMode="replace"; otherwise disabling the
+  # root mouse writes through the inherited parent and leaves every data
+  # panel with mouseMode all "none" (non-interactive spin/zoom).
   expect_true(all(vapply(
     summary$panels,
     function(panel) {
@@ -442,129 +443,36 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
     },
     logical(1)
   )))
-  # Title, strips, and the legend are orthographic and ignore the pointer.
-  # They do not listen for the data panels, so dragging them does not move
-  # the plot.
-  all_subscenes <- scene$rootSubscene$subscenes
-  chrome_subscenes <- Filter(
-    function(subscene) {
-      modes <- unname(as.character(subscene$par3d$mouseMode))
-      return(!"trackball" %in% modes)
-    },
-    all_subscenes
-  )
-  expect_equal(length(chrome_subscenes), 7L)
-  expect_true(all(vapply(
-    chrome_subscenes,
-    function(subscene) {
-      modes <- unname(as.character(subscene$par3d$mouseMode))
-      return(all(modes == "none") && identical(subscene$par3d$FOV, 0))
-    },
-    logical(1)
-  )))
+  # The root subscene shows the background behind the HTML chrome and
+  # ignores the pointer, so dragging beside the panels does not move them.
+  root <- scene$rootSubscene
   expect_equal(
-    lapply(chrome_subscenes, function(subscene) {
-      as.integer(subscene$par3d$listeners)
-    }),
-    lapply(chrome_subscenes, function(subscene) as.integer(subscene$id))
+    list(
+      mouseMode = unname(as.character(root$par3d$mouseMode)),
+      background = "background" %in% rgl_subscene_object_types(root, scene)
+    ),
+    list(
+      mouseMode = c("none", "none", "none", "none", "none"),
+      background = TRUE
+    )
   )
   expect_equal(
     unique(lapply(summary$panels, function(panel) panel$zoom)),
     list(1)
   )
-  # Data markers stay the unlit points primitive. Chrome contributes text,
-  # rotated row-label sprites, and the continuous legend's quads, with no
-  # bgplot3d background textures.
-  panel_types <- unlist(lapply(
-    scene$rootSubscene$subscenes[vapply(
-      all_subscenes,
-      function(subscene) subscene$id %in% panel_ids,
-      logical(1)
-    )],
-    rgl_subscene_object_types,
-    scene = scene
-  ))
+  # Data markers stay the unlit points primitive, and no chrome geometry is
+  # drawn into the scene.
   expect_equal(
     c(
-      any(panel_types == "points"),
-      any(panel_types %in% c("spheres", "sprites", "mesh3d")),
-      any(summary$object_types == "text"),
-      any(summary$object_types == "quads"),
-      any(summary$object_types == "sprites")
+      any(summary$object_types == "points"),
+      any(summary$object_types %in% c("text", "sprites", "quads", "spheres"))
     ),
-    c(TRUE, FALSE, TRUE, TRUE, TRUE)
+    c(TRUE, FALSE)
   )
-  expect_false(any(vapply(
-    scene$objects,
-    function(object) {
-      texture <- object$material$texture
-      return(
-        identical(object$type, "background") &&
-          is.character(texture) &&
-          any(nzchar(texture))
-      )
-    },
-    logical(1)
-  )))
-
   expect_equal(
     pixelatorR:::.cell_plot_default_theme$strip_background_color,
     "#D9D9D9"
   )
-  both_strips <- pixelatorR:::.cell_rgl_facet_layout(
-    n_row = 2L,
-    n_col = 2L,
-    need_col_strips = TRUE,
-    need_row_strips = TRUE,
-    need_title = TRUE,
-    need_legend = TRUE,
-    text_size = 11,
-    viewport = c(width = 1000, height = 1000)
-  )
-  expect_equal(
-    list(
-      mat = both_strips$mat,
-      title_px = both_strips$title_px,
-      title_row = 1000 * both_strips$heights[[1]] / sum(both_strips$heights)
-    ),
-    list(
-      mat = matrix(
-        c(
-          10L, 7L, 8L, 9L,
-          10L, 5L, 1L, 3L,
-          10L, 6L, 2L, 4L,
-          11L, 11L, 11L, 11L
-        ),
-        nrow = 4L
-      ),
-      title_px = 36,
-      title_row = 36
-    )
-  )
-  expect_equal(
-    pixelatorR:::.cell_rgl_title_row_px(
-      text_size = 11,
-      has_title = TRUE,
-      has_subtitle = TRUE
-    ),
-    50.6
-  )
-  rectangular_strips <- pixelatorR:::.cell_rgl_facet_layout(
-    n_row = 2L,
-    n_col = 2L,
-    need_col_strips = TRUE,
-    need_row_strips = TRUE,
-    need_title = TRUE,
-    need_legend = TRUE,
-    viewport = c(width = 1200, height = 800)
-  )
-  expect_equal(
-    1200 * rectangular_strips$widths[[1]] /
-      sum(rectangular_strips$widths),
-    800 * rectangular_strips$heights[[2]] /
-      sum(rectangular_strips$heights)
-  )
-  expect_equal(pixelatorR:::.cell_plot_row_strip_angle, 90)
 })
 
 test_that("rgl cell plots use builder-baked illumination colors", {
@@ -718,36 +626,26 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
   )
   unlink(legend_log)
 
-  flat_legend <- list(
-    title = "marker",
-    limits = c(2, 2),
-    colors = c("#000000", "#FFFFFF")
+  # Flat or missing limits still give a usable colorbar range and ticks.
+  expect_equal(
+    list(
+      flat = pixelatorR:::.cell_rgl_colorbar_limits(c(2, 2)),
+      missing = pixelatorR:::.cell_rgl_colorbar_limits(c(NA_real_, NA_real_)),
+      ticks = pixelatorR:::.cell_rgl_colorbar_ticks(c(0, 1))
+    ),
+    list(
+      flat = c(1.9, 2.1),
+      missing = c(0, 1),
+      ticks = list(
+        list(at = 0, label = "0.0"),
+        list(at = 0.2, label = "0.2"),
+        list(at = 0.4, label = "0.4"),
+        list(at = 0.6, label = "0.6"),
+        list(at = 0.8, label = "0.8"),
+        list(at = 1, label = "1.0")
+      )
+    )
   )
-  rgl::open3d()
-  expect_no_error({
-    pixelatorR:::.cell_rgl_draw_colorbar(
-      flat_legend,
-      text_color = "black",
-      text_size = 11,
-      region = list(width = 280, height = 1000)
-    )
-    pixelatorR:::.cell_rgl_draw_colorbar(
-      list(
-        title = "marker",
-        limits = c(NA_real_, NA_real_),
-        colors = flat_legend$colors
-      ),
-      text_color = "black",
-      text_size = 11,
-      region = list(width = 280, height = 1000)
-    )
-  })
-  expect_true(any(vapply(
-    rgl::scene3d()$objects,
-    function(object) identical(object$type, "quads"),
-    logical(1)
-  )))
-  rgl::close3d()
 
   na_facet <- tibble::tibble(
     x = c(0, 1),
@@ -763,7 +661,7 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
   expect_equal(rgl_plot_summary(render_rgl_scene(na_facet))$n_panels, 2L)
 })
 
-test_that("rgl chrome is native text and legend geometry", {
+test_that("rgl chrome is described for the HTML overlay", {
   old_options <- options(rgl.useNULL = TRUE)
   on.exit(options(old_options), add = TRUE)
   on.exit(try(rgl::close3d(), silent = TRUE), add = TRUE)
@@ -781,128 +679,96 @@ test_that("rgl chrome is native text and legend geometry", {
     cell_grid(cols = cell, rows = panel) |>
     cell_annotation(title = "Spectral layout")
 
-  scene <- render_rgl_scene(faceted)
-  subscene_texts <- function(subscene) {
-    texts <- lapply(as.character(subscene$objects), function(id) {
-      object <- scene$objects[[id]]
-      if (is.null(object) || !identical(object$type, "text")) {
-        return(character())
-      }
-      return(as.character(object$texts))
-    })
-    return(unlist(texts, use.names = FALSE))
-  }
-  subscenes <- scene$rootSubscene$subscenes
-  texts <- unlist(lapply(subscenes, subscene_texts), use.names = FALSE)
-  expect_equal(
-    c(
-      "Spectral layout" %in% texts,
-      any(c("a", "b", "m1", "m2") %in% texts)
-    ),
-    c(TRUE, FALSE)
+  faceted$mapping$arrange <- NULL
+  built <- build_cell_plot(faceted)
+  rgl::open3d(useNULL = TRUE, silent = TRUE, windowRect = c(0, 0, 1000, 1000))
+  rendered <- pixelatorR:::.render_cell_plot_rgl(built, device = rgl::cur3d())
+  scene <- rgl::scene3d()
+  panel_ids <- vapply(
+    scene$rootSubscene$subscenes,
+    function(subscene) as.integer(subscene$id),
+    integer(1)
   )
-
-  # Strip labels are fixed-size sprites carrying a rasterized label, so row
-  # labels can be rotated and both strip kinds share one font.
-  strips <- Filter(
-    function(subscene) {
-      "sprites" %in% rgl_subscene_object_types(subscene, scene)
-    },
-    subscenes
-  )
-  expect_equal(length(strips), 4L)
-  strip_sprites <- lapply(strips, function(subscene) {
-    ids <- as.character(subscene$objects)
-    sprite <- Find(
-      function(id) identical(scene$objects[[id]]$type, "sprites"),
-      ids
-    )
-    return(scene$objects[[sprite]])
-  })
-  expect_equal(
-    vapply(strip_sprites, function(sprite) sprite$fixedSize, logical(1)),
-    rep(TRUE, 4)
-  )
-  expect_equal(
-    vapply(
-      strip_sprites,
-      function(sprite) file.exists(sprite$material$texture),
-      logical(1)
-    ),
-    rep(TRUE, 4)
-  )
-  # Column strips are wide and short; row strips are narrow and tall. The row
-  # strip width matches the column strip height.
-  strip_viewports <- lapply(strips, function(subscene) {
-    as.numeric(subscene$par3d$viewport)
-  })
-  is_column_strip <- vapply(
-    strip_viewports,
-    function(viewport) viewport[[3]] > viewport[[4]],
+  # No text, sprite, or quad is drawn for the chrome; the hook receives a
+  # specification instead, with every indexed vector as a JSON array.
+  expect_false(any(vapply(
+    scene$objects,
+    function(object) object$type %in% c("text", "sprites", "quads"),
     logical(1)
-  )
-  expect_equal(sum(is_column_strip), 2L)
-  column_strip <- strip_viewports[is_column_strip][[1]]
-  row_strip <- strip_viewports[!is_column_strip][[1]]
-  expect_equal(column_strip[[4]], row_strip[[3]])
+  )))
   expect_equal(
-    lapply(strips, function(subscene) subscene$par3d$userMatrix),
-    rep(list(diag(4)), 4)
+    rendered$chrome,
+    list(
+      panels = as.list(panel_ids),
+      nRow = 2L,
+      nCol = 2L,
+      title = "Spectral layout",
+      subtitle = NULL,
+      colStrips = list("a", "b"),
+      rowStrips = list("m1", "m2"),
+      legend = list(
+        type = "continuous",
+        title = "marker",
+        colors = list("#000000", "#FFFFFF"),
+        ticks = list(
+          list(at = 0, label = "0"),
+          list(at = 1 / 3, label = "1"),
+          list(at = 2 / 3, label = "2"),
+          list(at = 1, label = "3")
+        )
+      ),
+      theme = list(
+        textSize = 11,
+        textColor = "#000000",
+        backgroundColor = "#FFFFFF",
+        stripBackgroundColor = "#D9D9D9"
+      )
+    )
   )
 
-  legend <- Find(
-    function(subscene) {
-      types <- rgl_subscene_object_types(subscene, scene)
-      return(any(types == "quads"))
-    },
-    subscenes
-  )
-  expect_false(is.null(legend))
-  expect_equal(legend$par3d$mouseMode, c(
-    none = "none",
-    left = "none",
-    right = "none",
-    middle = "none",
-    wheel = "none"
-  ))
-  expect_equal(as.integer(legend$par3d$listeners), as.integer(legend$id))
-
-  # Every chrome region is laid out in its own pixel coordinates and the
-  # camera is zoomed so that rectangle fills the viewport: its far corner
-  # projects to the top-right of normalized device space in the window.
-  chrome <- Filter(
-    function(subscene) {
-      !"trackball" %in% as.character(subscene$par3d$mouseMode)
-    },
-    subscenes
-  )
-  expect_equal(length(chrome), 7L)
-  corners <- lapply(chrome, function(subscene) {
-    rgl::useSubscene3d(subscene$id)
-    viewport <- as.numeric(subscene$par3d$viewport)
-    projection <- rgl::rgl.projection()
-    corner <- projection$proj %*% projection$model %*%
-      c(viewport[[3]], viewport[[4]], 0, 1)
-    return(as.numeric(corner[1:2] / corner[4]))
-  })
-  expect_equal(corners, rep(list(c(1, 1)), 7L), tolerance = 1e-5)
-
-  # The title sits at the left edge of its region, one text size in.
-  title_subscene <- Find(
-    function(subscene) "Spectral layout" %in% subscene_texts(subscene),
-    subscenes
-  )
-  title_object <- Find(
-    function(object) {
-      identical(object$type, "text") && "Spectral layout" %in% object$texts
-    },
-    scene$objects
+  discrete <- tibble::tibble(
+    x = c(0, 1),
+    y = c(1, 0),
+    z = c(-1, 1),
+    g = c("a", "b")
+  ) |>
+    cell_plot(color = g) |>
+    cell_node_scale_color(colors = c(a = "red", b = "blue")) |>
+    cell_annotation(subtitle = "Only a subtitle")
+  discrete$mapping$arrange <- NULL
+  rgl::close3d()
+  rgl::open3d(useNULL = TRUE, silent = TRUE, windowRect = c(0, 0, 1000, 1000))
+  discrete_rendered <- pixelatorR:::.render_cell_plot_rgl(
+    build_cell_plot(discrete),
+    device = rgl::cur3d()
   )
   expect_equal(
-    as.numeric(title_object$vertices[1, c("x", "y")]),
-    c(11, 0.5 * title_subscene$par3d$viewport[[4]])
+    discrete_rendered$chrome[c("nRow", "nCol", "title", "subtitle", "colStrips", "rowStrips", "legend")],
+    list(
+      nRow = 1L,
+      nCol = 1L,
+      title = NULL,
+      subtitle = "Only a subtitle",
+      colStrips = NULL,
+      rowStrips = NULL,
+      legend = list(
+        type = "discrete",
+        title = "g",
+        labels = list("a", "b"),
+        colors = list("#FF0000", "#0000FF")
+      )
+    )
   )
-  expect_equal(as.numeric(title_object$adj[1]), 0)
+  expect_equal(length(discrete_rendered$chrome$panels), 1L)
+
+  # A plain scatter has no chrome at all.
+  rgl::close3d()
+  rgl::open3d(useNULL = TRUE, silent = TRUE, windowRect = c(0, 0, 1000, 1000))
+  plain <- pixelatorR:::.render_cell_plot_rgl(
+    build_cell_plot(cell_plot(tibble::tibble(x = 0:1, y = 0:1, z = 0:1))),
+    device = rgl::cur3d()
+  )
+  expect_null(plain$chrome)
 })
 
 test_that("rgl html output returns a widget", {
@@ -956,8 +822,8 @@ test_that("rgl html output returns a widget", {
   # A plain scene has no chrome, so no render hook is attached.
   expect_equal(length(widget$jsHooks$render), 0L)
 
-  # Chrome regions are refitted in the browser: the hook lists every
-  # orthographic subscene with how its content is anchored.
+  # Chrome is drawn as HTML by the render hook, which receives the chrome
+  # specification and the data panel ids to lay out around it.
   chrome_widget <- cell_plot(
     tibble::tibble(x = c(0, 1), y = c(1, 0), z = c(-1, 1), g = c("a", "b")),
     color = g
@@ -966,36 +832,33 @@ test_that("rgl html output returns a widget", {
     cell_annotation(title = "Title") |>
     cell_plot_rgl()
   hook <- chrome_widget$jsHooks$render[[1]]
-  chrome_subscenes <- Filter(
-    function(object) {
-      identical(object$type, "subscene") && identical(object$par3d$FOV, 0)
-    },
-    chrome_widget$x$objects
-  )
-  chrome_ids <- sort(vapply(
-    chrome_subscenes,
+  panel_ids <- sort(vapply(
+    Filter(
+      function(object) {
+        identical(object$type, "subscene") &&
+          !identical(object$id, chrome_widget$x$rootSubscene)
+      },
+      chrome_widget$x$objects
+    ),
     function(object) as.integer(object$id),
     integer(1)
   ))
-  hook_ids <- vapply(hook$data$chrome, function(entry) entry$id, integer(1))
   expect_equal(
     list(
       code = hook$code,
-      ids = sort(hook_ids),
-      anchors = vapply(
-        hook$data$chrome,
-        function(entry) entry$anchor,
-        character(1)
-      ),
-      title_px = hook$data$titlePx,
-      layout_height = hook$data$layoutHeight
+      panels = sort(unlist(hook$data$panels)),
+      grid = c(hook$data$nRow, hook$data$nCol),
+      title = hook$data$title,
+      col_strips = hook$data$colStrips,
+      legend_type = hook$data$legend$type
     ),
     list(
-      code = htmlwidgets::JS(.cell_rgl_chrome_fit_js),
-      ids = unname(chrome_ids),
-      anchors = c("center", "center", "left", "left"),
-      title_px = 36,
-      layout_height = 1000
+      code = htmlwidgets::JS(.cell_rgl_chrome_js),
+      panels = unname(panel_ids),
+      grid = c(1L, 2L),
+      title = "Title",
+      col_strips = list("a", "b"),
+      legend_type = "discrete"
     )
   )
 

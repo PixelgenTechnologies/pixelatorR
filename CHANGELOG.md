@@ -13,17 +13,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   canvas in pixels. In a knitr HTML chunk, a missing size follows the chunk
   figure size. `knitr` is suggested and is required only for that chunk
   sizing. Printed at the console, an unsized widget fills the IDE viewer
-  and follows its size; titles, strips, and legends are refitted on every
-  resize so they keep their place and size.
+  and follows its size; the data panels are laid out again on every resize.
 
 ### Changed
 
-- `cell_plot_rgl()` draws titles, facet strips, and color legends as native rgl
-  objects in orthographic regions. Those regions no longer rotate or zoom the
-  data panels, and `later` is no longer required. Row strip labels read
-  upward, as in the other renderers. Titles are left-aligned, and the title
-  row stays exactly as tall as the title and subtitle. Legends are sized in
-  multiples of the theme text size rather than as a share of the plot.
+- `cell_plot_rgl()` draws titles, facet strips, and color legends as HTML
+  over the WebGL canvas instead of as scene objects, so they render in the
+  browser's fonts at native resolution and can be selected and copied. Sizes
+  follow the theme text size in points as in the ggplot renderer; the title
+  row is exactly as tall as the title and subtitle, and the legend is as wide
+  as its labels. Dragging on the chrome or beside the panels no longer moves
+  the plot, and `later` is no longer required. Row strip labels read upward,
+  as in the other renderers. `rgl::scene3d()` snapshots of the widget scene
+  contain only the data panels.
 
 ## [0.22.0] - 2026-10-01
 
