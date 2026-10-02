@@ -156,10 +156,6 @@ expect_gifski <- function(...) {
   rlang::check_installed("gifski", ...)
 }
 
-expect_later <- function(...) {
-  rlang::check_installed("later", ...)
-}
-
 expect_plotly <- function(...) {
   rlang::check_installed("plotly", ...)
 }

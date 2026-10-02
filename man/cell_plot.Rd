@@ -29,13 +29,15 @@ column.}
 \item{color}{Optional column mapping or constant color for every node.
 Character, factor, numeric, and integer columns are supported, where
 character and factor columns are treated as categorical and numeric and
-integer columns as continuous. A character value is read as a column name
+integer columns as continuous. Missing numeric values are kept. Non-finite
+values such as \code{Inf} are not. A character value is read as a column name
 when \code{data} has that column and otherwise as one fully opaque color.}
 
 \item{size, alpha}{Optional column mappings or constant values for node size
 and alpha. Character, factor, numeric, and integer columns are supported,
-where character and factor columns are treated as categorical levels. One
-finite number sets a constant relative size or a constant alpha between zero
+where character and factor columns are treated as categorical levels.
+Missing numeric values are kept. Non-finite values such as \code{Inf} are not.
+One finite number sets a constant relative size or a constant alpha between zero
 and one. Category-specific sizes and alphas are set with
 \code{\link[=cell_node_scale_size]{cell_node_scale_size()}} and \code{\link[=cell_node_scale_alpha]{cell_node_scale_alpha()}}.}
 
@@ -61,8 +63,8 @@ Creates a cell-layout visualization recipe. The recipe stores data, column
 mappings, and optional rendering instructions without drawing a plot. Add
 instructions with the \verb{cell_*()} modifier functions. Printing the recipe
 builds and renders a ggplot. \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} draws the same
-recipe as a 3D Plotly widget. \code{\link[=cell_plot_rgl]{cell_plot_rgl()}} draws it as a native rgl
-scene. \code{\link[=cell_plot_animate]{cell_plot_animate()}} encodes a rotating GIF or video after
+recipe as a 3D Plotly widget. \code{\link[=cell_plot_rgl]{cell_plot_rgl()}} returns it as an rgl
+htmlwidget. \code{\link[=cell_plot_animate]{cell_plot_animate()}} encodes a rotating GIF or video after
 \code{\link[=cell_coord_rotate]{cell_coord_rotate()}}. \code{\link[=summary]{summary()}} inspects the recipe without drawing.
 }
 \details{

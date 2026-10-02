@@ -1,37 +1,28 @@
 #' Render a cell plot with rgl
 #'
-#' Builds a [cell_plot()] recipe and draws it as an interactive native 3D
-#' scatter using [rgl]. Node sizes are converted from backend-neutral relative
-#' units to rgl point diameters in pixels. Continuous sizes are grouped into a
-#' bounded number of pixel-size bins to keep the scene responsive.
-#' Panel grids use [rgl::layout3d()] with shared mouse control among data
-#' panels. Facet labels are drawn in dedicated themeable strip regions along
-#' the top (columns) and side (rows), so points cannot cover them. Plot titles
-#' and color legends also use reserved full-window chrome regions. Rotating and
-#' scroll-zooming work with the pointer anywhere in the window, including over
-#' the strips, title, and legend, and always drive every data panel together.
-#' Panel grids support at most 10 rows and 20 columns.
+#' Draws a [cell_plot()] recipe as an interactive 3D scatter with [rgl] and
+#' returns it as an htmlwidget. The widget has no fixed size: it fills the
+#' IDE viewer, a Quarto or R Markdown page, or any other container and
+#' follows that container when it is resized.
 #'
-#' Occlusion follows the scene camera, so markers closer to the current
-#' viewpoint appear in front. The rgl backend does not provide hover labels or
-#' interactive legend filtering. The `arrange` and `depth` mappings and
-#' [cell_coord_rotate()] are ignored. Markers use the rendered colors
-#' resolved by [build_cell_plot()], including illumination when requested,
-#' while legends are drawn from the unilluminated color scale metadata as
-#' static 2D overlays. Numeric color mappings use a continuous colorbar;
-#' categorical mappings use a discrete legend.
+#' Drag to rotate and scroll to zoom. Panels in a grid share one camera and
+#' move together. Grids support at most 10 rows and 20 columns.
 #'
-#' Unlike [cell_plot_interactive()], this renderer opens an rgl device rather
-#' than returning an htmlwidget. Legends are drawn with [rgl::bgplot3d()] and
-#' do not support Plotly-style interactive legend filtering.
+#' Titles, facet strips, and legends are HTML drawn over the WebGL canvas, so
+#' they stay sharp at any resolution and their text can be selected. Their
+#' size follows the theme text size in points. Numeric color mappings get a
+#' colorbar and categorical mappings a discrete legend; legends show the
+#' color scale without illumination.
 #'
-#' [rgl::bgplot3d()] renders text into a bitmap sized for the window it was
-#' drawn in. Titles, facet strips, and legends are redrawn automatically at
-#' the new size shortly after the window stops changing.
+#' Node sizes are converted from relative units to point diameters in pixels,
+#' and continuous sizes are grouped into at most 20 size bins. Occlusion
+#' follows the camera. The `arrange` and `depth` mappings and
+#' [cell_coord_rotate()] are ignored. Hover labels and interactive legend
+#' filtering are not available.
 #'
 #' @param object A `cell_plot` recipe.
 #'
-#' @return The rgl device id, returned invisibly.
+#' @return An htmlwidget.
 #'
 #' @seealso [cell_plot()], [cell_plot_interactive()]
 #'
@@ -51,27 +42,286 @@
 cell_plot_rgl <- function(object) {
   .validate_cell_plot(object)
   expect_rgl()
-  expect_later()
 
   object$mapping$arrange <- NULL
-  return(.render_cell_plot_rgl(build_cell_plot(object)))
+  built <- build_cell_plot(object)
+  return(.cell_rgl_html_widget(built))
 }
+
+#' Draw a cell plot into an rgl htmlwidget
+#'
+#' Draws the built plot on a temporary null device, captures it with
+#' [rgl::rglwidget()], and closes the device. The widget gets no width or
+#' height so it fills its container; passing `NULL` explicitly also bypasses
+#' the knitr figure-size default of [rgl::rglwidget()]. Chrome is added by
+#' the render hook in `.cell_rgl_chrome_js`.
+#'
+#' @param object A `cell_plot_built` object.
+#'
+#' @return An rgl htmlwidget.
+#'
+#' @noRd
+.cell_rgl_html_widget <- function(object) {
+  canvas <- .cell_rgl_default_canvas_px
+  previous <- as.integer(rgl::cur3d())
+  device <- rgl::open3d(
+    useNULL = TRUE,
+    silent = TRUE,
+    windowRect = c(0, 0, canvas, canvas)
+  )
+  on.exit(.cell_rgl_close_html_device(device, previous), add = TRUE)
+  rendered <- .render_cell_plot_rgl(object, device = device)
+  # snapshot = FALSE: a null device cannot draw the raster snapshot knitr
+  # requests for PDF or Word output.
+  widget <- rgl::rglwidget(
+    width = NULL,
+    height = NULL,
+    snapshot = FALSE
+  )
+  if (!is.null(rendered$chrome)) {
+    widget <- htmlwidgets::onRender(
+      widget,
+      htmlwidgets::JS(.cell_rgl_chrome_js),
+      data = rendered$chrome
+    )
+  }
+  return(widget)
+}
+
+#' JavaScript that draws chrome as HTML and fits the panels around it
+#'
+#' Runs after the widget renders and after every resize and canvas restart.
+#' Adds a layer over the canvas with the title block, one strip per facet
+#' level, and the legend, built from `.cell_rgl_chrome_spec()`. The browser
+#' measures the title height, legend width, and strip thickness; the data
+#' panel viewports fill the remaining rectangle. The layer ignores the
+#' pointer while each element accepts it, so text is selectable and dragging
+#' on chrome does not move the plot. Labels are set with `textContent`. A
+#' canvas restart clears the widget element, so the layer is re-attached on
+#' every layout. A later render removes the previous layer and reuses the
+#' resize wrapper, so titles and strips are not stacked.
+#'
+#' @noRd
+.cell_rgl_chrome_js <- "
+function(el, x, data) {
+  var rgl = el.rglinstance;
+  if (!rgl) {
+    return;
+  }
+  var theme = data.theme,
+      block = 'position:absolute;box-sizing:border-box;pointer-events:auto;',
+      make = function(parent, css, text) {
+        var node = document.createElement('div');
+        node.style.cssText = css;
+        if (text !== null && text !== undefined) {
+          node.textContent = String(text);
+        }
+        parent.appendChild(node);
+        return node;
+      },
+      i;
+  var previous = el.querySelector('.cell-rgl-chrome');
+  if (previous) {
+    previous.remove();
+  }
+  if (window.getComputedStyle(el).position === 'static') {
+    el.style.position = 'relative';
+  }
+  var layer = make(el,
+    'position:absolute;left:0;top:0;overflow:hidden;pointer-events:none;' +
+    'font-family:sans-serif;line-height:1.2;color:' + theme.textColor + ';' +
+    'font-size:' + theme.textSize + 'pt;');
+  layer.className = 'cell-rgl-chrome';
+
+  var title = null;
+  if (data.title !== null || data.subtitle !== null) {
+    title = make(layer, block + 'left:0;top:0;padding:0.5em 0.75em;white-space:nowrap;');
+    if (data.title !== null) {
+      make(title, 'font-size:1.2em;font-weight:bold;', data.title);
+    }
+    if (data.subtitle !== null) {
+      make(title, '', data.subtitle);
+    }
+  }
+
+  var stripCss = block + 'display:flex;align-items:center;justify-content:center;' +
+        'overflow:hidden;font-size:0.8em;background:' + theme.stripBackgroundColor + ';',
+      labelCss = 'flex-shrink:0;white-space:nowrap;',
+      colStrips = [], rowStrips = [], colLabels = [], rowLabels = [], strip;
+  for (i = 0; i < (data.colStrips || []).length; i++) {
+    strip = make(layer, stripCss);
+    colLabels.push(make(strip, labelCss + 'padding:0.5em;', data.colStrips[i]));
+    colStrips.push(strip);
+  }
+  for (i = 0; i < (data.rowStrips || []).length; i++) {
+    strip = make(layer, stripCss);
+    rowLabels.push(make(strip,
+      labelCss + 'padding:0.5em;writing-mode:vertical-rl;transform:rotate(180deg);',
+      data.rowStrips[i]));
+    rowStrips.push(strip);
+  }
+
+  var legend = null;
+  if (data.legend !== null) {
+    legend = make(layer, block + 'right:0;padding:0.75em;white-space:nowrap;');
+    if (data.legend.title !== null && data.legend.title !== '') {
+      make(legend, 'margin-bottom:0.5em;', data.legend.title);
+    }
+    if (data.legend.type === 'discrete') {
+      for (i = 0; i < data.legend.labels.length; i++) {
+        var row = make(legend, 'display:flex;align-items:center;font-size:0.8em;line-height:1.7;');
+        make(row, 'flex-shrink:0;width:1em;height:1em;border-radius:50%;margin-right:0.5em;' +
+          'background:' + data.legend.colors[i] + ';');
+        make(row, '', data.legend.labels[i]);
+      }
+    } else {
+      var colors = data.legend.colors,
+          fill = colors.length > 1 ? 'linear-gradient(to top,' + colors.join(',') + ')' : colors[0],
+          body = make(legend, 'display:flex;align-items:stretch;height:12em;padding:0.5em 0;'),
+          ticks, tick, labels = [], labelWidth = 0;
+      make(body, 'width:1.4em;background:' + fill + ';');
+      ticks = make(body, 'position:relative;font-size:0.8em;');
+      for (i = 0; i < data.legend.ticks.length; i++) {
+        tick = data.legend.ticks[i];
+        make(ticks, 'position:absolute;left:0;width:0.4em;height:1px;background:' +
+          theme.textColor + ';bottom:' + (tick.at * 100) + '%;');
+        labels.push(make(ticks,
+          'position:absolute;left:0.7em;transform:translateY(50%);bottom:' + (tick.at * 100) + '%;',
+          tick.label));
+      }
+      for (i = 0; i < labels.length; i++) {
+        labelWidth = Math.max(labelWidth, labels[i].offsetWidth);
+      }
+      ticks.style.width = 'calc(0.7em + ' + labelWidth + 'px)';
+    }
+  }
+
+  var layout = function() {
+    var W = rgl.canvas.width,
+        H = rgl.canvas.height,
+        legendW = legend ? legend.offsetWidth : 0,
+        titleH = 0, stripPx = 0, r, c, sub;
+    if (layer.parentNode !== el) {
+      el.appendChild(layer);
+    }
+    layer.style.width = W + 'px';
+    layer.style.height = H + 'px';
+    if (title) {
+      title.style.width = Math.max(W - legendW, 0) + 'px';
+      titleH = title.offsetHeight;
+    }
+    for (i = 0; i < colLabels.length; i++) {
+      stripPx = Math.max(stripPx, colLabels[i].offsetHeight);
+    }
+    for (i = 0; i < rowLabels.length; i++) {
+      stripPx = Math.max(stripPx, rowLabels[i].offsetWidth);
+    }
+    stripPx = Math.ceil(stripPx);
+    var colStripH = colStrips.length ? stripPx : 0,
+        rowStripW = rowStrips.length ? stripPx : 0,
+        left = rowStripW,
+        top = titleH + colStripH,
+        panelW = Math.max(W - left - legendW, 1),
+        panelH = Math.max(H - top, 1),
+        cellW = panelW / data.nCol,
+        cellH = panelH / data.nRow;
+    for (i = 0; i < data.panels.length; i++) {
+      sub = rgl.getObj(data.panels[i]);
+      if (!sub || !sub.par3d || !sub.par3d.viewport) {
+        continue;
+      }
+      r = Math.floor(i / data.nCol);
+      c = i % data.nCol;
+      sub.par3d.viewport.x = (left + c * cellW) / W;
+      sub.par3d.viewport.y = (H - top - (r + 1) * cellH) / H;
+      sub.par3d.viewport.width = cellW / W;
+      sub.par3d.viewport.height = cellH / H;
+    }
+    for (c = 0; c < colStrips.length; c++) {
+      colStrips[c].style.left = (left + c * cellW) + 'px';
+      colStrips[c].style.top = titleH + 'px';
+      colStrips[c].style.width = cellW + 'px';
+      colStrips[c].style.height = colStripH + 'px';
+    }
+    for (r = 0; r < rowStrips.length; r++) {
+      rowStrips[r].style.left = '0px';
+      rowStrips[r].style.top = (top + r * cellH) + 'px';
+      rowStrips[r].style.width = rowStripW + 'px';
+      rowStrips[r].style.height = cellH + 'px';
+    }
+    if (legend) {
+      legend.style.top = Math.max(top + (panelH - legend.offsetHeight) / 2, 0) + 'px';
+    }
+  };
+  el.cellRglLayout = layout;
+  if (!rgl.cellRglChrome) {
+    var resize = rgl.resize,
+        restart = rgl.restartCanvas;
+    rgl.cellRglChrome = true;
+    rgl.resize = function(element) {
+      resize.call(this, element);
+      if (el.cellRglLayout) {
+        el.cellRglLayout();
+      }
+    };
+    rgl.restartCanvas = function() {
+      restart.call(this);
+      if (el.cellRglLayout) {
+        el.cellRglLayout();
+      }
+    };
+  }
+  layout();
+  rgl.drawScene();
+}
+"
+
+#' Close the null device used for an rgl htmlwidget
+#'
+#' Restores the previously current device when it is still open.
+#'
+#' @param device Device id opened for the widget.
+#' @param previous Device id that was current beforehand.
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @noRd
+.cell_rgl_close_html_device <- function(device, previous) {
+  open_devices <- as.integer(rgl::rgl.dev.list())
+  if (as.integer(device) %in% open_devices) {
+    rgl::set3d(device, silent = TRUE)
+    rgl::close3d()
+  }
+  open_devices <- as.integer(rgl::rgl.dev.list())
+  if (length(previous) == 1L && previous %in% open_devices) {
+    rgl::set3d(previous, silent = TRUE)
+  }
+  return(invisible(NULL))
+}
+
+#' Size in pixels of the null device the scene is drawn on
+#'
+#' @noRd
+.cell_rgl_default_canvas_px <- 1000L
 
 #' Render a built cell plot with rgl
 #'
-#' Converts rendered colors, sizes, and alpha into rgl point properties.
-#' Colors come from .cell_plot_rendered_colors() so builder-baked illumination
-#' matches ggplot, Plotly, and base. Panel grids become an [rgl::layout3d()]
-#' arrangement that keeps every row and column level, including empty panels.
-#' Facet labels use dedicated gray strip regions; title and legend chrome use
-#' reserved regions so placement does not depend on the upper-left panel.
+#' Draws the data panels as an [rgl::layout3d()] grid that keeps every row
+#' and column level, including empty panels, using the rendered colors from
+#' .cell_plot_rendered_colors() so illumination matches the other renderers.
+#' The root subscene carries the background color and ignores the pointer.
+#' Titles, facet strips, and legends are returned as a `chrome` specification
+#' for the HTML render hook.
 #'
 #' @param object A `cell_plot_built` object with a mapped `z` coordinate.
+#' @param device An open rgl device to draw into.
 #'
-#' @return The rgl device id, returned invisibly.
+#' @return A list with `device`, the rgl device id, and `chrome`, the list
+#' from `.cell_rgl_chrome_spec()` or `NULL` when the plot has no title,
+#' strips, or legend.
 #'
 #' @noRd
-.render_cell_plot_rgl <- function(object) {
+.render_cell_plot_rgl <- function(object, device) {
   pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
 
   mapping <- object$mapping
@@ -127,17 +377,14 @@ cell_plot_rgl <- function(object) {
   n_col <- length(col_levels)
   n_panels <- n_row * n_col
   background_color <- object$theme$background_color
-  text_color <- object$theme$text_color
-  text_size <- object$theme$text_size
-  strip_background_color <- object$theme$strip_background_color
 
   title <- object$annotation$title
   subtitle <- object$annotation$subtitle
-  need_title <- !is.null(title) || !is.null(subtitle)
   need_legend <- !is.null(mapping$color)
-  has_layout <- !is.null(facet_rows) ||
+  has_chrome <- !is.null(facet_rows) ||
     !is.null(facet_cols) ||
-    need_title ||
+    !is.null(title) ||
+    !is.null(subtitle) ||
     need_legend
   legend_title <- .cell_plot_legend_title(object)
   categorical_legend <- if (need_legend && categorical) {
@@ -157,95 +404,35 @@ cell_plot_rgl <- function(object) {
     )
   }
 
-  device <- rgl::open3d(windowRect = c(100, 100, 1100, 1100))
-  # Overlays are bitmaps tied to the viewport they were drawn in, so keep the
-  # drawing calls around to repaint them whenever the window size changes.
-  chrome <- list()
+  rgl::set3d(device, silent = TRUE)
 
-  title_id <- NULL
-  legend_id <- NULL
-  corner_id <- NULL
-  col_strip_ids <- integer()
-  row_strip_ids <- integer()
-  resize_layout <- NULL
-  if (!has_layout) {
+  if (!has_chrome) {
     panel_ids <- rgl::subsceneInfo()$id
   } else {
     parent_id <- rgl::currentSubscene3d()
-    layout_args <- list(
-      n_row = n_row,
-      n_col = n_col,
-      need_col_strips = !is.null(facet_cols),
-      need_row_strips = !is.null(facet_rows),
-      need_title = need_title,
-      need_legend = need_legend,
-      need_subtitle = !is.null(subtitle)
-    )
-    layout <- do.call(
-      .cell_rgl_facet_layout,
-      c(
-        layout_args,
-        list(viewport = rgl::par3d("viewport", subscene = parent_id))
-      )
-    )
-    # mouseMode = "replace" is required: layout3d() defaults to inherited
-    # mouse handling, so disabling chrome mouse would write through to the
-    # parent and kill trackball/zoom on every data panel.
-    ids <- rgl::layout3d(
-      layout$mat,
-      widths = layout$widths,
-      heights = layout$heights,
+    # With layout3d()'s default inherited mouse handling, setting the root
+    # mouseMode to "none" below would also disable every data panel.
+    panel_ids <- rgl::layout3d(
+      matrix(seq_len(n_panels), nrow = n_row, ncol = n_col, byrow = TRUE),
       sharedMouse = FALSE,
       mouseMode = "replace"
     )
-    if (!is.null(facet_cols) && !is.null(facet_rows)) {
-      resize_layout <- function() {
-        viewport <- rgl::par3d("viewport", subscene = parent_id)
-        resized_layout <- do.call(
-          .cell_rgl_facet_layout,
-          c(layout_args, list(viewport = viewport))
-        )
-        .cell_rgl_set_layout_viewports(
-          ids = ids,
-          mat = resized_layout$mat,
-          widths = resized_layout$widths,
-          heights = resized_layout$heights,
-          parent_viewport = viewport
-        )
-        return(invisible(NULL))
-      }
-    }
-    panel_ids <- ids[seq_len(n_panels)]
-    chrome_index <- n_panels
-    if (!is.null(facet_cols)) {
-      col_strip_ids <- ids[chrome_index + seq_len(n_col)]
-      chrome_index <- chrome_index + n_col
-    }
-    if (!is.null(facet_cols) && !is.null(facet_rows)) {
-      chrome_index <- chrome_index + 1L
-      corner_id <- ids[[chrome_index]]
-    }
-    if (!is.null(facet_rows)) {
-      row_strip_ids <- ids[chrome_index + seq_len(n_row)]
-      chrome_index <- chrome_index + n_row
-    }
-    if (need_title) {
-      chrome_index <- chrome_index + 1L
-      title_id <- ids[[chrome_index]]
-    }
-    if (need_legend) {
-      chrome_index <- chrome_index + 1L
-      legend_id <- ids[[chrome_index]]
-    }
-    .cell_rgl_set_listeners(
-      c(panel_ids, col_strip_ids, corner_id, row_strip_ids, title_id, legend_id),
-      panel_ids = panel_ids
+    panel_ids <- as.integer(panel_ids[seq_len(n_panels)])
+    .cell_rgl_set_listeners(panel_ids, panel_ids = panel_ids)
+    rgl::useSubscene3d(parent_id)
+    rgl::bg3d(color = background_color)
+    rgl::par3d(
+      mouseMode = c(
+        left = "none",
+        right = "none",
+        middle = "none",
+        wheel = "none"
+      ),
+      subscene = parent_id
     )
   }
 
   for (panel_index in seq_len(n_panels)) {
-    # Select panels by id so title/legend chrome cells in the layout3d
-    # subscene list cannot shift which data panel is current.
     rgl::useSubscene3d(panel_ids[[panel_index]])
 
     row_index <- ((panel_index - 1L) %/% n_col) + 1L
@@ -297,230 +484,150 @@ cell_plot_rgl <- function(object) {
     rgl::view3d(zoom = 1)
   }
 
-  for (col_index in seq_along(col_strip_ids)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
-      subscene = col_strip_ids[[col_index]],
-      fn = .cell_rgl_strip_overlay,
-      label = .cell_plot_facet_label(col_levels[[col_index]]),
-      angle = 0,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = strip_background_color
-    )
-  }
-  for (row_index in seq_along(row_strip_ids)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
-      subscene = row_strip_ids[[row_index]],
-      fn = .cell_rgl_strip_overlay,
-      label = .cell_plot_facet_label(row_levels[[row_index]]),
-      angle = .cell_plot_row_strip_angle,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = strip_background_color
-    )
-  }
-  if (!is.null(corner_id)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
-      subscene = corner_id,
-      fn = .cell_rgl_strip_overlay,
-      label = "",
-      angle = 0,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = background_color
-    )
-  }
-
-  if (!is.null(title_id)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
-      subscene = title_id,
-      fn = .cell_rgl_title_overlay,
+  chrome <- NULL
+  if (has_chrome) {
+    chrome <- .cell_rgl_chrome_spec(
+      panel_ids = panel_ids,
+      n_row = n_row,
+      n_col = n_col,
       title = title,
       subtitle = subtitle,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = background_color
-    )
-  }
-  if (!is.null(legend_id)) {
-    chrome <- .cell_rgl_add_chrome(
-      chrome,
-      subscene = legend_id,
-      fn = .cell_rgl_legend_overlay,
-      text_color = text_color,
-      text_size = text_size,
-      background_color = background_color,
+      col_labels = if (!is.null(facet_cols)) {
+        vapply(col_levels, .cell_plot_facet_label, character(1))
+      },
+      row_labels = if (!is.null(facet_rows)) {
+        vapply(row_levels, .cell_plot_facet_label, character(1))
+      },
       categorical_legend = categorical_legend,
-      continuous_legend = continuous_legend
+      continuous_legend = continuous_legend,
+      theme = object$theme
     )
   }
-
-  resources <- .cell_rgl_draw_chrome(chrome)
-  .cell_rgl_register_chrome(
-    device = device,
-    chrome = chrome,
-    resources = resources,
-    resize = resize_layout
-  )
-
-  return(invisible(as.integer(device)))
+  return(invisible(list(device = as.integer(device), chrome = chrome)))
 }
 
-#' Build a layout matrix for faceted rgl chrome
+#' Describe chrome for the HTML render hook
 #'
-#' Reserves dedicated column and row facet strips around an `n_row` by `n_col`
-#' panel grid, plus optional title and legend regions. When both strips are
-#' present, the strip-corner cell is also reserved so pointer events there
-#' reach a subscene instead of the unwired root. Panel cells are numbered
-#' first, followed by column strips, the strip corner, row strips, title, and
-#' legend, so [rgl::layout3d()] returns ids in that order.
+#' Collects what `.cell_rgl_chrome_js` needs to draw the title block, facet
+#' strips, and legend. Indexed vectors are wrapped in lists so they serialize
+#' as JSON arrays even with one element, colors are converted to hexadecimal
+#' because R color names are not CSS colors, and colorbar ticks are chosen
+#' with [pretty()].
 #'
+#' @param panel_ids Data panel subscene ids in row-major order.
 #' @param n_row,n_col Panel grid dimensions.
-#' @param need_col_strips,need_row_strips Whether to reserve facet strips.
-#' @param need_title,need_legend Whether to reserve title and legend regions.
-#' @param need_subtitle Whether the title region also contains a subtitle.
-#' @param viewport Parent viewport as either width and height or the four-value
-#' rgl viewport vector.
+#' @param title,subtitle Plot title and subtitle, or `NULL`.
+#' @param col_labels,row_labels Facet strip labels per column and row, or
+#' `NULL` when that direction is not faceted.
+#' @param categorical_legend Optional list with `title`, `labels`, and `colors`.
+#' @param continuous_legend Optional list with `title`, `limits`, and `colors`.
+#' @param theme The plot theme list.
 #'
-#' @return A list with `mat`, `widths`, and `heights`.
+#' @return A list with `panels`, `nRow`, `nCol`, `title`, `subtitle`,
+#' `colStrips`, `rowStrips`, `legend`, and `theme`. `legend` is `NULL` or a
+#' list with `type` `"discrete"` (`title`, `labels`, `colors`) or
+#' `"continuous"` (`title`, `colors`, `ticks`), where each tick has `at`, its
+#' position along the bar from 0 at the bottom to 1 at the top, and `label`.
 #'
 #' @noRd
-.cell_rgl_facet_layout <- function(
+.cell_rgl_chrome_spec <- function(
+  panel_ids,
   n_row,
   n_col,
-  need_col_strips,
-  need_row_strips,
-  need_title,
-  need_legend,
-  need_subtitle = FALSE,
-  viewport = c(width = 1, height = 1)
+  title,
+  subtitle,
+  col_labels,
+  row_labels,
+  categorical_legend,
+  continuous_legend,
+  theme
 ) {
-  n_panels <- n_row * n_col
-  layout_rows <- n_row +
-    as.integer(need_col_strips) +
-    as.integer(need_title)
-  layout_cols <- n_col +
-    as.integer(need_row_strips) +
-    as.integer(need_legend)
-  mat <- matrix(0L, nrow = layout_rows, ncol = layout_cols)
-
-  panel_index <- 0L
-  row_offset <- as.integer(need_title) + as.integer(need_col_strips)
-  col_offset <- as.integer(need_row_strips)
-  for (row_index in seq_len(n_row)) {
-    for (col_index in seq_len(n_col)) {
-      panel_index <- panel_index + 1L
-      mat[row_index + row_offset, col_index + col_offset] <- panel_index
+  legend <- NULL
+  if (!is.null(continuous_legend)) {
+    colors <- continuous_legend$colors
+    if (length(colors) == 0L) {
+      colors <- "#000000"
     }
+    legend <- list(
+      type = "continuous",
+      title = continuous_legend$title,
+      colors = as.list(colors),
+      ticks = .cell_rgl_colorbar_ticks(
+        .cell_rgl_colorbar_limits(continuous_legend$limits)
+      )
+    )
+  } else if (!is.null(categorical_legend)) {
+    legend <- list(
+      type = "discrete",
+      title = categorical_legend$title,
+      labels = as.list(as.character(categorical_legend$labels)),
+      colors = as.list(categorical_legend$colors)
+    )
   }
-
-  chrome_id <- n_panels
-  if (need_col_strips) {
-    strip_row <- as.integer(need_title) + 1L
-    for (col_index in seq_len(n_col)) {
-      chrome_id <- chrome_id + 1L
-      mat[strip_row, col_index + col_offset] <- chrome_id
-    }
-  }
-  if (need_col_strips && need_row_strips) {
-    chrome_id <- chrome_id + 1L
-    mat[as.integer(need_title) + 1L, 1L] <- chrome_id
-  }
-  if (need_row_strips) {
-    for (row_index in seq_len(n_row)) {
-      chrome_id <- chrome_id + 1L
-      mat[row_index + row_offset, 1L] <- chrome_id
-    }
-  }
-  if (need_title) {
-    chrome_id <- chrome_id + 1L
-    mat[1L, seq_len(n_col + col_offset)] <- chrome_id
-  }
-  if (need_legend) {
-    chrome_id <- chrome_id + 1L
-    mat[, layout_cols] <- chrome_id
-  }
-
-  widths <- c(
-    if (need_row_strips) 0.1,
-    rep(1, n_col),
-    if (need_legend) 0.28
-  )
-  heights <- c(
-    if (need_title) {
-      if (need_subtitle) 0.18 else 0.12
-    },
-    if (need_col_strips) 0.1,
-    rep(1, n_row)
-  )
-  if (need_col_strips && need_row_strips) {
-    viewport <- as.numeric(viewport)
-    if (length(viewport) == 4L) {
-      viewport <- viewport[3:4]
-    }
-    viewport_width <- viewport[[1]]
-    viewport_height <- viewport[[2]]
-    col_strip_row <- as.integer(need_title) + 1L
-    col_strip_height <- viewport_height *
-      heights[[col_strip_row]] / sum(heights)
-    other_width_weight <- sum(widths[-1L])
-    if (col_strip_height < viewport_width) {
-      widths[[1L]] <- col_strip_height * other_width_weight /
-        (viewport_width - col_strip_height)
-    }
-  }
-  return(list(mat = mat, widths = widths, heights = heights))
+  return(list(
+    panels = as.list(as.integer(panel_ids)),
+    nRow = as.integer(n_row),
+    nCol = as.integer(n_col),
+    title = title,
+    subtitle = subtitle,
+    colStrips = if (!is.null(col_labels)) as.list(col_labels),
+    rowStrips = if (!is.null(row_labels)) as.list(row_labels),
+    legend = legend,
+    theme = list(
+      textSize = theme$text_size,
+      textColor = .cell_colors_to_hex(theme$text_color),
+      backgroundColor = .cell_colors_to_hex(theme$background_color),
+      stripBackgroundColor = .cell_colors_to_hex(theme$strip_background_color)
+    )
+  ))
 }
 
-#' Resize rgl layout subscenes
+#' Limits used to place a continuous colorbar
 #'
-#' Converts layout weights into pixel viewports and applies them to existing
-#' subscenes. This keeps facet-strip dimensions synchronized when an rgl window
-#' is resized without rebuilding the scenes or their contents.
+#' Constant or non-finite limits cannot position ticks. They expand to a short
+#' range around the repeated value, or to `c(0, 1)` when nothing is finite.
 #'
-#' @param ids Subscene ids indexed by the integer ids in `mat`.
-#' @param mat Integer layout matrix.
-#' @param widths,heights Relative layout dimensions.
-#' @param parent_viewport Four-value rgl parent viewport.
+#' @param limits Numeric color-scale limits.
 #'
-#' @return `ids`, invisibly.
+#' @return A length-two finite, strictly increasing range.
 #'
 #' @noRd
-.cell_rgl_set_layout_viewports <- function(
-  ids,
-  mat,
-  widths,
-  heights,
-  parent_viewport
-) {
-  parent_viewport <- as.numeric(parent_viewport)
-  pixel_widths <- parent_viewport[[3L]] * widths / sum(widths)
-  pixel_heights <- parent_viewport[[4L]] * heights / sum(heights)
-  x_positions <- c(0, cumsum(pixel_widths))
-  y_positions <- rev(c(0, cumsum(rev(pixel_heights))))[-1L]
-
-  for (id_index in seq_along(ids)) {
-    rows <- range(row(mat)[mat == id_index])
-    cols <- range(col(mat)[mat == id_index])
-    viewport <- c(
-      x = x_positions[[cols[[1L]]]],
-      y = y_positions[[rows[[2L]]]],
-      width = sum(pixel_widths[seq.int(cols[[1L]], cols[[2L]])]),
-      height = sum(pixel_heights[seq.int(rows[[1L]], rows[[2L]])])
-    )
-    rgl::par3d(viewport = viewport, subscene = ids[[id_index]])
+.cell_rgl_colorbar_limits <- function(limits) {
+  if (length(limits) < 2L || any(!is.finite(limits))) {
+    return(c(0, 1))
   }
-  return(invisible(ids))
+  if (limits[[1]] == limits[[2]]) {
+    pad <- max(abs(limits[[1]]) * 0.05, 1e-6)
+    return(c(limits[[1]] - pad, limits[[2]] + pad))
+  }
+  return(limits)
 }
 
-#' Connect rgl subscene mouse actions to the data panels
+#' Tick marks for a continuous colorbar
 #'
-#' Data panels listen together, while chrome forwards its mouse actions to the
-#' data panels without moving itself.
+#' Uses [pretty()] breaks that fall inside the limits. Labels use the default
+#' formatting, which switches to scientific notation for extreme values.
+#'
+#' @param limits Finite, strictly increasing length-two range.
+#'
+#' @return A list with one entry per tick holding `at`, the position along
+#' the bar from 0 to 1, and `label`, the formatted value.
+#'
+#' @noRd
+.cell_rgl_colorbar_ticks <- function(limits) {
+  values <- pretty(limits, n = 4)
+  values <- values[values >= limits[[1]] & values <= limits[[2]]]
+  labels <- format(values, trim = TRUE)
+  at <- (values - limits[[1]]) / diff(limits)
+  return(lapply(
+    seq_along(values),
+    function(i) list(at = at[[i]], label = labels[[i]])
+  ))
+}
+
+#' Connect rgl data panels so they share one camera
+#'
+#' Each data panel listens to every data panel.
 #'
 #' @param subscene_ids Integer vector of subscene ids to configure.
 #' @param panel_ids Integer vector of data-panel subscene ids.
@@ -533,609 +640,6 @@ cell_plot_rgl <- function(object) {
     rgl::par3d(listeners = panel_ids, subscene = id)
   }
   return(invisible(subscene_ids))
-}
-
-#' Record an overlay drawing call so it can be repainted later
-#'
-#' [rgl::bgplot3d()] rasterizes into a bitmap sized for the subscene viewport
-#' it was drawn in, so overlays must be redrawn to survive a window resize.
-#' Each entry stores the target subscene together with a zero-argument closure
-#' that repaints it.
-#'
-#' @param chrome List of existing overlay entries.
-#' @param subscene Subscene id the overlay belongs to.
-#' @param fn Drawing function to call.
-#' @param ... Arguments passed to `fn`.
-#'
-#' @return `chrome` with one entry appended.
-#'
-#' @noRd
-.cell_rgl_add_chrome <- function(chrome, subscene, fn, ...) {
-  force(fn)
-  args <- list(...)
-  entry <- list(
-    subscene = subscene,
-    draw = function() {
-      return(invisible(do.call(fn, args)))
-    }
-  )
-  return(c(chrome, list(entry)))
-}
-
-#' Paint every recorded overlay at the current window size
-#'
-#' Overlays are drawn into their own subscenes, so the current subscene is
-#' restored afterwards to avoid leaking a chrome subscene to the caller.
-#'
-#' @param chrome List of overlay entries from .cell_rgl_add_chrome().
-#'
-#' @return A list with `object_ids` and `texture_files`, invisibly.
-#'
-#' @noRd
-.cell_rgl_draw_chrome <- function(chrome) {
-  resources <- list(object_ids = integer(), texture_files = character())
-  if (length(chrome) == 0L) {
-    return(invisible(resources))
-  }
-  current_subscene <- rgl::currentSubscene3d()
-  finished <- FALSE
-  on.exit(
-    {
-      rgl::useSubscene3d(current_subscene)
-      if (!finished) {
-        .cell_rgl_remove_chrome(resources)
-      }
-    },
-    add = TRUE
-  )
-  for (entry in chrome) {
-    rgl::useSubscene3d(entry$subscene)
-    background_id <- as.integer(entry$draw())
-    resources$object_ids <- unique(c(
-      resources$object_ids,
-      background_id,
-      as.integer(rgl::rgl.attrib(background_id, "ids"))
-    ))
-    resources$texture_files <- unique(c(
-      resources$texture_files,
-      rgl::material3d("texture", id = background_id)
-    ))
-  }
-  finished <- TRUE
-  return(invisible(resources))
-}
-
-#' Remove resources belonging to old rgl overlays
-#'
-#' [rgl::bgplot3d()] creates both a background object and a textured quad.
-#' Removing only the returned background id leaves the quad in the scene, so
-#' all recorded object ids and their temporary texture files are discarded
-#' together after a replacement overlay has been drawn.
-#'
-#' @param resources A list with `object_ids` and `texture_files`.
-#'
-#' @return `NULL`, invisibly.
-#'
-#' @noRd
-.cell_rgl_remove_chrome <- function(resources) {
-  if (length(resources$object_ids) > 0L) {
-    live_ids <- as.integer(names(rgl::scene3d()$objects))
-    object_ids <- intersect(as.integer(resources$object_ids), live_ids)
-    if (length(object_ids) > 0L) {
-      rgl::pop3d(id = object_ids)
-    }
-  }
-  if (length(resources$texture_files) > 0L) {
-    unlink(resources$texture_files)
-  }
-  return(invisible(NULL))
-}
-
-#' Drop one device from the rgl chrome registry
-#'
-#' Deletes its temporary texture files before removing the registry entry.
-#' Scene objects need no cleanup here because this path is used when the
-#' associated device has closed or has no overlays.
-#'
-#' @param key Character device id used as the registry key.
-#'
-#' @return `TRUE` when an entry was removed, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_drop_chrome <- function(key) {
-  if (!exists(key, envir = .cell_rgl_chrome_registry, inherits = FALSE)) {
-    return(invisible(FALSE))
-  }
-  state <- get(key, envir = .cell_rgl_chrome_registry)
-  unlink(state$resources$texture_files)
-  rm(list = key, envir = .cell_rgl_chrome_registry)
-  if (length(ls(envir = .cell_rgl_chrome_registry)) == 0L) {
-    .cell_rgl_cancel_poll()
-  }
-  return(invisible(TRUE))
-}
-
-#' Registry of rgl devices with redrawable text overlays
-#'
-#' Keyed by device id, each element holds the overlay entries for that device
-#' and the window rectangle they were last drawn at.
-#'
-#' @noRd
-.cell_rgl_chrome_registry <- new.env(parent = emptyenv())
-
-#' Seconds between idle checks of the rgl window size
-#'
-#' Dragging a window border produces no R command and no rgl event, so the
-#' window size is polled while R is idle. The interval also acts as the
-#' debounce window: a resize is repainted once the size holds still for one
-#' full interval, so dragging repaints once at the end instead of continuously.
-#'
-#' @noRd
-.cell_rgl_poll_interval <- 0.25
-
-#' Whether an idle poll is already queued
-#'
-#' Guards against stacking [later::later()] callbacks, which would poll faster
-#' and faster every time a plot is drawn.
-#'
-#' @noRd
-.cell_rgl_poll_state <- new.env(parent = emptyenv())
-
-#' Track a device so its overlays can be redrawn
-#'
-#' Registering with an empty `chrome` clears any previous registration.
-#'
-#' @param device rgl device id.
-#' @param chrome List of overlay entries from .cell_rgl_add_chrome().
-#' @param resources Current overlay object ids and texture files.
-#' @param resize Optional zero-argument function that updates subscene geometry
-#' after a window resize.
-#'
-#' @return `TRUE` if the device is now tracked, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_register_chrome <- function(
-  device,
-  chrome,
-  resources,
-  resize = NULL
-) {
-  key <- as.character(device)
-  .cell_rgl_drop_chrome(key)
-  if (length(chrome) == 0L) {
-    return(invisible(FALSE))
-  }
-  assign(
-    key,
-    list(
-      chrome = chrome,
-      resources = resources,
-      resize = resize,
-      window_rect = as.numeric(rgl::par3d("windowRect", dev = device))
-    ),
-    envir = .cell_rgl_chrome_registry
-  )
-  .cell_rgl_schedule_poll()
-  return(invisible(TRUE))
-}
-
-#' Queue the next idle check of the rgl window size
-#'
-#' [later::later()] runs its callbacks while R is idle, including while the
-#' console sits at the prompt, which is the only time a border drag can be
-#' noticed. Polling stops once no device is tracked.
-#'
-#' @return `TRUE` if a poll was queued, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_schedule_poll <- function() {
-  if (isTRUE(.cell_rgl_poll_state$queued)) {
-    return(invisible(FALSE))
-  }
-  if (length(ls(envir = .cell_rgl_chrome_registry)) == 0L) {
-    .cell_rgl_cancel_poll()
-    return(invisible(FALSE))
-  }
-  .cell_rgl_poll_state$queued <- TRUE
-  .cell_rgl_poll_state$cancel <- later::later(
-    function() {
-      .cell_rgl_poll_state$queued <- FALSE
-      .cell_rgl_poll_state$cancel <- NULL
-      .cell_rgl_resize_poll()
-      .cell_rgl_schedule_poll()
-      return(invisible(NULL))
-    },
-    delay = .cell_rgl_poll_interval
-  )
-  return(invisible(TRUE))
-}
-
-#' Cancel the queued rgl resize poll
-#'
-#' [later::later()] returns a cancellation closure. Invoking it prevents a
-#' queued idle callback from running after the last watched window closes or
-#' the package unloads.
-#'
-#' @return `TRUE` when a callback was cancelled, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_cancel_poll <- function() {
-  cancel <- .cell_rgl_poll_state$cancel
-  if (is.function(cancel)) {
-    cancel()
-  }
-  .cell_rgl_poll_state$cancel <- NULL
-  .cell_rgl_poll_state$queued <- FALSE
-  return(invisible(is.function(cancel)))
-}
-
-#' Poll tracked devices and redraw overlays after settled resizes
-#'
-#' Closed devices are dropped. Changed devices are repainted only after their
-#' window dimensions remain stable across two polls. An open device that fails
-#' to repaint keeps its overlays and is retried on the next poll.
-#'
-#' @return `TRUE` while at least one device is still tracked.
-#'
-#' @noRd
-.cell_rgl_resize_poll <- function() {
-  keys <- ls(envir = .cell_rgl_chrome_registry)
-  open_devices <- as.integer(rgl::rgl.dev.list())
-  for (key in keys) {
-    device <- as.integer(key)
-    if (!device %in% open_devices) {
-      .cell_rgl_drop_chrome(key)
-      next
-    }
-    # A failed repaint must not stop resize handling for the other devices, and
-    # must not discard the overlays an open window is still displaying, so the
-    # device stays tracked and is retried on the next poll.
-    tryCatch(
-      .cell_rgl_check_device(key, device),
-      error = function(condition) NULL
-    )
-  }
-  keep_watching <- length(ls(envir = .cell_rgl_chrome_registry)) > 0L
-  if (!keep_watching) {
-    .cell_rgl_cancel_poll()
-  }
-  return(keep_watching)
-}
-
-#' Repaint one tracked device if its window size changed and has settled
-#'
-#' @param key Registry key for the device.
-#' @param device rgl device id.
-#'
-#' @return `TRUE` if the device was repainted, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_check_device <- function(key, device) {
-  state <- get(key, envir = .cell_rgl_chrome_registry)
-  window_rect <- as.numeric(rgl::par3d("windowRect", dev = device))
-  if (isTRUE(all.equal(window_rect, state$window_rect))) {
-    if (!is.null(state$pending_rect)) {
-      state$pending_rect <- NULL
-      assign(key, state, envir = .cell_rgl_chrome_registry)
-    }
-    return(invisible(FALSE))
-  }
-  if (!isTRUE(all.equal(window_rect, state$pending_rect))) {
-    # Size is still changing, so the drag is not finished yet.
-    state$pending_rect <- window_rect
-    assign(key, state, envir = .cell_rgl_chrome_registry)
-    return(invisible(FALSE))
-  }
-  .cell_rgl_redraw_chrome(device)
-  return(invisible(TRUE))
-}
-
-#' Repaint the overlays of one tracked rgl device
-#'
-#' @param device rgl device id.
-#'
-#' @return `TRUE` if overlays were repainted, `FALSE` otherwise, invisibly.
-#'
-#' @noRd
-.cell_rgl_redraw_chrome <- function(device) {
-  key <- as.character(device)
-  if (!exists(key, envir = .cell_rgl_chrome_registry, inherits = FALSE)) {
-    return(invisible(FALSE))
-  }
-  if (!device %in% rgl::rgl.dev.list()) {
-    .cell_rgl_drop_chrome(key)
-    return(invisible(FALSE))
-  }
-
-  state <- get(key, envir = .cell_rgl_chrome_registry)
-  previous_device <- as.integer(rgl::cur3d())
-  if (previous_device != device) {
-    rgl::set3d(device, silent = TRUE)
-    on.exit(
-      if (previous_device %in% rgl::rgl.dev.list()) {
-        rgl::set3d(previous_device, silent = TRUE)
-      },
-      add = TRUE
-    )
-  }
-
-  if (is.function(state$resize)) {
-    state$resize()
-  }
-  resources <- .cell_rgl_draw_chrome(state$chrome)
-  .cell_rgl_remove_chrome(state$resources)
-  state$resources <- resources
-  state$window_rect <- as.numeric(rgl::par3d("windowRect", dev = device))
-  state$pending_rect <- NULL
-  assign(key, state, envir = .cell_rgl_chrome_registry)
-  return(invisible(TRUE))
-}
-
-#' Draw a facet label in a dedicated rgl strip
-#'
-#' The strip is a separate subscene from the data panel, so points cannot cover
-#' its text. A gray background follows the default [ggplot2::facet_grid()]
-#' appearance. Row strip labels are rotated vertically.
-#'
-#' @param label Facet level label.
-#' @param angle Text rotation in degrees.
-#' @param text_color,text_size,background_color Theme values.
-#'
-#' @return The value returned by [rgl::bgplot3d()], invisibly.
-#'
-#' @noRd
-.cell_rgl_strip_overlay <- function(
-  label,
-  angle,
-  text_color,
-  text_size,
-  background_color
-) {
-  return(invisible(rgl::bgplot3d(
-    {
-      graphics::par(
-        mar = c(0, 0, 0, 0),
-        bg = background_color,
-        fg = text_color,
-        cex = text_size / 11
-      )
-      graphics::plot(
-        0,
-        0,
-        type = "n",
-        xlim = c(0, 1),
-        ylim = c(0, 1),
-        axes = FALSE,
-        xlab = "",
-        ylab = "",
-        xaxs = "i",
-        yaxs = "i"
-      )
-      graphics::text(
-        x = 0.5,
-        y = 0.5,
-        labels = label,
-        srt = angle,
-        col = text_color
-      )
-    },
-    bg.color = background_color
-  )))
-}
-
-#' Draw a title in a reserved rgl layout region
-#'
-#' @param title,subtitle Optional plot title and subtitle text.
-#' @param text_color,text_size,background_color Theme values.
-#'
-#' @return The value returned by [rgl::bgplot3d()], invisibly.
-#'
-#' @noRd
-.cell_rgl_title_overlay <- function(
-  title,
-  subtitle,
-  text_color,
-  text_size,
-  background_color
-) {
-  return(invisible(rgl::bgplot3d(
-    {
-      graphics::par(
-        mar = c(0, 1, 0, 1),
-        bg = background_color,
-        fg = text_color,
-        cex = text_size / 11
-      )
-      graphics::plot(
-        0,
-        0,
-        type = "n",
-        xlim = c(0, 1),
-        ylim = c(0, 1),
-        axes = FALSE,
-        xlab = "",
-        ylab = "",
-        xaxs = "i",
-        yaxs = "i"
-      )
-      if (!is.null(title)) {
-        graphics::text(
-          x = 0.02,
-          y = if (is.null(subtitle)) 0.5 else 0.65,
-          labels = title,
-          adj = c(0, 0.5),
-          col = text_color,
-          cex = 1.2,
-          font = 2
-        )
-      }
-      if (!is.null(subtitle)) {
-        graphics::text(
-          x = 0.02,
-          y = if (is.null(title)) 0.5 else 0.25,
-          labels = subtitle,
-          adj = c(0, 0.5),
-          col = text_color
-        )
-      }
-    },
-    bg.color = background_color
-  )))
-}
-
-#' Draw a legend in a reserved rgl layout region
-#'
-#' @param text_color,text_size,background_color Theme values.
-#' @param categorical_legend Optional list with `title`, `labels`, and `colors`.
-#' @param continuous_legend Optional list with `title`, `limits`, and `colors`.
-#'
-#' @return The value returned by [rgl::bgplot3d()], invisibly.
-#'
-#' @noRd
-.cell_rgl_legend_overlay <- function(
-  text_color,
-  text_size,
-  background_color,
-  categorical_legend = NULL,
-  continuous_legend = NULL
-) {
-  return(invisible(rgl::bgplot3d(
-    {
-      graphics::par(
-        mar = c(0, 0, 0, 0),
-        bg = background_color,
-        fg = text_color,
-        col.axis = text_color,
-        col.lab = text_color,
-        cex = text_size / 11
-      )
-      if (!is.null(continuous_legend)) {
-        .cell_rgl_draw_colorbar(continuous_legend, text_color = text_color)
-      } else if (!is.null(categorical_legend)) {
-        graphics::plot(
-          0,
-          0,
-          type = "n",
-          xlim = c(0, 1),
-          ylim = c(0, 1),
-          axes = FALSE,
-          xlab = "",
-          ylab = "",
-          xaxs = "i",
-          yaxs = "i"
-        )
-        graphics::legend(
-          "center",
-          legend = categorical_legend$labels,
-          col = categorical_legend$colors,
-          pch = 16,
-          title = categorical_legend$title,
-          bty = "n",
-          text.col = text_color,
-          title.col = text_color
-        )
-      }
-    },
-    bg.color = background_color
-  )))
-}
-
-#' Draw a continuous colorbar for a numeric color scale
-#'
-#' Numeric mappings render as a continuous ramp rather than a discrete
-#' `legend()` key, matching [cell_plot_interactive()]. The bar, ticks, and
-#' title are positioned in relative coordinates so the bar keeps its
-#' proportions in a narrow legend region.
-#'
-#' @param continuous_legend List with `title`, `limits`, and `colors`.
-#' @param text_color Theme text color.
-#'
-#' @return `NULL`, invisibly.
-#'
-#' @noRd
-.cell_rgl_draw_colorbar <- function(
-  continuous_legend,
-  text_color
-) {
-  n_stops <- max(100L, length(continuous_legend$colors))
-  legend_colors <- grDevices::colorRampPalette(continuous_legend$colors)(
-    n_stops
-  )
-  # image()/seq() need finite, strictly increasing limits. Constant or
-  # all-non-finite color scales otherwise abort during faceted legend layout.
-  limits <- continuous_legend$limits
-  if (length(limits) < 2L || any(!is.finite(limits))) {
-    limits <- c(0, 1)
-  } else if (limits[1] == limits[2]) {
-    pad <- max(abs(limits[1]) * 0.05, 1e-6)
-    limits <- c(limits[1] - pad, limits[2] + pad)
-  }
-  continuous_legend$limits <- limits
-
-  # A reserved legend region can be only a few dozen pixels wide. Base
-  # graphics margins are measured in text lines, so they would consume the
-  # whole region and collapse the bar into a thin strip with a clipped
-  # title. Place the bar in relative coordinates instead.
-  graphics::par(mar = c(0, 0, 0, 0))
-  graphics::plot(
-    0,
-    0,
-    type = "n",
-    xlim = c(0, 1),
-    ylim = c(0, 1),
-    axes = FALSE,
-    xlab = "",
-    ylab = "",
-    xaxs = "i",
-    yaxs = "i"
-  )
-  bar_x <- c(0.18, 0.3)
-  bar_y <- c(0.3, 0.7)
-  title_y <- 0.77
-  label_cex <- 0.85
-  title_cex <- 0.9
-
-  graphics::rasterImage(
-    # Raster rows are painted from top to bottom, while scale colors are
-    # ordered from low to high. Reverse them so high values appear at the top,
-    # matching ggplot2's default vertical colorbar.
-    grDevices::as.raster(matrix(rev(legend_colors), ncol = 1L)),
-    xleft = bar_x[1],
-    ybottom = bar_y[1],
-    xright = bar_x[2],
-    ytop = bar_y[2],
-    interpolate = TRUE
-  )
-
-  tick_values <- pretty(limits, n = 4)
-  tick_values <- tick_values[
-    tick_values >= limits[1] & tick_values <= limits[2]
-  ]
-  tick_y <- stats::approx(x = limits, y = bar_y, xout = tick_values)$y
-  tick_length <- diff(bar_x) * 0.2
-  graphics::segments(
-    bar_x[2],
-    tick_y,
-    bar_x[2] + tick_length,
-    tick_y,
-    col = text_color
-  )
-  graphics::text(
-    x = bar_x[2] + tick_length * 1.4,
-    y = tick_y,
-    labels = tick_values,
-    adj = c(0, 0.5),
-    col = text_color,
-    cex = label_cex
-  )
-  graphics::text(
-    x = mean(bar_x),
-    y = title_y,
-    labels = continuous_legend$title,
-    col = text_color,
-    cex = title_cex
-  )
-  return(invisible(NULL))
 }
 
 #' Maximum number of rgl point-size groups
@@ -1192,10 +696,11 @@ cell_plot_rgl <- function(object) {
 
 #' Draw rgl points grouped by pixel size
 #'
-#' Uses the same unlit `points` primitive as [rgl::plot3d()] `type = "p"`.
-#' [rgl::points3d()] accepts only a scalar point size, so nodes are split into
-#' a bounded number of size groups while
-#' preserving per-node color and alpha vectors within each group.
+#' Uses the same unlit `points` primitive as [rgl::plot3d()] `type = "p"`,
+#' with `point_antialias` so WebGL draws round points. [rgl::points3d()]
+#' accepts only a scalar point size, so nodes are split into a bounded number
+#' of size groups while preserving per-node color and alpha vectors within
+#' each group.
 #'
 #' @param x,y,z Node coordinates.
 #' @param color Hex colors.
@@ -1218,7 +723,8 @@ cell_plot_rgl <- function(object) {
         z = z[idx],
         size = groups$size[[as.character(key)]],
         color = color[idx],
-        alpha = alpha[idx]
+        alpha = alpha[idx],
+        point_antialias = TRUE
       )
     )
   }

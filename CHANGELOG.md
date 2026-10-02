@@ -5,7 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.22.1] - 2026-10-02
+
+### Changed
+
+- `cell_plot_rgl()` returns an rgl htmlwidget that fills its container,
+  such as the IDE viewer or a Quarto page, and follows it when resized.
+  Titles, facet strips, and legends are HTML drawn over the WebGL canvas,
+  sized by the theme text size, with row strip labels reading upward.
+  Points are round. Colorbar tick labels use scientific notation when the
+  values need it.
+
+### Removed
+
+- `cell_plot_rgl()` does not use `later`.
 
 ### Deprecated
 

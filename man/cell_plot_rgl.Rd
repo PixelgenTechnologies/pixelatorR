@@ -10,38 +10,29 @@ cell_plot_rgl(object)
 \item{object}{A \code{cell_plot} recipe.}
 }
 \value{
-The rgl device id, returned invisibly.
+An htmlwidget.
 }
 \description{
-Builds a \code{\link[=cell_plot]{cell_plot()}} recipe and draws it as an interactive native 3D
-scatter using \link[rgl:rgl-package]{rgl::rgl}. Node sizes are converted from backend-neutral relative
-units to rgl point diameters in pixels. Continuous sizes are grouped into a
-bounded number of pixel-size bins to keep the scene responsive.
-Panel grids use \code{\link[rgl:mfrow3d]{rgl::layout3d()}} with shared mouse control among data
-panels. Facet labels are drawn in dedicated themeable strip regions along
-the top (columns) and side (rows), so points cannot cover them. Plot titles
-and color legends also use reserved full-window chrome regions. Rotating and
-scroll-zooming work with the pointer anywhere in the window, including over
-the strips, title, and legend, and always drive every data panel together.
-Panel grids support at most 10 rows and 20 columns.
+Draws a \code{\link[=cell_plot]{cell_plot()}} recipe as an interactive 3D scatter with \link[rgl:rgl-package]{rgl::rgl} and
+returns it as an htmlwidget. The widget has no fixed size: it fills the
+IDE viewer, a Quarto or R Markdown page, or any other container and
+follows that container when it is resized.
 }
 \details{
-Occlusion follows the scene camera, so markers closer to the current
-viewpoint appear in front. The rgl backend does not provide hover labels or
-interactive legend filtering. The \code{arrange} and \code{depth} mappings and
-\code{\link[=cell_coord_rotate]{cell_coord_rotate()}} are ignored. Markers use the rendered colors
-resolved by \code{\link[=build_cell_plot]{build_cell_plot()}}, including illumination when requested,
-while legends are drawn from the unilluminated color scale metadata as
-static 2D overlays. Numeric color mappings use a continuous colorbar;
-categorical mappings use a discrete legend.
+Drag to rotate and scroll to zoom. Panels in a grid share one camera and
+move together. Grids support at most 10 rows and 20 columns.
 
-Unlike \code{\link[=cell_plot_interactive]{cell_plot_interactive()}}, this renderer opens an rgl device rather
-than returning an htmlwidget. Legends are drawn with \code{\link[rgl:bgplot3d]{rgl::bgplot3d()}} and
-do not support Plotly-style interactive legend filtering.
+Titles, facet strips, and legends are HTML drawn over the WebGL canvas, so
+they stay sharp at any resolution and their text can be selected. Their
+size follows the theme text size in points. Numeric color mappings get a
+colorbar and categorical mappings a discrete legend; legends show the
+color scale without illumination.
 
-\code{\link[rgl:bgplot3d]{rgl::bgplot3d()}} renders text into a bitmap sized for the window it was
-drawn in. Titles, facet strips, and legends are redrawn automatically at
-the new size shortly after the window stops changing.
+Node sizes are converted from relative units to point diameters in pixels,
+and continuous sizes are grouped into at most 20 size bins. Occlusion
+follows the camera. The \code{arrange} and \code{depth} mappings and
+\code{\link[=cell_coord_rotate]{cell_coord_rotate()}} are ignored. Hover labels and interactive legend
+filtering are not available.
 }
 \examples{
 \dontshow{if (interactive()) withAutoprint(\{ # examplesIf}
