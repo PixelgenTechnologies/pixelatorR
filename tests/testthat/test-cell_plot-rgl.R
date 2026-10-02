@@ -631,7 +631,8 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
     list(
       flat = pixelatorR:::.cell_rgl_colorbar_limits(c(2, 2)),
       missing = pixelatorR:::.cell_rgl_colorbar_limits(c(NA_real_, NA_real_)),
-      ticks = pixelatorR:::.cell_rgl_colorbar_ticks(c(0, 1))
+      ticks = pixelatorR:::.cell_rgl_colorbar_ticks(c(0, 1)),
+      wide = pixelatorR:::.cell_rgl_colorbar_ticks(c(0, 1e100))
     ),
     list(
       flat = c(1.9, 2.1),
@@ -643,6 +644,14 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
         list(at = 0.6, label = "0.6"),
         list(at = 0.8, label = "0.8"),
         list(at = 1, label = "1.0")
+      ),
+      wide = list(
+        list(at = 0, label = "0e+00"),
+        list(at = 0.2, label = "2e+99"),
+        list(at = 0.4, label = "4e+99"),
+        list(at = 0.6, label = "6e+99"),
+        list(at = 0.8, label = "8e+99"),
+        list(at = 1, label = "1e+100")
       )
     )
   )

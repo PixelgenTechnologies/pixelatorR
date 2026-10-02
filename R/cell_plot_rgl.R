@@ -98,7 +98,8 @@ cell_plot_rgl <- function(object) {
 #' pointer while each element accepts it, so text is selectable and dragging
 #' on chrome does not move the plot. Labels are set with `textContent`. A
 #' canvas restart clears the widget element, so the layer is re-attached on
-#' every layout.
+#' every layout. A later render removes the previous layer and reuses the
+#' resize wrapper, so titles and strips are not stacked.
 #'
 #' @noRd
 .cell_rgl_chrome_js <- "
@@ -119,6 +120,10 @@ function(el, x, data) {
         return node;
       },
       i;
+  var previous = el.querySelector('.cell-rgl-chrome');
+  if (previous) {
+    previous.remove();
+  }
   if (window.getComputedStyle(el).position === 'static') {
     el.style.position = 'relative';
   }
@@ -126,6 +131,7 @@ function(el, x, data) {
     'position:absolute;left:0;top:0;overflow:hidden;pointer-events:none;' +
     'font-family:sans-serif;line-height:1.2;color:' + theme.textColor + ';' +
     'font-size:' + theme.textSize + 'pt;');
+  layer.className = 'cell-rgl-chrome';
 
   var title = null;
   if (data.title !== null || data.subtitle !== null) {
@@ -247,16 +253,24 @@ function(el, x, data) {
       legend.style.top = Math.max(top + (panelH - legend.offsetHeight) / 2, 0) + 'px';
     }
   };
-  var resize = rgl.resize,
-      restart = rgl.restartCanvas;
-  rgl.resize = function(element) {
-    resize.call(this, element);
-    layout();
-  };
-  rgl.restartCanvas = function() {
-    restart.call(this);
-    layout();
-  };
+  el.cellRglLayout = layout;
+  if (!rgl.cellRglChrome) {
+    var resize = rgl.resize,
+        restart = rgl.restartCanvas;
+    rgl.cellRglChrome = true;
+    rgl.resize = function(element) {
+      resize.call(this, element);
+      if (el.cellRglLayout) {
+        el.cellRglLayout();
+      }
+    };
+    rgl.restartCanvas = function() {
+      restart.call(this);
+      if (el.cellRglLayout) {
+        el.cellRglLayout();
+      }
+    };
+  }
   layout();
   rgl.drawScene();
 }
@@ -591,7 +605,8 @@ function(el, x, data) {
 
 #' Tick marks for a continuous colorbar
 #'
-#' Uses [pretty()] breaks that fall inside the limits.
+#' Uses [pretty()] breaks that fall inside the limits. Labels use the default
+#' formatting, which switches to scientific notation for extreme values.
 #'
 #' @param limits Finite, strictly increasing length-two range.
 #'
@@ -602,7 +617,7 @@ function(el, x, data) {
 .cell_rgl_colorbar_ticks <- function(limits) {
   values <- pretty(limits, n = 4)
   values <- values[values >= limits[[1]] & values <= limits[[2]]]
-  labels <- format(values, trim = TRUE, scientific = FALSE)
+  labels <- format(values, trim = TRUE)
   at <- (values - limits[[1]]) / diff(limits)
   return(lapply(
     seq_along(values),

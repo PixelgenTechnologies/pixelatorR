@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   such as the IDE viewer or a Quarto page, and follows it when resized.
   Titles, facet strips, and legends are HTML drawn over the WebGL canvas,
   sized by the theme text size, with row strip labels reading upward.
-  Points are round.
+  Points are round. Colorbar tick labels use scientific notation when the
+  values need it.
 
 ### Removed
 
