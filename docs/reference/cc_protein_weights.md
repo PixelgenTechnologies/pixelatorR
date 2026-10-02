@@ -149,6 +149,14 @@ CD36, CD62P, and CD9 are often masked.
 ``` r
 library(dplyr)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file())
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 se$cell_type <- c("Mono", "pDC", "CD4T", "CD4T", "CD4T")
 w <- cc_protein_weights(
@@ -163,10 +171,10 @@ w <- cc_protein_weights(
 
 head(w)
 #>                Mono         CD4T
-#> CD11b  3.863506e-02 0.0002470799
-#> CD11c  5.531433e-03 0.0004586875
-#> TCRab  1.575291e-04 0.0070295612
-#> HLA-DR 6.444657e-04 0.0076158502
-#> CD45   1.030968e-02 0.1277495896
-#> CD14   9.006046e-07 0.0007086174
+#> CD11b  3.856771e-02 0.0002468968
+#> CD11c  5.522549e-03 0.0004586625
+#> TCRab  1.698013e-04 0.0070295816
+#> HLA-DR 6.569015e-04 0.0076158705
+#> CD45   1.051947e-02 0.1277499281
+#> CD14   2.170921e-06 0.0007086194
 ```

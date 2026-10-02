@@ -58,12 +58,19 @@ This option is only applicable to bipartite graphs.}
 A interactive 3D plot of a component graph layout as a \code{plotly} object
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
+Deprecated. Use \code{\link[=cell_plot]{cell_plot()}} instead.
+
 Plot a 3D component graph layout computed with \code{\link{ComputeLayout}} and
 color nodes by a marker.
 }
 \examples{
 library(pixelatorR)
 
+# Use cell_plot() instead
+\dontrun{
 # MPX
 pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
@@ -76,5 +83,9 @@ pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1], add_layouts = TRUE)
 Plot3DGraph(seur, cell_id = colnames(seur)[1], marker = "CD16", layout_method = "wpmds_3d")
+}
 
+}
+\seealso{
+\code{\link[=cell_plot]{cell_plot()}}
 }

@@ -216,7 +216,7 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Load polarization scores
 polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading polarization data
 #> ✔ Returning a 'tbl_df' object
 polarization_table1$sample <- "Sample1"
@@ -232,180 +232,20 @@ dpa_markers <- RunDPA(polarization_table_merged,
 #> ℹ Polarity metric: 'morans_z'
 #> ℹ Running 80 tests for the following comparison:
 #>   - Sample1 vs Sample2
-#> Warning: Got the following message when running wilcox.test test for marker 'ACTB': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'B2M': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD102': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD11a': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD11b': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD11c': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD127': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD137': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD14': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD150': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD152': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD154': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD158': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD16': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD161': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD162': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD163': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD18': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD19': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD197': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD1d': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD2': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD20': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD200': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD22': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD229': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD244': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD25': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD26': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD268': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD27': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD274': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD278': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD279': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD29': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD314': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD32': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD328': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD33': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD337': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD35': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD36': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD37': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD38': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD3E': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD4': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD40': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD41': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD43': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD44': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD45': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD45RA': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD45RB': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD47': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD48': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD49D': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD5': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD50': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD52': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD53': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD54': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD55': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD59': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD62P': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD64': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD69': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD7': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD71': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD72': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD8': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD82': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD84': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD86': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD9': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'HLA-ABC': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'HLA-DR': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'TCRb': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'mIgG1': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'mIgG2a': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'mIgG2b': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
 dpa_markers
 #> # A tibble: 80 × 14
-#>      estimate data_type target  reference    n1    n2 statistic     p p_adj
-#>         <dbl> <chr>     <chr>   <chr>     <int> <int>     <dbl> <dbl> <dbl>
-#>  1  0         morans_z  Sample1 Sample2       4     4       8       1     1
-#>  2  0         morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  3  0         morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  4 -0.0000610 morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  5  0         morans_z  Sample1 Sample2       4     4       8       1     1
-#>  6  0         morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  7  0.0000256 morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  8  0         morans_z  Sample1 Sample2       3     3       4.5     1     1
-#>  9  0         morans_z  Sample1 Sample2       5     5      12.5     1     1
-#> 10  0.0000178 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>    estimate data_type target  reference    n1    n2 statistic     p p_adj
+#>       <dbl> <chr>     <chr>   <chr>     <int> <int>     <dbl> <dbl> <dbl>
+#>  1        0 morans_z  Sample1 Sample2       4     4       8       1     1
+#>  2        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  3        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  4        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  5        0 morans_z  Sample1 Sample2       4     4       8       1     1
+#>  6        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  7        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  8        0 morans_z  Sample1 Sample2       3     3       4.5     1     1
+#>  9        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#> 10        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
 #> # ℹ 70 more rows
 #> # ℹ 5 more variables: conf.low <dbl>, conf.high <dbl>, method <chr>,
 #> #   alternative <chr>, marker <chr>
@@ -426,180 +266,20 @@ dpa_markers <- RunDPA(seur_merged,
 #> ℹ Polarity metric: 'morans_z'
 #> ℹ Running 80 tests for the following comparison:
 #>   - Sample1 vs Sample2
-#> Warning: Got the following message when running wilcox.test test for marker 'ACTB': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'B2M': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD102': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD11a': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD11b': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD11c': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD127': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD137': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD14': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD150': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD152': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD154': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD158': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD16': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD161': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD162': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD163': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD18': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD19': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD197': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD1d': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD2': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD20': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD200': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD22': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD229': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD244': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD25': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD26': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD268': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD27': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD274': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD278': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD279': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD29': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD314': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD32': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD328': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD33': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD337': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD35': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD36': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD37': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD38': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD3E': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD4': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD40': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD41': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD43': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD44': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD45': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD45RA': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD45RB': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD47': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD48': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD49D': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD5': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD50': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD52': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD53': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD54': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD55': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD59': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD62P': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD64': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD69': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD7': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD71': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD72': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD8': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD82': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD84': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD86': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'CD9': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'HLA-ABC': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'HLA-DR': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'TCRb': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'mIgG1': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'mIgG2a': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
-#> Warning: Got the following message when running wilcox.test test for marker 'mIgG2b': Sample1 vs Sample2
-#>   cannot compute exact confidence intervals with ties
 dpa_markers
 #> # A tibble: 80 × 14
-#>      estimate data_type target  reference    n1    n2 statistic     p p_adj
-#>         <dbl> <chr>     <chr>   <chr>     <int> <int>     <dbl> <dbl> <dbl>
-#>  1  0         morans_z  Sample1 Sample2       4     4       8       1     1
-#>  2  0         morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  3  0         morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  4 -0.0000610 morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  5  0         morans_z  Sample1 Sample2       4     4       8       1     1
-#>  6  0         morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  7  0.0000256 morans_z  Sample1 Sample2       5     5      12.5     1     1
-#>  8  0         morans_z  Sample1 Sample2       3     3       4.5     1     1
-#>  9  0         morans_z  Sample1 Sample2       5     5      12.5     1     1
-#> 10  0.0000178 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>    estimate data_type target  reference    n1    n2 statistic     p p_adj
+#>       <dbl> <chr>     <chr>   <chr>     <int> <int>     <dbl> <dbl> <dbl>
+#>  1        0 morans_z  Sample1 Sample2       4     4       8       1     1
+#>  2        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  3        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  4        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  5        0 morans_z  Sample1 Sample2       4     4       8       1     1
+#>  6        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  7        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#>  8        0 morans_z  Sample1 Sample2       3     3       4.5     1     1
+#>  9        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
+#> 10        0 morans_z  Sample1 Sample2       5     5      12.5     1     1
 #> # ℹ 70 more rows
 #> # ℹ 5 more variables: conf.low <dbl>, conf.high <dbl>, method <chr>,
 #> #   alternative <chr>, marker <chr>

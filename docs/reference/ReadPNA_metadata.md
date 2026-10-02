@@ -31,6 +31,14 @@ library(pixelatorR)
 # Create example Seurat object
 pxl_file <- minimal_pna_pxl_file()
 ReadPNA_metadata(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> # A tibble: 1 × 6
 #>   sample_name        version technology   panel_name panel_version post_analysis
 #>   <chr>              <chr>   <chr>        <chr>      <chr>         <named list> 

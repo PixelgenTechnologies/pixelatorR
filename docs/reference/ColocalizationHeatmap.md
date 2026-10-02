@@ -172,10 +172,6 @@ Each marker pair can only appear once in the data. This means that if
 you ran the test across multiple groups, you need to subset the data
 first.
 
-## See also
-
-`pixelatorRinternal::extract_panel_interactions()`
-
 ## Examples
 
 ``` r

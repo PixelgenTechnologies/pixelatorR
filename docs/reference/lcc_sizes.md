@@ -17,11 +17,11 @@ lcc_sizes(df, mc_cores = 1)
 
   pq_files
 
-  : Paths to parquet files containing downsampled edgelists.
+  :   Paths to parquet files containing downsampled edgelists.
 
   fracs
 
-  : The corresponding downsampling fractions.
+  :   The corresponding downsampling fractions.
 
   Typically generated with
   [`downsample_to_parquet`](downsample_to_parquet.md).

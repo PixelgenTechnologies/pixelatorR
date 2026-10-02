@@ -4,14 +4,37 @@
 \alias{CreateCellGraphObject}
 \title{Create a CellGraph object}
 \usage{
-CreateCellGraphObject(cellgraph, counts = NULL, layout = NULL, verbose = FALSE)
+CreateCellGraphObject(
+  cellgraph,
+  counts = NULL,
+  layout = NULL,
+  layers = NULL,
+  meta.data = NULL,
+  reductions = NULL,
+  verbose = FALSE
+)
 }
 \arguments{
 \item{cellgraph}{A \code{tbl_graph} object representing a PNA single-cell graph}
 
-\item{counts}{A \code{dgCMatrix} with marker counts}
+\item{counts}{A \code{dgCMatrix} with marker counts. Rows are matched to graph
+node names (order does not need to match).}
 
-\item{layout}{A named \code{list} of \code{tbl_df} objects with cell layouts}
+\item{layout}{A named \code{list} of \code{data.frame} objects with cell
+layouts. Nodes are identified by row names or by a \code{name} column;
+otherwise the row order is assumed to follow the graph. MPX bipartite
+layouts may use unsuffixed names while graph nodes keep \code{-A}/\code{-B};
+those names are matched after stripping the suffix, as in
+\code{\link{LoadCellGraphs}}. Stored layouts keep graph node order and do
+not copy node IDs as row names.}
+
+\item{layers}{A named \code{list} of additional numeric node matrices
+(nodes x features). \code{"counts"} is reserved.}
+
+\item{meta.data}{A node-level \code{data.frame} or \code{tbl_df}. Either row
+names or a \code{name} column must identify nodes.}
+
+\item{reductions}{A named \code{list} of \code{\link{NodeDimReduc}} objects}
 
 \item{verbose}{Print messages}
 }
@@ -20,6 +43,12 @@ A \code{CellGraph} object
 }
 \description{
 Create a CellGraph object
+}
+\details{
+Node-level variable names must not clash between the graph node table,
+\code{meta.data}, reduction embeddings, and matrix features. Count and
+layer matrices may share feature names because methods such as
+\code{\link[SeuratObject]{FetchData}} select a specific layer.
 }
 \examples{
 
@@ -62,9 +91,6 @@ cg
 counts <- db$components_marker_counts(
   components = sel_comp, as_sparse = TRUE
 )[[1]]
-node_names <- component_graph \%>\% pull(name)
-# Ensure that the counts matrix rows match the graph node names
-counts <- counts[node_names, ]
 
 # Create a CellGraph object with graph and counts
 cg <- CreateCellGraphObject(cellgraph = component_graph, counts = counts)
@@ -74,11 +100,8 @@ cg
 layout <- db$components_layout(
   components = sel_comp
 )[[1]]
-# Ensure that the layout table rows match the graph node names
-layout <- layout[match(node_names, layout$name), ] \%>\%
-  select(-name)
 
-# Create a CellGraph object with graph, counts and layout
+# Layouts with a name column or node row names are matched automatically
 cg <- CreateCellGraphObject(
   cellgraph = component_graph,
   counts = counts,

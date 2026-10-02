@@ -26,12 +26,12 @@ assistant (Gemini, Claude, ChatGPT, etc.).
 
 For best results, give the LLM:
 
-| Context | Why | Required? |
-|----|----|----|
-| `SKILL.md` | Defines all conventions, patterns, and rules | **Yes** |
-| Source code of the function | So the LLM understands parameters, validation, and return types | **Yes** |
-| An existing test file | As a concrete example of the style | Optional |
-| Roxygen documentation | Extra detail on expected behavior | Optional |
+| Context                     | Why                                                             | Required? |
+|-----------------------------|-----------------------------------------------------------------|-----------|
+| `SKILL.md`                  | Defines all conventions, patterns, and rules                    | **Yes**   |
+| Source code of the function | So the LLM understands parameters, validation, and return types | **Yes**   |
+| An existing test file       | As a concrete example of the style                              | Optional  |
+| Roxygen documentation       | Extra detail on expected behavior                               | Optional  |
 
 ### Minimal Prompt Template
 
@@ -75,7 +75,6 @@ The LLM will likely use placeholder values for `expect_equal()`
 comparisons (since it cannot run R code). Replace them with real values:
 
 ``` r
-
 # In an interactive R session:
 library(pixelatorR)
 library(dplyr)

@@ -52,9 +52,8 @@ CellGraphs(object, ...) <- value
 
 ## Value
 
-Returns a list of [`CellGraph`](CellGraph-class.md) objects. If there
-are no [`CellGraph`](CellGraph-class.md) objects present, returns a
-named list where each element is `NULL`.
+Returns a [`CellGraphList`](CellGraphList.md). Unloaded graphs are
+stored as `NULL` elements.
 
 ## See also
 
@@ -65,16 +64,15 @@ spatial metrics
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
 pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
-#> ℹ Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading count data from /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/extdata/five_cells/five_cells.pxl
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpWBZbar/temp_libpath9d141cde8a08/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 components <- colnames(counts)
@@ -108,21 +106,8 @@ cg_assay
 
 # Get cellgraphs from a CellGraphAssay object
 CellGraphs(cg_assay)
-#> $RCVCMP0000217
-#> A CellGraph object containing a bipartite graph with 3507 nodes and 7580 edges
-#> 
-#> $RCVCMP0000118
-#> A CellGraph object containing a bipartite graph with 2470 nodes and 5138 edges
-#> 
-#> $RCVCMP0000487
-#> A CellGraph object containing a bipartite graph with 4225 nodes and 8150 edges
-#> 
-#> $RCVCMP0000655
-#> A CellGraph object containing a bipartite graph with 4340 nodes and 9918 edges
-#> 
-#> $RCVCMP0000263
-#> A CellGraph object containing a bipartite graph with 2258 nodes and 4303 edges
-#> 
+#> A CellGraphList with 5 loaded CellGraph object(s) out of 5 
+#> Names: RCVCMP0000217, RCVCMP0000118, RCVCMP0000487, RCVCMP0000655, RCVCMP0000263  
 
 
 # CellGraphs setter CellGraphAssay
@@ -135,23 +120,18 @@ library(pixelatorR)
 
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 CellGraphs(seur_obj[["PNA"]])
-#> $`0a45497c6bfbfb22`
-#> NULL
-#> 
-#> $`2708240b908e2eba`
-#> NULL
-#> 
-#> $c3c393e9a17c1981
-#> NULL
-#> 
-#> $d4074c845bb62800
-#> NULL
-#> 
-#> $efe0ed189cb499fc
-#> NULL
-#> 
+#> A CellGraphList with 0 loaded CellGraph object(s) out of 5 
+#> Names: 0a45497c6bfbfb22, 2708240b908e2eba, c3c393e9a17c1981, d4074c845bb62800, efe0ed189cb499fc  
 
 # Set cellgraphs in a PNAAssay object
 CellGraphs(seur_obj[["PNA"]]) <- CellGraphs(seur_obj[["PNA"]])
@@ -165,21 +145,8 @@ se <- ReadMPX_Seurat(pxl_file)
 
 # Get cellgraphs from a Seurat object
 CellGraphs(se)
-#> $RCVCMP0000217
-#> NULL
-#> 
-#> $RCVCMP0000118
-#> NULL
-#> 
-#> $RCVCMP0000487
-#> NULL
-#> 
-#> $RCVCMP0000655
-#> NULL
-#> 
-#> $RCVCMP0000263
-#> NULL
-#> 
+#> A CellGraphList with 0 loaded CellGraph object(s) out of 5 
+#> Names: RCVCMP0000217, RCVCMP0000118, RCVCMP0000487, RCVCMP0000655, RCVCMP0000263  
 
 # CellGraphs setter Seurat
 # ---------------------------------

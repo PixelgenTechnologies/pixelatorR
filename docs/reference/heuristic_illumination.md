@@ -1,9 +1,9 @@
 # Compute heuristic illumination for 3D layouts
 
 Combines three simple lighting heuristics for 3D coordinates: (1)
-directional light from the positive z-axis, (2) radial volume shading
-from the origin, and (3) ambient occlusion approximated from mean
-distance to nearest neighbors.
+directional light along `light_direction` (default: the positive
+z-axis), (2) radial volume shading from the origin, and (3) ambient
+occlusion approximated from mean distance to nearest neighbors.
 
 ## Usage
 
@@ -15,7 +15,8 @@ heuristic_illumination(
   volume_shading_weight = 0.5,
   ambient_occlusion_weight = 1,
   ambient_occlusion_k = 20,
-  normalize_weights = TRUE
+  normalize_weights = TRUE,
+  light_direction = c(0, 0, 1)
 )
 ```
 
@@ -55,15 +56,28 @@ heuristic_illumination(
   Logical; if `TRUE`, weights are normalized to sum to 1. Default:
   `TRUE`.
 
+- light_direction:
+
+  Numeric vector of length 3 in layout `(x, y, z)` coordinates giving
+  the directional light axis. Internally normalized to unit length. The
+  directional term is the projection of each point onto this unit
+  vector, then rescaled to `[0, 1]`. Default: `c(0, 0, 1)` (positive
+  z-axis). The zero vector and non-finite values are rejected.
+
 ## Value
 
 A numeric vector of illumination values (length `nrow(layout)`). Higher
 values indicate stronger illumination.
 
+## Details
+
+Directional lighting is defined in layout `(x, y, z)` coordinates, not
+camera coordinates. Interactive cameras will not re-light a scene unless
+a renderer recomputes the illumination mask.
+
 ## Examples
 
 ``` r
-
 library(dplyr)
 set.seed(1)
 
@@ -89,8 +103,8 @@ layout <- tibble::tibble(
 )
 illum <- heuristic_illumination(layout)
 
-# Create a temporary GIF file and render a rotating layout
-# using the computed illumination as node values
+# Use cell_plot() and cell_plot_animate() to render a rotating layout
+if (FALSE) { # \dontrun{
 temp_gif <- fs::file_temp(ext = ".gif")
 render_rotating_layout(
   data = layout %>%
@@ -107,13 +121,5 @@ render_rotating_layout(
   boomerang = TRUE,
   show_first_frame = FALSE
 )
-#> ! The following parameters are not supported with graphics_use = 'base':
-#> ggplot_theme, label_grid_axes, title
-#> Titles, text annotations and color bar will be missing from the plot.
-#> 
-#> ── Rendering frames... 
-#> 
-#> ── Creating video... 
-#> ✔ The video has been saved to:
-#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpXxUDE2/filebadb42d68d8e.gif
+} # }
 ```

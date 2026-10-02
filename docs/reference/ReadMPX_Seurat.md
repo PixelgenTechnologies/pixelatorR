@@ -90,7 +90,6 @@ Other data-loaders: [`ReadMPX_item()`](ReadMPX_item.md),
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 
 # Load example data as a Seurat object

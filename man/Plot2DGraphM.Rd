@@ -68,6 +68,11 @@ names of \code{titles} should match \code{cells}}
 A \code{patchwork} object
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+}
+\details{
+Deprecated. Use \code{\link[=cell_plot]{cell_plot()}} with \code{\link[=cell_grid]{cell_grid()}} instead.
+
 In contrast to \code{\link{Plot2DGraph}}, which only draw 1 marker at the time,
 this function makes it possible to arrange plots into a grid with markers in rows
 and components in columns. The color scales are fixed for each marker so that their
@@ -76,6 +81,8 @@ limits are the same across all components.
 \examples{
 library(pixelatorR)
 
+# Use cell_plot() with cell_grid() instead
+\dontrun{
 # MPX
 pxl_file <- minimal_mpx_pxl_file()
 seur <- ReadMPX_Seurat(pxl_file)
@@ -89,8 +96,9 @@ seur <- ReadPNA_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[2:3], add_layouts = TRUE)
 seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
 Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
+}
 
 }
 \seealso{
-\code{\link[=Plot2DGraph]{Plot2DGraph()}}
+\code{\link[=cell_plot]{cell_plot()}}, \code{\link[=Plot2DGraph]{Plot2DGraph()}}
 }

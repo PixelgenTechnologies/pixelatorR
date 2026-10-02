@@ -55,7 +55,7 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Read edgelist
 edgelist <- ReadMPX_arrow_edgelist(pxl_file)
-#> ℹ Extracting edgelist.parquet file to /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpXxUDE2/edgelist.parquet
+#> ℹ Extracting edgelist.parquet file to /tmp/RtmpjKKHFf/edgelist.parquet
 #> ✔ Returning FileSystemDataset
 
 # Load graph from edge list and store in a CellGraph object

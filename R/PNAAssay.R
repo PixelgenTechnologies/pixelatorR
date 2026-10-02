@@ -256,7 +256,7 @@ CellGraphs.PNAAssay <- function(
   object,
   ...
 ) {
-  return(slot(object, name = "cellgraphs"))
+  return(CreateCellGraphList(slot(object, name = "cellgraphs")))
 }
 
 #' @rdname CellGraphs
@@ -268,7 +268,19 @@ CellGraphs.PNAAssay <- function(
 CellGraphs.PNAAssay5 <- CellGraphs.PNAAssay
 
 
-#' Internal function to replace cellgraphs in a PNAAssay object
+#' Replace the cellgraphs slot of a PNAAssay
+#'
+#' Accepts a named list or \code{CellGraphList} of \code{CellGraph} objects
+#' and \code{NULL} placeholders. \code{value = NULL} unloads every cell.
+#' The list is stored unclassed so it fits the S4 slot.
+#'
+#' @param object A \code{PNAAssay} or \code{PNAAssay5}
+#' @param value A named list / \code{CellGraphList}, or \code{NULL}
+#' @param call Environment to report as the error caller
+#'
+#' @return \code{object} with an updated \code{cellgraphs} slot
+#'
+#' @keywords internal
 #' @noRd
 .replace_cellgraphs <- function(
   object,
@@ -285,7 +297,7 @@ CellGraphs.PNAAssay5 <- CellGraphs.PNAAssay
   if (inherits(x = value, what = "list")) {
     assert_vectors_match(names(value), names(CellGraphs(object)))
     for (i in seq_along(value)) {
-      if (!inherits(x = value[[i]], what = c("CellGraph", "NULL"))) {
+      if (!.is_cellgraph_or_null(value[[i]])) {
         cli::cli_abort(
           c(
             "i" = "All elements of {.var value} must be of class {.cls CellGraph} or {.cls NULL}",
@@ -295,7 +307,7 @@ CellGraphs.PNAAssay5 <- CellGraphs.PNAAssay
         )
       }
     }
-    slot(object = object, name = "cellgraphs") <- value
+    slot(object = object, name = "cellgraphs") <- .unclass_cellgraph_list(value)
   } else {
     cli::cli_abort(
       c(
@@ -388,7 +400,7 @@ RenameCells.PNAAssay <- function(
   # Rename cellgraphs
   cellgraphs <- slot(object, name = "cellgraphs")
   cellgraphs <- set_names(cellgraphs, nm = new.names)
-  slot(pna_assay_renamed, name = "cellgraphs") <- cellgraphs
+  slot(pna_assay_renamed, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
 
   # Handle proximity slot
   name_conversion <- tibble(new = new.names, component = orig.names)
@@ -468,7 +480,7 @@ as.PNAAssay.Assay <- function(
     assert_non_empty_object(cellgraphs, classes = "list")
     assert_singles_match(length(cellgraphs), ncol(x))
     for (i in seq_along(cellgraphs)) {
-      if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
+      if (!.is_cellgraph_or_null(cellgraphs[[i]])) {
         cli::cli_abort(
           c(
             "i" = "All elements of {.var cellgraphs} must be of class {.cls CellGraph} or {.cls NULL}",
@@ -492,7 +504,7 @@ as.PNAAssay.Assay <- function(
   new_assay <- as(object = x, Class = "PNAAssay")
 
   # Add slots
-  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
   slot(new_assay, name = "proximity") <- proximity
 
   # Add fs_map
@@ -567,7 +579,7 @@ as.PNAAssay5.Assay5 <- function(
     assert_non_empty_object(cellgraphs, classes = "list")
     assert_singles_match(length(cellgraphs), ncol(x))
     for (i in seq_along(cellgraphs)) {
-      if (!inherits(x = cellgraphs[[i]], what = c("CellGraph", "NULL"))) {
+      if (!.is_cellgraph_or_null(cellgraphs[[i]])) {
         cli::cli_abort(
           c(
             "i" = "All elements of {.var cellgraphs} must be of class {.cls CellGraph} or {.cls NULL}",
@@ -591,7 +603,7 @@ as.PNAAssay5.Assay5 <- function(
   new_assay <- as(object = x, Class = "PNAAssay5")
 
   # Add slots
-  slot(new_assay, name = "cellgraphs") <- cellgraphs
+  slot(new_assay, name = "cellgraphs") <- .unclass_cellgraph_list(cellgraphs)
   slot(new_assay, name = "proximity") <- proximity
 
   # Add fs_map

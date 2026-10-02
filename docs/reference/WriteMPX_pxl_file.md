@@ -73,10 +73,10 @@ Nothing. The function writes the PXL file to the specified location.
 
 The structure of the PXL file is detailed below:
 
-\|– adata.h5ad\
-\|– polarization.parquet\
-\|– colocalization.parquet\
-\|– metadata.json\
+\|– adata.h5ad  
+\|– polarization.parquet  
+\|– colocalization.parquet  
+\|– metadata.json  
 \|– edgelist.parquet
 
 The merged files are converted into a zip archive and saved to the
@@ -125,7 +125,7 @@ WriteMPX_pxl_file(se_merged, pxl_file)
 #> ✔ Exported merged edge list
 #> ✔ Exported merged meta data
 #> ✔ Exported anndata file
-#> ℹ Saving PXL file to /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpXxUDE2/small.pxl
+#> ℹ Saving PXL file to /tmp/RtmpjKKHFf/small.pxl
 #> ✔ Finished!
 
 # Read the new PXL file

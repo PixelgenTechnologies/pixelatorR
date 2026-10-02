@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.20.0
+Version: 0.22.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
@@ -33,7 +33,6 @@ Imports:
     stringr,
     patchwork,
     ggraph,
-    plotly,
     fs,
     pbapply,
     jsonlite,
@@ -41,11 +40,7 @@ Imports:
     R6,
     DBI,
     duckdb (>= 1.5.0),
-    bit64,
-    grDevices,
-    graphics,
-    stats,
-    utils
+    bit64
 Suggests:
     Seurat (>= 5.0.0),
     spelling,
@@ -53,6 +48,7 @@ Suggests:
     graphlayouts,
     scales,
     pheatmap,
+    plotly,
     ComplexHeatmap,
     dbplyr,
     reticulate,
@@ -68,6 +64,8 @@ Suggests:
     pcaMethods,
     gifski,
     av,
+    later,
+    rgl,
     magick,
     ragg,
     png,
@@ -79,13 +77,13 @@ Suggests:
     pls,
     matrixStats,
     sparseMatrixStats,
-    FNN,
-    presto
-Remotes: immunogenomics/presto
+    FNN
 Collate: 
     'generics.R'
+    'NodeDimReduc.R'
     'CellGraph.R'
     'CellGraphAssay.R'
+    'CellGraphList.R'
     'lazy_load_tables.R'
     'PNAAssay.R'
     'aaa.R'
@@ -94,10 +92,20 @@ Collate:
     'analysis-utils.R'
     'annotate.R'
     'cell_count_plot.R'
+    'cell_plot.R'
+    'cell_plot_animate.R'
+    'cell_plot_base.R'
+    'cell_plot_build.R'
+    'cell_plot_ggplot.R'
+    'cell_plot_illumination.R'
+    'cell_plot_modifiers.R'
+    'cell_plot_plotly.R'
+    'cell_plot_rgl.R'
     'cell_segmentation.R'
     'coarsened_pmds.R'
     'colocalization_heatmap.R'
-    'd3_graph_helpers.R'
+    'local_proximity_scores.R'
+    'compute_lps.R'
     'density_scatter_plot.R'
     'differential_analysis_utils.R'
     'utils.R'
@@ -110,6 +118,7 @@ Collate:
     'duckdb_methods.R'
     'duckdb_node_neighborhoods.R'
     'extdata.R'
+    'fetch_layout_data.R'
     'filter_and_summarize_proximity_scores.R'
     'global_options.R'
     'graph_analysis.R'
@@ -124,7 +133,6 @@ Collate:
     'load_data_mpx.R'
     'load_data_pna.R'
     'local_G.R'
-    'local_proximity_scores.R'
     'molecule_rank_plot.R'
     'objects.R'
     'patch_detection.R'
@@ -133,6 +141,7 @@ Collate:
     'pixelatorR_style.R'
     'proximity_scores.R'
     'read_edgelist.R'
+    'reexports.R'
     'remove_cell_graphs.R'
     'render_rotating_layout.R'
     'restore_paths.R'

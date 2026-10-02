@@ -58,9 +58,6 @@ cg <- se %>%
 
 A <- igraph::as_adjacency_matrix(cg@cellgraph)
 A2 <- expand_adjacency_matrix(A, k = 2)
-#> Warning: 'as(<dgCMatrix>, "ngCMatrix")' is deprecated.
-#> Use 'as(., "nMatrix")' instead.
-#> See help("Deprecated") and help("Matrix-deprecated").
 Matrix::diag(A2) <- 1
 node_nbs_matrix_cg <- Matrix::t(A2 %*% cg@counts)
 
