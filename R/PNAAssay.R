@@ -1275,11 +1275,11 @@ merge.PNAAssay <- function(
     can_merge_meta_features <- TRUE
     ob_features <- lapply(objects, function(x) rownames(x@meta.features))
     for (i in 2:length(ob_features)) {
-      if (!all(ob_features[[i]] == ob_features[[1]])) {
+      if (!identical(ob_features[[i]], ob_features[[1]])) {
         cli_alert_danger(
           c(
             "Meta features are not the same across objects. ",
-            "Slot @meta.features will be empty in the merged object."
+            "Feature metadata is dropped from @meta.features in the merged object."
           )
         )
         can_merge_meta_features <- FALSE
@@ -1290,7 +1290,9 @@ merge.PNAAssay <- function(
     if (can_merge_meta_features) {
       meta_features <- objects[[1]]@meta.features %>% select(any_of(c("control", "marker", "nuclear")))
     } else {
-      meta_features <- data.frame()
+      # A valid Assay requires one meta.features row per feature, so keep the
+      # row names of the merged feature set and drop only the columns
+      meta_features <- data.frame(row.names = rownames(merged_pna_assay))
     }
 
     # Place meta.features in PNAAssay
