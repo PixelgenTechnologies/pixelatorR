@@ -7,24 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- `cell_plot_rgl()` returns an rgl htmlwidget. The widget has no size of
-  its own, so it fills the IDE viewer, a Quarto or R Markdown page, or a
-  browser element and follows that element when it is resized. The data
-  panels are laid out again on every resize.
-
 ### Changed
 
-- `cell_plot_rgl()` draws titles, facet strips, and color legends as HTML
-  over the WebGL canvas instead of as scene objects, so they render in the
-  browser's fonts at native resolution and can be selected and copied. Sizes
-  follow the theme text size in points as in the ggplot renderer; the title
-  row is exactly as tall as the title and subtitle, and the legend is as wide
-  as its labels. Dragging on the chrome or beside the panels no longer moves
-  the plot, and `later` is no longer required. Row strip labels read upward,
-  as in the other renderers. `rgl::scene3d()` snapshots of the widget scene
-  contain only the data panels.
+- `cell_plot_rgl()` returns an rgl htmlwidget that fills its container,
+  such as the IDE viewer or a Quarto page, and follows it when resized.
+  Titles, facet strips, and legends are HTML drawn over the WebGL canvas,
+  sized by the theme text size, with row strip labels reading upward.
+
+### Removed
+
+- `cell_plot_rgl()` does not use `later`.
 
 ## [0.22.0] - 2026-10-01
 

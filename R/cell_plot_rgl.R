@@ -1,37 +1,24 @@
 #' Render a cell plot with rgl
 #'
-#' Builds a [cell_plot()] recipe and draws it as an interactive native 3D
-#' scatter using [rgl]. Node sizes are converted from backend-neutral relative
-#' units to rgl point diameters in pixels. Continuous sizes are grouped into a
-#' bounded number of pixel-size bins to keep the scene responsive.
-#' Panel grids use [rgl::layout3d()] with shared mouse control among data
-#' panels. Pointer rotation and scroll-zooming stay on the data panels, which
-#' move together. Panel grids support at most 10 rows and 20 columns.
+#' Draws a [cell_plot()] recipe as an interactive 3D scatter with [rgl] and
+#' returns it as an htmlwidget. The widget has no fixed size: it fills the
+#' IDE viewer, a Quarto or R Markdown page, or any other container and
+#' follows that container when it is resized.
 #'
-#' Occlusion follows the scene camera, so markers closer to the current
-#' viewpoint appear in front. The rgl backend does not provide hover labels or
-#' interactive legend filtering. The `arrange` and `depth` mappings and
-#' [cell_coord_rotate()] are ignored. Markers use the rendered colors
-#' resolved by [build_cell_plot()], including illumination when requested,
-#' while legends are drawn from the unilluminated color scale metadata.
-#' Numeric color mappings use a continuous colorbar;
-#' categorical mappings use a discrete legend.
+#' Drag to rotate and scroll to zoom. Panels in a grid share one camera and
+#' move together. Grids support at most 10 rows and 20 columns.
 #'
-#' The scene is drawn on a null device and returned as an rgl htmlwidget for
-#' the IDE viewer, Quarto, R Markdown, and `htmlwidgets::saveWidget()`. The
-#' widget carries no size of its own, so it fills the element it is shown in
-#' and follows that element when it is resized.
+#' Titles, facet strips, and legends are HTML drawn over the WebGL canvas, so
+#' they stay sharp at any resolution and their text can be selected. Their
+#' size follows the theme text size in points. Numeric color mappings get a
+#' colorbar and categorical mappings a discrete legend; legends show the
+#' color scale without illumination.
 #'
-#' Titles, facet strips, and legends are HTML elements laid over the WebGL
-#' canvas rather than objects in the scene, so they are drawn by the browser
-#' in its own fonts at the display's native resolution and can be selected
-#' and copied. Their sizes follow the theme text size in points, as in the
-#' ggplot renderer: the title row is exactly as tall as the title and
-#' subtitle, strips are one line of text with the ggplot strip margin, and
-#' the legend is as wide as its labels. The data panels fill whatever space
-#' remains and are laid out again whenever the canvas is resized. Because the
-#' chrome lives outside the scene, [rgl::scene3d()] snapshots and rgl's own
-#' image export contain only the data panels.
+#' Node sizes are converted from relative units to point diameters in pixels,
+#' and continuous sizes are grouped into at most 20 size bins. Occlusion
+#' follows the camera. The `arrange` and `depth` mappings and
+#' [cell_coord_rotate()] are ignored. Hover labels and interactive legend
+#' filtering are not available.
 #'
 #' @param object A `cell_plot` recipe.
 #'
@@ -63,14 +50,11 @@ cell_plot_rgl <- function(object) {
 
 #' Draw a cell plot into an rgl htmlwidget
 #'
-#' Opens a null device, draws the built plot, snapshots it with
-#' [rgl::rglwidget()], and closes the device. The snapshot keeps the scene
-#' after the device closes. The widget is given no width or height, which
-#' also overrides [rgl::rglwidget()]'s knitr figure-size default, so
-#' htmlwidgets lets it fill its container and follow that container when it
-#' is resized. When the plot has a title, facet strips, or a legend, a render
-#' hook adds them as HTML over the canvas and fits the data panels around
-#' them, see `.cell_rgl_chrome_js`.
+#' Draws the built plot on a temporary null device, captures it with
+#' [rgl::rglwidget()], and closes the device. The widget gets no width or
+#' height so it fills its container; passing `NULL` explicitly also bypasses
+#' the knitr figure-size default of [rgl::rglwidget()]. Chrome is added by
+#' the render hook in `.cell_rgl_chrome_js`.
 #'
 #' @param object A `cell_plot_built` object.
 #'
@@ -87,10 +71,8 @@ cell_plot_rgl <- function(object) {
   )
   on.exit(.cell_rgl_close_html_device(device, previous), add = TRUE)
   rendered <- .render_cell_plot_rgl(object, device = device)
-  # A knitr PDF or Word chunk would otherwise ask for a raster snapshot.
-  # A null device cannot draw one, and this output is the widget itself.
-  # width and height are passed as NULL so the knitr figure-size default
-  # inside rglwidget() does not pin the widget.
+  # snapshot = FALSE: a null device cannot draw the raster snapshot knitr
+  # requests for PDF or Word output.
   widget <- rgl::rglwidget(
     width = NULL,
     height = NULL,
@@ -106,23 +88,17 @@ cell_plot_rgl <- function(object) {
   return(widget)
 }
 
-#' JavaScript that draws rgl chrome as HTML and fits the panels around it
+#' JavaScript that draws chrome as HTML and fits the panels around it
 #'
-#' Runs once after the widget renders and again after every resize and
-#' canvas restart. It adds one absolutely positioned layer over the canvas
-#' holding the title block, one strip per facet level, and the legend, all
-#' built from the specification produced by `.cell_rgl_chrome_spec()`. Text
-#' is set through `textContent`, so labels are never interpreted as HTML.
-#'
-#' Sizes come from the browser's own layout: the title block and legend are
-#' measured after their text is set, and the strip thickness is the height of
-#' a strip label with its padding. The data panels, drawn by rgl as a grid of
-#' subscenes, then get viewports that fill the rectangle left of the legend
-#' and below the title and column strips. The layer ignores the pointer, and
-#' each chrome element accepts it, so text can be selected and dragging on a
-#' title or legend does not move the plot. Row strip labels read upward. A
-#' canvas restart removes every child of the widget element, so the layer is
-#' re-attached whenever the layout runs.
+#' Runs after the widget renders and after every resize and canvas restart.
+#' Adds a layer over the canvas with the title block, one strip per facet
+#' level, and the legend, built from `.cell_rgl_chrome_spec()`. The browser
+#' measures the title height, legend width, and strip thickness; the data
+#' panel viewports fill the remaining rectangle. The layer ignores the
+#' pointer while each element accepts it, so text is selectable and dragging
+#' on chrome does not move the plot. Labels are set with `textContent`. A
+#' canvas restart clears the widget element, so the layer is re-attached on
+#' every layout.
 #'
 #' @noRd
 .cell_rgl_chrome_js <- "
@@ -288,8 +264,7 @@ function(el, x, data) {
 
 #' Close the null device used for an rgl htmlwidget
 #'
-#' Restores the device that was current before the widget was drawn, when that
-#' device is still open.
+#' Restores the previously current device when it is still open.
 #'
 #' @param device Device id opened for the widget.
 #' @param previous Device id that was current beforehand.
@@ -310,25 +285,19 @@ function(el, x, data) {
   return(invisible(NULL))
 }
 
-#' Default rgl canvas size in pixels
-#'
-#' Size of the null device the scene is drawn on. The widget itself has no
-#' size and fills the element it is shown in.
+#' Size in pixels of the null device the scene is drawn on
 #'
 #' @noRd
 .cell_rgl_default_canvas_px <- 1000L
 
 #' Render a built cell plot with rgl
 #'
-#' Converts rendered colors, sizes, and alpha into rgl point properties.
-#' Colors come from .cell_plot_rendered_colors() so builder-baked illumination
-#' matches ggplot, Plotly, and base. Panel grids become an [rgl::layout3d()]
-#' arrangement that keeps every row and column level, including empty panels.
-#' The scene holds only the data panels. Titles, facet strips, and legends are
-#' described by the returned `chrome` specification and drawn as HTML by the
-#' widget's render hook, which also shrinks the panel grid to make room for
-#' them. The root subscene carries the background color for that room and
-#' ignores the pointer, so dragging beside the panels does not move them.
+#' Draws the data panels as an [rgl::layout3d()] grid that keeps every row
+#' and column level, including empty panels, using the rendered colors from
+#' .cell_plot_rendered_colors() so illumination matches the other renderers.
+#' The root subscene carries the background color and ignores the pointer.
+#' Titles, facet strips, and legends are returned as a `chrome` specification
+#' for the HTML render hook.
 #'
 #' @param object A `cell_plot_built` object with a mapped `z` coordinate.
 #' @param device An open rgl device to draw into.
@@ -427,9 +396,8 @@ function(el, x, data) {
     panel_ids <- rgl::subsceneInfo()$id
   } else {
     parent_id <- rgl::currentSubscene3d()
-    # mouseMode = "replace" is required: layout3d() defaults to inherited
-    # mouse handling, so disabling the root mouse below would write through
-    # to every data panel and kill trackball/zoom there.
+    # With layout3d()'s default inherited mouse handling, setting the root
+    # mouseMode to "none" below would also disable every data panel.
     panel_ids <- rgl::layout3d(
       matrix(seq_len(n_panels), nrow = n_row, ncol = n_col, byrow = TRUE),
       sharedMouse = FALSE,
@@ -524,14 +492,13 @@ function(el, x, data) {
   return(invisible(list(device = as.integer(device), chrome = chrome)))
 }
 
-#' Describe rgl chrome for the HTML render hook
+#' Describe chrome for the HTML render hook
 #'
-#' Collects everything `.cell_rgl_chrome_js` needs to draw the title block,
-#' facet strips, and legend and to place the data panels around them. Vectors
-#' that the hook indexes are wrapped in lists so they serialize as JSON arrays
-#' even when they hold one element. Colors are converted to hexadecimal, since
-#' R color names such as `"grey85"` are not CSS colors. Colorbar ticks are
-#' chosen here with [pretty()] so the hook only positions them.
+#' Collects what `.cell_rgl_chrome_js` needs to draw the title block, facet
+#' strips, and legend. Indexed vectors are wrapped in lists so they serialize
+#' as JSON arrays even with one element, colors are converted to hexadecimal
+#' because R color names are not CSS colors, and colorbar ticks are chosen
+#' with [pretty()].
 #'
 #' @param panel_ids Data panel subscene ids in row-major order.
 #' @param n_row,n_col Panel grid dimensions.

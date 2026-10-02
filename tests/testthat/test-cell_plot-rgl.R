@@ -432,9 +432,7 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
     lapply(summary$panels, function(panel) sort(panel$listeners)),
     rep(list(sort(as.integer(panel_ids))), 4)
   )
-  # layout3d() panels must use mouseMode="replace"; otherwise disabling the
-  # root mouse writes through the inherited parent and leaves every data
-  # panel with mouseMode all "none" (non-interactive spin/zoom).
+  # Data panels keep their own mouse modes while the root has none.
   expect_true(all(vapply(
     summary$panels,
     function(panel) {
@@ -460,8 +458,7 @@ test_that("rgl cell plot facet chrome and mouse sharing work as expected", {
     unique(lapply(summary$panels, function(panel) panel$zoom)),
     list(1)
   )
-  # Data markers stay the unlit points primitive, and no chrome geometry is
-  # drawn into the scene.
+  # Markers are points and the scene holds no chrome geometry.
   expect_equal(
     c(
       any(summary$object_types == "points"),
@@ -532,7 +529,7 @@ test_that("rgl cell plots use builder-baked illumination colors", {
 
   expect_equal(sort(unique(scene_hex)), sort(unique(rendered)))
   expect_equal(any(scene_hex != resolved[[1]]), TRUE)
-  # Spin/zoom must remain interactive after the chrome mouseMode fix.
+  # Data panels stay interactive.
   expect_true(all(vapply(
     summary$panels,
     function(panel) all(c("trackball", "zoom") %in% panel$mouseMode),
@@ -689,8 +686,8 @@ test_that("rgl chrome is described for the HTML overlay", {
     function(subscene) as.integer(subscene$id),
     integer(1)
   )
-  # No text, sprite, or quad is drawn for the chrome; the hook receives a
-  # specification instead, with every indexed vector as a JSON array.
+  # Chrome is a specification for the hook, with indexed vectors as JSON
+  # arrays, and adds no geometry to the scene.
   expect_false(any(vapply(
     scene$objects,
     function(object) object$type %in% c("text", "sprites", "quads"),
@@ -801,8 +798,8 @@ test_that("rgl html output returns a widget", {
     function(object) object$type,
     character(1)
   )
-  # The widget carries no size, so it fills its container. The scene is
-  # still drawn on the default canvas.
+  # The widget has no size and fills its container; the scene is drawn on
+  # the default canvas.
   expect_equal(
     list(
       width = widget$width,
