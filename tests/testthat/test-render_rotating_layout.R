@@ -1,7 +1,8 @@
 set.seed(123)
-cg <- (ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) %>%
-  LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE, verbose = FALSE) %>%
-  CellGraphs())[[1]]
+# add_layouts is deprecated; suppress the lifecycle warning during setup
+se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
+se <- suppressWarnings(LoadCellGraphs(se, cells = colnames(se)[1], add_layouts = TRUE, verbose = FALSE))
+cg <- CellGraphs(se)[[1]]
 xyz <- cg@layout$wpmds_3d
 xyz$node_val <- runif(nrow(xyz))
 gif_file <- fs::file_temp(ext = "gif")
