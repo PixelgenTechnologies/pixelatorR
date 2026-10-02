@@ -4,17 +4,10 @@
 \alias{cell_plot_rgl}
 \title{Render a cell plot with rgl}
 \usage{
-cell_plot_rgl(object, width = NULL, height = NULL)
+cell_plot_rgl(object)
 }
 \arguments{
 \item{object}{A \code{cell_plot} recipe.}
-
-\item{width, height}{Canvas size in pixels, 1000 by 1000 when not given.
-Inside a knitr HTML chunk, a missing size is the chunk \code{fig.width} or
-\code{fig.height} in inches multiplied by \code{dpi}. That sizing needs the suggested
-package knitr, which Quarto and R Markdown install. Outside knitr, a widget
-without \code{width} and \code{height} fills the viewer or browser element it is
-shown in.}
 }
 \value{
 An htmlwidget.
@@ -39,9 +32,9 @@ Numeric color mappings use a continuous colorbar;
 categorical mappings use a discrete legend.
 
 The scene is drawn on a null device and returned as an rgl htmlwidget for
-the IDE viewer, Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. Printed
-at the console, the widget opens in the IDE viewer, fills it, and follows
-it when the pane is resized.
+the IDE viewer, Quarto, R Markdown, and \code{htmlwidgets::saveWidget()}. The
+widget carries no size of its own, so it fills the element it is shown in
+and follows that element when it is resized.
 
 Titles, facet strips, and legends are HTML elements laid over the WebGL
 canvas rather than objects in the scene, so they are drawn by the browser

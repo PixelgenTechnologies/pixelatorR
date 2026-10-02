@@ -790,31 +790,33 @@ test_that("rgl html output returns a widget", {
     return(devices)
   }
 
-  expect_error(cell_plot_rgl(recipe, width = 0), regexp = "width")
-  expect_error(cell_plot_rgl(recipe, height = 2.5), regexp = "height")
   expect_equal(open_devices(), integer())
 
   before <- open_devices()
-  widget <- cell_plot_rgl(recipe, width = 640, height = 480)
+  widget <- cell_plot_rgl(recipe)
   expect_s3_class(widget, "htmlwidget")
-  expect_equal(
-    list(width = widget$width, height = widget$height),
-    list(width = 640, height = 480)
-  )
   subscene <- widget$x$objects[[as.character(widget$x$rootSubscene)]]
   object_types <- vapply(
     widget$x$objects,
     function(object) object$type,
     character(1)
   )
+  # The widget carries no size, so it fills its container. The scene is
+  # still drawn on the default canvas.
   expect_equal(
     list(
+      width = widget$width,
+      height = widget$height,
+      viewer_fill = widget$sizingPolicy$viewer$fill,
       window = as.numeric(subscene$par3d$windowRect),
       has_points = any(object_types == "points"),
       devices = open_devices()
     ),
     list(
-      window = c(0, 0, 640, 480),
+      width = NULL,
+      height = NULL,
+      viewer_fill = TRUE,
+      window = c(0, 0, 1000, 1000),
       has_points = TRUE,
       devices = before
     )
@@ -862,54 +864,6 @@ test_that("rgl html output returns a widget", {
     )
   )
 
-  # Without a size the widget fills the viewer, so it carries no fixed size,
-  # while the layout was still computed on a 1000 by 1000 canvas.
-  default_widget <- cell_plot_rgl(recipe)
-  default_subscene <- default_widget$x$objects[[
-    as.character(default_widget$x$rootSubscene)
-  ]]
-  expect_equal(
-    list(
-      width = default_widget$width,
-      height = default_widget$height,
-      viewer_fill = default_widget$sizingPolicy$viewer$fill,
-      window = as.numeric(default_subscene$par3d$windowRect)
-    ),
-    list(
-      width = NULL,
-      height = NULL,
-      viewer_fill = TRUE,
-      window = c(0, 0, 1000, 1000)
-    )
-  )
-  expect_equal(open_devices(), before)
-
-  skip_if_not_installed("knitr")
-  old_to <- knitr::opts_knit$get("rmarkdown.pandoc.to")
-  old_chunk <- knitr::opts_current$get(c("fig.width", "fig.height", "dpi"))
-  on.exit(
-    {
-      options(knitr.in.progress = old_options[["knitr.in.progress"]])
-      knitr::opts_knit$set(rmarkdown.pandoc.to = old_to)
-      knitr::opts_current$set(
-        fig.width = old_chunk$fig.width,
-        fig.height = old_chunk$fig.height,
-        dpi = old_chunk$dpi
-      )
-    },
-    add = TRUE
-  )
-  knitr::opts_current$set(fig.width = 4, fig.height = 3, dpi = 100)
-  options(knitr.in.progress = TRUE)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "latex")
-  pdf_widget <- cell_plot_rgl(recipe)
-  expect_null(pdf_widget$width)
-  knitr::opts_knit$set(rmarkdown.pandoc.to = "html")
-  chunk_widget <- cell_plot_rgl(recipe, width = 220)
-  expect_equal(
-    list(width = chunk_widget$width, height = chunk_widget$height),
-    list(width = 220, height = 300)
-  )
   expect_equal(open_devices(), before)
 })
 

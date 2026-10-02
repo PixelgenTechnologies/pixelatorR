@@ -163,18 +163,3 @@ expect_plotly <- function(...) {
 expect_rgl <- function(...) {
   rlang::check_installed("rgl", ...)
 }
-
-#' Require knitr while a document render is reading the chunk figure size
-#'
-#' [cell_plot_rgl()] needs knitr only to turn the current chunk `fig.width`,
-#' `fig.height`, and `dpi` into a canvas size. Quarto and R Markdown install
-#' knitr, so a normal install of pixelatorR does not.
-#'
-#' @param ... Passed to [rlang::check_installed()].
-#'
-#' @return `NULL`, invisibly, when knitr is installed.
-#'
-#' @noRd
-expect_knitr <- function(...) {
-  rlang::check_installed("knitr", ...)
-}

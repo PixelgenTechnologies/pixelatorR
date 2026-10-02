@@ -18,9 +18,9 @@
 #' categorical mappings use a discrete legend.
 #'
 #' The scene is drawn on a null device and returned as an rgl htmlwidget for
-#' the IDE viewer, Quarto, R Markdown, and `htmlwidgets::saveWidget()`. Printed
-#' at the console, the widget opens in the IDE viewer, fills it, and follows
-#' it when the pane is resized.
+#' the IDE viewer, Quarto, R Markdown, and `htmlwidgets::saveWidget()`. The
+#' widget carries no size of its own, so it fills the element it is shown in
+#' and follows that element when it is resized.
 #'
 #' Titles, facet strips, and legends are HTML elements laid over the WebGL
 #' canvas rather than objects in the scene, so they are drawn by the browser
@@ -34,12 +34,6 @@
 #' image export contain only the data panels.
 #'
 #' @param object A `cell_plot` recipe.
-#' @param width,height Canvas size in pixels, 1000 by 1000 when not given.
-#' Inside a knitr HTML chunk, a missing size is the chunk `fig.width` or
-#' `fig.height` in inches multiplied by `dpi`. That sizing needs the suggested
-#' package knitr, which Quarto and R Markdown install. Outside knitr, a widget
-#' without `width` and `height` fills the viewer or browser element it is
-#' shown in.
 #'
 #' @return An htmlwidget.
 #'
@@ -58,51 +52,48 @@
 #'   cell_plot_rgl()
 #'
 #' @export
-cell_plot_rgl <- function(object, width = NULL, height = NULL) {
+cell_plot_rgl <- function(object) {
   .validate_cell_plot(object)
   expect_rgl()
-  width <- .cell_rgl_check_px(width, arg = "width")
-  height <- .cell_rgl_check_px(height, arg = "height")
 
   object$mapping$arrange <- NULL
   built <- build_cell_plot(object)
-  return(.cell_rgl_html_widget(built, width = width, height = height))
+  return(.cell_rgl_html_widget(built))
 }
 
 #' Draw a cell plot into an rgl htmlwidget
 #'
 #' Opens a null device, draws the built plot, snapshots it with
 #' [rgl::rglwidget()], and closes the device. The snapshot keeps the scene
-#' after the device closes. When neither the caller nor a knitr HTML chunk
-#' sets a size, the widget carries no size of its own, so htmlwidgets lets it
-#' fill the IDE viewer and follow the viewer when it is resized. When the plot
-#' has a title, facet strips, or a legend, a render hook adds them as HTML
-#' over the canvas and fits the data panels around them, see
-#' `.cell_rgl_chrome_js`.
+#' after the device closes. The widget is given no width or height, which
+#' also overrides [rgl::rglwidget()]'s knitr figure-size default, so
+#' htmlwidgets lets it fill its container and follow that container when it
+#' is resized. When the plot has a title, facet strips, or a legend, a render
+#' hook adds them as HTML over the canvas and fits the data panels around
+#' them, see `.cell_rgl_chrome_js`.
 #'
 #' @param object A `cell_plot_built` object.
-#' @param width,height Checked canvas sizes in pixels, or `NULL`.
 #'
 #' @return An rgl htmlwidget.
 #'
 #' @noRd
-.cell_rgl_html_widget <- function(object, width, height) {
-  chunk <- .cell_rgl_knitr_html_px()
-  sized <- !is.null(width) || !is.null(height) || !is.null(chunk)
-  size <- .cell_rgl_canvas_pixels(width, height, fallback = chunk)
+.cell_rgl_html_widget <- function(object) {
+  canvas <- .cell_rgl_default_canvas_px
   previous <- as.integer(rgl::cur3d())
   device <- rgl::open3d(
     useNULL = TRUE,
     silent = TRUE,
-    windowRect = c(0, 0, size$width, size$height)
+    windowRect = c(0, 0, canvas, canvas)
   )
   on.exit(.cell_rgl_close_html_device(device, previous), add = TRUE)
   rendered <- .render_cell_plot_rgl(object, device = device)
   # A knitr PDF or Word chunk would otherwise ask for a raster snapshot.
   # A null device cannot draw one, and this output is the widget itself.
+  # width and height are passed as NULL so the knitr figure-size default
+  # inside rglwidget() does not pin the widget.
   widget <- rgl::rglwidget(
-    width = if (sized) size$width,
-    height = if (sized) size$height,
+    width = NULL,
+    height = NULL,
     snapshot = FALSE
   )
   if (!is.null(rendered$chrome)) {
@@ -319,86 +310,13 @@ function(el, x, data) {
   return(invisible(NULL))
 }
 
-#' Pixel size of an rgl canvas
-#'
-#' An explicit size wins, then the `fallback`, then a 1000 by 1000 square.
-#'
-#' @param width,height Checked sizes in pixels, or `NULL`.
-#' @param fallback Optional list with `width` and `height` used for a missing
-#' dimension, such as the knitr chunk figure size.
-#'
-#' @return A list with integer `width` and `height`.
-#'
-#' @noRd
-.cell_rgl_canvas_pixels <- function(width, height, fallback = NULL) {
-  if (is.null(width)) {
-    width <- fallback$width %||% .cell_rgl_default_canvas_px
-  }
-  if (is.null(height)) {
-    height <- fallback$height %||% .cell_rgl_default_canvas_px
-  }
-  return(list(width = as.integer(width), height = as.integer(height)))
-}
-
 #' Default rgl canvas size in pixels
 #'
-#' Used for the html canvas when no size is given.
+#' Size of the null device the scene is drawn on. The widget itself has no
+#' size and fills the element it is shown in.
 #'
 #' @noRd
 .cell_rgl_default_canvas_px <- 1000L
-
-#' Check one canvas dimension
-#'
-#' @param value A pixel count, or `NULL` when the caller did not set it.
-#' @param arg Argument name used in the error.
-#' @param call Calling environment used for validation errors.
-#'
-#' @return `NULL`, or one positive integer pixel count.
-#'
-#' @noRd
-.cell_rgl_check_px <- function(value, arg, call = rlang::caller_env()) {
-  if (is.null(value)) {
-    return(NULL)
-  }
-  assert_single_value(value, type = "integer", arg = arg, call = call)
-  if (!is.finite(value) || value <= 0) {
-    cli::cli_abort(
-      c("x" = "{.arg {arg}} must be a positive number of pixels."),
-      call = call
-    )
-  }
-  return(as.integer(value))
-}
-
-#' Figure size of the current knitr HTML chunk
-#'
-#' Returns pixel sizes only while knitr is rendering an HTML document. Other
-#' outputs, including PDF and Word, keep the default canvas. A knitr render
-#' without knitr installed stops and asks for the package.
-#'
-#' @return A list with integer `width` and `height`, or `NULL` when the chunk
-#' size does not apply.
-#'
-#' @noRd
-.cell_rgl_knitr_html_px <- function() {
-  if (!isTRUE(getOption("knitr.in.progress"))) {
-    return(NULL)
-  }
-  expect_knitr()
-  if (!isTRUE(knitr::is_html_output())) {
-    return(NULL)
-  }
-  fig_width <- knitr::opts_current$get("fig.width")
-  fig_height <- knitr::opts_current$get("fig.height")
-  dpi <- knitr::opts_current$get("dpi")
-  if (is.null(fig_width) || is.null(fig_height) || is.null(dpi)) {
-    return(NULL)
-  }
-  return(list(
-    width = as.integer(round(fig_width * dpi)),
-    height = as.integer(round(fig_height * dpi))
-  ))
-}
 
 #' Render a built cell plot with rgl
 #'

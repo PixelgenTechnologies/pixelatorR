@@ -9,11 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- `cell_plot_rgl()` returns an rgl htmlwidget. `width` and `height` set the
-  canvas in pixels. In a knitr HTML chunk, a missing size follows the chunk
-  figure size. `knitr` is suggested and is required only for that chunk
-  sizing. Printed at the console, an unsized widget fills the IDE viewer
-  and follows its size; the data panels are laid out again on every resize.
+- `cell_plot_rgl()` returns an rgl htmlwidget. The widget has no size of
+  its own, so it fills the IDE viewer, a Quarto or R Markdown page, or a
+  browser element and follows that element when it is resized. The data
+  panels are laid out again on every resize.
 
 ### Changed
 
