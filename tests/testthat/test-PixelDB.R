@@ -22,6 +22,52 @@ test_that("PixelDB finalizer eventually closes connections", {
   )
 })
 
+test_that("PixelDB computes proximity scores in a temporary table", {
+  db <- PixelDB$new(pxl_file)
+  on.exit(db$close())
+
+  proximity <- db$compute_proximity_scores(
+    components = "0a45497c6bfbfb22",
+    markers = c("B2M", "HLA-ABC"),
+    name = "computed_proximity"
+  )
+
+  expect_s3_class(proximity, "tbl_lazy")
+  expect_setequal(
+    colnames(proximity),
+    c(
+      "component",
+      "marker_1",
+      "marker_2",
+      "join_count",
+      "join_count_expected_mean",
+      "log2_ratio"
+    )
+  )
+
+  result <- proximity %>% collect()
+  expect_gt(nrow(result), 0)
+  expect_true(all(result$component == "0a45497c6bfbfb22"))
+  expect_true(all(result$marker_1 %in% c("B2M", "HLA-ABC")))
+  expect_true(all(result$marker_2 %in% c("B2M", "HLA-ABC")))
+  expect_true(all(result$marker_1 <= result$marker_2))
+  expect_true(all(is.finite(result$log2_ratio)))
+
+  proximity_z <- db$compute_proximity_scores(
+    components = "0a45497c6bfbfb22",
+    markers = c("B2M", "HLA-ABC"),
+    calc_z_score = TRUE,
+    name = "computed_proximity_z"
+  )
+  expect_true(all(c("join_count_expected_sd", "join_count_z", "join_count_p") %in% colnames(proximity_z)))
+  expect_true(all(is.finite(proximity_z %>% pull(join_count_z))))
+
+  table_info <- db$info() %>%
+    filter(name == "computed_proximity")
+  expect_equal(nrow(table_info), 1)
+  expect_true(table_info$temporary)
+})
+
 test_that("PixelDB methods work as expected", {
   # close method
   expect_no_error(db <- PixelDB$new(pxl_file))
@@ -237,6 +283,12 @@ test_that("PixelDB methods fails with invalid input", {
   expect_error(db$fetch_table("Invalid"))
   expect_error(db$fetch_table_subset("Invalid"))
   expect_error(db$proximity(calc_log2_ratio = "Invalid"))
+  expect_error(db$compute_proximity_scores(components = 1))
+  expect_error(db$compute_proximity_scores(markers = 1))
+  expect_error(db$compute_proximity_scores(name = c("one", "two")))
+  expect_error(db$compute_proximity_scores(calc_z_score = "Invalid"))
+  expect_error(db$compute_proximity_scores(min_marker_count = -1L))
+  expect_error(db$compute_proximity_scores(batch_size = 0L))
   expect_error(db$components_edgelist("Invalid"))
   expect_error(db$components_edgelist("3898b03349c6e28d", umi_data_type = "Invalid"))
   expect_error(db$components_edgelist("3898b03349c6e28d", include_all_columns = "Invalid"))
