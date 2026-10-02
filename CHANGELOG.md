@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The `add_layouts` argument of `LoadCellGraphs()` is deprecated and will be
   removed in a future release. It still works, but supplying it now signals a
   `lifecycle` deprecation warning once per R session.
+  
+### Fixes
+
+- `merge()` on `PNAAssay` objects with different panels no longer fails. A
+  message is emitted and the feature metadata columns are dropped from
+  `@meta.features`, while one row per merged feature is kept so that the merged
+  assay stays valid for downstream methods such as `subset()`.
 
 ## [0.22.0] - 2026-10-01
 
