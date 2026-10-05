@@ -121,7 +121,7 @@ rgl_plot_summary <- function(scene) {
 }
 
 # Draws on a null device and leaves it open, so scene3d() and rgl.attrib()
-# can read the result. cell_plot_rgl() returns a widget and closes its device.
+# can read the result. cell_plot_interactive() returns a widget and closes its device.
 render_rgl_scene <- function(object) {
   object$mapping$arrange <- NULL
   built <- build_cell_plot(object)
@@ -353,7 +353,7 @@ test_that("rgl cell plot grids work as expected", {
   expect_error(
     cell_plot(too_many_rows) |>
       cell_grid(rows = panel) |>
-      cell_plot_rgl()
+      cell_plot_interactive()
   )
   too_many_cols <- tibble::tibble(
     x = 1:21,
@@ -364,7 +364,7 @@ test_that("rgl cell plot grids work as expected", {
   expect_error(
     cell_plot(too_many_cols) |>
       cell_grid(cols = panel) |>
-      cell_plot_rgl()
+      cell_plot_interactive()
   )
 
   rgl::close3d()
@@ -616,7 +616,7 @@ test_that("rgl helpers tolerate missing sizes, flat colorbars, and NA facets", {
   legend_log <- tempfile()
   legend_con <- file(legend_log, open = "wt")
   sink(legend_con, type = "message")
-  wide_widget <- cell_plot_rgl(wide_categorical)
+  wide_widget <- cell_plot_interactive(wide_categorical)
   sink(type = "message")
   close(legend_con)
   expect_s3_class(wide_widget, "htmlwidget")
@@ -802,7 +802,7 @@ test_that("rgl html output returns a widget", {
   expect_equal(open_devices(), integer())
 
   before <- open_devices()
-  widget <- cell_plot_rgl(recipe)
+  widget <- cell_plot_interactive(recipe)
   expect_s3_class(widget, "htmlwidget")
   subscene <- widget$x$objects[[as.character(widget$x$rootSubscene)]]
   object_types <- vapply(
@@ -841,7 +841,7 @@ test_that("rgl html output returns a widget", {
   ) |>
     cell_grid(cols = g) |>
     cell_annotation(title = "Title") |>
-    cell_plot_rgl()
+    cell_plot_interactive()
   hook <- chrome_widget$jsHooks$render[[1]]
   panel_ids <- sort(vapply(
     Filter(

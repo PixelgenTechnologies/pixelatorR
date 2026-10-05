@@ -92,7 +92,7 @@ test_that("Interactive cell plots work as expected", {
     cell_annotation(title = "Cells", subtitle = "demo") |>
     cell_coord_rotate() |>
     cell_illuminate() |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
 
   expect_s3_class(continuous, "plotly")
   expect_equal(
@@ -168,7 +168,7 @@ test_that("Interactive cell plots work as expected", {
   )
 
   constant <- cell_plot(plot_data) |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
   constant_marker <- plotly_plot_summary(constant)$traces[[1]]$marker
   expect_equal(
     constant_marker[c("color", "size")],
@@ -180,7 +180,7 @@ test_that("Interactive cell plots work as expected", {
 
   mixed <- cell_plot(plot_data, color = cell) |>
     cell_node_scale_color(colors = c(a = "red", b = "blue")) |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
   expect_equal(
     plotly_plot_summary(mixed)$traces,
     list(
@@ -256,7 +256,7 @@ test_that("Interactive cell plots work as expected", {
   categorical <- cell_plot(plot_data, color = cell) |>
     cell_node_scale_color(colors = c(a = "red", b = "blue")) |>
     cell_grid(cols = cell) |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
   expect_equal(
     plotly_plot_summary(categorical),
     list(
@@ -388,7 +388,7 @@ test_that("Interactive cell plots work as expected", {
 
   renamed_legend <- cell_plot(plot_data, color = cell) |>
     cell_annotation(legend_title = "Cell ID") |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
   renamed_summary <- plotly_plot_summary(renamed_legend)
   expect_equal(renamed_summary$legend_title, "Cell ID")
   expect_equal(
@@ -406,12 +406,12 @@ test_that("Interactive cell plots ignore depth sizing and arrangement", {
   )
 
   without_depth <- cell_plot(plot_data, size = 2, depth = NULL) |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
   with_depth <- cell_plot(plot_data, size = 2) |>
     cell_node_depth(focal_distance = 0.2) |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
   arranged <- cell_plot(plot_data, arrange = x) |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
 
   expect_equal(
     plotly_plot_summary(without_depth)$traces[[1]]$marker$size,
@@ -437,7 +437,7 @@ test_that("Interactive cell plot grids work as expected", {
   ) |>
     cell_plot() |>
     cell_grid(rows = panel) |>
-    cell_plot_interactive()
+    cell_plot_interactive(renderer = "plotly")
 
   na_summary <- plotly_plot_summary(na_factor)
   expect_equal(
@@ -469,7 +469,7 @@ test_that("Interactive cell plot grids work as expected", {
   expect_error(
     cell_plot(too_many_rows) |>
       cell_grid(rows = panel) |>
-      cell_plot_interactive()
+      cell_plot_interactive(renderer = "plotly")
   )
   too_many_cols <- tibble::tibble(
     x = 1:21,
@@ -480,6 +480,6 @@ test_that("Interactive cell plot grids work as expected", {
   expect_error(
     cell_plot(too_many_cols) |>
       cell_grid(cols = panel) |>
-      cell_plot_interactive()
+      cell_plot_interactive(renderer = "plotly")
   )
 })

@@ -1,48 +1,9 @@
-#' Render a cell plot as an interactive Plotly widget
-#'
-#' Builds a [cell_plot()] recipe and draws it as an interactive 3D scatter.
-#' Node sizes are converted from backend-neutral relative units to Plotly
-#' marker diameters in pixels.
-#' Panel grids support at most 10 rows and 20 columns.
-#'
-#' Occlusion follows the scene camera, so markers closer to the current
-#' viewpoint appear in front. The `arrange` and `depth` mappings and
-#' [cell_coord_rotate()] are ignored. Markers use the rendered colors
-#' resolved by [build_cell_plot()], including illumination when requested,
-#' while legends are built from the unilluminated color scale metadata.
-#'
-#' @param object A `cell_plot` recipe.
-#'
-#' @return A Plotly htmlwidget.
-#'
-#' @seealso [cell_plot()], [print.cell_plot()], [cell_plot_rgl()]
-#'
-#' @examplesIf requireNamespace("plotly", quietly = TRUE)
-#' se <- ReadPNA_Seurat(minimal_pna_pxl_file())
-#' se <- LoadCellGraphs(se, cells = colnames(se)[4], verbose = FALSE) |>
-#'   ComputeLayout(layout_method = "spectral")
-#'
-#' cell_graph <- CellGraphs(se)[[4]]
-#'
-#' layout_data <- FetchLayoutData(cell_graph, vars = "CD82", layout_method = "spectral_3d")
-#'
-#' cell_plot(layout_data, color = CD82) |>
-#'   cell_plot_interactive()
-#'
-#' @export
-cell_plot_interactive <- function(object) {
-  .validate_cell_plot(object)
-  expect_plotly()
-
-  object$mapping$arrange <- NULL
-  return(.render_cell_plot_plotly(build_cell_plot(object)))
-}
-
 #' Render a built cell plot with Plotly
 #'
-#' Converts resolved colors, sizes, and alpha into Plotly marker properties.
-#' Panel grids become a Cartesian arrangement of scenes that keeps every row
-#' and column level, including empty panels.
+#' The Plotly backend of [cell_plot_interactive()]. Converts resolved colors,
+#' sizes, and alpha into Plotly marker properties. Panel grids become a
+#' Cartesian arrangement of scenes that keeps every row and column level,
+#' including empty panels.
 #'
 #' @param object A `cell_plot_built` object with a mapped `z` coordinate.
 #'
