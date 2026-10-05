@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `FindAllProximityMarkers()` runs one-versus-rest differential proximity
+  tests for a single grouping column. Each level is compared to all other
+  levels pooled together by wrapping `DifferentialProximityAnalysis()`.
+
 ## [0.23.0] - 2026-10-13
 
 ### Added
