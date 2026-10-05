@@ -265,8 +265,7 @@ cell_node_scale_size <- function(object, sizes = c(2, 6), limits = NULL) {
 #'
 #' Depth sizing scales one node size, so this modifier cannot be combined with
 #' [cell_node_scale_size()]. If a size column is mapped, depth sizing is
-#' ignored. [cell_plot_interactive()] and [cell_plot_rgl()] ignore this
-#' modifier.
+#' ignored. [cell_plot_interactive()] ignores this modifier.
 #'
 #' @param object A `cell_plot` recipe.
 #' @param focal_distance Positive finite focal distance in the units of the

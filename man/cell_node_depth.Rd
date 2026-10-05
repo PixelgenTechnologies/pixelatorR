@@ -30,8 +30,7 @@ them.
 
 Depth sizing scales one node size, so this modifier cannot be combined with
 \code{\link[=cell_node_scale_size]{cell_node_scale_size()}}. If a size column is mapped, depth sizing is
-ignored. \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} and \code{\link[=cell_plot_rgl]{cell_plot_rgl()}} ignore this
-modifier.
+ignored. \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} ignores this modifier.
 }
 \examples{
 se <- ReadPNA_Seurat(minimal_pna_pxl_file())

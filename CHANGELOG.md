@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0]
+
+### Changed
+
+- `cell_plot_interactive()` gains a `renderer` argument that selects the
+  interactive backend: `"rgl"` (default) returns the WebGL htmlwidget that
+  `cell_plot_rgl()` used to return, and `"plotly"` returns the Plotly widget.
+  Code that relied on `cell_plot_interactive()` drawing with Plotly must pass
+  `renderer = "plotly"`.
+
+### Removed
+
+- `cell_plot_rgl()`. Use `cell_plot_interactive(renderer = "rgl")`.
+
 ## [0.22.1] - 2026-10-02
 
 ### Changed

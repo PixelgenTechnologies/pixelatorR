@@ -4,8 +4,8 @@
 #' mappings, and optional rendering instructions without drawing a plot. Add
 #' instructions with the `cell_*()` modifier functions. Printing the recipe
 #' builds and renders a ggplot. [cell_plot_interactive()] draws the same
-#' recipe as a 3D Plotly widget. [cell_plot_rgl()] returns it as an rgl
-#' htmlwidget. [cell_plot_animate()] encodes a rotating GIF or video after
+#' recipe as an interactive 3D htmlwidget with rgl or Plotly.
+#' [cell_plot_animate()] encodes a rotating GIF or video after
 #' [cell_coord_rotate()]. [summary()] inspects the recipe without drawing.
 #'
 #' A `cell_plot` is an S3 list with a fixed set of fields:
@@ -56,13 +56,12 @@
 #' and one. Category-specific sizes and alphas are set with
 #' [cell_node_scale_size()] and [cell_node_scale_alpha()].
 #' @param arrange An optional column mapping used to order points in projected
-#' plots. [cell_plot_interactive()] and [cell_plot_rgl()] ignore this mapping
-#' because occlusion follows the scene camera. Defaults to the mapped `z`
-#' column.
+#' plots. [cell_plot_interactive()] ignores this mapping because occlusion
+#' follows the scene camera. Defaults to the mapped `z` column.
 #' @param depth An optional column mapping used for ggplot depth sizing.
 #' Defaults to the mapped `z` column, so depth sizing is on unless
 #' `depth = NULL` turns it off. Must not be the same column as `x`, `y`, or
-#' `size`. Plotly and rgl ignore this mapping.
+#' `size`. [cell_plot_interactive()] ignores this mapping.
 #' @param illumination_mask Optional logical column mapping. Illumination is
 #' applied only to rows where this column is `TRUE`. Rows where it is `FALSE`
 #' retain their unilluminated colors. Missing values are not allowed.
@@ -70,8 +69,7 @@
 #' @return A `cell_plot` recipe.
 #'
 #' @seealso [cell_node_scale_size()], [cell_node_depth()],
-#' [cell_coord_rotate()], [cell_plot_animate()], [cell_plot_interactive()],
-#' [cell_plot_rgl()]
+#' [cell_coord_rotate()], [cell_plot_animate()], [cell_plot_interactive()]
 #'
 #' @examples
 #' # Plot a spectral layout of a cell from the example data
@@ -982,8 +980,8 @@ print.summary.cell_plot <- function(x, ...) {
 #'
 #' Builds and draws the recipe as a static ggplot, then returns that ggplot
 #' invisibly. This matches `print.ggplot()`: typing a recipe at the prompt
-#' renders the plot. Use [cell_plot_interactive()] for the Plotly renderer or
-#' [cell_plot_rgl()] for the native rgl renderer.
+#' renders the plot. Use [cell_plot_interactive()] for an interactive rgl or
+#' Plotly widget.
 #'
 #' @param x A `cell_plot` recipe.
 #' @param ... Additional arguments. Currently not used.

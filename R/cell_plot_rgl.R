@@ -1,60 +1,11 @@
-#' Render a cell plot with rgl
-#'
-#' Draws a [cell_plot()] recipe as an interactive 3D scatter with [rgl] and
-#' returns it as an htmlwidget. The widget has no fixed size: it fills the
-#' IDE viewer, a Quarto or R Markdown page, or any other container and
-#' follows that container when it is resized.
-#'
-#' Drag to rotate and scroll to zoom. Panels in a grid share one camera and
-#' move together. Grids support at most 10 rows and 20 columns.
-#'
-#' Titles, facet strips, and legends are HTML drawn over the WebGL canvas, so
-#' they stay sharp at any resolution and their text can be selected. Their
-#' size follows the theme text size in points. Numeric color mappings get a
-#' colorbar and categorical mappings a discrete legend; legends show the
-#' color scale without illumination.
-#'
-#' Node sizes are converted from relative units to point diameters in pixels,
-#' and continuous sizes are grouped into at most 20 size bins. Occlusion
-#' follows the camera. The `arrange` and `depth` mappings and
-#' [cell_coord_rotate()] are ignored. Hover labels and interactive legend
-#' filtering are not available.
-#'
-#' @param object A `cell_plot` recipe.
-#'
-#' @return An htmlwidget.
-#'
-#' @seealso [cell_plot()], [cell_plot_interactive()]
-#'
-#' @examplesIf interactive()
-#' se <- ReadPNA_Seurat(minimal_pna_pxl_file())
-#' se <- LoadCellGraphs(se, cells = colnames(se)[4], verbose = FALSE) |>
-#'   ComputeLayout(layout_method = "spectral")
-#'
-#' cell_graph <- CellGraphs(se)[[4]]
-#'
-#' layout_data <- FetchLayoutData(cell_graph, vars = "CD82", layout_method = "spectral_3d")
-#'
-#' cell_plot(layout_data, color = CD82) |>
-#'   cell_plot_rgl()
-#'
-#' @export
-cell_plot_rgl <- function(object) {
-  .validate_cell_plot(object)
-  expect_rgl()
-
-  object$mapping$arrange <- NULL
-  built <- build_cell_plot(object)
-  return(.cell_rgl_html_widget(built))
-}
-
 #' Draw a cell plot into an rgl htmlwidget
 #'
-#' Draws the built plot on a temporary null device, captures it with
-#' [rgl::rglwidget()], and closes the device. The widget gets no width or
-#' height so it fills its container; passing `NULL` explicitly also bypasses
-#' the knitr figure-size default of [rgl::rglwidget()]. Chrome is added by
-#' the render hook in `.cell_rgl_chrome_js`.
+#' The rgl backend of [cell_plot_interactive()]. Draws the built plot on a
+#' temporary null device, captures it with [rgl::rglwidget()], and closes the
+#' device. The widget gets no width or height so it fills its container;
+#' passing `NULL` explicitly also bypasses the knitr figure-size default of
+#' [rgl::rglwidget()]. Chrome is added by the render hook in
+#' `.cell_rgl_chrome_js`.
 #'
 #' @param object A `cell_plot_built` object.
 #'
@@ -359,7 +310,7 @@ function(el, x, data) {
   if (length(row_levels) > 10) {
     cli::cli_abort(
       c(
-        "x" = "{.fn cell_plot_rgl} supports at most 10 facet rows.",
+        "x" = "{.fn cell_plot_interactive} supports at most 10 facet rows.",
         "i" = "{.arg rows} creates {length(row_levels)} facet rows."
       )
     )
@@ -367,7 +318,7 @@ function(el, x, data) {
   if (length(col_levels) > 20) {
     cli::cli_abort(
       c(
-        "x" = "{.fn cell_plot_rgl} supports at most 20 facet columns.",
+        "x" = "{.fn cell_plot_interactive} supports at most 20 facet columns.",
         "i" = "{.arg cols} creates {length(col_levels)} facet columns."
       )
     )
