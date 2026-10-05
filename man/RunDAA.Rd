@@ -144,6 +144,7 @@ daa_markers
 \seealso{
 Other DA-methods: 
 \code{\link{DifferentialProximityAnalysis}()},
+\code{\link{FindAllProximityMarkers}()},
 \code{\link{RunDCA}()},
 \code{\link{RunDPA}()}
 }
