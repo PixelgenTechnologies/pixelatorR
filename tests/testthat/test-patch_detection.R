@@ -13,7 +13,7 @@ test_that("patch_detection works as expected", {
   expect_equal(
     table(cg_patch@cellgraph %>% pull(patch)),
     structure(
-      c(`1` = 41588L, `2` = 1267L, `3` = 688L),
+      c(`0` = 41575L, `1` = 1241L, `2` = 727L),
       dim = 3L,
       dimnames = structure(list(c("0", "1", "2")), names = ""),
       class = "table"

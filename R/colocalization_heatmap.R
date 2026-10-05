@@ -577,18 +577,27 @@ ColocalizationHeatmap <- function(
         }
       }
 
+      user_layer_fun <- pheatmap_args$layer_fun
+      pheatmap_args$layer_fun <- NULL
       user_cell_fun <- pheatmap_args$cell_fun
       pheatmap_args$cell_fun <- NULL
-      cell_fun <- function(j, i, x, y, width, height, fill, ...) {
-        if (!is.null(user_cell_fun)) {
-          user_cell_fun(j, i, x, y, width, height, fill, ...)
+      layer_fun <- function(j, i, x, y, width, height, fill, ...) {
+        if (!is.null(user_layer_fun)) {
+          user_layer_fun(j, i, x, y, width, height, fill, ...)
         }
-        if (isTRUE(highlight_mat[i, j])) {
+        if (!is.null(user_cell_fun)) {
+          for (k in seq_along(i)) {
+            user_cell_fun(j[k], i[k], x[k], y[k], width[k], height[k], fill[k], ...)
+          }
+        }
+        is_hl <- highlight_mat[cbind(i, j)]
+        if (any(is_hl, na.rm = TRUE)) {
+          idx <- which(is_hl)
           grid::grid.rect(
-            x = x,
-            y = y,
-            width = width * (1 - highlight_shrink),
-            height = height * (1 - highlight_shrink),
+            x = x[idx],
+            y = y[idx],
+            width = width[idx] * (1 - highlight_shrink),
+            height = height[idx] * (1 - highlight_shrink),
             gp = grid::gpar(
               col = highlight_colors,
               fill = NA,
@@ -611,7 +620,7 @@ ColocalizationHeatmap <- function(
             clustering_distance_rows = clustering_distance_rows,
             clustering_distance_cols = clustering_distance_cols,
             clustering_method = clustering_method,
-            cell_fun = cell_fun
+            layer_fun = layer_fun
           ),
           pheatmap_args
         )
