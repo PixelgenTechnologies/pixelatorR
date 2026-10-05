@@ -155,6 +155,9 @@ to compare \code{reference}. \code{targets} can be a single group name or a vect
 group names while \code{reference} can only refer to a single group. Both \code{targets}
 and \code{reference} should be present in the \code{contrast_column}. These parameters
 are similar to the \code{ident.1} and \code{ident.2} parameters in \code{FindMarkers}.
+
+To compare every level of a single grouping column against all other levels,
+use \code{\link{FindAllProximityMarkers}}.
 }
 \section{Additional groups}{
 
@@ -258,6 +261,7 @@ dp_results <- DifferentialProximityAnalysis(
 }
 \seealso{
 Other DA-methods: 
+\code{\link{FindAllProximityMarkers}()},
 \code{\link{RunDAA}()},
 \code{\link{RunDCA}()},
 \code{\link{RunDPA}()}

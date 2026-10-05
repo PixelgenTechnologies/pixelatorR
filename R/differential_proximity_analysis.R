@@ -409,6 +409,12 @@ DifferentialProximityAnalysis.Matrix <- function(
       min_diff_pct = min_diff_pct
     )
 
+    # Filters in .wilcox_de_test() can leave no pairs. Skip the comparison
+    # instead of building a zero-row tibble with recycled columns.
+    if (nrow(de_results) == 0) {
+      next
+    }
+
     # Tidy up the results
     diff_prox_res[[key]] <- tibble(
       data_type = proximity_metric,
@@ -492,33 +498,15 @@ DifferentialProximityAnalysis.Seurat <- function(
   method <- match.arg(method, choices = c("seurat", "legacy"))
 
   # Fetch proximity scores
-  proximity_data <- ProximityScores(object[[assay]], assay = assay, lazy = lazy)
-  metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
-  proximity_data <- switch(metric_type,
-    all = proximity_data,
-    self = proximity_data %>% filter(marker_1 == marker_2),
-    co = proximity_data %>% filter(marker_1 != marker_2)
-  ) %>%
-    filter(join_count_expected_mean >= min_exp_join_count)
-  proximity_data <- proximity_data %>% compute()
-  if (method == "seurat") {
-    proximity_data <- proximity_data %>%
-      compute() %>%
-      ProximityScoresToAssay(values_from = proximity_metric)
-    # Add missing columns
-    missing_components <- setdiff(colnames(object), colnames(proximity_data))
-    if (length(missing_components) > 0) {
-      m_missing <- Matrix::rsparsematrix(
-        nrow = nrow(proximity_data),
-        ncol = length(missing_components),
-        density = 0
-      )
-      rownames(m_missing) <- rownames(proximity_data)
-      colnames(m_missing) <- missing_components
-      proximity_data <- cbind(proximity_data, m_missing)
-      proximity_data <- proximity_data[, colnames(object)]
-    }
-  }
+  proximity_data <- .load_proximity_for_da(
+    object = object,
+    assay = assay,
+    lazy = lazy,
+    min_exp_join_count = min_exp_join_count,
+    proximity_metric = proximity_metric,
+    metric_type = metric_type,
+    method = method
+  )
 
   # Add group data
   group_data <- .select_group_data(object[[]], contrast_column, group_vars)
@@ -696,4 +684,668 @@ DifferentialProximityAnalysis.Seurat <- function(
     fc_results[rownames(data_use), ]
   )
   return(de_results)
+}
+
+
+#' @param assay Name of the assay to use.
+#' @param lazy If \code{TRUE}, proximity scores are loaded lazily and filtered
+#' with the \code{duckdb} backend before testing.
+#' @param min_exp_join_count Minimum expected join count for a marker pair to
+#' be included. Pairs below the threshold are treated as missing. With
+#' \code{method = "seurat"}, missing scores are set to 0.
+#' @param diff_threshold Minimum difference in the proximity metric required to
+#' test a marker pair. Used when \code{method = "seurat"}.
+#' @param min_pct Minimum fraction of cells in either group with a non-zero
+#' score. Used when \code{method = "seurat"}.
+#' @param min_diff_pct Minimum difference in the fraction of cells with a
+#' non-zero score. Used when \code{method = "seurat"}.
+#' @param method One of \code{"seurat"} or \code{"legacy"}. Passed through to
+#' \code{\link{DifferentialProximityAnalysis}}.
+#'
+#' @rdname FindAllProximityMarkers
+#' @method FindAllProximityMarkers Seurat
+#'
+#' @export
+#'
+FindAllProximityMarkers.Seurat <- function(
+  object,
+  group_by,
+  idents = NULL,
+  assay = NULL,
+  lazy = FALSE,
+  min_exp_join_count = 0,
+  min_cells_per_group = 10,
+  diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
+  proximity_metric = "log2_ratio",
+  metric_type = c("all", "self", "co"),
+  backend = c("dplyr", "data.table"),
+  method = c("seurat", "legacy"),
+  p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  verbose = TRUE,
+  ...
+) {
+  call <- caller_env()
+  .reject_find_all_proximity_args(..., call = call)
+  assert_single_value(group_by, type = "string", call = call)
+  assert_col_in_data(group_by, object[[]], call = call)
+  assert_col_class(
+    group_by,
+    object[[]],
+    classes = c("character", "factor"),
+    call = call
+  )
+  .validate_find_all_common_args(
+    min_cells_per_group = min_cells_per_group,
+    proximity_metric = proximity_metric,
+    verbose = verbose,
+    call = call
+  )
+
+  assay <- .validate_or_set_assay(object, assay, call = call)
+  metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
+  backend <- match.arg(backend, choices = c("dplyr", "data.table"))
+  method <- match.arg(method, choices = c("seurat", "legacy"))
+  p_adjust_method <- match.arg(
+    p_adjust_method,
+    choices = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr")
+  )
+
+  meta <- object[[]]
+  label_chr <- as.character(meta[[group_by]])
+  names(label_chr) <- rownames(meta)
+  idents <- .resolve_one_vs_rest_idents(
+    labels = meta[[group_by]],
+    idents = idents,
+    group_by = group_by,
+    call = call
+  )
+  rest_label <- .make_rest_label(label_chr)
+  .warn_missing_group_labels(label_chr, group_by)
+
+  proximity_data <- .load_proximity_for_da(
+    object = object,
+    assay = assay,
+    lazy = lazy,
+    min_exp_join_count = min_exp_join_count,
+    proximity_metric = proximity_metric,
+    metric_type = metric_type,
+    method = method
+  )
+  dots <- list(...)
+
+  if (method == "seurat") {
+    cell_labels <- .labels_for_cells(label_chr, colnames(proximity_data), group_by)
+    contrast_col <- ".pxl_one_vs_rest"
+    results <- .run_one_vs_rest_loop(
+      label_chr = cell_labels,
+      idents = idents,
+      rest_label = rest_label,
+      group_by = group_by,
+      min_cells_per_group = min_cells_per_group,
+      verbose = verbose,
+      call = call,
+      run_one = function(ident) {
+        group_data <- data.frame(
+          .pxl_one_vs_rest = .assign_one_vs_rest(
+            cell_labels,
+            ident,
+            rest_label
+          ),
+          row.names = colnames(proximity_data),
+          check.names = FALSE,
+          stringsAsFactors = FALSE
+        )
+        names(group_data) <- contrast_col
+        args <- list(
+          object = proximity_data,
+          group_data = group_data,
+          contrast_column = contrast_col,
+          reference = rest_label,
+          targets = ident,
+          proximity_metric = proximity_metric,
+          p_adjust_method = p_adjust_method,
+          diff_threshold = diff_threshold,
+          min_pct = min_pct,
+          min_diff_pct = min_diff_pct,
+          min_cells_per_group = min_cells_per_group,
+          verbose = verbose
+        )
+        do.call(DifferentialProximityAnalysis, c(args, dots))
+      }
+    )
+  } else {
+    prepared <- .prepare_legacy_group_table(proximity_data, label_chr)
+    cell_labels <- .labels_for_cells(
+      label_chr,
+      unique(as.character(prepared$data$component)),
+      group_by
+    )
+    contrast_col <- .safe_colname(colnames(prepared$data), ".pxl_one_vs_rest")
+    results <- .run_one_vs_rest_loop(
+      label_chr = cell_labels,
+      idents = idents,
+      rest_label = rest_label,
+      group_by = group_by,
+      min_cells_per_group = min_cells_per_group,
+      verbose = verbose,
+      call = call,
+      run_one = function(ident) {
+        tab <- prepared$data
+        tab[[contrast_col]] <- .assign_one_vs_rest(
+          tab[[prepared$group_col]],
+          ident,
+          rest_label
+        )
+        tab <- tab %>% filter(!is.na(.data[[contrast_col]]))
+        args <- list(
+          object = tab,
+          contrast_column = contrast_col,
+          reference = rest_label,
+          targets = ident,
+          proximity_metric = proximity_metric,
+          metric_type = metric_type,
+          backend = backend,
+          p_adjust_method = p_adjust_method,
+          min_cells_per_group = min_cells_per_group,
+          verbose = verbose
+        )
+        do.call(DifferentialProximityAnalysis, c(args, dots))
+      }
+    )
+  }
+
+  results
+}
+
+
+#' @rdname FindAllProximityMarkers
+#' @method FindAllProximityMarkers data.frame
+#'
+#' @examples
+#' library(dplyr)
+#' set.seed(1)
+#' example_data <- tidyr::expand_grid(
+#'   marker_1 = c("CD19", "CD3E"),
+#'   marker_2 = c("CD19", "CD3E"),
+#'   component = paste0("cell", seq_len(12))
+#' ) %>%
+#'   mutate(
+#'     join_count_z = rnorm(n()),
+#'     seurat_clusters = dplyr::case_when(
+#'       component %in% paste0("cell", 1:4) ~ "0",
+#'       component %in% paste0("cell", 5:8) ~ "1",
+#'       TRUE ~ "2"
+#'     )
+#'   )
+#'
+#' # Compare each cluster with the cells in every other cluster
+#' FindAllProximityMarkers(
+#'   example_data,
+#'   group_by = "seurat_clusters",
+#'   proximity_metric = "join_count_z",
+#'   min_cells_per_group = 4,
+#'   verbose = FALSE
+#' )
+#'
+#' @export
+#'
+FindAllProximityMarkers.data.frame <- function(
+  object,
+  group_by,
+  idents = NULL,
+  min_cells_per_group = 10,
+  proximity_metric = "log2_ratio",
+  metric_type = c("all", "self", "co"),
+  backend = c("dplyr", "data.table"),
+  p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
+  verbose = TRUE,
+  ...
+) {
+  call <- caller_env()
+  .reject_find_all_proximity_args(..., call = call)
+  assert_single_value(group_by, type = "string", call = call)
+  .validate_find_all_common_args(
+    min_cells_per_group = min_cells_per_group,
+    proximity_metric = proximity_metric,
+    verbose = verbose,
+    call = call
+  )
+  metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
+  backend <- match.arg(backend, choices = c("dplyr", "data.table"))
+  p_adjust_method <- match.arg(
+    p_adjust_method,
+    choices = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr")
+  )
+
+  if (group_by %in% c("marker_1", "marker_2", "component", proximity_metric)) {
+    cli::cli_abort(
+      "{.arg group_by} must be a grouping column, not {.val {group_by}}.",
+      call = call
+    )
+  }
+
+  # Copy so the caller's table is left unchanged, including data.table inputs.
+  object <- as_tibble(object) %>% ungroup()
+  assert_col_in_data("component", object, call = call)
+  assert_col_in_data("marker_1", object, call = call)
+  assert_col_in_data("marker_2", object, call = call)
+  assert_col_in_data(group_by, object, call = call)
+  assert_col_class(group_by, object, classes = c("character", "factor"), call = call)
+  assert_col_in_data(proximity_metric, object, call = call)
+  assert_col_class(proximity_metric, object, classes = "numeric", call = call)
+
+  n_missing_component <- sum(is.na(object$component))
+  if (n_missing_component > 0) {
+    cli::cli_warn(
+      "Dropping {n_missing_component} row{?s} with missing component values."
+    )
+    object <- object %>% filter(!is.na(component))
+  }
+
+  labels_by_cell <- object %>%
+    distinct(component, !!sym(group_by))
+  if (anyDuplicated(labels_by_cell$component)) {
+    cli::cli_abort(
+      "Each component must have a single value in {.val {group_by}}.",
+      call = call
+    )
+  }
+
+  label_chr <- as.character(labels_by_cell[[group_by]])
+  names(label_chr) <- as.character(labels_by_cell$component)
+  idents <- .resolve_one_vs_rest_idents(
+    labels = labels_by_cell[[group_by]],
+    idents = idents,
+    group_by = group_by,
+    call = call
+  )
+  rest_label <- .make_rest_label(label_chr)
+  .warn_missing_group_labels(label_chr, group_by)
+
+  group_col <- .safe_colname(colnames(object), ".pxl_group_label")
+  contrast_col <- .safe_colname(colnames(object), ".pxl_one_vs_rest")
+  object[[group_col]] <- unname(label_chr[as.character(object$component)])
+  dots <- list(...)
+
+  .run_one_vs_rest_loop(
+    label_chr = unname(label_chr),
+    idents = idents,
+    rest_label = rest_label,
+    group_by = group_by,
+    min_cells_per_group = min_cells_per_group,
+    verbose = verbose,
+    call = call,
+    run_one = function(ident) {
+      tab <- object
+      tab[[contrast_col]] <- .assign_one_vs_rest(
+        tab[[group_col]],
+        ident,
+        rest_label
+      )
+      tab <- tab %>% filter(!is.na(.data[[contrast_col]]))
+      args <- list(
+        object = tab,
+        contrast_column = contrast_col,
+        reference = rest_label,
+        targets = ident,
+        proximity_metric = proximity_metric,
+        metric_type = metric_type,
+        backend = backend,
+        p_adjust_method = p_adjust_method,
+        min_cells_per_group = min_cells_per_group,
+        verbose = verbose
+      )
+      do.call(DifferentialProximityAnalysis, c(args, dots))
+    }
+  )
+}
+
+
+#' Load proximity scores once for differential testing.
+#'
+#' @return For \code{method = "seurat"}, a sparse matrix of marker pairs by
+#'   cells. For \code{method = "legacy"}, a proximity table without group
+#'   columns. \code{metric_type} filtering matches
+#'   \code{DifferentialProximityAnalysis.Seurat()}.
+#'
+#' @noRd
+.load_proximity_for_da <- function(
+  object,
+  assay,
+  lazy,
+  min_exp_join_count,
+  proximity_metric,
+  metric_type,
+  method
+) {
+  method <- match.arg(method, choices = c("seurat", "legacy"))
+  proximity_data <- ProximityScores(object[[assay]], assay = assay, lazy = lazy)
+  metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
+  proximity_data <- switch(metric_type,
+    all = proximity_data,
+    self = proximity_data %>% filter(marker_1 == marker_2),
+    co = proximity_data %>% filter(marker_1 != marker_2)
+  ) %>%
+    filter(join_count_expected_mean >= min_exp_join_count)
+  proximity_data <- proximity_data %>% compute()
+  if (method == "seurat") {
+    proximity_data <- proximity_data %>%
+      compute() %>%
+      ProximityScoresToAssay(values_from = proximity_metric)
+    missing_components <- setdiff(colnames(object), colnames(proximity_data))
+    if (length(missing_components) > 0) {
+      m_missing <- Matrix::rsparsematrix(
+        nrow = nrow(proximity_data),
+        ncol = length(missing_components),
+        density = 0
+      )
+      rownames(m_missing) <- rownames(proximity_data)
+      colnames(m_missing) <- missing_components
+      proximity_data <- cbind(proximity_data, m_missing)
+      proximity_data <- proximity_data[, colnames(object)]
+    }
+  }
+  proximity_data
+}
+
+
+#' @noRd
+.reject_find_all_proximity_args <- function(..., call = caller_env()) {
+  blocked <- c(
+    "contrast_column", "reference", "targets", "group_vars", "group_data"
+  )
+  supplied <- intersect(names(list(...)), blocked)
+  if (length(supplied) > 0) {
+    cli::cli_abort(
+      c(
+        "x" = "Cannot pass {.arg {supplied}} to {.fn FindAllProximityMarkers}.",
+        "i" = paste0(
+          "{.arg group_by} selects the groups. Each level is compared to ",
+          "all other levels."
+        )
+      ),
+      call = call
+    )
+  }
+}
+
+
+#' @noRd
+.validate_find_all_common_args <- function(
+  min_cells_per_group,
+  proximity_metric,
+  verbose,
+  call = caller_env()
+) {
+  assert_single_value(min_cells_per_group, type = "numeric", call = call)
+  if (is.na(min_cells_per_group) || min_cells_per_group < 0) {
+    cli::cli_abort(
+      c("x" = "{.arg min_cells_per_group} must be a non-negative number."),
+      call = call
+    )
+  }
+  assert_single_value(proximity_metric, type = "string", call = call)
+  assert_single_value(verbose, type = "bool", call = call)
+}
+
+
+#' @noRd
+.coerce_idents <- function(idents) {
+  if (is.factor(idents) || is.numeric(idents)) {
+    return(as.character(idents))
+  }
+  idents
+}
+
+
+#' @noRd
+.resolve_one_vs_rest_idents <- function(
+  labels,
+  idents,
+  group_by,
+  call = caller_env()
+) {
+  if (is.factor(labels)) {
+    all_idents <- levels(droplevels(labels))
+  } else {
+    all_idents <- unique(as.character(labels))
+  }
+  all_idents <- all_idents[!is.na(all_idents)]
+  if (length(all_idents) < 2) {
+    n_groups <- length(all_idents)
+    cli::cli_abort(
+      c(
+        "i" = "Group variable {.val {group_by}} must have at least 2 groups.",
+        "x" = "Group variable {.val {group_by}} has {n_groups} unique group{?s}."
+      ),
+      call = call
+    )
+  }
+
+  if (is.null(idents)) {
+    return(all_idents)
+  }
+
+  idents <- .coerce_idents(idents)
+  assert_vector(idents, type = "character", n = 1, arg = "idents", call = call)
+  if (anyDuplicated(idents)) {
+    cli::cli_abort("{.arg idents} must be unique.", call = call)
+  }
+  missing <- setdiff(idents, all_idents)
+  if (length(missing) > 0) {
+    cli::cli_abort(
+      "Not all {.arg idents} were found in {.val {group_by}}: {.val {missing}}.",
+      call = call
+    )
+  }
+  idents
+}
+
+
+#' @noRd
+.make_rest_label <- function(labels) {
+  used <- unique(as.character(labels))
+  used <- used[!is.na(used)]
+  candidate <- "rest"
+  while (candidate %in% used) {
+    candidate <- paste0(candidate, "_")
+  }
+  candidate
+}
+
+
+#' @noRd
+.assign_one_vs_rest <- function(labels, ident, rest_label) {
+  labels <- as.character(labels)
+  contrast <- rep(NA_character_, length(labels))
+  known <- !is.na(labels)
+  contrast[known & labels == ident] <- ident
+  contrast[known & labels != ident] <- rest_label
+  contrast
+}
+
+
+#' @noRd
+.safe_colname <- function(existing, base) {
+  candidate <- base
+  while (candidate %in% existing) {
+    candidate <- paste0(candidate, "_")
+  }
+  candidate
+}
+
+
+#' @noRd
+.warn_missing_group_labels <- function(label_chr, group_by) {
+  n_missing <- sum(is.na(label_chr))
+  if (n_missing > 0) {
+    cli::cli_warn(
+      "Excluding {n_missing} cell{?s} with missing {.val {group_by}} labels."
+    )
+  }
+}
+
+
+#' Align named cell labels to \code{cells}, warning when metadata is missing.
+#'
+#' @noRd
+.labels_for_cells <- function(label_chr, cells, group_by) {
+  cells <- as.character(cells)
+  missing <- setdiff(cells, names(label_chr))
+  if (length(missing) > 0) {
+    n_missing <- length(missing)
+    cli::cli_warn(
+      "Excluding {n_missing} component{?s} with no {.val {group_by}} label."
+    )
+  }
+  unname(label_chr[cells])
+}
+
+
+#' @noRd
+.prepare_legacy_group_table <- function(proximity_data, label_chr) {
+  proximity_data <- proximity_data %>%
+    collect() %>%
+    as_tibble() %>%
+    ungroup()
+  group_col <- .safe_colname(colnames(proximity_data), ".pxl_group_label")
+  proximity_data[[group_col]] <- unname(
+    label_chr[as.character(proximity_data$component)]
+  )
+  list(data = proximity_data, group_col = group_col)
+}
+
+
+#' @noRd
+.one_vs_rest_counts <- function(label_chr, ident) {
+  list(
+    n_tgt = sum(label_chr == ident, na.rm = TRUE),
+    n_ref = sum(!is.na(label_chr) & label_chr != ident)
+  )
+}
+
+
+#' @noRd
+.warn_skip_one_vs_rest <- function(
+  ident,
+  rest_label,
+  n_tgt,
+  n_ref,
+  min_cells_per_group
+) {
+  if (n_tgt < min_cells_per_group && n_ref < min_cells_per_group) {
+    reason <- "both groups have"
+  } else if (n_tgt < min_cells_per_group) {
+    reason <- "the target group has"
+  } else {
+    reason <- "the reference group has"
+  }
+  cli::cli_warn(
+    paste0(
+      "Skipping {.val {ident}} vs {.val {rest_label}} because {reason} ",
+      "fewer than {.val {min_cells_per_group}} cells."
+    )
+  )
+}
+
+
+#' @noRd
+.is_skippable_da_error <- function(err) {
+  msg <- conditionMessage(err)
+  grepl(
+    paste(
+      "Found no groups with at least",
+      "Found no valid target data",
+      "No valid results were generated",
+      sep = "|"
+    ),
+    msg
+  )
+}
+
+
+#' Run one \code{DifferentialProximityAnalysis()} call per group level.
+#'
+#' @param run_one A function of one argument, the level to test.
+#'
+#' @noRd
+.run_one_vs_rest_loop <- function(
+  label_chr,
+  idents,
+  rest_label,
+  group_by,
+  min_cells_per_group,
+  verbose,
+  run_one,
+  call = caller_env()
+) {
+  if (verbose && check_global_verbosity()) {
+    n_tests <- length(idents)
+    cli_alert_info(
+      paste0(
+        "Running one-versus-rest proximity tests for {n_tests} level{?s} ",
+        "of {.val {group_by}}. The pooled remainder is labeled ",
+        "{.val {rest_label}}."
+      )
+    )
+  }
+
+  results <- vector("list", length(idents))
+  for (i in seq_along(idents)) {
+    ident <- idents[[i]]
+    counts <- .one_vs_rest_counts(label_chr, ident)
+    if (
+      counts$n_tgt < min_cells_per_group ||
+        counts$n_ref < min_cells_per_group
+    ) {
+      .warn_skip_one_vs_rest(
+        ident,
+        rest_label,
+        counts$n_tgt,
+        counts$n_ref,
+        min_cells_per_group
+      )
+      next
+    }
+
+    n_tgt <- counts$n_tgt
+    n_ref <- counts$n_ref
+    if (verbose && check_global_verbosity()) {
+      cli_alert_info(
+        paste0(
+          "Testing {.val {ident}} vs {.val {rest_label}} ",
+          "({n_tgt} vs {n_ref} cells)."
+        )
+      )
+    }
+
+    result <- tryCatch(run_one(ident), error = function(e) e)
+    if (inherits(result, "error")) {
+      if (.is_skippable_da_error(result)) {
+        cli::cli_warn(
+          paste0(
+            "Skipping {.val {ident}} vs {.val {rest_label}}: ",
+            "{conditionMessage(result)}"
+          )
+        )
+        next
+      }
+      rlang::cnd_signal(result)
+    }
+    results[[i]] <- result
+  }
+
+  out <- bind_rows(results)
+  if (nrow(out) == 0) {
+    cli::cli_abort(
+      c(
+        "x" = "No one-versus-rest proximity tests produced results.",
+        "i" = "Check {.arg group_by} and {.arg min_cells_per_group}."
+      ),
+      call = call
+    )
+  }
+  out
 }
