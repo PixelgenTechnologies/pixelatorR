@@ -1027,6 +1027,9 @@ RestorePaths <- function(
 #' and \code{reference} should be present in the \code{contrast_column}. These parameters
 #' are similar to the \code{ident.1} and \code{ident.2} parameters in \code{FindMarkers}.
 #'
+#' To compare every level of a single grouping column against all other levels,
+#' use \code{\link{FindAllProximityMarkers}}.
+#'
 #' @section Additional groups:
 #' The tests are always computed between \code{targets} and \code{reference}, but it is possible
 #' to add additional grouping variables with \code{group_vars}. If \code{group_vars} is used,
@@ -1128,6 +1131,72 @@ DifferentialProximityAnalysis <- function(
   ...
 ) {
   UseMethod(generic = "DifferentialProximityAnalysis", object = object)
+}
+
+#' Find all proximity markers
+#'
+#' Identifies proximity marker pairs that differ between each group and the
+#' cells in every other group. This is the proximity-score equivalent of
+#' \code{FindAllMarkers} in Seurat.
+#'
+#' \code{group_by} must be a single column, for example \code{"seurat_clusters"}
+#' or \code{"cell_type"}. For each level of that column, the level is compared
+#' to the remaining levels pooled into one reference group. Each comparison is
+#' delegated to \code{\link{DifferentialProximityAnalysis}}. With clusters
+#' \code{0}, \code{1}, and \code{2}, the comparisons are \code{0} versus the
+#' pool of \code{1} and \code{2}, \code{1} versus the pool of \code{0} and
+#' \code{2}, and \code{2} versus the pool of \code{0} and \code{1}.
+#'
+#' The level being tested is stored in \code{target}. The pooled remainder is
+#' stored in \code{reference} and is labeled \code{"rest"}, unless that label
+#' is already a level of \code{group_by}. A positive \code{diff_median} means
+#' the proximity metric is higher in \code{target} than in the pooled
+#' remainder. Factor levels set the comparison order. Character labels are
+#' tested in order of first appearance. P-values are adjusted separately
+#' within each comparison.
+#'
+#' @concept DA
+#' @family DA-methods
+#'
+#' @param object An object containing PNA proximity scores.
+#' @param group_by Name of a single column of group labels. The column must be
+#' a character vector or a factor with at least two levels.
+#' @param idents Optional levels of \code{group_by} to test. Numeric and factor
+#' values are coerced to character. When \code{NULL} (default), every level is
+#' tested against the others.
+#' @param min_cells_per_group Minimum number of cells required in both the
+#' level being tested and the pooled remainder. Comparisons that do not meet
+#' this threshold are skipped.
+#' @param proximity_metric The proximity metric to use. Any numeric column in
+#' the proximity score table can be selected. The default is
+#' \code{"log2_ratio"}.
+#' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
+#' \code{"self"} keeps pairs where both markers are the same protein, and
+#' \code{"co"} keeps pairs of different proteins.
+#' @param backend One of \code{"dplyr"} or \code{"data.table"}. \code{"data.table"}
+#' requires the \code{dtplyr} package and is used by the legacy differential
+#' test.
+#' @param p_adjust_method One of \code{"bonferroni"}, \code{"holm"},
+#' \code{"hochberg"}, \code{"hommel"}, \code{"BH"}, \code{"BY"}, or \code{"fdr"}
+#' (see \code{?p.adjust}). P-values are adjusted within each one-versus-rest
+#' comparison.
+#' @param verbose Print messages.
+#' @param ... Additional arguments passed to
+#' \code{\link{DifferentialProximityAnalysis}}. \code{contrast_column},
+#' \code{reference}, \code{targets}, and \code{group_vars} are set by this
+#' function and cannot be supplied.
+#'
+#' @return A \code{tbl_df} of test results stacked across comparisons.
+#'
+#' @rdname FindAllProximityMarkers
+#'
+#' @export
+#'
+FindAllProximityMarkers <- function(
+  object,
+  ...
+) {
+  UseMethod(generic = "FindAllProximityMarkers", object = object)
 }
 
 #' Convert objects to a \code{\link{PNAAssay5}}
