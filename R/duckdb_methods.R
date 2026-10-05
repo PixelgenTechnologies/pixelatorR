@@ -254,7 +254,8 @@ PixelDB <- R6Class(
         )
       }
       DBI::dbGetQuery(
-        private$con, glue("SELECT * FROM {name}")
+        private$con,
+        glue("SELECT * FROM {name}")
       )
     },
     #' @description
@@ -297,7 +298,8 @@ PixelDB <- R6Class(
       column_filter_collapsed <- sapply(names(columns_filter), function(nm) {
         x <- columns_filter[[nm]]
         glue("{nm} IN ({glue_sql('{x*}', .con = private$con)})")
-      }) %>% paste(collapse = " AND ")
+      }) %>%
+        paste(collapse = " AND ")
       sql_query <- glue("SELECT * FROM {name} WHERE {column_filter_collapsed}")
       DBI::dbGetQuery(private$con, sql_query)
     },
@@ -352,16 +354,24 @@ PixelDB <- R6Class(
       if (calc_log2_ratio) {
         if (!"join_count" %in% colnames(proximity_scores)) {
           cli::cli_abort(
-            c("x" = "The Proximity score table does not contain the required {.str join_count} column")
+            c(
+              "x" = "The Proximity score table does not contain the required {.str join_count} column"
+            )
           )
         }
         if (!"join_count_expected_mean" %in% colnames(proximity_scores)) {
           cli::cli_abort(
-            c("x" = "The Proximity score table does not contain the required {.str join_count_expected_mean} column")
+            c(
+              "x" = "The Proximity score table does not contain the required {.str join_count_expected_mean} column"
+            )
           )
         }
         proximity_scores <- proximity_scores %>%
-          mutate(log2_ratio = log2(pmax(join_count, 1) / pmax(join_count_expected_mean, 1)))
+          mutate(
+            log2_ratio = log2(
+              pmax(join_count, 1) / pmax(join_count_expected_mean, 1)
+            )
+          )
       }
 
       proximity_scores <- proximity_scores %>% compute()
@@ -448,17 +458,22 @@ PixelDB <- R6Class(
     #'  - uei_count: The number of unique event identifiers (UEIs) supporting the edge.
     #'    This column is optional and is only returned if it is present in the edgelist table.
     #'
-    components_edgelist = function(components,
-                                   umi_data_type = c("int64", "string", "suffixed_string"),
-                                   lazy = FALSE,
-                                   include_all_columns = FALSE) {
+    components_edgelist = function(
+      components,
+      umi_data_type = c("int64", "string", "suffixed_string"),
+      lazy = FALSE,
+      include_all_columns = FALSE
+    ) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
       assert_single_value(lazy, type = "bool")
       assert_single_value(include_all_columns, type = "bool")
 
-      umi_data_type <- match.arg(umi_data_type, choices = c("int64", "string", "suffixed_string"))
+      umi_data_type <- match.arg(
+        umi_data_type,
+        choices = c("int64", "string", "suffixed_string")
+      )
 
       el <- tbl(private$con, "edgelist")
 
@@ -495,7 +510,10 @@ PixelDB <- R6Class(
         sql_query <- dbplyr::sql_render(el)
         DBI::dbExecute(
           private$con,
-          paste0("CREATE OR REPLACE TEMPORARY VIEW edgelist_modified AS ", sql_query)
+          paste0(
+            "CREATE OR REPLACE TEMPORARY VIEW edgelist_modified AS ",
+            sql_query
+          )
         )
 
         el <- tbl(private$con, "edgelist_modified")
@@ -521,7 +539,11 @@ PixelDB <- R6Class(
     #'
     #' @return A list with \code{tbl_df}'s with the layout coordinates and optionally marker counts
     #'
-    components_layout = function(components, add_marker_counts = FALSE, verbose = TRUE) {
+    components_layout = function(
+      components,
+      add_marker_counts = FALSE,
+      verbose = TRUE
+    ) {
       self$check_connection()
       assert_vector(components, "character", allow_null = TRUE, n = 1)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
@@ -538,7 +560,11 @@ PixelDB <- R6Class(
 
       components <- components %||% (self$counts() %>% colnames())
 
-      if (verbose) cli::cli_alert_info("Fetching {.val {length(components)}} component layouts...")
+      if (verbose) {
+        cli::cli_alert_info(
+          "Fetching {.val {length(components)}} component layouts..."
+        )
+      }
 
       lapply_func <- ifelse(verbose, pbapply::pblapply, lapply)
 
@@ -553,9 +579,13 @@ PixelDB <- R6Class(
         set_names(nm = components)
 
       if (add_marker_counts) {
-        if (verbose) cli::cli_alert_info("Fetching marker counts...")
+        if (verbose) {
+          cli::cli_alert_info("Fetching marker counts...")
+        }
         marker_counts <- self$components_marker_counts(components)
-        if (verbose) cli::cli_alert_info("Adding marker counts to layout tables...")
+        if (verbose) {
+          cli::cli_alert_info("Adding marker counts to layout tables...")
+        }
         layout_list <- lapply_func(names(layout_list), function(nm) {
           layout_list[[nm]] %>%
             left_join(marker_counts[[nm]], by = c("name" = "name"))
@@ -583,14 +613,20 @@ PixelDB <- R6Class(
     #'
     #' @return A list with \code{dgCMatrix} matrices or \code{tbl_df}'s with the marker counts
     #'
-    components_marker_counts = function(components, as_sparse = FALSE, verbose = FALSE) {
+    components_marker_counts = function(
+      components,
+      as_sparse = FALSE,
+      verbose = FALSE
+    ) {
       self$check_connection()
       assert_vector(components, "character", allow_null = TRUE, n = 1)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
 
       # Build the query for a single component
       component_query <- function(component) {
-        component_filter_sql <- glue::glue("WHERE component IN ('{component}') ")
+        component_filter_sql <- glue::glue(
+          "WHERE component IN ('{component}') "
+        )
         sql_query <- glue::glue(
           "SELECT umi1 || '-umi1' as name, marker_1 as marker ", # Add -umi1 suffix
           "FROM edgelist ",
@@ -634,6 +670,149 @@ PixelDB <- R6Class(
     },
 
     #' @description
+    #' Load cell graphs for components as a CellGraphList
+    #'
+    #' This method queries the \code{edgelist} table to construct bipartite
+    #' \code{CellGraph} objects for the specified \code{components}. Each graph
+    #' is converted to a \code{tbl_graph} and assigned attributes \code{type = "bipartite"},
+    #' \code{component_id}, and \code{assay_type = "PNA"}. Node markers are
+    #' returned as a sparse count matrix.
+    #'
+    #' @param components A character vector of component IDs.
+    #' @param markers An optional character vector of all possible marker names to set fixed
+    #'   columns on the counts matrix. If \code{NULL}, marker names are derived from the data.
+    #' @param verbose Print progress messages.
+    #'
+    #' @examples
+    #' # Connect to a PNA database and load cell graphs
+    #' pxl_file <- minimal_pna_pxl_file()
+    #' db <- PixelDB$new(pxl_file)
+    #' cgl <- db$components_cell_graph(c("0a45497c6bfbfb22"))
+    #' cgl
+    #'
+    #' @return A \code{CellGraphList} object containing \code{CellGraph} objects for the components.
+    #'
+    components_cell_graph = function(
+      components,
+      markers = NULL,
+      verbose = FALSE
+    ) {
+      self$check_connection()
+      assert_vector(components, "character", n = 1)
+      assert_unique(components)
+      assert_x_in_y(components, colnames(self$counts()))
+      assert_vector(markers, "character", allow_null = TRUE, n = 1)
+      assert_single_value(verbose, "bool")
+
+      # Temporarily disable DuckDB's internal query progress bar to prevent CLI display conflict
+      orig_progress_bar <- DBI::dbGetQuery(
+        private$con,
+        "SELECT current_setting('enable_progress_bar') AS val"
+      )$val[[1]]
+      DBI::dbExecute(private$con, "SET enable_progress_bar = false;")
+      on.exit(
+        {
+          if (DBI::dbIsValid(private$con)) {
+            DBI::dbExecute(
+              private$con,
+              glue::glue("SET enable_progress_bar = {orig_progress_bar};")
+            )
+          }
+        },
+        add = TRUE
+      )
+
+      if (verbose) {
+        pb <- cli::cli_progress_bar(
+          name = "Loading CellGraphs",
+          total = length(components),
+          clear = FALSE
+        )
+      }
+
+      cg_list <- lapply(components, function(cell) {
+        e <- DBI::dbGetQuery(
+          private$con,
+          glue::glue(
+            "SELECT umi1, umi2, marker_1, marker_2 FROM edgelist WHERE component = '{cell}'"
+          )
+        )
+
+        E <- nrow(e)
+        if (E == 0L) {
+          cli::cli_abort(
+            c(
+              "x" = "No edges found for component {.val {cell}}"
+            )
+          )
+        }
+
+        all_umi <- c(e$umi1, e$umi2)
+        dup <- duplicated(all_umi)
+        u <- all_umi[!dup]
+        n <- length(u)
+
+        # Fast 64-bit integer indexing using bit64 hashmap
+        hu <- bit64::hashmap(u)
+        idx <- bit64::hashpos(hu, all_umi)
+
+        edge_mat <- matrix(idx, ncol = 2, byrow = FALSE)
+        g <- igraph::graph_from_edgelist(edge_mat, directed = FALSE)
+
+        # Convert int64 to character for vertex and count matrix row names
+        u_names <- as.character(u)
+        igraph::V(g)$name <- u_names
+
+        # Determine node_type ("umi1" vs "umi2") based on first appearance position
+        node_type <- rep.int("umi2", n)
+        node_type[which(!dup) <= E] <- "umi1"
+        igraph::V(g)$node_type <- node_type
+
+        # Convert to tbl_graph and set bipartite attributes matching .load_pna_as_bipartite
+        tbl_g <- tidygraph::as_tbl_graph(g, directed = FALSE)
+        attr(tbl_g, "type") <- "bipartite"
+        attr(tbl_g, "component_id") <- cell
+        attr(tbl_g, "assay_type") <- "PNA"
+
+        # Subset markers using logical vector (!dup) to avoid matching
+        marker_char <- c(e$marker_1, e$marker_2)[!dup]
+        if (is.null(markers)) {
+          marker_factor <- as.factor(marker_char)
+          marker_levels <- levels(marker_factor)
+          j <- as.integer(marker_factor)
+          n_markers <- length(marker_levels)
+        } else {
+          j <- match(marker_char, markers)
+          marker_levels <- markers
+          n_markers <- length(markers)
+        }
+
+        X <- Matrix::sparseMatrix(
+          i = seq_len(n),
+          j = j,
+          x = 1,
+          dims = c(n, n_markers),
+          dimnames = list(u_names, marker_levels)
+        )
+
+        cg <- CreateCellGraphObject(cellgraph = tbl_g, counts = X)
+
+        if (verbose) {
+          cli::cli_progress_update(id = pb)
+        }
+
+        cg
+      })
+
+      if (verbose) {
+        cli::cli_progress_done(id = pb)
+      }
+
+      names(cg_list) <- components
+      CreateCellGraphList(cg_list)
+    },
+
+    #' @description
     #' Export a table to a parquet file
     #'
     #' @param parquet_file Path to the parquet file
@@ -650,14 +829,19 @@ PixelDB <- R6Class(
     #'
     #' @return Nothing
     #'
-    export_parquet = function(parquet_file,
-                              table_name = c("proximity", "edgelist", "layouts"),
-                              compression = c("snappy", "zstd"),
-                              compression_level = 1L) {
+    export_parquet = function(
+      parquet_file,
+      table_name = c("proximity", "edgelist", "layouts"),
+      compression = c("snappy", "zstd"),
+      compression_level = 1L
+    ) {
       self$check_connection()
       assert_single_value(parquet_file, "string")
       assert_file_ext(parquet_file, "parquet")
-      table_name <- match.arg(table_name, choices = c("proximity", "edgelist", "layouts"))
+      table_name <- match.arg(
+        table_name,
+        choices = c("proximity", "edgelist", "layouts")
+      )
       compression <- match.arg(compression, c("snappy", "zstd"))
       assert_single_value(compression_level, "integer")
       assert_x_in_y(table_name, self$names())

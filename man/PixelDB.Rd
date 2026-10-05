@@ -170,6 +170,17 @@ db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 
 
 ## ------------------------------------------------
+## Method `PixelDB$components_cell_graph`
+## ------------------------------------------------
+
+# Connect to a PNA database and load cell graphs
+pxl_file <- minimal_pna_pxl_file()
+db <- PixelDB$new(pxl_file)
+cgl <- db$components_cell_graph(c("0a45497c6bfbfb22"))
+cgl
+
+
+## ------------------------------------------------
 ## Method `PixelDB$export_parquet`
 ## ------------------------------------------------
 
@@ -206,6 +217,7 @@ db$close()
 \item \href{#method-PixelDB-components_edgelist}{\code{PixelDB$components_edgelist()}}
 \item \href{#method-PixelDB-components_layout}{\code{PixelDB$components_layout()}}
 \item \href{#method-PixelDB-components_marker_counts}{\code{PixelDB$components_marker_counts()}}
+\item \href{#method-PixelDB-components_cell_graph}{\code{PixelDB$components_cell_graph()}}
 \item \href{#method-PixelDB-export_parquet}{\code{PixelDB$export_parquet()}}
 \item \href{#method-PixelDB-close}{\code{PixelDB$close()}}
 }
@@ -711,6 +723,50 @@ A list with \code{dgCMatrix} matrices or \code{tbl_df}'s with the marker counts
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
+
+}
+\if{html}{\out{</div>}}
+
+}
+
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-PixelDB-components_cell_graph"></a>}}
+\if{latex}{\out{\hypertarget{method-PixelDB-components_cell_graph}{}}}
+\subsection{Method \code{components_cell_graph()}}{
+Load cell graphs for components as a CellGraphList
+
+This method queries the \code{edgelist} table to construct bipartite
+\code{CellGraph} objects for the specified \code{components}. Each graph
+is converted to a \code{tbl_graph} and assigned attributes \code{type = "bipartite"},
+\code{component_id}, and \code{assay_type = "PNA"}. Node markers are
+returned as a sparse count matrix.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_cell_graph(components, markers = NULL, verbose = FALSE)}\if{html}{\out{</div>}}
+}
+
+\subsection{Arguments}{
+\if{html}{\out{<div class="arguments">}}
+\describe{
+\item{\code{components}}{A character vector of component IDs.}
+
+\item{\code{markers}}{An optional character vector of all possible marker names to set fixed
+columns on the counts matrix. If \code{NULL}, marker names are derived from the data.}
+
+\item{\code{verbose}}{Print progress messages.}
+}
+\if{html}{\out{</div>}}
+}
+\subsection{Returns}{
+A \code{CellGraphList} object containing \code{CellGraph} objects for the components.
+}
+\subsection{Examples}{
+\if{html}{\out{<div class="r example copy">}}
+\preformatted{# Connect to a PNA database and load cell graphs
+pxl_file <- minimal_pna_pxl_file()
+db <- PixelDB$new(pxl_file)
+cgl <- db$components_cell_graph(c("0a45497c6bfbfb22"))
+cgl
 
 }
 \if{html}{\out{</div>}}
