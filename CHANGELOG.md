@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `ProximityScoresToAssay()` warns about components whose proximity scores are
+  all zero. It previously warned about components whose scores were all
+  non-zero.
+
 ### Added
 
 - `PixelDB$components_cell_graph()` gains an `add_layouts` argument (default
