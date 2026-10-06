@@ -263,6 +263,8 @@ DifferentialProximityAnalysis.data.frame <- function(
 #' The rownames of this data.frame should correspond to the columns names of the matrix `object`.
 #' @param diff_threshold Minimum difference in proximity metric to consider a pair of groups for
 #' testing. Default is 0.1. This parameter is only used when the `method` argument is set to "seurat".
+#' @param only_pos If \code{TRUE}, test only marker pairs whose median is higher in the
+#' target group than in the reference. Pairs that do not pass are not tested. Default is \code{FALSE}.
 #' @param min_pct Minimum percentage of cells in either group that must express a marker pair for it
 #' to be considered for testing. Default is 0. This parameter is only used when the `method` argument
 #' is set to "seurat".
@@ -291,9 +293,11 @@ DifferentialProximityAnalysis.Matrix <- function(
   min_pct = 0,
   min_diff_pct = -Inf,
   min_cells_per_group = 10,
+  only_pos = FALSE,
   verbose = TRUE,
   ...
 ) {
+  assert_single_value(only_pos, type = "bool")
   # Validate group_data layout against the matrix `object`
   .validate_matrix_group_data(
     object = object,
@@ -406,7 +410,8 @@ DifferentialProximityAnalysis.Matrix <- function(
       cells_2 = components_reference,
       min_diff = diff_threshold,
       min_pct = min_pct,
-      min_diff_pct = min_diff_pct
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos
     )
 
     # Filters in .wilcox_de_test() can leave no pairs. Skip the comparison
@@ -596,6 +601,7 @@ DifferentialProximityAnalysis.Seurat <- function(
 #' @param min_diff Minimum difference in median expression between the two groups to consider a feature
 #' @param min_pct Minimum percentage of cells expressing a feature in either group to consider it
 #' @param min_diff_pct Minimum difference in percentage of cells expressing a feature between the two
+#' @param only_pos If \code{TRUE}, test only features with a positive median difference.
 #'
 #' @noRd
 .wilcox_de_test <- function(
@@ -604,7 +610,8 @@ DifferentialProximityAnalysis.Seurat <- function(
   cells_2,
   min_diff = 0.01,
   min_pct = 0.01,
-  min_diff_pct = -Inf
+  min_diff_pct = -Inf,
+  only_pos = FALSE
 ) {
   expect_sparseMatrixStats()
 
@@ -636,11 +643,22 @@ DifferentialProximityAnalysis.Seurat <- function(
 
   total_diff <- fc_results[, 1]
   names(total_diff) <- rownames(fc_results)
-  features_diff <- names(which(abs(total_diff) >= min_diff))
+  if (only_pos) {
+    # cells_1 is the target, so a positive difference is higher in the target.
+    features_diff <- names(which(total_diff > 0 & total_diff >= min_diff))
+  } else {
+    features_diff <- names(which(abs(total_diff) >= min_diff))
+  }
 
   features <- intersect(features, features_diff)
   if (length(features) == 0) {
-    cli::cli_warn("No features pass min_diff threshold; returning empty data.frame")
+    if (only_pos) {
+      cli::cli_warn(
+        "No features have a higher median in the target group; returning empty data.frame"
+      )
+    } else {
+      cli::cli_warn("No features pass min_diff threshold; returning empty data.frame")
+    }
     return(fc_results[features, ])
   }
 
@@ -713,6 +731,7 @@ FindAllProximityMarkers.Seurat <- function(
   diff_threshold = 0.01,
   min_pct = 0,
   min_diff_pct = -Inf,
+  only_pos = FALSE,
   proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -734,6 +753,7 @@ FindAllProximityMarkers.Seurat <- function(
     diff_threshold = diff_threshold,
     min_pct = min_pct,
     min_diff_pct = min_diff_pct,
+    only_pos = only_pos,
     proximity_metric = proximity_metric,
     verbose = verbose,
     call = call
@@ -778,6 +798,7 @@ FindAllProximityMarkers.Seurat <- function(
     diff_threshold = diff_threshold,
     min_pct = min_pct,
     min_diff_pct = min_diff_pct,
+    only_pos = only_pos,
     proximity_metric = proximity_metric,
     p_adjust_method = p_adjust_method,
     verbose = verbose,
@@ -826,6 +847,7 @@ FindAllProximityMarkers.data.frame <- function(
   diff_threshold = 0.01,
   min_pct = 0,
   min_diff_pct = -Inf,
+  only_pos = FALSE,
   proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
@@ -840,6 +862,7 @@ FindAllProximityMarkers.data.frame <- function(
     diff_threshold = diff_threshold,
     min_pct = min_pct,
     min_diff_pct = min_diff_pct,
+    only_pos = only_pos,
     proximity_metric = proximity_metric,
     verbose = verbose,
     call = call
@@ -920,6 +943,7 @@ FindAllProximityMarkers.data.frame <- function(
     diff_threshold = diff_threshold,
     min_pct = min_pct,
     min_diff_pct = min_diff_pct,
+    only_pos = only_pos,
     proximity_metric = proximity_metric,
     p_adjust_method = p_adjust_method,
     verbose = verbose,
@@ -1045,6 +1069,7 @@ FindAllProximityMarkers.data.frame <- function(
   diff_threshold,
   min_pct,
   min_diff_pct,
+  only_pos,
   proximity_metric,
   verbose,
   call = caller_env()
@@ -1077,6 +1102,7 @@ FindAllProximityMarkers.data.frame <- function(
       call = call
     )
   }
+  assert_single_value(only_pos, type = "bool", call = call)
   assert_single_value(proximity_metric, type = "string", call = call)
   assert_single_value(verbose, type = "bool", call = call)
 }
@@ -1201,6 +1227,7 @@ FindAllProximityMarkers.data.frame <- function(
   diff_threshold,
   min_pct,
   min_diff_pct,
+  only_pos,
   proximity_metric,
   p_adjust_method,
   verbose,
@@ -1240,6 +1267,7 @@ FindAllProximityMarkers.data.frame <- function(
         diff_threshold = diff_threshold,
         min_pct = min_pct,
         min_diff_pct = min_diff_pct,
+        only_pos = only_pos,
         min_cells_per_group = min_cells_per_group,
         verbose = verbose
       )

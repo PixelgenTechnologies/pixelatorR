@@ -1151,9 +1151,10 @@ DifferentialProximityAnalysis <- function(
 #' stored in \code{reference} and is labeled \code{"rest"}, unless that label
 #' is already a level of \code{group_by}. A positive \code{diff_median} means
 #' the proximity metric is higher in \code{target} than in the pooled
-#' remainder. Factor levels set the comparison order. Character labels are
-#' tested in order of first appearance. P-values are adjusted separately
-#' within each comparison.
+#' remainder. Set \code{only_pos = TRUE} to test only those pairs. Factor
+#' levels set the comparison order. Character labels are tested in order of
+#' first appearance. P-values are adjusted separately within each comparison,
+#' across the pairs that were tested.
 #'
 #' Proximity scores are pivoted once with \code{\link{ProximityScoresToAssay}}.
 #' Each comparison then calls the matrix method of
@@ -1177,11 +1178,15 @@ DifferentialProximityAnalysis <- function(
 #' level being tested and the pooled remainder. Comparisons that do not meet
 #' this threshold are skipped. The default is 10.
 #' @param diff_threshold Minimum absolute difference in the proximity metric
-#' required to test a marker pair. The default is 0.01.
+#' required to test a marker pair. The default is 0.01. When \code{only_pos}
+#' is \code{TRUE}, the difference must also be positive.
 #' @param min_pct Minimum fraction of cells in either group with a non-zero
 #' score. The default is 0.
 #' @param min_diff_pct Minimum difference in the fraction of cells with a
 #' non-zero score. The default is \code{-Inf}.
+#' @param only_pos If \code{TRUE}, test only marker pairs whose median is
+#' higher in the level being tested than in the pooled remainder. The default
+#' is \code{FALSE}.
 #' @param proximity_metric The proximity metric to use. Any numeric column in
 #' the proximity score table can be selected. The default is
 #' \code{"log2_ratio"}.
