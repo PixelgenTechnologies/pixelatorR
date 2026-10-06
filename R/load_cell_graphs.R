@@ -221,9 +221,21 @@ LoadCellGraphs.FileSystemDataset <- function(
   return(cg_list)
 }
 
-#' Internal load method for PNA data
+#' @param add_layouts `r lifecycle::badge("deprecated")` Load layouts from the
+#' PXL file if available. This argument is deprecated and will be removed in a
+#' future release. Supplying it triggers a warning once per R session.
+#' @param force Force load graph(s) if they are already loaded
+#' @param cl A cluster object created by makeCluster, or an integer
+#' to indicate number of child-processes (integer values are ignored
+#' on Windows) for parallel evaluations. See Details on performance
+#' in the documentation for \code{pbapply}. The default is NULL,
+#' which means that no parallelization is used.
 #'
-#' @noRd
+#' @rdname LoadCellGraphs
+#' @method LoadCellGraphs MPXAssay
+#'
+#' @export
+#'
 LoadCellGraphs.MPXAssay <- function(
   object,
   cells = colnames(object),

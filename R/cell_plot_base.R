@@ -11,7 +11,7 @@
 #'
 #' @noRd
 .render_cell_plot_base <- function(object, limits = NULL) {
-  pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
+  assert_class(object, "cell_plot_built", arg = "object")
 
   mapping <- object$mapping
   plot_data <- object$data

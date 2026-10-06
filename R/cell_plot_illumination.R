@@ -28,10 +28,10 @@
 #'
 #' @noRd
 .cell_illumination_coordinates <- function(layout) {
-  pixelatorR:::assert_class(layout, c("data.frame", "tbl_df"))
-  pixelatorR:::assert_x_in_y(x = c("x", "y", "z"), y = names(layout))
+  assert_class(layout, c("data.frame", "tbl_df"))
+  assert_x_in_y(x = c("x", "y", "z"), y = names(layout))
   for (coordinate in c("x", "y", "z")) {
-    pixelatorR:::assert_vector(layout[[coordinate]], type = "numeric")
+    assert_vector(layout[[coordinate]], type = "numeric")
   }
   coordinates <- as.matrix(layout[, c("x", "y", "z")])
   if (any(!is.finite(coordinates))) {
@@ -81,7 +81,7 @@
 #'
 #' @noRd
 .cell_ambient_occlusion_illumination <- function(coordinates, k) {
-  pixelatorR:::expect_FNN()
+  expect_FNN()
   neighbor_distances <- FNN::get.knn(coordinates, k = k)$nn.dist
   ambient_occlusion <- rowMeans(sqrt(neighbor_distances))
   return(.cell_safe_rescale(ambient_occlusion, to = c(1, 0)))
@@ -111,14 +111,14 @@
   if (length(unique(term_lengths)) != 1L) {
     cli::cli_abort("Illumination terms must have equal lengths.")
   }
-  pixelatorR:::assert_vector(weights, type = "numeric", n = 3)
-  pixelatorR:::assert_within_limits(weights, limits = c(0, Inf))
-  pixelatorR:::assert_vector(clamp_quantiles, type = "numeric", n = 2)
-  pixelatorR:::assert_within_limits(clamp_quantiles, limits = c(0, 1))
+  assert_vector(weights, type = "numeric", n = 3)
+  assert_within_limits(weights, limits = c(0, Inf))
+  assert_vector(clamp_quantiles, type = "numeric", n = 2)
+  assert_within_limits(clamp_quantiles, limits = c(0, 1))
   if (clamp_quantiles[[1]] >= clamp_quantiles[[2]]) {
     cli::cli_abort("{.arg clamp_quantiles[1]} must be less than {.arg clamp_quantiles[2]}.")
   }
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     normalize_weights,
     type = "bool",
     arg = "normalize_weights"
@@ -178,12 +178,12 @@
 ) {
   coordinates <- .cell_illumination_coordinates(layout)
   rows <- nrow(coordinates)
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     ambient_occlusion_k,
     type = "integer",
     arg = "ambient_occlusion_k"
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     ambient_occlusion_k,
     limits = c(1, rows - 1L),
     arg = "ambient_occlusion_k"
@@ -193,8 +193,8 @@
     volume_shading_weight,
     ambient_occlusion_weight
   )
-  pixelatorR:::assert_vector(weights, type = "numeric", n = 3)
-  pixelatorR:::assert_within_limits(weights, limits = c(0, Inf))
+  assert_vector(weights, type = "numeric", n = 3)
+  assert_within_limits(weights, limits = c(0, Inf))
   zero_term <- numeric(rows)
   directional <- if (directional_light_weight > 0) {
     .cell_directional_illumination(coordinates, light_direction)

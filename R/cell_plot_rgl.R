@@ -322,7 +322,7 @@ function(el, x, data) {
 #'
 #' @noRd
 .render_cell_plot_rgl <- function(object, device) {
-  pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
+  assert_class(object, "cell_plot_built", arg = "object")
 
   mapping <- object$mapping
   categorical <- identical(object$color$type, "categorical")
