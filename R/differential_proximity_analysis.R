@@ -695,16 +695,7 @@ DifferentialProximityAnalysis.Seurat <- function(
 #' object was created with \code{load_proximity_scores = FALSE} and the
 #' proximity scores were not stored in the object.
 #' @param min_exp_join_count Minimum expected join count for a marker pair to
-#' be included. Pairs below the threshold are treated as missing. With
-#' \code{method = "seurat"}, missing scores are set to 0.
-#' @param diff_threshold Minimum difference in the proximity metric required to
-#' test a marker pair. Used when \code{method = "seurat"}.
-#' @param min_pct Minimum fraction of cells in either group with a non-zero
-#' score. Used when \code{method = "seurat"}.
-#' @param min_diff_pct Minimum difference in the fraction of cells with a
-#' non-zero score. Used when \code{method = "seurat"}.
-#' @param method One of \code{"seurat"} or \code{"legacy"}. Passed through to
-#' \code{\link{DifferentialProximityAnalysis}}.
+#' be included. Pairs below the threshold are treated as missing and set to 0.
 #'
 #' @rdname FindAllProximityMarkers
 #' @method FindAllProximityMarkers Seurat
@@ -724,8 +715,6 @@ FindAllProximityMarkers.Seurat <- function(
   min_diff_pct = -Inf,
   proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
-  backend = c("dplyr", "data.table"),
-  method = c("seurat", "legacy"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -742,6 +731,9 @@ FindAllProximityMarkers.Seurat <- function(
   )
   .validate_find_all_common_args(
     min_cells_per_group = min_cells_per_group,
+    diff_threshold = diff_threshold,
+    min_pct = min_pct,
+    min_diff_pct = min_diff_pct,
     proximity_metric = proximity_metric,
     verbose = verbose,
     call = call
@@ -749,8 +741,6 @@ FindAllProximityMarkers.Seurat <- function(
 
   assay <- .validate_or_set_assay(object, assay, call = call)
   metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
-  backend <- match.arg(backend, choices = c("dplyr", "data.table"))
-  method <- match.arg(method, choices = c("seurat", "legacy"))
   p_adjust_method <- match.arg(
     p_adjust_method,
     choices = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr")
@@ -768,99 +758,32 @@ FindAllProximityMarkers.Seurat <- function(
   rest_label <- .make_rest_label(label_chr)
   .warn_missing_group_labels(label_chr, group_by)
 
-  proximity_data <- .load_proximity_for_da(
+  proximity_matrix <- .load_proximity_for_da(
     object = object,
     assay = assay,
     lazy = lazy,
     min_exp_join_count = min_exp_join_count,
     proximity_metric = proximity_metric,
     metric_type = metric_type,
-    method = method
+    method = "seurat"
   )
-  dots <- list(...)
 
-  if (method == "seurat") {
-    cell_labels <- .labels_for_cells(label_chr, colnames(proximity_data), group_by)
-    contrast_col <- ".pxl_one_vs_rest"
-    results <- .run_one_vs_rest_loop(
-      label_chr = cell_labels,
-      idents = idents,
-      rest_label = rest_label,
-      group_by = group_by,
-      min_cells_per_group = min_cells_per_group,
-      verbose = verbose,
-      call = call,
-      run_one = function(ident) {
-        group_data <- data.frame(
-          .pxl_one_vs_rest = .assign_one_vs_rest(
-            cell_labels,
-            ident,
-            rest_label
-          ),
-          row.names = colnames(proximity_data),
-          check.names = FALSE,
-          stringsAsFactors = FALSE
-        )
-        names(group_data) <- contrast_col
-        args <- list(
-          object = proximity_data,
-          group_data = group_data,
-          contrast_column = contrast_col,
-          reference = rest_label,
-          targets = ident,
-          proximity_metric = proximity_metric,
-          p_adjust_method = p_adjust_method,
-          diff_threshold = diff_threshold,
-          min_pct = min_pct,
-          min_diff_pct = min_diff_pct,
-          min_cells_per_group = min_cells_per_group,
-          verbose = verbose
-        )
-        do.call(DifferentialProximityAnalysis, c(args, dots))
-      }
-    )
-  } else {
-    prepared <- .prepare_legacy_group_table(proximity_data, label_chr)
-    cell_labels <- .labels_for_cells(
-      label_chr,
-      unique(as.character(prepared$data$component)),
-      group_by
-    )
-    contrast_col <- .safe_colname(colnames(prepared$data), ".pxl_one_vs_rest")
-    results <- .run_one_vs_rest_loop(
-      label_chr = cell_labels,
-      idents = idents,
-      rest_label = rest_label,
-      group_by = group_by,
-      min_cells_per_group = min_cells_per_group,
-      verbose = verbose,
-      call = call,
-      run_one = function(ident) {
-        tab <- prepared$data
-        tab[[contrast_col]] <- .assign_one_vs_rest(
-          tab[[prepared$group_col]],
-          ident,
-          rest_label
-        )
-        tab <- tab %>% filter(!is.na(.data[[contrast_col]]))
-        args <- list(
-          object = tab,
-          contrast_column = contrast_col,
-          reference = rest_label,
-          targets = ident,
-          proximity_metric = proximity_metric,
-          metric_type = metric_type,
-          backend = backend,
-          p_adjust_method = p_adjust_method,
-          min_cells_per_group = min_cells_per_group,
-          verbose = verbose
-        )
-        do.call(DifferentialProximityAnalysis, c(args, dots))
-      }
-    )
-  }
-
-  results
+  .run_matrix_one_vs_rest(
+    proximity_matrix = proximity_matrix,
+    label_chr = label_chr,
+    idents = idents,
+    rest_label = rest_label,
+    group_by = group_by,
+    min_cells_per_group = min_cells_per_group,
+    diff_threshold = diff_threshold,
+    min_pct = min_pct,
+    min_diff_pct = min_diff_pct,
+    proximity_metric = proximity_metric,
+    p_adjust_method = p_adjust_method,
+    verbose = verbose,
+    dots = list(...),
+    call = call
+  )
 }
 
 
@@ -900,9 +823,11 @@ FindAllProximityMarkers.data.frame <- function(
   group_by,
   idents = NULL,
   min_cells_per_group = 10,
+  diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
   proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
-  backend = c("dplyr", "data.table"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -912,12 +837,14 @@ FindAllProximityMarkers.data.frame <- function(
   assert_single_value(group_by, type = "string", call = call)
   .validate_find_all_common_args(
     min_cells_per_group = min_cells_per_group,
+    diff_threshold = diff_threshold,
+    min_pct = min_pct,
+    min_diff_pct = min_diff_pct,
     proximity_metric = proximity_metric,
     verbose = verbose,
     call = call
   )
   metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
-  backend <- match.arg(backend, choices = c("dplyr", "data.table"))
   p_adjust_method <- match.arg(
     p_adjust_method,
     choices = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr")
@@ -968,41 +895,36 @@ FindAllProximityMarkers.data.frame <- function(
   rest_label <- .make_rest_label(label_chr)
   .warn_missing_group_labels(label_chr, group_by)
 
-  group_col <- .safe_colname(colnames(object), ".pxl_group_label")
-  contrast_col <- .safe_colname(colnames(object), ".pxl_one_vs_rest")
-  object[[group_col]] <- unname(label_chr[as.character(object$component)])
-  dots <- list(...)
+  scored <- switch(metric_type,
+    all = object,
+    self = object %>% filter(marker_1 == marker_2),
+    co = object %>% filter(marker_1 != marker_2)
+  )
+  if (nrow(scored) == 0) {
+    cli::cli_abort(
+      "No data found for the specified metric type.",
+      call = call
+    )
+  }
+  proximity_matrix <- scored %>%
+    ProximityScoresToAssay(values_from = proximity_metric) %>%
+    .pad_proximity_matrix(cells = names(label_chr))
 
-  .run_one_vs_rest_loop(
-    label_chr = unname(label_chr),
+  .run_matrix_one_vs_rest(
+    proximity_matrix = proximity_matrix,
+    label_chr = label_chr,
     idents = idents,
     rest_label = rest_label,
     group_by = group_by,
     min_cells_per_group = min_cells_per_group,
+    diff_threshold = diff_threshold,
+    min_pct = min_pct,
+    min_diff_pct = min_diff_pct,
+    proximity_metric = proximity_metric,
+    p_adjust_method = p_adjust_method,
     verbose = verbose,
-    call = call,
-    run_one = function(ident) {
-      tab <- object
-      tab[[contrast_col]] <- .assign_one_vs_rest(
-        tab[[group_col]],
-        ident,
-        rest_label
-      )
-      tab <- tab %>% filter(!is.na(.data[[contrast_col]]))
-      args <- list(
-        object = tab,
-        contrast_column = contrast_col,
-        reference = rest_label,
-        targets = ident,
-        proximity_metric = proximity_metric,
-        metric_type = metric_type,
-        backend = backend,
-        p_adjust_method = p_adjust_method,
-        min_cells_per_group = min_cells_per_group,
-        verbose = verbose
-      )
-      do.call(DifferentialProximityAnalysis, c(args, dots))
-    }
+    dots = list(...),
+    call = call
   )
 }
 
@@ -1053,30 +975,42 @@ FindAllProximityMarkers.data.frame <- function(
   if (method == "seurat") {
     proximity_data <- proximity_data %>%
       compute() %>%
-      ProximityScoresToAssay(values_from = proximity_metric)
-    missing_components <- setdiff(colnames(object), colnames(proximity_data))
-    if (length(missing_components) > 0) {
-      m_missing <- Matrix::rsparsematrix(
-        nrow = nrow(proximity_data),
-        ncol = length(missing_components),
-        density = 0
-      )
-      rownames(m_missing) <- rownames(proximity_data)
-      colnames(m_missing) <- missing_components
-      proximity_data <- cbind(proximity_data, m_missing)
-      proximity_data <- proximity_data[, colnames(object)]
-    }
+      ProximityScoresToAssay(values_from = proximity_metric) %>%
+      .pad_proximity_matrix(cells = colnames(object))
   }
   proximity_data
 }
 
 
+#' Add zero columns for cells that have no proximity scores.
+#'
+#' @param cells Column order of the returned matrix.
+#'
+#' @noRd
+.pad_proximity_matrix <- function(proximity_matrix, cells) {
+  cells <- as.character(cells)
+  missing_components <- setdiff(cells, colnames(proximity_matrix))
+  if (length(missing_components) > 0) {
+    m_missing <- Matrix::rsparsematrix(
+      nrow = nrow(proximity_matrix),
+      ncol = length(missing_components),
+      density = 0
+    )
+    rownames(m_missing) <- rownames(proximity_matrix)
+    colnames(m_missing) <- missing_components
+    proximity_matrix <- cbind(proximity_matrix, m_missing)
+  }
+  proximity_matrix[, cells, drop = FALSE]
+}
+
+
 #' @noRd
 .reject_find_all_proximity_args <- function(..., call = caller_env()) {
+  supplied_names <- names(list(...))
   blocked <- c(
     "contrast_column", "reference", "targets", "group_vars", "group_data"
   )
-  supplied <- intersect(names(list(...)), blocked)
+  supplied <- intersect(supplied_names, blocked)
   if (length(supplied) > 0) {
     cli::cli_abort(
       c(
@@ -1089,12 +1023,28 @@ FindAllProximityMarkers.data.frame <- function(
       call = call
     )
   }
+  legacy <- intersect(supplied_names, c("method", "backend"))
+  if (length(legacy) > 0) {
+    cli::cli_abort(
+      c(
+        "x" = "Cannot pass {.arg {legacy}} to {.fn FindAllProximityMarkers}.",
+        "i" = paste0(
+          "Each comparison uses the matrix Wilcoxon test on one proximity ",
+          "matrix."
+        )
+      ),
+      call = call
+    )
+  }
 }
 
 
 #' @noRd
 .validate_find_all_common_args <- function(
   min_cells_per_group,
+  diff_threshold,
+  min_pct,
+  min_diff_pct,
   proximity_metric,
   verbose,
   call = caller_env()
@@ -1103,6 +1053,27 @@ FindAllProximityMarkers.data.frame <- function(
   if (is.na(min_cells_per_group) || min_cells_per_group < 0) {
     cli::cli_abort(
       c("x" = "{.arg min_cells_per_group} must be a non-negative number."),
+      call = call
+    )
+  }
+  assert_single_value(diff_threshold, type = "numeric", call = call)
+  if (is.na(diff_threshold) || diff_threshold < 0) {
+    cli::cli_abort(
+      c("x" = "{.arg diff_threshold} must be a non-negative number."),
+      call = call
+    )
+  }
+  assert_single_value(min_pct, type = "numeric", call = call)
+  if (is.na(min_pct) || min_pct < 0 || min_pct > 1) {
+    cli::cli_abort(
+      c("x" = "{.arg min_pct} must be a number between 0 and 1."),
+      call = call
+    )
+  }
+  assert_single_value(min_diff_pct, type = "numeric", call = call)
+  if (is.na(min_diff_pct)) {
+    cli::cli_abort(
+      c("x" = "{.arg min_diff_pct} must be a number."),
       call = call
     )
   }
@@ -1188,16 +1159,6 @@ FindAllProximityMarkers.data.frame <- function(
 
 
 #' @noRd
-.safe_colname <- function(existing, base) {
-  candidate <- base
-  while (candidate %in% existing) {
-    candidate <- paste0(candidate, "_")
-  }
-  candidate
-}
-
-
-#' @noRd
 .warn_missing_group_labels <- function(label_chr, group_by) {
   n_missing <- sum(is.na(label_chr))
   if (n_missing > 0) {
@@ -1224,17 +1185,67 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
+#' Compare each group with the pooled rest on one proximity matrix.
+#'
+#' The matrix is built by the caller. Each iteration only replaces the
+#' contrast labels in \code{group_data}.
+#'
 #' @noRd
-.prepare_legacy_group_table <- function(proximity_data, label_chr) {
-  proximity_data <- proximity_data %>%
-    collect() %>%
-    as_tibble() %>%
-    ungroup()
-  group_col <- .safe_colname(colnames(proximity_data), ".pxl_group_label")
-  proximity_data[[group_col]] <- unname(
-    label_chr[as.character(proximity_data$component)]
+.run_matrix_one_vs_rest <- function(
+  proximity_matrix,
+  label_chr,
+  idents,
+  rest_label,
+  group_by,
+  min_cells_per_group,
+  diff_threshold,
+  min_pct,
+  min_diff_pct,
+  proximity_metric,
+  p_adjust_method,
+  verbose,
+  dots,
+  call = caller_env()
+) {
+  cell_labels <- .labels_for_cells(label_chr, colnames(proximity_matrix), group_by)
+  contrast_col <- ".pxl_one_vs_rest"
+  .run_one_vs_rest_loop(
+    label_chr = cell_labels,
+    idents = idents,
+    rest_label = rest_label,
+    group_by = group_by,
+    min_cells_per_group = min_cells_per_group,
+    verbose = verbose,
+    call = call,
+    run_one = function(ident) {
+      group_data <- data.frame(
+        .pxl_one_vs_rest = .assign_one_vs_rest(
+          cell_labels,
+          ident,
+          rest_label
+        ),
+        row.names = colnames(proximity_matrix),
+        check.names = FALSE,
+        stringsAsFactors = FALSE
+      )
+      names(group_data) <- contrast_col
+      args <- list(
+        object = proximity_matrix,
+        group_data = group_data,
+        contrast_column = contrast_col,
+        reference = rest_label,
+        targets = ident,
+        proximity_metric = proximity_metric,
+        p_adjust_method = p_adjust_method,
+        diff_threshold = diff_threshold,
+        min_pct = min_pct,
+        min_diff_pct = min_diff_pct,
+        min_cells_per_group = min_cells_per_group,
+        verbose = verbose
+      )
+      do.call(DifferentialProximityAnalysis, c(args, dots))
+    }
   )
-  list(data = proximity_data, group_col = group_col)
 }
 
 
