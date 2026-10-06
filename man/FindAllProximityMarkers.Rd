@@ -21,8 +21,6 @@ FindAllProximityMarkers(object, ...)
   min_diff_pct = -Inf,
   proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
-  backend = c("dplyr", "data.table"),
-  method = c("seurat", "legacy"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -33,9 +31,11 @@ FindAllProximityMarkers(object, ...)
   group_by,
   idents = NULL,
   min_cells_per_group = 10,
+  diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf,
   proximity_metric = "log2_ratio",
   metric_type = c("all", "self", "co"),
-  backend = c("dplyr", "data.table"),
   p_adjust_method = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr"),
   verbose = TRUE,
   ...
@@ -47,7 +47,8 @@ FindAllProximityMarkers(object, ...)
 \item{...}{Additional arguments passed to
 \code{\link{DifferentialProximityAnalysis}}. \code{contrast_column},
 \code{reference}, \code{targets}, and \code{group_vars} are set by this
-function and cannot be supplied.}
+function and cannot be supplied. \code{method} and \code{backend} are not
+used.}
 
 \item{group_by}{Name of a single column of group labels. The column must be
 a character vector or a factor with at least two levels.}
@@ -65,21 +66,20 @@ object was created with \code{load_proximity_scores = FALSE} and the
 proximity scores were not stored in the object.}
 
 \item{min_exp_join_count}{Minimum expected join count for a marker pair to
-be included. Pairs below the threshold are treated as missing. With
-\code{method = "seurat"}, missing scores are set to 0.}
+be included. Pairs below the threshold are treated as missing and set to 0.}
 
 \item{min_cells_per_group}{Minimum number of cells required in both the
 level being tested and the pooled remainder. Comparisons that do not meet
-this threshold are skipped.}
+this threshold are skipped. The default is 10.}
 
-\item{diff_threshold}{Minimum difference in the proximity metric required to
-test a marker pair. Used when \code{method = "seurat"}.}
+\item{diff_threshold}{Minimum absolute difference in the proximity metric
+required to test a marker pair. The default is 0.01.}
 
 \item{min_pct}{Minimum fraction of cells in either group with a non-zero
-score. Used when \code{method = "seurat"}.}
+score. The default is 0.}
 
 \item{min_diff_pct}{Minimum difference in the fraction of cells with a
-non-zero score. Used when \code{method = "seurat"}.}
+non-zero score. The default is \code{-Inf}.}
 
 \item{proximity_metric}{The proximity metric to use. Any numeric column in
 the proximity score table can be selected. The default is
@@ -88,13 +88,6 @@ the proximity score table can be selected. The default is
 \item{metric_type}{One of \code{"all"}, \code{"self"}, or \code{"co"}.
 \code{"self"} keeps pairs where both markers are the same protein, and
 \code{"co"} keeps pairs of different proteins.}
-
-\item{backend}{One of \code{"dplyr"} or \code{"data.table"}. \code{"data.table"}
-requires the \code{dtplyr} package and is used by the legacy differential
-test.}
-
-\item{method}{One of \code{"seurat"} or \code{"legacy"}. Passed through to
-\code{\link{DifferentialProximityAnalysis}}.}
 
 \item{p_adjust_method}{One of \code{"bonferroni"}, \code{"holm"},
 \code{"hochberg"}, \code{"hommel"}, \code{"BH"}, \code{"BY"}, or \code{"fdr"}
@@ -127,6 +120,11 @@ the proximity metric is higher in \code{target} than in the pooled
 remainder. Factor levels set the comparison order. Character labels are
 tested in order of first appearance. P-values are adjusted separately
 within each comparison.
+
+Proximity scores are pivoted once with \code{\link{ProximityScoresToAssay}}.
+Each comparison then calls the matrix method of
+\code{\link{DifferentialProximityAnalysis}} on that same matrix. Missing
+scores are treated as 0.
 
 A \code{Seurat} object created with \code{load_proximity_scores = FALSE}
 does not store proximity scores. Pass \code{lazy = TRUE} to fetch them
