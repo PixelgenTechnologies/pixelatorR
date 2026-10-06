@@ -1155,6 +1155,11 @@ DifferentialProximityAnalysis <- function(
 #' tested in order of first appearance. P-values are adjusted separately
 #' within each comparison.
 #'
+#' Proximity scores are pivoted once with \code{\link{ProximityScoresToAssay}}.
+#' Each comparison then calls the matrix method of
+#' \code{\link{DifferentialProximityAnalysis}} on that same matrix. Missing
+#' scores are treated as 0.
+#'
 #' A \code{Seurat} object created with \code{load_proximity_scores = FALSE}
 #' does not store proximity scores. Pass \code{lazy = TRUE} to fetch them
 #' with \code{\link{ProximityScores}(object, lazy = TRUE)}.
@@ -1170,16 +1175,19 @@ DifferentialProximityAnalysis <- function(
 #' tested against the others.
 #' @param min_cells_per_group Minimum number of cells required in both the
 #' level being tested and the pooled remainder. Comparisons that do not meet
-#' this threshold are skipped.
+#' this threshold are skipped. The default is 10.
+#' @param diff_threshold Minimum absolute difference in the proximity metric
+#' required to test a marker pair. The default is 0.01.
+#' @param min_pct Minimum fraction of cells in either group with a non-zero
+#' score. The default is 0.
+#' @param min_diff_pct Minimum difference in the fraction of cells with a
+#' non-zero score. The default is \code{-Inf}.
 #' @param proximity_metric The proximity metric to use. Any numeric column in
 #' the proximity score table can be selected. The default is
 #' \code{"log2_ratio"}.
 #' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
 #' \code{"self"} keeps pairs where both markers are the same protein, and
 #' \code{"co"} keeps pairs of different proteins.
-#' @param backend One of \code{"dplyr"} or \code{"data.table"}. \code{"data.table"}
-#' requires the \code{dtplyr} package and is used by the legacy differential
-#' test.
 #' @param p_adjust_method One of \code{"bonferroni"}, \code{"holm"},
 #' \code{"hochberg"}, \code{"hommel"}, \code{"BH"}, \code{"BY"}, or \code{"fdr"}
 #' (see \code{?p.adjust}). P-values are adjusted within each one-versus-rest
@@ -1188,7 +1196,8 @@ DifferentialProximityAnalysis <- function(
 #' @param ... Additional arguments passed to
 #' \code{\link{DifferentialProximityAnalysis}}. \code{contrast_column},
 #' \code{reference}, \code{targets}, and \code{group_vars} are set by this
-#' function and cannot be supplied.
+#' function and cannot be supplied. \code{method} and \code{backend} are not
+#' used.
 #'
 #' @return A \code{tbl_df} of test results stacked across comparisons.
 #'

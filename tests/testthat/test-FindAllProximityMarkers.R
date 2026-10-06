@@ -4,6 +4,59 @@ arrange_markers <- function(x) {
   x %>% arrange(marker_1, marker_2, target, reference)
 }
 
+matrix_one_vs_rest <- function(
+  df,
+  ident,
+  group_by = "cluster",
+  proximity_metric = "join_count_z",
+  rest = "rest",
+  min_cells_per_group = 4,
+  diff_threshold = 0.01,
+  min_pct = 0,
+  min_diff_pct = -Inf
+) {
+  labels <- df %>% distinct(component, !!sym(group_by))
+  label_chr <- as.character(labels[[group_by]])
+  names(label_chr) <- as.character(labels$component)
+  mat <- ProximityScoresToAssay(df, values_from = proximity_metric)
+  missing <- setdiff(names(label_chr), colnames(mat))
+  if (length(missing) > 0) {
+    m_missing <- Matrix::rsparsematrix(
+      nrow = nrow(mat),
+      ncol = length(missing),
+      density = 0
+    )
+    rownames(m_missing) <- rownames(mat)
+    colnames(m_missing) <- missing
+    mat <- cbind(mat, m_missing)
+  }
+  mat <- mat[, names(label_chr), drop = FALSE]
+  cell_labels <- unname(label_chr[colnames(mat)])
+  contrast <- ifelse(
+    is.na(cell_labels),
+    NA_character_,
+    ifelse(cell_labels == ident, ident, rest)
+  )
+  group_data <- data.frame(
+    contrast = contrast,
+    row.names = colnames(mat),
+    stringsAsFactors = FALSE
+  )
+  DifferentialProximityAnalysis(
+    mat,
+    group_data = group_data,
+    contrast_column = "contrast",
+    reference = rest,
+    targets = ident,
+    proximity_metric = proximity_metric,
+    min_cells_per_group = min_cells_per_group,
+    diff_threshold = diff_threshold,
+    min_pct = min_pct,
+    min_diff_pct = min_diff_pct,
+    verbose = FALSE
+  )
+}
+
 one_vs_rest_data <- function(n_per_group = 4L, groups = c("0", "1", "2")) {
   components <- paste0("cell", seq_len(n_per_group * length(groups)))
   clusters <- rep(groups, each = n_per_group)
@@ -51,17 +104,7 @@ test_that("FindAllProximityMarkers compares each level to the pooled rest", {
   expect_gt(boosted$diff_median, 0)
 
   for (ident in unique(res$target)) {
-    manual <- df %>%
-      mutate(contrast = if_else(cluster == ident, ident, "rest"))
-    ref <- DifferentialProximityAnalysis(
-      manual,
-      contrast_column = "contrast",
-      reference = "rest",
-      targets = ident,
-      proximity_metric = "join_count_z",
-      min_cells_per_group = 4,
-      verbose = FALSE
-    )
+    ref <- matrix_one_vs_rest(df, ident = ident, min_cells_per_group = 4)
     got <- res %>% filter(target == ident)
     expect_equal(arrange_markers(got), arrange_markers(ref))
   }
@@ -149,28 +192,49 @@ test_that("FindAllProximityMarkers skips groups that are too small", {
   )
 })
 
-test_that("dplyr and data.table backends agree", {
-  skip_if_not_installed("dtplyr")
-  skip_if_not_installed("data.table")
+test_that("matrix thresholds are applied once to the shared proximity matrix", {
   set.seed(1)
-  df <- one_vs_rest_data()
-  dplyr_res <- FindAllProximityMarkers(
+  df <- one_vs_rest_data(n_per_group = 4L, groups = as.character(0:5))
+  df <- df %>%
+    mutate(
+      join_count_z = if_else(
+        marker_1 == "A" & marker_2 == "A" & cluster == "0",
+        join_count_z + 5,
+        join_count_z
+      )
+    )
+
+  loose <- FindAllProximityMarkers(
     df,
     group_by = "cluster",
+    idents = "0",
     proximity_metric = "join_count_z",
-    backend = "dplyr",
     min_cells_per_group = 4,
+    diff_threshold = 0,
+    min_pct = 0,
+    min_diff_pct = -Inf,
     verbose = FALSE
   )
-  dt_res <- FindAllProximityMarkers(
+  strict <- FindAllProximityMarkers(
     df,
     group_by = "cluster",
+    idents = "0",
     proximity_metric = "join_count_z",
-    backend = "data.table",
     min_cells_per_group = 4,
+    diff_threshold = 1,
+    min_pct = 0,
+    min_diff_pct = -Inf,
     verbose = FALSE
   )
-  expect_equal(dplyr_res, dt_res)
+  expect_lt(nrow(strict), nrow(loose))
+  expect_true(all(abs(strict$diff_median) >= 1))
+  ref <- matrix_one_vs_rest(
+    df,
+    ident = "0",
+    min_cells_per_group = 4,
+    diff_threshold = 1
+  )
+  expect_equal(arrange_markers(strict), arrange_markers(ref))
 })
 
 test_that("FindAllProximityMarkers fails with invalid input", {
@@ -272,6 +336,26 @@ test_that("FindAllProximityMarkers fails with invalid input", {
     ),
     "non-negative"
   )
+  expect_error(
+    FindAllProximityMarkers(
+      df,
+      group_by = "cluster",
+      proximity_metric = "join_count_z",
+      method = "legacy",
+      min_cells_per_group = 4
+    ),
+    "method"
+  )
+  expect_error(
+    FindAllProximityMarkers(
+      df,
+      group_by = "cluster",
+      proximity_metric = "join_count_z",
+      min_pct = 2,
+      min_cells_per_group = 4
+    ),
+    "min_pct"
+  )
 })
 
 pxl_file <- minimal_pna_pxl_file()
@@ -329,34 +413,13 @@ for (assay_version in c("v3", "v5")) {
         group_by = "cell_type",
         metric_type = "self",
         diff_threshold = 1,
+        min_pct = 0,
+        min_diff_pct = -Inf,
         min_cells_per_group = 10,
         verbose = FALSE
       )
     })
     expect_setequal(unique(res_all$target), c("CD16+ Mono", "pDC", "CD4T"))
-
-    expect_no_error({
-      res_legacy <- FindAllProximityMarkers(
-        seur_obj_big,
-        group_by = "cell_type",
-        idents = "CD4T",
-        method = "legacy",
-        metric_type = "self",
-        min_cells_per_group = 10,
-        verbose = FALSE
-      )
-    })
-    ref_legacy <- DifferentialProximityAnalysis(
-      se_manual,
-      contrast_column = "pxl_contrast",
-      reference = "rest",
-      targets = "CD4T",
-      method = "legacy",
-      metric_type = "self",
-      min_cells_per_group = 10,
-      verbose = FALSE
-    )
-    expect_equal(arrange_markers(res_legacy), arrange_markers(ref_legacy))
 
     res_small <- suppressWarnings(FindAllProximityMarkers(
       seur_obj_big,
@@ -451,26 +514,5 @@ for (assay_version in c("v3", "v5")) {
       verbose = FALSE
     )
     expect_equal(arrange_markers(res_lazy), arrange_markers(res_loaded))
-
-    res_lazy_legacy <- FindAllProximityMarkers(
-      seur_missing,
-      group_by = "cell_type",
-      idents = "CD4T",
-      lazy = TRUE,
-      method = "legacy",
-      metric_type = "self",
-      min_cells_per_group = 2,
-      verbose = FALSE
-    )
-    res_loaded_legacy <- FindAllProximityMarkers(
-      seur_obj,
-      group_by = "cell_type",
-      idents = "CD4T",
-      method = "legacy",
-      metric_type = "self",
-      min_cells_per_group = 2,
-      verbose = FALSE
-    )
-    expect_equal(arrange_markers(res_lazy_legacy), arrange_markers(res_loaded_legacy))
   })
 }
