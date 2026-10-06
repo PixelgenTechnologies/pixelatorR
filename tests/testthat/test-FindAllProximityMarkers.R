@@ -410,4 +410,67 @@ for (assay_version in c("v3", "v5")) {
       "Cannot pass"
     )
   })
+
+  test_that(paste0("FindAllProximityMarkers fetches unloaded proximity scores when lazy = TRUE (", assay_version, ")"), {
+    seur_missing <- suppressWarnings(ReadPNA_Seurat(
+      pxl_file,
+      load_proximity_scores = FALSE,
+      verbose = FALSE
+    ))
+    seur_missing$cell_type <- seur_obj$cell_type
+
+    expect_error(
+      FindAllProximityMarkers(
+        seur_missing,
+        group_by = "cell_type",
+        metric_type = "self",
+        min_cells_per_group = 2,
+        verbose = FALSE
+      ),
+      "lazy = TRUE"
+    )
+
+    res_lazy <- FindAllProximityMarkers(
+      seur_missing,
+      group_by = "cell_type",
+      idents = "CD4T",
+      lazy = TRUE,
+      metric_type = "self",
+      diff_threshold = 0,
+      min_cells_per_group = 2,
+      verbose = FALSE
+    )
+    res_loaded <- FindAllProximityMarkers(
+      seur_obj,
+      group_by = "cell_type",
+      idents = "CD4T",
+      lazy = FALSE,
+      metric_type = "self",
+      diff_threshold = 0,
+      min_cells_per_group = 2,
+      verbose = FALSE
+    )
+    expect_equal(arrange_markers(res_lazy), arrange_markers(res_loaded))
+
+    res_lazy_legacy <- FindAllProximityMarkers(
+      seur_missing,
+      group_by = "cell_type",
+      idents = "CD4T",
+      lazy = TRUE,
+      method = "legacy",
+      metric_type = "self",
+      min_cells_per_group = 2,
+      verbose = FALSE
+    )
+    res_loaded_legacy <- FindAllProximityMarkers(
+      seur_obj,
+      group_by = "cell_type",
+      idents = "CD4T",
+      method = "legacy",
+      metric_type = "self",
+      min_cells_per_group = 2,
+      verbose = FALSE
+    )
+    expect_equal(arrange_markers(res_lazy_legacy), arrange_markers(res_loaded_legacy))
+  })
 }
