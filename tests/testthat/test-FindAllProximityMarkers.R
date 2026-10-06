@@ -13,7 +13,8 @@ matrix_one_vs_rest <- function(
   min_cells_per_group = 4,
   diff_threshold = 0.01,
   min_pct = 0,
-  min_diff_pct = -Inf
+  min_diff_pct = -Inf,
+  only_pos = FALSE
 ) {
   labels <- df %>% distinct(component, !!sym(group_by))
   label_chr <- as.character(labels[[group_by]])
@@ -53,6 +54,7 @@ matrix_one_vs_rest <- function(
     diff_threshold = diff_threshold,
     min_pct = min_pct,
     min_diff_pct = min_diff_pct,
+    only_pos = only_pos,
     verbose = FALSE
   )
 }
@@ -237,6 +239,57 @@ test_that("matrix thresholds are applied once to the shared proximity matrix", {
   expect_equal(arrange_markers(strict), arrange_markers(ref))
 })
 
+test_that("only_pos tests pairs with a higher median in the target", {
+  set.seed(1)
+  df <- one_vs_rest_data(n_per_group = 4L, groups = c("0", "1", "2"))
+  df <- df %>%
+    mutate(
+      join_count_z = if_else(
+        marker_1 == "A" & marker_2 == "A" & cluster == "0",
+        join_count_z + 5,
+        join_count_z
+      )
+    )
+
+  both <- FindAllProximityMarkers(
+    df,
+    group_by = "cluster",
+    idents = "0",
+    proximity_metric = "join_count_z",
+    min_cells_per_group = 4,
+    diff_threshold = 0,
+    only_pos = FALSE,
+    verbose = FALSE
+  )
+  pos <- FindAllProximityMarkers(
+    df,
+    group_by = "cluster",
+    idents = "0",
+    proximity_metric = "join_count_z",
+    min_cells_per_group = 4,
+    diff_threshold = 0,
+    only_pos = TRUE,
+    verbose = FALSE
+  )
+
+  expect_true(any(both$diff_median < 0))
+  expect_true(all(pos$diff_median > 0))
+  expect_lt(nrow(pos), nrow(both))
+  positive_pairs <- both %>%
+    filter(diff_median > 0) %>%
+    mutate(pair = paste(marker_1, marker_2))
+  expect_setequal(paste(pos$marker_1, pos$marker_2), positive_pairs$pair)
+
+  ref <- matrix_one_vs_rest(
+    df,
+    ident = "0",
+    min_cells_per_group = 4,
+    diff_threshold = 0,
+    only_pos = TRUE
+  )
+  expect_equal(arrange_markers(pos), arrange_markers(ref))
+})
+
 test_that("FindAllProximityMarkers fails with invalid input", {
   set.seed(1)
   df <- one_vs_rest_data()
@@ -355,6 +408,16 @@ test_that("FindAllProximityMarkers fails with invalid input", {
       min_cells_per_group = 4
     ),
     "min_pct"
+  )
+  expect_error(
+    FindAllProximityMarkers(
+      df,
+      group_by = "cluster",
+      proximity_metric = "join_count_z",
+      only_pos = "yes",
+      min_cells_per_group = 4
+    ),
+    "only_pos"
   )
 })
 

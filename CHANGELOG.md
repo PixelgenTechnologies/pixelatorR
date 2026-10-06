@@ -20,7 +20,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   levels pooled together. Proximity scores are pivoted once with
   `ProximityScoresToAssay()` and each comparison uses the matrix method of
   `DifferentialProximityAnalysis()`. `diff_threshold`, `min_pct`,
-  `min_diff_pct`, and `min_cells_per_group` apply to every input.
+  `min_diff_pct`, `min_cells_per_group`, and `only_pos` apply to every input.
+  `only_pos = TRUE` tests only pairs whose median is higher in the target.
   `lazy = TRUE` fetches proximity scores with `ProximityScores()` when they
   were not loaded into the Seurat object.
 
