@@ -113,7 +113,8 @@ the \code{method} argument is set to "seurat".}
 \item{assay}{Name of assay to use}
 
 \item{lazy}{If TRUE, the proximity scores will be loaded lazily and filtered using the
-\code{duckdb} backend.}
+\code{duckdb} backend. Scores are fetched with \code{\link{ProximityScores}(object, lazy = TRUE)}.
+Set this when the \code{Seurat} object was created with \code{load_proximity_scores = FALSE}.}
 
 \item{min_exp_join_count}{Minimum number of join counts required for a marker pair to be
 included in the analysis. Dropped protein pairs (those with fewer than \code{min_exp_join_count} counts)

@@ -1155,6 +1155,10 @@ DifferentialProximityAnalysis <- function(
 #' tested in order of first appearance. P-values are adjusted separately
 #' within each comparison.
 #'
+#' A \code{Seurat} object created with \code{load_proximity_scores = FALSE}
+#' does not store proximity scores. Pass \code{lazy = TRUE} to fetch them
+#' with \code{\link{ProximityScores}(object, lazy = TRUE)}.
+#'
 #' @concept DA
 #' @family DA-methods
 #'

@@ -58,8 +58,11 @@ tested against the others.}
 
 \item{assay}{Name of the assay to use.}
 
-\item{lazy}{If \code{TRUE}, proximity scores are loaded lazily and filtered
-with the \code{duckdb} backend before testing.}
+\item{lazy}{If \code{TRUE}, proximity scores are fetched with
+\code{\link{ProximityScores}(object, lazy = TRUE)} and filtered with the
+\code{duckdb} backend before testing. Set this when the \code{Seurat}
+object was created with \code{load_proximity_scores = FALSE} and the
+proximity scores were not stored in the object.}
 
 \item{min_exp_join_count}{Minimum expected join count for a marker pair to
 be included. Pairs below the threshold are treated as missing. With
@@ -124,6 +127,10 @@ the proximity metric is higher in \code{target} than in the pooled
 remainder. Factor levels set the comparison order. Character labels are
 tested in order of first appearance. P-values are adjusted separately
 within each comparison.
+
+A \code{Seurat} object created with \code{load_proximity_scores = FALSE}
+does not store proximity scores. Pass \code{lazy = TRUE} to fetch them
+with \code{\link{ProximityScores}(object, lazy = TRUE)}.
 }
 \examples{
 library(dplyr)

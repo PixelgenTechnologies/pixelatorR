@@ -445,7 +445,8 @@ DifferentialProximityAnalysis.Matrix <- function(
 
 
 #' @param lazy If TRUE, the proximity scores will be loaded lazily and filtered using the
-#' `duckdb` backend.
+#' `duckdb` backend. Scores are fetched with \code{\link{ProximityScores}(object, lazy = TRUE)}.
+#' Set this when the \code{Seurat} object was created with \code{load_proximity_scores = FALSE}.
 #' @param min_exp_join_count Minimum number of join counts required for a marker pair to be
 #' included in the analysis. Dropped protein pairs (those with fewer than `min_exp_join_count` counts)
 #' will be treated as missing entries. With `method = "seurat"`, these are treated as having a
@@ -688,8 +689,11 @@ DifferentialProximityAnalysis.Seurat <- function(
 
 
 #' @param assay Name of the assay to use.
-#' @param lazy If \code{TRUE}, proximity scores are loaded lazily and filtered
-#' with the \code{duckdb} backend before testing.
+#' @param lazy If \code{TRUE}, proximity scores are fetched with
+#' \code{\link{ProximityScores}(object, lazy = TRUE)} and filtered with the
+#' \code{duckdb} backend before testing. Set this when the \code{Seurat}
+#' object was created with \code{load_proximity_scores = FALSE} and the
+#' proximity scores were not stored in the object.
 #' @param min_exp_join_count Minimum expected join count for a marker pair to
 #' be included. Pairs below the threshold are treated as missing. With
 #' \code{method = "seurat"}, missing scores are set to 0.
@@ -1021,7 +1025,23 @@ FindAllProximityMarkers.data.frame <- function(
   method
 ) {
   method <- match.arg(method, choices = c("seurat", "legacy"))
-  proximity_data <- ProximityScores(object[[assay]], assay = assay, lazy = lazy)
+  assert_single_value(lazy, type = "bool")
+  if (!lazy) {
+    proximity_slot <- slot(object[[assay]], name = "proximity")
+    if (is.null(proximity_slot) || ncol(proximity_slot) == 0) {
+      cli::cli_abort(
+        c(
+          "x" = "Proximity scores are missing from the {.cls Seurat} object.",
+          "i" = paste(
+            "Create the object with {.code load_proximity_scores = TRUE},",
+            "or set {.code lazy = TRUE} to fetch them with {.fn ProximityScores}."
+          )
+        ),
+        call = caller_env()
+      )
+    }
+  }
+  proximity_data <- ProximityScores(object, assay = assay, lazy = lazy)
   metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
   proximity_data <- switch(metric_type,
     all = proximity_data,

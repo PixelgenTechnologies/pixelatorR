@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FindAllProximityMarkers()` runs one-versus-rest differential proximity
   tests for a single grouping column. Each level is compared to all other
   levels pooled together by wrapping `DifferentialProximityAnalysis()`.
+  `lazy = TRUE` fetches proximity scores with `ProximityScores()` when they
+  were not loaded into the Seurat object.
 
 ## [0.22.1] - 2026-10-02
 
