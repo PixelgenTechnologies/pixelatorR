@@ -11,7 +11,7 @@
 #'
 #' @noRd
 .render_cell_plot_plotly <- function(object) {
-  pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
+  assert_class(object, "cell_plot_built", arg = "object")
 
   mapping <- object$mapping
   categorical <- identical(object$color$type, "categorical")
