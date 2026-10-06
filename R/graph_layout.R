@@ -249,6 +249,66 @@ ComputeLayout.CellGraph <- function(
 #' @param verbose Print messages
 #'
 #' @rdname ComputeLayout
+#' @method ComputeLayout CellGraphList
+#'
+#' @examples
+#'
+#' # Compute layouts for all loaded graphs in a CellGraphList
+#' cgl <- ComputeLayout(CellGraphs(seur), layout_method = "cpmds")
+#'
+#' @export
+#'
+ComputeLayout.CellGraphList <- function(
+  object,
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_name = NULL,
+  dim = 3,
+  normalize_layout = FALSE,
+  project_on_unit_sphere = FALSE,
+  pivots = 100,
+  seed = 123,
+  verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  cl = NULL,
+  ...
+) {
+  cellgraphs <- unclass(object)
+  loaded_graphs <- !vapply(cellgraphs, is.null, logical(1))
+
+  if (sum(loaded_graphs) == 0) {
+    if (verbose && check_global_verbosity()) {
+      cli_alert_info("No CellGraph objects in {.cls CellGraphList}. Returning unmodified object.")
+    }
+    return(object)
+  }
+
+  if (verbose && check_global_verbosity()) {
+    cli_alert_info("Computing layouts for {sum(loaded_graphs)} graph{?s}")
+  }
+
+  # Unloaded graphs are kept as NULL placeholders so the names are preserved
+  cellgraphs[loaded_graphs] <- pblapply(cellgraphs[loaded_graphs], function(g) {
+    g <- ComputeLayout(
+      g,
+      layout_method = layout_method,
+      layout_name = layout_name,
+      dim = dim,
+      normalize_layout = normalize_layout,
+      project_on_unit_sphere = project_on_unit_sphere,
+      pivots = pivots,
+      seed = seed,
+      custom_layout_function = custom_layout_function,
+      custom_layout_function_args = custom_layout_function_args,
+      ...
+    )
+    return(g)
+  }, cl = cl)
+
+  return(CreateCellGraphList(cellgraphs))
+}
+
+#' @rdname ComputeLayout
 #' @method ComputeLayout MPXAssay
 #'
 #' @export

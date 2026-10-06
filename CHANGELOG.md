@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- `ComputeLayout()` method for `CellGraphList` objects, so layouts can be
+  computed directly on the list returned by `CellGraphs()`. Unloaded (`NULL`)
+  graphs are kept in place and the result is a `CellGraphList`.
+
 ## [0.22.2]
 
 ### Changed

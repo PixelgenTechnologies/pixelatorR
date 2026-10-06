@@ -5,6 +5,7 @@
 \alias{ComputeLayout}
 \alias{ComputeLayout.tbl_graph}
 \alias{ComputeLayout.CellGraph}
+\alias{ComputeLayout.CellGraphList}
 \alias{ComputeLayout.MPXAssay}
 \alias{ComputeLayout.CellGraphAssay}
 \alias{ComputeLayout.CellGraphAssay5}
@@ -39,6 +40,22 @@ ComputeLayout(object, ...)
   seed = 123,
   custom_layout_function = NULL,
   custom_layout_function_args = NULL,
+  ...
+)
+
+\method{ComputeLayout}{CellGraphList}(
+  object,
+  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_name = NULL,
+  dim = 3,
+  normalize_layout = FALSE,
+  project_on_unit_sphere = FALSE,
+  pivots = 100,
+  seed = 123,
+  verbose = TRUE,
+  custom_layout_function = NULL,
+  custom_layout_function_args = NULL,
+  cl = NULL,
   ...
 )
 
@@ -140,7 +157,9 @@ ComputeLayout(object, ...)
 )
 }
 \arguments{
-\item{object}{An object}
+\item{object}{A \code{tbl_graph}, \code{\link{CellGraph}},
+\code{\link{CellGraphList}}, \code{CellGraphAssay}, \code{PNAAssay}
+or \code{Seurat} object}
 
 \item{...}{Additional parameters passed to other methods}
 
@@ -191,7 +210,10 @@ which means that no parallelization is used.}
 \item{assay}{Name of assay to compute layouts for}
 }
 \value{
-An object containing a graph layout
+For a \code{tbl_graph}, a \code{tbl_df} with the layout coordinates.
+For all other classes, the input object with the layout stored in the
+\code{layout} slot of each \code{\link{CellGraph}}. For a
+\code{\link{CellGraphList}}, unloaded (\code{NULL}) graphs are kept in place.
 }
 \description{
 Computes graph layouts for component graphs.
@@ -229,6 +251,10 @@ plotly::plot_ly(
 
 # Compute layout for a CellGraph
 cg <- ComputeLayout(cg, layout_method = "cpmds")
+
+
+# Compute layouts for all loaded graphs in a CellGraphList
+cgl <- ComputeLayout(CellGraphs(seur), layout_method = "cpmds")
 
 
 # Compute layout for a PNAAssay
