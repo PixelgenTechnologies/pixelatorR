@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `ProximityScoresToAssay()` warns about components whose proximity scores are
+  all zero. It previously warned about components whose scores were all
+  non-zero.
+
 ### Added
 
 - `FindAllProximityMarkers()` runs one-versus-rest differential proximity
