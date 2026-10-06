@@ -37,6 +37,7 @@ DifferentialProximityAnalysis(object, ...)
   min_pct = 0,
   min_diff_pct = -Inf,
   min_cells_per_group = 10,
+  only_pos = FALSE,
   verbose = TRUE,
   ...
 )
@@ -109,6 +110,9 @@ is set to "seurat".}
 \item{min_diff_pct}{Minimum difference in percentage of cells expressing a marker pair between the
 two groups for it to be considered for testing. Default is -Inf. This parameter is only used when
 the \code{method} argument is set to "seurat".}
+
+\item{only_pos}{If \code{TRUE}, test only marker pairs whose median is higher in the
+target group than in the reference. Pairs that do not pass are not tested. Default is \code{FALSE}.}
 
 \item{assay}{Name of assay to use}
 
