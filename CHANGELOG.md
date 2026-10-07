@@ -9,9 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `PixelDB$components_cell_graph()` method to directly extract bipartite
+  cell graphs and associated marker counts from DuckDB edgelists using 64-bit
+  integer hashing (`bit64`), achieving faster graph instantiation and lower peak
+  memory usage.
 - `ComputeLayout()` method for `CellGraphList` objects, so layouts can be
   computed directly on the list returned by `CellGraphs()`. Unloaded (`NULL`)
   graphs are kept in place and the result is a `CellGraphList`.
+
+### Changed
+
+- Refactored `LoadCellGraphs()` for `PNAAssay` and `PNAAssay5` to use
+  `PixelDB$components_cell_graph()`, consolidating edgelist extraction and
+  marker count aggregation into single-pass DuckDB queries (~2.5–4.3x speedup).
+- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to 
+  avoid bloating the `meta.data` slot. Detailed meta data can be loaded by setting 
+  `detailed_meta_data = TRUE`.
+
+### Fixes
+
+- `ColocalizationHeatmap()` now uses vectorized `layer_fun` instead of `cell_fun`
+  for `ComplexHeatmap::pheatmap` tile highlighting, eliminating performance
+  warnings when plotting heatmaps with >100 rows or columns.
+- `merge()` on `PNAAssay` objects with different panels no longer fails. A
+  message is emitted and the feature metadata columns are dropped from
+  `@meta.features`, while one row per merged feature is kept so that the merged
+  assay stays valid for downstream methods such as `subset()`.
 
 ## [0.22.2]
 
@@ -22,9 +45,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cell_plot_rgl()` used to return, and `"plotly"` returns the Plotly widget.
   Code that relied on `cell_plot_interactive()` drawing with Plotly must pass
   `renderer = "plotly"`.
-- `ReadPNA_Seurat` now only loads a subset of the available meta data columns to 
-  avoid bloating the `meta.data` slot. Detailed meta data can be loaded by setting 
-  `detailed_meta_data = TRUE`.
 
 ### Removed
 
@@ -45,34 +65,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - `cell_plot_rgl()` does not use `later`.
 
-### Added
-
-- Added `PixelDB$components_cell_graph()` method to directly extract bipartite
-  cell graphs and associated marker counts from DuckDB edgelists using 64-bit
-  integer hashing (`bit64`), achieving faster graph instantiation and lower peak
-  memory usage.
-
-### Changed
-
-- Refactored `LoadCellGraphs()` for `PNAAssay` and `PNAAssay5` to use
-  `PixelDB$components_cell_graph()`, consolidating edgelist extraction and
-  marker count aggregation into single-pass DuckDB queries (~2.5–4.3x speedup).
-
 ### Deprecated
 
 - The `add_layouts` argument of `LoadCellGraphs()` is deprecated and will be
   removed in a future release. It still works, but supplying it now signals a
   `lifecycle` deprecation warning once per R session.
-  
-### Fixes
-
-- `ColocalizationHeatmap()` now uses vectorized `layer_fun` instead of `cell_fun`
-  for `ComplexHeatmap::pheatmap` tile highlighting, eliminating performance
-  warnings when plotting heatmaps with >100 rows or columns.
-- `merge()` on `PNAAssay` objects with different panels no longer fails. A
-  message is emitted and the feature metadata columns are dropped from
-  `@meta.features`, while one row per merged feature is kept so that the merged
-  assay stays valid for downstream methods such as `subset()`.
 
 ## [0.22.0] - 2026-10-01
 
