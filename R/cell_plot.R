@@ -98,8 +98,8 @@ cell_plot <- function(
   depth = z,
   illumination_mask = NULL
 ) {
-  pixelatorR:::assert_class(data, "tbl_df", arg = "data")
-  pixelatorR:::assert_within_limits(
+  assert_class(data, "tbl_df", arg = "data")
+  assert_within_limits(
     nrow(data),
     limits = c(1, Inf),
     arg = "nrow(data)"
@@ -159,7 +159,7 @@ cell_plot <- function(
 
   mapped_columns <- unlist(mapping, use.names = FALSE)
   for (column in mapped_columns) {
-    pixelatorR:::assert_col_in_data(
+    assert_col_in_data(
       column,
       data = data,
       arg_data = "data"
@@ -171,7 +171,7 @@ cell_plot <- function(
     use.names = FALSE
   )
   for (column in coordinate_columns) {
-    pixelatorR:::assert_class(
+    assert_class(
       data[[column]],
       classes = c("numeric", "integer"),
       arg = column
@@ -191,7 +191,7 @@ cell_plot <- function(
       next
     }
     values <- data[[column]]
-    pixelatorR:::assert_class(
+    assert_class(
       values,
       classes = c("numeric", "integer", "character", "factor"),
       arg = column
@@ -217,7 +217,7 @@ cell_plot <- function(
 
   if (!is.null(mapping$illumination_mask)) {
     mask <- data[[mapping$illumination_mask]]
-    pixelatorR:::assert_class(
+    assert_class(
       mask,
       classes = "logical",
       arg = mapping$illumination_mask
@@ -346,13 +346,13 @@ cell_plot <- function(
     return(rlang::as_string(expression))
   }
 
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     expression,
     type = "string",
     arg = argument,
     call = call
   )
-  pixelatorR:::assert_non_empty_object(
+  assert_non_empty_object(
     expression,
     classes = "character",
     arg = argument,
@@ -445,7 +445,7 @@ cell_plot <- function(
   }
 
   limits <- if (identical(argument, "alpha")) c(0, 1) else c(0, Inf)
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     value,
     limits = limits,
     arg = argument,
@@ -525,9 +525,9 @@ cell_plot <- function(
   strictly_increasing = FALSE,
   call = rlang::caller_env()
 ) {
-  pixelatorR:::assert_vector(x, type = "numeric", n = 2, arg = arg, call = call)
-  pixelatorR:::assert_length(x, n = 2, arg_x = arg, call = call)
-  pixelatorR:::assert_within_limits(x, limits = limits, arg = arg, call = call)
+  assert_vector(x, type = "numeric", n = 2, arg = arg, call = call)
+  assert_length(x, n = 2, arg_x = arg, call = call)
+  assert_within_limits(x, limits = limits, arg = arg, call = call)
   if (!all(is.finite(x))) {
     cli::cli_abort(
       c("i" = "{.arg {arg}} must contain finite values."),
@@ -587,14 +587,14 @@ cell_plot <- function(
   values <- object$data[[object$mapping[[aesthetic]]]]
   categorical <- is.character(values) || is.factor(values)
 
-  pixelatorR:::assert_vector(
+  assert_vector(
     output,
     type = "numeric",
     n = 1,
     arg = output_arg,
     call = call
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     output,
     limits = output_limits,
     arg = output_arg,
@@ -638,13 +638,13 @@ cell_plot <- function(
         call = call
       )
     }
-    pixelatorR:::assert_unique(
+    assert_unique(
       output_names,
       arg = paste0("names(", output_arg, ")"),
       call = call
     )
     observed_levels <- sort(unique(as.character(values[!is.na(values)])))
-    pixelatorR:::assert_x_in_y(
+    assert_x_in_y(
       observed_levels,
       output_names,
       arg_x = paste(aesthetic, "levels"),
@@ -764,15 +764,15 @@ cell_plot <- function(
     "theme", "annotation", "illuminate", "coord"
   )
 
-  pixelatorR:::assert_class(object, "cell_plot", arg = "object", call = call)
-  pixelatorR:::assert_vectors_match(
+  assert_class(object, "cell_plot", arg = "object", call = call)
+  assert_vectors_match(
     names(object),
     expected_fields,
     arg_x = "cell_plot fields",
     arg_y = "expected fields",
     call = call
   )
-  pixelatorR:::assert_vectors_match(
+  assert_vectors_match(
     names(object$constant),
     names(.cell_plot_empty_constant),
     arg_x = "constant aesthetics",
@@ -785,7 +785,7 @@ cell_plot <- function(
     c("data", "mapping", "constant")
   )
   for (value in object[instruction_fields]) {
-    pixelatorR:::assert_class(
+    assert_class(
       value,
       classes = "list",
       allow_null = TRUE,
@@ -901,7 +901,7 @@ cell_plot <- function(
   value,
   call = rlang::caller_env()
 ) {
-  pixelatorR:::assert_is_one_of(
+  assert_is_one_of(
     field,
     choices = setdiff(names(object), c("data", "mapping", "constant")),
     arg = "field",

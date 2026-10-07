@@ -16,7 +16,7 @@
 #'
 #' @noRd
 .render_cell_plot_ggplot <- function(object, limits = NULL) {
-  pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
+  assert_class(object, "cell_plot_built", arg = "object")
 
   plot_data <- object$data
   relative_size <- .cell_plot_projected_sizes(object)

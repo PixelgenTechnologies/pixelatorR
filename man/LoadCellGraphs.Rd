@@ -67,11 +67,8 @@ LoadCellGraphs(object, ...)
 \method{LoadCellGraphs}{PNAAssay}(
   object,
   cells = colnames(object),
-  add_marker_counts = TRUE,
   add_layouts = lifecycle::deprecated(),
   force = FALSE,
-  chunk_size = 10,
-  cl = NULL,
   verbose = TRUE,
   ...
 )
@@ -79,11 +76,8 @@ LoadCellGraphs(object, ...)
 \method{LoadCellGraphs}{PNAAssay5}(
   object,
   cells = colnames(object),
-  add_marker_counts = TRUE,
   add_layouts = lifecycle::deprecated(),
   force = FALSE,
-  chunk_size = 10,
-  cl = NULL,
   verbose = TRUE,
   ...
 )

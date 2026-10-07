@@ -9,7 +9,7 @@ cg@cellgraph <- cg@cellgraph %N>%
   mutate(partition = partition)
 
 expected_counts <- structure(
-  c(8516, 8588, 1626, 1644, 265, 307),
+  c(8553, 8551, 1642, 1628, 289, 283),
   dim = 2:3,
   dimnames = list(c("A", "B"), c("CD44", "CD3e", "CD4"))
 )

@@ -59,7 +59,7 @@ cell_plot_animate <- function(
     )
   }
 
-  pixelatorR:::assert_single_value(file, type = "string", arg = "file")
+  assert_single_value(file, type = "string", arg = "file")
   if (!nzchar(fs::path_ext(file))) {
     cli::cli_abort(
       c("x" = "{.arg file} must include an extension such as {.str gif} or {.str mp4}.")
@@ -75,24 +75,24 @@ cell_plot_animate <- function(
     )
   }
   for (argument in c("frames", "width", "height", "workers")) {
-    pixelatorR:::assert_single_value(
+    assert_single_value(
       get(argument),
       type = "integer",
       arg = argument
     )
-    pixelatorR:::assert_within_limits(
+    assert_within_limits(
       get(argument),
       limits = c(1, Inf),
       arg = argument
     )
   }
   for (argument in c("res", "fps")) {
-    pixelatorR:::assert_single_value(
+    assert_single_value(
       get(argument),
       type = "numeric",
       arg = argument
     )
-    pixelatorR:::assert_within_limits(
+    assert_within_limits(
       get(argument),
       limits = c(.Machine$double.eps, Inf),
       arg = argument
@@ -347,7 +347,7 @@ cell_plot_animate <- function(
     ls(namespace, all.names = TRUE),
     value = TRUE
   )
-  worker_env <- new.env(parent = globalenv())
+  worker_env <- new.env(parent = namespace)
   worker_env$built <- built
   worker_env$angles <- angles
   worker_env$png_files <- png_files
@@ -392,12 +392,12 @@ cell_plot_animate <- function(
 #'
 #' @noRd
 .cell_animation_angles <- function(specification, frames) {
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     frames,
     type = "integer",
     arg = "frames"
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     frames,
     limits = c(1, Inf),
     arg = "frames"
@@ -530,7 +530,7 @@ cell_plot_animate <- function(
 #'
 #' @noRd
 .cell_animation_limits <- function(object, angles) {
-  pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
+  assert_class(object, "cell_plot_built", arg = "object")
   mapping <- object$mapping
   layout <- tibble::tibble(
     x = object$data[[mapping$x]],
@@ -607,7 +607,7 @@ cell_plot_animate <- function(
 #'
 #' @noRd
 .cell_animation_frame <- function(object, angle) {
-  pixelatorR:::assert_class(object, "cell_plot_built", arg = "object")
+  assert_class(object, "cell_plot_built", arg = "object")
   object <- .cell_prepare_animation_illumination(object)
   illumination_cache <- attr(
     object,

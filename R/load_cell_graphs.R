@@ -67,9 +67,9 @@ NULL
   add_layouts
 }
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 # Load methods
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# -------------------------------------------------------
 
 #' @param cells A character vector of cell names to load CellGraphs for
 #' @param load_as Choose how the cell graph should be represented. This option has no
@@ -120,7 +120,8 @@ LoadCellGraphs.FileSystemDataset <- function(
 
   # Select load function
   graph_load_fkn <-
-    switch(load_as,
+    switch(
+      load_as,
       "bipartite" = .load_mpx_as_bipartite,
       "Anode" = .load_mpx_as_anode,
       "linegraph" = .load_mpx_as_linegraph
@@ -128,7 +129,9 @@ LoadCellGraphs.FileSystemDataset <- function(
 
   # Convert edgelist to list of Cell Graphs
   if (verbose && check_global_verbosity()) {
-    cli_alert("  Loading {length(cells)} edgelist(s) as {col_br_magenta(load_as)} graph(s)")
+    cli_alert(
+      "  Loading {length(cells)} edgelist(s) as {col_br_magenta(load_as)} graph(s)"
+    )
   }
 
   # Group cells ids into chunks
@@ -141,7 +144,8 @@ LoadCellGraphs.FileSystemDataset <- function(
     # Load chunks for specific sample
     g_list <- try(
       {
-        graph_load_fkn(object,
+        graph_load_fkn(
+          object,
           cell_ids = cell_ids,
           add_markers = add_marker_counts
         )
@@ -151,14 +155,20 @@ LoadCellGraphs.FileSystemDataset <- function(
 
     if (inherits(g_list, what = "try-error") || any(sapply(g_list, is.null))) {
       cli::cli_abort(
-        c("x" = "Failed to load edge list data. Most likely reason is that invalid cells were provided.")
+        c(
+          "x" = "Failed to load edge list data. Most likely reason is that invalid cells were provided."
+        )
       )
     }
 
     # Add marker counts
     if (add_marker_counts) {
       g_list <- lapply(g_list, function(g) {
-        return(CreateCellGraphObject(g$graph, counts = g$counts, verbose = FALSE))
+        return(CreateCellGraphObject(
+          g$graph,
+          counts = g$counts,
+          verbose = FALSE
+        ))
       })
     } else {
       g_list <- lapply(g_list, function(g) {
@@ -167,7 +177,8 @@ LoadCellGraphs.FileSystemDataset <- function(
     }
 
     return(g_list)
-  }) %>% Reduce(c, .)
+  }) %>%
+    Reduce(c, .)
 
   return(cellgraphs)
 }
@@ -183,14 +194,19 @@ LoadCellGraphs.FileSystemDataset <- function(
   verbose = TRUE
 ) {
   # Select load function
-  graph_load_fkn <- switch(load_as,
+  graph_load_fkn <- switch(
+    load_as,
     "bipartite" = .load_mpx_as_bipartite,
     "Anode" = .load_mpx_as_anode,
     "linegraph" = .load_mpx_as_linegraph
   )
 
   # Load cell graphs
-  cg_list <- graph_load_fkn(object, cell_ids = cells, add_markers = add_marker_counts)
+  cg_list <- graph_load_fkn(
+    object,
+    cell_ids = cells,
+    add_markers = add_marker_counts
+  )
 
   if (add_marker_counts) {
     cg_list <- lapply(cg_list, function(g) {
@@ -204,46 +220,6 @@ LoadCellGraphs.FileSystemDataset <- function(
 
   return(cg_list)
 }
-
-#' Internal load method for PNA data
-#'
-#' @noRd
-.load_pna_graphs_from_df <- function(
-  object,
-  cells,
-  verbose = TRUE
-) {
-  # Select load function
-  graph_load_fkn <- .load_pna_as_bipartite
-
-  # Convert edgelist to list of Cell Graphs
-  if (verbose && check_global_verbosity()) {
-    cli_alert("  Loading {length(cells)} edgelist(s) as {col_br_magenta('bipartite')} graph(s)")
-  }
-
-  # Load chunks for specific sample
-  g_list <- try(
-    {
-      graph_load_fkn(
-        object,
-        cell_ids = cells
-      )
-    },
-    silent = TRUE
-  )
-
-  if (inherits(g_list, what = "try-error") || any(sapply(g_list, is.null))) {
-    abort(glue("Failed to load edge list data. Most likely reason is that invalid cells were provided."))
-  }
-
-  # Create CellGraph objects
-  g_list <- lapply(g_list, function(g) {
-    return(CreateCellGraphObject(g, verbose = FALSE))
-  })
-
-  return(g_list)
-}
-
 
 #' @param add_layouts `r lifecycle::badge("deprecated")` Load layouts from the
 #' PXL file if available. This argument is deprecated and will be removed in a
@@ -292,16 +268,26 @@ LoadCellGraphs.MPXAssay <- function(
   loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
   if ((sum(!loaded_graphs) == 0) && !force) {
     if (verbose && check_global_verbosity()) {
-      cli_alert_info("All cells are already loaded. Returning object unmodified.")
+      cli_alert_info(
+        "All cells are already loaded. Returning object unmodified."
+      )
     }
     return(object)
   } else {
     if (force) {
-      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>% set_names(nm = cells)
-      loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
+      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>%
+        set_names(nm = cells)
+      loaded_graphs <- !sapply(
+        slot(object, name = "cellgraphs")[cells],
+        is.null
+      )
     }
     cells_to_load <- setdiff(cells, cells[loaded_graphs])
-    if (verbose && check_global_verbosity() && (length(cells_to_load) < length(cells))) {
+    if (
+      verbose &&
+        check_global_verbosity() &&
+        (length(cells_to_load) < length(cells))
+    ) {
       cli_alert_info(glue(
         "{length(cells) - length(cells_to_load)} CellGraphs loaded.",
         " Loading remaining {length(cells_to_load)} CellGraphs."
@@ -342,7 +328,11 @@ LoadCellGraphs.MPXAssay <- function(
         filter(current_id %in% cells)
       original_id <- cell_id_data$original_id
       current_id <- cell_id_data$current_id
-      precomputed_layouts <- ReadMPX_layouts(f, cells = original_id, graph_projection = load_as)
+      precomputed_layouts <- ReadMPX_layouts(
+        f,
+        cells = original_id,
+        graph_projection = load_as
+      )
       precomputed_layouts <- lapply(precomputed_layouts, function(x) {
         x %>% set_names(nm = current_id)
       })
@@ -357,9 +347,12 @@ LoadCellGraphs.MPXAssay <- function(
     precomputed_layouts_merged <- list()
     for (layout_type in all_layout_types) {
       precomputed_layouts_merged[[layout_type]] <-
-        Reduce(c, lapply(precomputed_layouts_sample, function(x) {
-          x[[layout_type]]
-        }))
+        Reduce(
+          c,
+          lapply(precomputed_layouts_sample, function(x) {
+            x[[layout_type]]
+          })
+        )
     }
   }
 
@@ -386,7 +379,8 @@ LoadCellGraphs.MPXAssay <- function(
     fs::file_move(unz_pq_file, pq_file)
 
     # Read the edgelist in memory, but only the necessary columns
-    ar <- arrow::read_parquet(pq_file,
+    ar <- arrow::read_parquet(
+      pq_file,
       col_select = c("upia", "upib", "marker", "component"),
       as_data_frame = FALSE
     )
@@ -406,40 +400,51 @@ LoadCellGraphs.MPXAssay <- function(
       group_split()
 
     # Read cellgraphs
-    cg_list <- pblapply(id_data_chunks, function(id_chunk) {
-      # Filter edgelist data for the current chunk
-      # Note that we use original_id which are the original
-      # MPX component ids. current_id are the ids currenty used
-      # for components in object
-      edgelist_data <- ar %>%
-        mutate(component = as.character(component)) %>%
-        filter(component %in% id_chunk$original_id) %>%
-        collect()
+    cg_list <- pblapply(
+      id_data_chunks,
+      function(id_chunk) {
+        # Filter edgelist data for the current chunk
+        # Note that we use original_id which are the original
+        # MPX component ids. current_id are the ids currenty used
+        # for components in object
+        edgelist_data <- ar %>%
+          mutate(component = as.character(component)) %>%
+          filter(component %in% id_chunk$original_id) %>%
+          collect()
 
-      # Send to internal data.frame method
-      cg_list <- .load_mpx_graphs_from_df(
-        edgelist_data,
-        cells = id_chunk$original_id,
-        load_as = load_as,
-        add_marker_counts = add_marker_counts,
-        verbose = verbose
-      )
+        # Send to internal data.frame method
+        cg_list <- .load_mpx_graphs_from_df(
+          edgelist_data,
+          cells = id_chunk$original_id,
+          load_as = load_as,
+          add_marker_counts = add_marker_counts,
+          verbose = verbose
+        )
 
-      return(cg_list)
-    }, cl = cl) %>%
+        return(cg_list)
+      },
+      cl = cl
+    ) %>%
       unlist()
 
     # Update names of the cellgraph list
     cg_list <- cg_list[fs_map_nested_filtered$data[[i]]$original_id]
-    cg_list <- set_names(cg_list, nm = fs_map_nested_filtered$data[[i]]$current_id)
+    cg_list <- set_names(
+      cg_list,
+      nm = fs_map_nested_filtered$data[[i]]$current_id
+    )
 
     # Remove temporary file
     try_delete <- try(fs::file_delete(pq_file), silent = TRUE)
     if (inherits(try_delete, what = "try-error")) {
-      cli_alert_warning("Failed to delete temporary edge list parquet file {pq_file}.")
+      cli_alert_warning(
+        "Failed to delete temporary edge list parquet file {pq_file}."
+      )
     }
     if (inherits(try_delete, what = "try-error")) {
-      cli_alert_warning("Failed to delete temporary edge list parquet file {pq_file}.")
+      cli_alert_warning(
+        "Failed to delete temporary edge list parquet file {pq_file}."
+      )
     }
 
     return(cg_list)
@@ -449,18 +454,25 @@ LoadCellGraphs.MPXAssay <- function(
   # Add layouts to the list of cellgraphs if layouts were loaded
   if (add_layouts) {
     cg_list_full <- lapply(names(cg_list_full), function(nm) {
-      layouts <- lapply(precomputed_layouts_merged[all_layout_types], function(ly) ly[[nm]])
+      layouts <- lapply(
+        precomputed_layouts_merged[all_layout_types],
+        function(ly) ly[[nm]]
+      )
       .attach_precomputed_layouts(cg_list_full[[nm]], layouts)
     }) %>%
       set_names(nm = names(cg_list_full))
   }
 
   # Fill cellgraphs slot list with the loaded CellGraphs
-  slot(object, name = "cellgraphs")[fs_map_unnested_filtered$current_id] <- cg_list_full
+  slot(object, name = "cellgraphs")[
+    fs_map_unnested_filtered$current_id
+  ] <- cg_list_full
 
   # Return object
   if (verbose && check_global_verbosity()) {
-    cli_alert_success("Successfully loaded {length(cells_to_load)} CellGraph object(s).")
+    cli_alert_success(
+      "Successfully loaded {length(cells_to_load)} CellGraph object(s)."
+    )
   }
   return(object)
 }
@@ -496,11 +508,8 @@ LoadCellGraphs.CellGraphAssay5 <- LoadCellGraphs.MPXAssay
 LoadCellGraphs.PNAAssay <- function(
   object,
   cells = colnames(object),
-  add_marker_counts = TRUE,
   add_layouts = lifecycle::deprecated(),
   force = FALSE,
-  chunk_size = 10,
-  cl = NULL,
   verbose = TRUE,
   ...
 ) {
@@ -514,16 +523,26 @@ LoadCellGraphs.PNAAssay <- function(
   loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
   if ((sum(!loaded_graphs) == 0) && !force) {
     if (verbose && check_global_verbosity()) {
-      cli_alert_info("All cells are already loaded. Returning object unmodified.")
+      cli_alert_info(
+        "All cells are already loaded. Returning object unmodified."
+      )
     }
     return(object)
   } else {
     if (force) {
-      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>% set_names(nm = cells)
-      loaded_graphs <- !sapply(slot(object, name = "cellgraphs")[cells], is.null)
+      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>%
+        set_names(nm = cells)
+      loaded_graphs <- !sapply(
+        slot(object, name = "cellgraphs")[cells],
+        is.null
+      )
     }
     cells_to_load <- setdiff(cells, cells[loaded_graphs])
-    if (verbose && check_global_verbosity() && (length(cells_to_load) < length(cells))) {
+    if (
+      verbose &&
+        check_global_verbosity() &&
+        (length(cells_to_load) < length(cells))
+    ) {
       cli_alert_info(glue(
         "{length(cells) - length(cells_to_load)} CellGraphs loaded.",
         " Loading remaining {length(cells_to_load)} CellGraphs."
@@ -538,7 +557,7 @@ LoadCellGraphs.PNAAssay <- function(
   fs_map_nested_filtered <- fs_map_unnested_filtered %>%
     tidyr::nest(data = c("current_id", "original_id"))
 
-  # Load cell graphs in chunks
+  # Load cell graphs per PXL source
   cg_list_full <- lapply(seq_len(nrow(fs_map_nested_filtered)), function(i) {
     f <- fs_map_nested_filtered$pxl_file[i]
 
@@ -550,79 +569,25 @@ LoadCellGraphs.PNAAssay <- function(
       ))
     }
 
-    # Split data into chunks determined by chunk_size
-    id_data <- fs_map_nested_filtered$data[[i]] %>%
-      mutate(group = ceiling(seq_len(n()) / chunk_size)) %>%
-      rename(component = current_id)
-    id_data_chunks <- split(id_data, id_data$group)
+    original_ids <- fs_map_nested_filtered$data[[i]]$original_id
+    current_ids <- fs_map_nested_filtered$data[[i]]$current_id
 
     # Setup connection to PXL database
-    # TODO: can we speed this up with e.g. arrow?
     db <- PixelDB$new(f)
-    on.exit(db$close())
+    on.exit(db$close(), add = TRUE)
 
     if (verbose && check_global_verbosity()) {
       cli_alert_info(
-        "Fetching edgelists for {nrow(fs_map_nested_filtered$data[[i]])} cells ",
+        "Fetching CellGraphs for {length(original_ids)} cells ",
         "from sample {fs_map_nested_filtered$sample[i]}"
       )
-    } else {
-      opb <- getOption("pboptions")
-      pbapply::pboptions(type = "none")
-      on.exit(pbapply::pboptions(opb))
     }
 
-    # Fetch the component edge tables from the data base
-    edge_table_list <- pblapply(id_data_chunks, function(id_chunk) {
-      db$components_edgelist(id_chunk$original_id, umi_data_type = "suffixed_string", include_all_columns = FALSE)
-    })
-
-    if (verbose && check_global_verbosity()) {
-      cli_alert("Creating {.cls CellGraph} objects")
-    }
-
-    # Construct CellGraph objects from the edge tables
-    cg_list <- pblapply(seq_along(edge_table_list), function(i) {
-      edge_table <- edge_table_list[[i]]
-      id_chunk <- id_data_chunks[[i]]
-
-      # Send to internal data.frame method
-      cg_list <- .load_pna_graphs_from_df(
-        edge_table,
-        cells = id_chunk$original_id,
-        verbose = FALSE
-      )
-
-      return(cg_list)
-    }, cl = cl) %>%
-      unlist()
-
-    # Load markers counts if specified
-    if (add_marker_counts) {
-      if (verbose && check_global_verbosity()) {
-        cli_alert("Fetching marker counts")
-      }
-      # Fetch marker counts from the data base
-      # The marker counts matrices are created from the edgelist
-      # in the data base using SQL queries
-      marker_counts_list <- pblapply(id_data_chunks, function(id_chunk) {
-        db$components_marker_counts(id_chunk$original_id, as_sparse = TRUE)
-      }) %>% Reduce(c, .)
-
-      if (verbose && check_global_verbosity()) {
-        cli_alert("Adding marker counts to {.cls CellGraph} object(s)")
-      }
-      # Fill marker counts slot list with the loaded marker counts
-      cg_list <- pblapply(names(cg_list), function(nm) {
-        cg <- cg_list[[nm]]
-        cg@counts <- .align_counts(
-          marker_counts_list[[nm]],
-          node_names = cg@cellgraph %N>% pull(name)
-        )
-        return(cg)
-      }) %>%
-        set_names(nm = names(cg_list))
-    }
+    # Extract cell graphs directly using DuckDB
+    cg_list <- db$components_cell_graph(
+      components = original_ids,
+      verbose = verbose && check_global_verbosity()
+    )
 
     # Load layout if specified
     if (add_layouts) {
@@ -632,19 +597,19 @@ LoadCellGraphs.PNAAssay <- function(
       if (!"layouts" %in% db$names()) {
         cli::cli_abort(c("x" = "Layouts are missing from the PXL file."))
       }
-      layout_list <- pblapply(id_data_chunks, function(id_chunk) {
-        db$components_layout(id_chunk$original_id, verbose = FALSE)
-      }) %>% Reduce(c, .)
+      layout_list <- db$components_layout(original_ids, verbose = FALSE)
 
       if (verbose && check_global_verbosity()) {
         cli_alert("Adding layouts to {.cls CellGraph} object(s)")
       }
 
-      cg_list <- pblapply(names(cg_list), function(nm) {
+      cg_list <- lapply(names(cg_list), function(nm) {
         cg <- cg_list[[nm]]
-        graph_node_names <- cg@cellgraph %N>% pull(name)
+        graph_node_names <- cg@nodes
         layout <- layout_list[[nm]]
-        layout <- layout[match(graph_node_names, layout$name), ] %>%
+        # Match using base UMI (stripping any -umi1/-umi2 suffix if present)
+        layout_name_clean <- sub("-(umi1|umi2)$", "", layout$name)
+        layout <- layout[match(graph_node_names, layout_name_clean), ] %>%
           select(-name) %>%
           as.data.frame()
         rownames(layout) <- NULL
@@ -654,20 +619,24 @@ LoadCellGraphs.PNAAssay <- function(
         set_names(nm = names(cg_list))
     }
 
-    # Update names of the cellgraph list
-    cg_list <- cg_list[fs_map_nested_filtered$data[[i]]$original_id]
-    cg_list <- set_names(cg_list, nm = fs_map_nested_filtered$data[[i]]$current_id)
+    # Update names of the cellgraph list to current_ids
+    cg_list <- cg_list[original_ids]
+    cg_list <- set_names(cg_list, nm = current_ids)
 
     return(cg_list)
   }) %>%
-    unlist()
+    unlist(recursive = FALSE)
 
   # Fill cellgraphs slot list with the loaded CellGraphs
-  slot(object, name = "cellgraphs")[fs_map_unnested_filtered$current_id] <- cg_list_full
+  slot(object, name = "cellgraphs")[
+    fs_map_unnested_filtered$current_id
+  ] <- cg_list_full
 
   # Return object
   if (verbose && check_global_verbosity()) {
-    cli_alert_success("Successfully loaded {length(cells_to_load)} {.cls CellGraph} object(s).")
+    cli_alert_success(
+      "Successfully loaded {length(cells_to_load)} {.cls CellGraph} object(s)."
+    )
   }
   return(object)
 }
@@ -722,57 +691,26 @@ LoadCellGraphs.Seurat <- function(
   }
 
   # Load cell graphs
-  cg_assay <-
-    LoadCellGraphs(
-      cg_assay,
-      cells = cells,
-      load_as = load_as,
-      add_marker_counts = add_marker_counts,
-      add_layouts = add_layouts,
-      force = force,
-      chunk_size = chunk_size,
-      cl = cl,
-      verbose = verbose,
-      ...
-    )
+  cg_args <- list(
+    object = cg_assay,
+    cells = cells,
+    load_as = load_as,
+    add_layouts = add_layouts,
+    force = force,
+    verbose = verbose,
+    ...
+  )
+  if (inherits(cg_assay, c("MPXAssay", "CellGraphAssay", "CellGraphAssay5"))) {
+    cg_args$add_marker_counts <- add_marker_counts
+    cg_args$chunk_size <- chunk_size
+    cg_args$cl <- cl
+  }
+
+  cg_assay <- do.call(LoadCellGraphs, cg_args)
 
   object[[assay]] <- cg_assay
 
   return(object)
-}
-
-#' Load bipartite graph from edgelist
-#'
-#' @param edge_table A \code{data.frame}
-#' @param cell_ids An integer vector of cell IDs
-#'
-#' @noRd
-.load_pna_as_bipartite <- function(
-  edge_table,
-  cell_ids
-) {
-  components <- pull(edge_table, component)
-
-  component_graphs <- lapply(cell_ids, function(i) {
-    edge_table_cur <- edge_table[components == i, ] %>% select(-component)
-
-    # Convert to a tbl_graph
-    g <- edge_table_cur %>%
-      select(umi1, umi2) %>%
-      as.matrix() %>%
-      igraph::graph_from_edgelist(directed = FALSE)
-    g <- as_tbl_graph(g, directed = FALSE) %>%
-      mutate(node_type = stringr::str_extract(name, "umi[1|2]"))
-
-    # Return results
-    attr(g, "type") <- "bipartite"
-    attr(g, "component_id") <- i
-    attr(g, "assay_type") <- "PNA"
-    return(g)
-  }) %>%
-    set_names(nm = cell_ids)
-
-  return(component_graphs[cell_ids])
 }
 
 
@@ -829,19 +767,39 @@ LoadCellGraphs.Seurat <- function(
 
       # Count markers per upia/upib pair and fill empty cells with 0
       markers_wide <- markers_s %>%
-        tidyr::pivot_wider(id_cols = c("from", "to"), names_from = marker, values_from = n, values_fill = 0)
+        tidyr::pivot_wider(
+          id_cols = c("from", "to"),
+          names_from = marker,
+          values_from = n,
+          values_fill = 0
+        )
 
       # Get new edges from pivot table (no duplicated edges left)
       new_edges <- markers_wide %>% select(from, to)
 
       # Get edge count matrix from pivot table
-      edge_cntMatrix <- as(markers_wide[, 3:ncol(markers_wide)] %>% as.matrix(), "dgCMatrix")
+      edge_cntMatrix <- as(
+        markers_wide[, 3:ncol(markers_wide)] %>% as.matrix(),
+        "dgCMatrix"
+      )
 
       # Create node count matrix by aggregating counts for A nodes and B nodes
       grp1 <- markers_wide %>% pull(from)
-      upia_markers <- as(markers_wide %>% select(-from, -to) %>% rowsum(group = grp1) %>% as.matrix(), "dgCMatrix")
+      upia_markers <- as(
+        markers_wide %>%
+          select(-from, -to) %>%
+          rowsum(group = grp1) %>%
+          as.matrix(),
+        "dgCMatrix"
+      )
       grp2 <- markers_wide %>% pull(to)
-      upib_markers <- as(markers_wide %>% select(-from, -to) %>% rowsum(group = grp2) %>% as.matrix(), "dgCMatrix")
+      upib_markers <- as(
+        markers_wide %>%
+          select(-from, -to) %>%
+          rowsum(group = grp2) %>%
+          as.matrix(),
+        "dgCMatrix"
+      )
       node_cntMatrix <- rbind(upia_markers, upib_markers)
       rownames(node_cntMatrix) <- g %>% pull(name)
 
@@ -853,9 +811,7 @@ LoadCellGraphs.Seurat <- function(
         select(name, node_type)
     } else {
       # Skip marker counts and return a simple undirected graph
-      new_edges <- g %E>% as_tibble() %>%
-        select(from, to) %>%
-        distinct()
+      new_edges <- g %E>% as_tibble() %>% select(from, to) %>% distinct()
 
       # Replace with collapsed edges and return a simple undirected graph
       g <- g %E>%
@@ -870,7 +826,11 @@ LoadCellGraphs.Seurat <- function(
     attr(g, "component_id") <- nm
     attr(g, "assay_type") <- "MPX"
     if (add_markers) {
-      return(list(graph = g, counts = node_cntMatrix, counts_edges = edge_cntMatrix))
+      return(list(
+        graph = g,
+        counts = node_cntMatrix,
+        counts_edges = edge_cntMatrix
+      ))
     } else {
       return(g)
     }
@@ -893,7 +853,11 @@ LoadCellGraphs.Seurat <- function(
   add_markers = TRUE
 ) {
   # Start by loading graph as bipartite
-  g_list <- .load_mpx_as_bipartite(arrow_data, cell_ids = cell_ids, add_markers = add_markers)
+  g_list <- .load_mpx_as_bipartite(
+    arrow_data,
+    cell_ids = cell_ids,
+    add_markers = add_markers
+  )
 
   g_list <- lapply(names(g_list), function(nm) {
     g <- g_list[[nm]]
@@ -957,7 +921,8 @@ LoadCellGraphs.Seurat <- function(
 
     # Anode projection
     g_anode <- edge_table %>%
-      left_join(edge_table,
+      left_join(
+        edge_table,
         by = c("upib"),
         relationship = "many-to-many",
         suffix = c("1", "2")
@@ -979,9 +944,17 @@ LoadCellGraphs.Seurat <- function(
 
       # Pivot marker counts into a wide format
       markers_wide <- markers_s %>%
-        pivot_wider(id_cols = upia, names_from = marker, values_from = n, values_fill = 0)
+        pivot_wider(
+          id_cols = upia,
+          names_from = marker,
+          values_from = n,
+          values_fill = 0
+        )
 
-      cntMatrix <- as(markers_wide[, 2:ncol(markers_wide)] %>% as.matrix(), "dgCMatrix")
+      cntMatrix <- as(
+        markers_wide[, 2:ncol(markers_wide)] %>% as.matrix(),
+        "dgCMatrix"
+      )
 
       # Sort matrix rows to match graph names
       nds <- g_anode %>%
