@@ -347,7 +347,7 @@ cell_plot_animate <- function(
     ls(namespace, all.names = TRUE),
     value = TRUE
   )
-  worker_env <- new.env(parent = globalenv())
+  worker_env <- new.env(parent = namespace)
   worker_env$built <- built
   worker_env$angles <- angles
   worker_env$png_files <- png_files
