@@ -252,6 +252,30 @@ test_that("Animation renderers and encoding work as expected", {
       respect = TRUE
     )
   )
+  expect_equal(
+    .cell_base_layout_matrix(
+      n_row = 1L,
+      n_col = 2L,
+      has_title = FALSE,
+      has_subtitle = FALSE,
+      has_row_strips = FALSE,
+      has_col_strips = FALSE,
+      has_legend = TRUE,
+      legend_width = 1
+    )$widths,
+    c("1", "1", "2.54 cm")
+  )
+  expect_error(
+    .cell_base_layout_matrix(
+      n_row = 1L,
+      n_col = 1L,
+      has_title = FALSE,
+      has_subtitle = FALSE,
+      has_row_strips = FALSE,
+      has_col_strips = FALSE,
+      has_legend = TRUE
+    )
+  )
   layout_respect <- function(has_row_strips, has_col_strips) {
     .cell_base_layout_matrix(
       n_row = 1L,
@@ -260,7 +284,8 @@ test_that("Animation renderers and encoding work as expected", {
       has_subtitle = FALSE,
       has_row_strips = has_row_strips,
       has_col_strips = has_col_strips,
-      has_legend = TRUE
+      has_legend = TRUE,
+      legend_width = 1.2
     )$respect
   }
   expect_false(layout_respect(has_row_strips = FALSE, has_col_strips = FALSE))
@@ -329,7 +354,8 @@ test_that("Animation renderers and encoding work as expected", {
     ),
     list(
       fills = c("#000000", "#777777", "#FFFFFF"),
-      labels = c(0, 2)
+      breaks = c(0, 0.5, 1, 1.5, 2),
+      labels = c("0.0", "0.5", "1.0", "1.5", "2.0")
     )
   )
 
@@ -380,6 +406,109 @@ test_that("Animation renderers and encoding work as expected", {
   )
   expect_true(file.exists(mp4_file))
   unlink(mp4_file)
+})
+
+test_that("Base legend layout works as expected", {
+  expect_equal(
+    .cell_base_legend_breaks(c(5.004e-05, 1)),
+    c(0.25, 0.5, 0.75, 1)
+  )
+  expect_equal(
+    .cell_base_legend_labels(.cell_base_legend_breaks(c(5.004e-05, 1))),
+    c("0.25", "0.50", "0.75", "1.00")
+  )
+  expect_equal(.cell_base_legend_breaks(c(0, 3)), c(0, 1, 2, 3))
+  expect_equal(.cell_base_legend_breaks(c(1, 1)), 1)
+  expect_equal(
+    .cell_base_legend_label_spacing(c(0, 0.1, 0.2, 0.3, 0.4), min_spacing = 0.25),
+    c(TRUE, FALSE, FALSE, TRUE, FALSE)
+  )
+  expect_equal(.cell_base_legend_label_spacing(0.5, min_spacing = 1), TRUE)
+
+  png_file <- tempfile(fileext = ".png")
+  grDevices::png(png_file, width = 600, height = 400, res = 100)
+  on.exit(unlink(png_file), add = TRUE)
+  expect_equal(.cell_base_wrap_text("ab cd", max_width = Inf, cex = 1), "ab cd")
+  expect_equal(.cell_base_wrap_text("ab cd", max_width = 0, cex = 1), c("a", "b", "c", "d"))
+  expect_equal(
+    .cell_base_wrap_text(
+      "a bcdefghbcdefgh c",
+      max_width = graphics::strwidth("bcdefgh", units = "inches", cex = 1),
+      cex = 1
+    ),
+    c("a", "bcdefgh", "bcdefgh", "c")
+  )
+  expect_equal(.cell_base_wrap_text("", max_width = 1, cex = 1), character())
+  expect_equal(.cell_base_wrap_text(NULL, max_width = 1, cex = 1), character())
+
+  plot_data <- tibble::tibble(
+    x = c(-1, 0, 1),
+    y = c(0, 1, 0),
+    z = 0,
+    weight = c(5.004e-05, 0.5, 1),
+    group = c("a", "b", "b")
+  )
+  continuous <- cell_plot(plot_data, color = weight) |>
+    cell_node_scale_color(colors = c("black", "white")) |>
+    cell_annotation(legend_title = "signature weight") |>
+    build_cell_plot()
+  metrics <- .cell_base_legend_metrics(
+    continuous,
+    text_cex = 11 / 12,
+    device_width = 6
+  )
+  expect_equal(
+    metrics[c("type", "title_lines", "breaks", "labels", "limits", "title_cex", "label_cex")],
+    list(
+      type = "continuous",
+      title_lines = "signature weight",
+      breaks = c(0.25, 0.5, 0.75, 1),
+      labels = c("0.25", "0.50", "0.75", "1.00"),
+      limits = c(5.004e-05, 1),
+      title_cex = 11 / 12,
+      label_cex = 11 / 12 * 0.8
+    )
+  )
+  expect_gt(
+    metrics$width,
+    graphics::strwidth("signature weight", units = "inches", cex = 11 / 12)
+  )
+  expect_gt(
+    metrics$width,
+    graphics::strwidth("0.25", units = "inches", cex = 11 / 12 * 0.8)
+  )
+
+  narrow <- .cell_base_legend_metrics(
+    continuous,
+    text_cex = 11 / 12,
+    device_width = 2.5
+  )
+  expect_equal(narrow$title_lines, c("signature", "weight"))
+  expect_lte(narrow$width, 0.4 * 2.5)
+  expect_gt(metrics$width, narrow$width)
+
+  categorical <- cell_plot(plot_data, color = group) |>
+    cell_node_scale_color(colors = c(a = "red", b = "blue")) |>
+    build_cell_plot()
+  categorical_metrics <- .cell_base_legend_metrics(
+    categorical,
+    text_cex = 1,
+    device_width = 6
+  )
+  expect_equal(
+    categorical_metrics[c("type", "labels", "colors", "title_lines")],
+    list(
+      type = "categorical",
+      labels = c("a", "b"),
+      colors = c("red", "blue"),
+      title_lines = "group"
+    )
+  )
+
+  limits <- list(x = c(-2, 2), y = c(-2, 2))
+  expect_no_error(.render_cell_plot_base(continuous, limits = limits))
+  expect_no_error(.render_cell_plot_base(categorical, limits = limits))
+  grDevices::dev.off()
 })
 
 test_that("Locked illumination follows rotated frame geometry", {
