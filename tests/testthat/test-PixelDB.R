@@ -246,3 +246,33 @@ test_that("PixelDB methods fails with invalid input", {
   expect_error(db$components_marker_counts("Invalid"))
   expect_no_error(db$close())
 })
+
+test_that("PixelDB throws descriptive error when PXL file is empty (marked as null)", {
+  tmp_dir <- tempfile()
+  dir.create(tmp_dir)
+  tmp_pxl <- file.path(tmp_dir, "null_sample.pxl")
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = tmp_pxl)
+  DBI::dbExecute(con, "CREATE TABLE metadata (value JSON)")
+  meta_json <- jsonlite::toJSON(list(
+    sample_name = "null-sample",
+    version = "0.30.0",
+    null = TRUE,
+    null_reason = "Processing failed at step X"
+  ), auto_unbox = TRUE)
+  DBI::dbExecute(con, sprintf("INSERT INTO metadata VALUES ('%s')", meta_json))
+  DBI::dbDisconnect(con)
+
+  expect_error(
+    PixelDB$new(tmp_pxl),
+    class = "pixeldb_null_error",
+    regexp = "The PXL file is empty \\(marked as null\\)"
+  )
+  expect_error(
+    PixelDB$new(tmp_pxl),
+    class = "pixeldb_null_error",
+    regexp = "Reason: Processing failed at step X"
+  )
+})
+
