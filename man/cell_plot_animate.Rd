@@ -41,7 +41,9 @@ The output path, invisibly.
 \description{
 Builds a \code{\link[=cell_plot]{cell_plot()}} recipe once, draws one frame per rotation angle, and
 encodes a GIF or video. Rotation geometry comes from \code{\link[=cell_coord_rotate]{cell_coord_rotate()}}.
-File type, size, resolution, frame rate, and the frame backend belong here.
+When a boomerang returns through an angle that was already drawn, that
+frame is copied instead of drawn again. File type, size, resolution, frame
+rate, and the frame backend belong here.
 }
 \details{
 GIF output uses gifski. Any other extension is encoded with av. The parent

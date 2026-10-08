@@ -2,7 +2,9 @@
 #'
 #' Builds a [cell_plot()] recipe once, draws one frame per rotation angle, and
 #' encodes a GIF or video. Rotation geometry comes from [cell_coord_rotate()].
-#' File type, size, resolution, frame rate, and the frame backend belong here.
+#' When a boomerang returns through an angle that was already drawn, that
+#' frame is copied instead of drawn again. File type, size, resolution, frame
+#' rate, and the frame backend belong here.
 #'
 #' GIF output uses gifski. Any other extension is encoded with av. The parent
 #' directory of `file` must already exist. An existing file is overwritten.
@@ -117,6 +119,9 @@ cell_plot_animate <- function(
   built <- build_cell_plot(object)
   built <- .cell_prepare_animation_illumination(built)
   angles <- .cell_animation_angles(built$coord, frames = frames)
+  # A repeated angle, such as the return half of an even boomerang, copies
+  # the first PNG with that angle.
+  sources <- .cell_animation_frame_sources(angles)
   limits <- .cell_animation_plot_limits(.cell_animation_limits(built, angles))
   png_device <- .cell_animation_png_device()
   tmp_dir <- fs::file_temp("cell_plot_frames")
@@ -139,8 +144,9 @@ cell_plot_animate <- function(
   tryCatch(
     {
       cli::cli_progress_bar("Rendering frames", total = length(angles))
+      render_ids <- which(sources == seq_along(sources))
       if (workers == 1L) {
-        for (i in seq_along(angles)) {
+        for (i in render_ids) {
           .cell_animation_write_frame(
             object = built,
             angle = angles[[i]],
@@ -154,8 +160,12 @@ cell_plot_animate <- function(
           )
           cli::cli_progress_update()
         }
+        .cell_animation_copy_repeated_frames(sources, png_files)
+        if (length(render_ids) < length(angles)) {
+          cli::cli_progress_update(inc = length(angles) - length(render_ids))
+        }
       } else {
-        workers <- min(workers, length(angles))
+        workers <- min(workers, length(render_ids))
         cluster <- parallel::makeCluster(workers)
         parallel::clusterEvalQ(cluster, {
           for (package in c(
@@ -188,7 +198,8 @@ cell_plot_animate <- function(
           frame_backend = frame_backend,
           png_device = png_device
         )
-        parallel::parLapplyLB(cluster, seq_along(angles), worker_fun)
+        parallel::parLapplyLB(cluster, render_ids, worker_fun)
+        .cell_animation_copy_repeated_frames(sources, png_files)
         cli::cli_progress_update(inc = length(angles))
         parallel::stopCluster(cluster)
         cluster <- NULL
@@ -380,10 +391,58 @@ cell_plot_animate <- function(
   return(fun)
 }
 
+#' Index of the first frame with the same angle
+#'
+#' A boomerang return trip repeats angles from the outward trip when `frames`
+#' is even. Those frames share the first index so the renderer can copy the
+#' PNG. Angles that appear once, including the extra return angles of an odd
+#' frame count, point at themselves.
+#'
+#' @param angles Numeric frame angles in degrees.
+#'
+#' @return An integer vector of the same length as `angles`.
+#'
+#' @noRd
+.cell_animation_frame_sources <- function(angles) {
+  sources <- seq_along(angles)
+  if (length(angles) < 2L) {
+    return(sources)
+  }
+  for (i in seq.int(2L, length(angles))) {
+    earlier <- which(angles[seq_len(i - 1L)] == angles[[i]])
+    if (length(earlier) > 0L) {
+      sources[[i]] <- earlier[[1L]]
+    }
+  }
+  return(sources)
+}
+
+#' Copy animation frames that repeat an earlier angle
+#'
+#' Each repeated frame is a copy of the first PNG with the same angle. Frames
+#' that introduce an angle are left untouched.
+#'
+#' @param sources Integer vector from `.cell_animation_frame_sources()`.
+#' @param png_files PNG paths aligned with `sources`. The first path for each
+#' angle must already exist.
+#'
+#' @return `png_files`, invisibly.
+#'
+#' @noRd
+.cell_animation_copy_repeated_frames <- function(sources, png_files) {
+  repeated <- which(sources != seq_along(sources))
+  for (i in repeated) {
+    fs::file_copy(png_files[[sources[[i]]]], png_files[[i]])
+  }
+  return(invisible(png_files))
+}
+
 #' Create frame angles for a cell plot rotation
 #'
 #' Generates a forward or boomerang sequence with exactly `frames` entries.
-#' Full rotations omit the duplicate closing angle.
+#' Full rotations omit the duplicate closing angle. An even boomerang returns
+#' through the outward angles in reverse, excluding the first and last frame,
+#' and those values are the same numbers as the frames already drawn.
 #'
 #' @param specification A rotation specification from [cell_coord_rotate()].
 #' @param frames Positive whole number of output frames.
@@ -423,6 +482,13 @@ cell_plot_animate <- function(
   return_frames <- frames - outward_frames
   if (return_frames == 0L) {
     return(angles)
+  }
+
+  # Even frame counts step back through angles already drawn. Reuse those
+  # values so later matching can copy the PNG.
+  repeated_return <- rev(angles)[-c(1L, length(angles))]
+  if (length(repeated_return) == return_frames) {
+    return(c(angles, repeated_return))
   }
 
   return_angles <- seq(

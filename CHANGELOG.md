@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `cell_plot_animate()` copies a boomerang frame when its angle matches a
+  frame already drawn. Return angles that have not been drawn yet, which
+  happens when `frames` is odd, are still rendered.
 - Refactored `LoadCellGraphs()` for `PNAAssay` and `PNAAssay5` to use
   `PixelDB$components_cell_graph()`, consolidating edgelist extraction and
   marker count aggregation into single-pass DuckDB queries (~2.5–4.3x speedup).
