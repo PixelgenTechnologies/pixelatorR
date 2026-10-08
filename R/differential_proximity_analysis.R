@@ -563,12 +563,13 @@ DifferentialProximityAnalysis.Seurat <- function(
   return(proximity_test_results)
 }
 
-#' Utility function to compute the median difference and percentage
-#' of cells expressing a feature in two groups.
+#' Compute the median difference and the fraction of non-zero scores in two groups.
 #'
-#' @param object A matrix where rows are features (e.g. marker pairs) and columns are cells.
-#' @param cells_1 A vector of cell names for group 1
-#' @param cells_2 A vector of cell names for group 2
+#' @param object A matrix where rows are features and columns are cells.
+#' @param cells_1 Cell names for the target group.
+#' @param cells_2 Cell names for the reference group.
+#'
+#' @return A data.frame with columns \code{difference}, \code{pct_1}, and \code{pct_2}.
 #'
 #' @noRd
 .median_difference <- function(object, cells_1, cells_2) {
@@ -602,6 +603,8 @@ DifferentialProximityAnalysis.Seurat <- function(
 #' @param min_pct Minimum percentage of cells expressing a feature in either group to consider it
 #' @param min_diff_pct Minimum difference in percentage of cells expressing a feature between the two
 #' @param only_pos If \code{TRUE}, test only features with a positive median difference.
+#'
+#' @return A data.frame of Wilcoxon results, or an empty data.frame when no feature passes.
 #'
 #' @noRd
 .wilcox_de_test <- function(
@@ -953,12 +956,17 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
-#' Load proximity scores once for differential testing.
+#' Load and filter proximity scores once for differential testing.
 #'
-#' @return For \code{method = "seurat"}, a sparse matrix of marker pairs by
-#'   cells. For \code{method = "legacy"}, a proximity table without group
-#'   columns. \code{metric_type} filtering matches
-#'   \code{DifferentialProximityAnalysis.Seurat()}.
+#' @param object A Seurat object.
+#' @param assay Name of the assay to read.
+#' @param lazy If \code{TRUE}, fetch scores from the PXL file.
+#' @param min_exp_join_count Minimum expected join count for a marker pair.
+#' @param proximity_metric Numeric column used when building the matrix.
+#' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
+#' @param method \code{"seurat"} returns a matrix and \code{"legacy"} returns a table.
+#'
+#' @return A sparse matrix of marker pairs by cells, or a proximity table for the legacy method.
 #'
 #' @noRd
 .load_proximity_for_da <- function(
@@ -1008,7 +1016,10 @@ FindAllProximityMarkers.data.frame <- function(
 
 #' Add zero columns for cells that have no proximity scores.
 #'
-#' @param cells Column order of the returned matrix.
+#' @param proximity_matrix Sparse matrix of marker pairs by cells.
+#' @param cells Cell ids, in the column order of the returned matrix.
+#'
+#' @return A sparse matrix with one column per cell in \code{cells}.
 #'
 #' @noRd
 .pad_proximity_matrix <- function(proximity_matrix, cells) {
@@ -1028,6 +1039,13 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
+#' Stop when the caller passes arguments that this function sets itself.
+#'
+#' @param ... Arguments supplied by the caller.
+#' @param call Calling environment used in the error message.
+#'
+#' @return Nothing. Signals an error when a blocked argument is present.
+#'
 #' @noRd
 .reject_find_all_proximity_args <- function(..., call = caller_env()) {
   supplied_names <- names(list(...))
@@ -1063,6 +1081,19 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
+#' Check the arguments shared by the \code{FindAllProximityMarkers()} methods.
+#'
+#' @param min_cells_per_group Minimum cells required on each side of a comparison.
+#' @param diff_threshold Minimum absolute median difference required to test a pair.
+#' @param min_pct Minimum fraction of cells with a non-zero score in either group.
+#' @param min_diff_pct Minimum difference in that fraction between the two groups.
+#' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
+#' @param proximity_metric Name of the numeric proximity column to test.
+#' @param verbose Print progress messages.
+#' @param call Calling environment used in error messages.
+#'
+#' @return Nothing. Signals an error when an argument is invalid.
+#'
 #' @noRd
 .validate_find_all_common_args <- function(
   min_cells_per_group,
@@ -1108,6 +1139,12 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
+#' Coerce requested group levels to character.
+#'
+#' @param idents Levels to test. Factors and numbers are coerced.
+#'
+#' @return A character vector, or \code{idents} unchanged when it is already character.
+#'
 #' @noRd
 .coerce_idents <- function(idents) {
   if (is.factor(idents) || is.numeric(idents)) {
@@ -1117,6 +1154,15 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
+#' Choose which group levels to test against the pooled remainder.
+#'
+#' @param labels Group label for each cell.
+#' @param idents Levels to test, or \code{NULL} to test every level.
+#' @param group_by Name of the grouping column, used in error messages.
+#' @param call Calling environment used in error messages.
+#'
+#' @return A character vector of levels to test.
+#'
 #' @noRd
 .resolve_one_vs_rest_idents <- function(
   labels,
@@ -1161,6 +1207,12 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
+#' Choose a label for the pooled remainder that is not already a group level.
+#'
+#' @param labels Group labels already in use.
+#'
+#' @return \code{"rest"}, with extra underscores appended until the label is unused.
+#'
 #' @noRd
 .make_rest_label <- function(labels) {
   used <- unique(as.character(labels))
@@ -1173,6 +1225,14 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
+#' Label one level as the target and every other known level as the remainder.
+#'
+#' @param labels Group label for each cell.
+#' @param ident Level to test.
+#' @param rest_label Label for the pooled remainder.
+#'
+#' @return A character vector. Missing labels stay missing.
+#'
 #' @noRd
 .assign_one_vs_rest <- function(labels, ident, rest_label) {
   labels <- as.character(labels)
@@ -1184,6 +1244,13 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
+#' Warn when some cells have no group label.
+#'
+#' @param label_chr Group label for each cell.
+#' @param group_by Name of the grouping column.
+#'
+#' @return Nothing. Called for its warning.
+#'
 #' @noRd
 .warn_missing_group_labels <- function(label_chr, group_by) {
   n_missing <- sum(is.na(label_chr))
@@ -1195,7 +1262,13 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
-#' Align named cell labels to \code{cells}, warning when metadata is missing.
+#' Align named cell labels to a set of cells.
+#'
+#' @param label_chr Group labels named by cell id.
+#' @param cells Cell ids to keep, in the desired order.
+#' @param group_by Name of the grouping column, used in the warning.
+#'
+#' @return An unnamed character vector, with \code{NA} where a cell has no label.
 #'
 #' @noRd
 .labels_for_cells <- function(label_chr, cells, group_by) {
@@ -1211,10 +1284,25 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
-#' Compare each group with the pooled rest on one proximity matrix.
+#' Run one-versus-rest Wilcoxon tests on one proximity matrix.
 #'
-#' The matrix is built by the caller. Each iteration only replaces the
-#' contrast labels in \code{group_data}.
+#' @param proximity_matrix Sparse matrix of marker pairs by cells.
+#' @param label_chr Group labels named by cell id.
+#' @param idents Levels to test.
+#' @param rest_label Label for the pooled remainder.
+#' @param group_by Name of the grouping column, used in messages.
+#' @param min_cells_per_group Minimum cells required on each side of a comparison.
+#' @param diff_threshold Minimum absolute median difference required to test a pair.
+#' @param min_pct Minimum fraction of cells with a non-zero score in either group.
+#' @param min_diff_pct Minimum difference in that fraction between the two groups.
+#' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
+#' @param proximity_metric Name stored in the \code{data_type} column of the results.
+#' @param p_adjust_method Method passed to \code{p.adjust()} within each comparison.
+#' @param verbose Print progress messages.
+#' @param dots Extra arguments passed to \code{DifferentialProximityAnalysis()}.
+#' @param call Calling environment used in the error when no comparison succeeds.
+#'
+#' @return A tibble of test results stacked across comparisons.
 #'
 #' @noRd
 .run_matrix_one_vs_rest <- function(
@@ -1236,110 +1324,7 @@ FindAllProximityMarkers.data.frame <- function(
 ) {
   cell_labels <- .labels_for_cells(label_chr, colnames(proximity_matrix), group_by)
   contrast_col <- ".pxl_one_vs_rest"
-  .run_one_vs_rest_loop(
-    label_chr = cell_labels,
-    idents = idents,
-    rest_label = rest_label,
-    group_by = group_by,
-    min_cells_per_group = min_cells_per_group,
-    verbose = verbose,
-    call = call,
-    run_one = function(ident) {
-      group_data <- data.frame(
-        .pxl_one_vs_rest = .assign_one_vs_rest(
-          cell_labels,
-          ident,
-          rest_label
-        ),
-        row.names = colnames(proximity_matrix),
-        check.names = FALSE,
-        stringsAsFactors = FALSE
-      )
-      names(group_data) <- contrast_col
-      args <- list(
-        object = proximity_matrix,
-        group_data = group_data,
-        contrast_column = contrast_col,
-        reference = rest_label,
-        targets = ident,
-        proximity_metric = proximity_metric,
-        p_adjust_method = p_adjust_method,
-        diff_threshold = diff_threshold,
-        min_pct = min_pct,
-        min_diff_pct = min_diff_pct,
-        only_pos = only_pos,
-        min_cells_per_group = min_cells_per_group,
-        verbose = verbose
-      )
-      do.call(DifferentialProximityAnalysis, c(args, dots))
-    }
-  )
-}
 
-
-#' @noRd
-.one_vs_rest_counts <- function(label_chr, ident) {
-  list(
-    n_tgt = sum(label_chr == ident, na.rm = TRUE),
-    n_ref = sum(!is.na(label_chr) & label_chr != ident)
-  )
-}
-
-
-#' @noRd
-.warn_skip_one_vs_rest <- function(
-  ident,
-  rest_label,
-  n_tgt,
-  n_ref,
-  min_cells_per_group
-) {
-  if (n_tgt < min_cells_per_group && n_ref < min_cells_per_group) {
-    reason <- "both groups have"
-  } else if (n_tgt < min_cells_per_group) {
-    reason <- "the target group has"
-  } else {
-    reason <- "the reference group has"
-  }
-  cli::cli_warn(
-    paste0(
-      "Skipping {.val {ident}} vs {.val {rest_label}} because {reason} ",
-      "fewer than {.val {min_cells_per_group}} cells."
-    )
-  )
-}
-
-
-#' @noRd
-.is_skippable_da_error <- function(err) {
-  msg <- conditionMessage(err)
-  grepl(
-    paste(
-      "Found no groups with at least",
-      "Found no valid target data",
-      "No valid results were generated",
-      sep = "|"
-    ),
-    msg
-  )
-}
-
-
-#' Run one \code{DifferentialProximityAnalysis()} call per group level.
-#'
-#' @param run_one A function of one argument, the level to test.
-#'
-#' @noRd
-.run_one_vs_rest_loop <- function(
-  label_chr,
-  idents,
-  rest_label,
-  group_by,
-  min_cells_per_group,
-  verbose,
-  run_one,
-  call = caller_env()
-) {
   if (verbose && check_global_verbosity()) {
     n_tests <- length(idents)
     cli_alert_info(
@@ -1354,23 +1339,19 @@ FindAllProximityMarkers.data.frame <- function(
   results <- vector("list", length(idents))
   for (i in seq_along(idents)) {
     ident <- idents[[i]]
-    counts <- .one_vs_rest_counts(label_chr, ident)
-    if (
-      counts$n_tgt < min_cells_per_group ||
-        counts$n_ref < min_cells_per_group
-    ) {
+    n_tgt <- sum(cell_labels == ident, na.rm = TRUE)
+    n_ref <- sum(!is.na(cell_labels) & cell_labels != ident)
+    if (n_tgt < min_cells_per_group || n_ref < min_cells_per_group) {
       .warn_skip_one_vs_rest(
-        ident,
-        rest_label,
-        counts$n_tgt,
-        counts$n_ref,
-        min_cells_per_group
+        ident = ident,
+        rest_label = rest_label,
+        n_tgt = n_tgt,
+        n_ref = n_ref,
+        min_cells_per_group = min_cells_per_group
       )
       next
     }
 
-    n_tgt <- counts$n_tgt
-    n_ref <- counts$n_ref
     if (verbose && check_global_verbosity()) {
       cli_alert_info(
         paste0(
@@ -1380,7 +1361,32 @@ FindAllProximityMarkers.data.frame <- function(
       )
     }
 
-    result <- tryCatch(run_one(ident), error = function(e) e)
+    group_data <- data.frame(
+      contrast = .assign_one_vs_rest(cell_labels, ident, rest_label),
+      row.names = colnames(proximity_matrix),
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+    names(group_data) <- contrast_col
+    args <- list(
+      object = proximity_matrix,
+      group_data = group_data,
+      contrast_column = contrast_col,
+      reference = rest_label,
+      targets = ident,
+      proximity_metric = proximity_metric,
+      p_adjust_method = p_adjust_method,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos,
+      min_cells_per_group = min_cells_per_group,
+      verbose = verbose
+    )
+    result <- tryCatch(
+      do.call(DifferentialProximityAnalysis, c(args, dots)),
+      error = function(e) e
+    )
     if (inherits(result, "error")) {
       if (.is_skippable_da_error(result)) {
         cli::cli_warn(
@@ -1407,4 +1413,59 @@ FindAllProximityMarkers.data.frame <- function(
     )
   }
   out
+}
+
+
+#' Warn that a one-versus-rest comparison has too few cells.
+#'
+#' @param ident Level being tested.
+#' @param rest_label Label for the pooled remainder.
+#' @param n_tgt Number of cells in \code{ident}.
+#' @param n_ref Number of cells in the pooled remainder.
+#' @param min_cells_per_group Minimum cells required on each side.
+#'
+#' @return Nothing. Called for its warning.
+#'
+#' @noRd
+.warn_skip_one_vs_rest <- function(
+  ident,
+  rest_label,
+  n_tgt,
+  n_ref,
+  min_cells_per_group
+) {
+  if (n_tgt < min_cells_per_group && n_ref < min_cells_per_group) {
+    reason <- "both groups have"
+  } else if (n_tgt < min_cells_per_group) {
+    reason <- "the target group has"
+  } else {
+    reason <- "the reference group has"
+  }
+  cli::cli_warn(
+    paste0(
+      "Skipping {.val {ident}} vs {.val {rest_label}} because {reason} ",
+      "fewer than {.val {min_cells_per_group}} cells."
+    )
+  )
+}
+
+
+#' Detect an empty differential-test error that a comparison can skip.
+#'
+#' @param err An error condition from \code{DifferentialProximityAnalysis()}.
+#'
+#' @return \code{TRUE} when the comparison produced no testable pairs.
+#'
+#' @noRd
+.is_skippable_da_error <- function(err) {
+  msg <- conditionMessage(err)
+  grepl(
+    paste(
+      "Found no groups with at least",
+      "Found no valid target data",
+      "No valid results were generated",
+      sep = "|"
+    ),
+    msg
+  )
 }
