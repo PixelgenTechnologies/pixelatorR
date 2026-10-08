@@ -35,6 +35,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   message is emitted and the feature metadata columns are dropped from
   `@meta.features`, while one row per merged feature is kept so that the merged
   assay stays valid for downstream methods such as `subset()`.
+- The `"base"` frame backend of `cell_plot_animate()` now draws color legends
+  that match the ggplot2 renderer. Continuous legends show regularly spaced,
+  formatted breaks instead of only the raw limits, the color bar has a fixed
+  physical size, and the legend column is sized from the rendered text so the
+  title and labels are never clipped. Long titles wrap onto several lines.
+  Text and point sizes in base frames no longer shrink with the number of
+  panels.
 
 ## [0.22.2]
 
