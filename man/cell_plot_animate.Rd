@@ -13,7 +13,8 @@ cell_plot_animate(
   res = 150,
   fps = 20,
   frame_backend = c("base", "ggplot2"),
-  workers = 1L
+  workers = 1L,
+  boomerang = FALSE
 )
 }
 \arguments{
@@ -35,6 +36,9 @@ odd count is raised to the next even number.}
 
 \item{workers}{Positive whole number of parallel workers. \code{1} renders
 sequentially.}
+
+\item{boomerang}{Whether the encoded frames return through the rotation.
+Return frames that repeat an angle already drawn are copied.}
 }
 \value{
 The output path, invisibly.

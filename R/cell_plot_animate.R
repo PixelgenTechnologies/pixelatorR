@@ -22,6 +22,8 @@
 #' `"ggplot2"` matches the static renderer more closely.
 #' @param workers Positive whole number of parallel workers. `1` renders
 #' sequentially.
+#' @param boomerang Whether the encoded frames return through the rotation.
+#' Return frames that repeat an angle already drawn are copied.
 #'
 #' @return The output path, invisibly.
 #'
@@ -52,7 +54,8 @@ cell_plot_animate <- function(
   res = 150,
   fps = 20,
   frame_backend = c("base", "ggplot2"),
-  workers = 1L
+  workers = 1L,
+  boomerang = FALSE
 ) {
   .validate_cell_plot(object)
   if (is.null(object$coord) || !identical(object$coord$type, "rotate")) {
@@ -107,9 +110,10 @@ cell_plot_animate <- function(
     }
   }
   frame_backend <- match.arg(frame_backend)
+  assert_single_value(boomerang, type = "bool", arg = "boomerang")
   frames <- .cell_animation_resolve_frames(
     as.integer(frames),
-    boomerang = object$coord$boomerang
+    boomerang = boomerang
   )
   width <- as.integer(width)
   height <- as.integer(height)
@@ -124,7 +128,11 @@ cell_plot_animate <- function(
 
   built <- build_cell_plot(object)
   built <- .cell_prepare_animation_illumination(built)
-  angles <- .cell_animation_angles(built$coord, frames = frames)
+  angles <- .cell_animation_angles(
+    built$coord,
+    frames = frames,
+    boomerang = boomerang
+  )
   # A repeated angle, such as the return half of an even boomerang, copies
   # the first PNG with that angle.
   sources <- .cell_animation_frame_sources(angles)
@@ -404,7 +412,7 @@ cell_plot_animate <- function(
 #' emitted.
 #'
 #' @param frames Requested frame count.
-#' @param boomerang Whether the rotation specification boomerangs.
+#' @param boomerang Whether the animation returns through the rotation.
 #'
 #' @return The frame count to render.
 #'
@@ -479,11 +487,12 @@ cell_plot_animate <- function(
 #'
 #' @param specification A rotation specification from [cell_coord_rotate()].
 #' @param frames Positive whole number of output frames.
+#' @param boomerang Whether the sequence returns through the outward angles.
 #'
 #' @return A numeric vector of angles in degrees.
 #'
 #' @noRd
-.cell_animation_angles <- function(specification, frames) {
+.cell_animation_angles <- function(specification, frames, boomerang = FALSE) {
   assert_single_value(
     frames,
     type = "integer",
@@ -501,7 +510,7 @@ cell_plot_animate <- function(
     return(0)
   }
 
-  if (!specification$boomerang) {
+  if (!isTRUE(boomerang)) {
     angles <- if (abs(max_degree) == 360) {
       seq(0, max_degree, length.out = frames + 1L)[-(frames + 1L)]
     } else {

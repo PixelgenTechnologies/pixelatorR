@@ -1,22 +1,21 @@
 test_that("Cell plot animation geometry works as expected", {
-  specification <- list(
-    max_degree = 360,
-    boomerang = FALSE
-  )
+  specification <- list(max_degree = 360)
   expect_equal(
     list(
       full_turn = .cell_animation_angles(specification, frames = 4),
       partial_turn = .cell_animation_angles(
-        list(max_degree = -180, boomerang = FALSE),
+        list(max_degree = -180),
         frames = 4
       ),
       even_boomerang = .cell_animation_angles(
-        list(max_degree = 180, boomerang = TRUE),
-        frames = 6
+        list(max_degree = 180),
+        frames = 6,
+        boomerang = TRUE
       ),
       odd_boomerang = .cell_animation_angles(
-        list(max_degree = 180, boomerang = TRUE),
-        frames = 5
+        list(max_degree = 180),
+        frames = 5,
+        boomerang = TRUE
       ),
       single_frame = .cell_animation_angles(specification, frames = 1)
     ),
@@ -166,8 +165,9 @@ test_that("Odd boomerang frame counts are raised to the next even number", {
     "even number of frames"
   )
   angles <- .cell_animation_angles(
-    list(max_degree = 180, boomerang = TRUE),
-    frames = raised
+    list(max_degree = 180),
+    frames = raised,
+    boomerang = TRUE
   )
   expect_equal(
     list(
@@ -185,12 +185,14 @@ test_that("Odd boomerang frame counts are raised to the next even number", {
 
 test_that("Boomerang frames reuse earlier renders", {
   uneven_degree <- .cell_animation_angles(
-    list(max_degree = 1, boomerang = TRUE),
-    frames = 6
+    list(max_degree = 1),
+    frames = 6,
+    boomerang = TRUE
   )
   odd_degree <- .cell_animation_angles(
-    list(max_degree = 180, boomerang = TRUE),
-    frames = 5
+    list(max_degree = 180),
+    frames = 5,
+    boomerang = TRUE
   )
   expect_identical(
     list(
