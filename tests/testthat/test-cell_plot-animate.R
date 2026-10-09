@@ -558,6 +558,72 @@ test_that("A long legend label stays inside the device", {
   grDevices::dev.off()
 })
 
+test_that("Base legend content stays within its column", {
+  expect_equal(
+    .cell_base_fit_title_lines(c("a", "b", "c"), max_lines = 3),
+    c("a", "b", "c")
+  )
+  expect_equal(
+    .cell_base_fit_title_lines(c("a", "b", "c"), max_lines = 2),
+    c("a", "b\u2026")
+  )
+  expect_equal(.cell_base_fit_title_lines(c("a", "b"), max_lines = 0), character())
+  expect_equal(.cell_base_fit_title_lines(character(), max_lines = -1), character())
+
+  fits <- .cell_base_legend_rows(
+    n_lines = c(1L, 3L),
+    key = 0.2,
+    label_line = 0.1,
+    spacing = 0.05,
+    available = 1
+  )
+  expect_equal(fits, list(scale = 1, heights = c(0.25, 0.35)))
+  shrunk <- .cell_base_legend_rows(
+    n_lines = c(1L, 3L),
+    key = 0.2,
+    label_line = 0.1,
+    spacing = 0.05,
+    available = 0.3
+  )
+  expect_equal(shrunk$scale, 0.6)
+  expect_equal(shrunk$heights, c(0.25, 0.35) * 0.6)
+  partial <- .cell_base_legend_rows(
+    n_lines = c(1L, 1L),
+    key = 0.2,
+    label_line = 0.1,
+    spacing = 0.05,
+    available = 0.4
+  )
+  expect_equal(partial$scale, 0.8)
+  expect_equal(sum(partial$heights), 0.4)
+  expect_equal(
+    .cell_base_legend_rows(integer(), key = 0.2, label_line = 0.1, spacing = 0.05, available = 1),
+    list(scale = 1, heights = numeric())
+  )
+
+  long_label <- paste(rep("membrane-proximal-signaling-cluster", 2), collapse = "-")
+  plot_data <- tibble::tibble(
+    x = seq(-1, 1, length.out = 6),
+    y = 0,
+    z = 0,
+    group = paste(long_label, seq_len(6)),
+    weight = seq(0, 1, length.out = 6)
+  )
+  categorical <- cell_plot(plot_data, color = group) |>
+    cell_annotation(legend_title = "A long legend title that needs several lines of text") |>
+    build_cell_plot()
+  continuous <- cell_plot(plot_data, color = weight) |>
+    cell_annotation(legend_title = "A long legend title that needs several lines of text") |>
+    build_cell_plot()
+  png_file <- tempfile(fileext = ".png")
+  grDevices::png(png_file, width = 200, height = 120, res = 72)
+  on.exit(unlink(png_file), add = TRUE)
+  limits <- list(x = c(-2, 2), y = c(-2, 2))
+  expect_no_error(.render_cell_plot_base(categorical, limits = limits))
+  expect_no_error(.render_cell_plot_base(continuous, limits = limits))
+  grDevices::dev.off()
+})
+
 test_that("Locked illumination follows rotated frame geometry", {
   skip_if_not_installed("FNN")
 

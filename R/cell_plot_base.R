@@ -51,6 +51,9 @@
   has_col_strips <- !is.null(object$grid$cols)
 
   old_par <- graphics::par(no.readonly = TRUE)
+  # pin and plt follow from mar and fig. Restoring them directly fails when
+  # the last drawn figure (the legend column) is narrower than the device.
+  old_par[c("pin", "plt")] <- NULL
   on.exit(graphics::par(old_par), add = TRUE)
   graphics::par(
     bg = object$theme$background_color,
@@ -617,26 +620,34 @@
     border = NA
   )
 
-  title_height <- length(metrics$title_lines) * line_height
+  # The title may not consume the whole column: keep at least two text lines
+  # of height for the keys or color bar and truncate the title if needed.
+  min_body <- 2 * unit
+  title_lines <- .cell_base_fit_title_lines(
+    metrics$title_lines,
+    max_lines = floor(
+      (panel[[2]] - 2 * margin - spacing - min_body) / line_height
+    )
+  )
+  title_height <- length(title_lines) * line_height
   title_gap <- if (title_height > 0) spacing else 0
-  available <- panel[[2]] - 2 * margin - title_height - title_gap
+  available <- max(panel[[2]] - 2 * margin - title_height - title_gap, 0)
 
   label_line <- geometry$line_height * geometry$text_scale * unit
-  max_label_lines <- 1L
-  if (length(metrics$label_lines) > 0L) {
-    max_label_lines <- max(1L, lengths(metrics$label_lines))
-  }
+  label_lines_n <- pmax(1L, lengths(metrics$label_lines))
   if (identical(metrics$type, "categorical")) {
     key <- geometry$key * unit
     n_keys <- length(metrics$labels)
-    row_height <- max(key, max_label_lines * label_line) + spacing
-    if (n_keys > 0 && n_keys * row_height > available) {
-      row_height <- max(available / n_keys, metrics$label_cex * 12 / 72)
-    }
-    body_height <- n_keys * row_height
+    rows <- .cell_base_legend_rows(
+      n_lines = label_lines_n,
+      key = key,
+      label_line = label_line,
+      spacing = spacing,
+      available = available
+    )
+    body_height <- sum(rows$heights)
   } else {
     body_height <- min(geometry$bar_height * unit, available)
-    body_height <- max(body_height, 2 * unit)
   }
 
   block_height <- title_height + title_gap + body_height
@@ -646,8 +657,8 @@
   if (title_height > 0) {
     graphics::text(
       left,
-      top - (seq_along(metrics$title_lines) - 0.5) * line_height,
-      labels = metrics$title_lines,
+      top - (seq_along(title_lines) - 0.5) * line_height,
+      labels = title_lines,
       adj = c(0, 0.5),
       cex = metrics$title_cex,
       col = text_color,
@@ -657,7 +668,8 @@
   body_top <- top - title_height - title_gap
 
   if (identical(metrics$type, "categorical")) {
-    centers <- body_top - (seq_len(n_keys) - 0.5) * row_height
+    key <- key * rows$scale
+    centers <- body_top - cumsum(rows$heights) + rows$heights / 2
     graphics::points(
       rep(left + key / 2, n_keys),
       centers,
@@ -667,13 +679,16 @@
       xpd = TRUE
     )
     .cell_base_legend_text(
-      x = left + key + spacing,
+      x = left + key + spacing * rows$scale,
       centers = centers,
       label_lines = metrics$label_lines,
-      line_height = label_line,
-      cex = metrics$label_cex,
+      line_height = label_line * rows$scale,
+      cex = metrics$label_cex * rows$scale,
       color = text_color
     )
+    return(invisible(NULL))
+  }
+  if (body_height <= 0) {
     return(invisible(NULL))
   }
 
@@ -698,7 +713,7 @@
   )
   keep <- .cell_base_legend_label_spacing(
     break_y,
-    min_spacing = max_label_lines * label_line
+    min_spacing = max(label_lines_n) * label_line
   )
   break_y <- break_y[keep]
   label_lines <- metrics$label_lines[keep]
@@ -721,6 +736,65 @@
     color = text_color
   )
   return(invisible(NULL))
+}
+
+#' Limit legend title lines to the space above the legend body
+#'
+#' @param title_lines Wrapped title lines.
+#' @param max_lines Maximum number of lines that fit. Non-positive values
+#' remove the title.
+#'
+#' @return The title lines that fit. When lines are dropped, the last kept
+#' line ends with an ellipsis.
+#'
+#' @noRd
+.cell_base_fit_title_lines <- function(title_lines, max_lines) {
+  n_lines <- length(title_lines)
+  if (n_lines <= max_lines) {
+    return(title_lines)
+  }
+  if (max_lines < 1) {
+    return(character())
+  }
+  kept <- title_lines[seq_len(max_lines)]
+  kept[[max_lines]] <- paste0(kept[[max_lines]], "\u2026")
+  return(kept)
+}
+
+#' Size categorical legend rows so they never overlap
+#'
+#' Each row is as tall as its key or its wrapped label, whichever is larger,
+#' plus the key spacing. When the rows do not fit the available height, the
+#' key, label text, and spacing are scaled down together, to at most 60% of
+#' their size, so rows stay distinct instead of overlapping. Rows that still
+#' do not fit overflow the column at the bottom.
+#'
+#' @param n_lines Number of wrapped lines per label.
+#' @param key Key size in inches.
+#' @param label_line Label line height in inches.
+#' @param spacing Spacing between rows in inches.
+#' @param available Height available for the rows in inches.
+#'
+#' @return A list with the applied `scale` and the row `heights` in inches.
+#'
+#' @noRd
+.cell_base_legend_rows <- function(
+  n_lines,
+  key,
+  label_line,
+  spacing,
+  available
+) {
+  if (length(n_lines) == 0L) {
+    return(list(scale = 1, heights = numeric()))
+  }
+  heights <- pmax(key, n_lines * label_line) + spacing
+  needed <- sum(heights)
+  scale <- 1
+  if (needed > available && available > 0) {
+    scale <- max(available / needed, 0.6)
+  }
+  return(list(scale = scale, heights = heights * scale))
 }
 
 #' Draw wrapped legend labels centered on keys or breaks

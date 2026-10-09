@@ -43,7 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   several lines, and the legend column is capped below the device width so a
   long label cannot make frame rendering fail.
   Text and point sizes in base frames no longer shrink with the number of
-  panels.
+  panels. Rendering a small frame with a legend no longer fails while
+  restoring the graphics parameters.
 
 ## [0.22.2]
 
