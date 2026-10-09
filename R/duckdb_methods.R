@@ -118,9 +118,12 @@ PixelDB <- R6Class(
           if (!inherits(meta_parsed, "try-error") && isTRUE(meta_parsed[["null"]])) {
             reason <- meta_parsed[["null_reason"]]
             self$close()
+            # Leave `{reason}` for cli to substitute. Glue-formatting it first
+            # would make cli parse braces inside the reason and throw a
+            # different error than pixeldb_null_error.
             msg <- c("x" = "The PXL file is empty (marked as null).")
-            if (!is.null(reason) && nzchar(reason)) {
-              msg <- c(msg, "i" = glue::glue("Reason: {reason}"))
+            if (is.character(reason) && length(reason) == 1L && !is.na(reason) && nzchar(reason)) {
+              msg <- c(msg, "i" = "Reason: {reason}")
             }
             cli::cli_abort(msg, class = "pixeldb_null_error")
           }
