@@ -805,6 +805,8 @@ cell_annotation <- function(
 #' @param max_degree Maximum rotation angle from -360 to 360 degrees. Positive
 #' angles follow the right-hand rule; use a negative angle to reverse direction.
 #' @param boomerang Whether the animation returns through the frame sequence.
+#' An odd frame count is raised to the next even number by
+#' [cell_plot_animate()].
 #' @param origin Rotation origin. `"origo"` uses `(0, 0, 0)`. `"centroid"`
 #' calculates the centroid independently within each [cell_grid()] panel.
 #'

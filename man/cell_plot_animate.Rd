@@ -21,7 +21,8 @@ cell_plot_animate(
 
 \item{file}{Output path. The extension selects the encoder.}
 
-\item{frames}{Positive whole number of encoded frames.}
+\item{frames}{Positive whole number of encoded frames. A boomerang with an
+odd count is raised to the next even number.}
 
 \item{width, height}{Output size in pixels.}
 
@@ -42,8 +43,10 @@ The output path, invisibly.
 Builds a \code{\link[=cell_plot]{cell_plot()}} recipe once, draws one frame per rotation angle, and
 encodes a GIF or video. Rotation geometry comes from \code{\link[=cell_coord_rotate]{cell_coord_rotate()}}.
 When a boomerang returns through an angle that was already drawn, that
-frame is copied instead of drawn again. File type, size, resolution, frame
-rate, and the frame backend belong here.
+frame is copied instead of drawn again. An odd \code{frames} count is raised to
+the next even number, with a warning, so the return trip is made of those
+copies. File type, size, resolution, frame rate, and the frame backend
+belong here.
 }
 \details{
 GIF output uses gifski. Any other extension is encoded with av. The parent

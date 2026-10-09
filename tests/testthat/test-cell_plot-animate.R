@@ -153,6 +153,36 @@ test_that("Cell plot animation geometry works as expected", {
   )
 })
 
+test_that("Odd boomerang frame counts are raised to the next even number", {
+  expect_equal(
+    list(
+      even = .cell_animation_resolve_frames(6L, boomerang = TRUE),
+      forward = .cell_animation_resolve_frames(5L, boomerang = FALSE)
+    ),
+    list(even = 6L, forward = 5L)
+  )
+  raised <- expect_warning(
+    .cell_animation_resolve_frames(5L, boomerang = TRUE),
+    "even number of frames"
+  )
+  angles <- .cell_animation_angles(
+    list(max_degree = 180, boomerang = TRUE),
+    frames = raised
+  )
+  expect_equal(
+    list(
+      frames = raised,
+      angles = angles,
+      sources = .cell_animation_frame_sources(angles)
+    ),
+    list(
+      frames = 6L,
+      angles = c(0, 60, 120, 180, 120, 60),
+      sources = c(1L, 2L, 3L, 4L, 3L, 2L)
+    )
+  )
+})
+
 test_that("Boomerang frames reuse earlier renders", {
   uneven_degree <- .cell_animation_angles(
     list(max_degree = 1, boomerang = TRUE),

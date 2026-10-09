@@ -22,7 +22,9 @@ axis. Numeric axes are normalized before they are stored.}
 \item{max_degree}{Maximum rotation angle from -360 to 360 degrees. Positive
 angles follow the right-hand rule; use a negative angle to reverse direction.}
 
-\item{boomerang}{Whether the animation returns through the frame sequence.}
+\item{boomerang}{Whether the animation returns through the frame sequence.
+An odd frame count is raised to the next even number by
+\code{\link[=cell_plot_animate]{cell_plot_animate()}}.}
 
 \item{origin}{Rotation origin. \code{"origo"} uses \verb{(0, 0, 0)}. \code{"centroid"}
 calculates the centroid independently within each \code{\link[=cell_grid]{cell_grid()}} panel.}

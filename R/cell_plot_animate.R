@@ -3,15 +3,18 @@
 #' Builds a [cell_plot()] recipe once, draws one frame per rotation angle, and
 #' encodes a GIF or video. Rotation geometry comes from [cell_coord_rotate()].
 #' When a boomerang returns through an angle that was already drawn, that
-#' frame is copied instead of drawn again. File type, size, resolution, frame
-#' rate, and the frame backend belong here.
+#' frame is copied instead of drawn again. An odd `frames` count is raised to
+#' the next even number, with a warning, so the return trip is made of those
+#' copies. File type, size, resolution, frame rate, and the frame backend
+#' belong here.
 #'
 #' GIF output uses gifski. Any other extension is encoded with av. The parent
 #' directory of `file` must already exist. An existing file is overwritten.
 #'
 #' @param object A `cell_plot` recipe that includes [cell_coord_rotate()].
 #' @param file Output path. The extension selects the encoder.
-#' @param frames Positive whole number of encoded frames.
+#' @param frames Positive whole number of encoded frames. A boomerang with an
+#' odd count is raised to the next even number.
 #' @param width,height Output size in pixels.
 #' @param res PNG resolution in pixels per inch.
 #' @param fps Encoded frames per second.
@@ -104,7 +107,10 @@ cell_plot_animate <- function(
     }
   }
   frame_backend <- match.arg(frame_backend)
-  frames <- as.integer(frames)
+  frames <- .cell_animation_resolve_frames(
+    as.integer(frames),
+    boomerang = object$coord$boomerang
+  )
   width <- as.integer(width)
   height <- as.integer(height)
   workers <- as.integer(workers)
@@ -389,6 +395,33 @@ cell_plot_animate <- function(
   }
   environment(fun) <- worker_env
   return(fun)
+}
+
+#' Raise an odd boomerang frame count to the next even number
+#'
+#' An even count returns through poses already drawn, with equal steps and a
+#' single bounce frame. An odd count is raised by one and a warning is
+#' emitted.
+#'
+#' @param frames Requested frame count.
+#' @param boomerang Whether the rotation specification boomerangs.
+#'
+#' @return The frame count to render.
+#'
+#' @noRd
+.cell_animation_resolve_frames <- function(frames, boomerang) {
+  if (!isTRUE(boomerang) || frames %% 2L == 0L) {
+    return(frames)
+  }
+  requested <- frames
+  frames <- frames + 1L
+  cli::cli_warn(
+    paste(
+      "A boomerang uses an even number of frames.",
+      "{.arg frames} was raised from {.val {requested}} to {.val {frames}}."
+    )
+  )
+  return(frames)
 }
 
 #' Index of the first frame with the same angle
