@@ -51,6 +51,9 @@
   has_col_strips <- !is.null(object$grid$cols)
 
   old_par <- graphics::par(no.readonly = TRUE)
+  # pin and plt follow from mar and fig. Restoring them directly fails when
+  # the last drawn figure (the legend column) is narrower than the device.
+  old_par[c("pin", "plt")] <- NULL
   on.exit(graphics::par(old_par), add = TRUE)
   graphics::par(
     bg = object$theme$background_color,
@@ -59,6 +62,16 @@
     col.lab = object$theme$text_color
   )
 
+  text_cex <- object$theme$text_size / 12
+  legend <- NULL
+  if (has_legend) {
+    legend <- .cell_base_legend_metrics(
+      object,
+      text_cex = text_cex,
+      device_width = graphics::par("din")[[1]]
+    )
+  }
+
   layout <- .cell_base_layout_matrix(
     n_row = n_row,
     n_col = n_col,
@@ -66,7 +79,8 @@
     has_subtitle = has_subtitle,
     has_row_strips = has_row_strips,
     has_col_strips = has_col_strips,
-    has_legend = has_legend
+    has_legend = has_legend,
+    legend_width = legend$width
   )
   graphics::layout(
     layout$mat,
@@ -74,8 +88,11 @@
     heights = layout$heights,
     respect = layout$respect
   )
+  # layout() shrinks the base cex for grids with two or more rows or columns.
+  # Reset it so text sizes follow the theme instead of the panel count.
+  graphics::par(cex = 1)
+  strip_cex <- text_cex * .cell_base_strip_text_scale
 
-  text_cex <- object$theme$text_size / 12
   if (has_title) {
     .cell_base_label(
       object$annotation$title,
@@ -99,7 +116,7 @@
     for (col_level in col_levels) {
       .cell_base_label(
         .cell_plot_facet_label(col_level),
-        cex = text_cex,
+        cex = strip_cex,
         color = object$theme$text_color,
         background = object$theme$strip_background_color
       )
@@ -113,7 +130,7 @@
     if (has_row_strips) {
       .cell_base_label(
         .cell_plot_facet_label(row_levels[[row_index]]),
-        cex = text_cex,
+        cex = strip_cex,
         color = object$theme$text_color,
         background = object$theme$strip_background_color,
         srt = .cell_plot_row_strip_angle
@@ -147,7 +164,7 @@
   }
 
   if (has_legend) {
-    .cell_base_legend(object, text_cex = text_cex)
+    .cell_base_legend(object, legend)
   }
 
   return(invisible(NULL))
@@ -158,6 +175,10 @@
 #' @param n_row,n_col Panel counts.
 #' @param has_title,has_subtitle,has_row_strips,has_col_strips,has_legend
 #' Layout flags.
+#' @param legend_width Legend column width in inches. Required when
+#' `has_legend` is `TRUE`. The legend column is absolute so that the legend
+#' title, color bar, and labels keep their physical size while the panels
+#' share the remaining device width.
 #'
 #' @return A list with `mat`, `widths`, `heights`, and `respect`. `respect` is
 #' `TRUE` only when both row and column strips are present, so that the
@@ -171,8 +192,12 @@
   has_subtitle,
   has_row_strips,
   has_col_strips,
-  has_legend
+  has_legend,
+  legend_width = NULL
 ) {
+  if (has_legend) {
+    assert_single_value(legend_width, type = "numeric", arg = "legend_width")
+  }
   n_layout_row <- as.integer(has_title) + as.integer(has_subtitle) +
     as.integer(has_col_strips) + n_row
   n_layout_col <- as.integer(has_row_strips) + n_col + as.integer(has_legend)
@@ -226,7 +251,7 @@
   widths <- c(
     if (has_row_strips) 0.14,
     rep(1, n_col),
-    if (has_legend) 0.32
+    if (has_legend) graphics::lcm(legend_width * 2.54)
   )
   heights <- c(
     if (has_title) 0.16,
@@ -332,86 +357,570 @@
   return(invisible(NULL))
 }
 
+# Facet strip text is drawn at 80% of the theme text size, matching the
+# ggplot2 `strip.text` default.
+.cell_base_strip_text_scale <- 0.8
+
+# Legend geometry expressed in multiples of the theme text size, following the
+# ggplot2 defaults: 5.5 pt margins and key spacing, 1.2-line keys, legend text
+# at 80% of the base size, and tick marks at 20% of the key size. The color bar
+# is wider than the ggplot2 key so the gradient stays readable in small frames.
+.cell_base_legend_geometry <- list(
+  margin = 0.5,
+  spacing = 0.5,
+  key = 1.2,
+  bar_width = 1.5,
+  bar_height = 6,
+  line_height = 1.25,
+  text_scale = 0.8,
+  tick_length = 0.2,
+  max_width_fraction = 0.4
+)
+
+#' Measure the legend before the base-graphics layout is created
+#'
+#' Computes the legend column width in inches from the rendered text so the
+#' legend title and labels always fit. The column grows with its contents up
+#' to `max_width_fraction` of the device width, and it is always kept below
+#' the device width so an absolute layout column cannot make `plot.new()`
+#' fail. Titles and labels wrap onto several lines inside that limit. All
+#' sizes are derived from `theme$text_size`, so the legend keeps the same
+#' physical proportions as the ggplot2 renderer regardless of frame size.
+#'
+#' A graphics device must be open because text is measured with
+#' [graphics::strwidth()].
+#'
+#' @param object A `cell_plot_built` object with a color mapping.
+#' @param text_cex Theme text size as a `cex` multiplier.
+#' @param device_width Device width in inches.
+#'
+#' @return A list describing the legend: `type`, `width` (inches), `unit`
+#' (inches per text-size unit), `title_lines`, `title_cex`, `label_cex`,
+#' `labels`, `label_lines` (wrapped label text, one character vector per
+#' label), and, for continuous scales, `fills`, `breaks`, and `limits`, or,
+#' for categorical scales, `colors`.
+#'
+#' @noRd
+.cell_base_legend_metrics <- function(object, text_cex, device_width) {
+  geometry <- .cell_base_legend_geometry
+  unit <- object$theme$text_size / 72
+  title_cex <- text_cex
+  label_cex <- text_cex * geometry$text_scale
+  margin <- geometry$margin * unit
+
+  metrics <- list(
+    type = object$color$type,
+    unit = unit,
+    title_cex = title_cex,
+    label_cex = label_cex
+  )
+  if (identical(object$color$type, "categorical")) {
+    metrics$labels <- as.character(object$color$limits)
+    metrics$colors <- unname(object$color$colors[object$color$limits])
+    key_width <- geometry$key * unit
+  } else {
+    legend_scale <- .cell_base_continuous_legend_scale(object$color)
+    metrics$fills <- legend_scale$fills
+    metrics$breaks <- legend_scale$breaks
+    metrics$labels <- legend_scale$labels
+    metrics$limits <- object$color$limits
+    key_width <- geometry$bar_width * unit
+  }
+
+  # The color bar or keys, their margins, and the gap before the labels.
+  # Labels wrap inside whatever remains of the column cap.
+  chrome <- margin + key_width + geometry$spacing * unit + margin
+  legend_limit <- .cell_base_legend_width_limit(
+    device_width = device_width,
+    preferred = geometry$max_width_fraction * device_width,
+    chrome = chrome
+  )
+  label_max <- max(legend_limit - chrome, 0)
+  metrics$label_lines <- lapply(metrics$labels, function(label) {
+    .cell_base_wrap_text(label, max_width = label_max, cex = label_cex)
+  })
+  label_width <- .cell_base_widest_line(metrics$label_lines, cex = label_cex)
+  body_width <- chrome + label_width
+
+  title <- .cell_plot_legend_title(object)
+  metrics$title_lines <- .cell_base_wrap_text(
+    title,
+    max_width = max(legend_limit - 2 * margin, 0),
+    cex = title_cex
+  )
+  title_width <- .cell_base_widest_line(list(metrics$title_lines), cex = title_cex)
+
+  metrics$width <- min(max(body_width, title_width + 2 * margin), legend_limit)
+  return(metrics)
+}
+
+#' Cap a legend column so it cannot consume the device
+#'
+#' Prefers `preferred` (a fraction of the device) and widens that up to the
+#' color-bar chrome when the bar itself needs more room. The result is always
+#' strictly below the device width, because an absolute `layout()` column
+#' wider than the device makes `plot.new()` fail.
+#'
+#' @param device_width Device width in inches.
+#' @param preferred Preferred legend width in inches.
+#' @param chrome Width of the legend bar or keys and their margins, in inches.
+#'
+#' @return Legend column limit in inches.
+#'
+#' @noRd
+.cell_base_legend_width_limit <- function(device_width, preferred, chrome) {
+  if (!is.finite(device_width) || device_width <= 0) {
+    return(0)
+  }
+  hard_cap <- 0.9 * device_width
+  limit <- min(max(preferred, chrome), hard_cap)
+  return(max(limit, 0))
+}
+
+#' Widest rendered line among wrapped legend text
+#'
+#' @param line_groups A list of character vectors, one vector per label.
+#' @param cex Text size as a `cex` multiplier.
+#'
+#' @return Width in inches, or `0` when there is no text.
+#'
+#' @noRd
+.cell_base_widest_line <- function(line_groups, cex) {
+  widths <- vapply(line_groups, function(lines) {
+    if (length(lines) == 0L) {
+      return(0)
+    }
+    max(.cell_base_text_width(lines, cex = cex))
+  }, numeric(1))
+  if (length(widths) == 0L) {
+    return(0)
+  }
+  return(max(widths))
+}
+
+#' Measure rendered text width in inches
+#'
+#' @param labels Character labels.
+#' @param cex Text size as a `cex` multiplier.
+#'
+#' @return Text widths in inches, one per label.
+#'
+#' @noRd
+.cell_base_text_width <- function(labels, cex) {
+  return(graphics::strwidth(labels, units = "inches", cex = cex))
+}
+
+#' Wrap text to a maximum rendered width
+#'
+#' Breaks text at whitespace first. A word that is wider than `max_width` on
+#' its own is split between characters and each piece is placed on its own
+#' line so every line fits.
+#'
+#' @param text A single character string.
+#' @param max_width Maximum line width in inches.
+#' @param cex Text size as a `cex` multiplier.
+#'
+#' @return A character vector with one element per line. Empty text yields an
+#' empty vector.
+#'
+#' @noRd
+.cell_base_wrap_text <- function(text, max_width, cex) {
+  text <- trimws(as.character(text %||% ""))
+  if (!nzchar(text)) {
+    return(character())
+  }
+  words <- strsplit(text, "\\s+")[[1]]
+
+  lines <- character()
+  current <- ""
+  for (word in words) {
+    if (.cell_base_text_width(word, cex = cex) > max_width) {
+      if (nzchar(current)) {
+        lines <- c(lines, current)
+        current <- ""
+      }
+      lines <- c(
+        lines,
+        .cell_base_break_word(word, max_width = max_width, cex = cex)
+      )
+      next
+    }
+    candidate <- if (nzchar(current)) paste(current, word) else word
+    if (nzchar(current) && .cell_base_text_width(candidate, cex = cex) > max_width) {
+      lines <- c(lines, current)
+      current <- word
+    } else {
+      current <- candidate
+    }
+  }
+  if (nzchar(current)) {
+    lines <- c(lines, current)
+  }
+  return(lines)
+}
+
+#' Split one word so each piece fits a maximum rendered width
+#'
+#' @param word A single word without whitespace.
+#' @param max_width Maximum piece width in inches.
+#' @param cex Text size as a `cex` multiplier.
+#'
+#' @return A character vector of word pieces.
+#'
+#' @noRd
+.cell_base_break_word <- function(word, max_width, cex) {
+  glyphs <- strsplit(word, "")[[1]]
+  pieces <- character()
+  current <- ""
+  for (glyph in glyphs) {
+    candidate <- paste0(current, glyph)
+    fits <- .cell_base_text_width(candidate, cex = cex) <= max_width
+    if (nzchar(current) && !fits) {
+      pieces <- c(pieces, current)
+      current <- glyph
+    } else {
+      current <- candidate
+    }
+  }
+  return(c(pieces, current))
+}
+
 #' Draw a categorical or continuous legend
 #'
+#' Draws the legend in a coordinate system measured in inches so the title,
+#' keys, color bar, and labels match the sizes measured by
+#' `.cell_base_legend_metrics()`. The legend block is left-aligned and
+#' vertically centered in the legend column, like a ggplot2 legend placed to
+#' the right of the panels.
+#'
 #' @param object A `cell_plot_built` object.
-#' @param text_cex Text size as a `cex` multiplier.
+#' @param metrics Legend measurements from `.cell_base_legend_metrics()`.
 #'
 #' @return `NULL`, invisibly.
 #'
 #' @noRd
-.cell_base_legend <- function(object, text_cex) {
-  graphics::par(mar = c(1, 0.4, 1, 0.8))
+.cell_base_legend <- function(object, metrics) {
+  geometry <- .cell_base_legend_geometry
+  unit <- metrics$unit
+  margin <- geometry$margin * unit
+  spacing <- geometry$spacing * unit
+  line_height <- geometry$line_height * unit
+  text_color <- object$theme$text_color
+
+  graphics::par(mar = c(0, 0, 0, 0), xaxs = "i", yaxs = "i")
   graphics::plot.new()
+  panel <- graphics::par("pin")
+  graphics::plot.window(xlim = c(0, panel[[1]]), ylim = c(0, panel[[2]]))
   graphics::rect(
     0,
     0,
-    1,
-    1,
+    panel[[1]],
+    panel[[2]],
     col = object$theme$background_color,
     border = NA
   )
-  if (identical(object$color$type, "categorical")) {
-    graphics::legend(
-      "center",
-      legend = object$color$limits,
-      pch = 16,
-      col = unname(object$color$colors[object$color$limits]),
-      bty = "n",
-      title = .cell_plot_legend_title(object),
-      text.col = object$theme$text_color,
-      title.col = object$theme$text_color,
-      cex = text_cex,
+
+  # The title may not consume the whole column: keep at least two text lines
+  # of height for the keys or color bar and truncate the title if needed.
+  min_body <- 2 * unit
+  title_lines <- .cell_base_fit_title_lines(
+    metrics$title_lines,
+    max_lines = floor(
+      (panel[[2]] - 2 * margin - spacing - min_body) / line_height
+    )
+  )
+  title_height <- length(title_lines) * line_height
+  title_gap <- if (title_height > 0) spacing else 0
+  available <- max(panel[[2]] - 2 * margin - title_height - title_gap, 0)
+
+  label_line <- geometry$line_height * geometry$text_scale * unit
+  label_lines_n <- pmax(1L, lengths(metrics$label_lines))
+  if (identical(metrics$type, "categorical")) {
+    key <- geometry$key * unit
+    n_keys <- length(metrics$labels)
+    rows <- .cell_base_legend_rows(
+      n_lines = label_lines_n,
+      key = key,
+      label_line = label_line,
+      spacing = spacing,
+      available = available
+    )
+    body_height <- sum(rows$heights)
+  } else {
+    body_height <- min(geometry$bar_height * unit, available)
+  }
+
+  block_height <- title_height + title_gap + body_height
+  top <- min((panel[[2]] + block_height) / 2, panel[[2]] - margin)
+  left <- margin
+
+  if (title_height > 0) {
+    graphics::text(
+      left,
+      top - (seq_along(title_lines) - 0.5) * line_height,
+      labels = title_lines,
+      adj = c(0, 0.5),
+      cex = metrics$title_cex,
+      col = text_color,
       xpd = TRUE
+    )
+  }
+  body_top <- top - title_height - title_gap
+
+  if (identical(metrics$type, "categorical")) {
+    key <- key * rows$scale
+    centers <- body_top - cumsum(rows$heights) + rows$heights / 2
+    graphics::points(
+      rep(left + key / 2, n_keys),
+      centers,
+      pch = 16,
+      col = metrics$colors,
+      cex = .cell_relative_size_to_cex(0.5 * key * 25.4),
+      xpd = TRUE
+    )
+    .cell_base_legend_text(
+      x = left + key + spacing * rows$scale,
+      centers = centers,
+      label_lines = metrics$label_lines,
+      line_height = label_line * rows$scale,
+      cex = metrics$label_cex * rows$scale,
+      color = text_color
     )
     return(invisible(NULL))
   }
+  if (body_height <= 0) {
+    return(invisible(NULL))
+  }
 
-  legend_scale <- .cell_base_continuous_legend_scale(object$color)
-  n <- 80L
-  ys <- seq(0.15, 0.85, length.out = n)
+  bar_width <- geometry$bar_width * unit
+  bar_bottom <- body_top - body_height
+  n_fills <- length(metrics$fills)
+  edges <- seq(bar_bottom, body_top, length.out = n_fills + 1L)
   graphics::rect(
-    xleft = 0.2,
-    ybottom = ys[-n],
-    xright = 0.45,
-    ytop = ys[-1],
-    col = legend_scale$fills[-n],
+    xleft = left,
+    ybottom = edges[-(n_fills + 1L)],
+    xright = left + bar_width,
+    ytop = edges[-1L],
+    col = metrics$fills,
     border = NA,
     xpd = TRUE
   )
-  graphics::text(
-    0.55,
-    c(0.15, 0.85),
-    labels = prettyNum(legend_scale$labels),
-    adj = 0,
-    cex = text_cex,
-    col = object$theme$text_color,
+
+  break_y <- scales::rescale(
+    metrics$breaks,
+    from = metrics$limits,
+    to = c(bar_bottom, body_top)
+  )
+  keep <- .cell_base_legend_label_spacing(
+    break_y,
+    min_spacing = max(label_lines_n) * label_line
+  )
+  break_y <- break_y[keep]
+  label_lines <- metrics$label_lines[keep]
+  tick_length <- geometry$tick_length * bar_width
+  graphics::segments(
+    x0 = c(rep(left, length(break_y)), rep(left + bar_width - tick_length, length(break_y))),
+    y0 = c(break_y, break_y),
+    x1 = c(rep(left + tick_length, length(break_y)), rep(left + bar_width, length(break_y))),
+    y1 = c(break_y, break_y),
+    col = "white",
+    lwd = 0.5 * metrics$label_cex,
     xpd = TRUE
   )
-  graphics::text(
-    0.5,
-    0.95,
-    labels = .cell_plot_legend_title(object),
-    cex = text_cex,
-    col = object$theme$text_color,
-    xpd = TRUE
+  .cell_base_legend_text(
+    x = left + bar_width + spacing,
+    centers = break_y,
+    label_lines = label_lines,
+    line_height = label_line,
+    cex = metrics$label_cex,
+    color = text_color
   )
   return(invisible(NULL))
 }
 
+#' Limit legend title lines to the space above the legend body
+#'
+#' @param title_lines Wrapped title lines.
+#' @param max_lines Maximum number of lines that fit. Non-positive values
+#' remove the title.
+#'
+#' @return The title lines that fit. When lines are dropped, the last kept
+#' line ends with an ellipsis.
+#'
+#' @noRd
+.cell_base_fit_title_lines <- function(title_lines, max_lines) {
+  n_lines <- length(title_lines)
+  if (n_lines <= max_lines) {
+    return(title_lines)
+  }
+  if (max_lines < 1) {
+    return(character())
+  }
+  kept <- title_lines[seq_len(max_lines)]
+  kept[[max_lines]] <- paste0(kept[[max_lines]], "\u2026")
+  return(kept)
+}
+
+#' Size categorical legend rows so they never overlap
+#'
+#' Each row is as tall as its key or its wrapped label, whichever is larger,
+#' plus the key spacing. When the rows do not fit the available height, the
+#' key, label text, and spacing are scaled down together, to at most 60% of
+#' their size, so rows stay distinct instead of overlapping. Rows that still
+#' do not fit overflow the column at the bottom.
+#'
+#' @param n_lines Number of wrapped lines per label.
+#' @param key Key size in inches.
+#' @param label_line Label line height in inches.
+#' @param spacing Spacing between rows in inches.
+#' @param available Height available for the rows in inches.
+#'
+#' @return A list with the applied `scale` and the row `heights` in inches.
+#'
+#' @noRd
+.cell_base_legend_rows <- function(
+  n_lines,
+  key,
+  label_line,
+  spacing,
+  available
+) {
+  if (length(n_lines) == 0L) {
+    return(list(scale = 1, heights = numeric()))
+  }
+  heights <- pmax(key, n_lines * label_line) + spacing
+  needed <- sum(heights)
+  scale <- 1
+  if (needed > available && available > 0) {
+    scale <- max(available / needed, 0.6)
+  }
+  return(list(scale = scale, heights = heights * scale))
+}
+
+#' Draw wrapped legend labels centered on keys or breaks
+#'
+#' Each label may occupy several lines. The lines of one label are stacked
+#' around its center so a wrapped label stays aligned with its key or tick.
+#'
+#' @param x Left edge of the label text, in inches.
+#' @param centers Vertical center of each label, in inches.
+#' @param label_lines A list of character vectors, one vector per label.
+#' @param line_height Distance between lines of one label, in inches.
+#' @param cex Text size as a `cex` multiplier.
+#' @param color Text color.
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @noRd
+.cell_base_legend_text <- function(
+  x,
+  centers,
+  label_lines,
+  line_height,
+  cex,
+  color
+) {
+  for (i in seq_along(centers)) {
+    lines <- label_lines[[i]]
+    n_lines <- length(lines)
+    if (n_lines == 0L) {
+      next
+    }
+    ys <- centers[[i]] +
+      ((n_lines + 1) / 2 - seq_len(n_lines)) * line_height
+    graphics::text(
+      x,
+      ys,
+      labels = lines,
+      adj = c(0, 0.5),
+      cex = cex,
+      col = color,
+      xpd = TRUE
+    )
+  }
+  return(invisible(NULL))
+}
+
+#' Select legend breaks whose labels do not overlap
+#'
+#' Walks the break positions from the bottom of the color bar upwards and
+#' drops any break closer than `min_spacing` to the previous kept break. The
+#' lowest break is always kept.
+#'
+#' @param positions Increasing numeric break positions in inches.
+#' @param min_spacing Minimum distance between labelled breaks in inches.
+#'
+#' @return A logical vector marking the breaks to label.
+#'
+#' @noRd
+.cell_base_legend_label_spacing <- function(positions, min_spacing) {
+  keep <- rep(TRUE, length(positions))
+  if (length(positions) < 2L) {
+    return(keep)
+  }
+  last_kept <- positions[[1]]
+  for (i in seq_along(positions)[-1L]) {
+    if (positions[[i]] - last_kept < min_spacing) {
+      keep[[i]] <- FALSE
+    } else {
+      last_kept <- positions[[i]]
+    }
+  }
+  return(keep)
+}
+
 #' Build a continuous base-graphics legend scale
 #'
-#' Orders colors and endpoint labels from low at the bottom to high at the top,
-#' matching the ggplot2 color bar.
+#' Orders colors from low at the bottom to high at the top and places labelled
+#' breaks the same way as the ggplot2 color bar: breaks come from
+#' [scales::extended_breaks()], breaks outside the scale limits are dropped,
+#' and labels use the default ggplot2 number formatting.
 #'
 #' @param color_scale A built continuous color scale.
 #' @param n Number of colors in the legend.
 #'
-#' @return A list containing `fills` and endpoint `labels`.
+#' @return A list containing `fills`, numeric `breaks`, and character
+#' `labels`.
 #'
 #' @noRd
 .cell_base_continuous_legend_scale <- function(color_scale, n = 80L) {
   palette <- .cell_colors_to_hex(unname(color_scale$colors))
   fills <- scales::gradient_n_pal(palette)(seq(0, 1, length.out = n))
-  return(list(fills = fills, labels = color_scale$limits))
+  breaks <- .cell_base_legend_breaks(color_scale$limits)
+  return(list(
+    fills = fills,
+    breaks = breaks,
+    labels = .cell_base_legend_labels(breaks)
+  ))
+}
+
+#' Choose legend breaks within continuous color limits
+#'
+#' @param limits Numeric scale limits of length two.
+#'
+#' @return Numeric breaks inside `limits`. When no regular break falls inside
+#' the limits, the limits themselves are returned.
+#'
+#' @noRd
+.cell_base_legend_breaks <- function(limits) {
+  limits <- range(limits)
+  breaks <- scales::extended_breaks()(limits)
+  breaks <- unique(
+    breaks[is.finite(breaks) & breaks >= limits[1] & breaks <= limits[2]]
+  )
+  if (length(breaks) == 0L) {
+    breaks <- unique(limits)
+  }
+  return(breaks)
+}
+
+#' Format legend break labels like ggplot2
+#'
+#' @param breaks Numeric breaks.
+#'
+#' @return Character labels with a shared number of decimals.
+#'
+#' @noRd
+.cell_base_legend_labels <- function(breaks) {
+  return(format(breaks, trim = TRUE, justify = "left"))
 }
