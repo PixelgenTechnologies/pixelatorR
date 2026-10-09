@@ -793,10 +793,10 @@ cell_annotation <- function(
 #' Add rotating coordinates to a cell plot
 #'
 #' Records rotation geometry for an animation renderer. This sets a rotation
-#' sequence rather than a single static view. The number of frames belongs to
-#' [cell_plot_animate()], not this modifier. Printed ggplot and Plotly views keep
-#' the unrotated coordinates. The default axis is `"y"`, which spins the cell
-#' left to right on screen.
+#' sequence rather than a single static view. The number of frames, and whether
+#' the animation returns through them, belong to [cell_plot_animate()], not this
+#' modifier. Printed ggplot and Plotly views keep the unrotated coordinates.
+#' The default axis is `"y"`, which spins the cell left to right on screen.
 #'
 #' @param object A `cell_plot` recipe.
 #' @param axis Axis around which coordinates are rotated. Use `"x"`, `"y"`, or
@@ -804,7 +804,6 @@ cell_annotation <- function(
 #' axis. Numeric axes are normalized before they are stored.
 #' @param max_degree Maximum rotation angle from -360 to 360 degrees. Positive
 #' angles follow the right-hand rule; use a negative angle to reverse direction.
-#' @param boomerang Whether the animation returns through the frame sequence.
 #' @param origin Rotation origin. `"origo"` uses `(0, 0, 0)`. `"centroid"`
 #' calculates the centroid independently within each [cell_grid()] panel.
 #'
@@ -831,7 +830,6 @@ cell_coord_rotate <- function(
   object,
   axis = "y",
   max_degree = 360,
-  boomerang = FALSE,
   origin = c("origo", "centroid")
 ) {
   axis <- if (is.character(axis)) {
@@ -849,11 +847,6 @@ cell_coord_rotate <- function(
     limits = c(-360, 360),
     arg = "max_degree"
   )
-  assert_single_value(
-    boomerang,
-    type = "bool",
-    arg = "boomerang"
-  )
   if (!is.finite(max_degree)) {
     cli::cli_abort(c("i" = "{.arg max_degree} must be finite."))
   }
@@ -863,7 +856,6 @@ cell_coord_rotate <- function(
     type = "rotate",
     axis = axis,
     max_degree = max_degree,
-    boomerang = boomerang,
     origin = origin
   )
   return(.replace_cell_plot_field(object, "coord", specification))

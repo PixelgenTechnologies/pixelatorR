@@ -1,22 +1,21 @@
 test_that("Cell plot animation geometry works as expected", {
-  specification <- list(
-    max_degree = 360,
-    boomerang = FALSE
-  )
+  specification <- list(max_degree = 360)
   expect_equal(
     list(
       full_turn = .cell_animation_angles(specification, frames = 4),
       partial_turn = .cell_animation_angles(
-        list(max_degree = -180, boomerang = FALSE),
+        list(max_degree = -180),
         frames = 4
       ),
       even_boomerang = .cell_animation_angles(
-        list(max_degree = 180, boomerang = TRUE),
-        frames = 6
+        list(max_degree = 180),
+        frames = 6,
+        boomerang = TRUE
       ),
       odd_boomerang = .cell_animation_angles(
-        list(max_degree = 180, boomerang = TRUE),
-        frames = 5
+        list(max_degree = 180),
+        frames = 5,
+        boomerang = TRUE
       ),
       single_frame = .cell_animation_angles(specification, frames = 1)
     ),
@@ -150,6 +149,79 @@ test_that("Cell plot animation geometry works as expected", {
       limits = list(x = c(-1, 1), y = c(0, 0))
     ),
     tolerance = 1e-10
+  )
+})
+
+test_that("Odd boomerang frame counts are raised to the next even number", {
+  expect_equal(
+    list(
+      even = .cell_animation_resolve_frames(6L, boomerang = TRUE),
+      forward = .cell_animation_resolve_frames(5L, boomerang = FALSE)
+    ),
+    list(even = 6L, forward = 5L)
+  )
+  raised <- expect_warning(
+    .cell_animation_resolve_frames(5L, boomerang = TRUE),
+    "even number of frames"
+  )
+  angles <- .cell_animation_angles(
+    list(max_degree = 180),
+    frames = raised,
+    boomerang = TRUE
+  )
+  expect_equal(
+    list(
+      frames = raised,
+      angles = angles,
+      sources = .cell_animation_frame_sources(angles)
+    ),
+    list(
+      frames = 6L,
+      angles = c(0, 60, 120, 180, 120, 60),
+      sources = c(1L, 2L, 3L, 4L, 3L, 2L)
+    )
+  )
+})
+
+test_that("Boomerang frames reuse earlier renders", {
+  uneven_degree <- .cell_animation_angles(
+    list(max_degree = 1),
+    frames = 6,
+    boomerang = TRUE
+  )
+  odd_degree <- .cell_animation_angles(
+    list(max_degree = 180),
+    frames = 5,
+    boomerang = TRUE
+  )
+  expect_identical(
+    list(
+      return_trip = uneven_degree[5:6],
+      even_sources = .cell_animation_frame_sources(uneven_degree),
+      odd_sources = .cell_animation_frame_sources(odd_degree)
+    ),
+    list(
+      return_trip = uneven_degree[3:2],
+      even_sources = c(1L, 2L, 3L, 4L, 3L, 2L),
+      odd_sources = c(1L, 2L, 3L, 4L, 5L)
+    )
+  )
+
+  frame_dir <- fs::file_temp("cell_plot_frames")
+  fs::dir_create(frame_dir)
+  on.exit(fs::dir_delete(frame_dir), add = TRUE)
+  frame_files <- fs::path(
+    frame_dir,
+    sprintf("frame_%04d.png", seq_along(uneven_degree))
+  )
+  frame_sources <- .cell_animation_frame_sources(uneven_degree)
+  for (i in which(frame_sources == seq_along(frame_sources))) {
+    writeLines(as.character(i), frame_files[[i]])
+  }
+  .cell_animation_copy_repeated_frames(frame_sources, frame_files)
+  expect_equal(
+    vapply(frame_files, readLines, character(1)),
+    c("1", "2", "3", "4", "3", "2")
   )
 })
 
