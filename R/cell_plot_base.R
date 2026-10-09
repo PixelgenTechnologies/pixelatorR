@@ -377,8 +377,10 @@
 #' Measure the legend before the base-graphics layout is created
 #'
 #' Computes the legend column width in inches from the rendered text so the
-#' legend title and labels always fit. The title wraps onto several lines when
-#' it would otherwise exceed `max_width_fraction` of the device width. All
+#' legend title and labels always fit. The column grows with its contents up
+#' to `max_width_fraction` of the device width, and it is always kept below
+#' the device width so an absolute layout column cannot make `plot.new()`
+#' fail. Titles and labels wrap onto several lines inside that limit. All
 #' sizes are derived from `theme$text_size`, so the legend keeps the same
 #' physical proportions as the ggplot2 renderer regardless of frame size.
 #'
@@ -391,7 +393,8 @@
 #'
 #' @return A list describing the legend: `type`, `width` (inches), `unit`
 #' (inches per text-size unit), `title_lines`, `title_cex`, `label_cex`,
-#' `labels`, and, for continuous scales, `fills`, `breaks`, and `limits`, or,
+#' `labels`, `label_lines` (wrapped label text, one character vector per
+#' label), and, for continuous scales, `fills`, `breaks`, and `limits`, or,
 #' for categorical scales, `colors`.
 #'
 #' @noRd
@@ -421,29 +424,75 @@
     key_width <- geometry$bar_width * unit
   }
 
-  label_width <- if (length(metrics$labels) == 0L) {
-    0
-  } else {
-    max(.cell_base_text_width(metrics$labels, cex = label_cex))
-  }
-  body_width <- margin + key_width + geometry$spacing * unit + label_width +
-    margin
+  # The color bar or keys, their margins, and the gap before the labels.
+  # Labels wrap inside whatever remains of the column cap.
+  chrome <- margin + key_width + geometry$spacing * unit + margin
+  legend_limit <- .cell_base_legend_width_limit(
+    device_width = device_width,
+    preferred = geometry$max_width_fraction * device_width,
+    chrome = chrome
+  )
+  label_max <- max(legend_limit - chrome, 0)
+  metrics$label_lines <- lapply(metrics$labels, function(label) {
+    .cell_base_wrap_text(label, max_width = label_max, cex = label_cex)
+  })
+  label_width <- .cell_base_widest_line(metrics$label_lines, cex = label_cex)
+  body_width <- chrome + label_width
 
   title <- .cell_plot_legend_title(object)
-  max_width <- max(geometry$max_width_fraction * device_width, body_width)
   metrics$title_lines <- .cell_base_wrap_text(
     title,
-    max_width = max_width - 2 * margin,
+    max_width = max(legend_limit - 2 * margin, 0),
     cex = title_cex
   )
-  title_width <- if (length(metrics$title_lines) == 0L) {
-    0
-  } else {
-    max(.cell_base_text_width(metrics$title_lines, cex = title_cex))
-  }
+  title_width <- .cell_base_widest_line(list(metrics$title_lines), cex = title_cex)
 
-  metrics$width <- max(body_width, title_width + 2 * margin)
+  metrics$width <- min(max(body_width, title_width + 2 * margin), legend_limit)
   return(metrics)
+}
+
+#' Cap a legend column so it cannot consume the device
+#'
+#' Prefers `preferred` (a fraction of the device) and widens that up to the
+#' color-bar chrome when the bar itself needs more room. The result is always
+#' strictly below the device width, because an absolute `layout()` column
+#' wider than the device makes `plot.new()` fail.
+#'
+#' @param device_width Device width in inches.
+#' @param preferred Preferred legend width in inches.
+#' @param chrome Width of the legend bar or keys and their margins, in inches.
+#'
+#' @return Legend column limit in inches.
+#'
+#' @noRd
+.cell_base_legend_width_limit <- function(device_width, preferred, chrome) {
+  if (!is.finite(device_width) || device_width <= 0) {
+    return(0)
+  }
+  hard_cap <- 0.9 * device_width
+  limit <- min(max(preferred, chrome), hard_cap)
+  return(max(limit, 0))
+}
+
+#' Widest rendered line among wrapped legend text
+#'
+#' @param line_groups A list of character vectors, one vector per label.
+#' @param cex Text size as a `cex` multiplier.
+#'
+#' @return Width in inches, or `0` when there is no text.
+#'
+#' @noRd
+.cell_base_widest_line <- function(line_groups, cex) {
+  widths <- vapply(line_groups, function(lines) {
+    if (length(lines) == 0L) {
+      return(0)
+    }
+    max(.cell_base_text_width(lines, cex = cex))
+  }, numeric(1))
+  if (length(widths) == 0L) {
+    return(0)
+  }
+  return(max(widths))
 }
 
 #' Measure rendered text width in inches
@@ -572,10 +621,15 @@
   title_gap <- if (title_height > 0) spacing else 0
   available <- panel[[2]] - 2 * margin - title_height - title_gap
 
+  label_line <- geometry$line_height * geometry$text_scale * unit
+  max_label_lines <- 1L
+  if (length(metrics$label_lines) > 0L) {
+    max_label_lines <- max(1L, lengths(metrics$label_lines))
+  }
   if (identical(metrics$type, "categorical")) {
     key <- geometry$key * unit
     n_keys <- length(metrics$labels)
-    row_height <- key + spacing
+    row_height <- max(key, max_label_lines * label_line) + spacing
     if (n_keys > 0 && n_keys * row_height > available) {
       row_height <- max(available / n_keys, metrics$label_cex * 12 / 72)
     }
@@ -612,14 +666,13 @@
       cex = .cell_relative_size_to_cex(0.5 * key * 25.4),
       xpd = TRUE
     )
-    graphics::text(
-      left + key + spacing,
-      centers,
-      labels = metrics$labels,
-      adj = c(0, 0.5),
+    .cell_base_legend_text(
+      x = left + key + spacing,
+      centers = centers,
+      label_lines = metrics$label_lines,
+      line_height = label_line,
       cex = metrics$label_cex,
-      col = text_color,
-      xpd = TRUE
+      color = text_color
     )
     return(invisible(NULL))
   }
@@ -645,10 +698,10 @@
   )
   keep <- .cell_base_legend_label_spacing(
     break_y,
-    min_spacing = geometry$line_height * geometry$text_scale * unit
+    min_spacing = max_label_lines * label_line
   )
   break_y <- break_y[keep]
-  labels <- metrics$labels[keep]
+  label_lines <- metrics$label_lines[keep]
   tick_length <- geometry$tick_length * bar_width
   graphics::segments(
     x0 = c(rep(left, length(break_y)), rep(left + bar_width - tick_length, length(break_y))),
@@ -659,15 +712,58 @@
     lwd = 0.5 * metrics$label_cex,
     xpd = TRUE
   )
-  graphics::text(
-    left + bar_width + spacing,
-    break_y,
-    labels = labels,
-    adj = c(0, 0.5),
+  .cell_base_legend_text(
+    x = left + bar_width + spacing,
+    centers = break_y,
+    label_lines = label_lines,
+    line_height = label_line,
     cex = metrics$label_cex,
-    col = text_color,
-    xpd = TRUE
+    color = text_color
   )
+  return(invisible(NULL))
+}
+
+#' Draw wrapped legend labels centered on keys or breaks
+#'
+#' Each label may occupy several lines. The lines of one label are stacked
+#' around its center so a wrapped label stays aligned with its key or tick.
+#'
+#' @param x Left edge of the label text, in inches.
+#' @param centers Vertical center of each label, in inches.
+#' @param label_lines A list of character vectors, one vector per label.
+#' @param line_height Distance between lines of one label, in inches.
+#' @param cex Text size as a `cex` multiplier.
+#' @param color Text color.
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @noRd
+.cell_base_legend_text <- function(
+  x,
+  centers,
+  label_lines,
+  line_height,
+  cex,
+  color
+) {
+  for (i in seq_along(centers)) {
+    lines <- label_lines[[i]]
+    n_lines <- length(lines)
+    if (n_lines == 0L) {
+      next
+    }
+    ys <- centers[[i]] +
+      ((n_lines + 1) / 2 - seq_len(n_lines)) * line_height
+    graphics::text(
+      x,
+      ys,
+      labels = lines,
+      adj = c(0, 0.5),
+      cex = cex,
+      col = color,
+      xpd = TRUE
+    )
+  }
   return(invisible(NULL))
 }
 

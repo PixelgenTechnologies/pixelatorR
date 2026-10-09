@@ -39,7 +39,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   that match the ggplot2 renderer. Continuous legends show regularly spaced,
   formatted breaks instead of only the raw limits, the color bar has a fixed
   physical size, and the legend column is sized from the rendered text so the
-  title and labels are never clipped. Long titles wrap onto several lines.
+  title and labels are never clipped. Long titles and labels wrap onto
+  several lines, and the legend column is capped below the device width so a
+  long label cannot make frame rendering fail.
   Text and point sizes in base frames no longer shrink with the number of
   panels.
 

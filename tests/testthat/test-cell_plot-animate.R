@@ -511,6 +511,53 @@ test_that("Base legend layout works as expected", {
   grDevices::dev.off()
 })
 
+test_that("A long legend label stays inside the device", {
+  expect_equal(
+    .cell_base_legend_width_limit(device_width = 0, preferred = 1, chrome = 1),
+    0
+  )
+  expect_equal(
+    .cell_base_legend_width_limit(device_width = 2, preferred = 0.5, chrome = 0.4),
+    0.5
+  )
+  expect_equal(
+    .cell_base_legend_width_limit(device_width = 2, preferred = 0.5, chrome = 1.2),
+    1.2
+  )
+  expect_equal(
+    .cell_base_legend_width_limit(device_width = 2, preferred = 3, chrome = 3),
+    1.8
+  )
+
+  long_label <- paste(
+    rep("membrane-proximal-signaling-cluster", 3),
+    collapse = "-"
+  )
+  plot_data <- tibble::tibble(
+    x = c(-1, 0, 1),
+    y = c(0, 1, 0),
+    z = 0,
+    group = c(long_label, "short", "other")
+  )
+  built <- cell_plot(plot_data, color = group) |>
+    build_cell_plot()
+  png_file <- tempfile(fileext = ".png")
+  grDevices::png(png_file, width = 160, height = 160, res = 72)
+  on.exit(unlink(png_file), add = TRUE)
+  device_width <- graphics::par("din")[[1]]
+  metrics <- .cell_base_legend_metrics(
+    built,
+    text_cex = 11 / 12,
+    device_width = device_width
+  )
+  expect_lt(metrics$width, device_width)
+  expect_true(any(lengths(metrics$label_lines) > 1L))
+  expect_no_error(
+    .render_cell_plot_base(built, limits = list(x = c(-2, 2), y = c(-2, 2)))
+  )
+  grDevices::dev.off()
+})
+
 test_that("Locked illumination follows rotated frame geometry", {
   skip_if_not_installed("FNN")
 
