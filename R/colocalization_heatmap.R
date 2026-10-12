@@ -438,6 +438,12 @@ ColocalizationHeatmap <- function(
       column_to_rownames(marker1_col) %>%
       as.matrix()
 
+    # When symmetrised, ensure columns match the row order so that plot_data_wide
+    # is a symmetric matrix, preventing discrepancies in row vs column dendrograms
+    if (symmetrise) {
+      plot_data_wide <- plot_data_wide[, rownames(plot_data_wide), drop = FALSE]
+    }
+
     # Cluster rows for the dots method
     if (cluster_rows && (type == "dots")) {
       rows_clust <- dist(plot_data_wide, method = clustering_distance_rows) %>%

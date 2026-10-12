@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- Fixed an issue in `ColocalizationHeatmap()` with `type = "tiles"` and
+  `symmetrise = TRUE` where columns and rows in the wide matrix had mismatched
+  initial ordering, causing row and column dendrograms to resolve ties
+  differently and yield slightly different cluster orderings.
 - `ColocalizationHeatmap()` now uses vectorized `layer_fun` instead of `cell_fun`
   for `ComplexHeatmap::pheatmap` tile highlighting, eliminating performance
   warnings when plotting heatmaps with >100 rows or columns.
