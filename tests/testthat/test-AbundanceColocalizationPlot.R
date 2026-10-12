@@ -86,18 +86,22 @@ for (assay_version in c("v3", "v5")) {
       coloc_score = "ColocScoreNotHere"
     )))
 
+    lifecycle::expect_deprecated(expect_error(AbundanceColocalizationPlot(seur_obj,
+      markers_x = c("CD20", "CD19"),
+      markers_y = c("CD2", "CD5"),
+      pt_size = c(1, 2, 3)
+    )))
+
     if (assay_version == "v5") {
       # Seurat also warns about the missing layer. Quiet the deprecation
       # signal so this expectation still checks that layer warning.
-      withr::with_options(
-        list(lifecycle_verbosity = "quiet"),
-        expect_warning(
-          expect_error(AbundanceColocalizationPlot(seur_obj,
-            markers_x = c("CD20", "CD19"),
-            markers_y = c("CD2", "CD5"),
-            layer = "LayerNotHere"
-          ))
-        )
+      rlang::local_options(lifecycle_verbosity = "quiet")
+      expect_warning(
+        expect_error(AbundanceColocalizationPlot(seur_obj,
+          markers_x = c("CD20", "CD19"),
+          markers_y = c("CD2", "CD5"),
+          layer = "LayerNotHere"
+        ))
       )
     } else {
       lifecycle::expect_deprecated(expect_error(AbundanceColocalizationPlot(seur_obj,
@@ -106,11 +110,5 @@ for (assay_version in c("v3", "v5")) {
         layer = "LayerNotHere"
       )))
     }
-
-    lifecycle::expect_deprecated(expect_error(AbundanceColocalizationPlot(seur_obj,
-      markers_x = c("CD20", "CD19"),
-      markers_y = c("CD2", "CD5"),
-      pt_size = c(1, 2, 3)
-    )))
   })
 }
