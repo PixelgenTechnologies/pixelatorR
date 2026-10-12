@@ -108,6 +108,27 @@ PixelDB <- R6Class(
           )
         )
       }
+
+      # Check if the PXL file is marked as empty/null
+      tables <- DBI::dbListTables(private$con)
+      if ("metadata" %in% tables) {
+        meta_query <- try(DBI::dbGetQuery(private$con, "SELECT value FROM metadata"), silent = TRUE)
+        if (!inherits(meta_query, "try-error") && nrow(meta_query) > 0 && nzchar(meta_query$value[1])) {
+          meta_parsed <- try(jsonlite::fromJSON(meta_query$value[1]), silent = TRUE)
+          if (!inherits(meta_parsed, "try-error") && isTRUE(meta_parsed[["null"]])) {
+            reason <- meta_parsed[["null_reason"]]
+            self$close()
+            # Leave `{reason}` for cli to substitute. Glue-formatting it first
+            # would make cli parse braces inside the reason and throw a
+            # different error than pixeldb_null_error.
+            msg <- c("x" = "The PXL file is empty (marked as null).")
+            if (is.character(reason) && length(reason) == 1L && !is.na(reason) && nzchar(reason)) {
+              msg <- c(msg, "i" = "Reason: {reason}")
+            }
+            cli::cli_abort(msg, class = "pixeldb_null_error")
+          }
+        }
+      }
     },
     #' @description
     #' Show information about tables in the PXL file
