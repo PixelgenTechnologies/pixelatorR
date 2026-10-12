@@ -31,6 +31,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   avoid bloating the `meta.data` slot. Detailed meta data can be loaded by setting 
   `detailed_meta_data = TRUE`.
 
+### Deprecated
+
+- `AbundanceColocalizationPlot()` is deprecated and will be removed in a
+  future release. It still works, but calling it now signals a `lifecycle`
+  deprecation warning once per R session.
+
 ### Fixes
 
 - `ColocalizationHeatmap()` now uses vectorized `layer_fun` instead of `cell_fun`
