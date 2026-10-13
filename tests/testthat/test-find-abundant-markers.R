@@ -80,6 +80,7 @@ test_that("FindAbundantMarkers works as expected", {
     data.frame(
       marker = c("HLA-ABC", "CD45", "mIgG1"),
       positive_fraction = c(1, 1, 0.2),
+      median_cpm = c(45468.3467435859, 53433.0962641779, 91.531086245166),
       isotype_median_cpm = c(273.2655229998482, 273.2655229998482, 273.2655229998482),
       isotype_ratio = c(1.5, 1.5, 1.5),
       abundance_threshold = c(NA_real_, NA_real_, NA_real_),

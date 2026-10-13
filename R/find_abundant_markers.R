@@ -44,7 +44,12 @@
 #'   If provided, the isotype median is computed within each group and the
 #'   function returns a named list with one result per observed group.
 #' @param return_stats Logical; if `TRUE`, return a tibble of per-marker
-#'   statistics (including a `kept` column) instead of marker names.
+#'   statistics instead of marker names. The tibble includes `median_cpm`,
+#'   the median CPM of each marker across the cells in the call (within the
+#'   group when `group_column` is set), which shows the CPM range to use
+#'   when choosing `abundance_threshold`. Isotype controls are included.
+#'   `isotype_median_cpm` is the median across all isotype values, not the
+#'   per-marker median. A `kept` column records the filter result.
 #'
 #' @return If `group_column` is `NULL`: a character vector of kept marker names,
 #'   or a tibble if `return_stats` is `TRUE`. If `group_column` is set: a
@@ -149,12 +154,17 @@ FindAbundantMarkers <- function(
 
     n_cells <- ncol(cpm)
     positive_fraction <- as.numeric(Matrix::rowSums(cpm > cutoff) / n_cells)
-    kept <- (positive_fraction >= min_cell_fraction) &
-      !(rownames(cpm) %in% isotype_markers)
+    is_isotype <- rownames(cpm) %in% isotype_markers
+    kept <- (positive_fraction >= min_cell_fraction) & !is_isotype
+
+    # Per-marker median so callers can see the CPM range before setting
+    # abundance_threshold.
+    median_cpm <- apply(as.matrix(cpm), 1, stats::median)
 
     markers_stats <- tibble(
       marker = rownames(cpm),
       positive_fraction = unname(positive_fraction),
+      median_cpm = unname(median_cpm),
       isotype_median_cpm = isotype_median_cpm,
       isotype_ratio = if (is.null(isotype_ratio)) NA_real_ else isotype_ratio,
       abundance_threshold = if (is.null(abundance_threshold)) {

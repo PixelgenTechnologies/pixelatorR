@@ -36,7 +36,12 @@ If provided, the isotype median is computed within each group and the
 function returns a named list with one result per observed group.}
 
 \item{return_stats}{Logical; if \code{TRUE}, return a tibble of per-marker
-statistics (including a \code{kept} column) instead of marker names.}
+statistics instead of marker names. The tibble includes \code{median_cpm},
+the median CPM of each marker across the cells in the call (within the
+group when \code{group_column} is set), which shows the CPM range to use
+when choosing \code{abundance_threshold}. Isotype controls are included.
+\code{isotype_median_cpm} is the median across all isotype values, not the
+per-marker median. A \code{kept} column records the filter result.}
 }
 \value{
 If \code{group_column} is \code{NULL}: a character vector of kept marker names,

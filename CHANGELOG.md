@@ -12,7 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `FindAbundantMarkers` to keep markers whose CPM exceeds an isotype-relative
   ratio and/or an absolute abundance threshold in at least
   `min_cell_fraction` of cells. CPM uses a per-marker pseudocount of 1
-  (`(x + 1) / sum(x + 1) * 1e6`).
+  (`(x + 1) / sum(x + 1) * 1e6`). With `return_stats = TRUE`, each marker,
+  including isotype controls, includes `median_cpm` so the CPM range is
+  visible when choosing `abundance_threshold`.
 - Added `PixelDB$components_cell_graph()` method to directly extract bipartite
   cell graphs and associated marker counts from DuckDB edgelists using 64-bit
   integer hashing (`bit64`), achieving faster graph instantiation and lower peak
