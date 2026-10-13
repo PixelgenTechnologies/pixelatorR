@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2026-10-13
+
 ### Added
 
 - `FindAbundantMarkers` to keep markers whose CPM exceeds an isotype-relative
