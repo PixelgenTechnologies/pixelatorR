@@ -1,7 +1,9 @@
 library(dplyr)
 
 arrange_markers <- function(x) {
-  x %>% arrange(marker_1, marker_2, target, reference)
+  x %>%
+    select(-any_of(c("data_type", "reference", "alternative"))) %>%
+    arrange(marker_1, marker_2, target)
 }
 
 matrix_one_vs_rest <- function(
@@ -98,8 +100,7 @@ test_that("FindAllProximityMarkers compares each level to the pooled rest", {
   expect_identical(df, before)
   expect_s3_class(res, "tbl_df")
   expect_equal(unique(res$target), as.character(0:5))
-  expect_true(all(res$reference == "rest"))
-  expect_false(any(res$target == res$reference))
+  expect_false(any(c("data_type", "reference", "alternative") %in% names(res)))
 
   boosted <- res %>%
     filter(target == "0", marker_1 == "A", marker_2 == "A")
@@ -154,7 +155,6 @@ test_that("FindAllProximityMarkers respects factor order, idents, and the rest l
     min_cells_per_group = 4,
     verbose = FALSE
   )
-  expect_true(all(res_rest$reference == "rest_"))
   expect_setequal(unique(res_rest$target), c("0", "1", "rest"))
 })
 
@@ -288,6 +288,31 @@ test_that("only_pos tests pairs with a higher median in the target", {
     only_pos = TRUE
   )
   expect_equal(arrange_markers(pos), arrange_markers(ref))
+})
+
+test_that("sparse-exact Wilcoxon p-values agree with the fallback path", {
+  mat <- Matrix::Matrix(
+    c(
+      0, 0, 1, 1, 2, 2,
+      0, 0, 0, 0, 3, 3,
+      1, 1, 1, 2, 2, 2,
+      0, 4, 4, 0, 4, 4
+    ),
+    nrow = 4,
+    byrow = TRUE,
+    sparse = TRUE
+  )
+  rownames(mat) <- c("A:A", "A:B", "B:B", "B:C")
+  colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
+
+  p_sparse <- pixelatorR:::.wilcox_p_sparse_exact(mat, n_cells_1 = 3)
+  p_fallback <- pixelatorR:::.wilcox_p_fallback(
+    mat,
+    cells_1 = colnames(mat)[1:3],
+    cells_2 = colnames(mat)[4:6]
+  )
+
+  expect_equal(p_sparse, p_fallback, tolerance = 1e-6)
 })
 
 test_that("FindAllProximityMarkers fails with invalid input", {
@@ -449,7 +474,7 @@ for (assay_version in c("v3", "v5")) {
     })
     expect_equal(colnames(seur_obj_big[[]]), meta_before)
     expect_true(all(res$target == "CD4T"))
-    expect_true(all(res$reference == "rest"))
+    expect_false(any(c("data_type", "reference", "alternative") %in% names(res)))
     expect_gt(nrow(res), 0)
 
     se_manual <- seur_obj_big

@@ -591,6 +591,136 @@ DifferentialProximityAnalysis.Seurat <- function(
   return(fc_results)
 }
 
+
+#' Compute row-wise tie constants for a sparse matrix.
+#'
+#' Counts the large zero tie block from sparsity and only inspects stored
+#' non-zero values to count additional ties.
+#'
+#' @param object A sparse matrix with features in rows.
+#'
+#' @return A numeric vector of tie constants, one per row.
+#'
+#' @noRd
+.sparse_tie_constant <- function(object) {
+  object <- methods::as(object, "RsparseMatrix")
+  n_rows <- nrow(object)
+  n_cols <- ncol(object)
+  out <- numeric(n_rows)
+  p <- object@p
+  x <- object@x
+
+  for (i in seq_len(n_rows)) {
+    start <- p[i] + 1L
+    end <- p[i + 1L]
+    if (start <= end) {
+      vals <- x[start:end]
+      n_nonzero <- length(vals)
+    } else {
+      vals <- numeric()
+      n_nonzero <- 0L
+    }
+
+    n_zero <- n_cols - n_nonzero
+    tie_zero <- if (n_zero > 1L) n_zero^3 - n_zero else 0
+    tie_nonzero <- 0
+    if (n_nonzero > 1L) {
+      runs <- rle(sort(vals))$lengths
+      runs <- runs[runs > 1L]
+      if (length(runs) > 0L) {
+        tie_nonzero <- sum(runs^3 - runs)
+      }
+    }
+    out[i] <- tie_zero + tie_nonzero
+  }
+
+  out
+}
+
+
+#' Compute row-wise Wilcoxon p-values with a sparse-exact tie correction.
+#'
+#' @param data_use A matrix where rows are features and columns are ordered as
+#'   the first group followed by the second group.
+#' @param n_cells_1 Number of cells in the first group.
+#'
+#' @return A numeric vector of p-values, one per row of 
+#'   \\code{data_use}.
+#'
+#' @noRd
+.wilcox_p_sparse_exact <- function(data_use, n_cells_1) {
+  expect_matrixStats()
+  data_dense <- as.matrix(data_use)
+  n_cells_2 <- ncol(data_use) - n_cells_1
+
+  ranks <- matrixStats::rowRanks(
+    data_dense,
+    ties.method = "average",
+    preserveShape = TRUE
+  )
+  rank_sum_1 <- rowSums(ranks[, seq_len(n_cells_1), drop = FALSE])
+  u <- rank_sum_1 - n_cells_1 * (n_cells_1 + 1) / 2
+
+  tie_const <- .sparse_tie_constant(data_use)
+  sigma <- sqrt(
+    (n_cells_1 * n_cells_2 / 12) *
+      ((n_cells_1 + n_cells_2 + 1) - tie_const /
+        ((n_cells_1 + n_cells_2) * (n_cells_1 + n_cells_2 - 1))
+      )
+  )
+  z <- u - (n_cells_1 * n_cells_2) / 2
+
+  p_val <- rep(1, length(z))
+  ok <- is.finite(sigma) & sigma > 0
+  z[ok] <- (z[ok] - sign(z[ok]) * 0.5) / sigma[ok]
+  p_val[ok] <- 2 * pmin(
+    pnorm(z[ok]),
+    pnorm(z[ok], lower.tail = FALSE)
+  )
+  p_val
+}
+
+
+#' Compute row-wise Wilcoxon p-values with the legacy fallback path.
+#'
+#' Uses the existing \\pkg{limma} loop when available, otherwise falls back to
+#' \\code{stats::wilcox.test()}.
+#'
+#' @param data_use A matrix where rows are features and columns are ordered as
+#'   the first group followed by the second group.
+#' @param cells_1 Cell names for the first group.
+#' @param cells_2 Cell names for the second group.
+#'
+#' @return A numeric vector of p-values, one per row of \\code{data_use}.
+#'
+#' @noRd
+.wilcox_p_fallback <- function(data_use, cells_1, cells_2) {
+  if (requireNamespace("limma", quietly = TRUE)) {
+    j <- seq_along(cells_1)
+    return(sapply(seq_len(nrow(data_use)), function(i) {
+      min(2 * min(limma::rankSumTestWithCorrelation(
+        index = j,
+        statistics = data_use[i, ]
+      )), 1)
+    }))
+  }
+
+  rlang::inform(
+    c(
+      "i" = "For a faster implementation of the Wilcoxon Rank Sum Test,
+      please install the limma package: pak::pak('limma')",
+      "v" = "This message will only appear once per R session."
+    ),
+    .frequency = "once",
+    .frequency_id = "limma_not_installed"
+  )
+  sapply(seq_len(nrow(data_use)), function(i) {
+    x1 <- as.numeric(data_use[i, cells_1])
+    x2 <- as.numeric(data_use[i, cells_2])
+    suppressWarnings(stats::wilcox.test(x1, x2, exact = FALSE)$p.value)
+  })
+}
+
 #' Utility function to perform Wilcoxon rank-sum test on two groups of cells.
 #'
 #' This function is adapted from Seurat::FindMarkers, mainly to avoid overhead
@@ -667,40 +797,14 @@ DifferentialProximityAnalysis.Seurat <- function(
 
   data_use <- data_use[features, c(cells_1, cells_2), drop = FALSE]
 
-  group_info <- data.frame(
-    row.names = c(cells_1, cells_2),
-    group = factor(c(
-      rep("Group1", length(cells_1)),
-      rep("Group2", length(cells_2))
-    ))
+  p_val <- tryCatch(
+    .wilcox_p_sparse_exact(data_use, n_cells_1 = length(cells_1)),
+    error = function(e) NULL
   )
-
-  data_use <- data_use[, rownames(group_info), drop = FALSE]
-
-  if (requireNamespace("limma", quietly = TRUE)) {
-    j <- seq_along(cells_1)
-    p_val <- sapply(seq_len(nrow(data_use)), function(x) {
-      min(2 * min(limma::rankSumTestWithCorrelation(
-        index = j,
-        statistics = data_use[x, ]
-      )), 1)
-    })
-  } else {
-    rlang::inform(
-      c(
-        "i" = "For a faster implementation of the Wilcoxon Rank Sum Test,
-      please install the limma package: pak::pak('limma')",
-        "v" = "This message will only appear once per R session."
-      ),
-      .frequency = "once",
-      .frequency_id = "limma_not_installed"
-    )
-    p_val <- sapply(seq_len(nrow(data_use)), function(x) {
-      x1 <- as.numeric(data_use[x, cells_1])
-      x2 <- as.numeric(data_use[x, cells_2])
-      suppressWarnings(stats::wilcox.test(x1, x2, exact = FALSE)$p.value)
-    })
+  if (is.null(p_val)) {
+    p_val <- .wilcox_p_fallback(data_use, cells_1 = cells_1, cells_2 = cells_2)
   }
+
   de_results <- cbind(
     data.frame(p_val, row.names = rownames(data_use)),
     fc_results[rownames(data_use), ]
@@ -1296,7 +1400,7 @@ FindAllProximityMarkers.data.frame <- function(
 #' @param min_pct Minimum fraction of cells with a non-zero score in either group.
 #' @param min_diff_pct Minimum difference in that fraction between the two groups.
 #' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
-#' @param proximity_metric Name stored in the \code{data_type} column of the results.
+#' @param proximity_metric Name of the proximity metric being tested.
 #' @param p_adjust_method Method passed to \code{p.adjust()} within each comparison.
 #' @param verbose Print progress messages.
 #' @param dots Extra arguments passed to \code{DifferentialProximityAnalysis()}.
@@ -1322,8 +1426,8 @@ FindAllProximityMarkers.data.frame <- function(
   dots,
   call = caller_env()
 ) {
-  cell_labels <- .labels_for_cells(label_chr, colnames(proximity_matrix), group_by)
-  contrast_col <- ".pxl_one_vs_rest"
+  cells <- colnames(proximity_matrix)
+  cell_labels <- .labels_for_cells(label_chr, cells, group_by)
 
   if (verbose && check_global_verbosity()) {
     n_tests <- length(idents)
@@ -1339,8 +1443,12 @@ FindAllProximityMarkers.data.frame <- function(
   results <- vector("list", length(idents))
   for (i in seq_along(idents)) {
     ident <- idents[[i]]
-    n_tgt <- sum(cell_labels == ident, na.rm = TRUE)
-    n_ref <- sum(!is.na(cell_labels) & cell_labels != ident)
+    is_target <- cell_labels == ident
+    is_reference <- !is.na(cell_labels) & !is_target
+    cells_target <- cells[is_target]
+    cells_reference <- cells[is_reference]
+    n_tgt <- length(cells_target)
+    n_ref <- length(cells_reference)
     if (n_tgt < min_cells_per_group || n_ref < min_cells_per_group) {
       .warn_skip_one_vs_rest(
         ident = ident,
@@ -1361,45 +1469,30 @@ FindAllProximityMarkers.data.frame <- function(
       )
     }
 
-    group_data <- data.frame(
-      contrast = .assign_one_vs_rest(cell_labels, ident, rest_label),
-      row.names = colnames(proximity_matrix),
-      check.names = FALSE,
-      stringsAsFactors = FALSE
-    )
-    names(group_data) <- contrast_col
-    args <- list(
-      object = proximity_matrix,
-      group_data = group_data,
-      contrast_column = contrast_col,
-      reference = rest_label,
-      targets = ident,
-      proximity_metric = proximity_metric,
-      p_adjust_method = p_adjust_method,
-      diff_threshold = diff_threshold,
+    de_results <- .wilcox_de_test(
+      proximity_matrix,
+      cells_1 = cells_target,
+      cells_2 = cells_reference,
+      min_diff = diff_threshold,
       min_pct = min_pct,
       min_diff_pct = min_diff_pct,
-      only_pos = only_pos,
-      min_cells_per_group = min_cells_per_group,
-      verbose = verbose
+      only_pos = only_pos
     )
-    result <- tryCatch(
-      do.call(DifferentialProximityAnalysis, c(args, dots)),
-      error = function(e) e
-    )
-    if (inherits(result, "error")) {
-      if (.is_skippable_da_error(result)) {
-        cli::cli_warn(
-          paste0(
-            "Skipping {.val {ident}} vs {.val {rest_label}}: ",
-            "{conditionMessage(result)}"
-          )
-        )
-        next
-      }
-      rlang::cnd_signal(result)
+
+    if (nrow(de_results) == 0) {
+      next
     }
-    results[[i]] <- result
+
+    results[[i]] <- tibble(
+      target = ident,
+      pct_tgt = de_results$pct_1,
+      pct_ref = de_results$pct_2,
+      diff_median = de_results$difference,
+      p = de_results$p_val,
+      p_adj = p.adjust(de_results$p_val, method = p_adjust_method),
+      marker_1 = sub(":.*$", "", rownames(de_results)),
+      marker_2 = sub("^[^:]*:", "", rownames(de_results))
+    )
   }
 
   out <- bind_rows(results)
