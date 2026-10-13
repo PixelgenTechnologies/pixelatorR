@@ -195,3 +195,39 @@ test_that("ComputeLayout works with 'cpmds' option", {
   expect_true("cpmds_3d" %in% names(CellGraphs(se)[[1]]@layout))
   expect_equal(c("x", "y", "z"), colnames(CellGraphs(se)[[1]]@layout[["cpmds_3d"]]))
 })
+
+test_that("ComputeLayout works as expected on a CellGraphList", {
+  cgl <- CellGraphs(se)
+  expect_s3_class(cgl, "CellGraphList")
+  loaded <- !vapply(cgl, is.null, logical(1))
+  expect_equal(sum(loaded), 1)
+
+  # Unloaded graphs are kept as NULL placeholders and names are preserved
+  expect_no_error(cgl_layout <- ComputeLayout(cgl, layout_method = "spectral", verbose = FALSE))
+  expect_s3_class(cgl_layout, "CellGraphList")
+  expect_equal(names(cgl_layout), names(cgl))
+  expect_equal(!vapply(cgl_layout, is.null, logical(1)), loaded)
+  cg <- cgl_layout[[colnames(se)[1]]]
+  expect_equal(names(cg@layout), "spectral_3d")
+  expect_equal(colnames(cg@layout[["spectral_3d"]]), c("x", "y", "z"))
+  expect_equal(nrow(cg@layout[["spectral_3d"]]), length(cg@cellgraph))
+
+  # Results are identical to the CellGraph method
+  cg_direct <- ComputeLayout(cgl[[colnames(se)[1]]], layout_method = "spectral")
+  expect_equal(cg@layout, cg_direct@layout)
+
+  # layout_name and dim are forwarded
+  cgl_2d <- ComputeLayout(cgl[loaded], layout_method = "wpmds", dim = 2, layout_name = "my_layout", verbose = FALSE)
+  expect_equal(names(cgl_2d[[1]]@layout), "my_layout")
+  expect_equal(colnames(cgl_2d[[1]]@layout[["my_layout"]]), c("x", "y"))
+
+  # A CellGraphList without loaded graphs is returned unmodified
+  cgl_empty <- cgl[!loaded]
+  expect_message(cgl_empty_layout <- ComputeLayout(cgl_empty, layout_method = "spectral"), "No CellGraph objects")
+  expect_equal(cgl_empty_layout, cgl_empty)
+  expect_no_error(ComputeLayout(CreateCellGraphList(), verbose = FALSE))
+
+  # Invalid input fails as for the other methods
+  expect_error(ComputeLayout(cgl, normalize_layout = TRUE, project_on_unit_sphere = TRUE, verbose = FALSE))
+  expect_error(ComputeLayout(cgl, layout_method = "Invalid", verbose = FALSE))
+})

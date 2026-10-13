@@ -62,8 +62,8 @@
 - [`TauPlot()`](TauPlot.md) : Plot UMIs per UPIa for quality control
 - [`DensityScatterPlot()`](DensityScatterPlot.md) : Create a density
   scatter / pseudocolor plot.
-- [`AbundanceColocalizationPlot()`](AbundanceColocalizationPlot.md) :
-  Create an abundance/colocalization scatterplot
+- [`AbundanceColocalizationPlot()`](AbundanceColocalizationPlot.md)
+  **\[deprecated\]** : Create an abundance/colocalization scatterplot
 - [`Plot2DGraph()`](Plot2DGraph.md) **\[deprecated\]** : Plot 2D graph
   layouts
 - [`Plot2DGraphM()`](Plot2DGraphM.md) **\[deprecated\]** : Plot multiple
@@ -115,9 +115,7 @@
   coordinates to a cell plot
 
 - [`cell_plot_interactive()`](cell_plot_interactive.md) : Render a cell
-  plot as an interactive Plotly widget
-
-- [`cell_plot_rgl()`](cell_plot_rgl.md) : Render a cell plot with rgl
+  plot as an interactive 3D widget
 
 - [`cell_plot_animate()`](cell_plot_animate.md) : Render a rotating cell
   plot animation
@@ -145,6 +143,8 @@
 
 - [`NormalizeMPX()`](NormalizeMPX.md) **\[superseded\]** : Normalize MPX
   data
+- [`FindAbundantMarkers()`](FindAbundantMarkers.md) : Find abundant
+  markers by isotype-relative and/or absolute abundance
 - [`KeepLargestComponent()`](KeepLargestComponent.md) : Keep largest
   component
 - [`RemoveCellGraphs()`](RemoveCellGraphs.md) : Remove CellGraphs

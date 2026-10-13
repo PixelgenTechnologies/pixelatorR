@@ -177,7 +177,7 @@ library(pixelatorR)
 
 se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -186,7 +186,7 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 #> ℹ See ?duckdb_storage for details and alternatives.
 se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -208,11 +208,11 @@ cg <- ComputeLPS(cg, markers = "B2M", mode = "all", name = "lps_b2m")
 head(CellGraphData(cg, slot = "meta.data"))
 #>      lps_b2m
 #> 1  0.3510601
-#> 2 -1.3058178
-#> 3  0.8001271
-#> 4  1.2880565
-#> 5  1.5179853
-#> 6  1.4691879
+#> 2  0.8001271
+#> 3  1.5179853
+#> 4  1.3778464
+#> 5 -0.6555791
+#> 6  1.5591532
 
 # Compute LPS for loaded cell graphs in a PNAAssay
 pna_assay <- ComputeLPS(se[["PNA"]], markers = "B2M")

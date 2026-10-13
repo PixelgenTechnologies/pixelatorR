@@ -238,7 +238,8 @@ test_that("FetchLayoutData.CellGraphList validates loaded CellGraphs", {
 })
 
 se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
-se <- LoadCellGraphs(se, cells = colnames(se)[1:2], add_layouts = TRUE, verbose = FALSE)
+# add_layouts is deprecated; suppress the lifecycle warning during setup
+se <- suppressWarnings(LoadCellGraphs(se, cells = colnames(se)[1:2], add_layouts = TRUE, verbose = FALSE))
 cells <- colnames(se)[1:2]
 
 test_that("FetchLayoutData.PNAAssay and Seurat methods work as expected", {

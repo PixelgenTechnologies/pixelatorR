@@ -17,6 +17,6 @@ A \code{ggplot} object, invisibly.
 \description{
 Builds and draws the recipe as a static ggplot, then returns that ggplot
 invisibly. This matches \code{print.ggplot()}: typing a recipe at the prompt
-renders the plot. Use \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} for the Plotly renderer or
-\code{\link[=cell_plot_rgl]{cell_plot_rgl()}} for the native rgl renderer.
+renders the plot. Use \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} for an interactive rgl or
+Plotly widget.
 }

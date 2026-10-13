@@ -1,11 +1,11 @@
 # Add rotating coordinates to a cell plot
 
 Records rotation geometry for an animation renderer. This sets a
-rotation sequence rather than a single static view. The number of frames
-belongs to [`cell_plot_animate()`](cell_plot_animate.md), not this
-modifier. Printed ggplot and Plotly views keep the unrotated
-coordinates. The default axis is `"y"`, which spins the cell left to
-right on screen.
+rotation sequence rather than a single static view. The number of
+frames, and whether the animation returns through them, belong to
+[`cell_plot_animate()`](cell_plot_animate.md), not this modifier.
+Printed ggplot and Plotly views keep the unrotated coordinates. The
+default axis is `"y"`, which spins the cell left to right on screen.
 
 ## Usage
 
@@ -14,7 +14,6 @@ cell_coord_rotate(
   object,
   axis = "y",
   max_degree = 360,
-  boomerang = FALSE,
   origin = c("origo", "centroid")
 )
 ```
@@ -36,10 +35,6 @@ cell_coord_rotate(
   Maximum rotation angle from -360 to 360 degrees. Positive angles
   follow the right-hand rule; use a negative angle to reverse direction.
 
-- boomerang:
-
-  Whether the animation returns through the frame sequence.
-
 - origin:
 
   Rotation origin. `"origo"` uses `(0, 0, 0)`. `"centroid"` calculates
@@ -60,7 +55,7 @@ A modified `cell_plot` recipe.
 ``` r
 se <- ReadPNA_Seurat(minimal_pna_pxl_file())
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -71,7 +66,7 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file())
 se <- LoadCellGraphs(se, cells = colnames(se)[4], verbose = FALSE) |>
   ComputeLayout(layout_method = "spectral")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

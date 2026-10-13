@@ -246,3 +246,60 @@ test_that("PixelDB methods fails with invalid input", {
   expect_error(db$components_marker_counts("Invalid"))
   expect_no_error(db$close())
 })
+
+write_null_pxl <- function(path, reason) {
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = path)
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+
+  # VARCHAR stores the metadata JSON as text. A JSON column needs the DuckDB
+  # json extension, which R CMD check cannot autoinstall.
+  DBI::dbExecute(con, "CREATE TABLE metadata (value VARCHAR)")
+  payload <- list(
+    sample_name = "null-sample",
+    version = "0.30.0",
+    null = TRUE
+  )
+  if (!is.null(reason)) {
+    payload$null_reason <- reason
+  }
+  meta_json <- as.character(jsonlite::toJSON(payload, auto_unbox = TRUE))
+  DBI::dbExecute(
+    con,
+    "INSERT INTO metadata (value) VALUES (?)",
+    params = list(meta_json)
+  )
+}
+
+test_that("PixelDB throws descriptive error when PXL file is empty (marked as null)", {
+  tmp_dir <- tempfile()
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+
+  tmp_pxl <- file.path(tmp_dir, "null_sample.pxl")
+  write_null_pxl(tmp_pxl, "Processing failed at step X")
+
+  expect_error(
+    PixelDB$new(tmp_pxl),
+    class = "pixeldb_null_error",
+    regexp = "The PXL file is empty \\(marked as null\\)"
+  )
+  expect_error(
+    PixelDB$new(tmp_pxl),
+    class = "pixeldb_null_error",
+    regexp = "Reason: Processing failed at step X"
+  )
+
+  # Braces in the reason must stay literal and still use pixeldb_null_error.
+  tmp_pxl_braces <- file.path(tmp_dir, "null_sample_braces.pxl")
+  write_null_pxl(tmp_pxl_braces, "failed {step} with } brace")
+  err <- expect_error(
+    PixelDB$new(tmp_pxl_braces),
+    class = "pixeldb_null_error"
+  )
+  expect_match(
+    conditionMessage(err),
+    "Reason: failed {step} with } brace",
+    fixed = TRUE
+  )
+})
+

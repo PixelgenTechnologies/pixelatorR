@@ -8,7 +8,6 @@ cell_coord_rotate(
   object,
   axis = "y",
   max_degree = 360,
-  boomerang = FALSE,
   origin = c("origo", "centroid")
 )
 }
@@ -22,8 +21,6 @@ axis. Numeric axes are normalized before they are stored.}
 \item{max_degree}{Maximum rotation angle from -360 to 360 degrees. Positive
 angles follow the right-hand rule; use a negative angle to reverse direction.}
 
-\item{boomerang}{Whether the animation returns through the frame sequence.}
-
 \item{origin}{Rotation origin. \code{"origo"} uses \verb{(0, 0, 0)}. \code{"centroid"}
 calculates the centroid independently within each \code{\link[=cell_grid]{cell_grid()}} panel.}
 }
@@ -32,7 +29,8 @@ A modified \code{cell_plot} recipe.
 }
 \description{
 Records rotation geometry for an animation renderer. This sets a rotation
-sequence rather than a single static view. The number of frames belongs to
+sequence rather than a single static view. The number of frames, and whether
+the animation returns through them, belong to
 \code{\link[=cell_plot_animate]{cell_plot_animate()}}, not this modifier. Printed ggplot and Plotly views keep
 the unrotated coordinates. The default axis is \code{"y"}, which spins the cell
 left to right on screen.

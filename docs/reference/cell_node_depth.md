@@ -38,8 +38,8 @@ values flatten them.
 Depth sizing scales one node size, so this modifier cannot be combined
 with [`cell_node_scale_size()`](cell_node_scale_size.md). If a size
 column is mapped, depth sizing is ignored.
-[`cell_plot_interactive()`](cell_plot_interactive.md) and
-[`cell_plot_rgl()`](cell_plot_rgl.md) ignore this modifier.
+[`cell_plot_interactive()`](cell_plot_interactive.md) ignores this
+modifier.
 
 ## See also
 
@@ -58,7 +58,7 @@ Other cell-plot-modifiers: [`cell_annotation()`](cell_annotation.md),
 ``` r
 se <- ReadPNA_Seurat(minimal_pna_pxl_file())
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -69,7 +69,7 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file())
 se <- LoadCellGraphs(se, cells = colnames(se)[4], verbose = FALSE) |>
   ComputeLayout(layout_method = "spectral")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

@@ -9,7 +9,12 @@ prox_summarized <- prox %>%
 
 test_that("ColocalizationHeatmap works as expected", {
   # Default method
-  expect_no_error(ColocalizationHeatmap(prox_summarized))
+  expect_no_error(ht <- ColocalizationHeatmap(prox_summarized))
+  ht_drawn <- suppressMessages(ComplexHeatmap::draw(ht, test = FALSE))
+  expect_identical(
+    rownames(ht@matrix)[ComplexHeatmap::row_order(ht_drawn)],
+    colnames(ht@matrix)[ComplexHeatmap::column_order(ht_drawn)]
+  )
 
   # Dots method
   expect_no_error(p <- ColocalizationHeatmap(prox_summarized, type = "dots", size_col = "mean_log2_ratio"))

@@ -224,12 +224,17 @@ TauPlot <- function(
 
 #' Compute a graph layout
 #'
-#' @param object An object
+#' @param object A \code{tbl_graph}, \code{\link{CellGraph}},
+#' \code{\link{CellGraphList}}, \code{CellGraphAssay}, \code{PNAAssay}
+#' or \code{Seurat} object
 #' @param ... Additional parameters passed to other methods
 #'
 #' @rdname ComputeLayout
 #'
-#' @return An object containing a graph layout
+#' @return For a \code{tbl_graph}, a \code{tbl_df} with the layout coordinates.
+#' For all other classes, the input object with the layout stored in the
+#' \code{layout} slot of each \code{\link{CellGraph}}. For a
+#' \code{\link{CellGraphList}}, unloaded (\code{NULL}) graphs are kept in place.
 #'
 #' @export
 #'

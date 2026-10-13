@@ -54,7 +54,7 @@ library(tidygraph)
 
 se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -63,7 +63,7 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 #> ℹ See ?duckdb_storage for details and alternatives.
 se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -79,26 +79,26 @@ CellGraphData(cg, slot = "cellgraph")
 #> # An undirected simple graph with 1 component
 #> #
 #> # Node Data: 43,543 × 2 (active)
-#>    name                   node_type
-#>    <chr>                  <chr>    
-#>  1 61208583141770358-umi1 umi1     
-#>  2 50526950249468550-umi2 umi2     
-#>  3 69733109123764664-umi1 umi1     
-#>  4 43235234960499656-umi2 umi2     
-#>  5 16002757515879905-umi1 umi1     
-#>  6 4606209975865882-umi2  umi2     
-#>  7 59822389138925142-umi1 umi1     
-#>  8 28470384711643019-umi2 umi2     
-#>  9 64270251753030037-umi1 umi1     
-#> 10 63550490663717685-umi2 umi2     
+#>    name              node_type
+#>    <chr>             <chr>    
+#>  1 61208583141770358 umi1     
+#>  2 69733109123764664 umi1     
+#>  3 16002757515879905 umi1     
+#>  4 59822389138925142 umi1     
+#>  5 64270251753030037 umi1     
+#>  6 11111585952318758 umi1     
+#>  7 17475490163417931 umi1     
+#>  8 68734019810858082 umi1     
+#>  9 6353174121442465  umi1     
+#> 10 21525916369122388 umi1     
 #> # ℹ 43,533 more rows
 #> #
 #> # Edge Data: 97,014 × 2
 #>    from    to
 #>   <int> <int>
-#> 1     1     2
-#> 2     3     4
-#> 3     5     6
+#> 1     1 18561
+#> 2     2 18562
+#> 3     3 18563
 #> # ℹ 97,011 more rows
 
 # Set slot data

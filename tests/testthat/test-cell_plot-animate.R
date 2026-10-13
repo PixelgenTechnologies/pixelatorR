@@ -1,22 +1,21 @@
 test_that("Cell plot animation geometry works as expected", {
-  specification <- list(
-    max_degree = 360,
-    boomerang = FALSE
-  )
+  specification <- list(max_degree = 360)
   expect_equal(
     list(
       full_turn = .cell_animation_angles(specification, frames = 4),
       partial_turn = .cell_animation_angles(
-        list(max_degree = -180, boomerang = FALSE),
+        list(max_degree = -180),
         frames = 4
       ),
       even_boomerang = .cell_animation_angles(
-        list(max_degree = 180, boomerang = TRUE),
-        frames = 6
+        list(max_degree = 180),
+        frames = 6,
+        boomerang = TRUE
       ),
       odd_boomerang = .cell_animation_angles(
-        list(max_degree = 180, boomerang = TRUE),
-        frames = 5
+        list(max_degree = 180),
+        frames = 5,
+        boomerang = TRUE
       ),
       single_frame = .cell_animation_angles(specification, frames = 1)
     ),
@@ -153,6 +152,79 @@ test_that("Cell plot animation geometry works as expected", {
   )
 })
 
+test_that("Odd boomerang frame counts are raised to the next even number", {
+  expect_equal(
+    list(
+      even = .cell_animation_resolve_frames(6L, boomerang = TRUE),
+      forward = .cell_animation_resolve_frames(5L, boomerang = FALSE)
+    ),
+    list(even = 6L, forward = 5L)
+  )
+  raised <- expect_warning(
+    .cell_animation_resolve_frames(5L, boomerang = TRUE),
+    "even number of frames"
+  )
+  angles <- .cell_animation_angles(
+    list(max_degree = 180),
+    frames = raised,
+    boomerang = TRUE
+  )
+  expect_equal(
+    list(
+      frames = raised,
+      angles = angles,
+      sources = .cell_animation_frame_sources(angles)
+    ),
+    list(
+      frames = 6L,
+      angles = c(0, 60, 120, 180, 120, 60),
+      sources = c(1L, 2L, 3L, 4L, 3L, 2L)
+    )
+  )
+})
+
+test_that("Boomerang frames reuse earlier renders", {
+  uneven_degree <- .cell_animation_angles(
+    list(max_degree = 1),
+    frames = 6,
+    boomerang = TRUE
+  )
+  odd_degree <- .cell_animation_angles(
+    list(max_degree = 180),
+    frames = 5,
+    boomerang = TRUE
+  )
+  expect_identical(
+    list(
+      return_trip = uneven_degree[5:6],
+      even_sources = .cell_animation_frame_sources(uneven_degree),
+      odd_sources = .cell_animation_frame_sources(odd_degree)
+    ),
+    list(
+      return_trip = uneven_degree[3:2],
+      even_sources = c(1L, 2L, 3L, 4L, 3L, 2L),
+      odd_sources = c(1L, 2L, 3L, 4L, 5L)
+    )
+  )
+
+  frame_dir <- fs::file_temp("cell_plot_frames")
+  fs::dir_create(frame_dir)
+  on.exit(fs::dir_delete(frame_dir), add = TRUE)
+  frame_files <- fs::path(
+    frame_dir,
+    sprintf("frame_%04d.png", seq_along(uneven_degree))
+  )
+  frame_sources <- .cell_animation_frame_sources(uneven_degree)
+  for (i in which(frame_sources == seq_along(frame_sources))) {
+    writeLines(as.character(i), frame_files[[i]])
+  }
+  .cell_animation_copy_repeated_frames(frame_sources, frame_files)
+  expect_equal(
+    vapply(frame_files, readLines, character(1)),
+    c("1", "2", "3", "4", "3", "2")
+  )
+})
+
 test_that("Animation frames preserve overlapping coordinate mappings", {
   plot_data <- tibble::tibble(
     shared = c(1, 0),
@@ -252,6 +324,30 @@ test_that("Animation renderers and encoding work as expected", {
       respect = TRUE
     )
   )
+  expect_equal(
+    .cell_base_layout_matrix(
+      n_row = 1L,
+      n_col = 2L,
+      has_title = FALSE,
+      has_subtitle = FALSE,
+      has_row_strips = FALSE,
+      has_col_strips = FALSE,
+      has_legend = TRUE,
+      legend_width = 1
+    )$widths,
+    c("1", "1", "2.54 cm")
+  )
+  expect_error(
+    .cell_base_layout_matrix(
+      n_row = 1L,
+      n_col = 1L,
+      has_title = FALSE,
+      has_subtitle = FALSE,
+      has_row_strips = FALSE,
+      has_col_strips = FALSE,
+      has_legend = TRUE
+    )
+  )
   layout_respect <- function(has_row_strips, has_col_strips) {
     .cell_base_layout_matrix(
       n_row = 1L,
@@ -260,7 +356,8 @@ test_that("Animation renderers and encoding work as expected", {
       has_subtitle = FALSE,
       has_row_strips = has_row_strips,
       has_col_strips = has_col_strips,
-      has_legend = TRUE
+      has_legend = TRUE,
+      legend_width = 1.2
     )$respect
   }
   expect_false(layout_respect(has_row_strips = FALSE, has_col_strips = FALSE))
@@ -329,7 +426,8 @@ test_that("Animation renderers and encoding work as expected", {
     ),
     list(
       fills = c("#000000", "#777777", "#FFFFFF"),
-      labels = c(0, 2)
+      breaks = c(0, 0.5, 1, 1.5, 2),
+      labels = c("0.0", "0.5", "1.0", "1.5", "2.0")
     )
   )
 
@@ -380,6 +478,222 @@ test_that("Animation renderers and encoding work as expected", {
   )
   expect_true(file.exists(mp4_file))
   unlink(mp4_file)
+})
+
+test_that("Base legend layout works as expected", {
+  expect_equal(
+    .cell_base_legend_breaks(c(5.004e-05, 1)),
+    c(0.25, 0.5, 0.75, 1)
+  )
+  expect_equal(
+    .cell_base_legend_labels(.cell_base_legend_breaks(c(5.004e-05, 1))),
+    c("0.25", "0.50", "0.75", "1.00")
+  )
+  expect_equal(.cell_base_legend_breaks(c(0, 3)), c(0, 1, 2, 3))
+  expect_equal(.cell_base_legend_breaks(c(1, 1)), 1)
+  expect_equal(
+    .cell_base_legend_label_spacing(c(0, 0.1, 0.2, 0.3, 0.4), min_spacing = 0.25),
+    c(TRUE, FALSE, FALSE, TRUE, FALSE)
+  )
+  expect_equal(.cell_base_legend_label_spacing(0.5, min_spacing = 1), TRUE)
+
+  png_file <- tempfile(fileext = ".png")
+  grDevices::png(png_file, width = 600, height = 400, res = 100)
+  on.exit(unlink(png_file), add = TRUE)
+  expect_equal(.cell_base_wrap_text("ab cd", max_width = Inf, cex = 1), "ab cd")
+  expect_equal(.cell_base_wrap_text("ab cd", max_width = 0, cex = 1), c("a", "b", "c", "d"))
+  expect_equal(
+    .cell_base_wrap_text(
+      "a bcdefghbcdefgh c",
+      max_width = graphics::strwidth("bcdefgh", units = "inches", cex = 1),
+      cex = 1
+    ),
+    c("a", "bcdefgh", "bcdefgh", "c")
+  )
+  expect_equal(.cell_base_wrap_text("", max_width = 1, cex = 1), character())
+  expect_equal(.cell_base_wrap_text(NULL, max_width = 1, cex = 1), character())
+
+  plot_data <- tibble::tibble(
+    x = c(-1, 0, 1),
+    y = c(0, 1, 0),
+    z = 0,
+    weight = c(5.004e-05, 0.5, 1),
+    group = c("a", "b", "b")
+  )
+  continuous <- cell_plot(plot_data, color = weight) |>
+    cell_node_scale_color(colors = c("black", "white")) |>
+    cell_annotation(legend_title = "signature weight") |>
+    build_cell_plot()
+  metrics <- .cell_base_legend_metrics(
+    continuous,
+    text_cex = 11 / 12,
+    device_width = 6
+  )
+  expect_equal(
+    metrics[c("type", "title_lines", "breaks", "labels", "limits", "title_cex", "label_cex")],
+    list(
+      type = "continuous",
+      title_lines = "signature weight",
+      breaks = c(0.25, 0.5, 0.75, 1),
+      labels = c("0.25", "0.50", "0.75", "1.00"),
+      limits = c(5.004e-05, 1),
+      title_cex = 11 / 12,
+      label_cex = 11 / 12 * 0.8
+    )
+  )
+  expect_gt(
+    metrics$width,
+    graphics::strwidth("signature weight", units = "inches", cex = 11 / 12)
+  )
+  expect_gt(
+    metrics$width,
+    graphics::strwidth("0.25", units = "inches", cex = 11 / 12 * 0.8)
+  )
+
+  narrow <- .cell_base_legend_metrics(
+    continuous,
+    text_cex = 11 / 12,
+    device_width = 2.5
+  )
+  expect_equal(narrow$title_lines, c("signature", "weight"))
+  expect_lte(narrow$width, 0.4 * 2.5)
+  expect_gt(metrics$width, narrow$width)
+
+  categorical <- cell_plot(plot_data, color = group) |>
+    cell_node_scale_color(colors = c(a = "red", b = "blue")) |>
+    build_cell_plot()
+  categorical_metrics <- .cell_base_legend_metrics(
+    categorical,
+    text_cex = 1,
+    device_width = 6
+  )
+  expect_equal(
+    categorical_metrics[c("type", "labels", "colors", "title_lines")],
+    list(
+      type = "categorical",
+      labels = c("a", "b"),
+      colors = c("red", "blue"),
+      title_lines = "group"
+    )
+  )
+
+  limits <- list(x = c(-2, 2), y = c(-2, 2))
+  expect_no_error(.render_cell_plot_base(continuous, limits = limits))
+  expect_no_error(.render_cell_plot_base(categorical, limits = limits))
+  grDevices::dev.off()
+})
+
+test_that("A long legend label stays inside the device", {
+  expect_equal(
+    .cell_base_legend_width_limit(device_width = 0, preferred = 1, chrome = 1),
+    0
+  )
+  expect_equal(
+    .cell_base_legend_width_limit(device_width = 2, preferred = 0.5, chrome = 0.4),
+    0.5
+  )
+  expect_equal(
+    .cell_base_legend_width_limit(device_width = 2, preferred = 0.5, chrome = 1.2),
+    1.2
+  )
+  expect_equal(
+    .cell_base_legend_width_limit(device_width = 2, preferred = 3, chrome = 3),
+    1.8
+  )
+
+  long_label <- paste(
+    rep("membrane-proximal-signaling-cluster", 3),
+    collapse = "-"
+  )
+  plot_data <- tibble::tibble(
+    x = c(-1, 0, 1),
+    y = c(0, 1, 0),
+    z = 0,
+    group = c(long_label, "short", "other")
+  )
+  built <- cell_plot(plot_data, color = group) |>
+    build_cell_plot()
+  png_file <- tempfile(fileext = ".png")
+  grDevices::png(png_file, width = 160, height = 160, res = 72)
+  on.exit(unlink(png_file), add = TRUE)
+  device_width <- graphics::par("din")[[1]]
+  metrics <- .cell_base_legend_metrics(
+    built,
+    text_cex = 11 / 12,
+    device_width = device_width
+  )
+  expect_lt(metrics$width, device_width)
+  expect_true(any(lengths(metrics$label_lines) > 1L))
+  expect_no_error(
+    .render_cell_plot_base(built, limits = list(x = c(-2, 2), y = c(-2, 2)))
+  )
+  grDevices::dev.off()
+})
+
+test_that("Base legend content stays within its column", {
+  expect_equal(
+    .cell_base_fit_title_lines(c("a", "b", "c"), max_lines = 3),
+    c("a", "b", "c")
+  )
+  expect_equal(
+    .cell_base_fit_title_lines(c("a", "b", "c"), max_lines = 2),
+    c("a", "b\u2026")
+  )
+  expect_equal(.cell_base_fit_title_lines(c("a", "b"), max_lines = 0), character())
+  expect_equal(.cell_base_fit_title_lines(character(), max_lines = -1), character())
+
+  fits <- .cell_base_legend_rows(
+    n_lines = c(1L, 3L),
+    key = 0.2,
+    label_line = 0.1,
+    spacing = 0.05,
+    available = 1
+  )
+  expect_equal(fits, list(scale = 1, heights = c(0.25, 0.35)))
+  shrunk <- .cell_base_legend_rows(
+    n_lines = c(1L, 3L),
+    key = 0.2,
+    label_line = 0.1,
+    spacing = 0.05,
+    available = 0.3
+  )
+  expect_equal(shrunk$scale, 0.6)
+  expect_equal(shrunk$heights, c(0.25, 0.35) * 0.6)
+  partial <- .cell_base_legend_rows(
+    n_lines = c(1L, 1L),
+    key = 0.2,
+    label_line = 0.1,
+    spacing = 0.05,
+    available = 0.4
+  )
+  expect_equal(partial$scale, 0.8)
+  expect_equal(sum(partial$heights), 0.4)
+  expect_equal(
+    .cell_base_legend_rows(integer(), key = 0.2, label_line = 0.1, spacing = 0.05, available = 1),
+    list(scale = 1, heights = numeric())
+  )
+
+  long_label <- paste(rep("membrane-proximal-signaling-cluster", 2), collapse = "-")
+  plot_data <- tibble::tibble(
+    x = seq(-1, 1, length.out = 6),
+    y = 0,
+    z = 0,
+    group = paste(long_label, seq_len(6)),
+    weight = seq(0, 1, length.out = 6)
+  )
+  categorical <- cell_plot(plot_data, color = group) |>
+    cell_annotation(legend_title = "A long legend title that needs several lines of text") |>
+    build_cell_plot()
+  continuous <- cell_plot(plot_data, color = weight) |>
+    cell_annotation(legend_title = "A long legend title that needs several lines of text") |>
+    build_cell_plot()
+  png_file <- tempfile(fileext = ".png")
+  grDevices::png(png_file, width = 200, height = 120, res = 72)
+  on.exit(unlink(png_file), add = TRUE)
+  limits <- list(x = c(-2, 2), y = c(-2, 2))
+  expect_no_error(.render_cell_plot_base(categorical, limits = limits))
+  expect_no_error(.render_cell_plot_base(continuous, limits = limits))
+  grDevices::dev.off()
 })
 
 test_that("Locked illumination follows rotated frame geometry", {

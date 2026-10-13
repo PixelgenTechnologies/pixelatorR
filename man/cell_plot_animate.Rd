@@ -13,7 +13,8 @@ cell_plot_animate(
   res = 150,
   fps = 20,
   frame_backend = c("base", "ggplot2"),
-  workers = 1L
+  workers = 1L,
+  boomerang = FALSE
 )
 }
 \arguments{
@@ -21,7 +22,8 @@ cell_plot_animate(
 
 \item{file}{Output path. The extension selects the encoder.}
 
-\item{frames}{Positive whole number of encoded frames.}
+\item{frames}{Positive whole number of encoded frames. A boomerang with an
+odd count is raised to the next even number.}
 
 \item{width, height}{Output size in pixels.}
 
@@ -34,6 +36,9 @@ cell_plot_animate(
 
 \item{workers}{Positive whole number of parallel workers. \code{1} renders
 sequentially.}
+
+\item{boomerang}{Whether the encoded frames return through the rotation.
+Return frames that repeat an angle already drawn are copied.}
 }
 \value{
 The output path, invisibly.
@@ -41,7 +46,11 @@ The output path, invisibly.
 \description{
 Builds a \code{\link[=cell_plot]{cell_plot()}} recipe once, draws one frame per rotation angle, and
 encodes a GIF or video. Rotation geometry comes from \code{\link[=cell_coord_rotate]{cell_coord_rotate()}}.
-File type, size, resolution, frame rate, and the frame backend belong here.
+When a boomerang returns through an angle that was already drawn, that
+frame is copied instead of drawn again. An odd \code{frames} count is raised to
+the next even number, with a warning, so the return trip is made of those
+copies. File type, size, resolution, frame rate, and the frame backend
+belong here.
 }
 \details{
 GIF output uses gifski. Any other extension is encoded with av. The parent

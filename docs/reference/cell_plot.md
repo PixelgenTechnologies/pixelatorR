@@ -5,8 +5,7 @@ column mappings, and optional rendering instructions without drawing a
 plot. Add instructions with the `cell_*()` modifier functions. Printing
 the recipe builds and renders a ggplot.
 [`cell_plot_interactive()`](cell_plot_interactive.md) draws the same
-recipe as a 3D Plotly widget. [`cell_plot_rgl()`](cell_plot_rgl.md)
-draws it as a native rgl scene.
+recipe as an interactive 3D htmlwidget with rgl or Plotly.
 [`cell_plot_animate()`](cell_plot_animate.md) encodes a rotating GIF or
 video after [`cell_coord_rotate()`](cell_coord_rotate.md).
 [`summary()`](https://rdrr.io/r/base/summary.html) inspects the recipe
@@ -49,32 +48,36 @@ cell_plot(
   Optional column mapping or constant color for every node. Character,
   factor, numeric, and integer columns are supported, where character
   and factor columns are treated as categorical and numeric and integer
-  columns as continuous. A character value is read as a column name when
-  `data` has that column and otherwise as one fully opaque color.
+  columns as continuous. Missing numeric values are kept. Non-finite
+  values such as `Inf` are not. A character value is read as a column
+  name when `data` has that column and otherwise as one fully opaque
+  color.
 
 - size, alpha:
 
   Optional column mappings or constant values for node size and alpha.
   Character, factor, numeric, and integer columns are supported, where
-  character and factor columns are treated as categorical levels. One
-  finite number sets a constant relative size or a constant alpha
-  between zero and one. Category-specific sizes and alphas are set with
-  [`cell_node_scale_size()`](cell_node_scale_size.md) and
+  character and factor columns are treated as categorical levels.
+  Missing numeric values are kept. Non-finite values such as `Inf` are
+  not. One finite number sets a constant relative size or a constant
+  alpha between zero and one. Category-specific sizes and alphas are set
+  with [`cell_node_scale_size()`](cell_node_scale_size.md) and
   [`cell_node_scale_alpha()`](cell_node_scale_alpha.md).
 
 - arrange:
 
   An optional column mapping used to order points in projected plots.
-  [`cell_plot_interactive()`](cell_plot_interactive.md) and
-  [`cell_plot_rgl()`](cell_plot_rgl.md) ignore this mapping because
-  occlusion follows the scene camera. Defaults to the mapped `z` column.
+  [`cell_plot_interactive()`](cell_plot_interactive.md) ignores this
+  mapping because occlusion follows the scene camera. Defaults to the
+  mapped `z` column.
 
 - depth:
 
   An optional column mapping used for ggplot depth sizing. Defaults to
   the mapped `z` column, so depth sizing is on unless `depth = NULL`
   turns it off. Must not be the same column as `x`, `y`, or `size`.
-  Plotly and rgl ignore this mapping.
+  [`cell_plot_interactive()`](cell_plot_interactive.md) ignores this
+  mapping.
 
 - illumination_mask:
 
@@ -130,8 +133,7 @@ range unless `limits` are supplied.
 [`cell_node_depth()`](cell_node_depth.md),
 [`cell_coord_rotate()`](cell_coord_rotate.md),
 [`cell_plot_animate()`](cell_plot_animate.md),
-[`cell_plot_interactive()`](cell_plot_interactive.md),
-[`cell_plot_rgl()`](cell_plot_rgl.md)
+[`cell_plot_interactive()`](cell_plot_interactive.md)
 
 ## Examples
 

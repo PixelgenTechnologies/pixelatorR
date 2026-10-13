@@ -8,6 +8,118 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## \[Unreleased\]
 
+## \[0.23.0\] - 2026-10-13
+
+### Added
+
+- `FindAbundantMarkers` to keep markers whose CPM exceeds an
+  isotype-relative ratio and/or an absolute abundance threshold in at
+  least `min_cell_fraction` of cells. CPM uses a per-marker pseudocount
+  of 1 (`(x + 1) / sum(x + 1) * 1e6`). With `return_stats = TRUE`, each
+  marker, including isotype controls, includes `median_cpm` so the CPM
+  range is visible when choosing `abundance_threshold`.
+- Added `PixelDB$components_cell_graph()` method to directly extract
+  bipartite cell graphs and associated marker counts from DuckDB
+  edgelists using 64-bit integer hashing (`bit64`), achieving faster
+  graph instantiation and lower peak memory usage.
+- [`ComputeLayout()`](reference/ComputeLayout.md) method for
+  `CellGraphList` objects, so layouts can be computed directly on the
+  list returned by [`CellGraphs()`](reference/CellGraphs.md). Unloaded
+  (`NULL`) graphs are kept in place and the result is a `CellGraphList`.
+
+### Changed
+
+- [`cell_plot_animate()`](reference/cell_plot_animate.md) copies a
+  boomerang frame when its angle matches a frame already drawn. An odd
+  `frames` count is raised to the next even number, with a warning, so
+  the return trip is made of those copies.
+- `boomerang` is an argument of
+  [`cell_plot_animate()`](reference/cell_plot_animate.md).
+  [`cell_coord_rotate()`](reference/cell_coord_rotate.md) records the
+  axis, angle, and origin.
+- Refactored [`LoadCellGraphs()`](reference/LoadCellGraphs.md) for
+  `PNAAssay` and `PNAAssay5` to use `PixelDB$components_cell_graph()`,
+  consolidating edgelist extraction and marker count aggregation into
+  single-pass DuckDB queries (~2.5–4.3x speedup).
+- `ReadPNA_Seurat` now only loads a subset of the available meta data
+  columns to avoid bloating the `meta.data` slot. Detailed meta data can
+  be loaded by setting `detailed_meta_data = TRUE`.
+
+### Deprecated
+
+- [`AbundanceColocalizationPlot()`](reference/AbundanceColocalizationPlot.md)
+  is deprecated and will be removed in a future release. It still works,
+  but calling it now signals a `lifecycle` deprecation warning once per
+  R session.
+
+### Fixes
+
+- Fixed an issue in
+  [`ColocalizationHeatmap()`](reference/ColocalizationHeatmap.md) with
+  `type = "tiles"` and `symmetrise = TRUE` where columns and rows in the
+  wide matrix had mismatched initial ordering, causing row and column
+  dendrograms to resolve ties differently and yield slightly different
+  cluster orderings.
+- [`ColocalizationHeatmap()`](reference/ColocalizationHeatmap.md) now
+  uses vectorized `layer_fun` instead of `cell_fun` for
+  [`ComplexHeatmap::pheatmap`](https://rdrr.io/pkg/ComplexHeatmap/man/pheatmap.html)
+  tile highlighting, eliminating performance warnings when plotting
+  heatmaps with \>100 rows or columns.
+- [`merge()`](https://rdrr.io/r/base/merge.html) on `PNAAssay` objects
+  with different panels no longer fails. A message is emitted and the
+  feature metadata columns are dropped from `@meta.features`, while one
+  row per merged feature is kept so that the merged assay stays valid
+  for downstream methods such as
+  [`subset()`](https://rdrr.io/r/base/subset.html).
+- The `"base"` frame backend of
+  [`cell_plot_animate()`](reference/cell_plot_animate.md) now draws
+  color legends that match the ggplot2 renderer. Continuous legends show
+  regularly spaced, formatted breaks instead of only the raw limits, the
+  color bar has a fixed physical size, and the legend column is sized
+  from the rendered text so the title and labels are never clipped. Long
+  titles and labels wrap onto several lines, and the legend column is
+  capped below the device width so a long label cannot make frame
+  rendering fail. Text and point sizes in base frames no longer shrink
+  with the number of panels. Rendering a small frame with a legend no
+  longer fails while restoring the graphics parameters.
+
+## \[0.22.2\]
+
+### Changed
+
+- [`cell_plot_interactive()`](reference/cell_plot_interactive.md) gains
+  a `renderer` argument that selects the interactive backend: `"rgl"`
+  (default) returns the WebGL htmlwidget that `cell_plot_rgl()` used to
+  return, and `"plotly"` returns the Plotly widget. Code that relied on
+  [`cell_plot_interactive()`](reference/cell_plot_interactive.md)
+  drawing with Plotly must pass `renderer = "plotly"`.
+
+### Removed
+
+- `cell_plot_rgl()`. Use `cell_plot_interactive(renderer = "rgl")`.
+
+## \[0.22.1\] - 2026-10-02
+
+### Changed
+
+- `cell_plot_rgl()` returns an rgl htmlwidget that fills its container,
+  such as the IDE viewer or a Quarto page, and follows it when resized.
+  Titles, facet strips, and legends are HTML drawn over the WebGL
+  canvas, sized by the theme text size, with row strip labels reading
+  upward. Points are round. Colorbar tick labels use scientific notation
+  when the values need it.
+
+### Removed
+
+- `cell_plot_rgl()` does not use `later`.
+
+### Deprecated
+
+- The `add_layouts` argument of
+  [`LoadCellGraphs()`](reference/LoadCellGraphs.md) is deprecated and
+  will be removed in a future release. It still works, but supplying it
+  now signals a `lifecycle` deprecation warning once per R session.
+
 ## \[0.22.0\] - 2026-10-01
 
 ### Added
@@ -34,9 +146,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   draws a ggplot, and [`summary()`](https://rdrr.io/r/base/summary.html)
   inspects it without drawing.
   [`cell_plot_interactive()`](reference/cell_plot_interactive.md) draws
-  a Plotly widget (`plotly`),
-  [`cell_plot_rgl()`](reference/cell_plot_rgl.md) draws a native rgl
-  scene (`rgl` and `later`), and
+  a Plotly widget (`plotly`), `cell_plot_rgl()` draws a native rgl scene
+  (`rgl` and `later`), and
   [`cell_plot_animate()`](reference/cell_plot_animate.md) encodes a
   rotating GIF or video after
   [`cell_coord_rotate()`](reference/cell_coord_rotate.md) (`gifski` or

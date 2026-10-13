@@ -74,8 +74,7 @@ test_that("Cell plot recipes and modifiers work as expected", {
     ) |>
     cell_coord_rotate(
       axis = "z",
-      max_degree = 180,
-      boomerang = TRUE
+      max_degree = 180
     )
 
   expect_equal(
@@ -122,7 +121,6 @@ test_that("Cell plot recipes and modifiers work as expected", {
         type = "rotate",
         axis = "z",
         max_degree = 180,
-        boomerang = TRUE,
         origin = "origo"
       )
     )
@@ -293,7 +291,6 @@ test_that("Cell plot recipes and modifiers work as expected", {
       type = "rotate",
       axis = c(0, 1, 0),
       max_degree = -90,
-      boomerang = FALSE,
       origin = "centroid"
     )
   )

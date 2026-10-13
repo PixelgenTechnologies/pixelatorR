@@ -201,7 +201,7 @@ share feature names because `layer` selects the matrix to search.
 library(pixelatorR)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -210,7 +210,7 @@ se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
 #> ℹ See ?duckdb_storage for details and alternatives.
 se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -226,28 +226,28 @@ cg
 
 # Fetch marker counts, node attributes, or embeddings
 head(SeuratObject::FetchData(cg, vars = colnames(cg@counts)[1]))
-#>                        B2M
-#> 61208583141770358-umi1   0
-#> 50526950249468550-umi2   0
-#> 69733109123764664-umi1   0
-#> 43235234960499656-umi2   0
-#> 16002757515879905-umi1   0
-#> 4606209975865882-umi2    0
+#>                   B2M
+#> 61208583141770358   0
+#> 69733109123764664   0
+#> 16002757515879905   0
+#> 59822389138925142   0
+#> 64270251753030037   0
+#> 11111585952318758   0
 
 # FetchData.CellGraphList combines loaded graphs without requiring a layout
 cgl <- CellGraphs(se)
 head(SeuratObject::FetchData(cgl, vars = colnames(cg@counts)[1]))
-#>                               component B2M
-#> 61208583141770358-umi1 0a45497c6bfbfb22   0
-#> 50526950249468550-umi2 0a45497c6bfbfb22   0
-#> 69733109123764664-umi1 0a45497c6bfbfb22   0
-#> 43235234960499656-umi2 0a45497c6bfbfb22   0
-#> 16002757515879905-umi1 0a45497c6bfbfb22   0
-#> 4606209975865882-umi2  0a45497c6bfbfb22   0
+#>                          component B2M
+#> 61208583141770358 0a45497c6bfbfb22   0
+#> 69733109123764664 0a45497c6bfbfb22   0
+#> 16002757515879905 0a45497c6bfbfb22   0
+#> 59822389138925142 0a45497c6bfbfb22   0
+#> 64270251753030037 0a45497c6bfbfb22   0
+#> 11111585952318758 0a45497c6bfbfb22   0
 
 # Subset
 cg_small <- subset(cg, nodes = CellGraphData(cg, slot = "nodes")[1:100])
 cg_small
-#> A CellGraph object containing a bipartite graph with 100 nodes and 53 edges
+#> A CellGraph object containing a bipartite graph with 100 nodes and 0 edges
 #> Number of markers:  149 
 ```

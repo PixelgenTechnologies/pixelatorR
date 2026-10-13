@@ -25,7 +25,7 @@ LoadCellGraphs(
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -39,7 +39,7 @@ LoadCellGraphs(
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -53,7 +53,7 @@ LoadCellGraphs(
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -65,11 +65,8 @@ LoadCellGraphs(
 LoadCellGraphs(
   object,
   cells = colnames(object),
-  add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
-  chunk_size = 10,
-  cl = NULL,
   verbose = TRUE,
   ...
 )
@@ -78,11 +75,8 @@ LoadCellGraphs(
 LoadCellGraphs(
   object,
   cells = colnames(object),
-  add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
-  chunk_size = 10,
-  cl = NULL,
   verbose = TRUE,
   ...
 )
@@ -94,7 +88,7 @@ LoadCellGraphs(
   cells = colnames(object),
   load_as = c("bipartite", "Anode", "linegraph"),
   add_marker_counts = TRUE,
-  add_layouts = FALSE,
+  add_layouts = lifecycle::deprecated(),
   force = FALSE,
   chunk_size = 10,
   cl = NULL,
@@ -143,7 +137,9 @@ LoadCellGraphs(
 
 - add_layouts:
 
-  Load layouts from the PXL file if available.
+  **\[deprecated\]** Load layouts from the PXL file if available. This
+  argument is deprecated and will be removed in a future release.
+  Supplying it triggers a warning once per R session.
 
 - force:
 
@@ -211,7 +207,7 @@ tends to slow down layout computations and visualizations.
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -221,17 +217,14 @@ seur_obj <- ReadPNA_Seurat(pxl_file)
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 pna_assay <- LoadCellGraphs(seur_obj[["PNA"]], cells = "0a45497c6bfbfb22")
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
 #> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
 #> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
 #> ℹ See ?duckdb_storage for details and alternatives.
-#> ℹ Fetching edgelists for 1 cells 
-#> → Creating <CellGraph> objects
-#> → Fetching marker counts
-#> → Adding marker counts to <CellGraph> object(s)
+#> ℹ Fetching CellGraphs for 1 cells 
 #> ✔ Successfully loaded 1 <CellGraph> object(s).
 CellGraphs(pna_assay)[["0a45497c6bfbfb22"]]
 #> A CellGraph object containing a bipartite graph with 43543 nodes and 97014 edges
