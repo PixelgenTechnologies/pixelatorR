@@ -29,25 +29,26 @@ column.}
 \item{color}{Optional column mapping or constant color for every node.
 Character, factor, numeric, and integer columns are supported, where
 character and factor columns are treated as categorical and numeric and
-integer columns as continuous. A character value is read as a column name
+integer columns as continuous. Missing numeric values are kept. Non-finite
+values such as \code{Inf} are not. A character value is read as a column name
 when \code{data} has that column and otherwise as one fully opaque color.}
 
 \item{size, alpha}{Optional column mappings or constant values for node size
 and alpha. Character, factor, numeric, and integer columns are supported,
-where character and factor columns are treated as categorical levels. One
-finite number sets a constant relative size or a constant alpha between zero
+where character and factor columns are treated as categorical levels.
+Missing numeric values are kept. Non-finite values such as \code{Inf} are not.
+One finite number sets a constant relative size or a constant alpha between zero
 and one. Category-specific sizes and alphas are set with
 \code{\link[=cell_node_scale_size]{cell_node_scale_size()}} and \code{\link[=cell_node_scale_alpha]{cell_node_scale_alpha()}}.}
 
 \item{arrange}{An optional column mapping used to order points in projected
-plots. \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} and \code{\link[=cell_plot_rgl]{cell_plot_rgl()}} ignore this mapping
-because occlusion follows the scene camera. Defaults to the mapped \code{z}
-column.}
+plots. \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} ignores this mapping because occlusion
+follows the scene camera. Defaults to the mapped \code{z} column.}
 
 \item{depth}{An optional column mapping used for ggplot depth sizing.
 Defaults to the mapped \code{z} column, so depth sizing is on unless
 \code{depth = NULL} turns it off. Must not be the same column as \code{x}, \code{y}, or
-\code{size}. Plotly and rgl ignore this mapping.}
+\code{size}. \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} ignores this mapping.}
 
 \item{illumination_mask}{Optional logical column mapping. Illumination is
 applied only to rows where this column is \code{TRUE}. Rows where it is \code{FALSE}
@@ -61,8 +62,8 @@ Creates a cell-layout visualization recipe. The recipe stores data, column
 mappings, and optional rendering instructions without drawing a plot. Add
 instructions with the \verb{cell_*()} modifier functions. Printing the recipe
 builds and renders a ggplot. \code{\link[=cell_plot_interactive]{cell_plot_interactive()}} draws the same
-recipe as a 3D Plotly widget. \code{\link[=cell_plot_rgl]{cell_plot_rgl()}} draws it as a native rgl
-scene. \code{\link[=cell_plot_animate]{cell_plot_animate()}} encodes a rotating GIF or video after
+recipe as an interactive 3D htmlwidget with rgl or Plotly.
+\code{\link[=cell_plot_animate]{cell_plot_animate()}} encodes a rotating GIF or video after
 \code{\link[=cell_coord_rotate]{cell_coord_rotate()}}. \code{\link[=summary]{summary()}} inspects the recipe without drawing.
 }
 \details{
@@ -113,6 +114,5 @@ cell_plot(layout_data, color = CD82) |>
 }
 \seealso{
 \code{\link[=cell_node_scale_size]{cell_node_scale_size()}}, \code{\link[=cell_node_depth]{cell_node_depth()}},
-\code{\link[=cell_coord_rotate]{cell_coord_rotate()}}, \code{\link[=cell_plot_animate]{cell_plot_animate()}}, \code{\link[=cell_plot_interactive]{cell_plot_interactive()}},
-\code{\link[=cell_plot_rgl]{cell_plot_rgl()}}
+\code{\link[=cell_coord_rotate]{cell_coord_rotate()}}, \code{\link[=cell_plot_animate]{cell_plot_animate()}}, \code{\link[=cell_plot_interactive]{cell_plot_interactive()}}
 }

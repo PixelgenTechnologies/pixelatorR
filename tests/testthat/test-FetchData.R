@@ -240,9 +240,12 @@ cg_no_cluster <- CreateCellGraphObject(
 cgl <- CreateCellGraphList(list(cell_1 = cg, cell_2 = cg_no_cluster))
 
 test_that("FetchData.CellGraphList works as expected", {
-  expect_error(
-    SeuratObject::FetchData(cgl, vars = c("CD3", "cluster", "node_type")),
-    "duplicated"
+  expect_warning(
+    expect_error(
+      SeuratObject::FetchData(cgl, vars = c("CD3", "cluster", "node_type")),
+      "duplicated"
+    ),
+    "missing from 1 cell"
   )
 
   fd_one <- SeuratObject::FetchData(cgl, vars = "CD3", cells = "cell_2")

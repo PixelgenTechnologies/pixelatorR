@@ -41,6 +41,10 @@ AbundanceColocalizationPlot(
 A ggplot object.
 }
 \description{
+\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}}
+
+This function is deprecated and will be removed in a future release.
+
 Create a scatter plot of the abundance values for two sets of markers from a Seurat object. The points
 (each corresponding to a cell) in the scatter plot are colored by the colocalization of the two markers.
 }
@@ -52,7 +56,9 @@ library(pixelatorR)
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
 
-# Plot with data.frame
+# Deprecated; will be removed in a future release
+\dontrun{
 AbundanceColocalizationPlot(seur_obj, c("CD3E", "CD4"), c("CD19", "CD20"))
+}
 
 }

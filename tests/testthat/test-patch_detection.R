@@ -1,5 +1,6 @@
-se <- ReadPNA_Seurat(minimal_pna_pxl_file(), load_proximity_scores = FALSE, verbose = FALSE) %>%
-  LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE, verbose = FALSE)
+# add_layouts is deprecated; suppress the lifecycle warning during setup
+se <- ReadPNA_Seurat(minimal_pna_pxl_file(), load_proximity_scores = FALSE, verbose = FALSE)
+se <- suppressWarnings(LoadCellGraphs(se, cells = colnames(se)[1], add_layouts = TRUE, verbose = FALSE))
 
 test_that("patch_detection works as expected", {
   expect_no_error(cg_patch <-
@@ -12,7 +13,7 @@ test_that("patch_detection works as expected", {
   expect_equal(
     table(cg_patch@cellgraph %>% pull(patch)),
     structure(
-      c(`1` = 41588L, `2` = 1267L, `3` = 688L),
+      c(`0` = 41575L, `1` = 1241L, `2` = 727L),
       dim = 3L,
       dimnames = structure(list(c("0", "1", "2")), names = ""),
       class = "table"

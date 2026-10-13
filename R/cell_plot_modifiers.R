@@ -39,12 +39,12 @@ cell_grid <- function(object, rows = NULL, cols = NULL) {
 
   facet_columns <- unlist(list(rows = rows, cols = cols), use.names = FALSE)
   for (column in facet_columns) {
-    pixelatorR:::assert_col_in_data(
+    assert_col_in_data(
       column,
       data = object$data,
       arg_data = "data"
     )
-    pixelatorR:::assert_class(
+    assert_class(
       object$data[[column]],
       classes = c("character", "factor", "integer"),
       arg = column
@@ -115,13 +115,13 @@ cell_node_scale_color <- function(
 
   type <- match.arg(type)
   if (!is.null(colors)) {
-    pixelatorR:::assert_valid_color(colors, arg = "colors")
+    assert_valid_color(colors, arg = "colors")
     .assert_opaque_colors(colors, arg = "colors")
   }
-  pixelatorR:::assert_valid_color(na_color, arg = "na_color")
-  pixelatorR:::assert_length(na_color, n = 1, arg_x = "na_color")
+  assert_valid_color(na_color, arg = "na_color")
+  assert_length(na_color, n = 1, arg_x = "na_color")
   .assert_opaque_colors(na_color, arg = "na_color")
-  pixelatorR:::assert_class(
+  assert_class(
     limits,
     classes = c("numeric", "integer", "character"),
     allow_null = TRUE,
@@ -132,13 +132,13 @@ cell_node_scale_color <- function(
     .assert_ordered_numeric_pair(limits, arg = "limits", limits = c(-Inf, Inf))
   }
   if (is.character(limits)) {
-    pixelatorR:::assert_vector(
+    assert_vector(
       limits,
       type = "character",
       n = 1,
       arg = "limits"
     )
-    pixelatorR:::assert_unique(limits, arg = "limits")
+    assert_unique(limits, arg = "limits")
   }
 
   color_values <- object$data[[object$mapping$color]]
@@ -155,7 +155,7 @@ cell_node_scale_color <- function(
   }
   if (scale_type == "categorical" && !is.null(names(colors))) {
     color_levels <- limits %||% .cell_categorical_levels(color_values)
-    pixelatorR:::assert_x_in_y(
+    assert_x_in_y(
       color_levels,
       names(colors),
       arg_x = "color levels",
@@ -265,8 +265,7 @@ cell_node_scale_size <- function(object, sizes = c(2, 6), limits = NULL) {
 #'
 #' Depth sizing scales one node size, so this modifier cannot be combined with
 #' [cell_node_scale_size()]. If a size column is mapped, depth sizing is
-#' ignored. [cell_plot_interactive()] and [cell_plot_rgl()] ignore this
-#' modifier.
+#' ignored. [cell_plot_interactive()] ignores this modifier.
 #'
 #' @param object A `cell_plot` recipe.
 #' @param focal_distance Positive finite focal distance in the units of the
@@ -293,12 +292,12 @@ cell_node_scale_size <- function(object, sizes = c(2, 6), limits = NULL) {
 #'
 #' @export
 cell_node_depth <- function(object, focal_distance = 1.5) {
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     focal_distance,
     type = "numeric",
     arg = "focal_distance"
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     focal_distance,
     limits = c(0, Inf),
     arg = "focal_distance"
@@ -399,14 +398,14 @@ cell_node_scale_alpha <- function(object, alphas = c(0.2, 1), limits = NULL) {
   argument,
   call = rlang::caller_env()
 ) {
-  pixelatorR:::assert_vector(
+  assert_vector(
     direction,
     type = "numeric",
     n = 3,
     arg = argument,
     call = call
   )
-  pixelatorR:::assert_length(
+  assert_length(
     direction,
     n = 3,
     arg_x = argument,
@@ -504,22 +503,22 @@ cell_illuminate <- function(
   light_direction = c(-3, 2, 3),
   lock_light = FALSE
 ) {
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     ambient_intensity,
     type = "numeric",
     arg = "ambient_intensity"
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     ambient_intensity,
     limits = c(0, 1),
     arg = "ambient_intensity"
   )
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     saturation_boost,
     type = "numeric",
     arg = "saturation_boost"
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     saturation_boost,
     limits = c(0, Inf),
     arg = "saturation_boost"
@@ -530,30 +529,30 @@ cell_illuminate <- function(
     )
   }
   if (!is.null(shadow_colors)) {
-    pixelatorR:::assert_valid_color(shadow_colors, arg = "shadow_colors")
+    assert_valid_color(shadow_colors, arg = "shadow_colors")
     .assert_opaque_colors(shadow_colors, arg = "shadow_colors")
   }
   light_direction <- .normalize_cell_direction(
     light_direction,
     argument = "light_direction"
   )
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     lock_light,
     type = "bool",
     arg = "lock_light"
   )
-  pixelatorR:::assert_vector(
+  assert_vector(
     clamp_quantiles,
     type = "numeric",
     n = 2,
     arg = "clamp_quantiles"
   )
-  pixelatorR:::assert_length(
+  assert_length(
     clamp_quantiles,
     n = 2,
     arg_x = "clamp_quantiles"
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     clamp_quantiles,
     limits = c(0, 1),
     arg = "clamp_quantiles"
@@ -574,12 +573,12 @@ cell_illuminate <- function(
     ambient_occlusion_weight = ambient_occlusion_weight
   )
   for (weight_name in names(illumination_weights)) {
-    pixelatorR:::assert_single_value(
+    assert_single_value(
       illumination_weights[[weight_name]],
       type = "numeric",
       arg = weight_name
     )
-    pixelatorR:::assert_within_limits(
+    assert_within_limits(
       illumination_weights[[weight_name]],
       limits = c(0, Inf),
       arg = weight_name
@@ -593,12 +592,12 @@ cell_illuminate <- function(
       c("i" = "At least one illumination weight must be positive.")
     )
   }
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     ambient_occlusion_k,
     type = "integer",
     arg = "ambient_occlusion_k"
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     ambient_occlusion_k,
     limits = c(1, Inf),
     arg = "ambient_occlusion_k"
@@ -679,28 +678,28 @@ cell_theme <- function(
   if (missing(text_size)) {
     text_size <- defaults$text_size
   }
-  pixelatorR:::assert_valid_color(
+  assert_valid_color(
     background_color,
     arg = "background_color"
   )
-  pixelatorR:::assert_length(
+  assert_length(
     background_color,
     n = 1,
     arg_x = "background_color"
   )
-  pixelatorR:::assert_valid_color(text_color, arg = "text_color")
-  pixelatorR:::assert_length(text_color, n = 1, arg_x = "text_color")
-  pixelatorR:::assert_valid_color(
+  assert_valid_color(text_color, arg = "text_color")
+  assert_length(text_color, n = 1, arg_x = "text_color")
+  assert_valid_color(
     strip_background_color,
     arg = "strip_background_color"
   )
-  pixelatorR:::assert_length(
+  assert_length(
     strip_background_color,
     n = 1,
     arg_x = "strip_background_color"
   )
-  pixelatorR:::assert_single_value(text_size, type = "numeric", arg = "text_size")
-  pixelatorR:::assert_within_limits(
+  assert_single_value(text_size, type = "numeric", arg = "text_size")
+  assert_within_limits(
     text_size,
     limits = c(.Machine$double.eps, Inf),
     arg = "text_size"
@@ -755,19 +754,19 @@ cell_annotation <- function(
   subtitle = NULL,
   legend_title = NULL
 ) {
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     title,
     type = "string",
     allow_null = TRUE,
     arg = "title"
   )
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     subtitle,
     type = "string",
     allow_null = TRUE,
     arg = "subtitle"
   )
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     legend_title,
     type = "string",
     allow_null = TRUE,
@@ -794,10 +793,10 @@ cell_annotation <- function(
 #' Add rotating coordinates to a cell plot
 #'
 #' Records rotation geometry for an animation renderer. This sets a rotation
-#' sequence rather than a single static view. The number of frames belongs to
-#' [cell_plot_animate()], not this modifier. Printed ggplot and Plotly views keep
-#' the unrotated coordinates. The default axis is `"y"`, which spins the cell
-#' left to right on screen.
+#' sequence rather than a single static view. The number of frames, and whether
+#' the animation returns through them, belong to [cell_plot_animate()], not this
+#' modifier. Printed ggplot and Plotly views keep the unrotated coordinates.
+#' The default axis is `"y"`, which spins the cell left to right on screen.
 #'
 #' @param object A `cell_plot` recipe.
 #' @param axis Axis around which coordinates are rotated. Use `"x"`, `"y"`, or
@@ -805,7 +804,6 @@ cell_annotation <- function(
 #' axis. Numeric axes are normalized before they are stored.
 #' @param max_degree Maximum rotation angle from -360 to 360 degrees. Positive
 #' angles follow the right-hand rule; use a negative angle to reverse direction.
-#' @param boomerang Whether the animation returns through the frame sequence.
 #' @param origin Rotation origin. `"origo"` uses `(0, 0, 0)`. `"centroid"`
 #' calculates the centroid independently within each [cell_grid()] panel.
 #'
@@ -832,7 +830,6 @@ cell_coord_rotate <- function(
   object,
   axis = "y",
   max_degree = 360,
-  boomerang = FALSE,
   origin = c("origo", "centroid")
 ) {
   axis <- if (is.character(axis)) {
@@ -840,20 +837,15 @@ cell_coord_rotate <- function(
   } else {
     .normalize_cell_direction(axis, argument = "axis")
   }
-  pixelatorR:::assert_single_value(
+  assert_single_value(
     max_degree,
     type = "numeric",
     arg = "max_degree"
   )
-  pixelatorR:::assert_within_limits(
+  assert_within_limits(
     max_degree,
     limits = c(-360, 360),
     arg = "max_degree"
-  )
-  pixelatorR:::assert_single_value(
-    boomerang,
-    type = "bool",
-    arg = "boomerang"
   )
   if (!is.finite(max_degree)) {
     cli::cli_abort(c("i" = "{.arg max_degree} must be finite."))
@@ -864,7 +856,6 @@ cell_coord_rotate <- function(
     type = "rotate",
     axis = axis,
     max_degree = max_degree,
-    boomerang = boomerang,
     origin = origin
   )
   return(.replace_cell_plot_field(object, "coord", specification))

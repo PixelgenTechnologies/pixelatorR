@@ -1,6 +1,6 @@
 Package: pixelatorR
 Title: Data Structures, Data Processing Tools and Visualization Tools for MPX Single Cell Data
-Version: 0.22.0
+Version: 0.23.0
 Authors@R: 
     c(
     person("Ludvig", "Larsson", , "ludvig.larsson@pixelgen.com", role = c("aut", "cre"),
@@ -64,8 +64,8 @@ Suggests:
     pcaMethods,
     gifski,
     av,
-    later,
     rgl,
+    htmlwidgets,
     magick,
     ragg,
     png,
@@ -98,6 +98,7 @@ Collate:
     'cell_plot_build.R'
     'cell_plot_ggplot.R'
     'cell_plot_illumination.R'
+    'cell_plot_interactive.R'
     'cell_plot_modifiers.R'
     'cell_plot_plotly.R'
     'cell_plot_rgl.R'
@@ -120,6 +121,7 @@ Collate:
     'extdata.R'
     'fetch_layout_data.R'
     'filter_and_summarize_proximity_scores.R'
+    'find_abundant_markers.R'
     'global_options.R'
     'graph_analysis.R'
     'graph_conversion.R'
