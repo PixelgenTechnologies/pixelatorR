@@ -165,10 +165,7 @@ library(tibble)
 se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
   LoadCellGraphs(cells = colnames(.)[2], add_layouts = TRUE)
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
-#> ℹ Fetching edgelists for 1 cells 
-#> → Creating <CellGraph> objects
-#> → Fetching marker counts
-#> → Adding marker counts to <CellGraph> object(s)
+#> ℹ Fetching CellGraphs for 1 cells 
 #> → Fetching layouts
 #> → Adding layouts to <CellGraph> object(s)
 #> ✔ Successfully loaded 1 <CellGraph> object(s).

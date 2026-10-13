@@ -91,7 +91,7 @@ library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
 se <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -155,15 +155,15 @@ SummarizeProximityScores(proximity_table, detailed = TRUE) %>%
 #> # A tibble: 12,561 × 6
 #>    marker_1 marker_2    sd   iqr   mad   q90
 #>    <chr>    <chr>    <dbl> <dbl> <dbl> <dbl>
-#>  1 CD56     CD71     0     0         0 0    
-#>  2 CD56     IgM      0     0         0 0    
-#>  3 CD56     TCRva7.2 0     0         0 0    
-#>  4 CD56     KLRG1    0     0         0 0    
-#>  5 CD56     CD93     0     0         0 0    
-#>  6 CD56     HLA-DR   0.128 0         0 0    
-#>  7 CD56     CD69     0     0         0 0    
-#>  8 CD56     CD59     0.826 0.258     0 0    
-#>  9 CD56     CD62P    0     0         0 0    
-#> 10 CD56     CX3CR1   0.709 0         0 0.951
+#>  1 CD56     Siglec-9 0      0        0 0    
+#>  2 CD56     CD79a    0      0        0 0    
+#>  3 CD56     HLA-ABC  0.790  1.13     0 0    
+#>  4 CD56     GPR56    0      0        0 0    
+#>  5 CD56     CD82     0      0        0 0    
+#>  6 CD56     IgD      0      0        0 0    
+#>  7 CD56     CD8      0      0        0 0    
+#>  8 CD56     mIgG2a   0      0        0 0    
+#>  9 CD56     CD9      0.447  0        0 0.600
+#> 10 CD56     CD94     0      0        0 0    
 #> # ℹ 12,551 more rows
 ```

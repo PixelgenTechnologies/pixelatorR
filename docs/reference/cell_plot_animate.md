@@ -2,8 +2,11 @@
 
 Builds a [`cell_plot()`](cell_plot.md) recipe once, draws one frame per
 rotation angle, and encodes a GIF or video. Rotation geometry comes from
-[`cell_coord_rotate()`](cell_coord_rotate.md). File type, size,
-resolution, frame rate, and the frame backend belong here.
+[`cell_coord_rotate()`](cell_coord_rotate.md). When a boomerang returns
+through an angle that was already drawn, that frame is copied instead of
+drawn again. An odd `frames` count is raised to the next even number,
+with a warning, so the return trip is made of those copies. File type,
+size, resolution, frame rate, and the frame backend belong here.
 
 ## Usage
 
@@ -17,7 +20,8 @@ cell_plot_animate(
   res = 150,
   fps = 20,
   frame_backend = c("base", "ggplot2"),
-  workers = 1L
+  workers = 1L,
+  boomerang = FALSE
 )
 ```
 
@@ -34,7 +38,8 @@ cell_plot_animate(
 
 - frames:
 
-  Positive whole number of encoded frames.
+  Positive whole number of encoded frames. A boomerang with an odd count
+  is raised to the next even number.
 
 - width, height:
 
@@ -56,6 +61,11 @@ cell_plot_animate(
 - workers:
 
   Positive whole number of parallel workers. `1` renders sequentially.
+
+- boomerang:
+
+  Whether the encoded frames return through the rotation. Return frames
+  that repeat an angle already drawn are copied.
 
 ## Value
 
@@ -91,7 +101,7 @@ file <- tempfile(fileext = ".gif")
 cell_plot(layout_data) |>
   cell_coord_rotate(axis = "y") |>
   cell_plot_animate(file, frames = 2, width = 160, height = 160, res = 72)
-#> ℹ Encoding /tmp/RtmpjKKHFf/file4d6b27fa317b.gif
-#> ✔ Encoding /tmp/RtmpjKKHFf/file4d6b27fa317b.gif [18ms]
+#> ℹ Encoding /tmp/Rtmp3BjCtL/file22fd775ea2c.gif
+#> ✔ Encoding /tmp/Rtmp3BjCtL/file22fd775ea2c.gif [15ms]
 #> 
 ```

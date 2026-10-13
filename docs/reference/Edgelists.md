@@ -75,7 +75,7 @@ library(pixelatorR)
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -85,7 +85,7 @@ seur_obj <- ReadPNA_Seurat(pxl_file)
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 el <- Edgelists(seur_obj[["PNA"]], lazy = FALSE)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -96,15 +96,15 @@ el
 #> # A tibble: 528,594 × 7
 #>    marker_1 marker_2    umi1    umi2 read_count uei_count component       
 #>    <chr>    <chr>    <int64> <int64>    <int64>   <int64> <chr>           
-#>  1 B2M      HLA-ABC    5 e15   2 e16          2         1 d4074c845bb62800
-#>  2 B2M      HLA-ABC    3 e16   5.e16          2         1 d4074c845bb62800
-#>  3 B2M      HLA-ABC    6 e16   6 e16          3         1 d4074c845bb62800
-#>  4 B2M      HLA-ABC    5.e16   4 e16          1         1 d4074c845bb62800
-#>  5 B2M      HLA-ABC    6 e16   6 e15          2         1 d4074c845bb62800
-#>  6 B2M      HLA-ABC    5.e16   4 e16          1         1 d4074c845bb62800
-#>  7 B2M      HLA-ABC    4 e16   6 e16          1         1 d4074c845bb62800
-#>  8 B2M      HLA-ABC    6 e16   4 e15          1         1 d4074c845bb62800
-#>  9 B2M      HLA-ABC    1.e16   1.e16          1         1 d4074c845bb62800
-#> 10 B2M      HLA-ABC    1.e16   3 e16          1         1 d4074c845bb62800
+#>  1 CD102    CD45RA     1.e16   4 e16          1         1 2708240b908e2eba
+#>  2 CD102    CD45RA     1.e16   7 e16          2         1 2708240b908e2eba
+#>  3 CD102    CD45RA     5 e15   1 e16          2         2 2708240b908e2eba
+#>  4 CD102    CD45RA     1.e16   1 e16          2         1 2708240b908e2eba
+#>  5 CD102    CD45RA     1.e16   5.e16          2         1 2708240b908e2eba
+#>  6 CD102    CD45RA     7 e15   6 e16          1         1 2708240b908e2eba
+#>  7 CD102    CD45RA     2 e15   6 e16          1         1 2708240b908e2eba
+#>  8 CD102    CD45RA     3 e16   3 e16          3         1 2708240b908e2eba
+#>  9 CD102    CD45RA     5 e15   6 e16          1         1 2708240b908e2eba
+#> 10 CD102    CD45RA     4 e16   5.e16          1         1 2708240b908e2eba
 #> # ℹ 528,584 more rows
 ```

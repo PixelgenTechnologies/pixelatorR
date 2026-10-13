@@ -43,6 +43,7 @@
 <url><loc>/reference/FSMap.html</loc></url>
 <url><loc>/reference/FetchLayoutData.html</loc></url>
 <url><loc>/reference/FilterProximityScores.html</loc></url>
+<url><loc>/reference/FindAbundantMarkers.html</loc></url>
 <url><loc>/reference/FindAnnoyNeighbors.html</loc></url>
 <url><loc>/reference/KeepLargestComponent.html</loc></url>
 <url><loc>/reference/LoadCellGraphs.html</loc></url>
@@ -114,7 +115,6 @@
 <url><loc>/reference/cell_plot.html</loc></url>
 <url><loc>/reference/cell_plot_animate.html</loc></url>
 <url><loc>/reference/cell_plot_interactive.html</loc></url>
-<url><loc>/reference/cell_plot_rgl.html</loc></url>
 <url><loc>/reference/cell_theme.html</loc></url>
 <url><loc>/reference/color-themes.html</loc></url>
 <url><loc>/reference/compute_transition_probabilities.html</loc></url>

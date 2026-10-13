@@ -12,6 +12,7 @@ ReadPNA_Seurat(
   return_pna_assay = TRUE,
   load_proximity_scores = TRUE,
   calc_log2_ratio = TRUE,
+  detailed_meta_data = FALSE,
   verbose = TRUE,
   ...
 )
@@ -48,6 +49,13 @@ ReadPNA_Seurat(
   A logical specifying whether to calculate and add a log2ratio column
   to the output table. Default is `TRUE`
 
+- detailed_meta_data:
+
+  Logical specifying whether to load detailed meta data. If `FALSE`
+  (default), only a subset of the meta data columns will be loaded,
+  including those used for quality control. The additional columns are
+  mostly useful for troubleshooting.
+
 - verbose:
 
   Print messages
@@ -81,7 +89,7 @@ library(pixelatorR)
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.

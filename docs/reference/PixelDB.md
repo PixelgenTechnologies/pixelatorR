@@ -62,6 +62,8 @@ Example usage:
 
 - [`PixelDB$components_marker_counts()`](#method-PixelDB-components_marker_counts)
 
+- [`PixelDB$components_cell_graph()`](#method-PixelDB-components_cell_graph)
+
 - [`PixelDB$export_parquet()`](#method-PixelDB-export_parquet)
 
 - [`PixelDB$close()`](#method-PixelDB-close)
@@ -533,6 +535,51 @@ A list with `dgCMatrix` matrices or `tbl_df`'s with the marker counts
 
 ------------------------------------------------------------------------
 
+### Method `components_cell_graph()`
+
+Load cell graphs for components as a CellGraphList
+
+This method queries the `edgelist` table to construct bipartite
+`CellGraph` objects for the specified `components`. Each graph is
+converted to a `tbl_graph` and assigned attributes `type = "bipartite"`,
+`component_id`, and `assay_type = "PNA"`. Node markers are returned as a
+sparse count matrix.
+
+#### Usage
+
+    PixelDB$components_cell_graph(components, markers = NULL, verbose = FALSE)
+
+#### Arguments
+
+- `components`:
+
+  A character vector of component IDs.
+
+- `markers`:
+
+  An optional character vector of all possible marker names to set fixed
+  columns on the counts matrix. If `NULL`, marker names are derived from
+  the data.
+
+- `verbose`:
+
+  Print progress messages.
+
+#### Returns
+
+A `CellGraphList` object containing `CellGraph` objects for the
+components.
+
+#### Examples
+
+    # Connect to a PNA database and load cell graphs
+    pxl_file <- minimal_pna_pxl_file()
+    db <- PixelDB$new(pxl_file)
+    cgl <- db$components_cell_graph(c("0a45497c6bfbfb22"))
+    cgl
+
+------------------------------------------------------------------------
+
 ### Method `export_parquet()`
 
 Export a table to a parquet file
@@ -607,7 +654,7 @@ library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
 db <- PixelDB$new(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -622,7 +669,7 @@ db <- PixelDB$new(pxl_file)
 
 db <- PixelDB$new(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -674,7 +721,7 @@ db$query("SELECT * FROM proximity") %>% head()
 db$close()
 db$reconnect()
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -885,11 +932,32 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name                     B2M  CD16  CD59
+#>   name                     B2M  CD18  CD16
 #>   <chr>                  <dbl> <dbl> <dbl>
-#> 1 24100734673138903-umi1     1     0     0
-#> 2 45574678819918116-umi1     0     1     0
-#> 3 10817808575594837-umi1     0     1     0
+#> 1 34739343391810798-umi1     1     0     0
+#> 2 54399852680662356-umi1     0     1     0
+#> 3 46889202488405884-umi1     0     0     1
+
+
+## ------------------------------------------------
+## Method `PixelDB$components_cell_graph`
+## ------------------------------------------------
+
+# Connect to a PNA database and load cell graphs
+pxl_file <- minimal_pna_pxl_file()
+db <- PixelDB$new(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
+cgl <- db$components_cell_graph(c("0a45497c6bfbfb22"))
+cgl
+#> A CellGraphList with 1 loaded CellGraph object(s) out of 1 
+#> Names: 0a45497c6bfbfb22  
 
 
 ## ------------------------------------------------
@@ -900,7 +968,7 @@ db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> /tmp/RtmpjKKHFf/file4d6b7d73ebba.parquet 
+#> /tmp/Rtmp3BjCtL/file22fd1835d60e.parquet 
 #>                                     TRUE 
 
 

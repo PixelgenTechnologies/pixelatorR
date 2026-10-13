@@ -72,7 +72,7 @@ library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
@@ -84,7 +84,7 @@ FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <chr>                                                 
-#> 1 <tibble [5 × 2]>      1 /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/e…
+#> 1 <tibble [5 × 2]>      1 /home/ubuntu/R/library/pixelatorR/extdata/five_cells/…
 
 # If the PXL has been moved, we can update the fs_map
 # Here we copy the test PXL file to a temporary location
@@ -101,7 +101,7 @@ FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                            
 #>   <list>            <int> <fs::path>                          
-#> 1 <tibble [5 × 2]>      1 /tmp/RtmpjKKHFf/file4d6b2e9145ef.pxl
+#> 1 <tibble [5 × 2]>      1 /tmp/Rtmp3BjCtL/file22fd4fc1c972.pxl
 
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
@@ -112,7 +112,7 @@ FSMap(seur_obj)
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <chr>                                                 
-#> 1 <tibble [5 × 2]>      1 /tmp/Rtmpoj0cDG/temp_libpath4d102621131d/pixelatorR/e…
+#> 1 <tibble [5 × 2]>      1 /home/ubuntu/R/library/pixelatorR/extdata/five_cells/…
 
 library(pixelatorR)
 
@@ -120,7 +120,7 @@ library(pixelatorR)
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 #> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/RtmpjKKHFf/duckdb
+#> ℹ /tmp/Rtmp3BjCtL/duckdb
 #> This is removed when the R session ends.
 #> • Extensions are re-downloaded each session.
 #> • Secrets are lost.
