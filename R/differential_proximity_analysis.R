@@ -569,7 +569,8 @@ DifferentialProximityAnalysis.Seurat <- function(
 #' @param cells_1 Cell names for the target group.
 #' @param cells_2 Cell names for the reference group.
 #'
-#' @return A data.frame with columns \code{difference}, \code{pct_1}, and \code{pct_2}.
+#' @return A data.frame with columns \code{difference}, \code{med_1},
+#'   \code{med_2}, \code{pct_1}, and \code{pct_2}.
 #'
 #' @noRd
 .median_difference <- function(object, cells_1, cells_2) {
@@ -583,11 +584,11 @@ DifferentialProximityAnalysis.Seurat <- function(
       length(x = cells_2),
     digits = 3
   )
-  data_1 <- sparseMatrixStats::rowMedians(object[, cells_1, drop = FALSE])
-  data_2 <- sparseMatrixStats::rowMedians(object[, cells_2, drop = FALSE])
-  med_diff <- (data_1 - data_2)
-  fc_results <- as.data.frame(x = cbind(med_diff, pct_1, pct_2))
-  colnames(fc_results) <- c("difference", "pct_1", "pct_2")
+  med_1 <- sparseMatrixStats::rowMedians(object[, cells_1, drop = FALSE])
+  med_2 <- sparseMatrixStats::rowMedians(object[, cells_2, drop = FALSE])
+  med_diff <- med_1 - med_2
+  fc_results <- as.data.frame(x = cbind(med_diff, med_1, med_2, pct_1, pct_2))
+  colnames(fc_results) <- c("difference", "med_1", "med_2", "pct_1", "pct_2")
   return(fc_results)
 }
 
@@ -1430,13 +1431,15 @@ FindAllProximityMarkers.data.frame <- function(
   cell_labels <- .labels_for_cells(label_chr, cells, group_by)
 
   if (verbose && check_global_verbosity()) {
-    n_tests <- length(idents)
-    cli_alert_info(
-      paste0(
-        "Running one-versus-rest proximity tests for {n_tests} level{?s} ",
-        "of {.val {group_by}}. The pooled remainder is labeled ",
-        "{.val {rest_label}}."
-      )
+    cli::cli_progress_bar(
+      format = paste0(
+        "Running one-versus-rest proximity tests ",
+        "[{cli::pb_bar}] {cli::pb_percent} | ",
+        "{cli::pb_current}/{cli::pb_total} | {cli::pb_status}"
+      ),
+      total = length(idents),
+      clear = FALSE,
+      status = paste0("starting (rest = ", rest_label, ")")
     )
   }
 
@@ -1461,11 +1464,9 @@ FindAllProximityMarkers.data.frame <- function(
     }
 
     if (verbose && check_global_verbosity()) {
-      cli_alert_info(
-        paste0(
-          "Testing {.val {ident}} vs {.val {rest_label}} ",
-          "({n_tgt} vs {n_ref} cells)."
-        )
+      cli::cli_progress_update(
+        set = i,
+        status = paste0(ident, " vs ", rest_label, " (", n_tgt, " vs ", n_ref, " cells)")
       )
     }
 
@@ -1487,6 +1488,8 @@ FindAllProximityMarkers.data.frame <- function(
       target = ident,
       pct_tgt = de_results$pct_1,
       pct_ref = de_results$pct_2,
+      med_tgt = de_results$med_1,
+      med_rest = de_results$med_2,
       diff_median = de_results$difference,
       p = de_results$p_val,
       p_adj = p.adjust(de_results$p_val, method = p_adjust_method),
@@ -1504,6 +1507,9 @@ FindAllProximityMarkers.data.frame <- function(
       ),
       call = call
     )
+  }
+  if (verbose && check_global_verbosity()) {
+    cli::cli_progress_done()
   }
   out
 }

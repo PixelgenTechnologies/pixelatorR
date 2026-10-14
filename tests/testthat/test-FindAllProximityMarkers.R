@@ -2,7 +2,7 @@ library(dplyr)
 
 arrange_markers <- function(x) {
   x %>%
-    select(-any_of(c("data_type", "reference", "alternative"))) %>%
+    select(-any_of(c("data_type", "reference", "alternative", "med_tgt", "med_rest"))) %>%
     arrange(marker_1, marker_2, target)
 }
 
@@ -101,10 +101,13 @@ test_that("FindAllProximityMarkers compares each level to the pooled rest", {
   expect_s3_class(res, "tbl_df")
   expect_equal(unique(res$target), as.character(0:5))
   expect_false(any(c("data_type", "reference", "alternative") %in% names(res)))
+  expect_true(all(c("med_tgt", "med_rest") %in% names(res)))
+  expect_equal(res$diff_median, res$med_tgt - res$med_rest)
 
   boosted <- res %>%
     filter(target == "0", marker_1 == "A", marker_2 == "A")
   expect_gt(boosted$diff_median, 0)
+  expect_equal(boosted$diff_median, boosted$med_tgt - boosted$med_rest)
 
   for (ident in unique(res$target)) {
     ref <- matrix_one_vs_rest(df, ident = ident, min_cells_per_group = 4)
