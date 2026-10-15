@@ -1527,7 +1527,7 @@ subset.CellGraph <- function(
   # so A and B copies of a UMI share a name. Those tables are already in
   # graph order.
   if (length(layout_names) == length(node_names) &&
-      (identical(layout_names, node_names) || identical(layout_names, stripped))) {
+    (identical(layout_names, node_names) || identical(layout_names, stripped))) {
     return(.drop_row_ids(layout))
   }
 

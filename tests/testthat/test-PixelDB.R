@@ -215,6 +215,39 @@ test_that("PixelDB methods work as expected", {
   expect_equal(names(mc), "0a45497c6bfbfb22")
   expect_equal(dim(mc[[1]]), c(43543, 150))
 
+  # components_cell_graph method (single and multiple components, markers, and add_layouts)
+  cells_two <- c("0a45497c6bfbfb22", "2708240b908e2eba")
+  expect_no_error(cgl_one <- db$components_cell_graph(cells_two[1]))
+  expect_s3_class(cgl_one, "CellGraphList")
+  expect_named(cgl_one, cells_two[1])
+  expect_s4_class(cgl_one[[1]], "CellGraph")
+  expect_equal(attr(cgl_one[[1]]@cellgraph, "type"), "bipartite")
+  expect_equal(attr(cgl_one[[1]]@cellgraph, "component_id"), cells_two[1])
+  expect_equal(attr(cgl_one[[1]]@cellgraph, "assay_type"), "PNA")
+  expect_null(cgl_one[[1]]@layout)
+
+  # Multiple components trigger the cached rowid component index
+  expect_no_error(
+    cgl_two <- db$components_cell_graph(
+      cells_two,
+      markers = rownames(db$counts()),
+      add_layouts = TRUE
+    )
+  )
+  expect_s3_class(cgl_two, "CellGraphList")
+  expect_named(cgl_two, cells_two)
+  expect_equal(cgl_two[[1]]@nodes, cgl_one[[1]]@nodes)
+  expect_equal(colnames(cgl_two[[1]]@counts), rownames(db$counts()))
+  expect_named(cgl_two[[1]]@layout, "wpmds_3d")
+  expect_equal(nrow(cgl_two[[1]]@layout$wpmds_3d), length(cgl_two[[1]]@nodes))
+  expect_equal(colnames(cgl_two[[1]]@layout$wpmds_3d), c("x", "y", "z"))
+
+  # Verify rowid index was populated and cached
+  idx_cache <- db$.__enclos_env__$private$component_index_cache
+  expect_true("edgelist" %in% names(idx_cache))
+  expect_true("layouts" %in% names(idx_cache))
+  expect_equal(nrow(idx_cache$edgelist), ncol(db$counts()))
+
   # export parquet method
   tmp_parquet_file <- fs::file_temp(ext = "parquet")
   expect_no_error(db$export_parquet(tmp_parquet_file, table_name = "proximity"))
@@ -244,6 +277,9 @@ test_that("PixelDB methods fails with invalid input", {
   expect_error(db$components_layout("3898b03349c6e28d", add_marker_counts = "Invalid"))
   expect_error(db$components_layout("3898b03349c6e28d", verbose = FALSE))
   expect_error(db$components_marker_counts("Invalid"))
+  expect_error(db$components_cell_graph("Invalid"))
+  expect_error(db$components_cell_graph(c("0a45497c6bfbfb22", "0a45497c6bfbfb22")))
+  expect_error(db$components_cell_graph("0a45497c6bfbfb22", add_layouts = "Invalid"))
   expect_no_error(db$close())
 })
 
@@ -302,4 +338,3 @@ test_that("PixelDB throws descriptive error when PXL file is empty (marked as nu
     fixed = TRUE
   )
 })
-
