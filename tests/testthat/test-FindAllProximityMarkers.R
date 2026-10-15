@@ -308,7 +308,7 @@ test_that("sparse-exact Wilcoxon p-values agree with the fallback path", {
   rownames(mat) <- c("A:A", "A:B", "B:B", "B:C")
   colnames(mat) <- paste0("cell", seq_len(ncol(mat)))
 
-  p_sparse <- pixelatorR:::.wilcox_p_sparse_exact(mat, n_cells_1 = 3)
+  p_sparse <- pixelatorR:::.wilcox_p_sparse_exact(mat, n_cells_1 = 3L)
   p_fallback <- pixelatorR:::.wilcox_p_fallback(
     mat,
     cells_1 = colnames(mat)[1:3],
@@ -316,6 +316,62 @@ test_that("sparse-exact Wilcoxon p-values agree with the fallback path", {
   )
 
   expect_equal(p_sparse, p_fallback, tolerance = 1e-6)
+})
+
+test_that("sparse-exact Wilcoxon p-values do not overflow 32-bit integer products", {
+  n_1 <- 50000L
+  n_2 <- 50000L
+  expect_true(is.na(suppressWarnings(n_1 * n_2)))
+
+  mat <- Matrix::sparseMatrix(
+    i = rep(1L, n_1),
+    j = seq_len(n_1),
+    x = 5,
+    dims = c(1L, n_1 + n_2),
+    dimnames = list("A:A", paste0("cell", seq_len(n_1 + n_2)))
+  )
+
+  expect_warning(
+    p_val <- pixelatorR:::.wilcox_p_sparse_exact(mat, n_cells_1 = n_1),
+    NA
+  )
+  expect_true(is.finite(p_val))
+  expect_lt(p_val, 1e-100)
+})
+
+test_that("FindAllProximityMarkers excludes cells with missing group_by labels", {
+  set.seed(1)
+  df <- bind_rows(
+    one_vs_rest_data(n_per_group = 4L, groups = c("0", "1", "2")),
+    one_vs_rest_data(n_per_group = 2L, groups = "unlabeled") %>%
+      mutate(
+        component = paste0("na_", component),
+        cluster = NA_character_
+      )
+  )
+
+  expect_warning(
+    res_with_na <- FindAllProximityMarkers(
+      df,
+      group_by = "cluster",
+      proximity_metric = "join_count_z",
+      min_cells_per_group = 4,
+      diff_threshold = 0,
+      verbose = FALSE
+    ),
+    "Excluding 2 cells"
+  )
+
+  res_clean <- FindAllProximityMarkers(
+    df %>% filter(!is.na(cluster)),
+    group_by = "cluster",
+    proximity_metric = "join_count_z",
+    min_cells_per_group = 4,
+    diff_threshold = 0,
+    verbose = FALSE
+  )
+
+  expect_equal(arrange_markers(res_with_na), arrange_markers(res_clean))
 })
 
 test_that("FindAllProximityMarkers fails with invalid input", {

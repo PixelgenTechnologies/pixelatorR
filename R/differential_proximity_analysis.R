@@ -622,12 +622,12 @@ DifferentialProximityAnalysis.Seurat <- function(
       n_nonzero <- 0L
     }
 
-    n_zero <- n_cols - n_nonzero
-    tie_zero <- if (n_zero > 1L) n_zero^3 - n_zero else 0
+    n_zero <- as.numeric(n_cols - n_nonzero)
+    tie_zero <- if (n_zero > 1) n_zero^3 - n_zero else 0
     tie_nonzero <- 0
     if (n_nonzero > 1L) {
-      runs <- rle(sort(vals))$lengths
-      runs <- runs[runs > 1L]
+      runs <- as.numeric(rle(sort(vals))$lengths)
+      runs <- runs[runs > 1]
       if (length(runs) > 0L) {
         tie_nonzero <- sum(runs^3 - runs)
       }
@@ -652,7 +652,8 @@ DifferentialProximityAnalysis.Seurat <- function(
 .wilcox_p_sparse_exact <- function(data_use, n_cells_1) {
   expect_matrixStats()
   data_dense <- as.matrix(data_use)
-  n_cells_2 <- ncol(data_use) - n_cells_1
+  n_cells_1 <- as.numeric(n_cells_1)
+  n_cells_2 <- as.numeric(ncol(data_use)) - n_cells_1
 
   ranks <- matrixStats::rowRanks(
     data_dense,
@@ -1446,8 +1447,9 @@ FindAllProximityMarkers.data.frame <- function(
   results <- vector("list", length(idents))
   for (i in seq_along(idents)) {
     ident <- idents[[i]]
-    is_target <- cell_labels == ident
-    is_reference <- !is.na(cell_labels) & !is_target
+    contrast <- .assign_one_vs_rest(cell_labels, ident, rest_label)
+    is_target <- !is.na(contrast) & contrast == ident
+    is_reference <- !is.na(contrast) & contrast == rest_label
     cells_target <- cells[is_target]
     cells_reference <- cells[is_reference]
     n_tgt <- length(cells_target)
