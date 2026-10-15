@@ -230,16 +230,16 @@ DifferentialProximityAnalysis.data.frame <- function(
 
     # Tidy up the results
     diff_prox_res[[key]] <- tibble(
-      data_type = proximity_metric,
       target = cur_keys[, contrast_column, drop = TRUE],
       reference = reference,
       n_tgt = cur_test_groups_u$n_tgt,
       n_ref = cur_test_groups_u$n_ref,
+      med_tgt = cur_test_groups_u$med_tgt,
+      med_ref = cur_test_groups_u$med_ref,
       diff_median = cur_test_groups_u$med_diff,
       statistic = cur_test_groups_u$u,
       auc = cur_test_groups_u$auc,
       p = cur_test_groups_u$p_val,
-      alternative = "two.sided",
       marker_1 = cur_test_groups_u$marker_1,
       marker_2 = cur_test_groups_u$marker_2
     ) %>%
@@ -422,14 +422,14 @@ DifferentialProximityAnalysis.Matrix <- function(
 
     # Tidy up the results
     diff_prox_res[[key]] <- tibble(
-      data_type = proximity_metric,
       target = cur_keys[, contrast_column, drop = TRUE],
       reference = reference,
       pct_tgt = de_results$pct_1,
       pct_ref = de_results$pct_2,
+      med_tgt = de_results$med_1,
+      med_ref = de_results$med_2,
       diff_median = de_results$difference,
       p = de_results$p_val,
-      alternative = "two.sided",
       pair = rownames(de_results)
     ) %>%
       .append_group_vars(cur_keys = cur_keys, group_vars = group_vars)
@@ -1567,4 +1567,110 @@ FindAllProximityMarkers.data.frame <- function(
     ),
     msg
   )
+}
+
+
+#' Add a proximity transition column to differential proximity results
+#'
+#' Classifies the reference/rest and target group medians into proximity regimes
+#' around zero (\code{"anti"} for \code{< -tau}, \code{"random"} for
+#' \code{[-tau, tau]}, and \code{"coloc"} for \code{> tau}) and combines them
+#' into a \code{transition} column formatted as \code{"<ref_state> -> <tgt_state>"}.
+#'
+#' Works on output tables from both \code{\link{DifferentialProximityAnalysis}}
+#' (using \code{med_ref} and \code{med_tgt}) and
+#' \code{\link{FindAllProximityMarkers}} (using \code{med_rest} and
+#' \code{med_tgt}).
+#'
+#' @param data A \code{data.frame} or \code{tbl_df} returned by
+#'   \code{\link{DifferentialProximityAnalysis}} or
+#'   \code{\link{FindAllProximityMarkers}}.
+#' @param tau Non-negative numeric threshold defining the neutral
+#'   \code{"random"} zone \code{[-tau, tau]} around 0. Default is \code{0.15}.
+#' @param tgt_col Name of the target median column. Default is \code{"med_tgt"}.
+#' @param ref_col Name of the reference median column. When \code{NULL}
+#'   (default), automatically uses \code{"med_ref"} or \code{"med_rest"} if
+#'   present in \code{data}.
+#' @param transition_col Name of the output transition column. Default is
+#'   \code{"transition"}.
+#' @param separator Separator placed between the reference and target states.
+#'   Default is \code{" -> "}.
+#'
+#' @return \code{data} with an added character column named by
+#'   \code{transition_col}.
+#'
+#' @examples
+#' library(dplyr)
+#' df <- tibble(
+#'   target = c("B", "CD4 T", "NK"),
+#'   med_tgt = c(0.8, 0.9, -0.4),
+#'   med_rest = c(0.0, 0.5, 0.0),
+#'   diff_median = med_tgt - med_rest
+#' )
+#' add_proximity_transition(df, tau = 0.15)
+#'
+#' @export
+#'
+add_proximity_transition <- function(
+  data,
+  tau = 0.15,
+  tgt_col = "med_tgt",
+  ref_col = NULL,
+  transition_col = "transition",
+  separator = " -> "
+) {
+  assert_class(data, "data.frame")
+  assert_single_value(tau, type = "numeric")
+  if (is.na(tau) || tau < 0) {
+    cli::cli_abort(
+      c("x" = "{.arg tau} must be a non-negative number.")
+    )
+  }
+  assert_single_value(tgt_col, type = "string")
+  assert_col_in_data(tgt_col, data)
+  assert_col_class(tgt_col, data, classes = "numeric")
+  assert_single_value(transition_col, type = "string")
+  assert_single_value(separator, type = "string")
+
+  if (is.null(ref_col)) {
+    candidates <- intersect(c("med_ref", "med_rest"), colnames(data))
+    if (length(candidates) == 0) {
+      cli::cli_abort(
+        c(
+          "x" = "Could not find a reference median column in {.arg data}.",
+          "i" = "Expected {.val med_ref} or {.val med_rest}, or supply {.arg ref_col}."
+        )
+      )
+    }
+    ref_col <- candidates[[1]]
+  } else {
+    assert_single_value(ref_col, type = "string")
+    assert_col_in_data(ref_col, data)
+  }
+  assert_col_class(ref_col, data, classes = "numeric")
+
+  tgt_vals <- data[[tgt_col]]
+  ref_vals <- data[[ref_col]]
+
+  state_tgt <- case_when(
+    is.na(tgt_vals) ~ NA_character_,
+    tgt_vals > tau ~ "coloc",
+    tgt_vals < -tau ~ "anti",
+    TRUE ~ "random"
+  )
+  state_ref <- case_when(
+    is.na(ref_vals) ~ NA_character_,
+    ref_vals > tau ~ "coloc",
+    ref_vals < -tau ~ "anti",
+    TRUE ~ "random"
+  )
+
+  transition <- ifelse(
+    is.na(state_ref) | is.na(state_tgt),
+    NA_character_,
+    paste0(state_ref, separator, state_tgt)
+  )
+
+  data %>%
+    mutate(!!sym(transition_col) := transition)
 }
