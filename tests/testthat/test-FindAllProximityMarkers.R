@@ -2,7 +2,7 @@ library(dplyr)
 
 arrange_markers <- function(x) {
   x %>%
-    select(-any_of(c("data_type", "reference", "alternative", "med_tgt", "med_rest"))) %>%
+    select(-any_of(c("data_type", "reference", "alternative", "med_tgt", "med_rest", "med_ref"))) %>%
     arrange(marker_1, marker_2, target)
 }
 

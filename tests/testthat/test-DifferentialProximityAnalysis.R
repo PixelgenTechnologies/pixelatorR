@@ -72,15 +72,15 @@ for (assay_version in c("v3", "v5")) {
     expected_data <-
       structure(
         list(
-          data_type = c("log2_ratio", "log2_ratio"),
           target = c("CD4T", "CD4T"),
           reference = c("pDC", "pDC"),
           pct_tgt = c(0.333, 0.333),
           pct_ref = c(1, 1),
+          med_tgt = c(0, 0),
+          med_ref = c(-1.13093086982645, -2.06004738366994),
           diff_median = c(1.13093086982645, 2.06004738366994),
           p = c(0.0924377451134652, 3.73436610215361e-07),
           p_adj = c(1, 0.000347669484110502),
-          alternative = c("two.sided", "two.sided"),
           marker_1 = c("CD56", "CD56"),
           marker_2 = c("HLA-ABC", "HLA-DR-DP-DQ")
         ),
@@ -89,6 +89,9 @@ for (assay_version in c("v3", "v5")) {
       )
 
     expect_equal(head(de_results1, 2), expected_data)
+    expect_true(all(c("med_tgt", "med_ref") %in% colnames(de_results)))
+    expect_false(any(c("data_type", "alternative") %in% colnames(de_results)))
+    expect_equal(de_results$diff_median, de_results$med_tgt - de_results$med_ref)
 
     # legacy method
     expect_no_error({
@@ -131,6 +134,13 @@ for (assay_version in c("v3", "v5")) {
       )
     })
     expect_equal(dim(de_results_filt), c(931, 11))
+
+    de_with_transition <- add_proximity_transition(de_results_filt, tau = 0.15)
+    expect_true("transition" %in% colnames(de_with_transition))
+    expect_equal(
+      head(de_with_transition$transition, 2),
+      c("anti -> random", "anti -> random")
+    )
   })
 
   test_that("DifferentialProximityAnalysis fails with invalid input", {
