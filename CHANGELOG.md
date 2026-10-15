@@ -7,10 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `PixelDB$components_cell_graph()` gains an `add_layouts` argument (default
+  `FALSE`) to load precomputed layouts and align coordinates to graph vertices
+  via `integer64` hashing (`bit64`).
+
 ### Changed
 
 - The default color palette for a mapped `cell_plot()` color column is
   `PixelgenGradient(7, "Cherry")`.
+- `PixelDB` now caches `counts()` per instance and lazily caches per-table
+  (`edgelist`, `layouts`) component `rowid` ranges to push down row-group
+  pruning on multi-component queries (`components_cell_graph()`,
+  `components_layout()`, `components_marker_counts()`, and eager
+  `components_edgelist()`).
+- `PixelDB$components_marker_counts()` now scans each component's edgelist once
+  using a CTE instead of scanning twice for `umi1` and `umi2`.
+
+### Fixes
+
+- Fixed `LoadCellGraphs()` on `PNAAssay` and `MPXAssay` objects to filter
+  `fs_map` by `cells_to_load` instead of `cells`, preventing already-loaded
+  graphs from being re-fetched when `force = FALSE`.
 
 ## [0.23.0] - 2026-10-13
 
