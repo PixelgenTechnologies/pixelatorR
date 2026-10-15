@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `ProximityScoresToAssay()` warns about components whose proximity scores are
+  all zero. It previously warned about components whose scores were all
+  non-zero.
+
+### Added
+
+- `FindAllProximityMarkers()` runs one-versus-rest differential proximity
+  tests for a single grouping column. Each level is compared to all other
+  levels pooled together. Proximity scores are pivoted once with
+  `ProximityScoresToAssay()` and each comparison uses the matrix method of
+  `DifferentialProximityAnalysis()`. `diff_threshold`, `min_pct`,
+  `min_diff_pct`, `min_cells_per_group`, and `only_pos` apply to every input.
+  `only_pos = TRUE` tests only pairs whose median is higher in the target.
+  `lazy = TRUE` fetches proximity scores with `ProximityScores()` when they
+  were not loaded into the Seurat object.
+- `add_proximity_transition()` classifies reference/rest and target group
+  medians from `DifferentialProximityAnalysis()` or `FindAllProximityMarkers()`
+  into proximity states (`"anti"`, `"random"`, `"coloc"`) around a threshold
+  `tau` and appends a `"<ref_state> -> <tgt_state>"` transition column.
+
 ## [0.23.0] - 2026-10-13
 
 ### Added

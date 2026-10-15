@@ -120,8 +120,7 @@ LoadCellGraphs.FileSystemDataset <- function(
 
   # Select load function
   graph_load_fkn <-
-    switch(
-      load_as,
+    switch(load_as,
       "bipartite" = .load_mpx_as_bipartite,
       "Anode" = .load_mpx_as_anode,
       "linegraph" = .load_mpx_as_linegraph
@@ -194,8 +193,7 @@ LoadCellGraphs.FileSystemDataset <- function(
   verbose = TRUE
 ) {
   # Select load function
-  graph_load_fkn <- switch(
-    load_as,
+  graph_load_fkn <- switch(load_as,
     "bipartite" = .load_mpx_as_bipartite,
     "Anode" = .load_mpx_as_anode,
     "linegraph" = .load_mpx_as_linegraph
@@ -811,7 +809,9 @@ LoadCellGraphs.Seurat <- function(
         select(name, node_type)
     } else {
       # Skip marker counts and return a simple undirected graph
-      new_edges <- g %E>% as_tibble() %>% select(from, to) %>% distinct()
+      new_edges <- g %E>% as_tibble() %>%
+        select(from, to) %>%
+        distinct()
 
       # Replace with collapsed edges and return a simple undirected graph
       g <- g %E>%

@@ -195,6 +195,7 @@ dpa_markers
 \seealso{
 Other DA-methods: 
 \code{\link{DifferentialProximityAnalysis}()},
+\code{\link{FindAllProximityMarkers}()},
 \code{\link{RunDAA}()},
 \code{\link{RunDCA}()}
 }
