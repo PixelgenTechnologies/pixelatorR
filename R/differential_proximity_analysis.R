@@ -1551,27 +1551,6 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
-#' Detect an empty differential-test error that a comparison can skip.
-#'
-#' @param err An error condition from \code{DifferentialProximityAnalysis()}.
-#'
-#' @return \code{TRUE} when the comparison produced no testable pairs.
-#'
-#' @noRd
-.is_skippable_da_error <- function(err) {
-  msg <- conditionMessage(err)
-  grepl(
-    paste(
-      "Found no groups with at least",
-      "Found no valid target data",
-      "No valid results were generated",
-      sep = "|"
-    ),
-    msg
-  )
-}
-
-
 #' Add a proximity transition column to differential proximity results
 #'
 #' Classifies the reference/rest and target group medians into proximity regimes
@@ -1598,8 +1577,8 @@ FindAllProximityMarkers.data.frame <- function(
 #' @param separator Separator placed between the reference and target states.
 #'   Default is \code{" -> "}.
 #'
-#' @return \code{data} with an added character column named by
-#'   \code{transition_col}.
+#' @return \code{data} with a character column named by
+#'   \code{transition_col}. An existing column of that name is replaced.
 #'
 #' @examples
 #' library(dplyr)
@@ -1667,12 +1646,10 @@ add_proximity_transition <- function(
     TRUE ~ "random"
   )
 
-  transition <- ifelse(
+  data[[transition_col]] <- ifelse(
     is.na(state_ref) | is.na(state_tgt),
     NA_character_,
     paste0(state_ref, separator, state_tgt)
   )
-
-  data %>%
-    mutate(!!sym(transition_col) := transition)
+  data
 }

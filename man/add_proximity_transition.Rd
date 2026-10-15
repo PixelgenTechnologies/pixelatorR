@@ -34,8 +34,8 @@ present in \code{data}.}
 Default is \code{" -> "}.}
 }
 \value{
-\code{data} with an added character column named by
-\code{transition_col}.
+\code{data} with a character column named by
+\code{transition_col}. An existing column of that name is replaced.
 }
 \description{
 Classifies the reference/rest and target group medians into proximity regimes
