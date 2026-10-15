@@ -464,10 +464,9 @@ PixelDB <- R6Class(
     #' character vectors be specifying the \code{umi_data_type}.
     #'
     #' @param components A character vector with component names or NULL to get all components
-    #' @param umi_data_type One of "int64", "string" or "suffixed_string". Default is "int64".
+    #' @param umi_data_type One of "int64" or "string". Default is "int64".
     #'  - "int64": The UMIs are encoded as int64
     #'  - "string": The UMIs are encoded as character
-    #'  - "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
     #' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
     #' a \code{tbl_lazy} object is returned.
     #' @param include_all_columns Logical specifying whether to include all columns in the output.
@@ -489,7 +488,7 @@ PixelDB <- R6Class(
     #'    This column is optional and is only returned if it is present in the edgelist table.
     #'
     components_edgelist = function(components,
-                                   umi_data_type = c("int64", "string", "suffixed_string"),
+                                   umi_data_type = c("int64", "string"),
                                    lazy = FALSE,
                                    include_all_columns = FALSE) {
       self$check_connection()
@@ -500,7 +499,7 @@ PixelDB <- R6Class(
 
       umi_data_type <- match.arg(
         umi_data_type,
-        choices = c("int64", "string", "suffixed_string")
+        choices = c("int64", "string")
       )
 
       if (!lazy && !is.null(components)) {
@@ -529,13 +528,6 @@ PixelDB <- R6Class(
           mutate(
             umi1 = as.character(umi1),
             umi2 = as.character(umi2)
-          )
-      }
-      if (umi_data_type == "suffixed_string") {
-        el <- el %>%
-          mutate(
-            umi1 = as.character(umi1) %>% stringr::str_c("-umi1"),
-            umi2 = as.character(umi2) %>% stringr::str_c("-umi2")
           )
       }
 
@@ -582,13 +574,7 @@ PixelDB <- R6Class(
       assert_single_value(add_marker_counts, "bool")
 
       # Construct the SQL query
-      # The pixel_type column is used to determine the UMI suffix
-      base_select <- paste0(
-        "SELECT CAST(index AS STRING) || ",
-        "CASE WHEN pixel_type IN ('A', 'umi1') ",
-        "THEN '-umi1' ELSE '-umi2' END AS ",
-        "name, x, y, z FROM layouts"
-      )
+      base_select <- "SELECT CAST(index AS STRING) AS name, x, y, z FROM layouts"
 
       components <- components %||% (self$counts() %>% colnames())
 
@@ -691,9 +677,9 @@ PixelDB <- R6Class(
         }
         sql_query <- paste0(
           "WITH src AS (SELECT umi1, umi2, marker_1, marker_2 FROM edgelist ", where_sql, ") ",
-          "SELECT umi1 || '-umi1' as name, marker_1 as marker FROM src ",
+          "SELECT CAST(umi1 AS STRING) AS name, marker_1 AS marker FROM src ",
           "UNION ",
-          "SELECT umi2 || '-umi2' as name, marker_2 as marker FROM src"
+          "SELECT CAST(umi2 AS STRING) AS name, marker_2 AS marker FROM src"
         )
         data <- DBI::dbGetQuery(private$con, sql_query)
         name_f <- factor(data$name, levels = unique(data$name))

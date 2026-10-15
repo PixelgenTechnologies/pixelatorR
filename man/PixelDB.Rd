@@ -592,7 +592,7 @@ character vectors be specifying the \code{umi_data_type}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_edgelist(
   components,
-  umi_data_type = c("int64", "string", "suffixed_string"),
+  umi_data_type = c("int64", "string"),
   lazy = FALSE,
   include_all_columns = FALSE
 )}\if{html}{\out{</div>}}
@@ -603,11 +603,10 @@ character vectors be specifying the \code{umi_data_type}.
 \describe{
 \item{\code{components}}{A character vector with component names or NULL to get all components}
 
-\item{\code{umi_data_type}}{One of "int64", "string" or "suffixed_string". Default is "int64".
+\item{\code{umi_data_type}}{One of "int64" or "string". Default is "int64".
 \itemize{
 \item "int64": The UMIs are encoded as int64
 \item "string": The UMIs are encoded as character
-\item "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
 }}
 
 \item{\code{lazy}}{A logical specifying whether to load the data lazily. If \code{TRUE},

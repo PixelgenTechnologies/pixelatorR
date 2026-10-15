@@ -7,7 +7,7 @@
 ReadPNA_edgelist(
   pxl_file,
   cells = NULL,
-  umi_data_type = c("int64", "string", "suffixed_string"),
+  umi_data_type = c("int64", "string"),
   lazy = TRUE
 )
 }
@@ -16,11 +16,10 @@ ReadPNA_edgelist(
 
 \item{cells}{A character vector with component IDs. If NULL, all components are loaded.}
 
-\item{umi_data_type}{One of "int64", "string" or "suffixed_string". Default is "int64".
+\item{umi_data_type}{One of "int64" or "string". Default is "int64".
 \itemize{
 \item "int64": The UMIs are encoded as int64
 \item "string": The UMIs are encoded as character
-\item "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
 }}
 
 \item{lazy}{A logical specifying whether to load the data lazily. If \code{TRUE},

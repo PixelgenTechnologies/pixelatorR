@@ -184,19 +184,6 @@ test_that("PixelDB methods work as expected", {
   )
   expect_equal(dim(el), c(110657, 5))
 
-  expect_no_error(el <- db$components_edgelist("0a45497c6bfbfb22", umi_data_type = "suffixed_string"))
-  expect_equal(
-    el %>% sapply(class),
-    c(
-      marker_1 = "character",
-      marker_2 = "character",
-      umi1 = "character",
-      umi2 = "character",
-      component = "character"
-    )
-  )
-  expect_equal(dim(el), c(97014, 5))
-
   expect_no_error(el_lazy <- db$components_edgelist(c("0a45497c6bfbfb22", "c3c393e9a17c1981"), lazy = TRUE))
   expect_no_error(el <- db$components_edgelist(c("0a45497c6bfbfb22", "c3c393e9a17c1981"), lazy = FALSE))
 
