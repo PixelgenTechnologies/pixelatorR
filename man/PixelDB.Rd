@@ -742,7 +742,12 @@ is converted to a \code{tbl_graph} and assigned attributes \code{type = "biparti
 \code{component_id}, and \code{assay_type = "PNA"}. Node markers are
 returned as a sparse count matrix.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_cell_graph(components, markers = NULL, verbose = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_cell_graph(
+  components,
+  markers = NULL,
+  add_layouts = FALSE,
+  verbose = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -752,6 +757,9 @@ returned as a sparse count matrix.
 
 \item{\code{markers}}{An optional character vector of all possible marker names to set fixed
 columns on the counts matrix. If \code{NULL}, marker names are derived from the data.}
+
+\item{\code{add_layouts}}{A logical specifying whether to load pre-computed 3D layouts
+from the \code{layouts} table into each \code{CellGraph}. Default is \code{FALSE}.}
 
 \item{\code{verbose}}{Print progress messages.}
 }
