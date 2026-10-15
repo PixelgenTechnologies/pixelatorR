@@ -259,3 +259,34 @@ for (assay_version in c("v3", "v5")) {
     )
   })
 }
+
+test_that("add_proximity_transition replaces an existing transition column", {
+  df <- data.frame(
+    med_tgt = c(0.8, -0.4, NA),
+    med_rest = c(0, 0.5, 0.2),
+    transition = c("stale", "stale", "stale")
+  )
+
+  named <- add_proximity_transition(
+    df,
+    tau = 0.15,
+    transition_col = "state_change"
+  )
+  expect_equal(
+    named$state_change,
+    c("random -> coloc", "coloc -> anti", NA_character_)
+  )
+  expect_equal(named$transition, c("stale", "stale", "stale"))
+
+  updated <- add_proximity_transition(df, tau = 0.15)
+  expect_equal(
+    updated$transition,
+    c("random -> coloc", "coloc -> anti", NA_character_)
+  )
+
+  retuned <- add_proximity_transition(updated, tau = 1)
+  expect_equal(
+    retuned$transition,
+    c("random -> random", "random -> random", NA_character_)
+  )
+})
