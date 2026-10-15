@@ -479,12 +479,10 @@ PixelDB <- R6Class(
     #'  - uei_count: The number of unique event identifiers (UEIs) supporting the edge.
     #'    This column is optional and is only returned if it is present in the edgelist table.
     #'
-    components_edgelist = function(
-      components,
-      umi_data_type = c("int64", "string", "suffixed_string"),
-      lazy = FALSE,
-      include_all_columns = FALSE
-    ) {
+    components_edgelist = function(components,
+                                   umi_data_type = c("int64", "string", "suffixed_string"),
+                                   lazy = FALSE,
+                                   include_all_columns = FALSE) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
@@ -560,11 +558,9 @@ PixelDB <- R6Class(
     #'
     #' @return A list with \code{tbl_df}'s with the layout coordinates and optionally marker counts
     #'
-    components_layout = function(
-      components,
-      add_marker_counts = FALSE,
-      verbose = TRUE
-    ) {
+    components_layout = function(components,
+                                 add_marker_counts = FALSE,
+                                 verbose = TRUE) {
       self$check_connection()
       assert_vector(components, "character", allow_null = TRUE, n = 1)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
@@ -634,11 +630,9 @@ PixelDB <- R6Class(
     #'
     #' @return A list with \code{dgCMatrix} matrices or \code{tbl_df}'s with the marker counts
     #'
-    components_marker_counts = function(
-      components,
-      as_sparse = FALSE,
-      verbose = FALSE
-    ) {
+    components_marker_counts = function(components,
+                                        as_sparse = FALSE,
+                                        verbose = FALSE) {
       self$check_connection()
       assert_vector(components, "character", allow_null = TRUE, n = 1)
       assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
@@ -713,11 +707,9 @@ PixelDB <- R6Class(
     #'
     #' @return A \code{CellGraphList} object containing \code{CellGraph} objects for the components.
     #'
-    components_cell_graph = function(
-      components,
-      markers = NULL,
-      verbose = FALSE
-    ) {
+    components_cell_graph = function(components,
+                                     markers = NULL,
+                                     verbose = FALSE) {
       self$check_connection()
       assert_vector(components, "character", n = 1)
       assert_unique(components)
@@ -850,12 +842,10 @@ PixelDB <- R6Class(
     #'
     #' @return Nothing
     #'
-    export_parquet = function(
-      parquet_file,
-      table_name = c("proximity", "edgelist", "layouts"),
-      compression = c("snappy", "zstd"),
-      compression_level = 1L
-    ) {
+    export_parquet = function(parquet_file,
+                              table_name = c("proximity", "edgelist", "layouts"),
+                              compression = c("snappy", "zstd"),
+                              compression_level = 1L) {
       self$check_connection()
       assert_single_value(parquet_file, "string")
       assert_file_ext(parquet_file, "parquet")

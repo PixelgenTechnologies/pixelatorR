@@ -302,4 +302,3 @@ test_that("PixelDB throws descriptive error when PXL file is empty (marked as nu
     fixed = TRUE
   )
 })
-

@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `only_pos = TRUE` tests only pairs whose median is higher in the target.
   `lazy = TRUE` fetches proximity scores with `ProximityScores()` when they
   were not loaded into the Seurat object.
+- `add_proximity_transition()` classifies reference/rest and target group
+  medians from `DifferentialProximityAnalysis()` or `FindAllProximityMarkers()`
+  into proximity states (`"anti"`, `"random"`, `"coloc"`) around a threshold
+  `tau` and appends a `"<ref_state> -> <tgt_state>"` transition column.
 
 ## [0.23.0] - 2026-10-13
 

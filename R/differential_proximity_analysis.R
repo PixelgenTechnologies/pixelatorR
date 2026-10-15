@@ -645,7 +645,7 @@ DifferentialProximityAnalysis.Seurat <- function(
 #'   the first group followed by the second group.
 #' @param n_cells_1 Number of cells in the first group.
 #'
-#' @return A numeric vector of p-values, one per row of 
+#' @return A numeric vector of p-values, one per row of
 #'   \\code{data_use}.
 #'
 #' @noRd
