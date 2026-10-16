@@ -553,7 +553,8 @@ build_cell_plot <- function(object) {
 #' legend scale. ggplot retrains color from the mapped column and `colors` /
 #' `limits` so it can draw a legend. Training always uses the full data,
 #' including every panel. Without a mapped column, every point takes the
-#' constant color and the scale carries no legend metadata.
+#' constant color and the scale carries no legend metadata. A mapped column
+#' with an empty palette uses `PixelgenGradient(7, "Cherry")`.
 #'
 #' @param values Mapped color values or `NULL`.
 #' @param specification A color specification or `NULL`.
@@ -563,7 +564,7 @@ build_cell_plot <- function(object) {
 #'
 #' @noRd
 .build_cell_color_scale <- function(values, specification, constant = NULL) {
-  default_colors <- c("lightgrey", "mistyrose", "red", "darkred")
+  default_colors <- PixelgenGradient(7, "Cherry")
   if (is.null(values)) {
     resolved <- .cell_colors_to_hex(constant %||% "gray90")
     return(list(

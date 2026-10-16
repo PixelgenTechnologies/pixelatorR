@@ -33,9 +33,10 @@
 #' [cell_node_scale_size()] overrides it. For a categorical size or alpha
 #' mapping, [cell_node_scale_size()] and [cell_node_scale_alpha()] also accept
 #' a named vector of per-level values, such as `sizes = c(a = 1, b = 2, c = 3)`.
-#' Color scale behavior is controlled by [cell_node_scale_color()]. Color scales
-#' are trained once across all panels, and continuous scales span the observed
-#' range unless `limits` are supplied.
+#' Color scale behavior is controlled by [cell_node_scale_color()]. The default
+#' palette for a mapped color column is `PixelgenGradient(7, "Cherry")`. Color
+#' scales are trained once across all panels, and continuous scales span the
+#' observed range unless `limits` are supplied.
 #'
 #' @param data A non-empty tibble containing cell-layout data.
 #' @param x,y Column mappings for the horizontal and vertical coordinates.

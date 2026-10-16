@@ -577,6 +577,33 @@ test_that("Palette colors with embedded alpha are rejected", {
   )
 })
 
+test_that("The default cell plot palette is the Cherry gradient", {
+  plot_data <- tibble::tibble(
+    x = c(0, 1),
+    y = c(0, 1),
+    z = c(0, 1),
+    marker = c(0, 10),
+    group = c("a", "b")
+  )
+  cherry <- PixelgenGradient(7, "Cherry")
+
+  continuous <- cell_plot(plot_data, color = marker) |>
+    build_cell_plot()
+  expect_equal(continuous$color$colors, cherry)
+  expect_equal(
+    continuous$color$resolved,
+    .cell_colors_to_hex(scales::gradient_n_pal(cherry)(c(0, 1)))
+  )
+
+  categorical <- cell_plot(plot_data, color = group) |>
+    build_cell_plot()
+  expect_equal(
+    unname(categorical$color$colors),
+    grDevices::colorRampPalette(cherry)(2)
+  )
+  expect_equal(names(categorical$color$colors), c("a", "b"))
+})
+
 test_that("Color scale training follows the modifier contract", {
   plot_data <- tibble::tibble(
     x = c(0, 1, 0, 1),
