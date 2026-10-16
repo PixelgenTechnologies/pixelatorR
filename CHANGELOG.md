@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The default color palette for a mapped `cell_plot()` color column is
+  `PixelgenGradient(7, "Cherry")`.
+
 ## [0.23.0] - 2026-10-13
 
 ### Added

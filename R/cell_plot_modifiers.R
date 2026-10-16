@@ -71,7 +71,7 @@ cell_grid <- function(object, rows = NULL, cols = NULL) {
 #'
 #' @param object A `cell_plot` recipe.
 #' @param colors Optional vector of valid, fully opaque colors used for the
-#' scale. When `NULL`, the builder uses its default palette.
+#' scale. When `NULL`, the builder uses `PixelgenGradient(7, "Cherry")`.
 #' @param limits Optional scale limits. Supply two ordered numeric values for a
 #' continuous scale or a character vector of levels for a categorical scale.
 #' @param na_color Fully opaque color used for missing values.
