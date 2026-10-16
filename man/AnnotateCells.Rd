@@ -8,12 +8,12 @@ AnnotateCells(
   object,
   reference = reference,
   summarize_by_column = NULL,
-  reference_assay = "ADT",
+  reference_assay = "PNA",
   query_assay = "PNA",
   reference_groups = c("celltype.l1", "celltype.l2"),
-  normalization_method = c("LogNormalize", "SCT", "CLR"),
+  normalization_method = c("CLR", "LogNormalize", "SCT"),
   reduction = "cca",
-  method = c("Seurat", "nmf"),
+  method = c("nnls", "Seurat", "nmf"),
   min_prediction_score = 0,
   skip_normalization = FALSE,
   verbose = TRUE,
@@ -23,79 +23,78 @@ AnnotateCells(
 \arguments{
 \item{object}{Seurat object to which you want to add celltype annotation}
 
-\item{reference}{Seurat object that contains annotated reference data, see examples
-for a programmatic way to obtain a PBMC reference dataset}
+\item{reference}{Seurat object that contains annotated reference data, see
+\code{\link{read_pbmc_reference}} and examples for obtaining a PBMC reference dataset}
 
 \item{summarize_by_column}{If NULL, return only the cell type annotation per cell.
 If the name of a column in the object metadata is provided, the annotations will
 be summarized to the factors of this column, i.e. the most common annotation per
 factor level will be retained. Useful for annotating the output of the Seurat
-clustering, for example.}
+clustering, for example, Default: NULL}
 
-\item{reference_assay}{Assay in the reference dataset used to find the anchors,
-Default: 'ADT'}
-
-\item{query_assay}{Assay in the query dataset used to find the anchors. It should
-probably be set to a normalized assay that was run on the object (e.g. "dsb"),
+\item{reference_assay}{Assay in the reference dataset used for annotation,
 Default: 'PNA'}
 
-\item{reference_groups}{A character vector of reference groups to use for annotation.}
+\item{query_assay}{Assay in the query dataset used for annotation,
+Default: 'PNA'}
 
-\item{normalization_method}{normalization method used during \code{FindTransferAnchors},
-Default: 'LogNormalize'}
+\item{reference_groups}{A character vector of reference metadata columns to use for
+annotation, Default: \code{c("celltype.l1", "celltype.l2")}}
 
-\item{reduction}{reduction method used during \code{FindTransferAnchors}, Default: 'cca'}
+\item{normalization_method}{Normalization method used prior to annotation (with margin = 2),
+either "CLR", "LogNormalize", or "SCT", Default: 'CLR'}
 
-\item{method}{Method to use for annotation, either "Seurat" or "nmf".}
+\item{reduction}{Reduction method used during \code{FindTransferAnchors} when
+\code{method = "Seurat"}, Default: 'cca'}
+
+\item{method}{Method to use for annotation, either "nnls", "Seurat", or "nmf"
+(alias for "nnls"), Default: 'nnls'}
 
 \item{min_prediction_score}{Minimum prediction score for the annotation to be considered valid.
-Labels with a prediction score below this value will be labelled as "Unknown". Default: 0,
-meaning that not threshold is used.}
+Labels with a prediction score below this value will be labelled as "Unknown", Default: 0,
+meaning that no threshold is used.}
 
 \item{skip_normalization}{If TRUE, the datasets will not be normalized prior to annotation.
-This parameter only has an effect if \code{method} is set to "nmf". The default layer will be
-used, so use this setting at your own risk.}
+The default layer will be used, so use this setting at your own risk, Default: FALSE}
 
-\item{verbose}{If TRUE, print messages about the progress of the annotation.}
+\item{verbose}{If TRUE, print messages about the progress of the annotation, Default: TRUE}
 
-\item{...}{Additional parameters to \code{FindTransferAnchors}}
+\item{...}{Additional parameters passed to \code{FindTransferAnchors} when \code{method = "Seurat"}}
 }
 \value{
 The initial Seurat object with additional annotation columns added to its metadata.
 }
 \description{
-This function finds anchors in a reference dataset and transfers the cell type
-of the reference to a query Seurat dataset. Two columns of cell type annotations
-are added to the metadata of the query dataset, one high-level and one more
-fine-grained. In addition, one can optionally summarize these annotations
-for a specific clustering solution. When choosing this, the most common annotation
-per cluster is added to the metadata of the object.
+This function transfers cell type annotations from a reference Seurat dataset
+to a query Seurat dataset using non-negative least squares (\code{"nnls"}, default)
+or Seurat anchor transfer (\code{"Seurat"}). For each column specified in
+\code{reference_groups}, a corresponding column of predicted cell type annotations
+and a \code{<group>_score} column of per-cell prediction scores are added to the
+metadata of the query dataset. In addition, one can optionally
+summarize these annotations for a specific clustering solution, which adds a
+\code{<group>_summary} column containing the most common annotation per cluster.
 }
 \details{
-The "Seurat" method is a wrapper for the \code{FindTransferAnchors} and \code{TransferData}
-functions from Seurat, followed by an optional summary per cluster.
+The "nnls" (or "nmf") method projects query cells onto feature-weighted reference
+cell type profiles using non-negative least squares (\code{RcppML::project}), followed by
+local fine-tuning across the top candidate cell types. The "Seurat" method is a wrapper for
+the \code{FindTransferAnchors} and \code{TransferData} functions from Seurat. Both methods
+support an optional summary per cluster.
 
-For \code{method = "nmf"}, merged \pkg{SeuratObject} v5 assays (\code{Assay5}, including
-\code{PNAAssay5}) must not retain split merge layers (\code{counts.1}, \code{data.1}, etc.).
+Merged \pkg{SeuratObject} v5 assays (\code{Assay5}, including \code{PNAAssay5}) must not
+retain split merge layers (\code{counts.1}, \code{data.1}, etc.).
 Run \code{JoinLayers()} on the \code{Seurat} object (or on the assay) after \code{merge()}
 before calling \code{AnnotateCells()}.
 }
 \examples{
 \dontrun{
-# Download reference file
-reference <-
-  readRDS(url(
-    paste0(
-      "https://pixelgen-technologies-datasets.s3.eu-north-1.amazonaws.com/",
-      "mpx-analysis/next/R/pbmc_annotation.rds"
-    )
-  ))
+reference <- read_pbmc_reference()
 
-# Does not work on the test data due to small size - ignore for now.
 seur <- ReadPNA_Seurat(minimal_pna_pxl_file())
 
-seur <- AnnotateCells(seur,
-  reference = reference, query_assay = "PNA"
+seur <- AnnotateCells(
+  seur,
+  reference = reference
 )
 }
 
