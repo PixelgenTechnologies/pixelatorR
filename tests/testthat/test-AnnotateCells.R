@@ -23,14 +23,13 @@ reference <- SeuratObject::CreateSeuratObject(
   Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
 
 test_that("annotate_cells works as expected", {
-  # NMF default
+  # NMF/NNLS default
   expect_no_error(seur_anno <- AnnotateCells(
     seur,
     reference,
     query_assay = "PNA",
     reference_assay = "anot",
     reference_groups = "cell_type",
-    method = "nmf",
     skip_normalization = TRUE,
     verbose = FALSE
   ))
@@ -42,6 +41,21 @@ test_that("annotate_cells works as expected", {
       "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T"
     )
   )
+  expect_true("cell_type_score" %in% colnames(seur_anno[[]]))
+  expect_true(all(seur_anno$cell_type_score >= 0 & seur_anno$cell_type_score <= 1))
+
+  # Backwards compatibility: method = "nmf" is an alias for "nnls"
+  expect_no_error(seur_nmf <- AnnotateCells(
+    seur,
+    reference,
+    query_assay = "PNA",
+    reference_assay = "anot",
+    reference_groups = "cell_type",
+    method = "nmf",
+    skip_normalization = TRUE,
+    verbose = FALSE
+  ))
+  expect_equal(seur_nmf$cell_type, seur_anno$cell_type)
 
   # NMF threshold
   expect_no_error(seur <- AnnotateCells(
@@ -100,6 +114,21 @@ test_that("annotate_cells works as expected", {
     LayerData(seur_anno, "data"),
     LayerData(seur_sub, "data")
   )
+
+  # Test that two-stage F-weighted NNLS separates closely related subtypes (e.g. CD4 TCM vs CD4 TEM vs Naive CD4 T)
+  subtypes_to_test <- c("CD4 TCM", "CD4 TEM", "Naive CD4 T")
+  sub_cells <- colnames(reference)[reference$celltype.l2 %in% subtypes_to_test]
+  query_sub <- subset(reference, cells = sub_cells)
+  query_sub <- AnnotateCells(
+    query_sub,
+    reference,
+    reference_groups = c("celltype.l1", "celltype.l2"),
+    query_assay = "PNA",
+    reference_assay = "PNA",
+    method = "nnls",
+    verbose = FALSE
+  )
+  expect_gt(mean(query_sub$celltype.l2 == reference$celltype.l2[sub_cells]), 0.80)
 })
 
 test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
@@ -159,6 +188,7 @@ test_that("annotate_cells fails with invalid input", {
   expect_error(seur <- AnnotateCells(seur, reference, quary_assay = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Seurat", normalization_method = "CLR", skip_normalization = FALSE))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_prediction_score = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", skip_normalization = "Invalid"))
 })
