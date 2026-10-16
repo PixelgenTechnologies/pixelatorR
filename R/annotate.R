@@ -106,7 +106,12 @@ AnnotateCells <- function(
   normalization_method <- match.arg(normalization_method, c("CLR", "LogNormalize", "SCT"))
   if (normalization_method == "CLR" && method == "Seurat" && !skip_normalization) {
     cli::cli_abort(
-      c("x" = "CLR normalization is not supported with the {.val Seurat} method when {.arg skip_normalization} is {.val FALSE}.")
+      c(
+        "x" = paste0(
+          "CLR normalization is not supported with the {.val Seurat} method ",
+          "when {.arg skip_normalization} is {.val FALSE}."
+        )
+      )
     )
   }
   assert_single_value(min_prediction_score, "numeric")
@@ -306,11 +311,21 @@ AnnotateCells <- function(
 
   # Format results
   if (!is.data.frame(predictions)) {
-    annotations <- lapply(predictions, function(x) x[, "predicted.id"]) %>% data.frame(check.names = FALSE)
-    prediction_scores <- lapply(predictions, function(x) x[, "prediction.score.max"]) %>% data.frame(check.names = FALSE)
+    annotations <- lapply(predictions, function(x) x[, "predicted.id"]) %>%
+      data.frame(check.names = FALSE)
+    prediction_scores <- lapply(predictions, function(x) x[, "prediction.score.max"]) %>%
+      data.frame(check.names = FALSE)
   } else {
-    annotations <- data.frame(predictions[, "predicted.id"], row.names = rownames(predictions), check.names = FALSE)
-    prediction_scores <- data.frame(predictions[, "prediction.score.max"], row.names = rownames(predictions), check.names = FALSE)
+    annotations <- data.frame(
+      predictions[, "predicted.id"],
+      row.names = rownames(predictions),
+      check.names = FALSE
+    )
+    prediction_scores <- data.frame(
+      predictions[, "prediction.score.max"],
+      row.names = rownames(predictions),
+      check.names = FALSE
+    )
     colnames(annotations) <- names(groups)
     colnames(prediction_scores) <- names(groups)
   }
@@ -608,12 +623,15 @@ AnnotateCells <- function(
       k <- min(max_subclusters, floor(n_grp / min_subcluster_size))
       sub_x <- as.matrix(x[, idx, drop = FALSE])
       # Remove zero-variance rows before k-means
-       cl <- tryCatch({
-        km <- stats::kmeans(t(sub_x), centers = k, nstart = 5L, iter.max = 20L)
-        km$cluster
-      }, error = function(e) {
-        rep(1L, n_grp)
-      })
+      cl <- tryCatch(
+        {
+          km <- stats::kmeans(t(sub_x), centers = k, nstart = 5L, iter.max = 20L)
+          km$cluster
+        },
+        error = function(e) {
+          rep(1L, n_grp)
+        }
+      )
       cl_tab <- table(cl)
       largest_cl <- as.integer(names(cl_tab)[which.max(cl_tab)])
       for (small_c in as.integer(names(cl_tab)[cl_tab < 5L])) {
