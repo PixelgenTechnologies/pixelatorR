@@ -30,10 +30,9 @@ A modified \code{cell_plot} recipe.
 \description{
 Records rotation geometry for an animation renderer. This sets a rotation
 sequence rather than a single static view. The number of frames, and whether
-the animation returns through them, belong to
-\code{\link[=cell_plot_animate]{cell_plot_animate()}}, not this modifier. Printed ggplot and Plotly views keep
-the unrotated coordinates. The default axis is \code{"y"}, which spins the cell
-left to right on screen.
+the animation returns through them, belong to \code{\link[=cell_plot_animate]{cell_plot_animate()}}, not this
+modifier. Printed ggplot and Plotly views keep the unrotated coordinates.
+The default axis is \code{"y"}, which spins the cell left to right on screen.
 }
 \examples{
 se <- ReadPNA_Seurat(minimal_pna_pxl_file())

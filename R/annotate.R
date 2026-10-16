@@ -1,65 +1,64 @@
 #' Automatic annotation of cell types
 #'
-#' This function finds anchors in a reference dataset and transfers the cell type
-#' of the reference to a query Seurat dataset. Two columns of cell type annotations
-#' are added to the metadata of the query dataset, one high-level and one more
-#' fine-grained. In addition, one can optionally summarize these annotations
-#' for a specific clustering solution. When choosing this, the most common annotation
-#' per cluster is added to the metadata of the object.
+#' This function transfers cell type annotations from a reference Seurat dataset
+#' to a query Seurat dataset using non-negative least squares (\code{"nnls"}, default)
+#' or Seurat anchor transfer (\code{"Seurat"}). For each column specified in
+#' \code{reference_groups}, a corresponding column of predicted cell type annotations
+#' and a \code{<group>_score} column of per-cell prediction scores are added to the
+#' metadata of the query dataset. In addition, one can optionally
+#' summarize these annotations for a specific clustering solution, which adds a
+#' \code{<group>_summary} column containing the most common annotation per cluster.
 #'
 #' @param object Seurat object to which you want to add celltype annotation
-#' @param reference Seurat object that contains annotated reference data, see examples
-#' for a programmatic way to obtain a PBMC reference dataset
+#' @param reference Seurat object that contains annotated reference data, see
+#' \code{\link{read_pbmc_reference}} and examples for obtaining a PBMC reference dataset
 #' @param summarize_by_column If NULL, return only the cell type annotation per cell.
 #' If the name of a column in the object metadata is provided, the annotations will
 #' be summarized to the factors of this column, i.e. the most common annotation per
 #' factor level will be retained. Useful for annotating the output of the Seurat
-#' clustering, for example.
-#' @param reference_assay Assay in the reference dataset used to find the anchors,
-#' Default: 'ADT'
-#' @param query_assay Assay in the query dataset used to find the anchors. It should
-#' probably be set to a normalized assay that was run on the object (e.g. "dsb"),
+#' clustering, for example, Default: NULL
+#' @param reference_assay Assay in the reference dataset used for annotation,
 #' Default: 'PNA'
-#' @param reference_groups A character vector of reference groups to use for annotation.
-#' @param normalization_method normalization method used during \code{FindTransferAnchors},
-#' Default: 'LogNormalize'
-#' @param reduction reduction method used during \code{FindTransferAnchors}, Default: 'cca'
-#' @param method Method to use for annotation, either "Seurat" or "nmf".
+#' @param query_assay Assay in the query dataset used for annotation,
+#' Default: 'PNA'
+#' @param reference_groups A character vector of reference metadata columns to use for
+#' annotation, Default: \code{c("celltype.l1", "celltype.l2")}
+#' @param normalization_method Normalization method used prior to annotation (with margin = 2),
+#' either "CLR", "LogNormalize", or "SCT", Default: 'CLR'
+#' @param reduction Reduction method used during \code{FindTransferAnchors} when
+#' \code{method = "Seurat"}, Default: 'cca'
+#' @param method Method to use for annotation, either "nnls", "Seurat", or "nmf"
+#' (alias for "nnls"), Default: 'nnls'
 #' @param min_prediction_score Minimum prediction score for the annotation to be considered valid.
-#' Labels with a prediction score below this value will be labelled as "Unknown". Default: 0,
-#' meaning that not threshold is used.
+#' Labels with a prediction score below this value will be labelled as "Unknown", Default: 0,
+#' meaning that no threshold is used.
 #' @param skip_normalization If TRUE, the datasets will not be normalized prior to annotation.
-#' This parameter only has an effect if `method` is set to "nmf". The default layer will be
-#' used, so use this setting at your own risk.
-#' @param verbose If TRUE, print messages about the progress of the annotation.
-#' @param ... Additional parameters to \code{FindTransferAnchors}
+#' The default layer will be used, so use this setting at your own risk, Default: FALSE
+#' @param verbose If TRUE, print messages about the progress of the annotation, Default: TRUE
+#' @param ... Additional parameters passed to \code{FindTransferAnchors} when \code{method = "Seurat"}
 #'
 #' @return The initial Seurat object with additional annotation columns added to its metadata.
 #'
-#' @details The "Seurat" method is a wrapper for the \code{FindTransferAnchors} and \code{TransferData}
-#' functions from Seurat, followed by an optional summary per cluster.
+#' @details The "nnls" (or "nmf") method projects query cells onto feature-weighted reference
+#' cell type profiles using non-negative least squares (\code{RcppML::project}), followed by
+#' local fine-tuning across the top candidate cell types. The "Seurat" method is a wrapper for
+#' the \code{FindTransferAnchors} and \code{TransferData} functions from Seurat. Both methods
+#' support an optional summary per cluster.
 #'
-#' For \code{method = "nmf"}, merged \pkg{SeuratObject} v5 assays (\code{Assay5}, including
-#' \code{PNAAssay5}) must not retain split merge layers (\code{counts.1}, \code{data.1}, etc.).
+#' Merged \pkg{SeuratObject} v5 assays (\code{Assay5}, including \code{PNAAssay5}) must not
+#' retain split merge layers (\code{counts.1}, \code{data.1}, etc.).
 #' Run \code{JoinLayers()} on the \code{Seurat} object (or on the assay) after \code{merge()}
 #' before calling \code{AnnotateCells()}.
 #'
 #' @examples
 #' \dontrun{
-#' # Download reference file
-#' reference <-
-#'   readRDS(url(
-#'     paste0(
-#'       "https://pixelgen-technologies-datasets.s3.eu-north-1.amazonaws.com/",
-#'       "mpx-analysis/next/R/pbmc_annotation.rds"
-#'     )
-#'   ))
+#' reference <- read_pbmc_reference()
 #'
-#' # Does not work on the test data due to small size - ignore for now.
 #' seur <- ReadPNA_Seurat(minimal_pna_pxl_file())
 #'
-#' seur <- AnnotateCells(seur,
-#'   reference = reference, query_assay = "PNA"
+#' seur <- AnnotateCells(
+#'   seur,
+#'   reference = reference
 #' )
 #' }
 #'
@@ -71,12 +70,12 @@ AnnotateCells <- function(
   object,
   reference = reference,
   summarize_by_column = NULL,
-  reference_assay = "ADT",
+  reference_assay = "PNA",
   query_assay = "PNA",
   reference_groups = c("celltype.l1", "celltype.l2"),
-  normalization_method = c("LogNormalize", "SCT", "CLR"),
+  normalization_method = c("CLR", "LogNormalize", "SCT"),
   reduction = "cca",
-  method = c("Seurat", "nmf"),
+  method = c("nnls", "Seurat", "nmf"),
   min_prediction_score = 0,
   skip_normalization = FALSE,
   verbose = TRUE,
@@ -99,12 +98,20 @@ AnnotateCells <- function(
     assert_col_in_data(ref_group, reference[[]])
   }
   assert_single_value(reduction, "string")
-  method <- match.arg(method, c("Seurat", "nmf"))
+  method <- match.arg(method, c("nnls", "Seurat", "nmf"))
+  if (method == "nmf") {
+    method <- "nnls"
+  }
   assert_single_value(skip_normalization, "bool")
-  normalization_method <- match.arg(normalization_method, c("LogNormalize", "SCT", "CLR"))
-  if (normalization_method == "CLR" && method == "Seurat") {
+  normalization_method <- match.arg(normalization_method, c("CLR", "LogNormalize", "SCT"))
+  if (normalization_method == "CLR" && method == "Seurat" && !skip_normalization) {
     cli::cli_abort(
-      c("x" = "CLR normalization is not supported with the {.val Seurat} method.")
+      c(
+        "x" = paste0(
+          "CLR normalization is not supported with the {.val Seurat} method ",
+          "when {.arg skip_normalization} is {.val FALSE}."
+        )
+      )
     )
   }
   assert_single_value(min_prediction_score, "numeric")
@@ -127,7 +134,7 @@ AnnotateCells <- function(
       verbose,
       ...
     ),
-    "nmf" = .seeded_nmf_annotaton(
+    "nnls" = .seeded_nmf_annotaton(
       object,
       reference,
       query_assay,
@@ -281,12 +288,14 @@ AnnotateCells <- function(
   }
 
   # Find the anchors to bridge the two datasets
+  # Seurat::FindTransferAnchors only accepts "LogNormalize" or "SCT" for normalization.method
+  anchor_norm_method <- if (normalization_method == "CLR") "LogNormalize" else normalization_method
   anchors <- Seurat::FindTransferAnchors(
     reference = reference,
     query = object_temp,
     reference.assay = reference_assay,
     query.assay = query_assay,
-    normalization.method = normalization_method,
+    normalization.method = anchor_norm_method,
     reduction = reduction,
     l2.norm = TRUE,
     verbose = verbose,
@@ -301,17 +310,37 @@ AnnotateCells <- function(
   )
 
   # Format results
-  annotations <- lapply(predictions, function(x) x[, "predicted.id"]) %>% data.frame(check.names = FALSE)
+  if (!is.data.frame(predictions)) {
+    annotations <- lapply(predictions, function(x) x[, "predicted.id"]) %>%
+      data.frame(check.names = FALSE)
+    prediction_scores <- lapply(predictions, function(x) x[, "prediction.score.max"]) %>%
+      data.frame(check.names = FALSE)
+  } else {
+    annotations <- data.frame(
+      predictions[, "predicted.id"],
+      row.names = rownames(predictions),
+      check.names = FALSE
+    )
+    prediction_scores <- data.frame(
+      predictions[, "prediction.score.max"],
+      row.names = rownames(predictions),
+      check.names = FALSE
+    )
+    colnames(annotations) <- names(groups)
+    colnames(prediction_scores) <- names(groups)
+  }
 
   if (min_prediction_score > 0) {
-    prediction_scores <- lapply(predictions, function(x) x[, "prediction.score.max"]) %>% as.data.frame()
     annotations[prediction_scores < min_prediction_score] <- "Unknown"
   }
 
-  # Add the transferred celltypes to the object metadata
+  colnames(prediction_scores) <- paste0(names(groups), "_score")
+  metadata_to_add <- cbind(annotations, prediction_scores)
+
+  # Add the transferred celltypes and prediction scores to the object metadata
   object <- SeuratObject::AddMetaData(
     object = object,
-    metadata = annotations
+    metadata = metadata_to_add
   )
 
   return(object)
@@ -425,18 +454,25 @@ AnnotateCells <- function(
   }
 
   predicted_annotations <- lapply(names(groups), function(nm) {
-    W <- .get_w_matrix(
-      target_data = target_data,
+    w_res <- .get_w_matrix(
       reference_data = reference_data,
-      nCells_per_group = 100,
-      minCells_per_celltype = 10,
+      nCells_per_group = 500,
+      minCells_per_celltype = 5,
       groups = groups[[nm]],
       seed = 123,
       verbose = FALSE
     )
 
-    # Run NNLS
-    proj_expr <- RcppML::project(as(target_data, "dgCMatrix"), W, L1 = 0.01)
+    W <- w_res$W
+    rm <- w_res$row_means
+    w_var <- w_res$within_var
+    fw <- w_res$feature_weights
+    parent_map <- w_res$parent_map
+    u_parents <- unique(parent_map)
+
+    # Scale query features by global root-F weights and run Stage 1 NNLS
+    weighted_target <- as(sweep(target_data, 1, fw, "*"), "dgCMatrix")
+    proj_expr <- RcppML::project(weighted_target, W, L1 = 0.05)
 
     # Cells with a very low total projection across all cell types are labeled
     # as "Unknown" to avoid spurious annotations.
@@ -445,36 +481,98 @@ AnnotateCells <- function(
     # Add a small value to the scores of failed cells to avoid issues with zero values in downstream calculations.
     proj_expr[, failed_cells] <- proj_expr[, failed_cells] + 1e-8
 
-    # Convert predicted values to proportions
-    prop <- apply(proj_expr, 2, function(x) {
+    # Aggregate Stage 1 projections by parent group to compute prediction proportions
+    parent_proj <- vapply(u_parents, function(p) {
+      sub_idx <- which(parent_map == p)
+      if (length(sub_idx) == 1L) {
+        proj_expr[sub_idx, ]
+      } else {
+        colSums(proj_expr[sub_idx, , drop = FALSE])
+      }
+    }, numeric(ncol(proj_expr)))
+    parent_proj <- t(parent_proj)
+    rownames(parent_proj) <- u_parents
+
+    # Convert Stage 1 predicted values to proportions
+    prop <- apply(parent_proj, 2, function(x) {
       prop.table(x)
     })
-    rownames(prop) <- colnames(W)
+    if (is.null(dim(prop))) {
+      prop <- matrix(prop, nrow = 1L, dimnames = list(u_parents, colnames(target_data)))
+    } else {
+      rownames(prop) <- u_parents
+    }
 
-    # Predicted cell type
-    predicted_celltype <- apply(prop, 2, function(x) {
-      rownames(prop)[which.max(x)]
-    })
+    # Stage 2: Pairwise local fine-tuning on top-2 candidate parent groups per cell
+    # (each represented by its highest-scoring sub-centroid for that cell, and only
+    # when the runner-up has non-trivial Stage 1 support relative to the top candidate)
+    k_cands <- min(2L, length(u_parents))
+    min_rel_score <- 0.25
+    sub_indices_by_parent <- split(seq_along(parent_map), parent_map)[u_parents]
+    predicted_celltype <- vapply(seq_len(ncol(target_data)), function(i) {
+      if (k_cands <= 1L) {
+        return(u_parents[1L])
+      }
+      scores_i <- proj_expr[, i]
+      best_sub_idx <- vapply(sub_indices_by_parent, function(idxs) {
+        if (length(idxs) == 1L) idxs else idxs[which.max(scores_i[idxs])]
+      }, integer(1))
+      sub_scores <- scores_i[best_sub_idx]
+      ord <- order(sub_scores, decreasing = TRUE)
+      top_k <- ord[seq_len(k_cands)]
+      top_k <- top_k[sub_scores[top_k] >= sub_scores[top_k[1L]] * min_rel_score]
+      if (length(top_k) <= 1L) {
+        return(u_parents[ord[1L]])
+      }
+      cands <- colnames(W)[best_sub_idx[top_k]]
+      sub_rm <- rm[, cands, drop = FALSE]
+
+      # Weight features by local between-candidate variance relative to pooled within-group variance,
+      # capped at the 90th percentile so a single batch-shifted marker cannot override the consensus
+      local_b_var <- apply(sub_rm, 1, stats::var)
+      local_fw <- sqrt(local_b_var / w_var)
+      if (all(local_fw == 0)) {
+        return(unname(parent_map[cands[1L]]))
+      }
+      cap_val <- stats::quantile(local_fw[local_fw > 0], 0.90, names = FALSE)
+      local_fw <- pmin(local_fw, cap_val)
+
+      sub_W <- sweep(sub_rm, 1, local_fw, "*")
+      sub_W <- sweep(sub_W, 2, sqrt(colSums(sub_W^2)) + 1e-8, "/")
+      sub_q <- local_fw * target_data[, i]
+      best_cand <- cands[which.max(crossprod(sub_W, sub_q))]
+      unname(parent_map[best_cand])
+    }, character(1))
+
+    prediction_score <- apply(prop, 2, max)
+    prediction_score[failed_cells] <- 0
+    names(prediction_score) <- colnames(target_data)
 
     if (min_prediction_score > 0) {
-      prediction_score <- apply(prop, 2, max)
       predicted_celltype[prediction_score < min_prediction_score] <- "Unknown"
     }
 
     predicted_celltype[failed_cells] <- "Unknown"
     names(predicted_celltype) <- colnames(target_data)
 
-    return(predicted_celltype)
-  }) %>% set_names(nm = names(groups))
+    out <- data.frame(
+      celltype = predicted_celltype,
+      score = prediction_score,
+      row.names = colnames(target_data),
+      check.names = FALSE
+    )
+    colnames(out) <- c(nm, paste0(nm, "_score"))
+    return(out)
+  })
 
   if (verbose && check_global_verbosity()) {
     cli::cli_alert_info("Labelling cells.")
   }
 
   # Format results
-  predicted_annotations <- predicted_annotations %>% data.frame(check.names = FALSE)
+  predicted_annotations <- do.call(cbind, predicted_annotations)
 
-  # Add the transferred celltypes to the object metadata
+  # Add the transferred celltypes and prediction scores to the object metadata
   object <- SeuratObject::AddMetaData(
     object = object,
     metadata = predicted_annotations
@@ -487,77 +585,147 @@ AnnotateCells <- function(
   return(object)
 }
 
-#' Compute an enrichment score for each marker and cell type
+#' Compute feature-weighted reference profiles for NNLS annotation
 #'
 #' @param x A matrix of protein abundance values, where rows are proteins
 #' and columns are cells.
 #' @param groups A vector indicating the group of each column in `x`.
 #'
-#' @return A matrix where rows are proteins and columns are groups, with
-#' enrichment scores calculated as the ratio of the mean expression
-#' of each protein in a group to the mean expression of that protein
+#' @return A list containing:
+#' \itemize{
+#'   \item `W`: L2-normalized, feature-weighted centroid matrix (proteins x groups)
+#'   \item `row_means`: Unweighted group centroid matrix (proteins x groups)
+#'   \item `within_var`: Pooled within-group variance vector per protein
+#'   \item `feature_weights`: Root-F feature weight vector per protein
+#' }
 #'
 #' @noRd
 #'
 .get_abundance_profiles <- function(
   x,
-  groups
+  groups,
+  max_subclusters = 3L,
+  min_subcluster_size = 12L
 ) {
-  # Calculate means
-  row_means <- do.call(cbind, lapply(unique(groups), function(grp) {
-    Matrix::rowMeans(x[, groups == grp, drop = FALSE])
-  }))
-  colnames(row_means) <- unique(groups)
+  groups <- as.character(groups)
+  ugroups <- unique(groups)
 
-  # Calculate enrichment scores
-  W <- do.call(bind_cols, lapply(colnames(row_means), function(grp) {
-    x1 <- row_means[, grp]
-    x2 <- row_means[, -which(colnames(row_means) == grp)]
-    x2 <- Matrix::rowMeans(x2) + 1
-    y <- tibble(x1 / x2) %>% set_names(nm = grp)
-    return(y)
-  })) %>%
-    as.matrix()
-  rownames(W) <- rownames(x)
+  # Split heterogeneous/large groups into up to `max_subclusters` sub-centroids
+  # so broad lineages (e.g. L1 Mono = Classical + Non-classical Mono) are represented
+  # by their constituent modes rather than a single blurred average
+  sub_groups <- character(length(groups))
+  parent_map <- character(0)
 
-  W <- apply(W, 2, function(x) {
-    x / max(x)
-  })
+  for (grp in ugroups) {
+    idx <- which(groups == grp)
+    n_grp <- length(idx)
+    if (n_grp >= min_subcluster_size * 2L && max_subclusters > 1L) {
+      k <- min(max_subclusters, floor(n_grp / min_subcluster_size))
+      sub_x <- as.matrix(x[, idx, drop = FALSE])
+      # Remove zero-variance rows before k-means
+      cl <- tryCatch(
+        {
+          km <- stats::kmeans(t(sub_x), centers = k, nstart = 5L, iter.max = 20L)
+          km$cluster
+        },
+        error = function(e) {
+          rep(1L, n_grp)
+        }
+      )
+      cl_tab <- table(cl)
+      largest_cl <- as.integer(names(cl_tab)[which.max(cl_tab)])
+      for (small_c in as.integer(names(cl_tab)[cl_tab < 5L])) {
+        cl[cl == small_c] <- largest_cl
+      }
+      if (length(unique(cl)) > 1L) {
+        sub_ids <- paste0(grp, "__sub", cl)
+        sub_groups[idx] <- sub_ids
+        for (sid in unique(sub_ids)) {
+          parent_map[sid] <- grp
+        }
+      } else {
+        sub_groups[idx] <- grp
+        parent_map[grp] <- grp
+      }
+    } else {
+      sub_groups[idx] <- grp
+      parent_map[grp] <- grp
+    }
+  }
 
-  return(W)
+  usub <- unique(sub_groups)
+
+  # Calculate robust sub-group centroids using a 15% trimmed mean across cells
+  row_means <- vapply(usub, function(grp) {
+    sub_mat <- as.matrix(x[, sub_groups == grp, drop = FALSE])
+    apply(sub_mat, 1, base::mean, trim = 0.15)
+  }, numeric(nrow(x)))
+  colnames(row_means) <- usub
+  rownames(row_means) <- rownames(x)
+
+  # Pooled within-sub-group variance per marker (computed directly on sparse/dense columns)
+  within_var <- vapply(usub, function(grp) {
+    sub_x <- x[, sub_groups == grp, drop = FALSE]
+    n_grp <- ncol(sub_x)
+    if (n_grp <= 1L) {
+      return(rep(0, nrow(sub_x)))
+    }
+    grp_mean <- Matrix::rowMeans(sub_x)
+    pmax(0, (Matrix::rowSums(sub_x^2) - n_grp * grp_mean^2) / (n_grp - 1L))
+  }, numeric(nrow(x)))
+  within_var <- rowMeans(within_var, na.rm = TRUE) + 0.05
+
+  # Between-group variance per marker and root-F feature weights (capped at 95th percentile
+  # for robustness against single-marker titration shifts across batches)
+  between_var <- if (ncol(row_means) > 1L) {
+    apply(row_means, 1, stats::var)
+  } else {
+    rep(1, nrow(row_means))
+  }
+  feature_weights <- sqrt(between_var / within_var)
+  if (all(feature_weights == 0)) {
+    feature_weights <- rep(1, nrow(row_means))
+  } else {
+    cap_fw <- stats::quantile(feature_weights[feature_weights > 0], 0.95, names = FALSE)
+    feature_weights <- pmin(feature_weights, cap_fw)
+  }
+
+  # Weight group centroids by feature weights and L2-normalize columns
+  W <- sweep(row_means, 1, feature_weights, "*")
+  W <- sweep(W, 2, sqrt(colSums(W^2)) + 1e-8, "/")
+
+  return(list(
+    W = W,
+    row_means = row_means,
+    within_var = within_var,
+    feature_weights = feature_weights,
+    parent_map = parent_map
+  ))
 }
 
-#' Compute an "enrichment" matrix to be used as a seed for NMF
+#' Compute feature-weighted reference matrices to be used for seeded NMF / NNLS
 #'
-#' @param target_data A matrix of protein abundance values for the target dataset.
 #' @param reference_data A matrix of protein abundance values for the reference dataset.
 #' @param nCells_per_group Maximum number of cells to sample per group in the `reference_data`.
 #' @param minCells_per_celltype Minimum number of cells required per cell type in the
 #' `reference_data`.
-#' @param groups A vector group labels for each each column in the `reference_data`.
+#' @param groups A vector group labels for each column in the `reference_data`.
 #' @param seed Random seed for reproducibility.
 #' @param verbose Logical indicating whether to print progress messages.
 #'
-#' @return A matrix with enrichment scores where rows are proteins and columns are groups.
+#' @return A list returned by `.get_abundance_profiles()` containing `W`,
+#' `row_means`, `within_var`, and `feature_weights`.
 #'
 #' @noRd
 #'
 .get_w_matrix <- function(
-  target_data,
   reference_data,
-  nCells_per_group = 50,
-  minCells_per_celltype = 10,
+  nCells_per_group = 500,
+  minCells_per_celltype = 5,
   groups,
   seed = 123,
   verbose = TRUE
 ) {
-  # Rescale data to ensure positive values
-  if (any(target_data < 0)) {
-    if (verbose) warn("Found negative values in input matrix")
-    if (verbose) cli_alert_info("Rescaling data to ensure positive values")
-    object <- t(apply(object, 1, function(x) (x - min(x)) / (max(x) - min(x))))
-  }
-
   # Sample cells
   if (verbose) {
     cli_alert(
@@ -590,14 +758,14 @@ AnnotateCells <- function(
       filter(!group %in% too_small$group)
   }
   if (verbose) cli_alert("  Kept {.val {length(unique(components$group))}} cell types after filtering")
-  components <- components %>% pull(component)
-  new_groups <- set_names(groups, nm = colnames(reference_data))[components]
+  kept_components <- components %>% pull(component)
+  new_groups <- set_names(groups, nm = colnames(reference_data))[kept_components]
 
   # Compute cell type abundance profiles
   if (verbose) cli_alert("  Calculating cell type abundance profiles")
-  W <- .get_abundance_profiles(x = reference_data[, components], groups = new_groups)
+  w_res <- .get_abundance_profiles(x = reference_data[, kept_components, drop = FALSE], groups = new_groups)
 
-  return(W)
+  return(w_res)
 }
 
 
