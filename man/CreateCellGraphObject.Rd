@@ -65,7 +65,7 @@ sel_comp <- db$cell_meta() \%>\%
   head(1)
 component_edgelist <- db$components_edgelist(
   components = sel_comp,
-  umi_data_type = "suffixed_string"
+  umi_data_type = "string"
 ) \%>\%
   select(umi1, umi2)
 

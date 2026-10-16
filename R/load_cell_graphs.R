@@ -120,8 +120,7 @@ LoadCellGraphs.FileSystemDataset <- function(
 
   # Select load function
   graph_load_fkn <-
-    switch(
-      load_as,
+    switch(load_as,
       "bipartite" = .load_mpx_as_bipartite,
       "Anode" = .load_mpx_as_anode,
       "linegraph" = .load_mpx_as_linegraph
@@ -194,8 +193,7 @@ LoadCellGraphs.FileSystemDataset <- function(
   verbose = TRUE
 ) {
   # Select load function
-  graph_load_fkn <- switch(
-    load_as,
+  graph_load_fkn <- switch(load_as,
     "bipartite" = .load_mpx_as_bipartite,
     "Anode" = .load_mpx_as_anode,
     "linegraph" = .load_mpx_as_linegraph
@@ -298,7 +296,7 @@ LoadCellGraphs.MPXAssay <- function(
   # Find where components are located
   fs_map_unnested_filtered <- slot(object, name = "fs_map") %>%
     tidyr::unnest(cols = "id_map") %>%
-    filter(current_id %in% cells)
+    filter(current_id %in% cells_to_load)
   fs_map_nested_filtered <- fs_map_unnested_filtered %>%
     tidyr::nest(data = c("current_id", "original_id"))
 
@@ -325,7 +323,7 @@ LoadCellGraphs.MPXAssay <- function(
     for (i in seq_len(nrow(fs_map_nested_filtered))) {
       f <- fs_map_nested_filtered$pxl_file[i]
       cell_id_data <- fs_map_nested_filtered$data[[i]] %>%
-        filter(current_id %in% cells)
+        filter(current_id %in% cells_to_load)
       original_id <- cell_id_data$original_id
       current_id <- cell_id_data$current_id
       precomputed_layouts <- ReadMPX_layouts(
@@ -553,7 +551,7 @@ LoadCellGraphs.PNAAssay <- function(
   # Find where components are located
   fs_map_unnested_filtered <- slot(object, name = "fs_map") %>%
     tidyr::unnest(cols = "id_map") %>%
-    filter(current_id %in% cells)
+    filter(current_id %in% cells_to_load)
   fs_map_nested_filtered <- fs_map_unnested_filtered %>%
     tidyr::nest(data = c("current_id", "original_id"))
 
@@ -583,41 +581,12 @@ LoadCellGraphs.PNAAssay <- function(
       )
     }
 
-    # Extract cell graphs directly using DuckDB
+    # Extract cell graphs (and optional layouts) directly using DuckDB
     cg_list <- db$components_cell_graph(
       components = original_ids,
+      add_layouts = add_layouts,
       verbose = verbose && check_global_verbosity()
     )
-
-    # Load layout if specified
-    if (add_layouts) {
-      if (verbose && check_global_verbosity()) {
-        cli_alert("Fetching layouts")
-      }
-      if (!"layouts" %in% db$names()) {
-        cli::cli_abort(c("x" = "Layouts are missing from the PXL file."))
-      }
-      layout_list <- db$components_layout(original_ids, verbose = FALSE)
-
-      if (verbose && check_global_verbosity()) {
-        cli_alert("Adding layouts to {.cls CellGraph} object(s)")
-      }
-
-      cg_list <- lapply(names(cg_list), function(nm) {
-        cg <- cg_list[[nm]]
-        graph_node_names <- cg@nodes
-        layout <- layout_list[[nm]]
-        # Match using base UMI (stripping any -umi1/-umi2 suffix if present)
-        layout_name_clean <- sub("-(umi1|umi2)$", "", layout$name)
-        layout <- layout[match(graph_node_names, layout_name_clean), ] %>%
-          select(-name) %>%
-          as.data.frame()
-        rownames(layout) <- NULL
-        cg@layout <- list(wpmds_3d = layout)
-        return(cg)
-      }) %>%
-        set_names(nm = names(cg_list))
-    }
 
     # Update names of the cellgraph list to current_ids
     cg_list <- cg_list[original_ids]
@@ -811,7 +780,9 @@ LoadCellGraphs.Seurat <- function(
         select(name, node_type)
     } else {
       # Skip marker counts and return a simple undirected graph
-      new_edges <- g %E>% as_tibble() %>% select(from, to) %>% distinct()
+      new_edges <- g %E>% as_tibble() %>%
+        select(from, to) %>%
+        distinct()
 
       # Replace with collapsed edges and return a simple undirected graph
       g <- g %E>%
