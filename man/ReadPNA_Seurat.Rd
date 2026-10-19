@@ -36,8 +36,9 @@ a log2ratio column to the output table. Default is \code{TRUE}}
 
 \item{detailed_meta_data}{Logical specifying whether to load detailed meta data.
 If \code{FALSE} (default), only a subset of the meta data columns will be loaded,
-including those used for quality control. The additional columns are mostly useful
-for troubleshooting.}
+including those used for quality control and any columns whose names match
+\code{^k_core_} (for example \code{k_core_1}, \code{k_core_2}). The additional
+columns are mostly useful for troubleshooting.}
 
 \item{verbose}{Print messages}
 

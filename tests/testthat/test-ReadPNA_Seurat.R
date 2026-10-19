@@ -10,6 +10,17 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(dim(seur_obj), c(158, 5))
     expect_s4_class(seur_obj[["PNA"]], ifelse(assay_version == "v3", "PNAAssay", "PNAAssay5"))
 
+    # QC columns plus every k_core_* column; other obs columns stay out
+    db <- PixelDB$new(pxl_file)
+    obs_cols <- colnames(db$cell_meta())
+    db$close()
+    k_core_cols <- grep("^k_core_", obs_cols, value = TRUE)
+    expect_gte(length(k_core_cols), 1)
+    expect_equal(
+      colnames(seur_obj[[]]),
+      unique(c(intersect(pixelatorR:::CELL_META_COLS, obs_cols), k_core_cols))
+    )
+
     # no proximity scores
     expect_no_error(suppressWarnings(seur_obj <- ReadPNA_Seurat(pxl_file, load_proximity_scores = FALSE, verbose = FALSE)))
     expect_true(length(ProximityScores(seur_obj)) == 0)

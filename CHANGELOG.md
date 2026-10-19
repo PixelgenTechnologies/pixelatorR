@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The default color palette for a mapped `cell_plot()` color column is
   `PixelgenGradient(7, "Cherry")`.
+- `ReadPNA_Seurat()` keeps `__adata__obs` columns matching `^k_core_`
+  (for example `k_core_1`, `k_core_2`) together with the fixed QC columns
+  when `detailed_meta_data = FALSE`.
 
 ## [0.23.0] - 2026-10-13
 
