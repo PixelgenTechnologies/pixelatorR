@@ -40,7 +40,8 @@ globalVariables(
 )
 
 
-#' Default columns to pull from cell metadata table __adata__obs in PXL files
+#' Default columns to pull from cell metadata table __adata__obs in PXL files.
+#' Columns matching \code{^k_core_} are selected in addition to this list.
 #'
 #' @noRd
 CELL_META_COLS <- c(
