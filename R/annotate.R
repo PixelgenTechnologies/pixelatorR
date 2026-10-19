@@ -503,17 +503,26 @@ AnnotateCells <- function(
       rownames(prop) <- u_parents
     }
 
+    # Pre-compute centered, L2-normalized reference sub-centroids and query profiles
+    # to evaluate each cell's Pearson correlation (`r_fit`) with its winning sub-centroid
+    rm_centered <- sweep(as.matrix(rm), 2, colMeans(rm), "-")
+    rm_centered <- sweep(rm_centered, 2, sqrt(colSums(rm_centered^2)) + 1e-8, "/")
+    q_mat <- as.matrix(target_data)
+    q_centered <- sweep(q_mat, 2, colMeans(q_mat), "-")
+    q_centered <- sweep(q_centered, 2, sqrt(colSums(q_centered^2)) + 1e-8, "/")
+    cor_sub_mat <- crossprod(rm_centered, q_centered)
+
     # Stage 2: Pairwise local fine-tuning on top-2 candidate parent groups per cell
     # (each represented by its highest-scoring sub-centroid for that cell, and only
     # when the runner-up has non-trivial Stage 1 support relative to the top candidate)
     k_cands <- min(2L, length(u_parents))
     min_rel_score <- 0.25
     sub_indices_by_parent <- split(seq_along(parent_map), parent_map)[u_parents]
-    predicted_celltype <- vapply(seq_len(ncol(target_data)), function(i) {
-      if (k_cands <= 1L) {
-        return(u_parents[1L])
-      }
+    win_sub_indices <- vapply(seq_len(ncol(target_data)), function(i) {
       scores_i <- proj_expr[, i]
+      if (k_cands <= 1L) {
+        return(which.max(scores_i))
+      }
       best_sub_idx <- vapply(sub_indices_by_parent, function(idxs) {
         if (length(idxs) == 1L) idxs else idxs[which.max(scores_i[idxs])]
       }, integer(1))
@@ -522,7 +531,7 @@ AnnotateCells <- function(
       top_k <- ord[seq_len(k_cands)]
       top_k <- top_k[sub_scores[top_k] >= sub_scores[top_k[1L]] * min_rel_score]
       if (length(top_k) <= 1L) {
-        return(u_parents[ord[1L]])
+        return(best_sub_idx[ord[1L]])
       }
       cands <- colnames(W)[best_sub_idx[top_k]]
       sub_rm <- rm[, cands, drop = FALSE]
@@ -532,19 +541,25 @@ AnnotateCells <- function(
       local_b_var <- apply(sub_rm, 1, stats::var)
       local_fw <- sqrt(local_b_var / w_var)
       if (all(local_fw == 0)) {
-        return(unname(parent_map[cands[1L]]))
+        return(best_sub_idx[top_k[1L]])
       }
       cap_val <- stats::quantile(local_fw[local_fw > 0], 0.90, names = FALSE)
       local_fw <- pmin(local_fw, cap_val)
 
       sub_W <- sweep(sub_rm, 1, local_fw, "*")
       sub_W <- sweep(sub_W, 2, sqrt(colSums(sub_W^2)) + 1e-8, "/")
-      sub_q <- local_fw * target_data[, i]
-      best_cand <- cands[which.max(crossprod(sub_W, sub_q))]
-      unname(parent_map[best_cand])
-    }, character(1))
+      sub_q <- local_fw * q_mat[, i]
+      win_idx <- which.max(crossprod(sub_W, sub_q))
+      best_sub_idx[top_k[win_idx]]
+    }, integer(1))
 
-    prediction_score <- apply(prop, 2, max)
+    predicted_celltype <- unname(parent_map[colnames(W)[win_sub_indices]])
+
+    # Combine Stage 1 relative NNLS specificity (`prop_score`) with Pearson correlation
+    # to the winning sub-centroid (`r_fit`) so out-of-reference cells receive low scores
+    prop_score <- apply(prop, 2, max)
+    r_fit <- pmax(0, cor_sub_mat[cbind(win_sub_indices, seq_len(ncol(target_data)))])
+    prediction_score <- prop_score * r_fit
     prediction_score[failed_cells] <- 0
     names(prediction_score) <- colnames(target_data)
 
