@@ -144,8 +144,27 @@ test_that("approximate_edge_saturation works as expected", {
       row.names = c(NA, -1L)
     )
   )
+  expect_no_error(edgesat_deg2 <- approximate_edge_saturation(
+    db,
+    components = "0a45497c6bfbfb22",
+    min_degree = 2L
+  ))
+  expect_equal(
+    edgesat_deg2 %>% collect(),
+    structure(
+      list(
+        component = "0a45497c6bfbfb22",
+        edges = 87202L,
+        read_count = 270711,
+        edge_saturation = 1 - (87202 / 270711)
+      ),
+      class = c("tbl_df", "tbl", "data.frame"),
+      row.names = c(NA, -1L)
+    )
+  )
   expect_error(approximate_edge_saturation("Invalid"))
   expect_error(approximate_edge_saturation(db, table_name = FALSE))
+  expect_error(approximate_edge_saturation(db, min_degree = 0L))
   expect_no_error(db$close())
 })
 
@@ -180,8 +199,46 @@ test_that("approximate_node_saturation works as expected", {
       row.names = c(NA, -1L)
     )
   )
+  expect_no_error(nodesat_m1 <- approximate_node_saturation(
+    db,
+    components = "0a45497c6bfbfb22",
+    node_reads_multiplier = 1
+  ))
+  expect_equal(
+    nodesat_m1 %>% collect(),
+    structure(
+      list(
+        component = "0a45497c6bfbfb22",
+        nodes = 43543L,
+        read_count = 289856,
+        node_saturation = 1 - (43543 / 289856)
+      ),
+      class = c("tbl_df", "tbl", "data.frame"),
+      row.names = c(NA, -1L)
+    )
+  )
+  expect_no_error(nodesat_deg2 <- approximate_node_saturation(
+    db,
+    components = "0a45497c6bfbfb22",
+    min_degree = 2L
+  ))
+  expect_equal(
+    nodesat_deg2 %>% collect(),
+    structure(
+      list(
+        component = "0a45497c6bfbfb22",
+        nodes = 33731L,
+        read_count = 541422,
+        node_saturation = 1 - (33731 / 541422)
+      ),
+      class = c("tbl_df", "tbl", "data.frame"),
+      row.names = c(NA, -1L)
+    )
+  )
   expect_error(approximate_node_saturation("Invalid"))
   expect_error(approximate_node_saturation(db, table_name = FALSE))
+  expect_error(approximate_node_saturation(db, node_reads_multiplier = 3))
+  expect_error(approximate_node_saturation(db, min_degree = 0L))
   expect_no_error(db$close())
 })
 
@@ -197,20 +254,94 @@ test_that("approximate_saturation_curve works as expected", {
         component = c("0a45497c6bfbfb22", "0a45497c6bfbfb22"),
         read_count = c(28986, 57971),
         p = c(0.1, 0.2),
-        nodes = c(26887.2053936728, 34138.8720659821),
-        edges = c(23754.9239169071, 40501.3715335425),
-        degree = c(1.76700579841572, 2.37274221920767),
-        node_saturation = c(0.536203591498088, 0.705552154818944),
-        edge_saturation = c(0.180469056892737, 0.301351166384184)
+        nodes = c(26393.2252179469, 33182.1442472842),
+        edges = c(23754.9239169061, 40501.3715335435),
+        degree = c(1.80007738506723, 2.44115456986227),
+        node_saturation = c(0.544724604672136, 0.713803934318157),
+        edge_saturation = c(0.180469056892771, 0.301351166384166)
       ),
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     )
   )
+  expect_no_error(sat_points_comp <- approximate_saturation_curve(
+    db,
+    fracs = c(0.1, 0.2),
+    components = "0a45497c6bfbfb22",
+    verbose = FALSE
+  ))
+  expect_equal(
+    sat_points_comp,
+    head(sat_points %>% collect() %>% arrange(component), 2)
+  )
+  expect_no_error(sat_points_deg2 <- approximate_saturation_curve(
+    db,
+    fracs = c(0.2),
+    components = "0a45497c6bfbfb22",
+    min_degree = 2L,
+    verbose = FALSE
+  ))
+  expect_equal(sat_points_deg2$read_count, 57971)
+  expect_lt(sat_points_deg2$nodes, sat_points_comp$nodes[2])
+  expect_gt(sat_points_deg2$node_saturation, sat_points_comp$node_saturation[2])
   expect_error(approximate_saturation_curve("Invalid"))
   expect_error(approximate_saturation_curve(db, fracs = "Invalid"))
   expect_error(approximate_saturation_curve(db, detailed = "Invalid"))
   expect_error(approximate_saturation_curve(db, verbose = "Invalid"))
+  expect_error(approximate_saturation_curve(db, min_degree = 0L))
+  expect_no_error(db$close())
+})
+
+# marginal_saturation and marginal_saturation_curve
+test_that("marginal_saturation and marginal_saturation_curve work as expected", {
+  expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
+  expect_no_error(msat <- marginal_saturation(db, components = "0a45497c6bfbfb22") %>% collect())
+  expect_s3_class(msat, "tbl_df")
+  expect_equal(msat$read_count, 289856)
+  expect_equal(msat$nodes, 43543L)
+  expect_equal(msat$edges, 97014L)
+  expect_equal(msat$node_discovery_rate, 5694 / 289856)
+  expect_equal(msat$edge_discovery_rate, 36446 / 289856)
+  expect_equal(msat$marginal_node_saturation, 1 - (5694 / (2 * 289856)))
+  expect_equal(msat$marginal_edge_saturation, 1 - (36446 / 289856))
+
+  expect_no_error(msat_deg2 <- marginal_saturation(
+    db,
+    components = "0a45497c6bfbfb22",
+    min_degree = 2L
+  ) %>% collect())
+  expect_equal(msat_deg2$nodes, 33731L)
+  expect_equal(msat_deg2$node_discovery_rate, 3494 / 289856)
+
+  # Curve at p = 1.0 should match full-depth marginal_saturation()
+  expect_no_error(mcurve_1 <- marginal_saturation_curve(
+    db,
+    fracs = c(0.2, 1.0),
+    components = "0a45497c6bfbfb22",
+    min_degree = 1L,
+    verbose = FALSE
+  ))
+  expect_equal(mcurve_1$node_discovery_rate[2], msat$node_discovery_rate)
+  expect_equal(mcurve_1$edge_discovery_rate[2], msat$edge_discovery_rate)
+  expect_equal(mcurve_1$marginal_node_saturation[2], msat$marginal_node_saturation)
+  expect_equal(mcurve_1$marginal_edge_saturation[2], msat$marginal_edge_saturation)
+
+  expect_no_error(mcurve_2 <- marginal_saturation_curve(
+    db,
+    fracs = c(0.2, 1.0),
+    components = "0a45497c6bfbfb22",
+    min_degree = 2L,
+    verbose = FALSE
+  ))
+  expect_equal(mcurve_2$nodes[2], as.numeric(msat_deg2$nodes))
+  expect_equal(mcurve_2$node_discovery_rate[2], msat_deg2$node_discovery_rate)
+  expect_equal(mcurve_2$marginal_node_saturation[2], msat_deg2$marginal_node_saturation)
+
+  expect_error(marginal_saturation("Invalid"))
+  expect_error(marginal_saturation(db, min_degree = 3L))
+  expect_error(marginal_saturation_curve("Invalid"))
+  expect_error(marginal_saturation_curve(db, fracs = c(0, 0.5)))
+  expect_error(marginal_saturation_curve(db, min_degree = 3L))
   expect_no_error(db$close())
 })
 

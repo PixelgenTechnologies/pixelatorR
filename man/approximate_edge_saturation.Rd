@@ -4,7 +4,12 @@
 \alias{approximate_edge_saturation}
 \title{Compute approximate edge saturation}
 \usage{
-approximate_edge_saturation(db, components = NULL, table_name = NULL)
+approximate_edge_saturation(
+  db,
+  components = NULL,
+  table_name = NULL,
+  min_degree = 1L
+)
 }
 \arguments{
 \item{db}{A \code{PixelDB} object with an active DuckDB connection.}
@@ -14,6 +19,10 @@ edgelist. If \code{NULL} (default), all components are included.}
 
 \item{table_name}{Optional name for the computed remote table. If provided,
 the result is materialized as a table in the DuckDB connection.}
+
+\item{min_degree}{Integer; minimum full-depth node degree required for both
+endpoints of an edge to be included. Default is \code{1L} (all edges included).
+Set to \code{2L} to exclude dangling (degree-1) leaves.}
 }
 \value{
 A lazy \code{tbl} (DuckDB query) with columns:
