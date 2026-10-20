@@ -32,6 +32,14 @@
 #' @param min_prediction_score Minimum prediction score for the annotation to be considered valid.
 #' Labels with a prediction score below this value will be labelled as "Unknown", Default: 0,
 #' meaning that no threshold is used.
+#' @param predict_doublets If TRUE, compute a heterotypic doublet score and candidate
+#' cell type pair using the first group in \code{reference_groups} when
+#' \code{method = "nnls"}, adding \code{doublet_score} and \code{doublet_pair}
+#' columns to the object metadata, Default: FALSE
+#' @param min_doublet_score Minimum doublet score required to report a candidate
+#' cell type pair in \code{doublet_pair} when \code{predict_doublets = TRUE}.
+#' Cells with a doublet score below this threshold will have \code{doublet_pair}
+#' set to \code{NA}, Default: 0.4
 #' @param skip_normalization If TRUE, the datasets will not be normalized prior to annotation.
 #' The default layer will be used, so use this setting at your own risk, Default: FALSE
 #' @param verbose If TRUE, print messages about the progress of the annotation, Default: TRUE
@@ -77,6 +85,8 @@ AnnotateCells <- function(
   reduction = "cca",
   method = c("nnls", "Seurat", "nmf"),
   min_prediction_score = 0,
+  predict_doublets = FALSE,
+  min_doublet_score = 0.4,
   skip_normalization = FALSE,
   verbose = TRUE,
   ...
@@ -116,6 +126,16 @@ AnnotateCells <- function(
   }
   assert_single_value(min_prediction_score, "numeric")
   assert_within_limits(min_prediction_score, c(0, 1))
+  assert_single_value(predict_doublets, "bool")
+  assert_single_value(min_doublet_score, "numeric")
+  assert_within_limits(min_doublet_score, c(0, 1))
+  if (predict_doublets && method == "Seurat") {
+    cli::cli_abort(
+      c(
+        "x" = "{.arg predict_doublets} is only supported when {.arg method} is {.val nnls}."
+      )
+    )
+  }
   assert_single_value(verbose, "bool")
 
   groups <- reference[[]][, reference_groups, drop = FALSE] %>% as.list()
@@ -143,6 +163,8 @@ AnnotateCells <- function(
       normalization_method,
       skip_normalization,
       min_prediction_score,
+      predict_doublets,
+      min_doublet_score,
       verbose
     )
   )
@@ -383,6 +405,10 @@ AnnotateCells <- function(
 #' @param normalization_method Method for normalizing the data, e.g., "LogNormalize".
 #' @param skip_normalization Logical indicating whether to skip normalization of the data.
 #' @param min_prediction_score Minimum prediction score for cell type assignment.
+#' @param predict_doublets Logical indicating whether to compute heterotypic doublet
+#' scores and candidate pairs from the first grouping in `groups`.
+#' @param min_doublet_score Minimum doublet score required to retain a candidate
+#' pair in `doublet_pair`.
 #' @param verbose Logical indicating whether to print progress messages.
 #'
 #' @noRd
@@ -396,6 +422,8 @@ AnnotateCells <- function(
   normalization_method,
   skip_normalization,
   min_prediction_score,
+  predict_doublets = FALSE,
+  min_doublet_score = 0.4,
   verbose
 ) {
   expect_RcppML()
@@ -577,6 +605,22 @@ AnnotateCells <- function(
       check.names = FALSE
     )
     colnames(out) <- c(nm, paste0(nm, "_score"))
+
+    if (predict_doublets && identical(nm, names(groups)[1L])) {
+      doublet_out <- .compute_nnls_doublets(
+        q_mat = q_mat,
+        rm = rm,
+        fw = fw,
+        proj_expr = proj_expr,
+        prop = prop,
+        u_parents = u_parents,
+        sub_indices_by_parent = sub_indices_by_parent,
+        failed_cells = failed_cells,
+        min_doublet_score = min_doublet_score
+      )
+      out <- cbind(out, doublet_out)
+    }
+
     return(out)
   })
 
@@ -598,6 +642,113 @@ AnnotateCells <- function(
   }
 
   return(object)
+}
+
+.compute_nnls_doublets <- function(
+  q_mat,
+  rm,
+  fw,
+  proj_expr,
+  prop,
+  u_parents,
+  sub_indices_by_parent,
+  failed_cells,
+  min_doublet_score = 0.4
+) {
+  n_cells <- ncol(q_mat)
+  if (length(u_parents) < 2L) {
+    return(data.frame(
+      doublet_score = rep(0, n_cells),
+      doublet_pair = rep(NA_character_, n_cells),
+      row.names = colnames(q_mat),
+      check.names = FALSE
+    ))
+  }
+
+  doublet_scores <- numeric(n_cells)
+  doublet_pairs <- rep(NA_character_, n_cells)
+
+  for (i in seq_len(n_cells)) {
+    if (failed_cells[i]) {
+      next
+    }
+    scores_i <- proj_expr[, i]
+    best_sub_idx <- vapply(sub_indices_by_parent, function(idxs) {
+      if (length(idxs) == 1L) idxs else idxs[which.max(scores_i[idxs])]
+    }, integer(1))
+
+    p_scores <- prop[, i]
+    ord_p <- order(p_scores, decreasing = TRUE)
+    p1 <- u_parents[ord_p[1L]]
+    p2 <- u_parents[ord_p[2L]]
+    prop2 <- p_scores[ord_p[2L]]
+
+    if (prop2 <= 0) {
+      next
+    }
+
+    sub1 <- best_sub_idx[p1]
+    sub2 <- best_sub_idx[p2]
+
+    # Weighted 1-centroid vs 2-centroid fit improvement
+    y <- fw * q_mat[, i]
+    x1 <- fw * rm[, sub1]
+    x2 <- fw * rm[, sub2]
+    b1 <- pmax(0, sum(x1 * y) / (sum(x1^2) + 1e-8))
+    b2 <- pmax(0, sum(x2 * y) / (sum(x2^2) + 1e-8))
+    rss1 <- min(sum((y - b1 * x1)^2), sum((y - b2 * x2)^2))
+    tss <- sum((y - mean(y))^2) + 1e-8
+
+    X <- cbind(x1, x2)
+    XtX <- crossprod(X)
+    Xty <- crossprod(X, y)
+    det_XtX <- XtX[1L, 1L] * XtX[2L, 2L] - XtX[1L, 2L]^2
+    w_2 <- if (det_XtX > 1e-8) solve(XtX, Xty) else c(b1, 0)
+    if (w_2[1L] < 0) w_2 <- c(0, b2)
+    if (w_2[2L] < 0) w_2 <- c(b1, 0)
+    rss2 <- sum((y - X %*% w_2)^2)
+    delta_r2 <- pmax(0, (rss1 - rss2) / tss)
+
+    # Top-6 markers exclusive to sub1 over sub2 and vice versa
+    m1_cands <- which(rm[, sub1] > 1.5 & rm[, sub2] < 1.1 & (rm[, sub1] - rm[, sub2]) > 1.2)
+    m2_cands <- which(rm[, sub2] > 1.5 & rm[, sub1] < 1.1 & (rm[, sub2] - rm[, sub1]) > 1.2)
+
+    if (length(m1_cands) > 6L) {
+      m1_cands <- m1_cands[order((rm[m1_cands, sub1] - rm[m1_cands, sub2]) * fw[m1_cands], decreasing = TRUE)[1:6]]
+    }
+    if (length(m2_cands) > 6L) {
+      m2_cands <- m2_cands[order((rm[m2_cands, sub2] - rm[m2_cands, sub1]) * fw[m2_cands], decreasing = TRUE)[1:6]]
+    }
+
+    r1 <- if (length(m1_cands) >= 3L) {
+      pmin(1.5, pmax(0, (q_mat[m1_cands, i] - rm[m1_cands, sub2] - 0.3) / (rm[m1_cands, sub1] - rm[m1_cands, sub2])))
+    } else {
+      0
+    }
+    r2 <- if (length(m2_cands) >= 3L) {
+      pmin(1.5, pmax(0, (q_mat[m2_cands, i] - rm[m2_cands, sub1] - 0.3) / (rm[m2_cands, sub2] - rm[m2_cands, sub1])))
+    } else {
+      0
+    }
+
+    # Require at least 4 of the top-6 exclusive markers to be actively expressed (ratio > 0.15)
+    coexpr1 <- if (sum(r1 > 0.15) >= 4L) mean(r1) else 0
+    coexpr2 <- if (sum(r2 > 0.15) >= 4L) mean(r2) else 0
+
+    coexpr_min <- pmin(coexpr1, coexpr2)
+    score_i <- sqrt(pmin(1, 2 * prop2) * coexpr_min) * sqrt(pmin(1, delta_r2 / 0.12))
+    doublet_scores[i] <- score_i
+    if (score_i >= min_doublet_score) {
+      doublet_pairs[i] <- paste0(p1, " + ", p2)
+    }
+  }
+
+  data.frame(
+    doublet_score = doublet_scores,
+    doublet_pair = doublet_pairs,
+    row.names = colnames(q_mat),
+    check.names = FALSE
+  )
 }
 
 #' Compute feature-weighted reference profiles for NNLS annotation

@@ -129,6 +129,37 @@ test_that("annotate_cells works as expected", {
     verbose = FALSE
   )
   expect_gt(mean(query_sub$celltype.l2 == reference$celltype.l2[sub_cells]), 0.80)
+
+  # Test optional NNLS doublet prediction
+  ref_counts <- LayerData(reference, "counts")
+  cd4_cell <- colnames(reference)[which(reference$celltype.l1 == "CD4 T")[1L]]
+  mono_cell <- colnames(reference)[which(reference$celltype.l1 == "Mono")[1L]]
+  b_cell <- colnames(reference)[which(reference$celltype.l1 == "B")[1L]]
+  sim_doublet_counts <- cbind(
+    singlet_cd4 = ref_counts[, cd4_cell],
+    singlet_mono = ref_counts[, mono_cell],
+    doublet_cd4_mono = ref_counts[, cd4_cell] + ref_counts[, mono_cell],
+    doublet_b_cd4 = ref_counts[, b_cell] + ref_counts[, cd4_cell]
+  )
+  query_dbl <- SeuratObject::CreateSeuratObject(
+    counts = as(sim_doublet_counts, "dgCMatrix"),
+    assay = "PNA"
+  )
+  query_dbl <- AnnotateCells(
+    query_dbl,
+    reference,
+    reference_groups = c("celltype.l1", "celltype.l2"),
+    query_assay = "PNA",
+    reference_assay = "PNA",
+    method = "nnls",
+    predict_doublets = TRUE,
+    min_doublet_score = 0.4,
+    verbose = FALSE
+  )
+  expect_contains(colnames(query_dbl[[]]), c("doublet_score", "doublet_pair"))
+  expect_equal(unname(is.na(query_dbl$doublet_pair)), c(TRUE, TRUE, FALSE, FALSE))
+  expect_gt(query_dbl$doublet_score["doublet_cd4_mono"], 0.4)
+  expect_gt(query_dbl$doublet_score["doublet_b_cd4"], 0.4)
 })
 
 test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
@@ -191,6 +222,9 @@ test_that("annotate_cells fails with invalid input", {
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Seurat", normalization_method = "CLR", skip_normalization = FALSE))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_prediction_score = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", skip_normalization = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", predict_doublets = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_doublet_score = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Seurat", normalization_method = "LogNormalize", predict_doublets = TRUE))
 })
 
 test_that("Reading reference data works as expected", {

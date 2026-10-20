@@ -15,6 +15,8 @@ AnnotateCells(
   reduction = "cca",
   method = c("nnls", "Seurat", "nmf"),
   min_prediction_score = 0,
+  predict_doublets = FALSE,
+  min_doublet_score = 0.4,
   skip_normalization = FALSE,
   verbose = TRUE,
   ...
@@ -53,6 +55,16 @@ either "CLR", "LogNormalize", or "SCT", Default: 'CLR'}
 \item{min_prediction_score}{Minimum prediction score for the annotation to be considered valid.
 Labels with a prediction score below this value will be labelled as "Unknown", Default: 0,
 meaning that no threshold is used.}
+
+\item{predict_doublets}{If TRUE, compute a heterotypic doublet score and candidate
+cell type pair using the first group in \code{reference_groups} when
+\code{method = "nnls"}, adding \code{doublet_score} and \code{doublet_pair}
+columns to the object metadata, Default: FALSE}
+
+\item{min_doublet_score}{Minimum doublet score required to report a candidate
+cell type pair in \code{doublet_pair} when \code{predict_doublets = TRUE}.
+Cells with a doublet score below this threshold will have \code{doublet_pair}
+set to \code{NA}, Default: 0.4}
 
 \item{skip_normalization}{If TRUE, the datasets will not be normalized prior to annotation.
 The default layer will be used, so use this setting at your own risk, Default: FALSE}
