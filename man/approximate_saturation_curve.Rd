@@ -27,9 +27,9 @@ node saturation. Default is \code{2}, reflecting that each edge contributes to t
 Optionally, set to \code{1} to use the same read count for nodes and edges, which may
 be more appropriate in certain contexts.}
 
-\item{min_degree}{Integer; minimum full-depth node degree required for nodes
-and incident edges to be included. Default is \code{1L} (all elements included).
-Set to \code{2L} to exclude dangling (degree-1) leaves.}
+\item{min_degree}{Integer (\code{1L} or \code{2L}); minimum node degree required for
+nodes to be counted at downsampling fraction \code{p}. Default is \code{1L} (all
+elements included). Set to \code{2L} to exclude dangling (degree-1) leaves.}
 
 \item{verbose}{Logical; if \code{TRUE} (default), print progress messages.}
 }

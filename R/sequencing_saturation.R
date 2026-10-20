@@ -433,7 +433,7 @@ approximate_node_saturation <- function(
         c("x" = "All {.var components} must be present in the PXL file.")
       )
     }
-    el_name <- "edgelist_modified"
+    el_name <- "edgelist_filtered"
     .filter_edgelist_duckdb(db, components)
   }
 
@@ -499,7 +499,7 @@ approximate_node_saturation <- function(
 
 #' Filter edgelist by components
 #'
-#' Creates a temporary table `edgelist_modified` containing only edges from
+#' Creates a temporary table `edgelist_filtered` containing only edges from
 #' the specified components.
 #'
 #' @param db A `PixelDB` object with an active DuckDB connection.
@@ -519,7 +519,7 @@ approximate_node_saturation <- function(
   DBI::dbExecute(
     db$.__enclos_env__$private$con,
     glue::glue(
-      "CREATE OR REPLACE TEMPORARY TABLE edgelist_modified AS (
+      "CREATE OR REPLACE TEMPORARY TABLE edgelist_filtered AS (
           SELECT component, umi1, umi2, read_count FROM edgelist WHERE component IN
           ({components_formatted})
         )"
@@ -604,9 +604,9 @@ approximate_node_saturation <- function(
 #' node saturation. Default is `2`, reflecting that each edge contributes to two nodes.
 #' Optionally, set to `1` to use the same read count for nodes and edges, which may
 #' be more appropriate in certain contexts.
-#' @param min_degree Integer; minimum full-depth node degree required for nodes
-#'   and incident edges to be included. Default is `1L` (all elements included).
-#'   Set to `2L` to exclude dangling (degree-1) leaves.
+#' @param min_degree Integer (`1L` or `2L`); minimum node degree required for
+#'   nodes to be counted at downsampling fraction `p`. Default is `1L` (all
+#'   elements included). Set to `2L` to exclude dangling (degree-1) leaves.
 #' @param verbose Logical; if `TRUE` (default), print progress messages.
 #'
 #' @return A tibble with the following columns:
@@ -677,9 +677,10 @@ approximate_saturation_curve <- function(
     )
   }
   assert_single_value(min_degree, type = "integer")
-  if (min_degree < 1L) {
+  if (!min_degree %in% c(1L, 2L)) {
     cli::cli_abort(
-      c("x" = "{.var min_degree} must be >= 1, but got {.val {min_degree}}.")
+      c("x" = "{.var min_degree} must be either {.val 1} or {.val 2},
+               but got {.val {min_degree}}.")
     )
   }
   assert_single_value(verbose, type = "bool")
@@ -908,7 +909,7 @@ marginal_saturation <- function(
         c("x" = "All {.var components} must be present in the PXL file.")
       )
     }
-    el_name <- "edgelist_modified"
+    el_name <- "edgelist_filtered"
     .filter_edgelist_duckdb(db, components)
   }
 
@@ -1092,7 +1093,7 @@ marginal_saturation_curve <- function(
         c("x" = "All {.var components} must be present in the PXL file.")
       )
     }
-    el_name <- "edgelist_modified"
+    el_name <- "edgelist_filtered"
     .filter_edgelist_duckdb(db, components)
   }
 

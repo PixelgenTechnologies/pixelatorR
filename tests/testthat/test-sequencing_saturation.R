@@ -289,6 +289,7 @@ test_that("approximate_saturation_curve works as expected", {
   expect_error(approximate_saturation_curve(db, detailed = "Invalid"))
   expect_error(approximate_saturation_curve(db, verbose = "Invalid"))
   expect_error(approximate_saturation_curve(db, min_degree = 0L))
+  expect_error(approximate_saturation_curve(db, min_degree = 3L))
   expect_no_error(db$close())
 })
 
@@ -368,6 +369,12 @@ test_that("marginal_saturation and marginal_saturation_curve work as expected", 
   expect_error(marginal_saturation_curve("Invalid"))
   expect_error(marginal_saturation_curve(db, fracs = c(0, 0.5)))
   expect_error(marginal_saturation_curve(db, min_degree = 3L))
+
+  # Mixed use with components_edgelist(lazy = TRUE) on the same connection
+  expect_no_error(lazy_el <- db$components_edgelist("0a45497c6bfbfb22", lazy = TRUE))
+  expect_no_error(marginal_saturation(db, components = "0a45497c6bfbfb22") %>% collect())
+  expect_no_error(db$components_edgelist("0a45497c6bfbfb22", lazy = TRUE))
+  expect_no_error(approximate_edge_saturation(db, components = "0a45497c6bfbfb22") %>% collect())
   expect_no_error(db$close())
 })
 
