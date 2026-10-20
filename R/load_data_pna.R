@@ -264,10 +264,9 @@ ReadPNA_metadata <- function(
 #'
 #' @param pxl_file Path to a PXL file with a PNA data set
 #' @param cells A character vector with component IDs. If NULL, all components are loaded.
-#' @param umi_data_type One of "int64", "string" or "suffixed_string". Default is "int64".
+#' @param umi_data_type One of "int64" or "string". Default is "int64".
 #'  - "int64": The UMIs are encoded as int64
 #'  - "string": The UMIs are encoded as character
-#'  - "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
 #' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
 #' a \code{tbl_lazy} object is returned.
 #'
@@ -287,7 +286,7 @@ ReadPNA_metadata <- function(
 ReadPNA_edgelist <- function(
   pxl_file,
   cells = NULL,
-  umi_data_type = c("int64", "string", "suffixed_string"),
+  umi_data_type = c("int64", "string"),
   lazy = TRUE
 ) {
   assert_single_value(pxl_file, type = "string")

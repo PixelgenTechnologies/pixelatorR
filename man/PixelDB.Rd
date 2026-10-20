@@ -592,7 +592,7 @@ character vectors be specifying the \code{umi_data_type}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_edgelist(
   components,
-  umi_data_type = c("int64", "string", "suffixed_string"),
+  umi_data_type = c("int64", "string"),
   lazy = FALSE,
   include_all_columns = FALSE
 )}\if{html}{\out{</div>}}
@@ -603,11 +603,10 @@ character vectors be specifying the \code{umi_data_type}.
 \describe{
 \item{\code{components}}{A character vector with component names or NULL to get all components}
 
-\item{\code{umi_data_type}}{One of "int64", "string" or "suffixed_string". Default is "int64".
+\item{\code{umi_data_type}}{One of "int64" or "string". Default is "int64".
 \itemize{
 \item "int64": The UMIs are encoded as int64
 \item "string": The UMIs are encoded as character
-\item "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
 }}
 
 \item{\code{lazy}}{A logical specifying whether to load the data lazily. If \code{TRUE},
@@ -742,7 +741,12 @@ is converted to a \code{tbl_graph} and assigned attributes \code{type = "biparti
 \code{component_id}, and \code{assay_type = "PNA"}. Node markers are
 returned as a sparse count matrix.
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_cell_graph(components, markers = NULL, verbose = FALSE)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PixelDB$components_cell_graph(
+  components,
+  markers = NULL,
+  add_layouts = FALSE,
+  verbose = FALSE
+)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
@@ -752,6 +756,9 @@ returned as a sparse count matrix.
 
 \item{\code{markers}}{An optional character vector of all possible marker names to set fixed
 columns on the counts matrix. If \code{NULL}, marker names are derived from the data.}
+
+\item{\code{add_layouts}}{A logical specifying whether to load pre-computed 3D layouts
+from the \code{layouts} table into each \code{CellGraph}. Default is \code{FALSE}.}
 
 \item{\code{verbose}}{Print progress messages.}
 }

@@ -1,17 +1,12 @@
 mpx_pxl_file <- minimal_mpx_pxl_file()
 pna_pxl_file <- minimal_pna_pxl_file()
 
-seur_obj_mpx <- ReadMPX_Seurat(mpx_pxl_file)
-seur_obj_pna <- ReadPNA_Seurat(pna_pxl_file)
+# Build a minimal MPX PXL file with precomputed layouts
 pxl_file_new <- fs::path_temp("test.pxl")
-
-# Load cell graphs and compute layouts
-seur_obj_mpx <- seur_obj_mpx %>%
-  LoadCellGraphs(cells = colnames(.)[1:2]) %>%
-  ComputeLayout(dim = 3, layout_method = "pmds")
-
-# Export layouts to a pxl file
-seur_obj_mpx_subset <- subset(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1:2])
+seur_obj_mpx_subset <- ReadMPX_Seurat(mpx_pxl_file, verbose = FALSE)
+seur_obj_mpx_subset <- subset(seur_obj_mpx_subset, cells = colnames(seur_obj_mpx_subset)[1:2]) |>
+  LoadCellGraphs(verbose = FALSE) |>
+  ComputeLayout(dim = 3, layout_method = "pmds", verbose = FALSE)
 WriteMPX_pxl_file(seur_obj_mpx_subset, pxl_file_new, export_layouts = TRUE, overwrite = TRUE)
 
 for (assay_version in c("v3", "v5")) {
@@ -20,37 +15,30 @@ for (assay_version in c("v3", "v5")) {
   expected_class_mpx <- ifelse(assay_version == "v3", "CellGraphAssay", "CellGraphAssay5")
   expected_class_pna <- ifelse(assay_version == "v3", "PNAAssay", "PNAAssay5")
 
-  # Load example data as a Seurat object
-  # MPX
-  seur_obj_mpx <- ReadMPX_Seurat(mpx_pxl_file)
-  seur_obj_mpx_merged <- merge(seur_obj_mpx, seur_obj_mpx, add.cell.ids = c("Sample1", "Sample2"))
+  seur_obj_mpx <- ReadMPX_Seurat(mpx_pxl_file, verbose = FALSE)
+  seur_obj_mpx_precomputed <- ReadMPX_Seurat(pxl_file_new, verbose = FALSE)
   cg_assay <- seur_obj_mpx[["mpxCells"]]
-  cg_assay_merged <- merge(cg_assay, cg_assay, add.cell.ids = c("A", "B"))
-
-  seur_obj_mpx_precomputed <- ReadMPX_Seurat(pxl_file_new)
-
   cg_assay_split <- lapply(list(c(1, 2), c(3, 4, 5)), function(inds) {
-    suppressWarnings({
-      subset(cg_assay, cells = colnames(cg_assay)[inds])
-    })
+    suppressWarnings(subset(cg_assay, cells = colnames(cg_assay)[inds]))
   })
-  cg_assay_merged_big <- merge(cg_assay_split[[1]], cg_assay_split[-1], add.cell.ids = paste0("Sample", 1:2))
+  cg_assay_merged <- merge(
+    cg_assay_split[[1]],
+    cg_assay_split[-1],
+    add.cell.ids = paste0("Sample", 1:2)
+  )
 
-  # PNA
-  seur_obj_pna <- ReadPNA_Seurat(pna_pxl_file)
-  seur_obj_pna_merged <- merge(seur_obj_pna, seur_obj_pna, add.cell.ids = c("Sample1", "Sample2"))
+  seur_obj_pna <- ReadPNA_Seurat(pna_pxl_file, verbose = FALSE)
   pna_assay <- seur_obj_pna[["PNA"]]
-  pna_assay_merged <- merge(pna_assay, pna_assay, add.cell.ids = c("A", "B"))
-
   pna_assay_split <- lapply(list(c(1, 2), c(3, 4, 5)), function(inds) {
-    suppressWarnings({
-      subset(pna_assay, cells = colnames(pna_assay)[inds])
-    })
+    suppressWarnings(subset(pna_assay, cells = colnames(pna_assay)[inds]))
   })
-  pna_assay_merged_big <- merge(pna_assay_split[[1]], pna_assay_split[-1], add.cell.ids = paste0("Sample", 1:2))
+  pna_assay_merged <- merge(
+    pna_assay_split[[1]],
+    pna_assay_split[-1],
+    add.cell.ids = paste0("Sample", 1:2)
+  )
 
   test_that("LoadCellGraphs works for Seurat objects", {
-    # Single data set
     expect_no_error({
       seur_obj_mpx <- LoadCellGraphs(seur_obj_mpx, cells = colnames(seur_obj_mpx)[1], verbose = FALSE)
     })
@@ -62,7 +50,12 @@ for (assay_version in c("v3", "v5")) {
 
     # Data set with pre-computed layouts (add_layouts is deprecated but still functional)
     lifecycle::expect_deprecated(
-      seur_obj_mpx_precomputed <- LoadCellGraphs(seur_obj_mpx_precomputed, cells = colnames(seur_obj_mpx_precomputed)[1], add_layouts = TRUE)
+      seur_obj_mpx_precomputed <- LoadCellGraphs(
+        seur_obj_mpx_precomputed,
+        cells = colnames(seur_obj_mpx_precomputed)[1],
+        add_layouts = TRUE,
+        verbose = FALSE
+      )
     )
     layouts <- seur_obj_mpx_precomputed[["mpxCells"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(2470, 3))
@@ -104,7 +97,13 @@ for (assay_version in c("v3", "v5")) {
     )
 
     lifecycle::expect_deprecated(
-      seur_obj_pna <- LoadCellGraphs(seur_obj_pna, cells = colnames(seur_obj_pna)[1], add_layouts = TRUE, verbose = FALSE, force = TRUE)
+      seur_obj_pna <- LoadCellGraphs(
+        seur_obj_pna,
+        cells = colnames(seur_obj_pna)[1],
+        add_layouts = TRUE,
+        verbose = FALSE,
+        force = TRUE
+      )
     )
     layouts <- seur_obj_pna[["PNA"]]@cellgraphs[[1]]@layout
     expect_equal(dim(layouts[[1]]), c(43543, 3))
@@ -146,31 +145,18 @@ for (assay_version in c("v3", "v5")) {
         class = c("tbl_df", "tbl", "data.frame")
       )
     )
-
-    # Merged data set
-    expect_no_error(seur_obj_mpx_merged <- LoadCellGraphs(seur_obj_mpx_merged, cells = colnames(seur_obj_mpx_merged)[1]))
-    expect_no_error(seur_obj_pna_merged <- LoadCellGraphs(seur_obj_pna_merged, cells = colnames(seur_obj_pna_merged)[1], verbose = FALSE))
   })
 
   test_that("LoadCellGraphs works for CellGraphAssay/PNAAssay objects", {
-    # MPX
-    # Load bipartite graph (default)
-    expect_no_error(cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], force = TRUE))
-    expect_s4_class(cg_assay, expected_class_mpx)
-    expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
-    expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "bipartite")
-
-    # Load A-node projected graph
-    expect_no_error(cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], load_as = "Anode", force = TRUE))
-    expect_s4_class(cg_assay, expected_class_mpx)
-    expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
-    expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "Anode")
-
-    # Load line graph
-    expect_no_error(cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], load_as = "linegraph", force = TRUE))
-    expect_s4_class(cg_assay, expected_class_mpx)
-    expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
-    expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), "linegraph")
+    # MPX projections
+    for (proj in c("bipartite", "Anode", "linegraph")) {
+      expect_no_error(
+        cg_assay <- LoadCellGraphs(cg_assay, cells = colnames(cg_assay)[1], load_as = proj, force = TRUE, verbose = FALSE)
+      )
+      expect_s4_class(cg_assay, expected_class_mpx)
+      expect_s4_class(CellGraphs(cg_assay)[[1]], "CellGraph")
+      expect_equal(attr(CellGraphs(cg_assay)[[1]]@cellgraph, "type"), proj)
+    }
 
     # PNA
     expect_no_error(pna_assay <- LoadCellGraphs(pna_assay, cells = colnames(pna_assay)[1], verbose = FALSE))
@@ -179,36 +165,58 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(attr(CellGraphs(pna_assay)[[1]]@cellgraph, "type"), "bipartite")
   })
 
-  test_that("LoadCellGraphs works for FileSystemDataset", {
-    expect_no_error(el <- ReadMPX_arrow_edgelist(mpx_pxl_file))
+  test_that("LoadCellGraphs works for FileSystemDataset and merged assays", {
+    expect_no_error(el <- ReadMPX_arrow_edgelist(mpx_pxl_file, verbose = FALSE))
 
-    # Single data set
-    expect_no_error(g_list <- LoadCellGraphs(el, cells = colnames(seur_obj_mpx), data_type = "MPX"))
+    # Load 2 cells across 2 merged samples
+    target_cells <- colnames(seur_obj_mpx)[c(1, 3)]
+    expect_no_error(g_list <- LoadCellGraphs(el, cells = target_cells, data_type = "MPX", verbose = FALSE))
     expect_type(g_list, "list")
     expect_s4_class(g_list[[1]], "CellGraph")
-    expect_equal(length(g_list), 5)
+    expect_equal(length(g_list), 2)
 
-    # Big merged data
+    merged_target_cells <- colnames(cg_assay_merged)[c(1, 3)]
     expect_no_error({
-      g_list_merged_big <- LoadCellGraphs(cg_assay_merged_big, cells = colnames(cg_assay_merged_big))
+      g_list_merged <- LoadCellGraphs(cg_assay_merged, cells = merged_target_cells, verbose = FALSE)
     })
-    expect_equal(names(CellGraphs(g_list_merged_big)), colnames(cg_assay_merged_big))
+    expect_equal(names(CellGraphs(g_list_merged)[merged_target_cells]), merged_target_cells)
 
-    # Check that contents of g_list and g_list_merged_big are the same
-    for (i in 1:2) {
-      expect_equal(
-        g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize(),
-        CellGraphs(g_list_merged_big)[[i]] %>% CellGraphData(slot = "cellgraph") %>% igraph::gsize()
-      )
-      expect_equal(
-        g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% length(),
-        CellGraphs(g_list_merged_big)[[i]] %>% CellGraphData(slot = "cellgraph") %>% length()
-      )
-      expect_equal(
-        g_list[[i]] %>% CellGraphData(slot = "cellgraph") %>% attr(which = "type"),
-        CellGraphs(g_list_merged_big)[[i]] %>% CellGraphData(slot = "cellgraph") %>% attr(which = "type")
-      )
+    for (i in seq_along(target_cells)) {
+      cg_direct <- CellGraphData(g_list[[i]], slot = "cellgraph")
+      cg_from_merged <- CellGraphData(CellGraphs(g_list_merged)[[merged_target_cells[i]]], slot = "cellgraph")
+      expect_equal(igraph::gsize(cg_direct), igraph::gsize(cg_from_merged))
+      expect_equal(length(cg_direct), length(cg_from_merged))
+      expect_equal(attr(cg_direct, "type"), attr(cg_from_merged, "type"))
     }
+
+    # Incremental loading (force = FALSE) and multi-sample merged PNA
+    pna_merged_cells <- colnames(pna_assay_merged)
+    pna_partial <- LoadCellGraphs(
+      pna_assay_merged,
+      cells = pna_merged_cells[c(1, 3)],
+      verbose = FALSE
+    )
+    expect_s4_class(CellGraphs(pna_partial)[[pna_merged_cells[1]]], "CellGraph")
+    expect_null(CellGraphs(pna_partial)[[pna_merged_cells[2]]])
+    expect_s4_class(CellGraphs(pna_partial)[[pna_merged_cells[3]]], "CellGraph")
+
+    attr(CellGraphs(pna_partial)[[pna_merged_cells[1]]]@cellgraph, "sentinel") <- "kept"
+    expect_message(
+      pna_incremental <- LoadCellGraphs(
+        pna_partial,
+        cells = pna_merged_cells[1:4],
+        force = FALSE,
+        verbose = TRUE
+      ),
+      "2 CellGraphs loaded. Loading remaining 2 CellGraphs."
+    )
+    expect_equal(
+      attr(CellGraphs(pna_incremental)[[pna_merged_cells[1]]]@cellgraph, "sentinel"),
+      "kept"
+    )
+    expect_s4_class(CellGraphs(pna_incremental)[[pna_merged_cells[2]]], "CellGraph")
+    expect_s4_class(CellGraphs(pna_incremental)[[pna_merged_cells[4]]], "CellGraph")
+    expect_null(CellGraphs(pna_incremental)[[pna_merged_cells[5]]])
   })
 
   test_that("LoadCellGraphs fails with invalid input", {

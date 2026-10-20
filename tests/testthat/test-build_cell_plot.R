@@ -125,13 +125,11 @@ test_that("Cell plot building and default rendering work as expected", {
   grDevices::pdf(NULL)
   facet_grob <- ggplot2::ggplotGrob(facet_rendered)
   top_strip <- facet_grob$layout[
-    facet_grob$layout$name == "strip-t-1",
-    ,
+    facet_grob$layout$name == "strip-t-1", ,
     drop = FALSE
   ]
   left_strip <- facet_grob$layout[
-    facet_grob$layout$name == "strip-l-1",
-    ,
+    facet_grob$layout$name == "strip-l-1", ,
     drop = FALSE
   ]
   top_strip_height <- grid::convertHeight(
