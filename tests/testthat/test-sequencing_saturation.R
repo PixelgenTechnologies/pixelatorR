@@ -300,8 +300,13 @@ test_that("marginal_saturation and marginal_saturation_curve work as expected", 
   expect_equal(msat$read_count, 289856)
   expect_equal(msat$nodes, 43543L)
   expect_equal(msat$edges, 97014L)
+  expect_equal(msat$degree, 2 * 97014 / 43543)
   expect_equal(msat$node_discovery_rate, 5694 / 289856)
   expect_equal(msat$edge_discovery_rate, 36446 / 289856)
+  expect_equal(
+    msat$degree_rate,
+    (2 * (36446 / 289856) - (2 * 97014 / 43543) * (5694 / 289856)) / 43543
+  )
   expect_equal(msat$marginal_node_saturation, 1 - (5694 / (2 * 289856)))
   expect_equal(msat$marginal_edge_saturation, 1 - (36446 / 289856))
 
@@ -311,7 +316,12 @@ test_that("marginal_saturation and marginal_saturation_curve work as expected", 
     min_degree = 2L
   ) %>% collect())
   expect_equal(msat_deg2$nodes, 33731L)
+  expect_equal(msat_deg2$degree, 2 * 97014 / 33731)
   expect_equal(msat_deg2$node_discovery_rate, 3494 / 289856)
+  expect_equal(
+    msat_deg2$degree_rate,
+    (2 * (36446 / 289856) - (2 * 97014 / 33731) * (3494 / 289856)) / 33731
+  )
 
   # Curve at p = 1.0 should match full-depth marginal_saturation()
   expect_no_error(mcurve_1 <- marginal_saturation_curve(
@@ -321,8 +331,10 @@ test_that("marginal_saturation and marginal_saturation_curve work as expected", 
     min_degree = 1L,
     verbose = FALSE
   ))
+  expect_equal(mcurve_1$degree[2], msat$degree)
   expect_equal(mcurve_1$node_discovery_rate[2], msat$node_discovery_rate)
   expect_equal(mcurve_1$edge_discovery_rate[2], msat$edge_discovery_rate)
+  expect_equal(mcurve_1$degree_rate[2], msat$degree_rate)
   expect_equal(mcurve_1$marginal_node_saturation[2], msat$marginal_node_saturation)
   expect_equal(mcurve_1$marginal_edge_saturation[2], msat$marginal_edge_saturation)
 
@@ -334,8 +346,22 @@ test_that("marginal_saturation and marginal_saturation_curve work as expected", 
     verbose = FALSE
   ))
   expect_equal(mcurve_2$nodes[2], as.numeric(msat_deg2$nodes))
+  expect_equal(mcurve_2$degree[2], msat_deg2$degree)
   expect_equal(mcurve_2$node_discovery_rate[2], msat_deg2$node_discovery_rate)
+  expect_equal(mcurve_2$degree_rate[2], msat_deg2$degree_rate)
   expect_equal(mcurve_2$marginal_node_saturation[2], msat_deg2$marginal_node_saturation)
+
+  # Numerical derivative check for degree_rate at p = 0.5
+  eps <- 1e-5
+  mcurve_num <- marginal_saturation_curve(
+    db,
+    fracs = c(0.5 - eps, 0.5, 0.5 + eps),
+    components = "0a45497c6bfbfb22",
+    min_degree = 1L,
+    verbose = FALSE
+  )
+  num_deg_rate <- (mcurve_num$degree[3] - mcurve_num$degree[1]) / (2 * eps * msat$read_count)
+  expect_equal(mcurve_num$degree_rate[2], num_deg_rate, tolerance = 1e-6)
 
   expect_error(marginal_saturation("Invalid"))
   expect_error(marginal_saturation(db, min_degree = 3L))

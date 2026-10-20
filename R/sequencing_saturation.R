@@ -844,6 +844,10 @@ approximate_saturation_curve <- function(
 #' \deqn{S_{\text{marginal, edge}} = 1 - \text{edge\_discovery\_rate}}
 #' \deqn{S_{\text{marginal, node}} = 1 - \frac{\text{node\_discovery\_rate}}{2}}
 #'
+#' The instantaneous rate of change of average node degree (\eqn{\bar{d} = 2E / N})
+#' per additional read is given by the quotient rule:
+#' \deqn{\text{degree\_rate} = \frac{d\bar{d}}{dR} = \frac{2\,\text{edge\_discovery\_rate} - \bar{d}\,\text{node\_discovery\_rate}}{N}}
+#'
 #' @param db A `PixelDB` object with an active DuckDB connection.
 #' @param components Optional character vector of component names to include.
 #'   If `NULL` (default), all components are included.
@@ -859,8 +863,10 @@ approximate_saturation_curve <- function(
 #'   \item{read_count}{Total sequencing reads in the component.}
 #'   \item{nodes}{Number of unique nodes (with degree >= `min_degree`).}
 #'   \item{edges}{Number of unique edges in the component.}
+#'   \item{degree}{Average node degree (\eqn{2 \times \text{edges} / \text{nodes}}).}
 #'   \item{node_discovery_rate}{Instantaneous slope \eqn{dN / dR} (new nodes per additional read).}
 #'   \item{edge_discovery_rate}{Instantaneous slope \eqn{dE / dR} (new edges per additional read).}
+#'   \item{degree_rate}{Instantaneous slope \eqn{d\bar{d} / dR} (change in average node degree per additional read).}
 #'   \item{marginal_node_saturation}{Marginal node saturation (\eqn{1 - (dN / dR) / 2}).}
 #'   \item{marginal_edge_saturation}{Marginal (Good-Turing) edge saturation (\eqn{1 - dE / dR}).}
 #' }
@@ -961,8 +967,10 @@ marginal_saturation <- function(
           e.read_count,
           n.nodes,
           e.edges,
+          (2.0 * e.edges) / NULLIF(n.nodes, 0) AS degree,
           n.node_marginal_num / e.read_count AS node_discovery_rate,
           e.edge_singletons / e.read_count AS edge_discovery_rate,
+          ((2.0 * (e.edge_singletons / e.read_count)) - (((2.0 * e.edges) / NULLIF(n.nodes, 0)) * (n.node_marginal_num / e.read_count))) / NULLIF(n.nodes, 0) AS degree_rate,
           1.0 - (n.node_marginal_num / (e.read_count * 2.0)) AS marginal_node_saturation,
           1.0 - (e.edge_singletons / e.read_count) AS marginal_edge_saturation
         FROM edge_stats e
@@ -1032,6 +1040,7 @@ marginal_saturation <- function(
 #'   \item{degree}{Estimated average node degree (\eqn{2 \times \text{edges} / \text{nodes}}).}
 #'   \item{node_discovery_rate}{Instantaneous slope \eqn{dN / dR} at fraction `p` (new nodes per additional read).}
 #'   \item{edge_discovery_rate}{Instantaneous slope \eqn{dE / dR} at fraction `p` (new edges per additional read).}
+#'   \item{degree_rate}{Instantaneous slope \eqn{d\bar{d} / dR} at fraction `p` (change in average node degree per additional read).}
 #'   \item{marginal_node_saturation}{Marginal node saturation at fraction `p` (\eqn{1 - (dN / dR) / 2}).}
 #'   \item{marginal_edge_saturation}{Marginal (Good-Turing) edge saturation at fraction `p`.}
 #' }
@@ -1235,7 +1244,7 @@ marginal_saturation_curve <- function(
         ed.p,
         b.nodes_part1 - i.nodes_part2 AS nodes,
         ed.edges,
-        2.0 * ed.edges / (b.nodes_part1 - i.nodes_part2) AS degree,
+        2.0 * ed.edges / NULLIF(b.nodes_part1 - i.nodes_part2, 0) AS degree,
         (b.dN_dp_part1 + i.dN_dp_part2) / ed.full_reads AS node_discovery_rate,
         ed.dE_dp / ed.full_reads AS edge_discovery_rate
       FROM edges_down ed
@@ -1249,6 +1258,7 @@ marginal_saturation_curve <- function(
   curve_df <- DBI::dbGetQuery(con, query_sql) %>%
     as_tibble() %>%
     mutate(
+      degree_rate = if_else(nodes > 0, (2 * edge_discovery_rate - degree * node_discovery_rate) / nodes, NA_real_),
       marginal_node_saturation = 1 - (node_discovery_rate / 2),
       marginal_edge_saturation = 1 - edge_discovery_rate
     ) %>%

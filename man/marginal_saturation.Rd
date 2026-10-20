@@ -26,8 +26,10 @@ A lazy \code{tbl} (DuckDB query) with columns:
 \item{read_count}{Total sequencing reads in the component.}
 \item{nodes}{Number of unique nodes (with degree >= \code{min_degree}).}
 \item{edges}{Number of unique edges in the component.}
+\item{degree}{Average node degree (\eqn{2 \times \text{edges} / \text{nodes}}).}
 \item{node_discovery_rate}{Instantaneous slope \eqn{dN / dR} (new nodes per additional read).}
 \item{edge_discovery_rate}{Instantaneous slope \eqn{dE / dR} (new edges per additional read).}
+\item{degree_rate}{Instantaneous slope \eqn{d\bar{d} / dR} (change in average node degree per additional read).}
 \item{marginal_node_saturation}{Marginal node saturation (\eqn{1 - (dN / dR) / 2}).}
 \item{marginal_edge_saturation}{Marginal (Good-Turing) edge saturation (\eqn{1 - dE / dR}).}
 }
@@ -86,6 +88,10 @@ sequencing read observes 2 node endpoints, \code{node_discovery_rate} is divided
 by \code{2}):
 \deqn{S_{\text{marginal, edge}} = 1 - \text{edge\_discovery\_rate}}
 \deqn{S_{\text{marginal, node}} = 1 - \frac{\text{node\_discovery\_rate}}{2}}
+
+The instantaneous rate of change of average node degree (\eqn{\bar{d} = 2E / N})
+per additional read is given by the quotient rule:
+\deqn{\text{degree\_rate} = \frac{d\bar{d}}{dR} = \frac{2\,\text{edge\_discovery\_rate} - \bar{d}\,\text{node\_discovery\_rate}}{N}}
 }
 }
 \seealso{
