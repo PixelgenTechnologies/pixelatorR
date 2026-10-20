@@ -91,7 +91,8 @@ by \code{2}):
 
 The instantaneous rate of change of average node degree (\eqn{\bar{d} = 2E / N})
 per additional read is given by the quotient rule:
-\deqn{\text{degree\_rate} = \frac{d\bar{d}}{dR} = \frac{2\,\text{edge\_discovery\_rate} - \bar{d}\,\text{node\_discovery\_rate}}{N}}
+\deqn{\text{degree\_rate} = \frac{d\bar{d}}{dR} =
+  \frac{2\,\text{edge\_discovery\_rate} - \bar{d}\,\text{node\_discovery\_rate}}{N}}
 }
 }
 \seealso{

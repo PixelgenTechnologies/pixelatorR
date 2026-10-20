@@ -38,7 +38,8 @@ A tibble with columns:
 \item{degree}{Estimated average node degree (\eqn{2 \times \text{edges} / \text{nodes}}).}
 \item{node_discovery_rate}{Instantaneous slope \eqn{dN / dR} at fraction \code{p} (new nodes per additional read).}
 \item{edge_discovery_rate}{Instantaneous slope \eqn{dE / dR} at fraction \code{p} (new edges per additional read).}
-\item{degree_rate}{Instantaneous slope \eqn{d\bar{d} / dR} at fraction \code{p} (change in average node degree per additional read).}
+\item{degree_rate}{Instantaneous slope \eqn{d\bar{d} / dR} at fraction \code{p}
+(change in average node degree per additional read).}
 \item{marginal_node_saturation}{Marginal node saturation at fraction \code{p} (\eqn{1 - (dN / dR) / 2}).}
 \item{marginal_edge_saturation}{Marginal (Good-Turing) edge saturation at fraction \code{p}.}
 }
