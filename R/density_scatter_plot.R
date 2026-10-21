@@ -12,7 +12,8 @@
 #' @param plot_gate Optional data frame containing gate parameters. For `gate_type = "rectangle"`, must contain columns
 #'   'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. `NA` and infinite values mean an open
 #'   edge: `xmin` or `ymin` of `NA` or `-Inf` has no lower bound, and `xmax` or `ymax` of `NA` or `Inf` has no upper
-#'   bound. For gate_type = "quadrant", must contain columns 'x' and 'y' defining the position of the quadrant lines.
+#'   bound. `Inf` is not a lower bound and `-Inf` is not an upper bound. For gate_type = "quadrant", must contain
+#'   columns 'x' and 'y' defining the position of the quadrant lines.
 #'   The data frame can also contain the variables specified in 'facet_vars' to plot different gates in different
 #'   facets.
 #' @param gate_type Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
@@ -364,6 +365,20 @@ DensityScatterPlot <- function(
             call = call
           )
         }
+        # Lower edges open toward -Inf. Upper edges open toward Inf.
+        open_value <- if (bound %in% c("xmin", "ymin")) -Inf else Inf
+        open_label <- if (bound %in% c("xmin", "ymin")) "-Inf" else "Inf"
+        direction_ok <- is.na(values) | is.finite(values) | values == open_value
+        direction_ok[is.na(direction_ok)] <- FALSE
+        if (!all(direction_ok)) {
+          cli::cli_abort(
+            c(
+              "i" = "{.code {bound}} must be finite, {.code NA}, or {.code {open_label}}.",
+              "x" = "Invalid value{?s}: {.val {values[!direction_ok]}}."
+            ),
+            call = call
+          )
+        }
       }
       # NA is an open edge, so it is not ordered against the opposite bound.
       x_order_ok <- is.na(plot_gate$xmin) | is.na(plot_gate$xmax) | plot_gate$xmin <= plot_gate$xmax
@@ -677,16 +692,68 @@ DensityScatterPlot <- function(
 
   # Create gate coordinates and add gate to plot
   if (gate_type == "rectangle") {
-    # Clip open edges to the panel. Counts above keep the logical bounds.
-    x_range <- layer_scales(gg)$x$range$range
-    y_range <- layer_scales(gg)$y$range$range
-    gate_summary <- gate_summary %>%
-      mutate(
-        xmin = if_else(is.finite(xmin), as.numeric(xmin), x_range[1]),
-        xmax = if_else(is.finite(xmax), as.numeric(xmax), x_range[2]),
-        ymin = if_else(is.finite(ymin), as.numeric(ymin), y_range[1]),
-        ymax = if_else(is.finite(ymax), as.numeric(ymax), y_range[2])
-      )
+    # Clip open edges to the panel after expansion and finite gate edges.
+    # layer_scales()$range$range is only the trained data extent.
+    bounds <- c(
+      gate_summary$xmin, gate_summary$xmax,
+      gate_summary$ymin, gate_summary$ymax
+    )
+    if (any(!is.finite(bounds))) {
+      finite_x <- as.numeric(c(gate_summary$xmin, gate_summary$xmax))
+      finite_y <- as.numeric(c(gate_summary$ymin, gate_summary$ymax))
+      finite_x <- finite_x[is.finite(finite_x)]
+      finite_y <- finite_y[is.finite(finite_y)]
+      gg_train <- gg
+      if (length(finite_x) > 0 || length(finite_y) > 0) {
+        n_bounds <- max(length(finite_x), length(finite_y))
+        gg_train <- gg_train + ggplot2::geom_blank(
+          data = data.frame(
+            marker1 = if (length(finite_x) > 0) {
+              rep(finite_x, length.out = n_bounds)
+            } else {
+              NA_real_
+            },
+            marker2 = if (length(finite_y) > 0) {
+              rep(finite_y, length.out = n_bounds)
+            } else {
+              NA_real_
+            }
+          ),
+          aes(x = marker1, y = marker2),
+          inherit.aes = FALSE,
+          na.rm = TRUE
+        )
+      }
+      panel_params <- ggplot_build(gg_train)$layout$panel_params[[1]]
+      x_range <- panel_params$x.range
+      y_range <- panel_params$y.range
+
+      # Keep that panel fixed. A rect drawn at the expanded edge would
+      # otherwise train the scales and grow the panel again.
+      fix_scale <- function(gg, aesthetic, limits) {
+        scale <- gg$scales$get_scales(aesthetic)
+        if (is.null(scale)) {
+          new_scale <- switch(aesthetic,
+            x = scale_x_continuous(limits = limits, expand = c(0, 0)),
+            y = scale_y_continuous(limits = limits, expand = c(0, 0))
+          )
+          return(gg + new_scale)
+        }
+        scale$limits <- limits
+        scale$expand <- c(0, 0)
+        gg
+      }
+      gg <- fix_scale(gg, "x", x_range)
+      gg <- fix_scale(gg, "y", y_range)
+
+      gate_summary <- gate_summary %>%
+        mutate(
+          xmin = if_else(is.finite(xmin), as.numeric(xmin), x_range[1]),
+          xmax = if_else(is.finite(xmax), as.numeric(xmax), x_range[2]),
+          ymin = if_else(is.finite(ymin), as.numeric(ymin), y_range[1]),
+          ymax = if_else(is.finite(ymax), as.numeric(ymax), y_range[2])
+        )
+    }
 
     # Calculate annotation positions
     gate_labels <-

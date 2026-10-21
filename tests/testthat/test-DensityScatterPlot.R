@@ -571,4 +571,95 @@ for (assay_version in c("v3", "v5")) {
     expect_gt(sum(inside_open), sum(inside_stand_in))
     expect_equal(as.numeric(label_data$label), as.numeric(sum(inside_open)))
   })
+
+  test_that("Open rectangle edges meet the panel", {
+    set.seed(1)
+    n_cells <- 40
+    counts <- matrix(
+      c(runif(n_cells, 0, 10), runif(n_cells, 0, 100)),
+      nrow = 2,
+      byrow = TRUE,
+      dimnames = list(
+        c("Feature1", "Feature2"),
+        paste0("Cell", seq_len(n_cells))
+      )
+    ) %>%
+      as("dgCMatrix")
+    object_asym <- CreateSeuratObject(counts = counts)
+
+    rect_data <- function(p) {
+      idx <- which(vapply(
+        p$layers,
+        function(layer) inherits(layer$geom, "GeomRect"),
+        logical(1)
+      ))
+      p$layers[[idx[1]]]$data
+    }
+    panel_ranges <- function(p) {
+      params <- ggplot_build(p)$layout$panel_params[[1]]
+      list(x = params$x.range, y = params$y.range)
+    }
+
+    # Shared axes: x data stops at 10, but the panel follows y out to 100.
+    p_equal <- expect_no_warning(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = 20, xmax = Inf, ymin = 0, ymax = 40),
+        gate_type = "rectangle",
+        grid_n = 25
+      )
+    )
+    rect_equal <- rect_data(p_equal)
+    panel_equal <- panel_ranges(p_equal)
+    expect_equal(as.numeric(rect_equal$xmin), 20)
+    expect_equal(as.numeric(rect_equal$xmax), panel_equal$x[2])
+    expect_gt(as.numeric(rect_equal$xmax), 10)
+    expect_gt(as.numeric(rect_equal$xmax), as.numeric(rect_equal$xmin))
+
+    # Free axes: a finite edge outside the data still expands the panel.
+    p_free <- expect_no_warning(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = 30, xmax = Inf, ymin = -Inf, ymax = 40),
+        gate_type = "rectangle",
+        equal_axes = FALSE,
+        coord_fixed = FALSE,
+        grid_n = 25
+      )
+    )
+    rect_free <- rect_data(p_free)
+    panel_free <- panel_ranges(p_free)
+    expect_equal(as.numeric(rect_free$xmin), 30)
+    expect_equal(as.numeric(rect_free$xmax), panel_free$x[2])
+    expect_equal(as.numeric(rect_free$ymin), panel_free$y[1])
+    expect_equal(as.numeric(rect_free$ymax), 40)
+    expect_gt(as.numeric(rect_free$xmax), as.numeric(rect_free$xmin))
+
+    expect_error(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = Inf, xmax = Inf, ymin = 0, ymax = 1),
+        gate_type = "rectangle"
+      )
+    )
+    expect_error(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = 0, xmax = -Inf, ymin = 0, ymax = -Inf),
+        gate_type = "rectangle"
+      )
+    )
+  })
 }
