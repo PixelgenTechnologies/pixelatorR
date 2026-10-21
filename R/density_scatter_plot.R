@@ -10,9 +10,11 @@
 #' @param marker2 Name of second marker to plot.
 #' @param facet_vars Optional character vector of length 1 or 2 specifying variables to facet by.
 #' @param plot_gate Optional data frame containing gate parameters. For `gate_type = "rectangle"`, must contain columns
-#'   'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. For gate_type = "quadrant", must contain
-#'   columns 'x' and 'y' defining the position of the quadrant lines. The data frame can also contain the variables
-#'   specified in 'facet_vars' to plot different gates in different facets.
+#'   'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. `NA` and infinite values mean an open
+#'   edge: `xmin` or `ymin` of `NA` or `-Inf` has no lower bound, and `xmax` or `ymax` of `NA` or `Inf` has no upper
+#'   bound. For gate_type = "quadrant", must contain columns 'x' and 'y' defining the position of the quadrant lines.
+#'   The data frame can also contain the variables specified in 'facet_vars' to plot different gates in different
+#'   facets.
 #' @param gate_type Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
 #' Required if `plot_gate` is provided.
 #' @param grid_n Number of grid points in each direction to compute density.
@@ -351,9 +353,38 @@ DensityScatterPlot <- function(
       assert_col_in_data("xmax", plot_gate, call = call)
       assert_col_in_data("ymin", plot_gate, call = call)
       assert_col_in_data("ymax", plot_gate, call = call)
-      for (i in seq_len(nrow(plot_gate))) {
-        assert_within_limits(plot_gate$xmin[i], limits = c(-Inf, plot_gate$xmax[i]), call = call)
-        assert_within_limits(plot_gate$ymin[i], limits = c(-Inf, plot_gate$ymax[i]), call = call)
+      for (bound in c("xmin", "xmax", "ymin", "ymax")) {
+        values <- plot_gate[[bound]]
+        if (!(is.numeric(values) || all(is.na(values)))) {
+          cli::cli_abort(
+            c(
+              "i" = "Rectangle gate bounds must be numeric, {.code NA}, or infinite.",
+              "x" = "{.code {bound}} is {.cls {class(values)}}."
+            ),
+            call = call
+          )
+        }
+      }
+      # NA is an open edge, so it is not ordered against the opposite bound.
+      x_order_ok <- is.na(plot_gate$xmin) | is.na(plot_gate$xmax) | plot_gate$xmin <= plot_gate$xmax
+      y_order_ok <- is.na(plot_gate$ymin) | is.na(plot_gate$ymax) | plot_gate$ymin <= plot_gate$ymax
+      if (!all(x_order_ok)) {
+        cli::cli_abort(
+          c(
+            "i" = "{.code xmin} must be less than or equal to {.code xmax}.",
+            "x" = "Invalid rectangle bounds in row{?s} {.val {which(!x_order_ok)}}."
+          ),
+          call = call
+        )
+      }
+      if (!all(y_order_ok)) {
+        cli::cli_abort(
+          c(
+            "i" = "{.code ymin} must be less than or equal to {.code ymax}.",
+            "x" = "Invalid rectangle bounds in row{?s} {.val {which(!y_order_ok)}}."
+          ),
+          call = call
+        )
       }
     } else {
       assert_col_in_data("x", plot_gate, call = call)
@@ -517,16 +548,18 @@ DensityScatterPlot <- function(
     )
 
     if (!is.null(plot_gate)) {
+      # Finite edges still expand shared axes. Open edges must not.
+      gate_coords <- plot_gate %>%
+        select(any_of(c(
+          "x", "y",
+          "xmin", "xmax",
+          "ymin", "ymax"
+        ))) %>%
+        unlist()
       scale_range <- range(
         c(
           scale_range,
-          plot_gate %>%
-            select(any_of(c(
-              "x", "y",
-              "xmin", "xmax",
-              "ymin", "ymax"
-            ))) %>%
-            unlist()
+          gate_coords[is.finite(gate_coords)]
         )
       )
     }
@@ -603,11 +636,12 @@ DensityScatterPlot <- function(
         xmin, xmax, ymin, ymax
       ) %>%
       summarise(
+        # NA matches an open edge. -Inf and Inf compare as unbounded.
         n_inside = sum(
-          marker1 >= xmin &
-            marker1 <= xmax &
-            marker2 >= ymin &
-            marker2 <= ymax
+          marker1 >= if_else(is.na(xmin), -Inf, as.numeric(xmin)) &
+            marker1 <= if_else(is.na(xmax), Inf, as.numeric(xmax)) &
+            marker2 >= if_else(is.na(ymin), -Inf, as.numeric(ymin)) &
+            marker2 <= if_else(is.na(ymax), Inf, as.numeric(ymax))
         ),
         total = n()
       )
@@ -643,6 +677,17 @@ DensityScatterPlot <- function(
 
   # Create gate coordinates and add gate to plot
   if (gate_type == "rectangle") {
+    # Clip open edges to the panel. Counts above keep the logical bounds.
+    x_range <- layer_scales(gg)$x$range$range
+    y_range <- layer_scales(gg)$y$range$range
+    gate_summary <- gate_summary %>%
+      mutate(
+        xmin = if_else(is.finite(xmin), as.numeric(xmin), x_range[1]),
+        xmax = if_else(is.finite(xmax), as.numeric(xmax), x_range[2]),
+        ymin = if_else(is.finite(ymin), as.numeric(ymin), y_range[1]),
+        ymax = if_else(is.finite(ymax), as.numeric(ymax), y_range[2])
+      )
+
     # Calculate annotation positions
     gate_labels <-
       gate_summary %>%

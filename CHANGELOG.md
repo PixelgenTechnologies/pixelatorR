@@ -30,6 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixes
 
+- `DensityScatterPlot()` rectangle gates accept open bounds (`NA`, `-Inf`, or `Inf`).
 - Fixed `LoadCellGraphs()` on `PNAAssay` and `MPXAssay` objects to filter
   `fs_map` by `cells_to_load` instead of `cells`, preventing already-loaded
   graphs from being re-fetched when `force = FALSE`.

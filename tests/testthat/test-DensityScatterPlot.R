@@ -505,4 +505,70 @@ for (assay_version in c("v3", "v5")) {
       )
     )
   })
+
+  test_that("Rectangle gates accept open edges", {
+    object_open <- object
+    counts <- GetAssayData(object_open, layer = "counts")
+    counts["Feature1", "Cell1"] <- 1e7
+    counts["Feature2", "Cell1"] <- -1e7
+    object_open <- SetAssayData(object_open, layer = "counts", new.data = counts)
+
+    plot_gate <- tibble(
+      xmin = 0,
+      xmax = Inf,
+      ymin = -Inf,
+      ymax = 30
+    )
+
+    p <- expect_no_warning(
+      DensityScatterPlot(
+        object_open,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = plot_gate,
+        gate_type = "rectangle",
+        gate_stat = "count"
+      )
+    )
+    expect_s3_class(p, "ggplot")
+
+    rect_idx <- which(vapply(
+      p$layers,
+      function(layer) inherits(layer$geom, "GeomRect"),
+      logical(1)
+    ))
+    rect_coords <- unlist(
+      p$layers[[rect_idx]]$data[, c("xmin", "xmax", "ymin", "ymax")],
+      use.names = FALSE
+    )
+    expect_true(all(is.finite(rect_coords)))
+
+    label_idx <- which(vapply(
+      p$layers,
+      function(layer) inherits(layer$geom, "GeomLabel"),
+      logical(1)
+    ))
+    label_data <- p$layers[[label_idx[1]]]$data
+    expect_true(all(is.finite(c(label_data$x, label_data$y))))
+
+    marker_data <- FetchData(
+      object_open,
+      vars = c("Feature1", "Feature2"),
+      layer = "counts"
+    )
+    inside_open <- marker_data$Feature1 >= plot_gate$xmin &
+      marker_data$Feature2 <= plot_gate$ymax
+    inside_stand_in <- marker_data$Feature1 >= plot_gate$xmin &
+      marker_data$Feature1 <= 1e6 &
+      marker_data$Feature2 >= -1e6 &
+      marker_data$Feature2 <= plot_gate$ymax
+    expect_true(any(
+      marker_data$Feature1 > 1e6 &
+        marker_data$Feature2 < -1e6 &
+        inside_open
+    ))
+    expect_gt(sum(inside_open), sum(inside_stand_in))
+    expect_equal(as.numeric(label_data$label), as.numeric(sum(inside_open)))
+  })
 }
