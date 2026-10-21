@@ -985,10 +985,8 @@ marginal_saturation <- function(
     )
   )
 
-  res <- tbl(con, "marginal_saturation_view")
-  if (!is.null(table_name)) {
-    res <- res %>% compute(name = table_name, overwrite = TRUE)
-  }
+  res <- tbl(con, "marginal_saturation_view") %>%
+    compute(name = table_name, overwrite = TRUE)
   return(res)
 }
 

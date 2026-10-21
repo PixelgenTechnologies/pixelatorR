@@ -370,6 +370,13 @@ test_that("marginal_saturation and marginal_saturation_curve work as expected", 
   expect_error(marginal_saturation_curve(db, fracs = c(0, 0.5)))
   expect_error(marginal_saturation_curve(db, min_degree = 3L))
 
+  # Uncollected lazy results should not be overwritten by later calls
+  msat_lazy_1 <- marginal_saturation(db, components = "0a45497c6bfbfb22", min_degree = 1L)
+  msat_lazy_2 <- marginal_saturation(db, components = "2708240b908e2eba", min_degree = 2L)
+  expect_equal(msat_lazy_1 %>% collect(), msat)
+  expect_equal((msat_lazy_2 %>% collect())$component, "2708240b908e2eba")
+  expect_equal((msat_lazy_2 %>% collect())$nodes, 28944L)
+
   # Mixed use with components_edgelist(lazy = TRUE) on the same connection
   expect_no_error(lazy_el <- db$components_edgelist("0a45497c6bfbfb22", lazy = TRUE))
   expect_no_error(marginal_saturation(db, components = "0a45497c6bfbfb22") %>% collect())
