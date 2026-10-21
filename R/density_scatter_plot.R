@@ -703,25 +703,29 @@ DensityScatterPlot <- function(
       finite_y <- as.numeric(c(gate_summary$ymin, gate_summary$ymax))
       finite_x <- finite_x[is.finite(finite_x)]
       finite_y <- finite_y[is.finite(finite_y)]
+      # Pair each finite edge with a data anchor on the other axis. An NA
+      # aesthetic would drop the row and leave that edge out of the panel.
+      x_anchor <- gg$data$marker1[which(is.finite(gg$data$marker1))[1]]
+      y_anchor <- gg$data$marker2[which(is.finite(gg$data$marker2))[1]]
+      train_bounds <- list()
+      if (length(finite_x) > 0 && is.finite(y_anchor)) {
+        train_bounds[[length(train_bounds) + 1]] <- data.frame(
+          marker1 = finite_x,
+          marker2 = y_anchor
+        )
+      }
+      if (length(finite_y) > 0 && is.finite(x_anchor)) {
+        train_bounds[[length(train_bounds) + 1]] <- data.frame(
+          marker1 = x_anchor,
+          marker2 = finite_y
+        )
+      }
       gg_train <- gg
-      if (length(finite_x) > 0 || length(finite_y) > 0) {
-        n_bounds <- max(length(finite_x), length(finite_y))
+      if (length(train_bounds) > 0) {
         gg_train <- gg_train + ggplot2::geom_blank(
-          data = data.frame(
-            marker1 = if (length(finite_x) > 0) {
-              rep(finite_x, length.out = n_bounds)
-            } else {
-              NA_real_
-            },
-            marker2 = if (length(finite_y) > 0) {
-              rep(finite_y, length.out = n_bounds)
-            } else {
-              NA_real_
-            }
-          ),
+          data = bind_rows(train_bounds),
           aes(x = marker1, y = marker2),
-          inherit.aes = FALSE,
-          na.rm = TRUE
+          inherit.aes = FALSE
         )
       }
       panel_params <- ggplot_build(gg_train)$layout$panel_params[[1]]

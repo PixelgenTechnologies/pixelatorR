@@ -641,6 +641,49 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(as.numeric(rect_free$ymax), 40)
     expect_gt(as.numeric(rect_free$xmax), as.numeric(rect_free$xmin))
 
+    # One axis fully open: the finite edge on the other axis still trains.
+    p_open_y <- expect_no_warning(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = 30, xmax = Inf, ymin = -Inf, ymax = Inf),
+        gate_type = "rectangle",
+        equal_axes = FALSE,
+        coord_fixed = FALSE,
+        grid_n = 25
+      )
+    )
+    rect_open_y <- rect_data(p_open_y)
+    panel_open_y <- panel_ranges(p_open_y)
+    expect_equal(as.numeric(rect_open_y$xmin), 30)
+    expect_equal(as.numeric(rect_open_y$xmax), panel_open_y$x[2])
+    expect_equal(as.numeric(rect_open_y$ymin), panel_open_y$y[1])
+    expect_equal(as.numeric(rect_open_y$ymax), panel_open_y$y[2])
+    expect_gt(as.numeric(rect_open_y$xmax), as.numeric(rect_open_y$xmin))
+
+    p_open_x <- expect_no_warning(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = -Inf, xmax = Inf, ymin = 150, ymax = Inf),
+        gate_type = "rectangle",
+        equal_axes = FALSE,
+        coord_fixed = FALSE,
+        grid_n = 25
+      )
+    )
+    rect_open_x <- rect_data(p_open_x)
+    panel_open_x <- panel_ranges(p_open_x)
+    expect_equal(as.numeric(rect_open_x$ymin), 150)
+    expect_equal(as.numeric(rect_open_x$ymax), panel_open_x$y[2])
+    expect_equal(as.numeric(rect_open_x$xmin), panel_open_x$x[1])
+    expect_equal(as.numeric(rect_open_x$xmax), panel_open_x$x[2])
+    expect_gt(as.numeric(rect_open_x$ymax), as.numeric(rect_open_x$ymin))
+
     expect_error(
       DensityScatterPlot(
         object_asym,
