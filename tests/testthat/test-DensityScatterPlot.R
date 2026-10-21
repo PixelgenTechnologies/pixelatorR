@@ -684,6 +684,58 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(as.numeric(rect_open_x$xmax), panel_open_x$x[2])
     expect_gt(as.numeric(rect_open_x$ymax), as.numeric(rect_open_x$ymin))
 
+    gate_count <- function(p) {
+      idx <- which(vapply(
+        p$layers,
+        function(layer) inherits(layer$geom, "GeomLabel"),
+        logical(1)
+      ))
+      as.numeric(p$layers[[idx[1]]]$data$label)
+    }
+    plot_open <- function(plot_gate) {
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = plot_gate,
+        gate_type = "rectangle",
+        gate_stat = "count",
+        equal_axes = FALSE,
+        coord_fixed = FALSE,
+        grid_n = 25
+      )
+    }
+    bound_vals <- function(p) {
+      as.numeric(rect_data(p)[1, c("xmin", "xmax", "ymin", "ymax")])
+    }
+
+    # NA matches the infinite edge, including a logical NA column.
+    p_na <- expect_no_warning(plot_open(tibble(
+      xmin = 0, xmax = NA, ymin = NA, ymax = 40
+    )))
+    p_inf <- expect_no_warning(plot_open(tibble(
+      xmin = 0, xmax = Inf, ymin = -Inf, ymax = 40
+    )))
+    expect_equal(gate_count(p_na), gate_count(p_inf))
+    expect_equal(bound_vals(p_na), bound_vals(p_inf))
+    expect_true(all(is.finite(bound_vals(p_na))))
+
+    p_na_all <- expect_no_warning(plot_open(tibble(
+      xmin = NA, xmax = NA, ymin = NA, ymax = NA
+    )))
+    p_inf_all <- expect_no_warning(plot_open(tibble(
+      xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf
+    )))
+    expect_equal(gate_count(p_na_all), n_cells)
+    expect_equal(gate_count(p_na_all), gate_count(p_inf_all))
+    expect_equal(bound_vals(p_na_all), bound_vals(p_inf_all))
+    panel_all <- panel_ranges(p_na_all)
+    expect_equal(
+      bound_vals(p_na_all),
+      c(panel_all$x[1], panel_all$x[2], panel_all$y[1], panel_all$y[2])
+    )
+
     expect_error(
       DensityScatterPlot(
         object_asym,
