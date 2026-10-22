@@ -287,7 +287,7 @@ SummarizeProximityScores.tbl_lazy <- function(
   if (detailed) {
     list_exprs <- rlang::set_names(
       lapply(proximity_metric, \(m) rlang::expr(list(!!sym(m)))),
-      paste0(proximity_metric, "_list")
+      glue("{proximity_metric}_list")
     )
 
     object <- grouped_object |>
@@ -323,7 +323,7 @@ SummarizeProximityScores.tbl_lazy <- function(
         object$n_cells_missing
       )
       for (metric in proximity_metric) {
-        col_list <- paste0(metric, "_list")
+        col_list <- glue("{metric}_list")
         object[[col_list]] <- pad_zeros(
           object[[col_list]],
           object$n_cells_missing
@@ -332,8 +332,8 @@ SummarizeProximityScores.tbl_lazy <- function(
     }
 
     for (metric in proximity_metric) {
-      col_list <- paste0(metric, "_list")
-      col_out <- paste0(prefix, metric)
+      col_list <- glue("{metric}_list")
+      col_out <- glue("{prefix}{metric}")
       object[[col_out]] <- vapply(
         object[[col_list]],
         summary_fkn,
@@ -348,8 +348,12 @@ SummarizeProximityScores.tbl_lazy <- function(
   if (summary_stat == "mean") {
     if (include_missing_obs) {
       sum_exprs <- rlang::set_names(
-        lapply(proximity_metric, \(m) rlang::expr(sum(!!sym(m), na.rm = TRUE))),
-        paste0(".sum_", proximity_metric)
+        lapply(proximity_metric, \(m) {
+          dplyr::sql(glue(
+            "CASE WHEN COUNT(*) > COUNT({m}) THEN NULL ELSE SUM({m}) END"
+          ))
+        }),
+        glue(".sum_{proximity_metric}")
       )
 
       object <- grouped_object |>
@@ -374,17 +378,19 @@ SummarizeProximityScores.tbl_lazy <- function(
         )
 
       for (metric in proximity_metric) {
-        sum_col <- paste0(".sum_", metric)
-        out_col <- paste0(prefix, metric)
+        sum_col <- glue(".sum_{metric}")
+        out_col <- glue("{prefix}{metric}")
         object[[out_col]] <- object[[sum_col]] / object$n_cells
       }
-      object <- select(object, -all_of(paste0(".sum_", proximity_metric)))
+      object <- select(object, -all_of(glue(".sum_{proximity_metric}")))
     } else {
       mean_exprs <- rlang::set_names(
         lapply(proximity_metric, \(m) {
-          rlang::expr(mean(!!sym(m), na.rm = TRUE))
+          dplyr::sql(glue(
+            "CASE WHEN COUNT(*) > COUNT({m}) THEN NULL ELSE AVG({m}) END"
+          ))
         }),
-        paste0(prefix, proximity_metric)
+        glue("{prefix}{proximity_metric}")
       )
 
       object <- grouped_object |>
@@ -408,7 +414,7 @@ SummarizeProximityScores.tbl_lazy <- function(
           pct_detected = n_cells_detected / n_cells
         ) |>
         relocate(
-          all_of(paste0(prefix, proximity_metric)),
+          all_of(glue("{prefix}{proximity_metric}")),
           .after = pct_detected
         )
     }
@@ -417,9 +423,11 @@ SummarizeProximityScores.tbl_lazy <- function(
     if (!include_missing_obs) {
       med_exprs <- rlang::set_names(
         lapply(proximity_metric, \(m) {
-          rlang::expr(median(!!sym(m), na.rm = TRUE))
+          dplyr::sql(glue(
+            "CASE WHEN COUNT(*) > COUNT({m}) THEN NULL ELSE MEDIAN({m}) END"
+          ))
         }),
-        paste0(prefix, proximity_metric)
+        glue("{prefix}{proximity_metric}")
       )
 
       object <- grouped_object |>
@@ -443,24 +451,24 @@ SummarizeProximityScores.tbl_lazy <- function(
           pct_detected = n_cells_detected / n_cells
         ) |>
         relocate(
-          all_of(paste0(prefix, proximity_metric)),
+          all_of(glue("{prefix}{proximity_metric}")),
           .after = pct_detected
         )
     } else {
       list_exprs <- rlang::set_names(
         lapply(proximity_metric, \(m) rlang::expr(list(!!sym(m)))),
-        paste0(proximity_metric, "_list")
+        glue("{proximity_metric}_list")
       )
       med_padded_exprs <- rlang::set_names(
         lapply(proximity_metric, \(m) {
-          col_list <- paste0(m, "_list")
-          dplyr::sql(paste0(
-            "list_median(list_concat(",
-            col_list,
-            ", repeat([0.0], CAST(n_cells_missing AS BIGINT))))"
+          col_list <- glue("{m}_list")
+          dplyr::sql(glue(
+            "CASE WHEN n_cells_detected > list_count({col_list}) ",
+            "THEN NULL ELSE list_median(list_concat({col_list}, ",
+            "repeat([0.0], CAST(n_cells_missing AS BIGINT)))) END"
           ))
         }),
-        paste0(prefix, proximity_metric)
+        glue("{prefix}{proximity_metric}")
       )
 
       object <- grouped_object |>
@@ -472,7 +480,7 @@ SummarizeProximityScores.tbl_lazy <- function(
         {
           \(x) {
             if (!is.null(group_vars)) {
-              left_join(x, n_cells_tbl, by = group_vars)
+              left_join(x, n_cells_tbl, by = group_vars, na_matches = "na")
             } else {
               mutate(x, n_cells = !!n_cells)
             }
@@ -483,7 +491,7 @@ SummarizeProximityScores.tbl_lazy <- function(
           pct_detected = n_cells_detected / n_cells
         ) |>
         mutate(!!!med_padded_exprs) |>
-        select(-all_of(paste0(proximity_metric, "_list"))) |>
+        select(-all_of(glue("{proximity_metric}_list"))) |>
         collect()
     }
   }
