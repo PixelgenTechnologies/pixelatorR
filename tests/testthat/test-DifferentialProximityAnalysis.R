@@ -43,9 +43,9 @@ for (assay_version in c("v3", "v5")) {
       structure(
         c(CD4T = 931L, `CD16+ Mono` = 1206L),
         dim = 2L,
-        dimnames = list(
-          . = c("CD4T", "CD16+ Mono")
-        ),
+        dimnames = structure(list(
+          c("CD4T", "CD16+ Mono")
+        ), names = ""),
         class = "table"
       ),
       de_results_multiple_targets$target |> table() |> sort()

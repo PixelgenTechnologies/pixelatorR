@@ -259,13 +259,14 @@ PredictDoublets.Matrix <- function(
     pb <- cli_progress_bar("Predicting doublets", total = iter, .auto_close = FALSE)
   }
 
-  pca_prep <-
-    . |>
-    as.matrix() |>
-    log1p() |>
-    (\(.) sweep(., 2, apply(., 2, mean), `-`))() |>
-    t() |>
-    scale()
+  pca_prep <- function(x) {
+    x |>
+      as.matrix() |>
+      log1p() |>
+      (\(.) sweep(., 2, apply(., 2, mean), `-`))() |>
+      t() |>
+      scale()
+  }
 
   cell_nn_res <-
     lapply(
@@ -321,14 +322,15 @@ PredictDoublets.Matrix <- function(
   expected_doublet_rate <- simulation_rate / (1 + simulation_rate)
   expected_doublet_nns <- n_neighbor * expected_doublet_rate
 
-  calc_stats <-
-    . |>
-    mutate(
-      doublet_p = stats::pbinom(doublet_nns - 1, n_neighbor, expected_doublet_rate, lower.tail = FALSE),
-      doublet_p_adj = p.adjust(doublet_p, p_adjust_method),
-      logratio = log2(doublet_nns / expected_doublet_nns),
-      doublet_prediction = ifelse(doublet_p_adj < p_threshold, "doublet", "singlet"),
-    )
+  calc_stats <- function(x) {
+    x |>
+      mutate(
+        doublet_p = stats::pbinom(doublet_nns - 1, n_neighbor, expected_doublet_rate, lower.tail = FALSE),
+        doublet_p_adj = p.adjust(doublet_p, p_adjust_method),
+        logratio = log2(doublet_nns / expected_doublet_nns),
+        doublet_prediction = ifelse(doublet_p_adj < p_threshold, "doublet", "singlet"),
+      )
+  }
 
   doublet_prediction_trials <-
     cell_nn_res |>
