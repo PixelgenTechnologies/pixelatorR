@@ -1,6 +1,6 @@
 library(pixelatorR)
 se <- ReadMPX_Seurat(minimal_mpx_pxl_file(), verbose = FALSE)
-se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE) %>%
+se <- LoadCellGraphs(se, cells = colnames(se)[1], verbose = FALSE) |>
   ComputeLayout(layout_method = "pmds", dim = 3, pivots = 50)
 cg <- CellGraphs(se)[[1]]
 
@@ -8,8 +8,8 @@ cg <- CellGraphs(se)[[1]]
 test_that("CellGraphData works as expected", {
   expect_no_error(cellgraph <- CellGraphData(cg))
   expect_s3_class(cellgraph, class = "tbl_graph")
-  expect_equal(cellgraph %>% igraph::gsize(), 5138)
-  expect_equal(cellgraph %>% length(), 2470)
+  expect_equal(cellgraph |> igraph::gsize(), 5138)
+  expect_equal(cellgraph |> length(), 2470)
 })
 
 test_that("CellGraphData fails when invalid input is provided", {
@@ -22,8 +22,8 @@ test_that("CellGraphData<- works as expected", {
   expect_no_error(CellGraphData(cg) <- CellGraphData(cg))
   expect_no_error(cellgraph <- CellGraphData(cg))
   expect_s3_class(cellgraph, class = "tbl_graph")
-  expect_equal(cellgraph %>% igraph::gsize(), 5138)
-  expect_equal(cellgraph %>% length(), 2470)
+  expect_equal(cellgraph |> igraph::gsize(), 5138)
+  expect_equal(cellgraph |> length(), 2470)
 })
 
 test_that("CellGraphData<- fails when invalid input is provided", {
@@ -41,8 +41,8 @@ test_that("show.CellGraph works as expected", {
 # subset method
 test_that("subset.CellGraph works as expected", {
   expect_no_error(cg_small <- subset(cg, nodes = CellGraphData(cg, slot = "nodes")[1:2000]))
-  expect_equal(cg_small@layout$pmds_3d %>% dim(), c(2000, 3))
-  expect_equal(cg_small@counts %>% dim(), c(2000, 79))
-  expect_equal(cg_small@cellgraph %>% length(), 2000)
-  expect_equal(cg_small@cellgraph %>% igraph::gsize(), 4227)
+  expect_equal(cg_small@layout$pmds_3d |> dim(), c(2000, 3))
+  expect_equal(cg_small@counts |> dim(), c(2000, 79))
+  expect_equal(cg_small@cellgraph |> length(), 2000)
+  expect_equal(cg_small@cellgraph |> igraph::gsize(), 4227)
 })

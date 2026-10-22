@@ -1,6 +1,6 @@
 options(Seurat.object.assay.version = "v5")
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-  LoadCellGraphs(cells = colnames(.)[2], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[2], verbose = FALSE))()
 cg <- CellGraphs(se)[[2]]
 
 # Get cell type weights
@@ -24,7 +24,7 @@ test_that("segment_cell returns expected compartments", {
     )
   )
 
-  comp <- out@cellgraph %>% pull(compartment)
+  comp <- out@cellgraph |> pull(compartment)
   expect_true(all(comp %in% c("Mono", "CD4T", "interface", "other")))
   expect_true(any(comp %in% c("Mono", "CD4T")))
   expect_false(any(grepl("^intra_", comp)))
@@ -39,7 +39,7 @@ test_that("segment_cell without interface detection has no interface labels", {
     verbose = FALSE
   )
 
-  comp <- out@cellgraph %>% pull(compartment)
+  comp <- out@cellgraph |> pull(compartment)
   expect_false(any(comp == "interface"))
   expect_true(all(comp %in% c("Mono", "CD4T", "other")))
 })
@@ -57,7 +57,7 @@ test_that("segment_cell handles empty interface without error", {
     )
   )
 
-  comp <- out@cellgraph %>% pull(compartment)
+  comp <- out@cellgraph |> pull(compartment)
   expect_true(all(comp %in% c("Mono", "CD4T", "interface", "other")))
 })
 
@@ -81,8 +81,8 @@ test_that("segment_cell applies component filtering to final annotation", {
     verbose = FALSE
   )
 
-  comp_lcc <- out_lcc@cellgraph %>% pull(compartment)
-  comp_min_size <- out_min_size@cellgraph %>% pull(compartment)
+  comp_lcc <- out_lcc@cellgraph |> pull(compartment)
+  comp_min_size <- out_min_size@cellgraph |> pull(compartment)
 
   n_non_other_lcc <- sum(comp_lcc %in% c("Mono", "CD4T"))
   n_non_other_min_size <- sum(comp_min_size %in% c("Mono", "CD4T"))

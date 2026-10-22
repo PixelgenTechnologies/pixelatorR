@@ -142,7 +142,7 @@ ReadMPX_Seurat <- function(
   hd5_object <- hdf5r::H5File$new(data$tmp_file, "r")
 
   # Load edgelist
-  empty_graphs <- rep(list(NULL), ncol(X)) %>% set_names(nm = colnames(X))
+  empty_graphs <- rep(list(NULL), ncol(X)) |> set_names(nm = colnames(X))
 
   if (return_cellgraphassay) {
     # Create CellGraphAssay(5)
@@ -191,7 +191,7 @@ ReadMPX_Seurat <- function(
       }
       # TODO: Remove this once the colocalization tables have been updated
       if (all(c("marker1", "marker2") %in% names(colocalization))) {
-        colocalization <- colocalization %>%
+        colocalization <- colocalization |>
           rename(marker_1 = !!sym("marker1"), marker_2 = !!sym("marker2"))
       }
       cg_assay@colocalization <- colocalization
@@ -215,7 +215,7 @@ ReadMPX_Seurat <- function(
 
   # Extract meta data
   meta_data <-
-    names(hd5_object[["obs"]]) %>%
+    names(hd5_object[["obs"]]) |>
     lapply(function(nm) {
       if (length(names(hd5_object[["obs"]][[nm]])) == 2) {
         indices <- hd5_object[["obs"]][[nm]][["codes"]]$read() + 1
@@ -225,9 +225,9 @@ ReadMPX_Seurat <- function(
         col <- tibble(!!sym(nm) := hd5_object[["obs"]][[nm]]$read())
       }
       return(col)
-    }) %>%
-    do.call(bind_cols, .) %>%
-    as.data.frame() %>%
+    }) |>
+    (\(.) do.call(bind_cols, .))() |>
+    as.data.frame() |>
     column_to_rownames("component")
 
   if (!all(rownames(meta_data) == colnames(seur_obj))) {
@@ -243,7 +243,7 @@ ReadMPX_Seurat <- function(
 
   # Extract feature meta data (var)
   feature_meta_data <-
-    names(hd5_object[["var"]]) %>%
+    names(hd5_object[["var"]]) |>
     lapply(function(nm) {
       # If reading function is missing, don't read the column
       # This is likely due to the column being empty
@@ -258,8 +258,8 @@ ReadMPX_Seurat <- function(
         return(NULL)
       }
       return(col)
-    }) %>%
-    do.call(bind_cols, .) %>%
+    }) |>
+    (\(.) do.call(bind_cols, .))() |>
     as.data.frame()
 
   # Close hdf5 file
@@ -270,7 +270,7 @@ ReadMPX_Seurat <- function(
 
   if (getOption("Seurat.object.assay.version", "v3") == "v3") {
     if (!"marker" %in% colnames(feature_meta_data)) {
-      feature_meta_data <- feature_meta_data %>%
+      feature_meta_data <- feature_meta_data |>
         rename(marker = !!sym("_index"))
     }
     rownames(feature_meta_data) <- feature_meta_data$marker
@@ -292,7 +292,7 @@ ReadMPX_Seurat <- function(
   VariableFeatures(seur_obj) <- rownames(seur_obj)
 
   # Remove redundant meta data columns
-  seur_obj@meta.data <- seur_obj@meta.data %>% select(-contains(c("nFeature", "nCount", "_index")))
+  seur_obj@meta.data <- seur_obj@meta.data |> select(-contains(c("nFeature", "nCount", "_index")))
 
   return(seur_obj)
 }
@@ -356,22 +356,22 @@ ReadMPX_item <- function(
 
   suppressWarnings(
     read_items <-
-      items %>%
-      set_names(., .) %>%
+      items |>
+      (\(.) set_names(., .))() |>
       lapply(function(item) {
         if (verbose && check_global_verbosity()) {
           cli_alert("  Loading {col_br_magenta(item)} data")
         }
 
         if (item == "edgelist") {
-          outdata <- ReadMPX_arrow_edgelist(filename, verbose = FALSE) %>% collect()
+          outdata <- ReadMPX_arrow_edgelist(filename, verbose = FALSE) |> collect()
         } else {
           # generate a file name for a new temporary directory.
           # When running R CMD check on windows latest release, we
           # do not have permissions to modify files in TEMPDIR.
           # For this reason, we create a new directory with a unique
           # name instead.
-          exdir_temp <- fs::file_temp() %>% stringr::str_replace("file", "dir")
+          exdir_temp <- fs::file_temp() |> stringr::str_replace("file", "dir")
 
           item_name <- paste0(item, ".parquet")
 
@@ -482,8 +482,8 @@ ReadMPX_metadata <- function(
   )
 
   # Read meta data from JSON file
-  meta_data <- jsonlite::read_json(temp_file, simplifyVector = TRUE) %>%
-    as_tibble() %>%
+  meta_data <- jsonlite::read_json(temp_file, simplifyVector = TRUE) |>
+    as_tibble() |>
     select(-contains("file_format_version"))
   if (nrow(meta_data) == 0) {
     cli::cli_abort(
@@ -494,8 +494,8 @@ ReadMPX_metadata <- function(
   if ("analysis" %in% colnames(meta_data)) {
     analysis <- meta_data$analysis[[1]]
     if (any(c("polarization", "colocalization") %in% names(analysis))) {
-      analysis <- unlist(analysis %>% unname())
-      names(analysis) <- names(analysis) %>%
+      analysis <- unlist(analysis |> unname())
+      names(analysis) <- names(analysis) |>
         stringr::str_replace("\\.", "_")
     } else {
       analysis <- unlist(analysis)
@@ -531,9 +531,9 @@ ReadMPX_metadata <- function(
 #'
 #' # Multiple files with less detail
 #' pxl_files <- c(pxl_file, pxl_file)
-#' meta_data_merged <- lapply(pxl_files, ReadMPX_metadata) %>%
+#' meta_data_merged <- lapply(pxl_files, ReadMPX_metadata) |>
 #'   bind_rows()
-#' meta_data_merged %>% print(detailed = FALSE)
+#' meta_data_merged |> print(detailed = FALSE)
 #'
 #' @export
 #'
@@ -547,7 +547,7 @@ print.pixelator_metadata <- function(
 
   if ("params" %in% names(x$analysis)) {
     analysis_params <- lapply(x$analysis, function(x) {
-      x %>% unlist()
+      x |> unlist()
     })
   } else {
     analysis_params <- NULL
@@ -558,7 +558,7 @@ print.pixelator_metadata <- function(
       "Sample {i} name: \t\t{col_blue(sampleIDs[i])}\n",
       "Pixelator version: \t{col_br_magenta(pixelator_version[i])}\n",
       .trim = FALSE
-    ) %>% print()
+    ) |> print()
 
     if (!is.null(analysis_params) && detailed) {
       cli_h2("Analysis parameters")
@@ -566,7 +566,7 @@ print.pixelator_metadata <- function(
         parameter = names(analysis_params[[i]]),
         value = analysis_params[[i]], row.names = NULL
       )
-      analysis_params_cur %>% print()
+      analysis_params_cur |> print()
     }
 
     if (length(analysis_params) > 1 && i < length(analysis_params)) {
@@ -666,7 +666,7 @@ ReadMPX_layouts <- function(
       c("x" = "File {.file {filename}} does not contain any layouts for all selected {.var cells}.")
     )
   }
-  layout_files <- layout_files %>%
+  layout_files <- layout_files |>
     filter(component %in% cells)
   utils::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
 
@@ -674,20 +674,20 @@ ReadMPX_layouts <- function(
   coords <- arrow::open_dataset(temp_layout_dir)
 
   # Check name data type
-  nm_dt <- (coords %>% schema())$GetFieldByName("name")$ToString() %>% stringr::str_remove("name: ")
+  nm_dt <- (coords |> schema())$GetFieldByName("name")$ToString() |> stringr::str_remove("name: ")
   # If the name is int64, convert to character
   if (nm_dt == "int64") {
-    coords <- coords %>%
+    coords <- coords |>
       mutate(name = as.character(name))
   }
-  coords <- coords %>%
-    select(any_of(c("name", "x", "y", "z", "sample")), component, graph_projection, layout) %>%
+  coords <- coords |>
+    select(any_of(c("name", "x", "y", "z", "sample")), component, graph_projection, layout) |>
     collect()
 
   # Handle graph_projections
-  coords_layout_grouped <- coords %>%
+  coords_layout_grouped <- coords |>
     group_by(graph_projection)
-  coords_layout_grouped_keys <- coords_layout_grouped %>%
+  coords_layout_grouped_keys <- coords_layout_grouped |>
     group_keys()
 
   # Keep selection graph_projection
@@ -697,35 +697,35 @@ ReadMPX_layouts <- function(
     )
   }
   if (!all(coords_layout_grouped_keys$graph_projection %in% graph_projection)) {
-    coords <- coords %>%
+    coords <- coords |>
       filter(graph_projection %in% graph_projection)
   }
-  coords <- coords %>%
+  coords <- coords |>
     select(-graph_projection)
 
   # Split coordinates by layout
-  coords_layout_grouped <- coords %>%
+  coords_layout_grouped <- coords |>
     group_by(layout)
-  coords_layout_split <- coords_layout_grouped %>%
-    group_split() %>%
+  coords_layout_split <- coords_layout_grouped |>
+    group_split() |>
     set_names(nm = group_keys(coords_layout_grouped)$layout)
 
   # Split coordinates by component
   coords_layout_split <- lapply(coords_layout_split, function(coords_layout) {
-    coords_component_grouped <- coords_layout %>%
-      select(-layout) %>%
+    coords_component_grouped <- coords_layout |>
+      select(-layout) |>
       group_by(component)
-    coords_component_split <- coords_component_grouped %>%
-      group_split() %>%
+    coords_component_split <- coords_component_grouped |>
+      group_split() |>
       lapply(function(x) {
-        x %>%
-          select(-component) %>%
+        x |>
+          select(-component) |>
           select(
             where(
               ~ sum(!is.na(.x)) > 0
             )
           )
-      }) %>%
+      }) |>
       set_names(nm = group_keys(coords_component_grouped)$component)
     return(coords_component_split[cells])
   })

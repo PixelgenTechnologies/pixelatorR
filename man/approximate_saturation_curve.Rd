@@ -94,12 +94,12 @@ db <- PixelDB$new(pxl_file)
 sat_curve <- approximate_saturation_curve(db, fracs = seq(0.1, 0.9, by = 0.1))
 
 # Plot node saturation curve
-sat_curve \%>\%
+sat_curve |>
   tidyr::pivot_longer(
     cols = c(node_saturation, edge_saturation),
     names_to = "type",
     values_to = "saturation"
-  ) \%>\%
+  ) |>
   ggplot(aes(read_count, saturation, color = component)) +
   geom_line() +
   geom_point() +

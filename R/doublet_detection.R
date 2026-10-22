@@ -94,20 +94,20 @@ FindAnnoyNeighbors <- function(
     cells <- rownames(x)
   }
 
-  tibble(id = rownames(x)) %>%
-    mutate(index = row_number() - 1) %>%
-    filter(id %in% cells) %>%
-    group_by_all() %>%
+  tibble(id = rownames(x)) |>
+    mutate(index = row_number() - 1) |>
+    filter(id %in% cells) |>
+    group_by_all() |>
     reframe({
       annoy_index$getNNsByItemList(index,
         n = n_nn,
         search_k = search_k,
         include_distances = TRUE
-      ) %>%
-        as_tibble() %>%
+      ) |>
+        as_tibble() |>
         mutate(nn = row_number())
-    }) %>%
-    ungroup() %>%
+    }) |>
+    ungroup() |>
     mutate(neighbor = rownames(x)[item + 1])
 }
 
@@ -199,7 +199,7 @@ SimulateDoublets <- function(
     return(
       list(
         counts = simulated_doublets,
-        ids = random_doublets %>%
+        ids = random_doublets |>
           mutate(
             id1 = colnames(count_data)[i1],
             id2 = colnames(count_data)[i2]
@@ -260,11 +260,11 @@ PredictDoublets.Matrix <- function(
   }
 
   pca_prep <-
-    . %>%
-    as.matrix() %>%
-    log1p() %>%
-    sweep(2, apply(., 2, mean), `-`) %>%
-    t() %>%
+    . |>
+    as.matrix() |>
+    log1p() |>
+    (\(.) sweep(., 2, apply(., 2, mean), `-`))() |>
+    t() |>
     scale()
 
   cell_nn_res <-
@@ -290,23 +290,23 @@ PredictDoublets.Matrix <- function(
           cbind(
             object,
             simulated_doublets
-          ) %>%
-          pca_prep() %>%
+          ) |>
+          pca_prep() |>
           pcaMethods::pca(
             method = "ppca",
             nPcs = npcs
-          ) %>%
+          ) |>
           slot("scores")
 
         cell_nn <-
-          pca_scores %>%
+          pca_scores |>
           FindAnnoyNeighbors(
             cells = colnames(object),
             n_nn = n_neighbor + 1
-          ) %>%
-          filter(id != neighbor) %>%
-          mutate(simulated = !neighbor %in% colnames(object)) %>%
-          group_by(id) %>%
+          ) |>
+          filter(id != neighbor) |>
+          mutate(simulated = !neighbor %in% colnames(object)) |>
+          group_by(id) |>
           summarise(
             doublet_nns = sum(simulated),
             doublet_nn_rate = doublet_nns / n_neighbor,
@@ -322,7 +322,7 @@ PredictDoublets.Matrix <- function(
   expected_doublet_nns <- n_neighbor * expected_doublet_rate
 
   calc_stats <-
-    . %>%
+    . |>
     mutate(
       doublet_p = stats::pbinom(doublet_nns - 1, n_neighbor, expected_doublet_rate, lower.tail = FALSE),
       doublet_p_adj = p.adjust(doublet_p, p_adjust_method),
@@ -331,10 +331,10 @@ PredictDoublets.Matrix <- function(
     )
 
   doublet_prediction_trials <-
-    cell_nn_res %>%
-    bind_rows(.id = "trial") %>%
-    mutate(trial = as.numeric(trial)) %>%
-    calc_stats() %>%
+    cell_nn_res |>
+    bind_rows(.id = "trial") |>
+    mutate(trial = as.numeric(trial)) |>
+    calc_stats() |>
     arrange(
       factor(id, levels = colnames(object)),
       trial
@@ -345,13 +345,13 @@ PredictDoublets.Matrix <- function(
   }
 
   doublet_prediction <-
-    doublet_prediction_trials %>%
-    group_by(id) %>%
+    doublet_prediction_trials |>
+    group_by(id) |>
     summarise(
       doublet_nns = round(median(doublet_nns), 0),
       doublet_vote = sum(doublet_prediction == "doublet") / n()
-    ) %>%
-    calc_stats() %>%
+    ) |>
+    calc_stats() |>
     arrange(factor(id, levels = colnames(object)))
 
   return(doublet_prediction)
@@ -383,7 +383,7 @@ PredictDoublets.Seurat <- function(
   assert_class(assay, "character", allow_null = TRUE)
   assert_class(layer, "character", allow_null = TRUE)
 
-  LayerData(object, assay = assay, layer = layer) %>%
+  LayerData(object, assay = assay, layer = layer) |>
     PredictDoublets(
       ref_cells1 = ref_cells1,
       ref_cells2 = ref_cells2,

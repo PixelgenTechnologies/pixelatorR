@@ -84,8 +84,8 @@
 #' dca_markers <- tidyr::expand_grid(
 #'   marker_1 = paste0("M", 1:10),
 #'   marker_2 = paste0("M", 1:10)
-#' ) %>%
-#'   filter(marker_1 > marker_2) %>%
+#' ) |>
+#'   filter(marker_1 > marker_2) |>
 #'   mutate(estimate = rnorm(n(), 0, 1), p_adj = 10^(-rnorm(n(), 3, 2)))
 #' dca_markers
 #'
@@ -137,7 +137,7 @@
 #' # We can specify the order of the markers with factor levels
 #' # but we need to turn off the clustering
 #' ColocalizationHeatmap(
-#'   dca_markers %>%
+#'   dca_markers |>
 #'     mutate(
 #'       marker_1 = factor(marker_1, levels = paste0("M", 1:10)),
 #'       marker_2 = factor(marker_2, levels = paste0("M", 1:10))
@@ -155,8 +155,8 @@
 #' # If there are multiple comparisons per marker pair, we need to subset
 #' # the data first
 #' dca_markers_two_tests <- bind_rows(
-#'   dca_markers %>% mutate(refrence = "ctrl", target = "stim1"),
-#'   dca_markers %>% mutate(refrence = "ctrl", target = "stim2")
+#'   dca_markers |> mutate(refrence = "ctrl", target = "stim1"),
+#'   dca_markers |> mutate(refrence = "ctrl", target = "stim2")
 #' )
 #' dca_markers_two_tests
 #'
@@ -167,7 +167,7 @@
 #'
 #' # We need to subset the data first
 #' ColocalizationHeatmap(
-#'   dca_markers_two_tests %>%
+#'   dca_markers_two_tests |>
 #'     filter(target == "stim1")
 #' )
 #'
@@ -334,7 +334,7 @@ ColocalizationHeatmap <- function(
     cli::cli_warn(
       c("i" = "The input data is grouped and will be ungrouped.")
     )
-    data <- data %>% ungroup()
+    data <- data |> ungroup()
   }
 
   cols_keep <- c(marker1_col, marker2_col, value_col)
@@ -343,7 +343,7 @@ ColocalizationHeatmap <- function(
     cols_keep <- c(cols_keep, size_col)
   }
   plot_data <-
-    data %>%
+    data |>
     select(
       all_of(cols_keep)
     )
@@ -359,7 +359,7 @@ ColocalizationHeatmap <- function(
   # Validate heatmap data
   dup_rows <- duplicated(select(plot_data, all_of(c(marker1_col, marker2_col))))
   if (sum(dup_rows) > 0) {
-    dup_pairs <- select(plot_data, all_of(c(marker1_col, marker2_col))) %>%
+    dup_pairs <- select(plot_data, all_of(c(marker1_col, marker2_col))) |>
       apply(1, paste, collapse = "/")
     cli::cli_abort(
       c(
@@ -372,12 +372,12 @@ ColocalizationHeatmap <- function(
   if (symmetrise) {
     # Symmetrise data
     plot_data <-
-      plot_data %>%
-      bind_rows(plot_data %>%
+      plot_data |>
+      bind_rows(plot_data |>
         rename(
           !!sym(marker1_col) := !!sym(marker2_col),
           !!sym(marker2_col) := !!sym(marker1_col)
-        )) %>%
+        )) |>
       distinct()
   }
 
@@ -387,11 +387,11 @@ ColocalizationHeatmap <- function(
       as.character(plot_data[[marker1_col]]),
       as.character(plot_data[[marker2_col]])
     ))
-    highlight_pairs <- highlight_pairs %>%
+    highlight_pairs <- highlight_pairs |>
       mutate(
         marker_1 = as.character(marker_1),
         marker_2 = as.character(marker_2)
-      ) %>%
+      ) |>
       filter(
         marker_1 %in% plot_markers,
         marker_2 %in% plot_markers
@@ -400,11 +400,11 @@ ColocalizationHeatmap <- function(
 
   # Set range for heatmap legend
   if (is.null(legend_range)) {
-    legend_range <- max(abs(plot_data %>% pull(all_of(value_col)))) * c(-1, 1)
+    legend_range <- max(abs(plot_data |> pull(all_of(value_col)))) * c(-1, 1)
   }
 
   # Cap values to legend range
-  plot_data <- plot_data %>%
+  plot_data <- plot_data |>
     mutate(across(all_of(value_col), ~ case_when(
       .x < legend_range[1] ~ legend_range[1],
       .x > legend_range[2] ~ legend_range[2],
@@ -413,7 +413,7 @@ ColocalizationHeatmap <- function(
 
   # Transform size col
   if (!is.null(size_col_transform)) {
-    plot_data <- plot_data %>%
+    plot_data <- plot_data |>
       mutate(!!sym(size_col) := size_col_transform(!!sym(size_col)))
     size_col_label <- paste0(size_col, "_transformed")
   } else {
@@ -426,16 +426,16 @@ ColocalizationHeatmap <- function(
   # correct order of rows and columns
   if (type == "tiles" || (cluster_rows || cluster_cols)) {
     plot_data_wide <-
-      plot_data %>%
-      {
+      plot_data |>
+      (\(.) {
         if (!is.null(size_col) && (size_col %in% names(.))) {
           select(., -all_of(size_col))
         } else {
           .
         }
-      } %>%
-      pivot_wider(names_from = all_of(marker2_col), values_from = all_of(value_col), values_fill = 0) %>%
-      column_to_rownames(marker1_col) %>%
+      })() |>
+      pivot_wider(names_from = all_of(marker2_col), values_from = all_of(value_col), values_fill = 0) |>
+      column_to_rownames(marker1_col) |>
       as.matrix()
 
     # When symmetrised, ensure columns match the row order so that plot_data_wide
@@ -446,9 +446,9 @@ ColocalizationHeatmap <- function(
 
     # Cluster rows for the dots method
     if (cluster_rows && (type == "dots")) {
-      rows_clust <- dist(plot_data_wide, method = clustering_distance_rows) %>%
+      rows_clust <- dist(plot_data_wide, method = clustering_distance_rows) |>
         hclust(method = clustering_method)
-      plot_data <- plot_data %>%
+      plot_data <- plot_data |>
         mutate(!!sym(marker1_col) := factor(!!sym(marker1_col), levels = with(rows_clust, labels[order])))
     }
 
@@ -457,10 +457,10 @@ ColocalizationHeatmap <- function(
       if (symmetrise && cluster_rows) {
         cols_clust <- rows_clust
       } else {
-        cols_clust <- dist(t(plot_data_wide), method = clustering_distance_cols) %>%
+        cols_clust <- dist(t(plot_data_wide), method = clustering_distance_cols) |>
           hclust(method = clustering_method)
       }
-      plot_data <- plot_data %>%
+      plot_data <- plot_data |>
         mutate(!!sym(marker2_col) := factor(!!sym(marker2_col), levels = with(cols_clust, labels[order])))
     }
   }
@@ -490,21 +490,21 @@ ColocalizationHeatmap <- function(
       if (!is.null(highlight_color_col)) {
         highlight_keep <- c(highlight_keep, highlight_color_col)
       }
-      highlight_cells <- highlight_pairs %>%
+      highlight_cells <- highlight_pairs |>
         mutate(
           !!sym(marker1_col) := marker_1,
           !!sym(marker2_col) := marker_2
-        ) %>%
+        ) |>
         select(all_of(highlight_keep))
       if (symmetrise) {
         highlight_cells <- bind_rows(
           highlight_cells,
-          highlight_cells %>%
+          highlight_cells |>
             rename(
               !!sym(marker1_col) := !!sym(marker2_col),
               !!sym(marker2_col) := !!sym(marker1_col)
             )
-        ) %>%
+        ) |>
           distinct()
       }
       if (is.null(highlight_color_col)) {
@@ -632,7 +632,7 @@ ColocalizationHeatmap <- function(
         )
       )
     } else {
-      p <- plot_data_wide %>%
+      p <- plot_data_wide |>
         ComplexHeatmap::pheatmap(
           breaks = seq(legend_range[1], legend_range[2], length.out = 101),
           color = colorRampPalette(colors)(100),

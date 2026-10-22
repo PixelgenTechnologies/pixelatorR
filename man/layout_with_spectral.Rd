@@ -111,13 +111,13 @@ coordinates. The coordinates are corrected using \eqn{D_1^{-1/2}} and
 
 \examples{
 library(dplyr)
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
-  LoadCellGraphs(cells = colnames(.)[4], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[4], verbose = FALSE))()
 
 cg <- CellGraphs(se)[[4]]
 g <- cg@cellgraph
 
-xyz <- layout_with_spectral(g) \%>\%
+xyz <- layout_with_spectral(g) |>
   as_tibble(.name_repair = ~ c("x", "y", "z"))
 
 plotly::plot_ly(

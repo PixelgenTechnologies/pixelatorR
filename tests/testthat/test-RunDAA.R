@@ -7,7 +7,7 @@ pxl_file <- system.file("extdata/five_cells",
 # Seurat objects
 se <- ReadMPX_Seurat(pxl_file)
 se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
-se$sample <- c("T", "R", "C", "C", "C") %>% rep(times = 10)
+se$sample <- c("T", "R", "C", "C", "C") |> rep(times = 10)
 se <- Seurat::NormalizeData(se, normalization.method = "CLR", margin = 2)
 
 test_that("RunDAA works as expected on a Seurat object", {

@@ -102,7 +102,7 @@ PNAAssay5 <- setClass(
 #' counts <- ReadPNA_counts(pxl_file)
 #' pna_assay <- CreatePNAAssay(
 #'   counts = counts,
-#'   cellgraphs = rep(list(NULL), ncol(counts)) %>%
+#'   cellgraphs = rep(list(NULL), ncol(counts)) |>
 #'     setNames(colnames(counts))
 #' )
 #' pna_assay
@@ -179,7 +179,7 @@ CreatePNAAssay <- function(
 #' counts <- ReadPNA_counts(pxl_file)
 #' pna_assay5 <- CreatePNAAssay5(
 #'   counts = counts,
-#'   cellgraphs = rep(list(NULL), ncol(counts)) %>%
+#'   cellgraphs = rep(list(NULL), ncol(counts)) |>
 #'     setNames(colnames(counts))
 #' )
 #' pna_assay5
@@ -289,7 +289,7 @@ CellGraphs.PNAAssay5 <- CellGraphs.PNAAssay
 ) {
   # Clean cellgraphs slot if value = NULL
   if (is.null(x = value)) {
-    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
+    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) |> set_names(nm = colnames(object))
     return(object)
   }
 
@@ -406,9 +406,9 @@ RenameCells.PNAAssay <- function(
   name_conversion <- tibble(new = new.names, component = orig.names)
   proximity <- slot(object, name = "proximity")
   if (length(proximity) > 0) {
-    proximity <- proximity %>%
-      left_join(y = name_conversion, by = "component") %>%
-      select(-component) %>%
+    proximity <- proximity |>
+      left_join(y = name_conversion, by = "component") |>
+      select(-component) |>
       rename(component = new)
   }
   slot(pna_assay_renamed, name = "proximity") <- proximity
@@ -416,8 +416,8 @@ RenameCells.PNAAssay <- function(
   # Handle fs_map
   fs_map <- slot(object, name = "fs_map")
   if (nrow(fs_map) > 0) {
-    fs_map$id_map <- fs_map %>%
-      pull(id_map) %>%
+    fs_map$id_map <- fs_map |>
+      pull(id_map) |>
       lapply(function(x) {
         x$current_id <- new.names[x$current_id]
         return(x)
@@ -461,7 +461,7 @@ RenameCells.PNAAssay5 <- RenameCells.PNAAssay
 #' )
 #' pna_assay <- as.PNAAssay(
 #'   assay,
-#'   cellgraphs = rep(list(NULL), ncol(counts)) %>%
+#'   cellgraphs = rep(list(NULL), ncol(counts)) |>
 #'     setNames(colnames(counts))
 #' )
 #' pna_assay
@@ -490,7 +490,7 @@ as.PNAAssay.Assay <- function(
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) |> set_names(nm = colnames(x))
   }
 
   # Check fs_map
@@ -560,7 +560,7 @@ setAs(
 #' )
 #' pna_assay5 <- as.PNAAssay5(
 #'   assay,
-#'   cellgraphs = rep(list(NULL), ncol(counts)) %>%
+#'   cellgraphs = rep(list(NULL), ncol(counts)) |>
 #'     setNames(colnames(counts))
 #' )
 #' pna_assay5
@@ -589,7 +589,7 @@ as.PNAAssay5.Assay5 <- function(
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) |> set_names(nm = colnames(x))
   }
 
   # Check fs_map
@@ -702,9 +702,9 @@ ProximityScores.PNAAssay <- function(
         )
       )
     }
-    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
-      rownames_to_column("component") %>%
-      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count") %>%
+    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") |>
+      rownames_to_column("component") |>
+      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count") |>
       mutate(count = as.integer(count))
 
     if (lazy) {
@@ -713,20 +713,20 @@ ProximityScores.PNAAssay <- function(
       all_counts <- tbl(proximity_scores$src$con, "all_counts")
     }
 
-    proximity_scores <- proximity_scores %>%
-      left_join(all_counts, by = c("component", "marker_1" = "marker")) %>%
-      rename(count_1 = count) %>%
-      left_join(all_counts, by = c("component", "marker_2" = "marker")) %>%
+    proximity_scores <- proximity_scores |>
+      left_join(all_counts, by = c("component", "marker_1" = "marker")) |>
+      rename(count_1 = count) |>
+      left_join(all_counts, by = c("component", "marker_2" = "marker")) |>
       rename(count_2 = count)
 
     if (add_marker_proportions) {
       if (inherits(object, "PNAAssay5")) {
-        object <- object %>% JoinLayers()
+        object <- object |> JoinLayers()
       }
-      numi <- LayerData(object, layer = "counts") %>% Matrix::colSums()
+      numi <- LayerData(object, layer = "counts") |> Matrix::colSums()
       numi <- tibble(
         component = names(numi),
-        umi_count = numi %>% unname()
+        umi_count = numi |> unname()
       )
 
       if (lazy) {
@@ -734,10 +734,10 @@ ProximityScores.PNAAssay <- function(
         numi <- tbl(proximity_scores$src$con, "numi")
       }
 
-      proximity_scores <- proximity_scores %>%
-        left_join(numi, by = "component") %>%
-        mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) %>%
-        select(-umi_count) %>%
+      proximity_scores <- proximity_scores |>
+        left_join(numi, by = "component") |>
+        mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) |>
+        select(-umi_count) |>
         compute(name = "extended_proximity", overwrite = TRUE)
     }
   }
@@ -759,7 +759,7 @@ ProximityScores.PNAAssay5 <- ProximityScores.PNAAssay
 #' @examples
 #' # Set proximity scores
 #' ProximityScores(seur_obj[["PNA"]]) <-
-#'   ProximityScores(seur_obj[["PNA"]]) %>%
+#'   ProximityScores(seur_obj[["PNA"]]) |>
 #'   mutate(ratio = join_count / join_count_expected_mean)
 #'
 #' @export
@@ -822,10 +822,10 @@ Edgelists.PNAAssay <- function(
   if (!lazy) {
     if (union) {
       con <- edgelists$src$con
-      edgelists <- edgelists %>% collect()
+      edgelists <- edgelists |> collect()
     } else {
       con <- edgelists[[1]]$src$con
-      edgelists <- edgelists %>% lapply(collect)
+      edgelists <- edgelists |> lapply(collect)
     }
     DBI::dbDisconnect(con)
   }
@@ -885,7 +885,7 @@ FSMap.PNAAssay5 <- FSMap.PNAAssay
 #' fs::file_copy(path = pxl_file, temp_file)
 #'
 #' # Change file path in fs_map
-#' FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) %>%
+#' FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) |>
 #'   mutate(pxl_file = temp_file)
 #'
 #' # Now the fs_map has been updated with the correct path
@@ -1077,10 +1077,10 @@ subset.PNAAssay <- function(
   proximity <- slot(x, name = "proximity")
   if (length(proximity) > 0) {
     if (!is.null(cells)) {
-      proximity <- proximity %>% filter(component %in% cells)
+      proximity <- proximity |> filter(component %in% cells)
     }
     if (!is.null(features)) {
-      proximity <- proximity %>% filter(marker_1 %in% features & marker_2 %in% features)
+      proximity <- proximity |> filter(marker_1 %in% features & marker_2 %in% features)
     }
   }
 
@@ -1088,7 +1088,7 @@ subset.PNAAssay <- function(
   fs_map <- slot(x, name = "fs_map")
   if (length(fs_map) > 0) {
     fs_map$id_map <- lapply(fs_map$id_map, function(x) {
-      x %>% filter(current_id %in% cells)
+      x |> filter(current_id %in% cells)
     })
     # Drop sample if id_map is empty
     rows_keep <- sapply(fs_map$id_map, nrow) > 0
@@ -1191,8 +1191,8 @@ merge.PNAAssay <- function(
       )
     }
     objects <- lapply(seq_along(objects), function(i) {
-      objects[[i]] %>%
-        RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) %>%
+      objects[[i]] |>
+        RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) |>
           set_names(nm = colnames(objects[[i]])))
     })
   }
@@ -1236,12 +1236,12 @@ merge.PNAAssay <- function(
   # Merge cellgraphs list
   cellgraphs_new <- Reduce(c, lapply(objects, function(pna_assay) {
     return(pna_assay@cellgraphs)
-  })) %>% set_names(nm = colnames(new_assay))
+  })) |> set_names(nm = colnames(new_assay))
 
   # Merge spatial metrics tables
   proximity <- lapply(objects, function(object) {
     slot(object, name = "proximity")
-  }) %>% bind_rows()
+  }) |> bind_rows()
 
   # Merge fs_map
   fs_map <- tibble()
@@ -1254,7 +1254,7 @@ merge.PNAAssay <- function(
   if (!is.null(fs_map)) {
     fs_map <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
       slot(objects[[i]], name = "fs_map")
-    })) %>% mutate(sample = seq_len(n()))
+    })) |> mutate(sample = seq_len(n()))
   }
 
   # Convert to PNAAssay and add cellgraphs
@@ -1288,7 +1288,7 @@ merge.PNAAssay <- function(
     }
 
     if (can_merge_meta_features) {
-      meta_features <- objects[[1]]@meta.features %>% select(any_of(c("control", "marker", "nuclear")))
+      meta_features <- objects[[1]]@meta.features |> select(any_of(c("control", "marker", "nuclear")))
     } else {
       # A valid Assay requires one meta.features row per feature, so keep the
       # row names of the merged feature set and drop only the columns
@@ -1345,7 +1345,7 @@ merge.PNAAssay5 <- merge.PNAAssay
       )
     }
     # Check component names
-    cells_in_proximity <- cell_ids %in% (proximity$component %>% unique())
+    cells_in_proximity <- cell_ids %in% (proximity$component |> unique())
     if (!all(cells_in_proximity)) {
       if (verbose && check_global_verbosity()) {
         cli_alert_warning(glue(
@@ -1356,7 +1356,7 @@ merge.PNAAssay5 <- merge.PNAAssay
       return(proximity)
     }
     # Check marker names
-    all_markers <- c(proximity$marker_1 %>% unique(), proximity$marker_2 %>% unique()) %>% unique()
+    all_markers <- c(proximity$marker_1 |> unique(), proximity$marker_2 |> unique()) |> unique()
     if (!all(markers %in% all_markers)) {
       if (verbose && check_global_verbosity()) {
         cli_alert_warning(glue(

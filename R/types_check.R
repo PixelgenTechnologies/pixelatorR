@@ -518,7 +518,7 @@ assert_col_class <- function(
   )
   # !! is required here: pull() evaluates its selection with the column names
   # of data in scope, so an unquoted x would be shadowed by a column named "x"
-  col_x <- data %>% pull(all_of(!!x))
+  col_x <- data |> pull(all_of(!!x))
   if (!inherits(col_x, classes)) {
     cli::cli_abort(
       c(
