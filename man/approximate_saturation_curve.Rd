@@ -8,7 +8,8 @@ approximate_saturation_curve(
   db,
   fracs = seq(0.04, 0.96, by = 0.04),
   components = NULL,
-  node_reads_multiplier = 2,
+  node_reads_multiplier = 2L,
+  min_degree = 1L,
   verbose = TRUE
 )
 }
@@ -25,6 +26,10 @@ If \code{NULL} (default), all components are included.}
 node saturation. Default is \code{2}, reflecting that each edge contributes to two nodes.
 Optionally, set to \code{1} to use the same read count for nodes and edges, which may
 be more appropriate in certain contexts.}
+
+\item{min_degree}{Integer (\code{1L} or \code{2L}); minimum node degree required for
+nodes to be counted at downsampling fraction \code{p}. Default is \code{1L} (all
+elements included). Set to \code{2L} to exclude dangling (degree-1) leaves.}
 
 \item{verbose}{Logical; if \code{TRUE} (default), print progress messages.}
 }
@@ -55,10 +60,10 @@ than actual random sampling. For each edge with a given \code{read_count}, the
 probability of the edge being retained at fraction \code{p} is:
 \deqn{P(\text{edge retained}) = 1 - (1 - p)^{\text{read\_count}}}
 
-For nodes, the probability of retention depends on the node's degree. A node
-is retained if at least one of its incident edges is retained:
-\deqn{P(\text{node retained}) = 1 - (1 - p_{edges})^{\text{degree}}}
-where \eqn{p_{edges}} is the fraction of edges retained.
+Similarly, a node is retained if at least one of its incident reads is
+retained. With total incident reads \eqn{r_v = \sum_{e \ni v} r_e}, the
+probability of node retention at fraction \code{p} is:
+\deqn{P(\text{node retained}) = 1 - (1 - p)^{r_v}}
 }
 
 \subsection{Saturation calculation}{
@@ -74,9 +79,8 @@ Since each read supports two nodes (one at each endpoint),
 
 \subsection{Implementation notes}{
 
-This function requires that \code{\link{approximate_node_saturation}} has been
-called first (either directly or through this function) to create the \code{nodes}
-temporary view in the DuckDB connection.
+This function calls \code{\link{approximate_node_saturation}} internally to
+create the \code{nodes} temporary view in the DuckDB connection.
 }
 }
 \examples{
