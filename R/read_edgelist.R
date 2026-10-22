@@ -69,12 +69,12 @@ ReadMPX_arrow_edgelist <- function(
   # Convert selected columns uint64 to string
   sel_fields <- grep(pattern = "^umi", names(ds), value = TRUE)
   sel_fields_type <- sapply(sel_fields, function(f) {
-    arrow::schema(ds)$GetFieldByName(f)$ToString() %>%
+    arrow::schema(ds)$GetFieldByName(f)$ToString() |>
       stringr::str_extract("(?<= ).*")
   })
   sel_fields <- sel_fields[sel_fields_type == "uint64"]
   if (length(sel_fields) > 0) {
-    ds <- ds %>%
+    ds <- ds |>
       mutate(across(all_of(sel_fields), as.character))
   }
 

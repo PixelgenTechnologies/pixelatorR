@@ -22,7 +22,7 @@ test_that("PredictDoublets works as expected", {
       c(rnorm(n = 200, mean = 4, sd = 1), rnorm(n = 200, mean = 4, sd = 1)),
       c(rnorm(n = 200, mean = 3, sd = 1), rnorm(n = 200, mean = 4, sd = 1)),
       c(rnorm(n = 200, mean = 2, sd = 1), rnorm(n = 200, mean = 4, sd = 1))
-    ) %>%
+    ) |>
     exp()
   sim_data <- as(sim_data, "CsparseMatrix")
 

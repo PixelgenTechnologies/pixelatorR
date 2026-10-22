@@ -80,7 +80,7 @@
     # Attach each PXL file database
     DBI::dbExecute(con_federated, glue::glue("ATTACH '{fs_map$pxl_file[i]}' AS db{i} (TYPE duckdb, READ_ONLY)"))
     # Copy the ID map to the federated database
-    copy_to(con_federated, fs_map$id_map[[i]] %>% rename(component = original_id), glue::glue("id_map{i}"))
+    copy_to(con_federated, fs_map$id_map[[i]] |> rename(component = original_id), glue::glue("id_map{i}"))
     # If proteins_keep is provided, filter the data to include only those proteins
     if (!is.null(proteins_keep) && table_name == "proximity") {
       copy_to(con_federated, tibble(marker = proteins_keep), glue::glue("proteins_keep{i}"))
@@ -88,7 +88,7 @@
   }
 
   # Select column names to keep
-  column_names <- DBI::dbGetQuery(con_federated, glue::glue("SELECT * FROM db1.{table_name} LIMIT 1")) %>% names()
+  column_names <- DBI::dbGetQuery(con_federated, glue::glue("SELECT * FROM db1.{table_name} LIMIT 1")) |> names()
   column_names <- column_names[!stringr::str_detect(column_names, "__index_level_0__")]
   column_names <- paste(setdiff(column_names, "component"), collapse = ", ")
 
@@ -134,10 +134,10 @@
   } else {
     # don’t union, return a list of lazy tables (one per DB)
     lazy_table <-
-      queries %>%
+      queries |>
       lapply(function(query, db) {
         tbl(con_federated, dbplyr::sql(query))
-      }) %>%
+      }) |>
       set_names(fs_map$sample)
   }
 

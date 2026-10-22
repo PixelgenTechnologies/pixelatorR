@@ -33,7 +33,6 @@
 #' @importFrom cli col_green
 #' @importFrom cli col_red
 #' @importFrom cli symbol
-#' @importFrom dplyr %>%
 #' @importFrom dplyr across
 #' @importFrom dplyr all_of
 #' @importFrom dplyr any_of

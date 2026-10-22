@@ -3,12 +3,12 @@
 #'
 #' @examples
 #' library(dplyr)
-#' cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-#'   LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE) %>%
-#'   CellGraphs() %>%
-#'   .[[1]]
+#' cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[1], verbose = FALSE))() |>
+#'   CellGraphs() |>
+#'   (\(.) .[[1]])()
 #'
-#' ComputeProximityScores(cg) %>%
+#' ComputeProximityScores(cg) |>
 #'   filter(join_count_z > 3)
 #'
 #' @export
@@ -52,30 +52,30 @@ ComputeProximityScores.CellGraph <- function(
   assert_single_value(min_marker_count, "integer")
   assert_single_value(seed, "integer")
 
-  if (!"node_type" %in% (object@cellgraph %N>% as_tibble() %>% names())) {
+  if (!"node_type" %in% (object@cellgraph %N>% as_tibble() |> names())) {
     cli::cli_abort(
       c("x" = "Node column {.val node_type} is missing from the graph")
     )
   }
 
   g <- object@cellgraph %N>% arrange(node_type)
-  node_types_vector <- g %>% pull(node_type)
+  node_types_vector <- g |> pull(node_type)
   node_types <- table(node_types_vector)
   if (!all(sort(names(node_types)) == c("umi1", "umi2"))) {
     cli::cli_abort(
       c("x" = "Node types must be named {.val umi1} and {.val umi2}.")
     )
   }
-  nA <- node_types["umi1"] %>% as.integer()
-  nB <- node_types["umi2"] %>% as.integer()
+  nA <- node_types["umi1"] |> as.integer()
+  nB <- node_types["umi2"] |> as.integer()
 
-  counts <- object@counts[match(g %>% pull(name), .cg_node_map(object)), , drop = FALSE]
+  counts <- object@counts[match(g |> pull(name), .cg_node_map(object)), , drop = FALSE]
 
   # Get adjacency matrix. We only need the upper triangle
   if (k > 1L) {
     A <- igraph::as_adjacency_matrix(g)
     A <- expand_adjacency_matrix(A, k = k)
-    A <- Matrix::triu(A, k = 1) %>% as("dgCMatrix")
+    A <- Matrix::triu(A, k = 1) |> as("dgCMatrix")
   } else {
     A <- igraph::as_adjacency_matrix(g, type = "upper")
   }
@@ -147,7 +147,7 @@ ComputeProximityScores.CellGraph <- function(
       # Shuffle nodes independently
       counts <- counts[c(sample.int(nA), sample.int(nB) + nA), ]
       jc_perm <- Matrix::t(counts) %*% A %*% counts
-      ar[, , i] <- jc_perm %>% as.matrix()
+      ar[, , i] <- jc_perm |> as.matrix()
     }
 
     # Add the transpose to ignore direction, e.g. A/B = B/A
@@ -155,12 +155,12 @@ ComputeProximityScores.CellGraph <- function(
 
     # Cast to 2D matrix and fast compute the mean and sd
     ar_2d <- matrix(ar, N^2, iterations)
-    avgs <- ar_2d %>%
-      Matrix::rowMeans() %>%
+    avgs <- ar_2d |>
+      Matrix::rowMeans() |>
       matrix(ncol = N)
     diag(avgs) <- diag(avgs) / 2
-    sds <- ar_2d %>%
-      matrixStats::rowSds() %>%
+    sds <- ar_2d |>
+      matrixStats::rowSds() |>
       matrix(ncol = N)
     diag(sds) <- diag(sds) / 2
 
@@ -179,34 +179,34 @@ ComputeProximityScores.CellGraph <- function(
   on.exit(Sys.setlocale("LC_COLLATE", old_locale), add = TRUE)
 
   # Create final tibble
-  proximity_scores <- arr_inds %>%
-    as_tibble() %>%
+  proximity_scores <- arr_inds |>
+    as_tibble() |>
     mutate(
       marker_1_unordered = markers[row],
       marker_2_unordered = markers[col],
       join_count = jc_obs,
       join_count_expected_mean = join_count_expected_mean
-    ) %>%
-    {
+    ) |>
+    (\(.) {
       if (k == 1) {
         mutate(., join_count_expected_sd = join_count_expected_sd)
       } else {
         .
       }
-    } %>%
-    select(-row, -col) %>%
+    })() |>
+    select(-row, -col) |>
     mutate(
       marker_1 = pmin(marker_1_unordered, marker_2_unordered),
       marker_2 = pmax(marker_1_unordered, marker_2_unordered)
-    ) %>%
+    ) |>
     select(-marker_1_unordered, -marker_2_unordered)
 
   if (calc_z_score && (k == 1)) {
-    proximity_scores <- proximity_scores %>%
+    proximity_scores <- proximity_scores |>
       mutate(join_count_z = (join_count - join_count_expected_mean) / pmax(join_count_expected_sd, 1))
   }
   if (calc_log2_ratio) {
-    proximity_scores <- proximity_scores %>%
+    proximity_scores <- proximity_scores |>
       mutate(log2_ratio = log2(pmax(join_count, 1) / pmax(join_count_expected_mean, 1)))
   }
 
@@ -252,9 +252,9 @@ ComputeProximityScores.list <- function(
   }
 
   proximity_scores <- pbapply::pblapply(names(object), function(nm) {
-    ComputeProximityScores(object[[nm]], mode, k, iterations, calc_z_score, calc_log2_ratio, min_marker_count, seed) %>%
+    ComputeProximityScores(object[[nm]], mode, k, iterations, calc_z_score, calc_log2_ratio, min_marker_count, seed) |>
       mutate(component = nm)
-  }, cl = cl) %>%
+  }, cl = cl) |>
     bind_rows()
 
   return(proximity_scores)
@@ -309,7 +309,7 @@ ComputeProximityScores.PNAAssay <- function(
     }
   }
 
-  proximity_scores <- cg_list %>%
+  proximity_scores <- cg_list |>
     ComputeProximityScores(
       mode,
       k,
@@ -341,19 +341,19 @@ ComputeProximityScores.PNAAssay5 <- ComputeProximityScores.PNAAssay
 #'
 #' @examples
 #' library(ggplot2)
-#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-#'   LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)
+#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[1:2], verbose = FALSE))()
 #'
 #' # Compute proximity scores for selected cells
 #' proximity_scores <- ComputeProximityScores(se, cells = colnames(se)[1:2])
 #'
 #' # Compare with available proximity scores
-#' proximity_scores %>%
-#'   left_join(ProximityScores(se %>% subset(cells = colnames(se)[1:2])),
+#' proximity_scores |>
+#'   left_join(ProximityScores(se |> subset(cells = colnames(se)[1:2])),
 #'     by = c("marker_1", "marker_2", "component"),
 #'     suffix = c("_post", "_pre")
-#'   ) %>%
-#'   na.omit() %>%
+#'   ) |>
+#'   na.omit() |>
 #'   ggplot(aes(log2_ratio_pre, log2_ratio_post)) +
 #'   geom_abline() +
 #'   geom_point() +

@@ -98,7 +98,7 @@ sequencing_saturation <- function(
 #' edgelist <-
 #'   ReadMPX_edgelist(system.file("extdata/five_cells", "five_cells.pxl",
 #'     package = "pixelatorR"
-#'   )) %>%
+#'   )) |>
 #'   rename(umi1 = upia, umi2 = upib, read_count = count)
 #'
 #' set.seed(37)
@@ -109,8 +109,8 @@ sequencing_saturation <- function(
 #'
 #' # Calculate the mean sequencing saturation for each sample fraction
 #' seqsat_mean <-
-#'   seqsat %>%
-#'   group_by(sample_frac) %>%
+#'   seqsat |>
+#'   group_by(sample_frac) |>
 #'   summarise(
 #'     mean_node_saturation = mean(graph_node_saturation),
 #'     mean_edge_saturation = mean(graph_edge_saturation)
@@ -161,24 +161,24 @@ SequenceSaturationCurve <- function(
 
   # Read edgelist
   el_tot <-
-    edgelist %>%
-    filter(component %in% sample(unique(component), n_comps)) %>%
+    edgelist |>
+    filter(component %in% sample(unique(component), n_comps)) |>
     select(component, umi1, umi2, read_count)
 
   tot_res <-
-    el_tot %>%
-    group_by(component) %>%
-    do({
+    el_tot |>
+    group_by(component) |>
+    (\(.) do(., {
       el_init <-
-        mutate(., edge = row_number()) %>%
+        mutate(., edge = row_number()) |>
         select(-component)
 
       index_init <-
-        el_init %>%
-        select(read_count) %>%
-        pull(1) %>%
-        as.numeric() %>%
-        rep(seq_along(.), times = .)
+        el_init |>
+        select(read_count) |>
+        pull(1) |>
+        as.numeric() |>
+        (\(.) rep(seq_along(.), times = .))()
 
       sample_sizes <-
         round(sample_fracs * length(index_init))
@@ -199,9 +199,9 @@ SequenceSaturationCurve <- function(
 
           # Create graph and remove all but the largest component
           el_graph <-
-            el %>%
-            as_tbl_graph() %>%
-            mutate(component = group_components()) %>%
+            el |>
+            as_tbl_graph() |>
+            mutate(component = group_components()) |>
             filter(component == 1)
 
           # Update index
@@ -214,7 +214,7 @@ SequenceSaturationCurve <- function(
         }
         graph_proteins <- n_distinct(c(el$umi1, el$umi2))
         res <-
-          res %>%
+          res |>
           bind_rows(
             tibble(
               sample_size = sample_sizes[i],
@@ -228,14 +228,14 @@ SequenceSaturationCurve <- function(
       }
 
       res <-
-        res %>%
+        res |>
         mutate(
           graph_node_saturation = sequencing_saturation(graph_proteins, graph_reads),
           graph_edge_saturation = sequencing_saturation(graph_edges, graph_reads)
         )
 
       res
-    }) %>%
+    }))() |>
     ungroup()
 
   return(tot_res)
@@ -301,7 +301,7 @@ approximate_edge_saturation <- function(
     min_degree = min_degree
   )
 
-  edge_saturation <- tbl(db$.__enclos_env__$private$con, el_name) %>%
+  edge_saturation <- tbl(db$.__enclos_env__$private$con, el_name) |>
     .compute_saturation_duckdb(
       type = "edges",
       table_name = table_name
@@ -388,7 +388,7 @@ approximate_node_saturation <- function(
 
   # If node_reads_multiplier is 1, we treat the total component read count for
   # nodes as the same as for edges (half of the summed endpoint read counts).
-  node_saturation <- tbl(db$.__enclos_env__$private$con, "nodes") %>%
+  node_saturation <- tbl(db$.__enclos_env__$private$con, "nodes") |>
     .compute_saturation_duckdb(
       type = "nodes",
       table_name = table_name,
@@ -428,7 +428,7 @@ approximate_node_saturation <- function(
   if (is.null(components)) {
     el_name <- "edgelist"
   } else {
-    if (!all(components %in% (db$counts() %>% colnames()))) {
+    if (!all(components %in% (db$counts() |> colnames()))) {
       cli::cli_abort(
         c("x" = "All {.var components} must be present in the PXL file.")
       )
@@ -514,7 +514,7 @@ approximate_node_saturation <- function(
   components
 ) {
   db$check_connection()
-  components_formatted <- glue::glue_sql("{components}", .con = db$.__enclos_env__$private$con) %>%
+  components_formatted <- glue::glue_sql("{components}", .con = db$.__enclos_env__$private$con) |>
     paste(collapse = ", ")
   DBI::dbExecute(
     db$.__enclos_env__$private$con,
@@ -550,13 +550,13 @@ approximate_node_saturation <- function(
 ) {
   type <- match.arg(type, c("edges", "nodes"))
   type_singular <- stringr::str_replace(type, "s$", "")
-  df_lazy %>%
-    group_by(component) %>%
+  df_lazy |>
+    group_by(component) |>
     summarize(
       !!sym(type) := as.integer(n()),
       read_count = round(sum(read_count, na.rm = TRUE) * reads_multiplier)
-    ) %>%
-    mutate(!!sym(paste0(type_singular, "_saturation")) := 1 - (!!sym(type) / read_count)) %>%
+    ) |>
+    mutate(!!sym(paste0(type_singular, "_saturation")) := 1 - (!!sym(type) / read_count)) |>
     compute(name = table_name, overwrite = TRUE)
 }
 
@@ -638,12 +638,12 @@ approximate_node_saturation <- function(
 #' sat_curve <- approximate_saturation_curve(db, fracs = seq(0.1, 0.9, by = 0.1))
 #'
 #' # Plot node saturation curve
-#' sat_curve %>%
+#' sat_curve |>
 #'   tidyr::pivot_longer(
 #'     cols = c(node_saturation, edge_saturation),
 #'     names_to = "type",
 #'     values_to = "saturation"
-#'   ) %>%
+#'   ) |>
 #'   ggplot(aes(read_count, saturation, color = component)) +
 #'   geom_line() +
 #'   geom_point() +
@@ -774,12 +774,12 @@ approximate_saturation_curve <- function(
       ORDER BY ed.component, ed.p
       "
     )
-  ) %>%
-    as_tibble() %>%
+  ) |>
+    as_tibble() |>
     mutate(
       node_saturation = 1 - (nodes / (read_count * node_reads_multiplier)),
       edge_saturation = 1 - (edges / read_count)
-    ) %>%
+    ) |>
     mutate(
       node_saturation = if_else(node_saturation < 0, NA_real_, node_saturation),
       edge_saturation = if_else(edge_saturation < 0, NA_real_, edge_saturation)
@@ -904,7 +904,7 @@ marginal_saturation <- function(
   if (is.null(components)) {
     el_name <- "edgelist"
   } else {
-    if (!all(components %in% (db$counts() %>% colnames()))) {
+    if (!all(components %in% (db$counts() |> colnames()))) {
       cli::cli_abort(
         c("x" = "All {.var components} must be present in the PXL file.")
       )
@@ -985,7 +985,7 @@ marginal_saturation <- function(
     )
   )
 
-  res <- tbl(con, "marginal_saturation_view") %>%
+  res <- tbl(con, "marginal_saturation_view") |>
     compute(name = table_name, overwrite = TRUE)
   return(res)
 }
@@ -1086,7 +1086,7 @@ marginal_saturation_curve <- function(
   if (is.null(components)) {
     el_name <- "edgelist"
   } else {
-    if (!all(components %in% (db$counts() %>% colnames()))) {
+    if (!all(components %in% (db$counts() |> colnames()))) {
       cli::cli_abort(
         c("x" = "All {.var components} must be present in the PXL file.")
       )
@@ -1259,13 +1259,13 @@ marginal_saturation_curve <- function(
     )
   }
 
-  curve_df <- DBI::dbGetQuery(con, query_sql) %>%
-    as_tibble() %>%
+  curve_df <- DBI::dbGetQuery(con, query_sql) |>
+    as_tibble() |>
     mutate(
       degree_rate = if_else(nodes > 0, (2 * edge_discovery_rate - degree * node_discovery_rate) / nodes, NA_real_),
       marginal_node_saturation = 1 - (node_discovery_rate / 2),
       marginal_edge_saturation = 1 - edge_discovery_rate
-    ) %>%
+    ) |>
     mutate(
       marginal_node_saturation = if_else(marginal_node_saturation < 0, NA_real_, marginal_node_saturation),
       marginal_edge_saturation = if_else(marginal_edge_saturation < 0, NA_real_, marginal_edge_saturation)
@@ -1338,10 +1338,10 @@ downsample_to_parquet <- function(
     db$close()
     rm(db)
   })
-  if (!all(components %in% (db$counts() %>% colnames()))) {
+  if (!all(components %in% (db$counts() |> colnames()))) {
     cli::cli_abort("All {.var components} must be present in the PXL file")
   }
-  comps_formatted <- glue::glue_sql("{components}", .con = db$.__enclos_env__$private$con) %>% paste(collapse = ",")
+  comps_formatted <- glue::glue_sql("{components}", .con = db$.__enclos_env__$private$con) |> paste(collapse = ",")
 
   pq_paths <- file.path(outdir, glue::glue("edgelist_{sprintf('%03d', seq_along(fracs))}.parquet"))
   for (f in pq_paths) {
@@ -1489,14 +1489,14 @@ lcc_sizes <- function(
 
     # Get the size of the largest connected components (LCC)
     # for each cell (component) in the edgelist
-    lcc_per_component <- tbl(con, "comps") %>%
-      left_join(tbl(con, "umi_nodes"), by = c("id" = "id")) %>%
-      group_by(componentId, component) %>%
-      count(name = "n_nodes") %>%
-      mutate(n_nodes = as.integer(n_nodes)) %>%
-      group_by(component) %>%
-      arrange(desc(n_nodes)) %>%
-      collect() %>%
+    lcc_per_component <- tbl(con, "comps") |>
+      left_join(tbl(con, "umi_nodes"), by = c("id" = "id")) |>
+      group_by(componentId, component) |>
+      count(name = "n_nodes") |>
+      mutate(n_nodes = as.integer(n_nodes)) |>
+      group_by(component) |>
+      arrange(desc(n_nodes)) |>
+      collect() |>
       slice_head(n = 1)
 
     return(lcc_per_component)
@@ -1504,11 +1504,11 @@ lcc_sizes <- function(
 
   # Format results into a single tibble
   lcc <- lapply(seq_along(lcc), function(i) {
-    lcc[[i]] %>%
-      mutate(frac = df$fracs[i]) %>%
+    lcc[[i]] |>
+      mutate(frac = df$fracs[i]) |>
       select(component, frac, n_nodes)
-  }) %>%
-    bind_rows() %>%
+  }) |>
+    bind_rows() |>
     ungroup()
 
   return(lcc)
@@ -1577,11 +1577,11 @@ lcc_sizes <- function(
 #' library(ggplot2)
 #' library(dplyr)
 #' pxl_file <- minimal_pna_pxl_file()
-#' components <- ReadPNA_counts(pxl_file) %>% colnames()
+#' components <- ReadPNA_counts(pxl_file) |> colnames()
 #'
 #' # Select fractions based on average read depth
 #' db <- PixelDB$new(pxl_file)
-#' avg_reads <- db$cell_meta()$reads %>% mean()
+#' avg_reads <- db$cell_meta()$reads |> mean()
 #' fracs <- (10^seq(4, log10(avg_reads), length.out = 20))[-20] / avg_reads
 #'
 #' lcc_df <- lcc_curve(pxl_file, components, fracs = fracs)
@@ -1594,10 +1594,10 @@ lcc_sizes <- function(
 #'   guides(color = "none")
 #'
 #' # Compute graph stability (LCC / max theoretical nodes)
-#' nodesat <- approximate_node_saturation(db) %>% collect()
+#' nodesat <- approximate_node_saturation(db) |> collect()
 #' db$close()
 #'
-#' lcc_df <- lcc_df %>%
+#' lcc_df <- lcc_df |>
 #'   left_join(nodesat, by = "component")
 #'
 #' ggplot(lcc_df, aes(frac, n_nodes / nodes, color = component)) +
@@ -1646,7 +1646,7 @@ lcc_curve <- function(
     }
     clean_up <- FALSE
   } else {
-    outdir <- fs::file_temp() %>% stringr::str_replace("file", "dir")
+    outdir <- fs::file_temp() |> stringr::str_replace("file", "dir")
     fs::dir_create(outdir)
     clean_up <- TRUE
   }
@@ -1668,11 +1668,11 @@ lcc_curve <- function(
   on.exit({
     db$close()
   })
-  read_counts <- db$cell_meta() %>%
-    select(read_count = reads_in_component) %>%
+  read_counts <- db$cell_meta() |>
+    select(read_count = reads_in_component) |>
     rownames_to_column("component")
-  lcc <- lcc %>%
-    left_join(read_counts, by = "component") %>%
+  lcc <- lcc |>
+    left_join(read_counts, by = "component") |>
     mutate(read_count = as.integer(round(read_count * frac)))
 
   if (clean_up) {

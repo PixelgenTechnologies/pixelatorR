@@ -30,19 +30,19 @@ distance or the maximum number of iterations is reached.
 \examples{
 library(dplyr)
 library(tidygraph)
-cg <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) \%>\%
-  LoadCellGraphs(cells = colnames(.)[4], add_layout = TRUE, verbose = FALSE) \%>\%
-  CellGraphs() \%>\%
-  .[[4]]
+cg <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[4], add_layout = TRUE, verbose = FALSE))() |>
+  CellGraphs() |>
+  (\(.) .[[4]])()
 
 # Compute distances from the seed set, here we just pick a random point
 start_set <- cg@cellgraph \%N>\%
-  pull(name) \%>\%
+  pull(name) |>
   head(1)
 cg <- distance_from_node_set(cg, start_set)
 
 # Visualize the distance on the 3D layout
-xyz <- cg@layout$wpmds_3d \%>\%
+xyz <- cg@layout$wpmds_3d |>
   mutate(d = cg@cellgraph \%N>\% pull(distance_from_seed))
 
 plotly::plot_ly(

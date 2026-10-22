@@ -176,8 +176,8 @@ LoadCellGraphs.FileSystemDataset <- function(
     }
 
     return(g_list)
-  }) %>%
-    Reduce(c, .)
+  }) |>
+    (\(.) Reduce(c, .))()
 
   return(cellgraphs)
 }
@@ -273,7 +273,7 @@ LoadCellGraphs.MPXAssay <- function(
     return(object)
   } else {
     if (force) {
-      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>%
+      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) |>
         set_names(nm = cells)
       loaded_graphs <- !sapply(
         slot(object, name = "cellgraphs")[cells],
@@ -294,10 +294,10 @@ LoadCellGraphs.MPXAssay <- function(
   }
 
   # Find where components are located
-  fs_map_unnested_filtered <- slot(object, name = "fs_map") %>%
-    tidyr::unnest(cols = "id_map") %>%
+  fs_map_unnested_filtered <- slot(object, name = "fs_map") |>
+    tidyr::unnest(cols = "id_map") |>
     filter(current_id %in% cells_to_load)
-  fs_map_nested_filtered <- fs_map_unnested_filtered %>%
+  fs_map_nested_filtered <- fs_map_unnested_filtered |>
     tidyr::nest(data = c("current_id", "original_id"))
 
   # Check for layouts
@@ -322,7 +322,7 @@ LoadCellGraphs.MPXAssay <- function(
     layout_types_sample <- list()
     for (i in seq_len(nrow(fs_map_nested_filtered))) {
       f <- fs_map_nested_filtered$pxl_file[i]
-      cell_id_data <- fs_map_nested_filtered$data[[i]] %>%
+      cell_id_data <- fs_map_nested_filtered$data[[i]] |>
         filter(current_id %in% cells_to_load)
       original_id <- cell_id_data$original_id
       current_id <- cell_id_data$current_id
@@ -332,7 +332,7 @@ LoadCellGraphs.MPXAssay <- function(
         graph_projection = load_as
       )
       precomputed_layouts <- lapply(precomputed_layouts, function(x) {
-        x %>% set_names(nm = current_id)
+        x |> set_names(nm = current_id)
       })
       layout_types_sample[[i]] <- names(precomputed_layouts)
       precomputed_layouts_sample[[i]] <- precomputed_layouts
@@ -391,10 +391,10 @@ LoadCellGraphs.MPXAssay <- function(
     }
 
     # Split data into chunks determined by chunk_size
-    id_data_chunks <- fs_map_nested_filtered$data[[i]] %>%
-      mutate(group = ceiling(seq_len(n()) / chunk_size)) %>%
-      rename(component = current_id) %>%
-      group_by(group) %>%
+    id_data_chunks <- fs_map_nested_filtered$data[[i]] |>
+      mutate(group = ceiling(seq_len(n()) / chunk_size)) |>
+      rename(component = current_id) |>
+      group_by(group) |>
       group_split()
 
     # Read cellgraphs
@@ -405,9 +405,9 @@ LoadCellGraphs.MPXAssay <- function(
         # Note that we use original_id which are the original
         # MPX component ids. current_id are the ids currenty used
         # for components in object
-        edgelist_data <- ar %>%
-          mutate(component = as.character(component)) %>%
-          filter(component %in% id_chunk$original_id) %>%
+        edgelist_data <- ar |>
+          mutate(component = as.character(component)) |>
+          filter(component %in% id_chunk$original_id) |>
           collect()
 
         # Send to internal data.frame method
@@ -422,7 +422,7 @@ LoadCellGraphs.MPXAssay <- function(
         return(cg_list)
       },
       cl = cl
-    ) %>%
+    ) |>
       unlist()
 
     # Update names of the cellgraph list
@@ -446,7 +446,7 @@ LoadCellGraphs.MPXAssay <- function(
     }
 
     return(cg_list)
-  }) %>%
+  }) |>
     unlist()
 
   # Add layouts to the list of cellgraphs if layouts were loaded
@@ -457,7 +457,7 @@ LoadCellGraphs.MPXAssay <- function(
         function(ly) ly[[nm]]
       )
       .attach_precomputed_layouts(cg_list_full[[nm]], layouts)
-    }) %>%
+    }) |>
       set_names(nm = names(cg_list_full))
   }
 
@@ -528,7 +528,7 @@ LoadCellGraphs.PNAAssay <- function(
     return(object)
   } else {
     if (force) {
-      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) %>%
+      slot(object, "cellgraphs")[cells] <- rep(list(NULL), length(cells)) |>
         set_names(nm = cells)
       loaded_graphs <- !sapply(
         slot(object, name = "cellgraphs")[cells],
@@ -549,10 +549,10 @@ LoadCellGraphs.PNAAssay <- function(
   }
 
   # Find where components are located
-  fs_map_unnested_filtered <- slot(object, name = "fs_map") %>%
-    tidyr::unnest(cols = "id_map") %>%
+  fs_map_unnested_filtered <- slot(object, name = "fs_map") |>
+    tidyr::unnest(cols = "id_map") |>
     filter(current_id %in% cells_to_load)
-  fs_map_nested_filtered <- fs_map_unnested_filtered %>%
+  fs_map_nested_filtered <- fs_map_unnested_filtered |>
     tidyr::nest(data = c("current_id", "original_id"))
 
   # Load cell graphs per PXL source
@@ -593,7 +593,7 @@ LoadCellGraphs.PNAAssay <- function(
     cg_list <- set_names(cg_list, nm = current_ids)
 
     return(cg_list)
-  }) %>%
+  }) |>
     unlist(recursive = FALSE)
 
   # Fill cellgraphs slot list with the loaded CellGraphs
@@ -694,48 +694,48 @@ LoadCellGraphs.Seurat <- function(
   cell_ids,
   add_markers = TRUE
 ) {
-  edge_table <- arrow_data %>%
-    mutate(component = as.character(component)) %>%
-    filter(component %in% cell_ids) %>%
-    collect() %>%
+  edge_table <- arrow_data |>
+    mutate(component = as.character(component)) |>
+    filter(component %in% cell_ids) |>
+    collect() |>
     group_by(component)
 
-  edge_table_split <- edge_table %>%
-    group_split() %>% # Split into list, with one element per component
-    set_names(nm = edge_table %>% dplyr::group_data() %>% pull(component)) # Name list with component IDs
+  edge_table_split <- edge_table |>
+    group_split() |> # Split into list, with one element per component
+    set_names(nm = edge_table |> dplyr::group_data() |> pull(component)) # Name list with component IDs
 
   edge_table_split <- lapply(names(edge_table_split), function(nm) {
     edge_table <- edge_table_split[[nm]]
 
     # Add a suffix to upia / upib and convert to a tbl_graph
-    g <- edge_table %>%
-      select(upia, upib, marker) %>%
-      mutate(across(where(is.factor), as.character)) %>%
-      mutate(upia = paste0(upia, "-A"), upib = paste0(upib, "-B")) %>%
+    g <- edge_table |>
+      select(upia, upib, marker) |>
+      mutate(across(where(is.factor), as.character)) |>
+      mutate(upia = paste0(upia, "-A"), upib = paste0(upib, "-B")) |>
       as_tbl_graph(directed = FALSE)
 
     # Add node type as node attribute
-    g <- g %>%
+    g <- g |>
       # Replace node attributes with name / node_type
       mutate(
-        !!!g %>%
-          as_tibble() %>%
-          mutate(id = name) %>%
+        !!!g |>
+          as_tibble() |>
+          mutate(id = name) |>
           tidyr::separate(col = name, into = c("name", "node_type"))
-      ) %>%
-      select(-name) %>%
-      rename(name = id) %>%
+      ) |>
+      select(-name) |>
+      rename(name = id) |>
       select(name, node_type)
 
     if (add_markers) {
       # Aggregate counts per upia / upib combination
       markers_s <- g %E>%
-        as_tibble() %>%
-        group_by(from, to, marker) %>%
+        as_tibble() |>
+        group_by(from, to, marker) |>
         summarize(n = n(), .groups = "drop")
 
       # Count markers per upia/upib pair and fill empty cells with 0
-      markers_wide <- markers_s %>%
+      markers_wide <- markers_s |>
         tidyr::pivot_wider(
           id_cols = c("from", "to"),
           names_from = marker,
@@ -744,50 +744,50 @@ LoadCellGraphs.Seurat <- function(
         )
 
       # Get new edges from pivot table (no duplicated edges left)
-      new_edges <- markers_wide %>% select(from, to)
+      new_edges <- markers_wide |> select(from, to)
 
       # Get edge count matrix from pivot table
       edge_cntMatrix <- as(
-        markers_wide[, 3:ncol(markers_wide)] %>% as.matrix(),
+        markers_wide[, 3:ncol(markers_wide)] |> as.matrix(),
         "dgCMatrix"
       )
 
       # Create node count matrix by aggregating counts for A nodes and B nodes
-      grp1 <- markers_wide %>% pull(from)
+      grp1 <- markers_wide |> pull(from)
       upia_markers <- as(
-        markers_wide %>%
-          select(-from, -to) %>%
-          rowsum(group = grp1) %>%
+        markers_wide |>
+          select(-from, -to) |>
+          rowsum(group = grp1) |>
           as.matrix(),
         "dgCMatrix"
       )
-      grp2 <- markers_wide %>% pull(to)
+      grp2 <- markers_wide |> pull(to)
       upib_markers <- as(
-        markers_wide %>%
-          select(-from, -to) %>%
-          rowsum(group = grp2) %>%
+        markers_wide |>
+          select(-from, -to) |>
+          rowsum(group = grp2) |>
           as.matrix(),
         "dgCMatrix"
       )
       node_cntMatrix <- rbind(upia_markers, upib_markers)
-      rownames(node_cntMatrix) <- g %>% pull(name)
+      rownames(node_cntMatrix) <- g |> pull(name)
 
       # Replace with collapsed edges and return a simple undirected graph
       g <- g %E>% # Activate edges
-        select(-marker) %>%
-        filter(FALSE) %>% # Remove all edges
+        select(-marker) |>
+        filter(FALSE) |> # Remove all edges
         bind_edges(new_edges) %N>% # Add the distinct edges matching the count matrix and reactivate nodes
         select(name, node_type)
     } else {
       # Skip marker counts and return a simple undirected graph
-      new_edges <- g %E>% as_tibble() %>%
-        select(from, to) %>%
+      new_edges <- g %E>% as_tibble() |>
+        select(from, to) |>
         distinct()
 
       # Replace with collapsed edges and return a simple undirected graph
       g <- g %E>%
-        select(-marker) %>%
-        filter(FALSE) %>% # Remove all edges
+        select(-marker) |>
+        filter(FALSE) |> # Remove all edges
         bind_edges(new_edges) %N>% # Add distinct edges and reactivate nodes
         select(name, node_type)
     }
@@ -805,7 +805,7 @@ LoadCellGraphs.Seurat <- function(
     } else {
       return(g)
     }
-  }) %>%
+  }) |>
     set_names(nm = names(edge_table_split))
 
   return(edge_table_split[cell_ids])
@@ -841,7 +841,7 @@ LoadCellGraphs.Seurat <- function(
     }
 
     # Convert squished bipartite graph to a linegraph
-    g_line <- g_bipartite %>%
+    g_line <- g_bipartite |>
       tidygraph::to_linegraph()
     g_line <- g_line[[1]]
 
@@ -855,7 +855,7 @@ LoadCellGraphs.Seurat <- function(
     } else {
       return(g_line)
     }
-  }) %>%
+  }) |>
     set_names(nm = names(g_list))
 
   return(g_list)
@@ -874,47 +874,47 @@ LoadCellGraphs.Seurat <- function(
   add_markers = TRUE
 ) {
   # Fetch edgelist from parquet file and group by component
-  edge_table <- arrow_data %>%
-    mutate(component = as.character(component)) %>%
-    filter(component %in% cell_ids) %>%
-    collect() %>%
+  edge_table <- arrow_data |>
+    mutate(component = as.character(component)) |>
+    filter(component %in% cell_ids) |>
+    collect() |>
     group_by(component)
 
   # Split into list with one component per element
-  edge_table_split <- edge_table %>%
-    group_split() %>%
-    set_names(nm = edge_table %>% dplyr::group_data() %>% pull(component))
+  edge_table_split <- edge_table |>
+    group_split() |>
+    set_names(nm = edge_table |> dplyr::group_data() |> pull(component))
 
   edge_table_split <- lapply(names(edge_table_split), function(nm) {
-    edge_table <- edge_table_split[[nm]] %>%
-      select(upia, upib, marker) %>%
+    edge_table <- edge_table_split[[nm]] |>
+      select(upia, upib, marker) |>
       mutate(across(where(is.factor), as.character))
 
     # Anode projection
-    g_anode <- edge_table %>%
+    g_anode <- edge_table |>
       left_join(
         edge_table,
         by = c("upib"),
         relationship = "many-to-many",
         suffix = c("1", "2")
-      ) %>%
-      select(upia1, upia2) %>%
-      distinct() %>%
+      ) |>
+      select(upia1, upia2) |>
+      distinct() |>
       filter(upia1 < upia2)
 
     # Convert edge list to tbl_graph (undirected)
-    g_anode <- g_anode %>%
+    g_anode <- g_anode |>
       as_tbl_graph(directed = FALSE)
 
     if (add_markers) {
       # Group by upia and marker
-      markers_s <- edge_table %>%
-        as_tibble() %>%
-        group_by(upia, marker) %>%
+      markers_s <- edge_table |>
+        as_tibble() |>
+        group_by(upia, marker) |>
         summarize(n = n(), .groups = "drop")
 
       # Pivot marker counts into a wide format
-      markers_wide <- markers_s %>%
+      markers_wide <- markers_s |>
         pivot_wider(
           id_cols = upia,
           names_from = marker,
@@ -923,12 +923,12 @@ LoadCellGraphs.Seurat <- function(
         )
 
       cntMatrix <- as(
-        markers_wide[, 2:ncol(markers_wide)] %>% as.matrix(),
+        markers_wide[, 2:ncol(markers_wide)] |> as.matrix(),
         "dgCMatrix"
       )
 
       # Sort matrix rows to match graph names
-      nds <- g_anode %>%
+      nds <- g_anode |>
         pull(name)
       cntMatrix <- cntMatrix[match(nds, markers_wide$upia), ]
       rownames(cntMatrix) <- nds
@@ -942,7 +942,7 @@ LoadCellGraphs.Seurat <- function(
     } else {
       return(g)
     }
-  }) %>%
+  }) |>
     set_names(nm = names(edge_table_split))
 
   # Return list with the correct order of components

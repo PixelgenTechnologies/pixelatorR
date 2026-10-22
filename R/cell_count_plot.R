@@ -41,12 +41,12 @@ CellCountPlot.data.frame <- function(
 
   # Create plot
   if (!is.null(group_by)) {
-    gg <- object %>%
-      group_by(.data[[group_by]], .data[[color_by]]) %>%
-      count() %>%
-      ungroup() %>%
-      group_by(!!sym(group_by)) %>%
-      mutate(frequency = n / sum(n) * 100) %>%
+    gg <- object |>
+      group_by(.data[[group_by]], .data[[color_by]]) |>
+      count() |>
+      ungroup() |>
+      group_by(!!sym(group_by)) |>
+      mutate(frequency = n / sum(n) * 100) |>
       ungroup()
 
     nudge_y <- if (as_frequency) max(gg$frequency) / 20 else max(gg$n) / 20
@@ -77,10 +77,10 @@ CellCountPlot.data.frame <- function(
         y = ifelse(as_frequency, "Frequency (%)", "Count")
       )
   } else {
-    gg <- object %>%
-      group_by(.data[[color_by]]) %>%
-      count() %>%
-      ungroup() %>%
+    gg <- object |>
+      group_by(.data[[color_by]]) |>
+      count() |>
+      ungroup() |>
       mutate(frequency = n / sum(n) * 100)
 
     nudge_y <- if (as_frequency) max(gg$frequency) / 20 else max(gg$n) / 20

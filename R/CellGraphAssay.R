@@ -109,17 +109,17 @@ setClassUnion("MPXAssay", c("CellGraphAssay", "CellGraphAssay5"))
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
 #' edgelist_split <-
-#'   edgelist %>%
-#'   select(upia, upib, component) %>%
-#'   distinct() %>%
-#'   group_by(component) %>%
-#'   group_split() %>%
+#'   edgelist |>
+#'   select(upia, upib, component) |>
+#'   distinct() |>
+#'   group_by(component) |>
+#'   group_split() |>
 #'   setNames(nm = components)
 #'
 #' # Convert data into a list of CellGraph objects
 #' bipartite_graphs <- lapply(edgelist_split, function(x) {
-#'   x <- x %>% as_tbl_graph(directed = FALSE)
-#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   x <- x |> as_tbl_graph(directed = FALSE)
+#'   x <- x |> mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
 #'   attr(x, "type") <- "bipartite"
 #'   CreateCellGraphObject(cellgraph = x)
 #' })
@@ -211,17 +211,17 @@ CreateCellGraphAssay <- function(
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
 #' edgelist_split <-
-#'   edgelist %>%
-#'   select(upia, upib, component) %>%
-#'   distinct() %>%
-#'   group_by(component) %>%
-#'   group_split() %>%
+#'   edgelist |>
+#'   select(upia, upib, component) |>
+#'   distinct() |>
+#'   group_by(component) |>
+#'   group_split() |>
 #'   setNames(nm = components)
 #'
 #' # Convert data into a list of CellGraph objects
 #' bipartite_graphs <- lapply(edgelist_split, function(x) {
-#'   x <- x %>% as_tbl_graph(directed = FALSE)
-#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   x <- x |> as_tbl_graph(directed = FALSE)
+#'   x <- x |> mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
 #'   attr(x, "type") <- "bipartite"
 #'   CreateCellGraphObject(cellgraph = x)
 #' })
@@ -305,17 +305,17 @@ CreateCellGraphAssay5 <- function(
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
 #' edgelist_split <-
-#'   edgelist %>%
-#'   select(upia, upib, component) %>%
-#'   distinct() %>%
-#'   group_by(component) %>%
-#'   group_split() %>%
+#'   edgelist |>
+#'   select(upia, upib, component) |>
+#'   distinct() |>
+#'   group_by(component) |>
+#'   group_split() |>
 #'   setNames(nm = components)
 #'
 #' # Convert data into a list of CellGraph objects
 #' bipartite_graphs <- lapply(edgelist_split, function(x) {
-#'   x <- x %>% as_tbl_graph(directed = FALSE)
-#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   x <- x |> as_tbl_graph(directed = FALSE)
+#'   x <- x |> mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
 #'   attr(x, "type") <- "bipartite"
 #'   CreateCellGraphObject(cellgraph = x)
 #' })
@@ -359,7 +359,7 @@ CellGraphs.MPXAssay <- function(
 ) {
   # Clean cellgraphs slot if value = NULL
   if (is.null(x = value)) {
-    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
+    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) |> set_names(nm = colnames(object))
     return(object)
   }
 
@@ -433,9 +433,9 @@ RenameCells.MPXAssay <- function(
   name_conversion <- tibble(new = new.names, component = orig.names)
   polarization <- slot(object, name = "polarization")
   if (length(polarization) > 0) {
-    polarization <- polarization %>%
-      left_join(y = name_conversion, by = "component") %>%
-      select(-component) %>%
+    polarization <- polarization |>
+      left_join(y = name_conversion, by = "component") |>
+      select(-component) |>
       rename(component = new)
   }
   slot(cg_assay_renamed, name = "polarization") <- polarization
@@ -443,9 +443,9 @@ RenameCells.MPXAssay <- function(
   # Handle colocalization slot
   colocalization <- slot(object, name = "colocalization")
   if (length(colocalization) > 0) {
-    colocalization <- colocalization %>%
-      left_join(y = name_conversion, by = "component") %>%
-      select(-component) %>%
+    colocalization <- colocalization |>
+      left_join(y = name_conversion, by = "component") |>
+      select(-component) |>
       rename(component = new)
   }
   slot(cg_assay_renamed, name = "colocalization") <- colocalization
@@ -453,8 +453,8 @@ RenameCells.MPXAssay <- function(
   # Handle fs_map
   fs_map <- slot(object, name = "fs_map")
   if (nrow(fs_map) > 0) {
-    fs_map$id_map <- fs_map %>%
-      pull(id_map) %>%
+    fs_map$id_map <- fs_map |>
+      pull(id_map) |>
       lapply(function(x) {
         x$current_id <- new.names[x$current_id]
         return(x)
@@ -510,17 +510,17 @@ RenameCells.CellGraphAssay5 <- RenameCells.MPXAssay
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
 #' edgelist_split <-
-#'   edgelist %>%
-#'   select(upia, upib, component) %>%
-#'   distinct() %>%
-#'   group_by(component) %>%
-#'   group_split() %>%
+#'   edgelist |>
+#'   select(upia, upib, component) |>
+#'   distinct() |>
+#'   group_by(component) |>
+#'   group_split() |>
 #'   setNames(nm = components)
 #'
 #' # Convert data into a list of CellGraph objects
 #' bipartite_graphs <- lapply(edgelist_split, function(x) {
-#'   x <- x %>% as_tbl_graph(directed = FALSE)
-#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   x <- x |> as_tbl_graph(directed = FALSE)
+#'   x <- x |> mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
 #'   attr(x, "type") <- "bipartite"
 #'   CreateCellGraphObject(cellgraph = x)
 #' })
@@ -557,7 +557,7 @@ as.CellGraphAssay.Assay <- function(
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) |> set_names(nm = colnames(x))
   }
 
   # Check fs_map
@@ -632,17 +632,17 @@ setAs(
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
 #' edgelist_split <-
-#'   edgelist %>%
-#'   select(upia, upib, component) %>%
-#'   distinct() %>%
-#'   group_by(component) %>%
-#'   group_split() %>%
+#'   edgelist |>
+#'   select(upia, upib, component) |>
+#'   distinct() |>
+#'   group_by(component) |>
+#'   group_split() |>
 #'   setNames(nm = components)
 #'
 #' # Convert data into a list of CellGraph objects
 #' bipartite_graphs <- lapply(edgelist_split, function(x) {
-#'   x <- x %>% as_tbl_graph(directed = FALSE)
-#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   x <- x |> as_tbl_graph(directed = FALSE)
+#'   x <- x |> mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
 #'   attr(x, "type") <- "bipartite"
 #'   CreateCellGraphObject(cellgraph = x)
 #' })
@@ -679,7 +679,7 @@ as.CellGraphAssay5.Assay5 <- function(
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) |> set_names(nm = colnames(x))
   }
 
   # Check fs_map
@@ -745,10 +745,10 @@ PolarizationScores.MPXAssay <- function(
 
   # Add marker counts
   if (add_marker_counts) {
-    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
-      rownames_to_column("component") %>%
+    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") |>
+      rownames_to_column("component") |>
       pivot_longer(where(is.numeric), names_to = "marker", values_to = "count")
-    pol_scores <- pol_scores %>%
+    pol_scores <- pol_scores |>
       left_join(all_counts, by = c("component", "marker"))
   }
 
@@ -794,13 +794,13 @@ ColocalizationScores.MPXAssay <- function(
 
   # Add marker counts
   if (add_marker_counts) {
-    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
-      rownames_to_column("component") %>%
+    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") |>
+      rownames_to_column("component") |>
       pivot_longer(where(is.numeric), names_to = "marker", values_to = "count")
-    coloc_scores <- coloc_scores %>%
-      left_join(all_counts %>%
-        rename(count_1 = count), by = c("component", "marker_1" = "marker")) %>%
-      left_join(all_counts %>%
+    coloc_scores <- coloc_scores |>
+      left_join(all_counts |>
+        rename(count_1 = count), by = c("component", "marker_1" = "marker")) |>
+      left_join(all_counts |>
         rename(count_2 = count), by = c("component", "marker_2" = "marker"))
   }
 
@@ -944,17 +944,17 @@ NULL
 #' edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 #' components <- colnames(counts)
 #' edgelist_split <-
-#'   edgelist %>%
-#'   select(upia, upib, component) %>%
-#'   distinct() %>%
-#'   group_by(component) %>%
-#'   group_split() %>%
+#'   edgelist |>
+#'   select(upia, upib, component) |>
+#'   distinct() |>
+#'   group_by(component) |>
+#'   group_split() |>
 #'   setNames(nm = components)
 #'
 #' # Convert data into a list of CellGraph objects
 #' bipartite_graphs <- lapply(edgelist_split, function(x) {
-#'   x <- x %>% as_tbl_graph(directed = FALSE)
-#'   x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+#'   x <- x |> as_tbl_graph(directed = FALSE)
+#'   x <- x |> mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
 #'   attr(x, "type") <- "bipartite"
 #'   CreateCellGraphObject(cellgraph = x)
 #' })
@@ -1082,19 +1082,19 @@ subset.MPXAssay <- function(
   polarization <- slot(x, name = "polarization")
   if (length(polarization) > 0) {
     if (!is.null(cells)) {
-      polarization <- polarization %>% filter(component %in% cells)
+      polarization <- polarization |> filter(component %in% cells)
     }
     if (!is.null(features)) {
-      polarization <- polarization %>% filter(marker %in% features)
+      polarization <- polarization |> filter(marker %in% features)
     }
   }
   colocalization <- slot(x, name = "colocalization")
   if (length(colocalization) > 0) {
     if (!is.null(cells)) {
-      colocalization <- colocalization %>% filter(component %in% cells)
+      colocalization <- colocalization |> filter(component %in% cells)
     }
     if (!is.null(features)) {
-      colocalization <- colocalization %>% filter((marker_1 %in% features) & (marker_2 %in% features))
+      colocalization <- colocalization |> filter((marker_1 %in% features) & (marker_2 %in% features))
     }
   }
 
@@ -1102,7 +1102,7 @@ subset.MPXAssay <- function(
   fs_map <- slot(x, name = "fs_map")
   if (length(fs_map) > 0) {
     fs_map$id_map <- lapply(fs_map$id_map, function(x) {
-      x %>% filter(current_id %in% cells)
+      x |> filter(current_id %in% cells)
     })
     # Drop sample if id_map is empty
     rows_keep <- sapply(fs_map$id_map, nrow) > 0
@@ -1203,8 +1203,8 @@ merge.MPXAssay <- function(
       )
     }
     objects <- lapply(seq_along(objects), function(i) {
-      objects[[i]] %>%
-        RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) %>%
+      objects[[i]] |>
+        RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) |>
           set_names(nm = colnames(objects[[i]])))
     })
   }
@@ -1248,15 +1248,15 @@ merge.MPXAssay <- function(
   # Merge cellgraphs list
   cellgraphs_new <- Reduce(c, lapply(objects, function(cg_assay) {
     return(cg_assay@cellgraphs)
-  })) %>% set_names(nm = colnames(new_assay))
+  })) |> set_names(nm = colnames(new_assay))
 
   # Merge spatial metrics tables
   polarization <- lapply(objects, function(object) {
     slot(object, name = "polarization")
-  }) %>% bind_rows()
+  }) |> bind_rows()
   colocalization <- lapply(objects, function(object) {
     slot(object, name = "colocalization")
-  }) %>% bind_rows()
+  }) |> bind_rows()
 
   # Merge fs_map
   fs_map <- tibble()
@@ -1269,7 +1269,7 @@ merge.MPXAssay <- function(
   if (!is.null(fs_map)) {
     fs_map <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
       slot(objects[[i]], name = "fs_map")
-    })) %>% mutate(sample = seq_len(n()))
+    })) |> mutate(sample = seq_len(n()))
   }
 
   # Convert to CellGraphAssay and add cellgraphs
@@ -1302,7 +1302,7 @@ merge.MPXAssay <- function(
     }
 
     if (can_merge_meta_features) {
-      meta_features <- objects[[1]]@meta.features %>% select(any_of(c("control", "marker", "nuclear")))
+      meta_features <- objects[[1]]@meta.features |> select(any_of(c("control", "marker", "nuclear")))
     }
 
     # Place meta.features in CellGraphAssay

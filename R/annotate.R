@@ -111,7 +111,7 @@ AnnotateCells <- function(
   assert_within_limits(min_prediction_score, c(0, 1))
   assert_single_value(verbose, "bool")
 
-  groups <- reference[[]][, reference_groups, drop = FALSE] %>% as.list()
+  groups <- reference[[]][, reference_groups, drop = FALSE] |> as.list()
 
   object <- switch(method,
     "Seurat" = .seurat_annotaton(
@@ -144,28 +144,28 @@ AnnotateCells <- function(
     # Summarize the transferred cell types by retaining the most common cell type
     # per factor level in the user-provided column
     summarized_results <- lapply(reference_groups, function(ref_group) {
-      object[[]] %>%
-        group_by(!!sym(ref_group), !!sym(summarize_by_column)) %>%
-        count() %>%
-        group_by(!!sym(summarize_by_column)) %>%
-        arrange(desc(n)) %>%
-        slice_head(n = 1) %>%
+      object[[]] |>
+        group_by(!!sym(ref_group), !!sym(summarize_by_column)) |>
+        count() |>
+        group_by(!!sym(summarize_by_column)) |>
+        arrange(desc(n)) |>
+        slice_head(n = 1) |>
         select(-n)
-    }) %>%
+    }) |>
       set_names(reference_groups)
 
-    updated_metadata <- object[[]] %>%
-      as_tibble(rownames = "component") %>%
+    updated_metadata <- object[[]] |>
+      as_tibble(rownames = "component") |>
       select(component, !!sym(summarize_by_column))
 
     for (ref_group in reference_groups) {
-      updated_metadata <- updated_metadata %>%
-        left_join(summarized_results[[ref_group]], by = summarize_by_column) %>%
+      updated_metadata <- updated_metadata |>
+        left_join(summarized_results[[ref_group]], by = summarize_by_column) |>
         rename_with(~ paste0(.x, "_summary"), !!sym(ref_group))
     }
 
-    updated_metadata <- updated_metadata %>%
-      data.frame(row.names = "component") %>%
+    updated_metadata <- updated_metadata |>
+      data.frame(row.names = "component") |>
       select(-!!sym(summarize_by_column))
 
     object <- SeuratObject::AddMetaData(
@@ -301,10 +301,10 @@ AnnotateCells <- function(
   )
 
   # Format results
-  annotations <- lapply(predictions, function(x) x[, "predicted.id"]) %>% data.frame(check.names = FALSE)
+  annotations <- lapply(predictions, function(x) x[, "predicted.id"]) |> data.frame(check.names = FALSE)
 
   if (min_prediction_score > 0) {
-    prediction_scores <- lapply(predictions, function(x) x[, "prediction.score.max"]) %>% as.data.frame()
+    prediction_scores <- lapply(predictions, function(x) x[, "prediction.score.max"]) |> as.data.frame()
     annotations[prediction_scores < min_prediction_score] <- "Unknown"
   }
 
@@ -465,14 +465,14 @@ AnnotateCells <- function(
     names(predicted_celltype) <- colnames(target_data)
 
     return(predicted_celltype)
-  }) %>% set_names(nm = names(groups))
+  }) |> set_names(nm = names(groups))
 
   if (verbose && check_global_verbosity()) {
     cli::cli_alert_info("Labelling cells.")
   }
 
   # Format results
-  predicted_annotations <- predicted_annotations %>% data.frame(check.names = FALSE)
+  predicted_annotations <- predicted_annotations |> data.frame(check.names = FALSE)
 
   # Add the transferred celltypes to the object metadata
   object <- SeuratObject::AddMetaData(
@@ -514,9 +514,9 @@ AnnotateCells <- function(
     x1 <- row_means[, grp]
     x2 <- row_means[, -which(colnames(row_means) == grp)]
     x2 <- Matrix::rowMeans(x2) + 1
-    y <- tibble(x1 / x2) %>% set_names(nm = grp)
+    y <- tibble(x1 / x2) |> set_names(nm = grp)
     return(y)
-  })) %>%
+  })) |>
     as.matrix()
   rownames(W) <- rownames(x)
 
@@ -569,14 +569,14 @@ AnnotateCells <- function(
   }
 
   set.seed(seed)
-  components <- tibble(component = colnames(reference_data), group = groups) %>%
-    group_by(group) %>%
+  components <- tibble(component = colnames(reference_data), group = groups) |>
+    group_by(group) |>
     slice(sample(min(nCells_per_group, n())))
 
   # Check that all celltypes have enough cells
-  n_cells <- components %>% count()
+  n_cells <- components |> count()
   if (any(n_cells$n < minCells_per_celltype)) {
-    too_small <- n_cells %>%
+    too_small <- n_cells |>
       filter(n < minCells_per_celltype)
     if (verbose) {
       cli_alert(
@@ -586,11 +586,11 @@ AnnotateCells <- function(
         )
       )
     }
-    components <- components %>%
+    components <- components |>
       filter(!group %in% too_small$group)
   }
   if (verbose) cli_alert("  Kept {.val {length(unique(components$group))}} cell types after filtering")
-  components <- components %>% pull(component)
+  components <- components |> pull(component)
   new_groups <- set_names(groups, nm = colnames(reference_data))[components]
 
   # Compute cell type abundance profiles
@@ -619,21 +619,21 @@ read_pbmc_reference <-
       system.file(
         "extdata", "PBMC_cell_annotation.csv",
         package = "pixelatorR"
-      ) %>%
-      read.csv() %>%
+      ) |>
+      read.csv() |>
       column_to_rownames("sample_component")
 
     counts <-
       system.file(
         "extdata", "PBMC_cell_counts.csv",
         package = "pixelatorR"
-      ) %>%
-      read.csv(check.names = FALSE) %>%
+      ) |>
+      read.csv(check.names = FALSE) |>
       column_to_rownames("sample_component")
 
     counts <-
-      counts[rownames(cell_annotation), ] %>%
-      t() %>%
+      counts[rownames(cell_annotation), ] |>
+      t() |>
       as("dgCMatrix")
 
     # Create Seurat object

@@ -189,14 +189,14 @@
 #' library(dplyr)
 #' pxl_file <- minimal_pna_pxl_file()
 #' se <- ReadPNA_Seurat(pxl_file)
-#' se <- se %>%
+#' se <- se |>
 #'   LoadCellGraphs(add_layouts = TRUE)
 #'
 #' # Use cell_plot() and cell_plot_animate() instead
 #' \dontrun{
 #' # Create a gif from a 3D layout
 #' cg <- CellGraphs(se)[[3]]
-#' df <- cg@layout$wpmds_3d %>%
+#' df <- cg@layout$wpmds_3d |>
 #'   mutate(node_val = cg@counts[, "CD3e"])
 #' temp_gif <- fs::file_temp(ext = ".gif")
 #' render_rotating_layout(
@@ -219,18 +219,18 @@
 #' markers <- paste0("Marker", 1:3)
 #' df <- lapply(1:2, function(i) {
 #'   set.seed(i)
-#'   cg <- simulate_bipartite_graph(n_nodes = 5e3, epsilon = 8) %>%
+#'   cg <- simulate_bipartite_graph(n_nodes = 5e3, epsilon = 8) |>
 #'     add_binary_marker_counts_pol(marker_polarize = "Marker1", epsilon = 12)
-#'   xyz <- layout_with_weighted_pmds(cg@cellgraph, dim = 3) %>%
+#'   xyz <- layout_with_weighted_pmds(cg@cellgraph, dim = 3) |>
 #'     as_tibble(.name_repair = ~ c("x", "y", "z"))
 #'   lapply(colnames(cg@counts)[1:2], function(m) {
-#'     xyz %>%
-#'       mutate(node_val = cg@counts[, m] %>% as.character()) %>%
+#'     xyz |>
+#'       mutate(node_val = cg@counts[, m] |> as.character()) |>
 #'       mutate(marker = m)
-#'   }) %>%
-#'     bind_rows() %>%
+#'   }) |>
+#'     bind_rows() |>
 #'     mutate(cell = paste0("Cell", i))
-#' }) %>% bind_rows()
+#' }) |> bind_rows()
 #'
 #' temp_gif <- fs::file_temp(ext = ".gif")
 #' render_rotating_layout(
@@ -362,11 +362,11 @@ render_rotating_layout <- function(
   marker_col <- marker_col %||% "marker"
   # Add missing columns to data required for downstream processing
   if (!cell_col %in% names(data)) {
-    data <- data %>%
+    data <- data |>
       mutate(!!sym(cell_col) := cell_col)
   }
   if (!marker_col %in% names(data)) {
-    data <- data %>%
+    data <- data |>
       mutate(!!sym(marker_col) := marker_col)
   }
 
@@ -374,10 +374,10 @@ render_rotating_layout <- function(
   angles <- seq(0, max_degree, length.out = frames)
 
   # Create chunks to process
-  indices_split <- seq_along(angles) %>% split(ceiling(seq_along(angles) / 3))
+  indices_split <- seq_along(angles) |> split(ceiling(seq_along(angles) / 3))
 
   # Create temporary directory where the frames will be saved
-  tmp_dir <- fs::file_temp() %>% stringr::str_replace("file", "dir")
+  tmp_dir <- fs::file_temp() |> stringr::str_replace("file", "dir")
   dir.create(tmp_dir)
 
   # Get cell axes ranges
@@ -386,17 +386,17 @@ render_rotating_layout <- function(
   # We then rescale the x, y, and z coordinates of each cell
   # such that the maximum absolute value of the coordinates is 1.
   # This is to ensure that all cells will fit to the same plot area.
-  xyz_grouped <- data %>%
-    select(x, y, z, node_val, all_of(c(marker_col, cell_col))) %>%
+  xyz_grouped <- data |>
+    select(x, y, z, node_val, all_of(c(marker_col, cell_col))) |>
     group_by(across(all_of(cell_col)))
-  group_d <- xyz_grouped %>% group_keys()
-  xyz_list <- xyz_grouped %>%
-    group_split() %>%
+  group_d <- xyz_grouped |> group_keys()
+  xyz_list <- xyz_grouped |>
+    group_split() |>
     set_names(nm = if (nrow(group_d) == 1) "cell" else group_d[, 1, drop = TRUE])
   if (scale_layout) {
     xyz_list <- lapply(xyz_list, function(xyz) {
-      xyz_scaled <- xyz %>%
-        select(x, y, z) %>%
+      xyz_scaled <- xyz |>
+        select(x, y, z) |>
         scale_layout(percentile = 1)
       xyz[, c("x", "y", "z")] <- xyz_scaled
       return(xyz)
@@ -426,18 +426,18 @@ render_rotating_layout <- function(
     # We then summarize the minimum and maximum values of the node_val
     # column for each marker. This is to make sure that each marker
     # has the same fixed color scale across different cells.
-    marker_limits <- data %>%
-      group_by(!!sym(marker_col)) %>%
+    marker_limits <- data |>
+      group_by(!!sym(marker_col)) |>
       summarize(
         min = min(node_val, na.rm = TRUE),
         max = max(node_val, na.rm = TRUE), .groups = "keep"
       )
-    marker_limits <- marker_limits %>%
-      group_split() %>%
-      set_names(nm = marker_limits[, 1, drop = TRUE]) %>%
+    marker_limits <- marker_limits |>
+      group_split() |>
+      set_names(nm = marker_limits[, 1, drop = TRUE]) |>
       lapply(function(x) {
-        x %>%
-          select(min, max) %>%
+        x |>
+          select(min, max) |>
           as.numeric()
       })
   } else {
@@ -446,10 +446,10 @@ render_rotating_layout <- function(
 
   # Create a nested list of tibbles, one for each cell, and one for each marker
   xyz_list_nested <- lapply(xyz_list, function(xyz) {
-    xyz_list_cell <- xyz %>% group_by(across(all_of(marker_col)))
-    group_d <- xyz_list_cell %>% group_keys()
-    xyz_list_cell <- xyz_list_cell %>%
-      group_split() %>%
+    xyz_list_cell <- xyz |> group_by(across(all_of(marker_col)))
+    group_d <- xyz_list_cell |> group_keys()
+    xyz_list_cell <- xyz_list_cell |>
+      group_split() |>
       set_names(nm = if (nrow(group_d) == 1) "marker" else group_d[, 1, drop = TRUE])
     return(xyz_list_cell)
   })
@@ -471,9 +471,9 @@ render_rotating_layout <- function(
           normalize_illumination
         )
         df
-      }) %>%
+      }) |>
         set_names(names(xyz_list_cell))
-    }) %>%
+    }) |>
       set_names(names(xyz_list_nested))
   }
 
@@ -496,9 +496,9 @@ render_rotating_layout <- function(
       # such that the nodes are stacked from back to front
       xyz_list_cur <- lapply(xyz_list_nested, function(xyz_cell) {
         xyz_cell <- lapply(xyz_cell, function(xyz) {
-          xyz_rotated <- .rotate_around_z(xyz %>% select(x, y, z), angles[i])
+          xyz_rotated <- .rotate_around_z(xyz |> select(x, y, z), angles[i])
           xyz[, c("x", "y", "z")] <- xyz_rotated
-          xyz <- xyz %>%
+          xyz <- xyz |>
             arrange(pick(all_of("y")))
           return(xyz)
         })
@@ -972,11 +972,11 @@ render_rotating_layout <- function(
 ) {
   if (use_facet_grid) {
     xyz_collapsed <- lapply(xyz_list_nested, function(xyz_cell) {
-      xyz_cell %>%
-        unname() %>%
+      xyz_cell |>
+        unname() |>
         bind_rows()
-    }) %>%
-      unname() %>%
+    }) |>
+      unname() |>
       bind_rows()
     if (use_illumination) {
       legend_df <- .legend_carrier_data(
@@ -1047,7 +1047,7 @@ render_rotating_layout <- function(
       xyz_list_cell <- xyz_list_nested[[cell_id]]
       # Create a list of ggplot objects per marker
       marker_plots <- lapply(names(xyz_list_cell), function(marker_id) {
-        df <- xyz_list_cell[[marker_id]] %>%
+        df <- xyz_list_cell[[marker_id]] |>
           mutate(row_text = marker_id)
         if (use_illumination) {
           legend_df <- .legend_carrier_data(
@@ -1155,7 +1155,7 @@ render_rotating_layout <- function(
 
       # Create a patchwork with the column labels, leaving an empty
       # space for the upper left corner of the grid
-      col_labels <- c(list(plot_spacer()), col_labels) %>%
+      col_labels <- c(list(plot_spacer()), col_labels) |>
         wrap_plots(
           nrow = 1,
           widths = c(margin_widths[2], rep(col_width, length(col_labels)))
@@ -1238,7 +1238,7 @@ render_rotating_layout <- function(
     for (cell_id in names(xyz_list_nested)) {
       df <- xyz_list_nested[[cell_id]][[marker_id]]
 
-      max_radius <- max(sqrt(rowSums((df %>% select(x, y, z))^2)))
+      max_radius <- max(sqrt(rowSums((df |> select(x, y, z))^2)))
 
       z_norm <- scales::rescale(df$z, from = c(-max_radius, max_radius), to = c(3, 1))
       apparent_sizes <- sqrt(1 / (z_norm^2))
@@ -1330,7 +1330,7 @@ render_rotating_layout <- function(
 #'
 .rotate_around_z <- function(coords, angle_degrees) {
   rotation_matrix <- .create_rotation_matrix(angle_degrees)
-  as_tibble(t(rotation_matrix %*% t(coords %>% as.matrix())), .name_repair = ~ c("x", "y", "z"))
+  as_tibble(t(rotation_matrix %*% t(coords |> as.matrix())), .name_repair = ~ c("x", "y", "z"))
 }
 
 
@@ -1354,7 +1354,7 @@ scale_layout <- function(
   assert_class(layout, classes = c("data.frame", "tbl_df"))
   assert_within_limits(percentile, c(0, 1))
 
-  layout <- layout %>%
+  layout <- layout |>
     select(any_of(c("x", "y", "z")))
 
   if (!ncol(layout) %in% c(2, 3)) {
@@ -1363,7 +1363,7 @@ scale_layout <- function(
 
   radii <- sqrt(rowSums(layout^2))
   perc <- quantile(radii, percentile)
-  layout_scaled <- layout %>%
+  layout_scaled <- layout |>
     mutate(across(everything(), ~ .x / perc))
 
   return(layout_scaled)
@@ -1490,7 +1490,7 @@ scale_layout <- function(
   }
 
   # Display the first frame in the viewer
-  p <- png::readPNG(file) %>% as.raster()
+  p <- png::readPNG(file) |> as.raster()
   old_par <- par(no.readonly = TRUE)
   on.exit(par(old_par))
   par(mar = c(0, 0, 0, 0))
@@ -1688,7 +1688,7 @@ scale_layout <- function(
       colors <- colorRampPalette(colors)(length(unique(data$node_val)))
     }
     if (inherits(data$node_val, "character")) {
-      data <- data %>%
+      data <- data |>
         mutate(node_val = factor(node_val, levels = unique(node_val)))
     }
   }
@@ -1771,7 +1771,7 @@ scale_layout <- function(
 #' \dontrun{
 #' temp_gif <- fs::file_temp(ext = ".gif")
 #' render_rotating_layout(
-#'   data = layout %>%
+#'   data = layout |>
 #'     mutate(node_val = illum),
 #'   pt_size = 0.8,
 #'   width = 740,

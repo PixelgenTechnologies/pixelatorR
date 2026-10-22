@@ -12,7 +12,7 @@ test_that("distance_from_node_set works as expected", {
 
   # Returns a CellGraph with the new node attribute
   expect_s4_class(out, "CellGraph")
-  out_dist <- out@cellgraph %N>% as_tibble() %>% select(name, distance_from_seed)
+  out_dist <- out@cellgraph %N>% as_tibble() |> select(name, distance_from_seed)
   expect_s3_class(out_dist, "tbl_df")
   expect_equal(names(out_dist), c("name", "distance_from_seed"))
   expect_type(out_dist$distance_from_seed, "integer")
@@ -26,7 +26,7 @@ test_that("distance_from_node_set works as expected", {
 
   # Data-level snippet of the first 10 rows
   expect_equal(
-    out_dist %>% slice(1:10),
+    out_dist |> slice(1:10),
     structure(
       list(
         name = c(

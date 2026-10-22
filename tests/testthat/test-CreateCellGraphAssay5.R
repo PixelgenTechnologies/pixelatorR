@@ -3,15 +3,15 @@ mat <- ReadMPX_counts(pxl_file)
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 components <- colnames(mat)
 edgelist <-
-  edgelist %>%
-  select(upia, upib, marker, component) %>%
-  distinct() %>%
-  group_by(component) %>%
-  group_split() %>%
+  edgelist |>
+  select(upia, upib, marker, component) |>
+  distinct() |>
+  group_by(component) |>
+  group_split() |>
   setNames(nm = components)
 bipartite_graphs <- lapply(edgelist, function(x) {
-  g <- x %>% tidygraph::as_tbl_graph(directed = FALSE)
-  g <- g %>% mutate(node_type = case_when(name %in% x$upia ~ "A", TRUE ~ "B"))
+  g <- x |> tidygraph::as_tbl_graph(directed = FALSE)
+  g <- g |> mutate(node_type = case_when(name %in% x$upia ~ "A", TRUE ~ "B"))
   attr(g, "type") <- "bipartite"
   CreateCellGraphObject(cellgraph = g)
 })

@@ -36,6 +36,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Package code, tests, and examples use the base R pipe `|>` instead of
+  magrittr's `%>%`. `lintr::pipe_consistency_linter()` now requires `|>`.
 - The default color palette for a mapped `cell_plot()` color column is
   `PixelgenGradient(7, "Cherry")`.
 - `ReadPNA_Seurat()` keeps `__adata__obs` columns matching `^k_core_`

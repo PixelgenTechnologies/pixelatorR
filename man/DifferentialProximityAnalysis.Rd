@@ -238,19 +238,19 @@ that comparison will be skipped.
 \examples{
 library(dplyr)
 example_data <- tidyr::expand_grid(
-  marker_1 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") \%>\%
+  marker_1 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") |>
     rep(each = 50),
-  marker_2 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") \%>\%
+  marker_2 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") |>
     rep(each = 50)
-) \%>\%
+) |>
   mutate(
     join_count_z = rnorm(n(), sd = 10)
   )
 
-example_data <- example_data \%>\%
-  mutate(sampleID = "ctrl") \%>\%
+example_data <- example_data |>
+  mutate(sampleID = "ctrl") |>
   bind_rows(
-    example_data \%>\% mutate(join_count_z = join_count_z + 1) \%>\%
+    example_data |> mutate(join_count_z = join_count_z + 1) |>
       mutate(sampleID = "treatment")
   )
 

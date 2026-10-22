@@ -38,13 +38,13 @@
 #'
 #' @examples
 #' library(dplyr)
-#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-#'   LoadCellGraphs(cells = colnames(.)[4], verbose = FALSE)
+#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[4], verbose = FALSE))()
 #'
 #' cg <- CellGraphs(se)[[4]]
 #' g <- cg@cellgraph
 #'
-#' xyz <- layout_with_coarsened_pmds(g) %>%
+#' xyz <- layout_with_coarsened_pmds(g) |>
 #'   as_tibble(.name_repair = ~ c("x", "y", "z"))
 #'
 #' plotly::plot_ly(
@@ -96,7 +96,7 @@ layout_with_coarsened_pmds <- function(
 
   # Run Leiden community detection
   if (leiden_weighted) {
-    g <- g %>% prob_distance_weights(k = 1, min_weight = 0)
+    g <- g |> prob_distance_weights(k = 1, min_weight = 0)
     ew <- -log10(igraph::E(g)$bi_prob)
     ew <- ew / mean(ew)
     ew <- 1 / ew

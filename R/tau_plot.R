@@ -56,7 +56,7 @@ TauPlot.data.frame <- function(
   )
 
   # Create plot
-  object %>%
+  object |>
     ggplot(aes(tau, !!sym(mol_per_upia), color = tau_type)) +
     geom_point() +
     {

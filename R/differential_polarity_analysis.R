@@ -56,7 +56,7 @@ RunDPA.data.frame <- function(
   )
 
   # Remove redundant columns
-  object <- object %>%
+  object <- object |>
     select(all_of(c("marker", "component", contrast_column, group_vars, polarity_metric)))
 
   # Define targets as all groups except the reference if not specified
@@ -72,7 +72,7 @@ RunDPA.data.frame <- function(
   )
 
   # Discard unused data columns
-  object <- object %>%
+  object <- object |>
     select(all_of(c("marker", polarity_metric, "component", contrast_column, group_vars)))
 
   # Group data and get contrasts
@@ -80,26 +80,26 @@ RunDPA.data.frame <- function(
     cli_alert_info("Splitting data by: {paste(c('marker', group_vars), collapse = ', ')}")
     cli_alert_info("Polarity metric: '{polarity_metric}'")
   }
-  test_groups <- object %>%
-    {
+  test_groups <- object |>
+    (\(.) {
       if (!is.null(group_vars)) {
         group_by(., pick(all_of(c("marker", group_vars))))
       } else {
         group_by(., pick(all_of("marker")))
       }
-    }
+    })()
 
   if (min_cells_per_group > 0) {
     # Filter test groups by minimum number of observations allowed
-    test_groups <- test_groups %>%
-      group_by(!!sym(contrast_column), .add = TRUE) %>%
-      mutate(n = n()) %>%
-      filter(n > min_cells_per_group) %>%
-      ungroup(!!sym(contrast_column)) %>%
+    test_groups <- test_groups |>
+      group_by(!!sym(contrast_column), .add = TRUE) |>
+      mutate(n = n()) |>
+      filter(n > min_cells_per_group) |>
+      ungroup(!!sym(contrast_column)) |>
       mutate(
         ref_n = sum(!!sym(contrast_column) == reference),
         target_n = sum(!!sym(contrast_column) %in% targets)
-      ) %>%
+      ) |>
       filter(ref_n > 0, target_n > 0)
     if (nrow(test_groups) == 0) {
       cli::cli_abort(
@@ -109,14 +109,14 @@ RunDPA.data.frame <- function(
   }
 
   # Get group keys
-  test_groups_keys <- test_groups %>% group_keys()
+  test_groups_keys <- test_groups |> group_keys()
 
   if (verbose && check_global_verbosity()) {
     .print_da_group_strategy(test_groups_keys, targets, reference)
   }
 
   # Split table by group keys
-  test_groups <- test_groups %>% group_split()
+  test_groups <- test_groups |> group_split()
 
   # Chunk the data to enable parallel processing
   # Decide how to split the data depending on the cl
@@ -159,17 +159,17 @@ RunDPA.data.frame <- function(
     # Process current chunk
     pol_test_chunk <- lapply(test_groups_chunk, function(polarity_contrast) {
       # Fetch marker for current comparison
-      marker <- polarity_contrast$marker %>% unique()
+      marker <- polarity_contrast$marker |> unique()
 
       # Get numeric data values for all targets
       x_list <- lapply(targets, function(target) {
-        polarity_contrast %>%
-          filter(.data[[contrast_column]] == target) %>%
+        polarity_contrast |>
+          filter(.data[[contrast_column]] == target) |>
           pull(all_of(polarity_metric))
-      }) %>%
+      }) |>
         set_names(nm = targets)
-      y <- polarity_contrast %>%
-        filter(.data[[contrast_column]] == reference) %>%
+      y <- polarity_contrast |>
+        filter(.data[[contrast_column]] == reference) |>
         pull(all_of(polarity_metric))
 
       # Run wilcox.test for all targets vs reference
@@ -206,39 +206,39 @@ RunDPA.data.frame <- function(
         result <- result$result
 
         # Tidy up results
-        result <- result %>%
-          .tidy() %>%
+        result <- result |>
+          .tidy() |>
           mutate(
             n1 = length(x), n2 = length(y), method = "Wilcoxon",
             alternative = alternative, data_type = polarity_metric,
             target = target, reference = reference, p = signif(p.value, 3)
-          ) %>%
+          ) |>
           select(c(
             "estimate", "data_type", "target", "reference", "n1", "n2", "statistic",
             "p", "conf.low", "conf.high", "method", "alternative"
-          )) %>%
+          )) |>
           mutate(marker = marker)
 
         # Add additional group columns
         if (!is.null(group_vars)) {
           for (group_var in group_vars) {
-            result[[group_var]] <- polarity_contrast[, group_var, drop = TRUE] %>% unique()
+            result[[group_var]] <- polarity_contrast[, group_var, drop = TRUE] |> unique()
           }
         }
 
         return(result)
-      }) %>%
+      }) |>
         bind_rows()
     })
 
-    return(pol_test_chunk %>% bind_rows())
+    return(pol_test_chunk |> bind_rows())
   }, cl = cl)
 
   pol_test_bind <- bind_rows(pol_test)
 
   # Adjust p-values
-  pol_test_bind <- pol_test_bind %>%
-    mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
+  pol_test_bind <- pol_test_bind |>
+    mutate(p_adj = p.adjust(p, p_adjust_method)) |>
     relocate(p_adj, .after = "p")
 
   return(pol_test_bind)
@@ -295,7 +295,7 @@ RunDPA.Seurat <- function(
   group_data <- .select_group_data(object[[]], contrast_column, group_vars)
 
   # Add group data to polarization table
-  polarization_data <- polarization_data %>%
+  polarization_data <- polarization_data |>
     left_join(y = group_data, by = "component")
 
   # Run DPA

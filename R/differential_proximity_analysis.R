@@ -10,19 +10,19 @@ NULL
 #' @examples
 #' library(dplyr)
 #' example_data <- tidyr::expand_grid(
-#'   marker_1 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") %>%
+#'   marker_1 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") |>
 #'     rep(each = 50),
-#'   marker_2 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") %>%
+#'   marker_2 = c("HLA-ABC", "B2M", "CD4", "CD8", "CD20", "CD19", "CD45", "CD43") |>
 #'     rep(each = 50)
-#' ) %>%
+#' ) |>
 #'   mutate(
 #'     join_count_z = rnorm(n(), sd = 10)
 #'   )
 #'
-#' example_data <- example_data %>%
-#'   mutate(sampleID = "ctrl") %>%
+#' example_data <- example_data |>
+#'   mutate(sampleID = "ctrl") |>
 #'   bind_rows(
-#'     example_data %>% mutate(join_count_z = join_count_z + 1) %>%
+#'     example_data |> mutate(join_count_z = join_count_z + 1) |>
 #'       mutate(sampleID = "treatment")
 #'   )
 #'
@@ -63,8 +63,8 @@ DifferentialProximityAnalysis.data.frame <- function(
   metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
   object <- switch(metric_type,
     all = object,
-    self = object %>% filter(marker_1 == marker_2),
-    co = object %>% filter(marker_1 != marker_2)
+    self = object |> filter(marker_1 == marker_2),
+    co = object |> filter(marker_1 != marker_2)
   )
   if (nrow(object) == 0) {
     cli::cli_abort("No data found for the specified metric type.")
@@ -82,11 +82,11 @@ DifferentialProximityAnalysis.data.frame <- function(
   )
 
   # Keep relevant columns
-  object <- object %>%
+  object <- object |>
     select(any_of(c("marker_1", "marker_2", proximity_metric, "component", contrast_column, group_vars)))
 
   # Group data by marker pair, contrast column and optional group variables
-  test_groups <- object %>%
+  test_groups <- object |>
     group_by(pick(all_of(c("marker_1", "marker_2", contrast_column, group_vars))))
 
   if (min_cells_per_group > 0) {
@@ -95,19 +95,19 @@ DifferentialProximityAnalysis.data.frame <- function(
     }
 
     # Compress the massive table into a tiny count table
-    valid_groups <- test_groups %>%
-      count(name = "cell_count") %>%
-      filter(cell_count >= min_cells_per_group) %>%
-      ungroup(!!sym(contrast_column)) %>%
-      mutate(n_groups = n(), ref_present = sum(!!sym(contrast_column) == reference)) %>%
-      filter(n_groups > 1, ref_present == 1) %>%
+    valid_groups <- test_groups |>
+      count(name = "cell_count") |>
+      filter(cell_count >= min_cells_per_group) |>
+      ungroup(!!sym(contrast_column)) |>
+      mutate(n_groups = n(), ref_present = sum(!!sym(contrast_column) == reference)) |>
+      filter(n_groups > 1, ref_present == 1) |>
       select(-n_groups, -ref_present)
 
     # Filter the massive original table using the valid combinations found above
-    test_groups <- test_groups %>%
-      ungroup() %>%
-      semi_join(valid_groups, by = c("marker_1", "marker_2", contrast_column, group_vars)) %>%
-      as_tibble() %>%
+    test_groups <- test_groups |>
+      ungroup() |>
+      semi_join(valid_groups, by = c("marker_1", "marker_2", contrast_column, group_vars)) |>
+      as_tibble() |>
       group_by(pick(all_of(c("marker_1", "marker_2", contrast_column, group_vars))))
     if (nrow(test_groups) == 0) {
       cli::cli_abort(glue(
@@ -118,11 +118,11 @@ DifferentialProximityAnalysis.data.frame <- function(
 
   # Compute group keys (drop marker columns; this method groups by marker pair
   # internally but iterates over contrast/group-var combinations only)
-  test_groups_keys <- test_groups %>%
-    group_keys() %>%
-    select(-marker_1, -marker_2) %>%
-    filter(!!sym(contrast_column) %in% targets) %>%
-    distinct() %>%
+  test_groups_keys <- test_groups |>
+    group_keys() |>
+    select(-marker_1, -marker_2) |>
+    filter(!!sym(contrast_column) %in% targets) |>
+    distinct() |>
     mutate_all(as.character)
 
   if (nrow(test_groups_keys) == 0) {
@@ -141,7 +141,7 @@ DifferentialProximityAnalysis.data.frame <- function(
 
   # Create a list to store the results in
   keys <- apply(test_groups_keys, 1, paste, collapse = "_")
-  diff_prox_res <- rep(list(NULL), length(keys)) %>%
+  diff_prox_res <- rep(list(NULL), length(keys)) |>
     set_names(keys)
 
   # iterate over group pairs
@@ -154,7 +154,7 @@ DifferentialProximityAnalysis.data.frame <- function(
     # If group_vars=NULL, the key is simply one of targets.
     # Otherwise, the key is target + additional group_vars.
     cur_keys <- test_groups_keys[i, ]
-    key <- as.character(cur_keys) %>% paste(collapse = "_")
+    key <- as.character(cur_keys) |> paste(collapse = "_")
     groups_keep <- c(reference, cur_keys[, contrast_column, drop = TRUE])
 
     # Filter data to the current comparison (contrast + group_vars)
@@ -167,53 +167,53 @@ DifferentialProximityAnalysis.data.frame <- function(
     )
 
     # Group by marker pair and compute ranks
-    cur_test_groups_rank <- cur_test_groups %>%
-      {
+    cur_test_groups_rank <- cur_test_groups |>
+      (\(.) {
         if (backend == "data.table") {
-          dtplyr::lazy_dt(.) %>%
-            group_by(marker_1, marker_2) %>%
+          dtplyr::lazy_dt(.) |>
+            group_by(marker_1, marker_2) |>
             mutate(r = data.table::frank(-!!sym(proximity_metric), ties.method = "average"))
         } else {
-          group_by(., marker_1, marker_2) %>%
+          group_by(., marker_1, marker_2) |>
             mutate(r = rank(-!!sym(proximity_metric), ties.method = "average"))
         }
-      }
+      })()
 
     # Compute the number of ties per marker pair
-    cur_test_groups_ties <- cur_test_groups_rank %>%
-      group_by(marker_1, marker_2, r) %>%
-      summarize(nties = n(), .groups = "drop") %>%
-      group_by(marker_1, marker_2) %>%
-      summarize(nties_const = sum(nties^3 - nties), .groups = "drop") %>%
+    cur_test_groups_ties <- cur_test_groups_rank |>
+      group_by(marker_1, marker_2, r) |>
+      summarize(nties = n(), .groups = "drop") |>
+      group_by(marker_1, marker_2) |>
+      summarize(nties_const = sum(nties^3 - nties), .groups = "drop") |>
       collect()
 
     # Compute the U statistic, Z score and p-value
-    cur_test_groups_u <- cur_test_groups_rank %>%
-      group_by(!!sym(contrast_column), .add = TRUE) %>%
-      summarize(rank_sum = sum(r), n = n(), med = median(!!sym(proximity_metric)), .groups = "drop") %>%
-      pivot_wider(names_from = !!sym(contrast_column), values_from = c("rank_sum", "n", "med")) %>%
+    cur_test_groups_u <- cur_test_groups_rank |>
+      group_by(!!sym(contrast_column), .add = TRUE) |>
+      summarize(rank_sum = sum(r), n = n(), med = median(!!sym(proximity_metric)), .groups = "drop") |>
+      pivot_wider(names_from = !!sym(contrast_column), values_from = c("rank_sum", "n", "med")) |>
       select(all_of(c(
         "marker_1", "marker_2",
         paste0("rank_sum_", groups_keep),
         paste0("n_", groups_keep),
         paste0("med_", groups_keep)
-      ))) %>%
-      rename(rs_ref = 3L, rs_tgt = 4L, n_ref = 5L, n_tgt = 6L, med_ref = 7L, med_tgt = 8L) %>%
+      ))) |>
+      rename(rs_ref = 3L, rs_tgt = 4L, n_ref = 5L, n_tgt = 6L, med_ref = 7L, med_tgt = 8L) |>
       mutate(
         med_diff = med_tgt - med_ref,
         u = rs_tgt - n_tgt * (n_tgt + 1) / 2,
         auc = u / (n_ref * n_tgt)
-      ) %>%
+      ) |>
       # Include the number of ties in the computation which
       # were computed in the previous step
-      {
+      (\(.) {
         if (nrow(cur_test_groups_ties) > 0) {
           left_join(., cur_test_groups_ties, by = c("marker_1", "marker_2"))
         } else {
           mutate(., nties_const = 0)
         }
-      } %>%
-      mutate(z = u - (n_ref * n_tgt) / 2) %>%
+      })() |>
+      mutate(z = u - (n_ref * n_tgt) / 2) |>
       mutate(
         sigma = sqrt(
           (n_ref * n_tgt / 12) *
@@ -221,11 +221,11 @@ DifferentialProximityAnalysis.data.frame <- function(
               ((n_ref + n_tgt) * (n_ref + n_tgt - 1))
             )
         )
-      ) %>%
+      ) |>
       # Formula for two.sided test which is currently the only option
-      mutate(z = (z - sign(z) * 0.5) / sigma) %>%
-      mutate(p_val = 2 * pmin(pnorm(z), pnorm(z, lower.tail = FALSE))) %>%
-      collect() %>%
+      mutate(z = (z - sign(z) * 0.5) / sigma) |>
+      mutate(p_val = 2 * pmin(pnorm(z), pnorm(z, lower.tail = FALSE))) |>
+      collect() |>
       na.omit()
 
     # Tidy up the results
@@ -242,8 +242,8 @@ DifferentialProximityAnalysis.data.frame <- function(
       p = cur_test_groups_u$p_val,
       marker_1 = cur_test_groups_u$marker_1,
       marker_2 = cur_test_groups_u$marker_2
-    ) %>%
-      filter(!is.na(n_ref), !is.na(n_tgt)) %>%
+    ) |>
+      filter(!is.na(n_ref), !is.na(n_tgt)) |>
       .append_group_vars(cur_keys = cur_keys, group_vars = group_vars)
   }
 
@@ -320,7 +320,7 @@ DifferentialProximityAnalysis.Matrix <- function(
   )
 
   # Lift the component identifier into a column for downstream filtering
-  group_data <- group_data %>%
+  group_data <- group_data |>
     as_tibble(rownames = "component")
 
   # Group data by contrast column and optional group variables, and compute keys
@@ -345,7 +345,7 @@ DifferentialProximityAnalysis.Matrix <- function(
 
   # Create a list to store the results in
   keys <- apply(test_groups_keys, 1, paste, collapse = "_")
-  diff_prox_res <- rep(list(NULL), length(keys)) %>%
+  diff_prox_res <- rep(list(NULL), length(keys)) |>
     set_names(keys)
 
   # iterate over group pairs
@@ -356,7 +356,7 @@ DifferentialProximityAnalysis.Matrix <- function(
 
     # Fetch the current group keys
     cur_keys <- test_groups_keys[i, ]
-    key <- as.character(cur_keys) %>% paste(collapse = "_")
+    key <- as.character(cur_keys) |> paste(collapse = "_")
 
     # Filter data to the current comparison (contrast + group_vars)
     cur_test_groups <- .filter_cur_group(
@@ -367,11 +367,11 @@ DifferentialProximityAnalysis.Matrix <- function(
       group_vars = group_vars
     )
 
-    components_reference <- cur_test_groups %>%
-      filter(!!sym(contrast_column) == reference) %>%
+    components_reference <- cur_test_groups |>
+      filter(!!sym(contrast_column) == reference) |>
       pull(component)
-    components_target <- cur_test_groups %>%
-      filter(!!sym(contrast_column) != reference) %>%
+    components_target <- cur_test_groups |>
+      filter(!!sym(contrast_column) != reference) |>
       pull(component)
 
     n_comps_reference <- length(components_reference)
@@ -431,7 +431,7 @@ DifferentialProximityAnalysis.Matrix <- function(
       diff_median = de_results$difference,
       p = de_results$p_val,
       pair = rownames(de_results)
-    ) %>%
+    ) |>
       .append_group_vars(cur_keys = cur_keys, group_vars = group_vars)
   }
 
@@ -444,7 +444,7 @@ DifferentialProximityAnalysis.Matrix <- function(
     cli::cli_abort("No valid results were generated. Please check your input data and parameters.")
   }
 
-  .finalize_da_results(diff_prox_res, p_adjust_method, group_vars) %>%
+  .finalize_da_results(diff_prox_res, p_adjust_method, group_vars) |>
     tidyr::separate(pair, into = c("marker_1", "marker_2"), sep = ":")
 }
 
@@ -517,14 +517,14 @@ DifferentialProximityAnalysis.Seurat <- function(
   # Add group data
   group_data <- .select_group_data(object[[]], contrast_column, group_vars)
   if (method == "seurat") {
-    group_data <- group_data %>%
+    group_data <- group_data |>
       column_to_rownames("component")
   }
 
   # Add group data to colocalization table
   if (method == "legacy") {
-    proximity_data <- proximity_data %>%
-      left_join(y = group_data, copy = TRUE, by = "component") %>%
+    proximity_data <- proximity_data |>
+      left_join(y = group_data, copy = TRUE, by = "component") |>
       collect()
   }
 
@@ -926,7 +926,7 @@ FindAllProximityMarkers.Seurat <- function(
 #'   marker_1 = c("CD19", "CD3E"),
 #'   marker_2 = c("CD19", "CD3E"),
 #'   component = paste0("cell", seq_len(12))
-#' ) %>%
+#' ) |>
 #'   mutate(
 #'     join_count_z = rnorm(n()),
 #'     seurat_clusters = dplyr::case_when(
@@ -989,7 +989,7 @@ FindAllProximityMarkers.data.frame <- function(
   }
 
   # Copy so the caller's table is left unchanged, including data.table inputs.
-  object <- as_tibble(object) %>% ungroup()
+  object <- as_tibble(object) |> ungroup()
   assert_col_in_data("component", object, call = call)
   assert_col_in_data("marker_1", object, call = call)
   assert_col_in_data("marker_2", object, call = call)
@@ -1003,10 +1003,10 @@ FindAllProximityMarkers.data.frame <- function(
     cli::cli_warn(
       "Dropping {n_missing_component} row{?s} with missing component values."
     )
-    object <- object %>% filter(!is.na(component))
+    object <- object |> filter(!is.na(component))
   }
 
-  labels_by_cell <- object %>%
+  labels_by_cell <- object |>
     distinct(component, !!sym(group_by))
   if (anyDuplicated(labels_by_cell$component)) {
     cli::cli_abort(
@@ -1028,8 +1028,8 @@ FindAllProximityMarkers.data.frame <- function(
 
   scored <- switch(metric_type,
     all = object,
-    self = object %>% filter(marker_1 == marker_2),
-    co = object %>% filter(marker_1 != marker_2)
+    self = object |> filter(marker_1 == marker_2),
+    co = object |> filter(marker_1 != marker_2)
   )
   if (nrow(scored) == 0) {
     cli::cli_abort(
@@ -1037,8 +1037,8 @@ FindAllProximityMarkers.data.frame <- function(
       call = call
     )
   }
-  proximity_matrix <- scored %>%
-    ProximityScoresToAssay(values_from = proximity_metric) %>%
+  proximity_matrix <- scored |>
+    ProximityScoresToAssay(values_from = proximity_metric) |>
     .pad_proximity_matrix(cells = names(label_chr))
 
   .run_matrix_one_vs_rest(
@@ -1103,15 +1103,15 @@ FindAllProximityMarkers.data.frame <- function(
   metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
   proximity_data <- switch(metric_type,
     all = proximity_data,
-    self = proximity_data %>% filter(marker_1 == marker_2),
-    co = proximity_data %>% filter(marker_1 != marker_2)
-  ) %>%
+    self = proximity_data |> filter(marker_1 == marker_2),
+    co = proximity_data |> filter(marker_1 != marker_2)
+  ) |>
     filter(join_count_expected_mean >= min_exp_join_count)
-  proximity_data <- proximity_data %>% compute()
+  proximity_data <- proximity_data |> compute()
   if (method == "seurat") {
-    proximity_data <- proximity_data %>%
-      compute() %>%
-      ProximityScoresToAssay(values_from = proximity_metric) %>%
+    proximity_data <- proximity_data |>
+      compute() |>
+      ProximityScoresToAssay(values_from = proximity_metric) |>
       .pad_proximity_matrix(cells = colnames(object))
   }
   proximity_data
