@@ -503,6 +503,16 @@ test_that("FindAllProximityMarkers fails with invalid input", {
     ),
     "only_pos"
   )
+  expect_error(
+    FindAllProximityMarkers(
+      df,
+      group_by = "cluster",
+      proximity_metric = "join_count_z",
+      min_cells_per_group = 4,
+      unknown_arg = TRUE
+    ),
+    "unknown_arg"
+  )
 })
 
 pxl_file <- minimal_pna_pxl_file()
@@ -618,6 +628,15 @@ for (assay_version in c("v3", "v5")) {
         verbose = FALSE
       ),
       "Cannot pass"
+    )
+    expect_error(
+      FindAllProximityMarkers(
+        seur_obj_big,
+        group_by = "cell_type",
+        unknown_arg = TRUE,
+        verbose = FALSE
+      ),
+      "unknown_arg"
     )
   })
 

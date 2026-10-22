@@ -911,7 +911,6 @@ FindAllProximityMarkers.Seurat <- function(
     proximity_metric = proximity_metric,
     p_adjust_method = p_adjust_method,
     verbose = verbose,
-    dots = list(...),
     call = call
   )
 }
@@ -1056,7 +1055,6 @@ FindAllProximityMarkers.data.frame <- function(
     proximity_metric = proximity_metric,
     p_adjust_method = p_adjust_method,
     verbose = verbose,
-    dots = list(...),
     call = call
   )
 }
@@ -1145,12 +1143,12 @@ FindAllProximityMarkers.data.frame <- function(
 }
 
 
-#' Stop when the caller passes arguments that this function sets itself.
+#' Stop when the caller passes unsupported arguments to `FindAllProximityMarkers()`.
 #'
 #' @param ... Arguments supplied by the caller.
 #' @param call Calling environment used in the error message.
 #'
-#' @return Nothing. Signals an error when a blocked argument is present.
+#' @return Nothing. Signals an error when any extra argument is present.
 #'
 #' @noRd
 .reject_find_all_proximity_args <- function(..., call = caller_env()) {
@@ -1184,6 +1182,7 @@ FindAllProximityMarkers.data.frame <- function(
       call = call
     )
   }
+  rlang::check_dots_empty(call = call)
 }
 
 
@@ -1405,7 +1404,6 @@ FindAllProximityMarkers.data.frame <- function(
 #' @param proximity_metric Name of the proximity metric being tested.
 #' @param p_adjust_method Method passed to \code{p.adjust()} within each comparison.
 #' @param verbose Print progress messages.
-#' @param dots Extra arguments passed to \code{DifferentialProximityAnalysis()}.
 #' @param call Calling environment used in the error when no comparison succeeds.
 #'
 #' @return A tibble of test results stacked across comparisons.
@@ -1425,7 +1423,6 @@ FindAllProximityMarkers.data.frame <- function(
   proximity_metric,
   p_adjust_method,
   verbose,
-  dots,
   call = caller_env()
 ) {
   cells <- colnames(proximity_matrix)

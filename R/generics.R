@@ -1203,9 +1203,8 @@ DifferentialProximityAnalysis <- function(
 #' (see \code{?p.adjust}). P-values are adjusted within each one-versus-rest
 #' comparison.
 #' @param verbose Print messages.
-#' @param ... Additional arguments passed to
-#' \code{\link{DifferentialProximityAnalysis}}. \code{contrast_column},
-#' \code{reference}, \code{targets}, and \code{group_vars} are set by this
+#' @param ... Not used. \code{contrast_column}, \code{reference},
+#' \code{targets}, \code{group_vars}, and \code{group_data} are set by this
 #' function and cannot be supplied. \code{method} and \code{backend} are not
 #' used.
 #'

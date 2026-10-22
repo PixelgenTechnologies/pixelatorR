@@ -46,9 +46,8 @@ FindAllProximityMarkers(object, ...)
 \arguments{
 \item{object}{An object containing PNA proximity scores.}
 
-\item{...}{Additional arguments passed to
-\code{\link{DifferentialProximityAnalysis}}. \code{contrast_column},
-\code{reference}, \code{targets}, and \code{group_vars} are set by this
+\item{...}{Not used. \code{contrast_column}, \code{reference},
+\code{targets}, \code{group_vars}, and \code{group_data} are set by this
 function and cannot be supplied. \code{method} and \code{backend} are not
 used.}
 
