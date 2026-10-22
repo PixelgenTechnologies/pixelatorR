@@ -60,7 +60,13 @@ test_that("PixelDB computes proximity scores in a temporary table", {
     name = "computed_proximity_z"
   )
   expect_true(all(c("join_count_expected_sd", "join_count_z", "join_count_p") %in% colnames(proximity_z)))
-  expect_true(all(is.finite(proximity_z %>% pull(join_count_z))))
+  result_z <- proximity_z %>% collect()
+  expect_true(all(is.finite(result_z$join_count_z)))
+
+  # Verify binomial SD formula sqrt(n * p * (1 - p)) for both homotypic and heterotypic pairs
+  n_edges <- db$components_edgelist("0a45497c6bfbfb22") %>% nrow()
+  p <- result_z$join_count_expected_mean / n_edges
+  expect_equal(result_z$join_count_expected_sd, sqrt(n_edges * p * (1 - p)))
 
   table_info <- db$info() %>%
     filter(name == "computed_proximity")

@@ -1300,8 +1300,8 @@ PixelDB <- R6Class(
           "    SQRT(t1.f_umi1 * t2.f_umi2 * (1.0 - (t1.f_umi1 * t2.f_umi2)) * ge.n_edges)",
           "  ELSE",
           "    SQRT(",
-          "      (t1.f_umi1 * t2.f_umi2 * (1.0 - (t1.f_umi1 * t2.f_umi2)) +",
-          "       t2.f_umi1 * t1.f_umi2 * (1.0 - (t2.f_umi1 * t1.f_umi2))) * ge.n_edges",
+          "      (t1.f_umi1 * t2.f_umi2 + t2.f_umi1 * t1.f_umi2) *",
+          "      (1.0 - (t1.f_umi1 * t2.f_umi2 + t2.f_umi1 * t1.f_umi2)) * ge.n_edges",
           "    )",
           "END AS join_count_expected_sd"
         )
