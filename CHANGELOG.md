@@ -48,6 +48,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `components_edgelist()`).
 - `PixelDB$components_marker_counts()` now scans each component's edgelist once
   using a CTE instead of scanning twice for `umi1` and `umi2`.
+- `SummarizeProximityScores()` now computes `mean` and `median` summaries
+  (including zero-padded missing observations) directly in DuckDB when
+  `detailed = FALSE`, vectorizes post-collection calculations when
+  `detailed = TRUE`, and accepts multiple `proximity_metric` values (e.g.
+  `c("log2_ratio", "join_count_z")`).
 
 ### Fixes
 

@@ -1523,7 +1523,8 @@ FilterProximityScores <- function(
 #' \code{include_missing_obs = FALSE}.
 #'
 #' @param object A \code{tbl_df} or \code{tbl_lazy} object with proximity scores.
-#' @param proximity_metric The proximity metric to use. One of "log2_ratio" or "join_count_z".
+#' @param proximity_metric The proximity metric(s) to use. One or both of
+#' \code{"log2_ratio"} and \code{"join_count_z"}.
 #' @param group_vars A character vector with the names of the variables to use for
 #' grouping This is typically used is you want to summarize the proximity scores
 #' for multiple cell types and/or conditions.

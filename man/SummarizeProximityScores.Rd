@@ -11,7 +11,7 @@ SummarizeProximityScores(object, ...)
 
 \method{SummarizeProximityScores}{tbl_lazy}(
   object,
-  proximity_metric = c("log2_ratio", "join_count_z"),
+  proximity_metric = "log2_ratio",
   group_vars = NULL,
   include_missing_obs = TRUE,
   summary_stat = c("mean", "median"),
@@ -34,7 +34,8 @@ SummarizeProximityScores(object, ...)
 
 \item{...}{Additional arguments. Currently not used.}
 
-\item{proximity_metric}{The proximity metric to use. One of "log2_ratio" or "join_count_z".}
+\item{proximity_metric}{The proximity metric(s) to use. One or both of
+\code{"log2_ratio"} and \code{"join_count_z"}.}
 
 \item{group_vars}{A character vector with the names of the variables to use for
 grouping This is typically used is you want to summarize the proximity scores
