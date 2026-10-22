@@ -733,10 +733,7 @@ PixelDB <- R6Class(
     #'
     components_cell_graph = function(components,
                                      markers = NULL,
-<<<<<<< HEAD
                                      add_layouts = FALSE,
-=======
->>>>>>> 8a4ef9ac (Added marginal_saturation methods)
                                      verbose = FALSE) {
       self$check_connection()
       assert_vector(components, "character", n = 1)
