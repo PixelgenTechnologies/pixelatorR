@@ -33,6 +33,8 @@
 #' @importFrom cli col_green
 #' @importFrom cli col_red
 #' @importFrom cli symbol
+# tidygraph's %N>% and %E>% evaluate %>% in the caller environment.
+#' @importFrom dplyr %>%
 #' @importFrom dplyr across
 #' @importFrom dplyr all_of
 #' @importFrom dplyr any_of
