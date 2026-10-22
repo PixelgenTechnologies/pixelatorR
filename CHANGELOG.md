@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `ProximityScoresToAssay()` warns about components whose proximity scores are
+  all zero. It previously warned about components whose scores were all
+  non-zero.
+
 ### Added
 
 - `PixelDB$components_cell_graph()` gains an `add_layouts` argument (default
@@ -19,6 +25,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `min_degree` parameter in `approximate_edge_saturation()`,
   `approximate_node_saturation()`, and `approximate_saturation_curve()` to
   optionally filter out degree-1 leaves.
+- `FindAllProximityMarkers()` runs one-versus-rest differential proximity
+  tests for a single grouping column. Each level is compared to all other
+  levels pooled together. Proximity scores are pivoted once with
+  `ProximityScoresToAssay()` and each comparison uses the matrix method of
+  `DifferentialProximityAnalysis()`. `diff_threshold`, `min_pct`,
+  `min_diff_pct`, and `min_cells_per_group` apply to every input.
+  `lazy = TRUE` fetches proximity scores with `ProximityScores()` when they
+  were not loaded into the Seurat object.
 
 ### Changed
 
@@ -44,7 +58,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized `approximate_saturation_curve()` by pre-aggregating edge and node
   read-count histograms in DuckDB and materializing component-filtered
   edgelists as temporary tables.
-
 
 ## [0.23.0] - 2026-10-13
 

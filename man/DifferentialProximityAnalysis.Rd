@@ -37,6 +37,7 @@ DifferentialProximityAnalysis(object, ...)
   min_pct = 0,
   min_diff_pct = -Inf,
   min_cells_per_group = 10,
+  only_pos = FALSE,
   verbose = TRUE,
   ...
 )
@@ -110,10 +111,14 @@ is set to "seurat".}
 two groups for it to be considered for testing. Default is -Inf. This parameter is only used when
 the \code{method} argument is set to "seurat".}
 
+\item{only_pos}{If \code{TRUE}, test only marker pairs whose median is higher in the
+target group than in the reference. Pairs that do not pass are not tested. Default is \code{FALSE}.}
+
 \item{assay}{Name of assay to use}
 
 \item{lazy}{If TRUE, the proximity scores will be loaded lazily and filtered using the
-\code{duckdb} backend.}
+\code{duckdb} backend. Scores are fetched with \code{\link{ProximityScores}(object, lazy = TRUE)}.
+Set this when the \code{Seurat} object was created with \code{load_proximity_scores = FALSE}.}
 
 \item{min_exp_join_count}{Minimum number of join counts required for a marker pair to be
 included in the analysis. Dropped protein pairs (those with fewer than \code{min_exp_join_count} counts)
@@ -155,6 +160,9 @@ to compare \code{reference}. \code{targets} can be a single group name or a vect
 group names while \code{reference} can only refer to a single group. Both \code{targets}
 and \code{reference} should be present in the \code{contrast_column}. These parameters
 are similar to the \code{ident.1} and \code{ident.2} parameters in \code{FindMarkers}.
+
+To compare every level of a single grouping column against all other levels,
+use \code{\link{FindAllProximityMarkers}}.
 }
 \section{Additional groups}{
 
@@ -258,6 +266,7 @@ dp_results <- DifferentialProximityAnalysis(
 }
 \seealso{
 Other DA-methods: 
+\code{\link{FindAllProximityMarkers}()},
 \code{\link{RunDAA}()},
 \code{\link{RunDCA}()},
 \code{\link{RunDPA}()}
