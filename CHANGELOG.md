@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.24.0] - 2026-10-23
 
-### Fixed
-
-- `ProximityScoresToAssay()` warns about components whose proximity scores are
-  all zero. It previously warned about components whose scores were all
-  non-zero.
-
 ### Added
 
 - `PixelDB$components_cell_graph()` gains an `add_layouts` argument (default
@@ -63,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Optimized `approximate_saturation_curve()` by pre-aggregating edge and node
   read-count histograms in DuckDB and materializing component-filtered
   edgelists as temporary tables.
+- `ProximityScoresToAssay()` warns about components whose proximity scores are
+  all zero. It previously warned about components whose scores were all
+  non-zero.
 
 ## [0.23.0] - 2026-10-13
 
