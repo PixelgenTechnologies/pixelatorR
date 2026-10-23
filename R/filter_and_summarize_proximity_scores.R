@@ -63,7 +63,13 @@ FilterProximityScores.tbl_lazy <- function(
     assert_within_limits(min_cells_count, limits = c(0, Inf))
   }
 
-  if (is.null(c(background_threshold_pct, background_threshold_count, min_cells_count))) {
+  if (
+    is.null(c(
+      background_threshold_pct,
+      background_threshold_count,
+      min_cells_count
+    ))
+  ) {
     cli::cli_abort(
       c(
         "i" = "You must provide at least one of the following arguments: ",
@@ -168,41 +174,50 @@ FilterProximityScores.data.frame <- function(
 #'
 SummarizeProximityScores.tbl_lazy <- function(
   object,
-  proximity_metric = c("log2_ratio", "join_count_z"),
+  proximity_metric = "log2_ratio",
   group_vars = NULL,
   include_missing_obs = TRUE,
   summary_stat = c("mean", "median"),
   detailed = FALSE,
   ...
 ) {
-  proximity_metric <- match.arg(proximity_metric, c("log2_ratio", "join_count_z"))
+  assert_vector(proximity_metric, "character", n = 1)
+  proximity_metric <- unique(match.arg(
+    proximity_metric,
+    c("log2_ratio", "join_count_z"),
+    several.ok = TRUE
+  ))
   summary_stat <- match.arg(summary_stat, c("mean", "median"))
-  assert_col_in_data(proximity_metric, object)
+  for (metric in proximity_metric) {
+    assert_col_in_data(metric, object)
+  }
   assert_vector(group_vars, "character", n = 1, allow_null = TRUE)
   assert_col_in_data("marker_1", object)
   assert_col_in_data("marker_2", object)
   assert_col_in_data("component", object)
   assert_single_value(include_missing_obs, "bool")
 
+  head_df <- object |>
+    head() |>
+    collect()
+
   # Validate proximity_metric class
-  proximity_metric_slice <- object %>%
-    head() %>%
-    pull(all_of(proximity_metric))
-  if (!inherits(proximity_metric_slice, c("numeric", "integer"))) {
-    cli::cli_abort(
-      c(
-        "i" = "The {.var proximity_metric} column must be of type {.cls {c('numeric', 'integer')}}.",
-        "x" = "Column {.str {proximity_metric}} is a {.cls {class(proximity_metric_slice)}}."
+  for (metric in proximity_metric) {
+    proximity_metric_slice <- head_df[[metric]]
+    if (!inherits(proximity_metric_slice, c("numeric", "integer"))) {
+      cli::cli_abort(
+        c(
+          "i" = "The {.var proximity_metric} column must be of type {.cls {c('numeric', 'integer')}}.",
+          "x" = "Column {.str {metric}} is a {.cls {class(proximity_metric_slice)}}."
+        )
       )
-    )
+    }
   }
 
   if (!is.null(group_vars)) {
     for (group_var in group_vars) {
       assert_col_in_data(group_var, object)
-      group_var_slice <- object %>%
-        head() %>%
-        pull(all_of(group_var))
+      group_var_slice <- head_df[[group_var]]
       if (!inherits(group_var_slice, c("character", "factor"))) {
         cli::cli_abort(
           c(
@@ -215,11 +230,16 @@ SummarizeProximityScores.tbl_lazy <- function(
   }
 
   # Check for the existence of duplicate rows
-  doublet_rows <- object %>%
-    group_by(across(all_of(c("component", "marker_1", "marker_2", group_vars)))) %>%
-    filter(n() > 1) %>%
-    ungroup() %>%
-    head(1) %>%
+  doublet_rows <- object |>
+    group_by(across(all_of(c(
+      "component",
+      "marker_1",
+      "marker_2",
+      group_vars
+    )))) |>
+    filter(n() > 1) |>
+    ungroup() |>
+    head(1) |>
     collect()
 
   if (nrow(doublet_rows) > 0) {
@@ -235,106 +255,246 @@ SummarizeProximityScores.tbl_lazy <- function(
 
   # Set the summary function
   prefix <- ifelse(summary_stat == "median", "median_", "mean_")
-  summary_fkn <- switch(summary_stat,
+  summary_fkn <- switch(
+    summary_stat,
     "median" = median,
     "mean" = mean
   )
 
   # Count number of components
-  n_cells <- object %>%
+  n_cells_tbl <- object |>
     {
-      if (!is.null(group_vars)) {
-        group_by(., !!!syms(group_vars))
-      } else {
-        .
-      }
-    } %>%
-    summarize(n_cells = as.integer(n_distinct(component)), .groups = "drop") %>%
-    compute("n_cells", overwrite = TRUE) %>%
-    collect()
+      \(x) if (!is.null(group_vars)) group_by(x, !!!syms(group_vars)) else x
+    }() |>
+    summarize(n_cells = as.integer(n_distinct(component)), .groups = "drop") |>
+    compute("n_cells", overwrite = TRUE)
 
+  n_cells <- collect(n_cells_tbl)
   if (is.null(group_vars)) {
-    n_cells <- n_cells %>% pull(n_cells)
+    n_cells <- n_cells |> pull(n_cells)
   }
 
-  # Calculate the median proximity score per group
-  object <- object %>%
+  pad_zeros <- function(lst, n_miss) {
+    Map(\(x, m) if (m > 0L) c(x, rep.int(0, m)) else x, lst, n_miss)
+  }
+
+  grouped_object <- object |>
     {
-      if (!is.null(group_vars)) {
-        group_by(., !!!syms(group_vars))
-      } else {
-        .
+      \(x) if (!is.null(group_vars)) group_by(x, !!!syms(group_vars)) else x
+    }() |>
+    group_by(marker_1, marker_2, .add = TRUE)
+
+  if (detailed) {
+    list_exprs <- rlang::set_names(
+      lapply(proximity_metric, \(m) rlang::expr(list(!!sym(m)))),
+      glue("{proximity_metric}_list")
+    )
+
+    object <- grouped_object |>
+      summarize(
+        n_cells_detected = as.integer(n()),
+        join_count_list = list(join_count),
+        join_count_expected_mean_list = list(join_count_expected_mean),
+        !!!list_exprs,
+        .groups = "drop"
+      ) |>
+      collect() |>
+      {
+        \(x) {
+          if (!is.null(group_vars)) {
+            left_join(x, n_cells, by = group_vars)
+          } else {
+            mutate(x, n_cells = n_cells)
+          }
+        }
+      }() |>
+      mutate(
+        n_cells_missing = n_cells - n_cells_detected,
+        pct_detected = n_cells_detected / n_cells
+      )
+
+    if (include_missing_obs) {
+      object$join_count_list <- pad_zeros(
+        object$join_count_list,
+        object$n_cells_missing
+      )
+      object$join_count_expected_mean_list <- pad_zeros(
+        object$join_count_expected_mean_list,
+        object$n_cells_missing
+      )
+      for (metric in proximity_metric) {
+        col_list <- glue("{metric}_list")
+        object[[col_list]] <- pad_zeros(
+          object[[col_list]],
+          object$n_cells_missing
+        )
       }
-    } %>%
-    group_by(marker_1, marker_2, .add = TRUE) %>%
-    {
-      if (detailed) {
-        summarize(.,
+    }
+
+    for (metric in proximity_metric) {
+      col_list <- glue("{metric}_list")
+      col_out <- glue("{prefix}{metric}")
+      object[[col_out]] <- vapply(
+        object[[col_list]],
+        summary_fkn,
+        numeric(1)
+      )
+    }
+
+    return(object)
+  }
+
+  # Non-detailed fast paths
+  if (summary_stat == "mean") {
+    if (include_missing_obs) {
+      sum_exprs <- rlang::set_names(
+        lapply(proximity_metric, \(m) {
+          dplyr::sql(glue(
+            "CASE WHEN COUNT(*) > COUNT({m}) THEN NULL ELSE SUM({m}) END"
+          ))
+        }),
+        glue(".sum_{proximity_metric}")
+      )
+
+      object <- grouped_object |>
+        summarize(
           n_cells_detected = as.integer(n()),
-          join_count_list = list(join_count),
-          join_count_expected_mean_list = list(join_count_expected_mean),
-          !!sym(paste0(proximity_metric, "_list")) := list(!!sym(proximity_metric)),
+          !!!sum_exprs,
           .groups = "drop"
+        ) |>
+        collect() |>
+        {
+          \(x) {
+            if (!is.null(group_vars)) {
+              left_join(x, n_cells, by = group_vars)
+            } else {
+              mutate(x, n_cells = n_cells)
+            }
+          }
+        }() |>
+        mutate(
+          n_cells_missing = n_cells - n_cells_detected,
+          pct_detected = n_cells_detected / n_cells
         )
-      } else {
-        summarize(.,
+
+      for (metric in proximity_metric) {
+        sum_col <- glue(".sum_{metric}")
+        out_col <- glue("{prefix}{metric}")
+        object[[out_col]] <- object[[sum_col]] / object$n_cells
+      }
+      object <- select(object, -all_of(glue(".sum_{proximity_metric}")))
+    } else {
+      mean_exprs <- rlang::set_names(
+        lapply(proximity_metric, \(m) {
+          dplyr::sql(glue(
+            "CASE WHEN COUNT(*) > COUNT({m}) THEN NULL ELSE AVG({m}) END"
+          ))
+        }),
+        glue("{prefix}{proximity_metric}")
+      )
+
+      object <- grouped_object |>
+        summarize(
           n_cells_detected = as.integer(n()),
-          !!sym(paste0(proximity_metric, "_list")) := list(!!sym(proximity_metric)),
+          !!!mean_exprs,
           .groups = "drop"
-        )
-      }
-    } %>%
-    collect() %>%
-    {
-      if (!is.null(group_vars)) {
-        left_join(., n_cells, by = group_vars)
-      } else {
-        mutate(., n_cells = n_cells)
-      }
-    } %>%
-    rowwise() %>%
-    mutate(n_cells_missing = n_cells - n_cells_detected) %>%
-    mutate(pct_detected = n_cells_detected / n_cells) %>%
-    {
-      if (include_missing_obs && detailed) {
+        ) |>
+        collect() |>
+        {
+          \(x) {
+            if (!is.null(group_vars)) {
+              left_join(x, n_cells, by = group_vars)
+            } else {
+              mutate(x, n_cells = n_cells)
+            }
+          }
+        }() |>
         mutate(
-          .,
-          !!sym(paste0(proximity_metric, "_list")) := list(
-            c(unlist(!!sym(paste0(proximity_metric, "_list"))), rep(0, n_cells_missing))
-          ),
-          join_count_list = list(
-            c(unlist(join_count_list), rep(0, n_cells_missing))
-          ),
-          join_count_expected_mean_list = list(
-            c(unlist(join_count_expected_mean_list), rep(0, n_cells_missing))
-          )
+          n_cells_missing = n_cells - n_cells_detected,
+          pct_detected = n_cells_detected / n_cells
+        ) |>
+        relocate(
+          all_of(glue("{prefix}{proximity_metric}")),
+          .after = pct_detected
         )
-      } else if (include_missing_obs && !detailed) {
+    }
+  } else {
+    # summary_stat == "median" and !detailed
+    if (!include_missing_obs) {
+      med_exprs <- rlang::set_names(
+        lapply(proximity_metric, \(m) {
+          dplyr::sql(glue(
+            "CASE WHEN COUNT(*) > COUNT({m}) THEN NULL ELSE MEDIAN({m}) END"
+          ))
+        }),
+        glue("{prefix}{proximity_metric}")
+      )
+
+      object <- grouped_object |>
+        summarize(
+          n_cells_detected = as.integer(n()),
+          !!!med_exprs,
+          .groups = "drop"
+        ) |>
+        collect() |>
+        {
+          \(x) {
+            if (!is.null(group_vars)) {
+              left_join(x, n_cells, by = group_vars)
+            } else {
+              mutate(x, n_cells = n_cells)
+            }
+          }
+        }() |>
         mutate(
-          .,
-          !!sym(paste0(proximity_metric, "_list")) := list(
-            c(unlist(!!sym(paste0(proximity_metric, "_list"))), rep(0, n_cells_missing))
-          )
+          n_cells_missing = n_cells - n_cells_detected,
+          pct_detected = n_cells_detected / n_cells
+        ) |>
+        relocate(
+          all_of(glue("{prefix}{proximity_metric}")),
+          .after = pct_detected
         )
-      } else {
-        .
-      }
-    } %>%
-    mutate(
-      .,
-      !!sym(paste0(prefix, proximity_metric)) :=
-        summary_fkn(unlist(!!sym(paste0(proximity_metric, "_list"))))
-    ) %>%
-    {
-      if (!detailed) {
-        select(., -all_of(paste0(proximity_metric, "_list")))
-      } else {
-        (
-          .
-        )
-      }
-    } %>%
-    ungroup()
+    } else {
+      list_exprs <- rlang::set_names(
+        lapply(proximity_metric, \(m) rlang::expr(list(!!sym(m)))),
+        glue("{proximity_metric}_list")
+      )
+      med_padded_exprs <- rlang::set_names(
+        lapply(proximity_metric, \(m) {
+          col_list <- glue("{m}_list")
+          dplyr::sql(glue(
+            "CASE WHEN n_cells_detected > list_count({col_list}) ",
+            "THEN NULL ELSE list_median(list_concat({col_list}, ",
+            "repeat([0.0], CAST(n_cells_missing AS BIGINT)))) END"
+          ))
+        }),
+        glue("{prefix}{proximity_metric}")
+      )
+
+      object <- grouped_object |>
+        summarize(
+          n_cells_detected = as.integer(n()),
+          !!!list_exprs,
+          .groups = "drop"
+        ) |>
+        {
+          \(x) {
+            if (!is.null(group_vars)) {
+              left_join(x, n_cells_tbl, by = group_vars, na_matches = "na")
+            } else {
+              mutate(x, n_cells = !!n_cells)
+            }
+          }
+        }() |>
+        mutate(
+          n_cells_missing = n_cells - n_cells_detected,
+          pct_detected = n_cells_detected / n_cells
+        ) |>
+        mutate(!!!med_padded_exprs) |>
+        select(-all_of(glue("{proximity_metric}_list"))) |>
+        collect()
+    }
+  }
 
   return(object)
 }

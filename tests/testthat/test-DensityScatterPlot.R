@@ -505,4 +505,256 @@ for (assay_version in c("v3", "v5")) {
       )
     )
   })
+
+  test_that("Rectangle gates accept open edges", {
+    object_open <- object
+    counts <- GetAssayData(object_open, layer = "counts")
+    counts["Feature1", "Cell1"] <- 1e7
+    counts["Feature2", "Cell1"] <- -1e7
+    object_open <- SetAssayData(object_open, layer = "counts", new.data = counts)
+
+    plot_gate <- tibble(
+      xmin = 0,
+      xmax = Inf,
+      ymin = -Inf,
+      ymax = 30
+    )
+
+    p <- expect_no_warning(
+      DensityScatterPlot(
+        object_open,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = plot_gate,
+        gate_type = "rectangle",
+        gate_stat = "count"
+      )
+    )
+    expect_s3_class(p, "ggplot")
+
+    rect_idx <- which(vapply(
+      p$layers,
+      function(layer) inherits(layer$geom, "GeomRect"),
+      logical(1)
+    ))
+    rect_coords <- unlist(
+      p$layers[[rect_idx]]$data[, c("xmin", "xmax", "ymin", "ymax")],
+      use.names = FALSE
+    )
+    expect_true(all(is.finite(rect_coords)))
+
+    label_idx <- which(vapply(
+      p$layers,
+      function(layer) inherits(layer$geom, "GeomLabel"),
+      logical(1)
+    ))
+    label_data <- p$layers[[label_idx[1]]]$data
+    expect_true(all(is.finite(c(label_data$x, label_data$y))))
+
+    marker_data <- FetchData(
+      object_open,
+      vars = c("Feature1", "Feature2"),
+      layer = "counts"
+    )
+    inside_open <- marker_data$Feature1 >= plot_gate$xmin &
+      marker_data$Feature2 <= plot_gate$ymax
+    inside_stand_in <- marker_data$Feature1 >= plot_gate$xmin &
+      marker_data$Feature1 <= 1e6 &
+      marker_data$Feature2 >= -1e6 &
+      marker_data$Feature2 <= plot_gate$ymax
+    expect_true(any(
+      marker_data$Feature1 > 1e6 &
+        marker_data$Feature2 < -1e6 &
+        inside_open
+    ))
+    expect_gt(sum(inside_open), sum(inside_stand_in))
+    expect_equal(as.numeric(label_data$label), as.numeric(sum(inside_open)))
+  })
+
+  test_that("Open rectangle edges meet the panel", {
+    set.seed(1)
+    n_cells <- 40
+    counts <- matrix(
+      c(runif(n_cells, 0, 10), runif(n_cells, 0, 100)),
+      nrow = 2,
+      byrow = TRUE,
+      dimnames = list(
+        c("Feature1", "Feature2"),
+        paste0("Cell", seq_len(n_cells))
+      )
+    ) %>%
+      as("dgCMatrix")
+    object_asym <- CreateSeuratObject(counts = counts)
+
+    rect_data <- function(p) {
+      idx <- which(vapply(
+        p$layers,
+        function(layer) inherits(layer$geom, "GeomRect"),
+        logical(1)
+      ))
+      p$layers[[idx[1]]]$data
+    }
+    panel_ranges <- function(p) {
+      params <- ggplot_build(p)$layout$panel_params[[1]]
+      list(x = params$x.range, y = params$y.range)
+    }
+
+    # Shared axes: x data stops at 10, but the panel follows y out to 100.
+    p_equal <- expect_no_warning(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = 20, xmax = Inf, ymin = 0, ymax = 40),
+        gate_type = "rectangle",
+        grid_n = 25
+      )
+    )
+    rect_equal <- rect_data(p_equal)
+    panel_equal <- panel_ranges(p_equal)
+    expect_equal(as.numeric(rect_equal$xmin), 20)
+    expect_equal(as.numeric(rect_equal$xmax), panel_equal$x[2])
+    expect_gt(as.numeric(rect_equal$xmax), 10)
+    expect_gt(as.numeric(rect_equal$xmax), as.numeric(rect_equal$xmin))
+
+    # Free axes: a finite edge outside the data still expands the panel.
+    p_free <- expect_no_warning(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = 30, xmax = Inf, ymin = -Inf, ymax = 40),
+        gate_type = "rectangle",
+        equal_axes = FALSE,
+        coord_fixed = FALSE,
+        grid_n = 25
+      )
+    )
+    rect_free <- rect_data(p_free)
+    panel_free <- panel_ranges(p_free)
+    expect_equal(as.numeric(rect_free$xmin), 30)
+    expect_equal(as.numeric(rect_free$xmax), panel_free$x[2])
+    expect_equal(as.numeric(rect_free$ymin), panel_free$y[1])
+    expect_equal(as.numeric(rect_free$ymax), 40)
+    expect_gt(as.numeric(rect_free$xmax), as.numeric(rect_free$xmin))
+
+    # One axis fully open: the finite edge on the other axis still trains.
+    p_open_y <- expect_no_warning(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = 30, xmax = Inf, ymin = -Inf, ymax = Inf),
+        gate_type = "rectangle",
+        equal_axes = FALSE,
+        coord_fixed = FALSE,
+        grid_n = 25
+      )
+    )
+    rect_open_y <- rect_data(p_open_y)
+    panel_open_y <- panel_ranges(p_open_y)
+    expect_equal(as.numeric(rect_open_y$xmin), 30)
+    expect_equal(as.numeric(rect_open_y$xmax), panel_open_y$x[2])
+    expect_equal(as.numeric(rect_open_y$ymin), panel_open_y$y[1])
+    expect_equal(as.numeric(rect_open_y$ymax), panel_open_y$y[2])
+    expect_gt(as.numeric(rect_open_y$xmax), as.numeric(rect_open_y$xmin))
+
+    p_open_x <- expect_no_warning(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = -Inf, xmax = Inf, ymin = 150, ymax = Inf),
+        gate_type = "rectangle",
+        equal_axes = FALSE,
+        coord_fixed = FALSE,
+        grid_n = 25
+      )
+    )
+    rect_open_x <- rect_data(p_open_x)
+    panel_open_x <- panel_ranges(p_open_x)
+    expect_equal(as.numeric(rect_open_x$ymin), 150)
+    expect_equal(as.numeric(rect_open_x$ymax), panel_open_x$y[2])
+    expect_equal(as.numeric(rect_open_x$xmin), panel_open_x$x[1])
+    expect_equal(as.numeric(rect_open_x$xmax), panel_open_x$x[2])
+    expect_gt(as.numeric(rect_open_x$ymax), as.numeric(rect_open_x$ymin))
+
+    gate_count <- function(p) {
+      idx <- which(vapply(
+        p$layers,
+        function(layer) inherits(layer$geom, "GeomLabel"),
+        logical(1)
+      ))
+      as.numeric(p$layers[[idx[1]]]$data$label)
+    }
+    plot_open <- function(plot_gate) {
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = plot_gate,
+        gate_type = "rectangle",
+        gate_stat = "count",
+        equal_axes = FALSE,
+        coord_fixed = FALSE,
+        grid_n = 25
+      )
+    }
+    bound_vals <- function(p) {
+      as.numeric(rect_data(p)[1, c("xmin", "xmax", "ymin", "ymax")])
+    }
+
+    # NA matches the infinite edge, including a logical NA column.
+    p_na <- expect_no_warning(plot_open(tibble(
+      xmin = 0, xmax = NA, ymin = NA, ymax = 40
+    )))
+    p_inf <- expect_no_warning(plot_open(tibble(
+      xmin = 0, xmax = Inf, ymin = -Inf, ymax = 40
+    )))
+    expect_equal(gate_count(p_na), gate_count(p_inf))
+    expect_equal(bound_vals(p_na), bound_vals(p_inf))
+    expect_true(all(is.finite(bound_vals(p_na))))
+
+    p_na_all <- expect_no_warning(plot_open(tibble(
+      xmin = NA, xmax = NA, ymin = NA, ymax = NA
+    )))
+    p_inf_all <- expect_no_warning(plot_open(tibble(
+      xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf
+    )))
+    expect_equal(gate_count(p_na_all), n_cells)
+    expect_equal(gate_count(p_na_all), gate_count(p_inf_all))
+    expect_equal(bound_vals(p_na_all), bound_vals(p_inf_all))
+    panel_all <- panel_ranges(p_na_all)
+    expect_equal(
+      bound_vals(p_na_all),
+      c(panel_all$x[1], panel_all$x[2], panel_all$y[1], panel_all$y[2])
+    )
+
+    expect_error(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = Inf, xmax = Inf, ymin = 0, ymax = 1),
+        gate_type = "rectangle"
+      )
+    )
+    expect_error(
+      DensityScatterPlot(
+        object_asym,
+        marker1 = "Feature1",
+        marker2 = "Feature2",
+        layer = "counts",
+        plot_gate = tibble(xmin = 0, xmax = -Inf, ymin = 0, ymax = -Inf),
+        gate_type = "rectangle"
+      )
+    )
+  })
 }

@@ -875,4 +875,3 @@ test_that("rgl html output returns a widget", {
 
   expect_equal(open_devices(), before)
 })
-

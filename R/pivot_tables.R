@@ -507,7 +507,7 @@ ProximityScoresToAssay.data.frame <- function(
 
   # Warn about components with all zero proximity scores
   zero_prox_components <-
-    which(Matrix::colSums(prox_wide != 0) == nrow(prox_wide)) %>%
+    which(Matrix::colSums(prox_wide != 0) == 0) %>%
     names()
 
   if (length(zero_prox_components) > 0) {

@@ -53,8 +53,9 @@ ReadPNA_counts <- function(
 #' memory. This parameter only have an effect if \code{return_pna_assay = TRUE}.
 #' @param detailed_meta_data Logical specifying whether to load detailed meta data.
 #' If \code{FALSE} (default), only a subset of the meta data columns will be loaded,
-#' including those used for quality control. The additional columns are mostly useful
-#' for troubleshooting.
+#' including those used for quality control and any columns whose names match
+#' \code{^k_core_} (for example \code{k_core_1}, \code{k_core_2}). The additional
+#' columns are mostly useful for troubleshooting.
 #' @param ... Additional parameters passed to \code{\link[SeuratObject]{CreateSeuratObject}}
 #' @inheritParams ReadPNA_counts
 #' @inheritParams ReadPNA_proximity
@@ -162,10 +163,12 @@ ReadPNA_Seurat <- function(
     )
   }
 
-  # Extract meta data
+  # Extract meta data. k_core_* columns are unbounded (k_core_1, k_core_2, ...),
+  # so select them with a regex in addition to the fixed QC columns.
   meta_data <- db$cell_meta()
   if (!detailed_meta_data) {
-    meta_data <- meta_data %>% select(any_of(CELL_META_COLS))
+    meta_data <- meta_data %>%
+      select(any_of(CELL_META_COLS), matches("^k_core_", ignore.case = FALSE))
   }
 
   if (!all(rownames(meta_data) == colnames(seur_obj))) {
@@ -261,10 +264,9 @@ ReadPNA_metadata <- function(
 #'
 #' @param pxl_file Path to a PXL file with a PNA data set
 #' @param cells A character vector with component IDs. If NULL, all components are loaded.
-#' @param umi_data_type One of "int64", "string" or "suffixed_string". Default is "int64".
+#' @param umi_data_type One of "int64" or "string". Default is "int64".
 #'  - "int64": The UMIs are encoded as int64
 #'  - "string": The UMIs are encoded as character
-#'  - "suffixed_string": The UMIs are encoded as character with a suffix '-umi1' or '-umi2' added
 #' @param lazy A logical specifying whether to load the data lazily. If \code{TRUE},
 #' a \code{tbl_lazy} object is returned.
 #'
@@ -284,7 +286,7 @@ ReadPNA_metadata <- function(
 ReadPNA_edgelist <- function(
   pxl_file,
   cells = NULL,
-  umi_data_type = c("int64", "string", "suffixed_string"),
+  umi_data_type = c("int64", "string"),
   lazy = TRUE
 ) {
   assert_single_value(pxl_file, type = "string")

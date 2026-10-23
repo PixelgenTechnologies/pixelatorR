@@ -8,7 +8,8 @@ approximate_node_saturation(
   db,
   components = NULL,
   table_name = NULL,
-  node_reads_multiplier = 2
+  node_reads_multiplier = 2L,
+  min_degree = 1L
 )
 }
 \arguments{
@@ -22,13 +23,20 @@ the result is materialized as a table in the DuckDB connection.}
 
 \item{node_reads_multiplier}{Numeric; multiplier for the read count when calculating
 node saturation. Default is \code{2}, reflecting that each edge contributes to two nodes.}
+
+\item{min_degree}{Integer; minimum full-depth node degree required for nodes
+(and incident edges) to be included. Default is \code{1L} (all nodes included).
+Set to \code{2L} to exclude dangling (degree-1) leaves.}
 }
 \value{
 A lazy \code{tbl} (DuckDB query) with columns:
 \describe{
 \item{component}{The component (cell) identifier.}
 \item{nodes}{The number of unique nodes.}
-\item{read_count}{The total read count for the component.}
+\item{read_count}{The total read count for the component scaled by
+\code{node_reads_multiplier} (i.e., twice the sequencing read count when
+\code{node_reads_multiplier = 2}, and equal to the sequencing read count when
+\code{node_reads_multiplier = 1}).}
 \item{node_saturation}{The node saturation value (0 to 1).}
 }
 }

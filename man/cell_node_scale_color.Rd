@@ -16,7 +16,7 @@ cell_node_scale_color(
 \item{object}{A \code{cell_plot} recipe.}
 
 \item{colors}{Optional vector of valid, fully opaque colors used for the
-scale. When \code{NULL}, the builder uses its default palette.}
+scale. When \code{NULL}, the builder uses \code{PixelgenGradient(7, "Cherry")}.}
 
 \item{limits}{Optional scale limits. Supply two ordered numeric values for a
 continuous scale or a character vector of levels for a categorical scale.}

@@ -93,9 +93,10 @@ When a size column is mapped, the default output range is \code{c(2, 6)} unless
 \code{\link[=cell_node_scale_size]{cell_node_scale_size()}} overrides it. For a categorical size or alpha
 mapping, \code{\link[=cell_node_scale_size]{cell_node_scale_size()}} and \code{\link[=cell_node_scale_alpha]{cell_node_scale_alpha()}} also accept
 a named vector of per-level values, such as \code{sizes = c(a = 1, b = 2, c = 3)}.
-Color scale behavior is controlled by \code{\link[=cell_node_scale_color]{cell_node_scale_color()}}. Color scales
-are trained once across all panels, and continuous scales span the observed
-range unless \code{limits} are supplied.
+Color scale behavior is controlled by \code{\link[=cell_node_scale_color]{cell_node_scale_color()}}. The default
+palette for a mapped color column is \code{PixelgenGradient(7, "Cherry")}. Color
+scales are trained once across all panels, and continuous scales span the
+observed range unless \code{limits} are supplied.
 }
 \examples{
 # Plot a spectral layout of a cell from the example data

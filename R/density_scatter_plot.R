@@ -10,9 +10,12 @@
 #' @param marker2 Name of second marker to plot.
 #' @param facet_vars Optional character vector of length 1 or 2 specifying variables to facet by.
 #' @param plot_gate Optional data frame containing gate parameters. For `gate_type = "rectangle"`, must contain columns
-#'   'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. For gate_type = "quadrant", must contain
-#'   columns 'x' and 'y' defining the position of the quadrant lines. The data frame can also contain the variables
-#'   specified in 'facet_vars' to plot different gates in different facets.
+#'   'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. `NA` and infinite values mean an open
+#'   edge: `xmin` or `ymin` of `NA` or `-Inf` has no lower bound, and `xmax` or `ymax` of `NA` or `Inf` has no upper
+#'   bound. `Inf` is not a lower bound and `-Inf` is not an upper bound. For gate_type = "quadrant", must contain
+#'   columns 'x' and 'y' defining the position of the quadrant lines.
+#'   The data frame can also contain the variables specified in 'facet_vars' to plot different gates in different
+#'   facets.
 #' @param gate_type Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
 #' Required if `plot_gate` is provided.
 #' @param grid_n Number of grid points in each direction to compute density.
@@ -351,9 +354,52 @@ DensityScatterPlot <- function(
       assert_col_in_data("xmax", plot_gate, call = call)
       assert_col_in_data("ymin", plot_gate, call = call)
       assert_col_in_data("ymax", plot_gate, call = call)
-      for (i in seq_len(nrow(plot_gate))) {
-        assert_within_limits(plot_gate$xmin[i], limits = c(-Inf, plot_gate$xmax[i]), call = call)
-        assert_within_limits(plot_gate$ymin[i], limits = c(-Inf, plot_gate$ymax[i]), call = call)
+      for (bound in c("xmin", "xmax", "ymin", "ymax")) {
+        values <- plot_gate[[bound]]
+        if (!(is.numeric(values) || all(is.na(values)))) {
+          cli::cli_abort(
+            c(
+              "i" = "Rectangle gate bounds must be numeric, {.code NA}, or infinite.",
+              "x" = "{.code {bound}} is {.cls {class(values)}}."
+            ),
+            call = call
+          )
+        }
+        # Lower edges open toward -Inf. Upper edges open toward Inf.
+        open_value <- if (bound %in% c("xmin", "ymin")) -Inf else Inf
+        open_label <- if (bound %in% c("xmin", "ymin")) "-Inf" else "Inf"
+        direction_ok <- is.na(values) | is.finite(values) | values == open_value
+        direction_ok[is.na(direction_ok)] <- FALSE
+        if (!all(direction_ok)) {
+          cli::cli_abort(
+            c(
+              "i" = "{.code {bound}} must be finite, {.code NA}, or {.code {open_label}}.",
+              "x" = "Invalid value{?s}: {.val {values[!direction_ok]}}."
+            ),
+            call = call
+          )
+        }
+      }
+      # NA is an open edge, so it is not ordered against the opposite bound.
+      x_order_ok <- is.na(plot_gate$xmin) | is.na(plot_gate$xmax) | plot_gate$xmin <= plot_gate$xmax
+      y_order_ok <- is.na(plot_gate$ymin) | is.na(plot_gate$ymax) | plot_gate$ymin <= plot_gate$ymax
+      if (!all(x_order_ok)) {
+        cli::cli_abort(
+          c(
+            "i" = "{.code xmin} must be less than or equal to {.code xmax}.",
+            "x" = "Invalid rectangle bounds in row{?s} {.val {which(!x_order_ok)}}."
+          ),
+          call = call
+        )
+      }
+      if (!all(y_order_ok)) {
+        cli::cli_abort(
+          c(
+            "i" = "{.code ymin} must be less than or equal to {.code ymax}.",
+            "x" = "Invalid rectangle bounds in row{?s} {.val {which(!y_order_ok)}}."
+          ),
+          call = call
+        )
       }
     } else {
       assert_col_in_data("x", plot_gate, call = call)
@@ -517,16 +563,18 @@ DensityScatterPlot <- function(
     )
 
     if (!is.null(plot_gate)) {
+      # Finite edges still expand shared axes. Open edges must not.
+      gate_coords <- plot_gate %>%
+        select(any_of(c(
+          "x", "y",
+          "xmin", "xmax",
+          "ymin", "ymax"
+        ))) %>%
+        unlist()
       scale_range <- range(
         c(
           scale_range,
-          plot_gate %>%
-            select(any_of(c(
-              "x", "y",
-              "xmin", "xmax",
-              "ymin", "ymax"
-            ))) %>%
-            unlist()
+          gate_coords[is.finite(gate_coords)]
         )
       )
     }
@@ -603,11 +651,12 @@ DensityScatterPlot <- function(
         xmin, xmax, ymin, ymax
       ) %>%
       summarise(
+        # NA matches an open edge. -Inf and Inf compare as unbounded.
         n_inside = sum(
-          marker1 >= xmin &
-            marker1 <= xmax &
-            marker2 >= ymin &
-            marker2 <= ymax
+          marker1 >= if_else(is.na(xmin), -Inf, as.numeric(xmin)) &
+            marker1 <= if_else(is.na(xmax), Inf, as.numeric(xmax)) &
+            marker2 >= if_else(is.na(ymin), -Inf, as.numeric(ymin)) &
+            marker2 <= if_else(is.na(ymax), Inf, as.numeric(ymax))
         ),
         total = n()
       )
@@ -643,6 +692,73 @@ DensityScatterPlot <- function(
 
   # Create gate coordinates and add gate to plot
   if (gate_type == "rectangle") {
+    # Clip open edges to the panel after expansion and finite gate edges.
+    # layer_scales()$range$range is only the trained data extent.
+    bounds <- c(
+      gate_summary$xmin, gate_summary$xmax,
+      gate_summary$ymin, gate_summary$ymax
+    )
+    if (any(!is.finite(bounds))) {
+      finite_x <- as.numeric(c(gate_summary$xmin, gate_summary$xmax))
+      finite_y <- as.numeric(c(gate_summary$ymin, gate_summary$ymax))
+      finite_x <- finite_x[is.finite(finite_x)]
+      finite_y <- finite_y[is.finite(finite_y)]
+      # Pair each finite edge with a data anchor on the other axis. An NA
+      # aesthetic would drop the row and leave that edge out of the panel.
+      x_anchor <- gg$data$marker1[which(is.finite(gg$data$marker1))[1]]
+      y_anchor <- gg$data$marker2[which(is.finite(gg$data$marker2))[1]]
+      train_bounds <- list()
+      if (length(finite_x) > 0 && is.finite(y_anchor)) {
+        train_bounds[[length(train_bounds) + 1]] <- data.frame(
+          marker1 = finite_x,
+          marker2 = y_anchor
+        )
+      }
+      if (length(finite_y) > 0 && is.finite(x_anchor)) {
+        train_bounds[[length(train_bounds) + 1]] <- data.frame(
+          marker1 = x_anchor,
+          marker2 = finite_y
+        )
+      }
+      gg_train <- gg
+      if (length(train_bounds) > 0) {
+        gg_train <- gg_train + ggplot2::geom_blank(
+          data = bind_rows(train_bounds),
+          aes(x = marker1, y = marker2),
+          inherit.aes = FALSE
+        )
+      }
+      panel_params <- ggplot_build(gg_train)$layout$panel_params[[1]]
+      x_range <- panel_params$x.range
+      y_range <- panel_params$y.range
+
+      # Keep that panel fixed. A rect drawn at the expanded edge would
+      # otherwise train the scales and grow the panel again.
+      fix_scale <- function(gg, aesthetic, limits) {
+        scale <- gg$scales$get_scales(aesthetic)
+        if (is.null(scale)) {
+          new_scale <- switch(aesthetic,
+            x = scale_x_continuous(limits = limits, expand = c(0, 0)),
+            y = scale_y_continuous(limits = limits, expand = c(0, 0))
+          )
+          return(gg + new_scale)
+        }
+        scale$limits <- limits
+        scale$expand <- c(0, 0)
+        gg
+      }
+      gg <- fix_scale(gg, "x", x_range)
+      gg <- fix_scale(gg, "y", y_range)
+
+      gate_summary <- gate_summary %>%
+        mutate(
+          xmin = if_else(is.finite(xmin), as.numeric(xmin), x_range[1]),
+          xmax = if_else(is.finite(xmax), as.numeric(xmax), x_range[2]),
+          ymin = if_else(is.finite(ymin), as.numeric(ymin), y_range[1]),
+          ymax = if_else(is.finite(ymax), as.numeric(ymax), y_range[2])
+        )
+    }
+
     # Calculate annotation positions
     gate_labels <-
       gate_summary %>%
