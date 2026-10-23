@@ -49,7 +49,7 @@ library(pixelatorR)
 
 pxl_file <- minimal_pna_pxl_file()
 proximity_tbl <- ReadPNA_proximity(pxl_file)
-#> ℹ Loading proximity scores from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c31181c4e/pixelatorR/extdata/five_cells/minimal_PNA_PBMC.pxl
+#> ℹ Loading proximity scores from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/minimal_PNA_PBMC.pxl
 #> ✔ Returning a <tbl_df> with the PNA proximity scores
 proximity_tbl
 #> # A tibble: 58,696 × 9

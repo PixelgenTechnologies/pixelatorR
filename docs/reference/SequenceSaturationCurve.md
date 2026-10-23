@@ -77,7 +77,7 @@ edgelist <-
     package = "pixelatorR"
   )) %>%
   rename(umi1 = upia, umi2 = upib, read_count = count)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c31181c4e/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 

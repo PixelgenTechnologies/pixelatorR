@@ -916,11 +916,11 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name               CD59  CD58 `HLA-ABC`
-#>   <chr>             <dbl> <dbl>     <dbl>
-#> 1 44994728539690155     1     0         0
-#> 2 59143209764553641     1     0         0
-#> 3 20922039533436104     1     0         0
+#>   name               CD59  CD53 CD66b
+#>   <chr>             <dbl> <dbl> <dbl>
+#> 1 34769694748755495     1     0     0
+#> 2 71722293887312477     1     0     0
+#> 3 1301978838857048      1     0     0
 
 
 ## ------------------------------------------------
@@ -944,8 +944,8 @@ cgl
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpzOzCiN/filefae3502de492.parquet 
-#>                                                                                 TRUE 
+#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHzVgLd/file107173dc678c2.parquet 
+#>                                                                                  TRUE 
 
 
 ## ------------------------------------------------

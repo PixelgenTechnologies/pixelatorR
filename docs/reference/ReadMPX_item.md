@@ -55,7 +55,7 @@ library(pixelatorR)
 # Load example data
 pxl_file <- minimal_mpx_pxl_file()
 polarization <- ReadMPX_item(pxl_file, items = "polarization")
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c31181c4e/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading polarization data
 #> ✔ Returning a 'tbl_df' object
 polarization
@@ -76,7 +76,7 @@ polarization
 
 # Alternative 2
 polarization <- ReadMPX_polarization(pxl_file)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c31181c4e/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading polarization data
 #> ✔ Returning a 'tbl_df' object
 ```

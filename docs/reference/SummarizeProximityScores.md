@@ -99,12 +99,12 @@ SummarizeProximityScores(proximity_table) %>% head()
 #> # A tibble: 6 × 7
 #>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
 #>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
-#> 1 CD56     CD81                    4       5               1          0.8
-#> 2 CD56     CD64                    4       5               1          0.8
-#> 3 CD56     TCRVg9                  4       5               1          0.8
-#> 4 CD56     CD7                     4       5               1          0.8
-#> 5 CD56     CD66b                   3       5               2          0.6
-#> 6 CD366    CD45RB                  5       5               0          1  
+#> 1 CD56     TCRgd                   3       5               2          0.6
+#> 2 CD366    CD41                    5       5               0          1  
+#> 3 CD366    CD49D                   5       5               0          1  
+#> 4 CD366    CD81                    5       5               0          1  
+#> 5 CD366    CD369                   4       5               1          0.8
+#> 6 CD366    CD64                    5       5               0          1  
 #> # ℹ 1 more variable: mean_log2_ratio <dbl>
 
 # Switch to median
@@ -125,12 +125,12 @@ SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) %>% head(
 #> # A tibble: 6 × 7
 #>   marker_1 marker_2 n_cells_detected n_cells n_cells_missing pct_detected
 #>   <chr>    <chr>               <int>   <int>           <int>        <dbl>
-#> 1 CD56     CD82                    4       5               1          0.8
-#> 2 CD56     TCRab                   4       5               1          0.8
-#> 3 CD366    CD4                     5       5               0          1  
-#> 4 CD366    CD50                    5       5               0          1  
-#> 5 CD366    CD47                    5       5               0          1  
-#> 6 CD366    CD45RA                  5       5               0          1  
+#> 1 CD56     HLA-ABC                 4       5               1          0.8
+#> 2 CD56     IgD                     4       5               1          0.8
+#> 3 CD56     CD9                     4       5               1          0.8
+#> 4 CD366    CD37                    5       5               0          1  
+#> 5 CD366    IgM                     5       5               0          1  
+#> 6 CD366    TCRva7.2                5       5               0          1  
 #> # ℹ 1 more variable: mean_log2_ratio <dbl>
 
 # Return lists which can be used to compute custom summary statistics
@@ -146,17 +146,17 @@ SummarizeProximityScores(proximity_table, detailed = TRUE) %>%
   select(marker_1, marker_2, sd, iqr, mad, q90) %>%
   ungroup()
 #> # A tibble: 12,561 × 6
-#>    marker_1 marker_2    sd   iqr   mad   q90
-#>    <chr>    <chr>    <dbl> <dbl> <dbl> <dbl>
-#>  1 CD56     HLA-ABC  0.790 1.13  0     0    
-#>  2 CD56     IgD      0     0     0     0    
-#>  3 CD56     CD9      0.447 0     0     0.600
-#>  4 CD366    CD37     0.447 0     0     0.600
-#>  5 CD366    IgM      0     0     0     0    
-#>  6 CD366    TCRva7.2 0     0     0     0    
-#>  7 CD366    KLRG1    0     0     0     0    
-#>  8 CD366    CD5      1.60  0     0     0.937
-#>  9 CD366    CD62P    0     0     0     0    
-#> 10 CD52     CD52     0.592 0.495 0.461 1.28 
+#>    marker_1 marker_2    sd   iqr    mad   q90
+#>    <chr>    <chr>    <dbl> <dbl>  <dbl> <dbl>
+#>  1 CD56     CD56     0     0     0      0    
+#>  2 CD56     CD85j    0     0     0      0    
+#>  3 CD56     CD70     0     0     0      0    
+#>  4 CD366    CD52     0.247 0.167 0.0839 0    
+#>  5 CD366    CD89     0.447 0     0      0.600
+#>  6 CD366    CD73     0     0     0      0    
+#>  7 CD366    CD86     0     0     0      0    
+#>  8 CD366    IgE      0     0     0      0    
+#>  9 CD52     IgM      1.25  0.556 0      0    
+#> 10 CD52     TCRva7.2 0.357 0.422 0      0    
 #> # ℹ 12,551 more rows
 ```

@@ -6,6 +6,7 @@ home:
 template:
   bootstrap: 5
   bootswatch: lumen
+  math-rendering: katex
 
 development:
   mode: auto

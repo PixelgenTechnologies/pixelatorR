@@ -64,9 +64,9 @@ library(tidygraph)
 
 pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
-#> ℹ Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c31181c4e/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/five_cells.pxl
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c31181c4e/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 components <- colnames(counts)

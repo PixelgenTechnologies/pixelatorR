@@ -93,7 +93,7 @@ FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <fs::path>                                            
-#> 1 <tibble [5 × 2]>      1 …gs_mq8n51jtbc0000gn/T/RtmpzOzCiN/filefae31808d29f.pxl
+#> 1 <tibble [5 × 2]>      1 …s_mq8n51jtbc0000gn/T/RtmpHzVgLd/file10717564e654a.pxl
 
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)

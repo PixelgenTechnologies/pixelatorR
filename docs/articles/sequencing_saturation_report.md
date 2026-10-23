@@ -13,12 +13,10 @@ sequencing library:
 In standard single-cell assays (such as scRNA-seq), each sequencing read
 observes a single molecule (UMI), and saturation is defined as:
 
-``` math
 S = 1 - \frac{U}{M}
-```
 
-where $`U`$ is the number of unique elements observed and
-$`M = \sum_{i=1}^{U} m_i`$ is the total number of element observations.
+where U is the number of unique elements observed and M =
+\sum\_{i=1}^{U} m_i is the total number of element observations.
 
 In Proximity Network Assays (PNA), **the physical DNA amplicons being
 sequenced represent edges** that connect two protein UMI nodes (`umi1`
@@ -78,66 +76,59 @@ db_pbmc$close()
 
 For edges, each sequencing read is one observation of one edge:
 
-- $`U = E`$ (number of unique edges observed)
-- $`M = R = \sum_{e=1}^{E} r_e`$ (total sequencing reads, where
-  $`r_e \ge 1`$ is the read count of edge $`e`$)
+- U = E (number of unique edges observed)
+- M = R = \sum\_{e=1}^{E} r_e (total sequencing reads, where r_e \ge 1
+  is the read count of edge e)
 
 This gives:
 
-``` math
-S_{\text{edge}} = 1 - \frac{E}{R} = 1 - \frac{1}{\bar{r}_e}
-```
+S\_{\text{edge}} = 1 - \frac{E}{R} = 1 - \frac{1}{\bar{r}\_e}
 
-where $`\bar{r}_e = \frac{R}{E}`$ is the average number of reads
-supporting each unique edge.
+where \bar{r}\_e = \frac{R}{E} is the average number of reads supporting
+each unique edge.
 
 `edge_saturation` is a direct, well-bounded measure of library PCR
 duplication:
 
 - Every sequencing read either discovers a new unique edge or is a PCR
-  duplicate of an already-observed edge. Thus $`R - E`$ is the exact
-  number of duplicate reads, and $`S_{\text{edge}} = \frac{R - E}{R}`$
-  is the exact fraction of reads that are PCR duplicates.
-- At very low depth where every edge is sequenced once ($`E = R`$),
-  $`S_{\text{edge}} = 0`$.
-- As read depth $`R \to \infty`$ and all true edges have been observed,
-  $`S_{\text{edge}} \to 1`$.
+  duplicate of an already-observed edge. Thus R - E is the exact number
+  of duplicate reads, and S\_{\text{edge}} = \frac{R - E}{R} is the
+  exact fraction of reads that are PCR duplicates.
+- At very low depth where every edge is sequenced once (E = R),
+  S\_{\text{edge}} = 0.
+- As read depth R \to \infty and all true edges have been observed,
+  S\_{\text{edge}} \to 1.
 
-## Why the read multiplier $`m = 2`$ is required for node saturation
+## Why the read multiplier m = 2 is required for node saturation
 
-When applying $`S = 1 - \frac{U}{M}`$ to nodes ($`U = N`$ unique nodes),
-the denominator $`M`$ must count **total node observations**, not edge
+When applying S = 1 - \frac{U}{M} to nodes (U = N unique nodes), the
+denominator M must count **total node observations**, not edge
 observations. In
 [`approximate_node_saturation()`](../reference/approximate_node_saturation.md)
 and
 [`approximate_saturation_curve()`](../reference/approximate_saturation_curve.md),
 this scaling factor is controlled by the `node_reads_multiplier`
-parameter, which we denote here simply as the **read multiplier $`m`$**.
+parameter, which we denote here simply as the **read multiplier m**.
 
 Because PNA graphs are bipartite (`umi1` and `umi2` are disjoint sets of
 A- and B-nodes) and every read has **two** node endpoints, each
-sequencing read contributes **2 node observations** ($`m = 2`$). Summing
-incident reads $`r_v`$ across all $`N`$ unique nodes yields:
+sequencing read contributes **2 node observations** (m = 2). Summing
+incident reads r_v across all N unique nodes yields:
 
-``` math
-M = \sum_{v=1}^{N} r_v = 2 \sum_{e=1}^{E} r_e = 2R
-```
+M = \sum\_{v=1}^{N} r_v = 2 \sum\_{e=1}^{E} r_e = 2R
 
-With a read multiplier of $`m = 2`$, cumulative node saturation is:
+With a read multiplier of m = 2, cumulative node saturation is:
 
-``` math
-S_{\text{node}} = 1 - \frac{N}{2R} = 1 - \frac{1}{\bar{r}_v}
-```
+S\_{\text{node}} = 1 - \frac{N}{2R} = 1 - \frac{1}{\bar{r}\_v}
 
-where $`\bar{r}_v = \frac{2R}{N} \ge 1`$ is the mean number of incident
+where \bar{r}\_v = \frac{2R}{N} \ge 1 is the mean number of incident
 reads per node.
 
-If $`m = 1`$ is used ($`1 - \frac{N}{R}`$), unique nodes are divided by
-edge reads. For a single read ($`R = 1, E = 1, N = 2`$), $`m = 1`$ gives
-$`1 - 2/1 = -100\%`$ saturation. More generally, whenever the
-downsampled graph has average degree
-$`\bar{d} < 2(1 - S_{\text{edge}})`$, $`N > R`$ and $`m = 1`$ produces
-invalid negative values.
+If m = 1 is used (1 - \frac{N}{R}), unique nodes are divided by edge
+reads. For a single read (R = 1, E = 1, N = 2), m = 1 gives 1 - 2/1 =
+-100\\ saturation. More generally, whenever the downsampled graph has
+average degree \bar{d} \< 2(1 - S\_{\text{edge}}), N \> R and m = 1
+produces invalid negative values.
 
 Code
 
@@ -187,35 +178,33 @@ ggplot(
 
 ## Why cumulative node saturation (`1 - N / 2R`) is misleading
 
-Even with the mathematically valid denominator $`2R`$, cumulative node
-saturation $`S_{\text{node}} = 1 - \frac{N}{2R}`$ has a conceptual flaw:
+Even with the mathematically valid denominator 2R, cumulative node
+saturation S\_{\text{node}} = 1 - \frac{N}{2R} has a conceptual flaw:
 **it conflates PCR duplication with graph connectivity (average node
 degree).**
 
-In any graph with $`N`$ nodes and $`E`$ unique edges, the average node
-degree is $`\bar{d} = \frac{2E}{N}`$. Substituting
-$`\frac{N}{2E} = \frac{1}{\bar{d}}`$ into $`S_{\text{node}}`$ gives:
+In any graph with N nodes and E unique edges, the average node degree is
+\bar{d} = \frac{2E}{N}. Substituting \frac{N}{2E} = \frac{1}{\bar{d}}
+into S\_{\text{node}} gives:
 
-``` math
-S_{\text{node}} = 1 - \frac{N}{2E} \cdot \frac{E}{R} = 1 - \frac{1}{\bar{d}}\left(1 - S_{\text{edge}}\right)
-```
+S\_{\text{node}} = 1 - \frac{N}{2E} \cdot \frac{E}{R} = 1 -
+\frac{1}{\bar{d}}\left(1 - S\_{\text{edge}}\right)
 
-This identity shows why $`S_{\text{node}}`$ looks high even when
-sequencing depth is very low:
+This identity shows why S\_{\text{node}} looks high even when sequencing
+depth is very low:
 
 1.  **Nodes are observed multiple times even with zero PCR
-    duplication:** A node $`v`$ can have many incident reads
-    ($`r_v > 1`$) either because its edges were PCR-duplicated
-    ($`r_e > 1`$) *or* because it is connected to several distinct edges
-    ($`d_v > 1`$).
+    duplication:** A node v can have many incident reads (r_v \> 1)
+    either because its edges were PCR-duplicated (r_e \> 1) *or* because
+    it is connected to several distinct edges (d_v \> 1).
 2.  **High baseline floor at 0% edge saturation:** Even when every
-    unique edge has only 1 read ($`S_{\text{edge}} = 0`$),
-    $`S_{\text{node}} = 1 - \frac{1}{\bar{d}}`$. In a graph with average
-    degree $`\bar{d} = 5`$, $`S_{\text{node}}`$ is already $`80\%`$
-    before a single PCR duplicate read is sequenced.
+    unique edge has only 1 read (S\_{\text{edge}} = 0), S\_{\text{node}}
+    = 1 - \frac{1}{\bar{d}}. In a graph with average degree \bar{d} = 5,
+    S\_{\text{node}} is already 80\\ before a single PCR duplicate read
+    is sequenced.
 
 The plot below illustrates this on the 5 components in
-[`minimal_pna_pxl_file()`](../reference/pna_dataset.md): at $`p = 0.20`$
+[`minimal_pna_pxl_file()`](../reference/pna_dataset.md): at p = 0.20
 (~58k reads on component `0a45497c6bfbfb22`), `edge_saturation` is only
 30.1% and nearly a quarter of the full-depth nodes have not been
 discovered yet, but `node_saturation` already reports 71.4%.
@@ -265,17 +254,15 @@ cum_curve_min |>
 
 In PNA cell graphs, roughly 19%–23% of all full-depth nodes have
 `degree == 1` (dangling leaves attached to the component by a single
-edge), and **100% of single-read nodes ($`r_v = 1`$) have
-`degree == 1`**.
+edge), and **100% of single-read nodes (r_v = 1) have `degree == 1`**.
 
 When a 1-bp sequencing or PCR error occurs in one of the UMI barcodes
 (`umi1` or `umi2`) of an abundant amplicon, the mutated barcode still
 pairs with the valid partner UMI on the other end of the amplicon. In
 the graph, this error attaches to the true node as a **single-read,
-degree-1 leaf** ($`d_v = 1, r_v = 1`$). Because sequencing errors occur
-at a roughly constant rate per read, deeper sequencing continuously adds
-new degree-1 leaves even after all true surface proteins have been
-captured.
+degree-1 leaf** (d_v = 1, r_v = 1). Because sequencing errors occur at a
+roughly constant rate per read, deeper sequencing continuously adds new
+degree-1 leaves even after all true surface proteins have been captured.
 
 For this reason, **using `min_degree = 2L` is recommended when computing
 node discovery rates or when evaluating saturation on an unfiltered
@@ -290,7 +277,7 @@ edgelist**:
   `node_discovery_rate` nearly in half). However, in the **raw,
   pre-filtered sample edgelist** (prior to component size filtering),
   there are many “orphaned” edges and tiny fragments—such as isolated
-  single-read edges ($`d_{u} = 1, d_{v} = 1`$) arising from background
+  single-read edges (d\_{u} = 1, d\_{v} = 1) arising from background
   noise, unattached antibodies, or sequencing errors—that are not
   attached to any cell component. When computing sample-wide saturation
   across the entire raw edgelist, a `min_degree = 2L` filter has a much
@@ -346,21 +333,20 @@ resting PBMC components with min_degree = 1L vs. min_degree = 2L.
 
 ### Dynamic degree filtering along downsampling curves
 
-When tracking `degree >= 2` core nodes across downsampling fractions
-$`p \in (0, 1]`$, we must model `degree >= 2` **dynamically at fraction
-$`p`$** rather than statically pre-filtering the graph at $`p = 1`$:
+When tracking `degree >= 2` core nodes across downsampling fractions p
+\in (0, 1\], we must model `degree >= 2` **dynamically at fraction p**
+rather than statically pre-filtering the graph at p = 1:
 
-- If we statically pre-filter to `degree >= 2` at $`p = 1`$, every
-  retained node has at least 2 reads ($`r_v \ge 2`$), which forces the
-  derivative of $`1 - (1 - p)^{r_v}`$ to artificially drop to $`0`$ at
-  $`p = 1`$.
-- Under the **exact dynamic `degree >= 2` model**, a node $`v`$ has
-  dynamic degree $`\text{deg}_v(p) \ge 2`$ at fraction $`p`$ if at least
-  two of its incident edges are retained:
+- If we statically pre-filter to `degree >= 2` at p = 1, every retained
+  node has at least 2 reads (r_v \ge 2), which forces the derivative of
+  1 - (1 - p)^{r_v} to artificially drop to 0 at p = 1.
+- Under the **exact dynamic `degree >= 2` model**, a node v has dynamic
+  degree \text{deg}\_v(p) \ge 2 at fraction p if at least two of its
+  incident edges are retained:
 
-``` math
-P(\text{deg}_v(p) \ge 2) = 1 - P(\text{deg}_v(p) = 0) - P(\text{deg}_v(p) = 1) = 1 + (d_v - 1)(1 - p)^{r_v} - \sum_{e \ni v} (1 - p)^{r_v - r_e}
-```
+P(\text{deg}\_v(p) \ge 2) = 1 - P(\text{deg}\_v(p) = 0) -
+P(\text{deg}\_v(p) = 1) = 1 + (d_v - 1)(1 - p)^{r_v} - \sum\_{e \ni v}
+(1 - p)^{r_v - r_e}
 
 This captures the graduation of degree-1 nodes into degree-2 core nodes
 as a second incident edge is sequenced.
@@ -369,45 +355,39 @@ as a second incident edge is sequenced.
 
 ### Mathematical definition and interpretation
 
-Because cumulative saturation metrics average over all reads from $`0`$
-to $`R`$, they change slowly at high sequencing depth. A more direct way
-to answer *“Should I sequence deeper?”* is to look at the **marginal
+Because cumulative saturation metrics average over all reads from 0 to
+R, they change slowly at high sequencing depth. A more direct way to
+answer *“Should I sequence deeper?”* is to look at the **marginal
 discovery rate**—the instantaneous slope of the discovery curve with
-respect to sequencing reads $`R(p) = pR`$:
+respect to sequencing reads R(p) = pR:
 
-``` math
-\text{edge\_discovery\_rate}(p) = \frac{d\,\mathbb{E}[E(p)]}{dR(p)} = \frac{1}{R} \sum_{e=1}^{E} r_e (1 - p)^{r_e - 1}
-```
+\text{edge\\discovery\\rate}(p) = \frac{d\\\mathbb{E}\[E(p)\]}{dR(p)} =
+\frac{1}{R} \sum\_{e=1}^{E} r_e (1 - p)^{r_e - 1}
 
-``` math
-\text{node\_discovery\_rate}(p) = \frac{d\,\mathbb{E}[N(p)]}{dR(p)}
-```
+\text{node\\discovery\\rate}(p) = \frac{d\\\mathbb{E}\[N(p)\]}{dR(p)}
 
-- **How to read `edge_discovery_rate` (bounds $`[0, 1]`$):** The
-  expected number of new unique edges discovered per additional read. At
-  $`p \to 0`$, every read discovers $`1`$ new edge; at full depth
-  ($`p = 1`$), $`\text{edge\_discovery\_rate}(1) = \frac{E_1}{R}`$ (the
-  fraction of reads supporting singleton edges). Multiplying
-  `edge_discovery_rate` by $`100{,}000`$ gives the expected number of
-  new edges gained if you sequence $`+100{,}000`$ additional reads per
-  cell.
-- **How to read `node_discovery_rate` (bounds $`[0, 2]`$):** The
-  expected number of new unique nodes discovered per additional read.
-  Because each read has **2** endpoints (`umi1` and `umi2`), the very
-  first reads at $`p \to 0`$ discover up to **2 new nodes per read**
-  (for `min_degree = 1L`). In practice, multiplying
-  `node_discovery_rate` by $`100{,}000`$ gives a direct, upper-bound
-  estimate of **how many new nodes you will gain by sequencing
-  $`+100{,}000`$ additional reads per cell** (since the slope continues
-  to decay as depth increases).
-- **Marginal (Good-Turing) saturation (bounds $`[0, 1]`$):** The
+- **How to read `edge_discovery_rate` (bounds \[0, 1\]):** The expected
+  number of new unique edges discovered per additional read. At p \to 0,
+  every read discovers 1 new edge; at full depth (p = 1),
+  \text{edge\\discovery\\rate}(1) = \frac{E_1}{R} (the fraction of reads
+  supporting singleton edges). Multiplying `edge_discovery_rate` by
+  100{,}000 gives the expected number of new edges gained if you
+  sequence +100{,}000 additional reads per cell.
+- **How to read `node_discovery_rate` (bounds \[0, 2\]):** The expected
+  number of new unique nodes discovered per additional read. Because
+  each read has **2** endpoints (`umi1` and `umi2`), the very first
+  reads at p \to 0 discover up to **2 new nodes per read** (for
+  `min_degree = 1L`). In practice, multiplying `node_discovery_rate` by
+  100{,}000 gives a direct, upper-bound estimate of **how many new nodes
+  you will gain by sequencing +100{,}000 additional reads per cell**
+  (since the slope continues to decay as depth increases).
+- **Marginal (Good-Turing) saturation (bounds \[0, 1\]):** The
   probability that the next observation lands on an already-observed
   element:
 
-``` math
-S_{\text{marginal, edge}}(p) = 1 - \text{edge\_discovery\_rate}(p), \qquad
-S_{\text{marginal, node}}(p) = 1 - \frac{\text{node\_discovery\_rate}(p)}{2}
-```
+S\_{\text{marginal, edge}}(p) = 1 - \text{edge\\discovery\\rate}(p),
+\qquad S\_{\text{marginal, node}}(p) = 1 -
+\frac{\text{node\\discovery\\rate}(p)}{2}
 
 ### Results on `minimal_pna_pxl_file()`
 
@@ -458,10 +438,10 @@ kable(
 | component | edges | reads | edge_saturation | nodes | node_saturation | edge_discovery_rate | node_disc_deg1 | marginal_edge_saturation | marg_node_sat_deg1 | core_nodes | node_disc_deg2 | new_nodes_100k_deg1 | new_nodes_100k_deg2 |
 |:---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | d4074c845bb62800 | 141153 | 372618 | 0.6212 | 65712 | 0.9118 | 0.1565 | 0.0246 | 0.8435 | 0.9877 | 50105 | 0.0189 | 2455 | 1887 |
-| 0a45497c6bfbfb22 | 97014 | 289856 | 0.6653 | 43543 | 0.9249 | 0.1257 | 0.0196 | 0.8743 | 0.9902 | 33731 | 0.0121 | 1964 | 1205 |
 | efe0ed189cb499fc | 100132 | 266795 | 0.6247 | 48636 | 0.9089 | 0.1536 | 0.0250 | 0.8464 | 0.9875 | 37171 | 0.0208 | 2503 | 2082 |
 | 2708240b908e2eba | 79638 | 229977 | 0.6537 | 37665 | 0.9181 | 0.1341 | 0.0221 | 0.8659 | 0.9889 | 28944 | 0.0158 | 2212 | 1584 |
 | c3c393e9a17c1981 | 110657 | 298516 | 0.6293 | 49351 | 0.9173 | 0.1513 | 0.0223 | 0.8487 | 0.9889 | 38146 | 0.0154 | 2227 | 1545 |
+| 0a45497c6bfbfb22 | 97014 | 289856 | 0.6653 | 43543 | 0.9249 | 0.1257 | 0.0196 | 0.8743 | 0.9902 | 33731 | 0.0121 | 1964 | 1205 |
 
 Full-depth saturation and marginal discovery rates for
 minimal_pna_pxl_file(). {.table .caption-top style="width:100%;"}
@@ -507,9 +487,9 @@ p_min_ndisc <- ggplot(marg_curve_min_deg1, aes(x = read_count, y = node_discover
 ### Results on resting PBMC components (`PBMCs_resting_S01_HG4.layout.pxl`)
 
 Across 100 randomly sampled cells in the resting PBMC dataset (mean read
-depth 489,185 reads/cell), the plots below show the mean and
-$`\pm 1\text{ SD}`$ error bars (plus 5th–95th percentile ribbons) for
-both `min_degree = 1L` and `min_degree = 2L`:
+depth 489,185 reads/cell), the plots below show the mean and \pm 1\text{
+SD} error bars (plus 5th–95th percentile ribbons) for both
+`min_degree = 1L` and `min_degree = 2L`:
 
 Code
 
@@ -593,31 +573,31 @@ plot_pbmc_panel <- function(df, metric_name, y_limits, y_label) {
 
 At full depth (~489k reads/cell) on this PBMC dataset, we can translate
 the discovery rates directly into what you would gain from **sequencing
-$`+100{,}000`$ additional reads per cell** (~21% deeper sequencing):
++100{,}000 additional reads per cell** (~21% deeper sequencing):
 
 - **Protein/node discovery is near-saturated:** `node_discovery_rate` is
-  0.0231 total nodes per read (**2,306 new nodes per $`+100{,}000`$
-  reads**, or 23.1 per 1,000 reads), and only 0.0121 core nodes per read
-  (**1,213 new core nodes per $`+100{,}000`$ reads**, or 12.1 per 1,000
-  reads) when `min_degree = 2L`. Because the discovery rate continues to
-  decrease with depth, $`+100{,}000`$ additional reads per cell would
-  add fewer than 1,213 core nodes (less than a 2.3% increase over the
-  current 53,594 core nodes).
+  0.0231 total nodes per read (**2,306 new nodes per +100{,}000 reads**,
+  or 23.1 per 1,000 reads), and only 0.0121 core nodes per read (**1,213
+  new core nodes per +100{,}000 reads**, or 12.1 per 1,000 reads) when
+  `min_degree = 2L`. Because the discovery rate continues to decrease
+  with depth, +100{,}000 additional reads per cell would add fewer than
+  1,213 core nodes (less than a 2.3% increase over the current 53,594
+  core nodes).
 - **Nearly half of new nodes at full depth are degree-1 leaves:**
-  Comparing `min_degree = 1L` (2,306 nodes per $`+100{,}000`$ reads)
-  against `min_degree = 2L` (1,213 core nodes per $`+100{,}000`$ reads)
-  shows that ~47% of newly discovered nodes at full depth (1,093 per
-  $`+100{,}000`$ reads) are dangling degree-1 leaves.
+  Comparing `min_degree = 1L` (2,306 nodes per +100{,}000 reads) against
+  `min_degree = 2L` (1,213 core nodes per +100{,}000 reads) shows that
+  ~47% of newly discovered nodes at full depth (1,093 per +100{,}000
+  reads) are dangling degree-1 leaves.
 - **New edges mostly densify existing nodes:** `edge_discovery_rate` is
-  0.1986 (**19,858 new edges per $`+100{,}000`$ reads**, or 198.6 per
-  1,000 reads), meaning ~90% of newly discovered edges at this depth
-  connect two nodes that are already in the component.
+  0.1986 (**19,858 new edges per +100{,}000 reads**, or 198.6 per 1,000
+  reads), meaning ~90% of newly discovered edges at this depth connect
+  two nodes that are already in the component.
 
 ## Summary recommendations
 
 | Use Case | Recommended Function & Metric | Recommended Parameters | Why |
 |:---|:---|:---|:---|
-| **Overall PCR duplication rate** | [`approximate_edge_saturation()`](../reference/approximate_edge_saturation.md) $`\to`$`edge_saturation` ($`1 - E/R`$) | `min_degree = 2L` (core graph) or `1L` (all reads) | Directly measures the fraction of reads that are PCR duplicates of observed amplicon edges; `min_degree = 2L` excludes degree-1 error leaves. |
-| **Deciding whether to sequence deeper (protein/node recovery)** | [`marginal_saturation()`](../reference/marginal_saturation.md) & [`marginal_saturation_curve()`](../reference/marginal_saturation_curve.md) $`\to`$`node_discovery_rate` ($`dN/dR`$) | `min_degree = 2L` | Measures the exact instantaneous yield of new core nodes per additional read while excluding single-read degree-1 leaf noise. |
-| **Deciding whether to sequence deeper (graph edge density)** | [`marginal_saturation()`](../reference/marginal_saturation.md) & [`marginal_saturation_curve()`](../reference/marginal_saturation_curve.md) $`\to`$`edge_discovery_rate` ($`dE/dR`$) | `min_degree = 1L` or `2L` | Measures the instantaneous yield of new unique edges per additional read ($`1 - \text{marginal\_edge\_saturation}`$). |
-| **Cumulative node saturation** | [`approximate_node_saturation()`](../reference/approximate_node_saturation.md) $`\to`$`node_saturation` ($`1 - N/2R`$) | $`m = 2`$ (default), `min_degree = 2L` | Always keep $`m = 2`$ (`node_reads_multiplier = 2`) so values remain in $`[0, 1)`$, but interpret with caution because $`1 - N/2R`$ is confounded by average node degree $`\bar{d}`$. |
+| **Overall PCR duplication rate** | [`approximate_edge_saturation()`](../reference/approximate_edge_saturation.md) \to `edge_saturation` (1 - E/R) | `min_degree = 2L` (core graph) or `1L` (all reads) | Directly measures the fraction of reads that are PCR duplicates of observed amplicon edges; `min_degree = 2L` excludes degree-1 error leaves. |
+| **Deciding whether to sequence deeper (protein/node recovery)** | [`marginal_saturation()`](../reference/marginal_saturation.md) & [`marginal_saturation_curve()`](../reference/marginal_saturation_curve.md) \to `node_discovery_rate` (dN/dR) | `min_degree = 2L` | Measures the exact instantaneous yield of new core nodes per additional read while excluding single-read degree-1 leaf noise. |
+| **Deciding whether to sequence deeper (graph edge density)** | [`marginal_saturation()`](../reference/marginal_saturation.md) & [`marginal_saturation_curve()`](../reference/marginal_saturation_curve.md) \to `edge_discovery_rate` (dE/dR) | `min_degree = 1L` or `2L` | Measures the instantaneous yield of new unique edges per additional read (1 - \text{marginal\\edge\\saturation}). |
+| **Cumulative node saturation** | [`approximate_node_saturation()`](../reference/approximate_node_saturation.md) \to `node_saturation` (1 - N/2R) | m = 2 (default), `min_degree = 2L` | Always keep m = 2 (`node_reads_multiplier = 2`) so values remain in \[0, 1), but interpret with caution because 1 - N/2R is confounded by average node degree \bar{d}. |
