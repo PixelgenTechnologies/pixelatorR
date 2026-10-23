@@ -1,6 +1,6 @@
 options(Seurat.object.assay.version = "v3")
 seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE, load_proximity_scores = FALSE, verbose = FALSE)
-seur <- suppressWarnings(merge(seur, list(seur, seur, seur))) %>%
+seur <- suppressWarnings(merge(seur, list(seur, seur, seur))) |>
   Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
 
 set.seed(123)
@@ -19,7 +19,7 @@ reference <- SeuratObject::CreateSeuratObject(
     cell_type = c(rep("CD4T", 10), rep("pDC", 10), rep("Mono CD16+", 10)),
     row.names = paste0("cell", 1:30)
   )
-) %>%
+) |>
   Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
 
 test_that("annotate_cells works as expected", {
@@ -35,7 +35,7 @@ test_that("annotate_cells works as expected", {
     verbose = FALSE
   ))
   expect_equal(
-    seur_anno$cell_type %>% unname(),
+    seur_anno$cell_type |> unname(),
     c(
       "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T",
@@ -56,7 +56,7 @@ test_that("annotate_cells works as expected", {
     verbose = FALSE
   ))
   expect_equal(
-    seur$cell_type %>% unname(),
+    seur$cell_type |> unname(),
     c(
       "Mono CD16+", "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+", "Unknown", "CD4T",
@@ -68,13 +68,13 @@ test_that("annotate_cells works as expected", {
   reference <- read_pbmc_reference()
   expect_no_error(
     seur_sub <-
-      seur %>%
-      Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE) %>%
+      seur |>
+      Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE) |>
       # Z score scaling
-      Seurat::ScaleData(verbose = FALSE) %>%
-      Seurat::RunPCA(npcs = 3, features = rownames(seur), verbose = FALSE) %>%
-      Seurat::FindNeighbors(reduction = "pca", dims = 1:3, verbose = FALSE) %>%
-      Seurat::FindClusters(resolution = 0.5, verbose = FALSE) %>%
+      Seurat::ScaleData(verbose = FALSE) |>
+      Seurat::RunPCA(npcs = 3, features = rownames(seur), verbose = FALSE) |>
+      Seurat::FindNeighbors(reduction = "pca", dims = 1:3, verbose = FALSE) |>
+      Seurat::FindClusters(resolution = 0.5, verbose = FALSE) |>
       subset(features = head(rownames(seur), 50))
   )
 
@@ -114,7 +114,7 @@ test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
   ))
   seur_merged <- suppressWarnings(merge(seur_v5, seur_v5, add.cell.ids = c("A", "B")))
   expect_no_error(
-    ref <- read_pbmc_reference() %>%
+    ref <- read_pbmc_reference() |>
       NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
   )
 
@@ -133,7 +133,7 @@ test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
   )
 
   expect_no_error(
-    seur_joined <- JoinLayers(seur_merged) %>%
+    seur_joined <- JoinLayers(seur_merged) |>
       NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
   )
   expect_no_error(

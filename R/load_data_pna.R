@@ -113,7 +113,7 @@ ReadPNA_Seurat <- function(
   }
 
   # Create an empty cellgraphs list
-  empty_graphs <- rep(list(NULL), ncol(X)) %>% set_names(nm = colnames(X))
+  empty_graphs <- rep(list(NULL), ncol(X)) |> set_names(nm = colnames(X))
 
   if (return_pna_assay) {
     # Create CellGraphAssay(5)
@@ -139,7 +139,7 @@ ReadPNA_Seurat <- function(
     if (load_proximity_scores) {
       proximity <- db$proximity(calc_log2_ratio)
       if (all(c("marker1", "marker2") %in% names(proximity))) {
-        proximity <- proximity %>%
+        proximity <- proximity |>
           rename(marker_1 = !!sym("marker1"), marker_2 = !!sym("marker2"))
       }
       pna_assay@proximity <- proximity
@@ -167,7 +167,7 @@ ReadPNA_Seurat <- function(
   # so select them with a regex in addition to the fixed QC columns.
   meta_data <- db$cell_meta()
   if (!detailed_meta_data) {
-    meta_data <- meta_data %>%
+    meta_data <- meta_data |>
       select(any_of(CELL_META_COLS), matches("^k_core_", ignore.case = FALSE))
   }
 
@@ -187,8 +187,8 @@ ReadPNA_Seurat <- function(
 
   if (getOption("Seurat.object.assay.version", "v3") == "v3") {
     if (!"marker" %in% colnames(feature_meta_data)) {
-      feature_meta_data <- feature_meta_data %>%
-        mutate(marker = rownames(.))
+      feature_meta_data <- feature_meta_data |>
+        (\(.) mutate(., marker = rownames(.)))()
     }
 
     # Replace underscore with dash
@@ -212,7 +212,7 @@ ReadPNA_Seurat <- function(
   VariableFeatures(seur_obj) <- rownames(seur_obj)
 
   # Remove redundant meta data columns
-  seur_obj@meta.data <- seur_obj@meta.data %>% select(-contains(c("nFeature", "nCount", "_index")))
+  seur_obj@meta.data <- seur_obj@meta.data |> select(-contains(c("nFeature", "nCount", "_index")))
 
   return(seur_obj)
 }
@@ -301,7 +301,7 @@ ReadPNA_edgelist <- function(
     on.exit(db$close())
   }
 
-  available_components <- db$counts() %>% colnames()
+  available_components <- db$counts() |> colnames()
   if (!any(cells %in% available_components) && !is.null(cells)) {
     cli::cli_abort(
       c(
@@ -351,7 +351,7 @@ ReadPNA_layouts <- function(
     )
   }
 
-  available_components <- db$counts() %>% colnames()
+  available_components <- db$counts() |> colnames()
   if (!any(cells %in% available_components) && !is.null(cells)) {
     cli::cli_abort(
       c(

@@ -24,15 +24,15 @@ test_that("FSMap works as expected", {
   tmp_path <- fs::file_temp(ext = "pxl")
   fs::file_copy(fs_map$pxl_file, tmp_path)
   expect_no_error({
-    FSMap(seur_obj_mpx) <- FSMap(seur_obj_mpx) %>%
-      mutate(pxl_file = tmp_path %>% as.character())
+    FSMap(seur_obj_mpx) <- FSMap(seur_obj_mpx) |>
+      mutate(pxl_file = tmp_path |> as.character())
   })
 
   # Check that the update fails if the file is missing
   fs::file_delete(tmp_path)
   expect_error({
-    FSMap(seur_obj_mpx) <- FSMap(seur_obj_mpx) %>%
-      mutate(pxl_file = tmp_path %>% as.character())
+    FSMap(seur_obj_mpx) <- FSMap(seur_obj_mpx) |>
+      mutate(pxl_file = tmp_path |> as.character())
   })
 
   # Check that FSMap works with multiple PNA assays

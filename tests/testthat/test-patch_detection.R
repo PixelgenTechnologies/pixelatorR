@@ -9,9 +9,9 @@ test_that("patch_detection works as expected", {
       patch_markers = c("CD58"),
       verbose = FALSE
     ))
-  expect_no_error(cg_patch@cellgraph %>% pull(patch))
+  expect_no_error(cg_patch@cellgraph |> pull(patch))
   expect_equal(
-    table(cg_patch@cellgraph %>% pull(patch)),
+    table(cg_patch@cellgraph |> pull(patch)),
     structure(
       c(`0` = 41575L, `1` = 1241L, `2` = 727L),
       dim = 3L,

@@ -19,13 +19,13 @@ for (assay_version in c("v3", "v5")) {
     # Seurat
     expect_no_error(seur_large_component <- KeepLargestComponent(seur))
     expect_s4_class(seur_large_component, "Seurat")
-    CellGraphs(seur) <- rep(list(NULL), ncol(seur)) %>% setNames(nm = colnames(seur))
+    CellGraphs(seur) <- rep(list(NULL), ncol(seur)) |> setNames(nm = colnames(seur))
     expect_no_error(seur <- KeepLargestComponent(seur))
 
     # CellGraphAssay
     expect_no_error(cg_assay_large_component <- KeepLargestComponent(cg_assay))
     expect_s4_class(cg_assay_large_component, expected_class)
-    cg_assay_large_component@cellgraphs <- rep(list(NULL), ncol(cg_assay)) %>% setNames(nm = colnames(cg_assay))
+    cg_assay_large_component@cellgraphs <- rep(list(NULL), ncol(cg_assay)) |> setNames(nm = colnames(cg_assay))
     expect_no_error(cg_assay_large_component <- KeepLargestComponent(cg_assay_large_component))
 
     # CellGraph

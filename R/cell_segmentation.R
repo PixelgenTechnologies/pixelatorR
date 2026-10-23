@@ -53,8 +53,8 @@
 #'
 #' @examples
 #' library(dplyr)
-#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-#'   LoadCellGraphs(cells = colnames(.)[2], verbose = FALSE)
+#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[2], verbose = FALSE))()
 #' cg <- CellGraphs(se)[[2]]
 #'
 #' # Get cell type weights
@@ -165,8 +165,8 @@ segment_cell <- function(
   } else {
     interface_nodes <- .fetch_interface_nodes(
       A,
-      c1_nodes = g_c1 %>% pull(name),
-      c2_nodes = g_c2 %>% pull(name),
+      c1_nodes = g_c1 |> pull(name),
+      c2_nodes = g_c2 |> pull(name),
       k_interface_expansion = k_interface_expansion
     )
   }
@@ -185,15 +185,15 @@ segment_cell <- function(
   # 3) Nodes that don't fit any of the above categories are classified as "other"
   # Note that the interface can break the connectivity of the cell1 and cell2 graphs,
   # so there's no guarantee that these compartments will be fully connected.
-  c1_nodes_keep <- g_c1 %>% pull(name)
-  c2_nodes_keep <- g_c2 %>% pull(name)
+  c1_nodes_keep <- g_c1 |> pull(name)
+  c2_nodes_keep <- g_c2 |> pull(name)
 
   node_compartment_map <- tibble(
     node = .cg_node_map(cg)
-  ) %>%
+  ) |>
     mutate(group = if_else(
       node %in% interface_nodes, "interface", "other"
-    )) %>%
+    )) |>
     mutate(compartment = case_when(
       group == "interface" ~ "interface",
       node %in% c1_nodes_keep ~ cell_names[1],
@@ -203,8 +203,8 @@ segment_cell <- function(
 
   # Add compartment annotation to graph
   cg@cellgraph <- cg@cellgraph %N>%
-    select(-any_of("compartment")) %>%
-    left_join(node_compartment_map %>% select(node, compartment), by = c("name" = "node"))
+    select(-any_of("compartment")) |>
+    left_join(node_compartment_map |> select(node, compartment), by = c("name" = "node"))
 
   return(cg)
 }
@@ -396,7 +396,7 @@ cc_protein_weights <- function(
   mode <- match.arg(mode, c("cell_abundance", "k_neighborhood"))
 
   # Define group vector and check that specified populations are present in the data
-  group_vec <- object[[]] %>% pull(!!sym(group_by))
+  group_vec <- object[[]] |> pull(!!sym(group_by))
   assert_x_in_y(population_1, group_vec)
   assert_x_in_y(population_2, group_vec)
 
@@ -436,11 +436,11 @@ cc_protein_weights <- function(
   pop_components <- results$pop_components
 
   # Compute marker frequencies for populations
-  pop1_props <- counts[, pop_components[[1]], drop = FALSE] %>%
-    Matrix::rowSums() %>%
+  pop1_props <- counts[, pop_components[[1]], drop = FALSE] |>
+    Matrix::rowSums() |>
     prop.table()
-  pop2_props <- counts[, pop_components[[2]], drop = FALSE] %>%
-    Matrix::rowSums() %>%
+  pop2_props <- counts[, pop_components[[2]], drop = FALSE] |>
+    Matrix::rowSums() |>
     prop.table()
 
   # Filter out unspecific markers to improve model
@@ -523,8 +523,8 @@ cc_protein_weights <- function(
   }
 
   # Ensure correct ordering of weight vectors
-  pop1_ind <- nmf_model$h[, pop_components[[1]], drop = FALSE] %>%
-    apply(1, sum) %>%
+  pop1_ind <- nmf_model$h[, pop_components[[1]], drop = FALSE] |>
+    apply(1, sum) |>
     which.max()
   if (pop1_ind == 2) {
     w <- w[, 2:1]
@@ -539,20 +539,20 @@ cc_protein_weights <- function(
       component = rep(c(population_1, population_2), each = nrow(w))
     )
 
-    top_markers <- gg %>%
-      group_by(component) %>%
-      slice_max(score, n = 40) %>%
-      pull(marker) %>%
+    top_markers <- gg |>
+      group_by(component) |>
+      slice_max(score, n = 40) |>
+      pull(marker) |>
       unique()
 
-    p <- gg %>%
-      filter(marker %in% top_markers) %>%
+    p <- gg |>
+      filter(marker %in% top_markers) |>
       ggplot(aes(reorder(marker, score), score, fill = component)) +
       geom_col() +
       coord_flip() +
       theme_bw() +
       labs(fill = "Population", x = "Protein", y = "Weights", title = "NMF model weights") +
-      scale_fill_manual(values = c("#6588CF", "#F19DA7") %>% set_names(c(population_1, population_2)))
+      scale_fill_manual(values = c("#6588CF", "#F19DA7") |> set_names(c(population_1, population_2)))
 
     print(p)
   }
@@ -571,30 +571,30 @@ cc_protein_weights <- function(
 
     km <- kmeans(x[, population_1], centers = 2)
     th <- .kmeans_midpoint(km$centers)
-    classification <- if_else(x[, population_1] >= th, population_1, population_2) %>%
+    classification <- if_else(x[, population_1] >= th, population_1, population_2) |>
       set_names(rownames(x))
 
     classification_table <- tibble(
-      actual = pop_components_test[[1]] %>% if_else(., population_1, population_2),
+      actual = pop_components_test[[1]] |> if_else(population_1, population_2),
       predicted = classification
-    ) %>%
-      group_by(actual, predicted) %>%
-      count() %>%
-      group_by(actual) %>%
-      mutate(p = n / sum(n)) %>%
-      mutate(type = factor(if_else(actual == predicted, "accuracy", "error"), levels = c("accuracy", "error"))) %>%
-      select(actual, type, p) %>%
-      pivot_wider(names_from = type, values_from = p, values_fill = list(p = 0), names_expand = TRUE) %>%
-      ungroup() %>%
-      data.frame(row.names = 1, check.names = FALSE) %>%
+    ) |>
+      group_by(actual, predicted) |>
+      count() |>
+      group_by(actual) |>
+      mutate(p = n / sum(n)) |>
+      mutate(type = factor(if_else(actual == predicted, "accuracy", "error"), levels = c("accuracy", "error"))) |>
+      select(actual, type, p) |>
+      pivot_wider(names_from = type, values_from = p, values_fill = list(p = 0), names_expand = TRUE) |>
+      ungroup() |>
+      data.frame(row.names = 1, check.names = FALSE) |>
       as.matrix()
 
     if (verbose) {
       cli::cli_alert_info(
         c(
           "Model accuracy on test set: ",
-          "{classification_table[population_1, 'accuracy'] %>% scales::percent(1)} for {.str {population_1}} and ",
-          "{classification_table[population_2, 'accuracy'] %>% scales::percent(1)} for {.str {population_2}}."
+          "{classification_table[population_1, 'accuracy'] |> scales::percent(1)} for {.str {population_1}} and ",
+          "{classification_table[population_2, 'accuracy'] |> scales::percent(1)} for {.str {population_2}}."
         )
       )
     }
@@ -652,7 +652,7 @@ cc_protein_weights <- function(
     components_keep_pop_2[inds_keep2] <- TRUE
   }
 
-  return(list(components_keep_pop_1, components_keep_pop_2) %>% set_names(c(population_1, population_2)))
+  return(list(components_keep_pop_1, components_keep_pop_2) |> set_names(c(population_1, population_2)))
 }
 
 #' Internal function to build count matrix for cell abundance mode of `cc_protein_weights`
@@ -668,7 +668,7 @@ cc_protein_weights <- function(
   pxl_assay <- object[[assay]]
 
   if (inherits(pxl_assay, "PNAAssay5")) {
-    if (length(Layers(pxl_assay, layer = "counts") %>% grep("^counts\\.\\d", x = .)) > 1) {
+    if (length(Layers(pxl_assay, layer = "counts") |> (\(.) grep("^counts\\.\\d", x = .))()) > 1) {
       cli::cli_abort(
         c(
           "Multiple count layers found in {.var object}. Please run {.var JoinLayers} and try again."
@@ -746,7 +746,7 @@ cc_protein_weights <- function(
   pop_components <- list(
     colnames(counts) %in% colnames(counts_pop1),
     colnames(counts) %in% colnames(counts_pop2)
-  ) %>% set_names(names(pop_components))
+  ) |> set_names(names(pop_components))
 
   # Check percent masked
   if (!is.null(masked_markers)) {
@@ -855,7 +855,7 @@ cc_protein_weights <- function(
 ) {
   shared_markers <- intersect(rownames(counts), rownames(w))
   x <- RcppML::project(
-    A = counts[shared_markers, ] %>% as("dgCMatrix"),
+    A = counts[shared_markers, ] |> as("dgCMatrix"),
     w = w[shared_markers, ],
     L1 = 0.2
   )
@@ -863,7 +863,7 @@ cc_protein_weights <- function(
   x <- Matrix::t(x)
 
   x <- x + 1e-8
-  x <- x %>%
+  x <- x |>
     prop.table(margin = 1)
   rownames(x) <- colnames(counts)
   colnames(x) <- colnames(w)
@@ -939,11 +939,11 @@ spatial_smoothing <- function(
   cg,
   markers
 ) {
-  x <- cg@counts[, markers, drop = FALSE] %>% Matrix::rowSums()
+  x <- cg@counts[, markers, drop = FALSE] |> Matrix::rowSums()
   m <- matrix(
     x,
     ncol = 1
-  ) %>%
+  ) |>
     as("dgCMatrix")
   rownames(m) <- .cg_node_map(cg)
   return(m)
@@ -974,18 +974,18 @@ spatial_smoothing <- function(
   }
 
   # Create membrane graph by subsetting on membrane nodes
-  g_filtered <- g %>%
+  g_filtered <- g |>
     filter(bool_filter)
   comps <- igraph::components(g_filtered)$membership
   comps_sizes <- table(comps)
 
   if (keep_largest_comp) {
     # Filter graph to include largest connected component
-    g_filtered <- g_filtered %>%
-      filter(comps == (which.max(comps_sizes) %>% names() %>% as.integer()))
+    g_filtered <- g_filtered |>
+      filter(comps == (which.max(comps_sizes) |> names() |> as.integer()))
   } else {
-    comps_keep <- names(comps_sizes[comps_sizes >= min_comp_size]) %>% as.integer()
-    g_filtered <- g_filtered %>%
+    comps_keep <- names(comps_sizes[comps_sizes >= min_comp_size]) |> as.integer()
+    g_filtered <- g_filtered |>
       filter(comps %in% comps_keep)
   }
 
@@ -1036,7 +1036,7 @@ spatial_smoothing <- function(
   row_sums <- Matrix::rowSums(exp_counts)
   row_sums[row_sums == 0] <- 1
   exp_counts <- exp_counts / row_sums
-  exp_counts <- as(exp_counts, "dgCMatrix") %>% Matrix::t()
+  exp_counts <- as(exp_counts, "dgCMatrix") |> Matrix::t()
   w <- w[shared_markers, , drop = FALSE]
   x <- RcppML::project(
     A = exp_counts,
@@ -1057,7 +1057,7 @@ spatial_smoothing <- function(
 
   # Add a pseudocount to avoid getting non-finite values
   x <- x + 1e-8
-  x <- x %>%
+  x <- x |>
     prop.table(margin = 1)
   rownames(x) <- rownames(counts_membrane)
   colnames(x) <- colnames(w)
@@ -1065,7 +1065,7 @@ spatial_smoothing <- function(
   # Slice scores into classes
   km <- kmeans(x[, cell_names[1]], centers = 2)
   th <- .kmeans_midpoint(km$centers)
-  node_classification <- if_else(x[, cell_names[1]] >= th, 1, 2) %>%
+  node_classification <- if_else(x[, cell_names[1]] >= th, 1, 2) |>
     set_names(rownames(x))
 
   return(node_classification)
@@ -1105,7 +1105,7 @@ spatial_smoothing <- function(
   interface_nodes <- c(
     rownames(A_crossing)[Matrix::rowSums(A_crossing) > 0],
     colnames(A_crossing)[Matrix::colSums(A_crossing) > 0]
-  ) %>% unique()
+  ) |> unique()
 
   # Expand interface to include neighboring nodes.
   if (k_interface_expansion > 0) {
@@ -1137,19 +1137,19 @@ spatial_smoothing <- function(
 #' @examples
 #' library(dplyr)
 #' library(tidygraph)
-#' cg <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) %>%
-#'   LoadCellGraphs(cells = colnames(.)[4], add_layout = TRUE, verbose = FALSE) %>%
-#'   CellGraphs() %>%
-#'   .[[4]]
+#' cg <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[4], add_layout = TRUE, verbose = FALSE))() |>
+#'   CellGraphs() |>
+#'   (\(.) .[[4]])()
 #'
 #' # Compute distances from the seed set, here we just pick a random point
 #' start_set <- cg@cellgraph %N>%
-#'   pull(name) %>%
+#'   pull(name) |>
 #'   head(1)
 #' cg <- distance_from_node_set(cg, start_set)
 #'
 #' # Visualize the distance on the 3D layout
-#' xyz <- cg@layout$wpmds_3d %>%
+#' xyz <- cg@layout$wpmds_3d |>
 #'   mutate(d = cg@cellgraph %N>% pull(distance_from_seed))
 #'
 #' plotly::plot_ly(
@@ -1218,7 +1218,7 @@ distance_from_node_set <- function(
 
   # Add distance
   cg@cellgraph <- cg@cellgraph %N>%
-    select(-any_of("distance_from_seed")) %>%
+    select(-any_of("distance_from_seed")) |>
     left_join(tibble(name = nodes, distance_from_seed = d), by = "name")
 
   return(cg)

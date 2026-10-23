@@ -53,13 +53,13 @@ layout of a graph with edge weights.
 library(dplyr)
 
 pxl_file <- minimal_mpx_pxl_file()
-seur_obj <- ReadMPX_Seurat(pxl_file) \%>\%
-  LoadCellGraphs(cells = colnames(.)[1])
+seur_obj <- ReadMPX_Seurat(pxl_file) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1]))()
 
 # compute weighted pMDS layout
-g <- CellGraphs(seur_obj)[[1]] \%>\%
+g <- CellGraphs(seur_obj)[[1]] |>
   CellGraphData("cellgraph")
-layout <- layout_with_weighted_pmds(g, dim = 3) \%>\%
+layout <- layout_with_weighted_pmds(g, dim = 3) |>
   as_tibble(.name_repair = ~ c("x", "y", "z"))
 plotly::plot_ly(
   layout,
@@ -72,7 +72,7 @@ plotly::plot_ly(
 )
 
 # or using ComputeLayout and cell_plot()
-seur_obj <- seur_obj \%>\%
+seur_obj <- seur_obj |>
   # Compute weighted pMDS layout
   ComputeLayout(layout_method = "wpmds", dim = 3)
 

@@ -5,9 +5,9 @@ for (assay_version in c("v3", "v5")) {
     "five_cells.pxl",
     package = "pixelatorR"
   )
-  seur_obj <- ReadMPX_Seurat(pxl_file) %>% LoadCellGraphs()
+  seur_obj <- ReadMPX_Seurat(pxl_file) |> LoadCellGraphs()
 
-  seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("A", "B")) %>% LoadCellGraphs()
+  seur_obj_merged <- merge(seur_obj, seur_obj, add.cell.ids = c("A", "B")) |> LoadCellGraphs()
 
   test_that("WriteMPX_pxl_file works as expected", {
     ## Single sample
@@ -25,7 +25,7 @@ for (assay_version in c("v3", "v5")) {
     ) %in% pxl_files))
 
     # Try reloading data
-    seur_obj_reloaded <- ReadMPX_Seurat(temp_pxl_file) %>% LoadCellGraphs()
+    seur_obj_reloaded <- ReadMPX_Seurat(temp_pxl_file) |> LoadCellGraphs()
     expect_equal(colnames(seur_obj_reloaded), colnames(seur_obj))
     expect_equal(rownames(seur_obj_reloaded), rownames(seur_obj))
     expect_equal(PolarizationScores(seur_obj_reloaded), PolarizationScores(seur_obj))
@@ -58,7 +58,7 @@ for (assay_version in c("v3", "v5")) {
     ) %in% pxl_files))
 
     # Try reloading data
-    seur_obj_reloaded <- ReadMPX_Seurat(temp_pxl_file) %>% LoadCellGraphs()
+    seur_obj_reloaded <- ReadMPX_Seurat(temp_pxl_file) |> LoadCellGraphs()
     expect_equal(colnames(seur_obj_reloaded), colnames(seur_obj_merged))
     expect_equal(rownames(seur_obj_reloaded), rownames(seur_obj_merged))
     expect_equal(PolarizationScores(seur_obj_reloaded), PolarizationScores(seur_obj_merged))
@@ -85,8 +85,8 @@ pxl_file <- system.file("extdata/five_cells",
   "five_cells.pxl",
   package = "pixelatorR"
 )
-seur_obj <- ReadMPX_Seurat(pxl_file) %>%
-  LoadCellGraphs() %>%
+seur_obj <- ReadMPX_Seurat(pxl_file) |>
+  LoadCellGraphs() |>
   ComputeLayout(dim = 3)
 temp_pxl_file <- fs::file_temp(ext = ".pxl")
 WriteMPX_pxl_file(seur_obj, temp_pxl_file)
@@ -103,5 +103,5 @@ test_that("anndata file can be loaded with the anndata python library", {
   X <- t(adata$X)
   rownames(X) <- rownames(adata$var)
   colnames(X) <- rownames(adata$obs)
-  expect_equal(X, LayerData(seur_obj, layer = "counts") %>% as.matrix())
+  expect_equal(X, LayerData(seur_obj, layer = "counts") |> as.matrix())
 })

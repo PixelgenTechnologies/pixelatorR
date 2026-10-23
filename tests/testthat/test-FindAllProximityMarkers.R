@@ -1,8 +1,8 @@
 library(dplyr)
 
 arrange_markers <- function(x) {
-  x %>%
-    select(-any_of(c("data_type", "reference", "alternative", "med_tgt", "med_rest", "med_ref"))) %>%
+  x |>
+    select(-any_of(c("data_type", "reference", "alternative", "med_tgt", "med_rest", "med_ref"))) |>
     arrange(marker_1, marker_2, target)
 }
 
@@ -18,7 +18,7 @@ matrix_one_vs_rest <- function(
   min_diff_pct = -Inf,
   only_pos = FALSE
 ) {
-  labels <- df %>% distinct(component, !!sym(group_by))
+  labels <- df |> distinct(component, !!sym(group_by))
   label_chr <- as.character(labels[[group_by]])
   names(label_chr) <- as.character(labels$component)
   mat <- ProximityScoresToAssay(df, values_from = proximity_metric)
@@ -68,7 +68,7 @@ one_vs_rest_data <- function(n_per_group = 4L, groups = c("0", "1", "2")) {
     marker_1 = c("A", "B"),
     marker_2 = c("A", "B"),
     component = components
-  ) %>%
+  ) |>
     mutate(
       cluster = clusters[match(component, components)],
       join_count_z = rnorm(n())
@@ -78,7 +78,7 @@ one_vs_rest_data <- function(n_per_group = 4L, groups = c("0", "1", "2")) {
 test_that("FindAllProximityMarkers compares each level to the pooled rest", {
   set.seed(1)
   df <- one_vs_rest_data(n_per_group = 4L, groups = as.character(0:5))
-  df <- df %>%
+  df <- df |>
     mutate(
       join_count_z = if_else(
         marker_1 == "A" & marker_2 == "A" & cluster == "0",
@@ -104,14 +104,14 @@ test_that("FindAllProximityMarkers compares each level to the pooled rest", {
   expect_true(all(c("med_tgt", "med_rest") %in% names(res)))
   expect_equal(res$diff_median, res$med_tgt - res$med_rest)
 
-  boosted <- res %>%
+  boosted <- res |>
     filter(target == "0", marker_1 == "A", marker_2 == "A")
   expect_gt(boosted$diff_median, 0)
   expect_equal(boosted$diff_median, boosted$med_tgt - boosted$med_rest)
 
   for (ident in unique(res$target)) {
     ref <- matrix_one_vs_rest(df, ident = ident, min_cells_per_group = 4)
-    got <- res %>% filter(target == ident)
+    got <- res |> filter(target == ident)
     expect_equal(arrange_markers(got), arrange_markers(ref))
   }
 })
@@ -141,7 +141,7 @@ test_that("FindAllProximityMarkers respects factor order, idents, and the rest l
   expect_equal(unique(res_one$target), "0")
 
   res_numeric <- FindAllProximityMarkers(
-    df %>% mutate(cluster = as.character(cluster)),
+    df |> mutate(cluster = as.character(cluster)),
     group_by = "cluster",
     idents = 1,
     proximity_metric = "join_count_z",
@@ -150,7 +150,7 @@ test_that("FindAllProximityMarkers respects factor order, idents, and the rest l
   )
   expect_equal(unique(res_numeric$target), "1")
 
-  colliding <- df %>% mutate(cluster = if_else(as.character(cluster) == "2", "rest", as.character(cluster)))
+  colliding <- df |> mutate(cluster = if_else(as.character(cluster) == "2", "rest", as.character(cluster)))
   res_rest <- FindAllProximityMarkers(
     colliding,
     group_by = "cluster",
@@ -165,7 +165,7 @@ test_that("FindAllProximityMarkers skips groups that are too small", {
   set.seed(1)
   df <- bind_rows(
     one_vs_rest_data(n_per_group = 4L, groups = c("0", "1")),
-    one_vs_rest_data(n_per_group = 2L, groups = "2") %>%
+    one_vs_rest_data(n_per_group = 2L, groups = "2") |>
       mutate(component = paste0("small", component))
   )
 
@@ -200,7 +200,7 @@ test_that("FindAllProximityMarkers skips groups that are too small", {
 test_that("matrix thresholds are applied once to the shared proximity matrix", {
   set.seed(1)
   df <- one_vs_rest_data(n_per_group = 4L, groups = as.character(0:5))
-  df <- df %>%
+  df <- df |>
     mutate(
       join_count_z = if_else(
         marker_1 == "A" & marker_2 == "A" & cluster == "0",
@@ -245,7 +245,7 @@ test_that("matrix thresholds are applied once to the shared proximity matrix", {
 test_that("only_pos tests pairs with a higher median in the target", {
   set.seed(1)
   df <- one_vs_rest_data(n_per_group = 4L, groups = c("0", "1", "2"))
-  df <- df %>%
+  df <- df |>
     mutate(
       join_count_z = if_else(
         marker_1 == "A" & marker_2 == "A" & cluster == "0",
@@ -278,8 +278,8 @@ test_that("only_pos tests pairs with a higher median in the target", {
   expect_true(any(both$diff_median < 0))
   expect_true(all(pos$diff_median > 0))
   expect_lt(nrow(pos), nrow(both))
-  positive_pairs <- both %>%
-    filter(diff_median > 0) %>%
+  positive_pairs <- both |>
+    filter(diff_median > 0) |>
     mutate(pair = paste(marker_1, marker_2))
   expect_setequal(paste(pos$marker_1, pos$marker_2), positive_pairs$pair)
 
@@ -343,7 +343,7 @@ test_that("FindAllProximityMarkers excludes cells with missing group_by labels",
   set.seed(1)
   df <- bind_rows(
     one_vs_rest_data(n_per_group = 4L, groups = c("0", "1", "2")),
-    one_vs_rest_data(n_per_group = 2L, groups = "unlabeled") %>%
+    one_vs_rest_data(n_per_group = 2L, groups = "unlabeled") |>
       mutate(
         component = paste0("na_", component),
         cluster = NA_character_
@@ -363,7 +363,7 @@ test_that("FindAllProximityMarkers excludes cells with missing group_by labels",
   )
 
   res_clean <- FindAllProximityMarkers(
-    df %>% filter(!is.na(cluster)),
+    df |> filter(!is.na(cluster)),
     group_by = "cluster",
     proximity_metric = "join_count_z",
     min_cells_per_group = 4,
@@ -400,7 +400,7 @@ test_that("FindAllProximityMarkers fails with invalid input", {
   )
   expect_error(
     FindAllProximityMarkers(
-      df %>% mutate(cluster = 1:n()),
+      df |> mutate(cluster = 1:n()),
       group_by = "cluster",
       proximity_metric = "join_count_z"
     ),
@@ -408,7 +408,7 @@ test_that("FindAllProximityMarkers fails with invalid input", {
   )
   expect_error(
     FindAllProximityMarkers(
-      df %>% mutate(cluster = "only"),
+      df |> mutate(cluster = "only"),
       group_by = "cluster",
       proximity_metric = "join_count_z",
       min_cells_per_group = 1
@@ -525,7 +525,7 @@ for (assay_version in c("v3", "v5")) {
   seur_obj_big <- merge(seur_obj, rep(list(seur_obj), 9), add.cell.ids = LETTERS[1:10])
 
   if (assay_version == "v5") {
-    seur_obj_big <- seur_obj_big %>% JoinLayers()
+    seur_obj_big <- seur_obj_big |> JoinLayers()
   }
 
   test_that(paste0("FindAllProximityMarkers works on a Seurat object (", assay_version, ")"), {

@@ -4,13 +4,13 @@ edge_list <-
     items = "edgelist"
   )
 edge_list <-
-  edge_list %>%
-  select(upia, upib, marker) %>%
+  edge_list |>
+  select(upia, upib, marker) |>
   distinct()
 bipart_graph <-
-  edge_list %>%
+  edge_list |>
   # Create tidy graph
-  as_tbl_graph(directed = FALSE) %>%
+  as_tbl_graph(directed = FALSE) |>
   mutate(node_type = case_when(name %in% edge_list$upia ~ "A", TRUE ~ "B"))
 attr(bipart_graph, "type") <- "bipartite"
 
@@ -49,13 +49,13 @@ test_that("CellGraph initialize supplies default slot values", {
   cg <- methods::new("CellGraph", cellgraph = bipart_graph)
   expect_identical(cg@layers, list())
   expect_identical(cg@reductions, list())
-  expect_equal(cg@nodes, bipart_graph %>% dplyr::pull(name))
+  expect_equal(cg@nodes, bipart_graph |> dplyr::pull(name))
   expect_equal(nrow(cg@meta.data), length(cg@nodes))
   expect_lt(.row_names_info(cg@meta.data), 0L)
 })
 
 test_that("AddMetaData fills per-node meta.data on empty tables", {
-  nodes <- bipart_graph %>% dplyr::pull(name)
+  nodes <- bipart_graph |> dplyr::pull(name)
   cg <- CreateCellGraphObject(cellgraph = bipart_graph)
   slot(cg, "meta.data") <- data.frame()
   cg <- SeuratObject::AddMetaData(cg, metadata = seq_along(nodes), col.name = "idx")
@@ -77,7 +77,7 @@ test_that("CreateCellGraphObject accepts named layout lists", {
   expect_false(inherits(cg@layout$example_layout, "tbl_df"))
   expect_equal(cg@layout$example_layout$x, layout$x)
   expect_equal(colnames(cg@layout$example_layout), "x")
-  expect_equal(CellGraphData(cg, slot = "nodes"), bipart_graph %>% pull(name))
+  expect_equal(CellGraphData(cg, slot = "nodes"), bipart_graph |> pull(name))
   expect_lt(.row_names_info(cg@layout$example_layout), 0L)
 })
 
@@ -106,7 +106,7 @@ test_that("CreateCellGraphObject fails when invalid input is provided", {
   )
 })
 
-node_names <- bipart_graph %>% dplyr::pull(name)
+node_names <- bipart_graph |> dplyr::pull(name)
 n_nodes <- length(node_names)
 
 make_counts <- function(row_order = node_names) {
@@ -283,7 +283,7 @@ test_that("CellGraphData<- stores the provided value and remaps shuffled graphs"
   shuffled_graph <- bipart_graph %N>% dplyr::arrange(dplyr::desc(name))
   attr(shuffled_graph, "type") <- "bipartite"
   CellGraphData(cg, slot = "cellgraph") <- shuffled_graph
-  new_names <- shuffled_graph %>% dplyr::pull(name)
+  new_names <- shuffled_graph |> dplyr::pull(name)
   expect_null(rownames(cg@counts))
   expect_equal(CellGraphData(cg, slot = "nodes"), new_names)
   expect_equal(as.numeric(as.matrix(cg@counts)), as.numeric(as.matrix(replacement[new_names, ])))
@@ -552,7 +552,7 @@ test_that("subset.CellGraph keeps node-level slots aligned", {
   )
   keep <- node_names[seq_len(min(50, n_nodes))]
   cg_small <- subset(cg, nodes = keep)
-  small_names <- cg_small@cellgraph %>% dplyr::pull(name)
+  small_names <- cg_small@cellgraph |> dplyr::pull(name)
   expect_equal(CellGraphData(cg_small, slot = "nodes"), small_names)
   expect_null(rownames(cg_small@counts))
   expect_null(rownames(cg_small@layers$data))
@@ -568,7 +568,7 @@ test_that("subset.CellGraph accepts a single node", {
   one <- node_names[1]
   cg_one <- subset(cg, nodes = one)
   expect_equal(igraph::gorder(cg_one@cellgraph), 1)
-  expect_equal(cg_one@cellgraph %>% dplyr::pull(name), one)
+  expect_equal(cg_one@cellgraph |> dplyr::pull(name), one)
 })
 
 test_that("KeepLargestComponent.CellGraph accepts a single-node component", {
@@ -608,10 +608,10 @@ make_single_graph <- function(node_ids = NULL) {
 
 test_that("subset.CellGraph keeps sequential IDs on graphs without a name attribute", {
   cg <- CreateCellGraphObject(cellgraph = make_single_graph())
-  expect_equal(cg@cellgraph %>% dplyr::pull(name), c("1", "2", "3"))
+  expect_equal(cg@cellgraph |> dplyr::pull(name), c("1", "2", "3"))
 
   cg_small <- subset(cg, nodes = c("2", "3"))
-  expect_equal(cg_small@cellgraph %>% dplyr::pull(name), c("2", "3"))
+  expect_equal(cg_small@cellgraph |> dplyr::pull(name), c("2", "3"))
   expect_equal(CellGraphData(cg_small, slot = "nodes"), c("2", "3"))
   expect_equal(nrow(cg_small@meta.data), 2)
 })
@@ -624,7 +624,7 @@ test_that("KeepLargestComponent.CellGraph works for graphs without a name attrib
   attr(g, "type") <- "single"
   cg <- CreateCellGraphObject(cellgraph = g)
   cg_largest <- KeepLargestComponent(cg, verbose = FALSE)
-  expect_equal(sort(cg_largest@cellgraph %>% dplyr::pull(name)), c("1", "2"))
+  expect_equal(sort(cg_largest@cellgraph |> dplyr::pull(name)), c("1", "2"))
 })
 
 test_that("subset.CellGraph rebuilds empty meta.data with automatic rownames", {
@@ -642,7 +642,7 @@ test_that("subset.CellGraph rebuilds empty meta.data with automatic rownames", {
 test_that("subset.CellGraph keeps character integer node names", {
   cg <- CreateCellGraphObject(cellgraph = make_single_graph(c("1", "2", "3")))
   cg_small <- subset(cg, nodes = c("1", "3"))
-  expect_equal(cg_small@cellgraph %>% dplyr::pull(name), c("1", "3"))
+  expect_equal(cg_small@cellgraph |> dplyr::pull(name), c("1", "3"))
   expect_equal(CellGraphData(cg_small, slot = "nodes"), c("1", "3"))
 })
 

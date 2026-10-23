@@ -133,8 +133,8 @@ library(ggplot2)
 library(dplyr)
 library(tibble)
 
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
-  LoadCellGraphs(cells = colnames(.)[2], add_layouts = TRUE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[2], add_layouts = TRUE))()
 cg <- CellGraphs(se)[[2]]
 
 # Compute local scores using analytical method

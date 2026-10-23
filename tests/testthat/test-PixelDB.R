@@ -140,7 +140,7 @@ test_that("PixelDB methods work as expected", {
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     )
-  expect_equal(prox %>% head(n = 2), expected_prox)
+  expect_equal(prox |> head(n = 2), expected_prox)
 
   # cell_meta method
   expect_no_error(cell_meta <- db$cell_meta())
@@ -160,7 +160,7 @@ test_that("PixelDB methods work as expected", {
   # components_edgelist method
   expect_no_error(el <- db$components_edgelist("c3c393e9a17c1981"))
   expect_equal(
-    el %>% sapply(class),
+    el |> sapply(class),
     c(
       marker_1 = "character",
       marker_2 = "character",
@@ -173,7 +173,7 @@ test_that("PixelDB methods work as expected", {
 
   expect_no_error(el <- db$components_edgelist("c3c393e9a17c1981", umi_data_type = "string"))
   expect_equal(
-    el %>% sapply(class),
+    el |> sapply(class),
     c(
       marker_1 = "character",
       marker_2 = "character",
@@ -192,7 +192,7 @@ test_that("PixelDB methods work as expected", {
   )
 
   expect_equal(
-    el_lazy %>% collect(),
+    el_lazy |> collect(),
     el
   )
 

@@ -3,7 +3,7 @@ seur <- ReadMPX_Seurat(system.file("extdata/five_cells", "five_cells.pxl", packa
 )
 
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
-seur <- seur %>% ComputeLayout(layout_method = "pmds", dim = 3, seed = 123)
+seur <- seur |> ComputeLayout(layout_method = "pmds", dim = 3, seed = 123)
 cg <- CellGraphs(seur)[[1]]
 g <- CellGraphData(cg, slot = "cellgraph")
 counts <- CellGraphData(cg, slot = "counts")

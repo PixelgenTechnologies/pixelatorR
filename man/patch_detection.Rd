@@ -139,24 +139,24 @@ library(ggplot2)
 library(Matrix)
 
 # Load a CellGraph object with PNA data
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
-  LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1], add_layouts = TRUE))()
 cg <- CellGraphs(se)[[1]]
 
-protein_props <- cg@counts \%>\%
-  Matrix::colSums() \%>\%
+protein_props <- cg@counts |>
+  Matrix::colSums() |>
   prop.table()
 patch_props <- protein_props
 patch_props["CD8"] <- 0.4
-patch_props <- patch_props \%>\% prop.table()
+patch_props <- patch_props |> prop.table()
 
 # Here we'll create an artifical patch by replacing node counts
 # in a small region
 inds <- 1
 patch_size <- 1000
-xyz <- cg@layout$wpmds_3d \%>\% as.matrix()
+xyz <- cg@layout$wpmds_3d |> as.matrix()
 xyz_center <- xyz[inds, , drop = FALSE]
-dists <- 1 - cos_dist(A = xyz_center, B = xyz) \%>\% as.vector()
+dists <- 1 - cos_dist(A = xyz_center, B = xyz) |> as.vector()
 inds_replace <- order(dists)[1:patch_size]
 counts_with_patch <- cg@counts
 
@@ -193,8 +193,8 @@ cg <- patch_detection(
 )
 
 # Visualize patch
-xyz <- cg@layout$wpmds_3d \%>\%
-  mutate(patch = cg@cellgraph \%>\% pull(patch))
+xyz <- cg@layout$wpmds_3d |>
+  mutate(patch = cg@cellgraph |> pull(patch))
 
 plotly::plot_ly(
   xyz,
@@ -209,18 +209,18 @@ plotly::plot_ly(
 )
 
 # Check protein composition
-gg <- tibble(patch = cg@cellgraph \%>\% pull(patch) \%>\% as.factor()) \%>\%
-  bind_cols(as.matrix(cg@counts)) \%>\%
-  group_by(patch) \%>\%
-  summarize(across(where(is.numeric), ~ sum(.x))) \%>\%
-  tidyr::pivot_longer(where(is.numeric)) \%>\%
-  group_by(patch) \%>\%
+gg <- tibble(patch = cg@cellgraph |> pull(patch) |> as.factor()) |>
+  bind_cols(as.matrix(cg@counts)) |>
+  group_by(patch) |>
+  summarize(across(where(is.numeric), ~ sum(.x))) |>
+  tidyr::pivot_longer(where(is.numeric)) |>
+  group_by(patch) |>
   mutate(value = value / sum(value))
-lvls <- gg \%>\%
-  arrange(desc(patch), value) \%>\%
-  pull(name) \%>\%
+lvls <- gg |>
+  arrange(desc(patch), value) |>
+  pull(name) |>
   unique()
-ggplot(gg \%>\% mutate(name = factor(name, lvls)), aes(name, patch, fill = value)) +
+ggplot(gg |> mutate(name = factor(name, lvls)), aes(name, patch, fill = value)) +
   geom_tile() +
   scale_fill_gradientn(
     colours = c("lightgrey", "mistyrose", "red", "darkred"),

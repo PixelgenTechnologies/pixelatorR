@@ -49,34 +49,34 @@ RunDCA.data.frame <- function(
   )
 
   # Keep relevant columns and filter self matches
-  object <- object %>%
-    select(any_of(c("marker_1", "marker_2", coloc_metric, "component", contrast_column, group_vars))) %>%
+  object <- object |>
+    select(any_of(c("marker_1", "marker_2", coloc_metric, "component", contrast_column, group_vars))) |>
     filter(marker_1 != marker_2)
 
   # Group data and get contrasts
   if (verbose && check_global_verbosity()) {
     cli_alert_info("Splitting data by: {paste(c('marker_1', 'marker_2', group_vars), collapse = ', ')}")
   }
-  test_groups <- object %>%
-    {
+  test_groups <- object |>
+    (\(.) {
       if (!is.null(group_vars)) {
         group_by(., pick(all_of(c("marker_1", "marker_2", group_vars))))
       } else {
         group_by(., pick(all_of(c("marker_1", "marker_2"))))
       }
-    }
+    })()
 
   if (min_cells_per_group > 0) {
     # Filter test groups by minimum number of observations allowed
-    test_groups <- test_groups %>%
-      group_by(!!sym(contrast_column), .add = TRUE) %>%
-      mutate(n = n()) %>%
-      filter(n > min_cells_per_group) %>%
-      ungroup(!!sym(contrast_column)) %>%
+    test_groups <- test_groups |>
+      group_by(!!sym(contrast_column), .add = TRUE) |>
+      mutate(n = n()) |>
+      filter(n > min_cells_per_group) |>
+      ungroup(!!sym(contrast_column)) |>
       mutate(
         ref_n = sum(!!sym(contrast_column) == reference),
         target_n = sum(!!sym(contrast_column) %in% targets)
-      ) %>%
+      ) |>
       filter(ref_n > 0, target_n > 0)
     if (nrow(test_groups) == 0) {
       cli::cli_abort(
@@ -86,14 +86,14 @@ RunDCA.data.frame <- function(
   }
 
   # Get group keys
-  test_groups_keys <- test_groups %>% group_keys()
+  test_groups_keys <- test_groups |> group_keys()
 
   if (verbose && check_global_verbosity()) {
     .print_da_group_strategy(test_groups_keys, targets, reference)
   }
 
   # Split table by group keys
-  test_groups <- test_groups %>% group_split()
+  test_groups <- test_groups |> group_split()
 
   # Chunk the data to enable parallel processing
   # Decide how to split the data depending on the cl
@@ -145,18 +145,18 @@ RunDCA.data.frame <- function(
   coloc_test <- pblapply(test_groups_chunked, function(test_groups_chunk) {
     coloc_test_chunk <- lapply(test_groups_chunk, function(colocalization_contrast) {
       # Fetch marker for current comparison
-      marker_1 <- colocalization_contrast$marker_1 %>% unique()
-      marker_2 <- colocalization_contrast$marker_2 %>% unique()
+      marker_1 <- colocalization_contrast$marker_1 |> unique()
+      marker_2 <- colocalization_contrast$marker_2 |> unique()
 
       # Get numeric data values
       x_list <- lapply(targets, function(target) {
-        colocalization_contrast %>%
-          filter(.data[[contrast_column]] == target) %>%
+        colocalization_contrast |>
+          filter(.data[[contrast_column]] == target) |>
           pull(all_of(coloc_metric))
-      }) %>%
+      }) |>
         set_names(nm = targets)
-      y <- colocalization_contrast %>%
-        filter(.data[[contrast_column]] == reference) %>%
+      y <- colocalization_contrast |>
+        filter(.data[[contrast_column]] == reference) |>
         pull(all_of(coloc_metric))
 
       # Run wilcox.test for all targets vs reference
@@ -194,41 +194,41 @@ RunDCA.data.frame <- function(
         result <- result$result
 
         # Tidy up results
-        result <- result %>%
-          .tidy() %>%
+        result <- result |>
+          .tidy() |>
           mutate(
             n1 = length(x), n2 = length(y), method = "Wilcoxon",
             alternative = alternative, data_type = "pearson_z",
             target = target, reference = reference, p = signif(p.value, 3)
-          ) %>%
+          ) |>
           select(c(
             "estimate", "data_type", "target", "reference",
             "n1", "n2", "statistic", "p", "conf.low", "conf.high",
             "method", "alternative"
-          )) %>%
+          )) |>
           mutate(marker_1 = marker_1, marker_2 = marker_2)
 
         # Add additional group columns
         if (!is.null(group_vars)) {
           for (group_var in group_vars) {
-            result[[group_var]] <- colocalization_contrast[, group_var, drop = TRUE] %>% unique()
+            result[[group_var]] <- colocalization_contrast[, group_var, drop = TRUE] |> unique()
           }
         }
 
         return(result)
-      }) %>%
+      }) |>
         bind_rows()
     })
 
-    return(coloc_test_chunk %>% bind_rows())
+    return(coloc_test_chunk |> bind_rows())
   }, cl = cl)
 
   # Bind results from coloc_test list
   coloc_test_bind <- bind_rows(coloc_test)
 
   # Adjust p-values
-  coloc_test_bind <- coloc_test_bind %>%
-    mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
+  coloc_test_bind <- coloc_test_bind |>
+    mutate(p_adj = p.adjust(p, p_adjust_method)) |>
     relocate(p_adj, .after = "p")
 
   return(coloc_test_bind)
@@ -297,7 +297,7 @@ RunDCA.Seurat <- function(
   group_data <- .select_group_data(object[[]], contrast_column, group_vars)
 
   # Add group data to colocalization table
-  colocalization_data <- colocalization_data %>%
+  colocalization_data <- colocalization_data |>
     left_join(y = group_data, by = "component")
 
   # Run DCA

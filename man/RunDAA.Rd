@@ -130,8 +130,8 @@ pxl_file <- minimal_mpx_pxl_file()
 # Seurat objects
 se <- ReadMPX_Seurat(pxl_file)
 se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
-se$sample <- c("T", "C", "C", "C", "C") \%>\% rep(times = 10)
-se <- Seurat::NormalizeData(se \%>\% JoinLayers(), normalization.method = "CLR", margin = 2)
+se$sample <- c("T", "C", "C", "C", "C") |> rep(times = 10)
+se <- Seurat::NormalizeData(se |> JoinLayers(), normalization.method = "CLR", margin = 2)
 
 # Run DAA
 daa_markers <- RunDAA(se,

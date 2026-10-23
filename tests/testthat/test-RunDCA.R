@@ -7,7 +7,7 @@ pxl_file <- minimal_mpx_pxl_file()
 colocalization_table1 <- colocalization_table2 <- ReadMPX_colocalization(pxl_file)
 colocalization_table1$sample <- "Sample1"
 colocalization_table2$sample <- "Sample2"
-colocalization_table_merged <- bind_rows(colocalization_table1, colocalization_table2) %>%
+colocalization_table_merged <- bind_rows(colocalization_table1, colocalization_table2) |>
   filter(marker_1 %in% c("ACTB", "HLA-ABC"))
 
 # Seurat objects
@@ -58,8 +58,8 @@ test_that("RunDCA works as expected on a data.frame and that ColocalizationHeatm
       class = c("tbl_df", "tbl", "data.frame")
     )
 
-  expect_equal(dca_markers %>%
-    arrange(marker_1, marker_2) %>%
+  expect_equal(dca_markers |>
+    arrange(marker_1, marker_2) |>
     head(2), expected_result, tolerance = 1e-4)
 
   # cl = 1 should witch to sequential processing

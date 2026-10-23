@@ -92,7 +92,7 @@ FetchLayoutData.CellGraphList <- function(
       add_marker = add_marker,
       layer = layer,
       warn_missing = FALSE
-    ) %>%
+    ) |>
       mutate(component = nm, .before = 1)
     found <- if (is.null(vars) || length(vars) == 0) {
       character()
