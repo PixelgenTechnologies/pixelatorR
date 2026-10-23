@@ -70,20 +70,13 @@ select a specific layer.
 ## Examples
 
 ``` r
+
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
 # Open a database connection (PXL file)
 db <- PixelDB$new(minimal_pna_pxl_file())
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 
 # Select a component ID and load the edgelist
 sel_comp <- db$cell_meta() %>%
@@ -91,7 +84,7 @@ sel_comp <- db$cell_meta() %>%
   head(1)
 component_edgelist <- db$components_edgelist(
   components = sel_comp,
-  umi_data_type = "suffixed_string"
+  umi_data_type = "string"
 ) %>%
   select(umi1, umi2)
 

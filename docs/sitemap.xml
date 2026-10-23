@@ -8,6 +8,8 @@
 <url><loc>/articles/index.html</loc></url>
 <url><loc>/articles/introduction.html</loc></url>
 <url><loc>/articles/load_data.html</loc></url>
+<url><loc>/articles/sequencing_saturation_presentation.html</loc></url>
+<url><loc>/articles/sequencing_saturation_report.html</loc></url>
 <url><loc>/authors.html</loc></url>
 <url><loc>/index.html</loc></url>
 <url><loc>/reference/AbundanceColocalizationPlot.html</loc></url>
@@ -44,6 +46,7 @@
 <url><loc>/reference/FetchLayoutData.html</loc></url>
 <url><loc>/reference/FilterProximityScores.html</loc></url>
 <url><loc>/reference/FindAbundantMarkers.html</loc></url>
+<url><loc>/reference/FindAllProximityMarkers.html</loc></url>
 <url><loc>/reference/FindAnnoyNeighbors.html</loc></url>
 <url><loc>/reference/KeepLargestComponent.html</loc></url>
 <url><loc>/reference/LoadCellGraphs.html</loc></url>
@@ -94,6 +97,7 @@
 <url><loc>/reference/SummarizeProximityScores.html</loc></url>
 <url><loc>/reference/TauPlot.html</loc></url>
 <url><loc>/reference/WriteMPX_pxl_file.html</loc></url>
+<url><loc>/reference/add_proximity_transition.html</loc></url>
 <url><loc>/reference/approximate_edge_saturation.html</loc></url>
 <url><loc>/reference/approximate_node_saturation.html</loc></url>
 <url><loc>/reference/approximate_saturation_curve.html</loc></url>
@@ -143,6 +147,8 @@
 <url><loc>/reference/lcc_sizes.html</loc></url>
 <url><loc>/reference/local_G.html</loc></url>
 <url><loc>/reference/local_proximity.html</loc></url>
+<url><loc>/reference/marginal_saturation.html</loc></url>
+<url><loc>/reference/marginal_saturation_curve.html</loc></url>
 <url><loc>/reference/mpx_dataset.html</loc></url>
 <url><loc>/reference/node_markers_counts.html</loc></url>
 <url><loc>/reference/partition_counts.html</loc></url>

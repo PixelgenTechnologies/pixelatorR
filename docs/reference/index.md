@@ -163,6 +163,10 @@
   Compute approximate saturation curve
 - [`sequencing_saturation()`](sequencing_saturation.md) : Calculate
   Sequencing Saturation
+- [`marginal_saturation()`](marginal_saturation.md) : Compute marginal
+  discovery rate and saturation
+- [`marginal_saturation_curve()`](marginal_saturation_curve.md) :
+  Compute marginal discovery rate and saturation curve
 - [`downsample_to_parquet()`](downsample_to_parquet.md) : Downsample
   edgelist and export to parquet files
 - [`lcc_curve()`](lcc_curve.md) **\[experimental\]** : Compute LCC curve
@@ -183,6 +187,10 @@
 - [`RunDCA()`](RunDCA.md) : Differential analysis (colocalization)
 - [`DifferentialProximityAnalysis()`](DifferentialProximityAnalysis.md)
   : Differential analysis of proximity scores
+- [`FindAllProximityMarkers()`](FindAllProximityMarkers.md) : Find all
+  proximity markers
+- [`add_proximity_transition()`](add_proximity_transition.md) : Add a
+  proximity transition column to differential proximity results
 - [`ColocalizationHeatmap()`](ColocalizationHeatmap.md) : Plot a
   colocalization heatmap
 

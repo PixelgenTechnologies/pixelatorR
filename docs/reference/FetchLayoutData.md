@@ -129,14 +129,6 @@ each node. Methods that extract from multiple components also include a
 library(pixelatorR)
 
 se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 se <- LoadCellGraphs(se, cells = colnames(se)[1], add_layouts = TRUE, verbose = FALSE)
 #> Warning: The `add_layouts` argument of `LoadCellGraphs()` is deprecated as of pixelatorR
 #> 0.21.0.
@@ -144,14 +136,6 @@ se <- LoadCellGraphs(se, cells = colnames(se)[1], add_layouts = TRUE, verbose = 
 #> ℹ Layouts can be computed with `ComputeLayout()`.
 #> ℹ The deprecated feature was likely used in the pixelatorR package.
 #>   Please report the issue to the authors.
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 cg <- CellGraphs(se)[[1]]
 
 # Coordinates only

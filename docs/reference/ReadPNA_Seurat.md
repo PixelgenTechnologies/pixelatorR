@@ -53,8 +53,9 @@ ReadPNA_Seurat(
 
   Logical specifying whether to load detailed meta data. If `FALSE`
   (default), only a subset of the meta data columns will be loaded,
-  including those used for quality control. The additional columns are
-  mostly useful for troubleshooting.
+  including those used for quality control and any columns whose names
+  match `^k_core_` (for example `k_core_1`, `k_core_2`). The additional
+  columns are mostly useful for troubleshooting.
 
 - verbose:
 
@@ -88,14 +89,6 @@ library(pixelatorR)
 # Crete example Seurat object
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 seur_obj
 #> An object of class Seurat 

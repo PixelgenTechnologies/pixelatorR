@@ -39,6 +39,7 @@ DifferentialProximityAnalysis(
   min_pct = 0,
   min_diff_pct = -Inf,
   min_cells_per_group = 10,
+  only_pos = FALSE,
   verbose = TRUE,
   ...
 )
@@ -154,6 +155,12 @@ DifferentialProximityAnalysis(
   -Inf. This parameter is only used when the `method` argument is set to
   "seurat".
 
+- only_pos:
+
+  If `TRUE`, test only marker pairs whose median is higher in the target
+  group than in the reference. Pairs that do not pass are not tested.
+  Default is `FALSE`.
+
 - assay:
 
   Name of assay to use
@@ -161,7 +168,10 @@ DifferentialProximityAnalysis(
 - lazy:
 
   If TRUE, the proximity scores will be loaded lazily and filtered using
-  the `duckdb` backend.
+  the `duckdb` backend. Scores are fetched with
+  [`ProximityScores`](ProximityScores.md)`(object, lazy = TRUE)`. Set
+  this when the `Seurat` object was created with
+  `load_proximity_scores = FALSE`.
 
 - min_exp_join_count:
 
@@ -211,6 +221,9 @@ or a vector of group names while `reference` can only refer to a single
 group. Both `targets` and `reference` should be present in the
 `contrast_column`. These parameters are similar to the `ident.1` and
 `ident.2` parameters in `FindMarkers`.
+
+To compare every level of a single grouping column against all other
+levels, use [`FindAllProximityMarkers`](FindAllProximityMarkers.md).
 
 ## Additional groups
 
@@ -290,7 +303,9 @@ that comparison will be skipped.
 
 ## See also
 
-Other DA-methods: [`RunDAA()`](RunDAA.md), [`RunDCA()`](RunDCA.md),
+Other DA-methods:
+[`FindAllProximityMarkers()`](FindAllProximityMarkers.md),
+[`RunDAA()`](RunDAA.md), [`RunDCA()`](RunDCA.md),
 [`RunDPA()`](RunDPA.md)
 
 ## Examples

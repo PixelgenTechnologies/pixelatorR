@@ -8,7 +8,12 @@ number of reads.
 ## Usage
 
 ``` r
-approximate_edge_saturation(db, components = NULL, table_name = NULL)
+approximate_edge_saturation(
+  db,
+  components = NULL,
+  table_name = NULL,
+  min_degree = 1L
+)
 ```
 
 ## Arguments
@@ -26,6 +31,12 @@ approximate_edge_saturation(db, components = NULL, table_name = NULL)
 
   Optional name for the computed remote table. If provided, the result
   is materialized as a table in the DuckDB connection.
+
+- min_degree:
+
+  Integer; minimum full-depth node degree required for both endpoints of
+  an edge to be included. Default is `1L` (all edges included). Set to
+  `2L` to exclude dangling (degree-1) leaves.
 
 ## Value
 

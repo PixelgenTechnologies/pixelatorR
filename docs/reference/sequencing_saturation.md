@@ -48,6 +48,7 @@ This function can be used for calculating the saturation of:
 ## Examples
 
 ``` r
+
 # For a graph with 300 unique reads, 100 nodes, and 200 edges,
 # sequenced at 400 total reads
 

@@ -123,9 +123,10 @@ For a categorical size or alpha mapping,
 [`cell_node_scale_alpha()`](cell_node_scale_alpha.md) also accept a
 named vector of per-level values, such as
 `sizes = c(a = 1, b = 2, c = 3)`. Color scale behavior is controlled by
-[`cell_node_scale_color()`](cell_node_scale_color.md). Color scales are
-trained once across all panels, and continuous scales span the observed
-range unless `limits` are supplied.
+[`cell_node_scale_color()`](cell_node_scale_color.md). The default
+palette for a mapped color column is `PixelgenGradient(7, "Cherry")`.
+Color scales are trained once across all panels, and continuous scales
+span the observed range unless `limits` are supplied.
 
 ## See also
 

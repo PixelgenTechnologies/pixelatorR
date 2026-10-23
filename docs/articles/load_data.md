@@ -1,6 +1,7 @@
 # Load data
 
 ``` r
+
 library(pixelatorR)
 library(SeuratObject)
 library(dplyr)
@@ -10,6 +11,7 @@ library(ggplot2)
 Tip: you can turn off the verbose messages in `pixelatorR` by setting:
 
 ``` r
+
 options(pixelatorR.verbose = FALSE)
 ```
 
@@ -25,6 +27,7 @@ To get started, we need a PXL file which we can download from
 <https://software.pixelgen.com/>.
 
 ``` r
+
 dir.create("PBMC_data")
 download.file(url = "https://pixelgen-technologies-datasets.s3.eu-north-1.amazonaws.com/mpx-datasets/pixelator/0.12.0/1k-human-pbmcs-v1.0-immunology-I/Sample01_human_pbmcs_unstimulated.dataset.pxl?download=1",
               destfile = "PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
@@ -36,6 +39,7 @@ For instance, `ReadMPX_counts` allows us to load only the count matrix
 and nothing else:
 
 ``` r
+
 pxl_file <- "PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl"
 countMatrix <- ReadMPX_counts(pxl_file)
 countMatrix[1:5, 1:5]
@@ -52,6 +56,7 @@ With `ReadMPX_item`, we can chose a specific item to load from the PXL
 file, including: “polarization”, “colocalization”, “edgelist”.
 
 ``` r
+
 polarization_scores <- ReadMPX_item(pxl_file, items = "polarization")
 polarization_scores
 ```
@@ -74,6 +79,7 @@ polarization_scores
 If we provide multiple items, `ReadMPX_item` returns a list instead:
 
 ``` r
+
 all_items <- ReadMPX_item(pxl_file, items = c("polarization", "colocalization", "edgelist"))
 names(all_items)
 ```
@@ -85,12 +91,14 @@ Alternatively, we can use the wrapper functions `ReadMPX_polarization`,
 `ReadMPX_item`:
 
 ``` r
+
 polarization_scores <- ReadMPX_polarization(pxl_file)
 ```
 
 is equivalent to
 
 ``` r
+
 polarization_scores <- ReadMPX_item(pxl_file, items = "polarization")
 ```
 
@@ -101,6 +109,7 @@ us to load MPX data into a `Seurat` object with some additional bells
 and whistles provided by `pixelatorR`.
 
 ``` r
+
 seur_obj <- ReadMPX_Seurat(pxl_file)
 ```
 
@@ -119,6 +128,7 @@ faster to process which can be useful if protein **abundance** is the
 only interesting data type for the analysis.
 
 ``` r
+
 # Load simpler data set
 seur_obj <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = FALSE)
 ```
@@ -126,6 +136,7 @@ seur_obj <- ReadMPX_Seurat(pxl_file, return_cellgraphassay = FALSE)
     ## Warning: Data is of class matrix. Coercing to dgCMatrix.
 
 ``` r
+
 seur_obj[["mpxCells"]]
 ```
 
@@ -147,6 +158,7 @@ scores and colocalization scores are loaded and stored in a
 `CellGraphAssay` named “mpxCells”.
 
 ``` r
+
 seur_obj <- ReadMPX_Seurat(pxl_file)
 seur_obj
 ```
@@ -163,6 +175,7 @@ We can fetch the polarization/colocalization score tables from the
 methods:
 
 ``` r
+
 # Fetch polarization scores
 polarizaton_scores <- PolarizationScores(seur_obj)
 polarizaton_scores %>% head()
@@ -179,6 +192,7 @@ polarizaton_scores %>% head()
     ## 6 -0.00132           0.145             0.693   -1.46  CD150  RCVCMP0000830
 
 ``` r
+
 # Fetch colocalization scores
 colocalization_scores <- ColocalizationScores(seur_obj)
 colocalization_scores %>% head()
@@ -200,6 +214,7 @@ colocalization_scores %>% head()
 An equivalent way to extract the polarization scores would be:
 
 ``` r
+
 polarizaton_scores <- seur_obj[["mpxCells"]]@polarization
 ```
 
@@ -213,6 +228,7 @@ Component-specific metrics are stored in the `@meta.data` slot of the
 `Seurat` object which can be accessed with double brackets (`[[]]`):
 
 ``` r
+
 colnames(seur_obj[[]])
 ```
 
@@ -224,6 +240,7 @@ colnames(seur_obj[[]])
     ## [16] "upia_per_upib"       "upib"                "vertices"
 
 ``` r
+
 seur_obj[[]] %>% head()
 ```
 
@@ -259,6 +276,7 @@ seur_obj[[]] %>% head()
 We can for instance explore QC metrics visually for component filtering:
 
 ``` r
+
 ggplot(seur_obj[[]], aes(tau, umi_per_upia)) +
   geom_point() +
   scale_x_continuous(labels = scales::percent)
@@ -278,6 +296,7 @@ track of the paths of the PXL file(s) associated with the data. We can
 get the path to the PXL file with the `FSMap` function:
 
 ``` r
+
 FSMap(seur_obj[["mpxCells"]])
 ```
 
@@ -289,6 +308,7 @@ component IDs with the “original” component IDs. If we unnest the
 “id_map” column, we can see the current and original component IDs:
 
 ``` r
+
 FSMap(seur_obj[["mpxCells"]]) %>% 
   tidyr::unnest(id_map)
 ```
@@ -313,6 +333,7 @@ If we were to rename the component IDs of the Seurat object, the
 remain unchanged:
 
 ``` r
+
 seur_obj_renamed <- RenameCells(seur_obj, new.names = paste0("A_", colnames(seur_obj)))
 
 FSMap(seur_obj_renamed[["mpxCells"]]) %>% 
@@ -348,6 +369,7 @@ For example, we can load the graphs for two selected components like
 this:
 
 ``` r
+
 seur_obj <- LoadCellGraphs(seur_obj, cells = c("RCVCMP0000228", "RCVCMP0000231"))
 ```
 
@@ -355,6 +377,7 @@ We can then fetch the loaded `CellGraph` objects for our two components
 using:
 
 ``` r
+
 CellGraphs(seur_obj)[c("RCVCMP0000228", "RCVCMP0000231")]
 ```
 

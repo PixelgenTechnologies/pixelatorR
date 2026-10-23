@@ -156,6 +156,7 @@ PNA component.
 
 Other DA-methods:
 [`DifferentialProximityAnalysis()`](DifferentialProximityAnalysis.md),
+[`FindAllProximityMarkers()`](FindAllProximityMarkers.md),
 [`RunDCA()`](RunDCA.md), [`RunDPA()`](RunDPA.md)
 
 ## Examples

@@ -12,7 +12,7 @@ processing.
 ReadPNA_edgelist(
   pxl_file,
   cells = NULL,
-  umi_data_type = c("int64", "string", "suffixed_string"),
+  umi_data_type = c("int64", "string"),
   lazy = TRUE
 )
 ```
@@ -30,14 +30,11 @@ ReadPNA_edgelist(
 
 - umi_data_type:
 
-  One of "int64", "string" or "suffixed_string". Default is "int64".
+  One of "int64" or "string". Default is "int64".
 
   - "int64": The UMIs are encoded as int64
 
   - "string": The UMIs are encoded as character
-
-  - "suffixed_string": The UMIs are encoded as character with a suffix
-    '-umi1' or '-umi2' added
 
 - lazy:
 

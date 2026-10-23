@@ -13,7 +13,8 @@ approximate_saturation_curve(
   db,
   fracs = seq(0.04, 0.96, by = 0.04),
   components = NULL,
-  node_reads_multiplier = 2,
+  node_reads_multiplier = 2L,
+  min_degree = 1L,
   verbose = TRUE
 )
 ```
@@ -40,6 +41,12 @@ approximate_saturation_curve(
   saturation. Default is `2`, reflecting that each edge contributes to
   two nodes. Optionally, set to `1` to use the same read count for nodes
   and edges, which may be more appropriate in certain contexts.
+
+- min_degree:
+
+  Integer (`1L` or `2L`); minimum node degree required for nodes to be
+  counted at downsampling fraction `p`. Default is `1L` (all elements
+  included). Set to `2L` to exclude dangling (degree-1) leaves.
 
 - verbose:
 
@@ -90,10 +97,10 @@ rather than actual random sampling. For each edge with a given
 `read_count`, the probability of the edge being retained at fraction `p`
 is: \$\$P(\text{edge retained}) = 1 - (1 - p)^{\text{read\\count}}\$\$
 
-For nodes, the probability of retention depends on the node's degree. A
-node is retained if at least one of its incident edges is retained:
-\$\$P(\text{node retained}) = 1 - (1 - p\_{edges})^{\text{degree}}\$\$
-where \\p\_{edges}\\ is the fraction of edges retained.
+Similarly, a node is retained if at least one of its incident reads is
+retained. With total incident reads \\r_v = \sum\_{e \ni v} r_e\\, the
+probability of node retention at fraction `p` is: \$\$P(\text{node
+retained}) = 1 - (1 - p)^{r_v}\$\$
 
 ### Saturation calculation
 
@@ -108,10 +115,10 @@ edges}\\.
 
 ### Implementation notes
 
-This function requires that
-[`approximate_node_saturation`](approximate_node_saturation.md) has been
-called first (either directly or through this function) to create the
-`nodes` temporary view in the DuckDB connection.
+This function calls
+[`approximate_node_saturation`](approximate_node_saturation.md)
+internally to create the `nodes` temporary view in the DuckDB
+connection.
 
 ## See also
 

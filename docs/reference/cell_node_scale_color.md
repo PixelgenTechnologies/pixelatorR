@@ -31,7 +31,7 @@ cell_node_scale_color(
 - colors:
 
   Optional vector of valid, fully opaque colors used for the scale. When
-  `NULL`, the builder uses its default palette.
+  `NULL`, the builder uses `PixelgenGradient(7, "Cherry")`.
 
 - limits:
 

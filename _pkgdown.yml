@@ -115,6 +115,8 @@ reference:
     - approximate_node_saturation
     - approximate_saturation_curve
     - sequencing_saturation
+    - marginal_saturation
+    - marginal_saturation_curve
     - downsample_to_parquet
     - lcc_curve
     - lcc_sizes
@@ -127,6 +129,8 @@ reference:
     - RunDPA
     - RunDCA
     - DifferentialProximityAnalysis
+    - FindAllProximityMarkers
+    - add_proximity_transition
     - ColocalizationHeatmap
   - subtitle: Cell type annotation
   - contents:

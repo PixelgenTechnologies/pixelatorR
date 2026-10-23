@@ -12,7 +12,8 @@ approximate_node_saturation(
   db,
   components = NULL,
   table_name = NULL,
-  node_reads_multiplier = 2
+  node_reads_multiplier = 2L,
+  min_degree = 1L
 )
 ```
 
@@ -38,6 +39,12 @@ approximate_node_saturation(
   saturation. Default is `2`, reflecting that each edge contributes to
   two nodes.
 
+- min_degree:
+
+  Integer; minimum full-depth node degree required for nodes (and
+  incident edges) to be included. Default is `1L` (all nodes included).
+  Set to `2L` to exclude dangling (degree-1) leaves.
+
 ## Value
 
 A lazy `tbl` (DuckDB query) with columns:
@@ -52,7 +59,10 @@ A lazy `tbl` (DuckDB query) with columns:
 
 - read_count:
 
-  The total read count for the component.
+  The total read count for the component scaled by
+  `node_reads_multiplier` (i.e., twice the sequencing read count when
+  `node_reads_multiplier = 2`, and equal to the sequencing read count
+  when `node_reads_multiplier = 1`).
 
 - node_saturation:
 

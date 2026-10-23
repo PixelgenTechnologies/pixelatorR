@@ -14,6 +14,7 @@ pixelatorR can be installed from GitHub by running the following code
 from R:
 
 ``` r
+
 install.packages("remotes")
 remotes::install_github("PixelgenTechnologies/pixelatorR")
 ```
@@ -29,6 +30,7 @@ git clone https://github.com/pixelgentechnologies/pixelatorR.git
 Then, in an R session, run:
 
 ``` r
+
 install.packages("<path to pixelatorR directory>", repos = NULL, type = "source")
 ```
 

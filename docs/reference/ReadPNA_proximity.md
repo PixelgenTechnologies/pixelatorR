@@ -49,15 +49,7 @@ library(pixelatorR)
 
 pxl_file <- minimal_pna_pxl_file()
 proximity_tbl <- ReadPNA_proximity(pxl_file)
-#> ℹ Loading proximity scores from: /home/ubuntu/R/library/pixelatorR/extdata/five_cells/minimal_PNA_PBMC.pxl
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
+#> ℹ Loading proximity scores from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c31181c4e/pixelatorR/extdata/five_cells/minimal_PNA_PBMC.pxl
 #> ✔ Returning a <tbl_df> with the PNA proximity scores
 proximity_tbl
 #> # A tibble: 58,696 × 9

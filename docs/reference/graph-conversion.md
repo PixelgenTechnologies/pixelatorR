@@ -56,6 +56,7 @@ An A-node-projected graph
 ## Examples
 
 ``` r
+
 library(pixelatorR)
 library(tibble)
 #> 
@@ -68,7 +69,7 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Load edgelist
 el <- ReadMPX_arrow_edgelist(pxl_file)
-#> ℹ Extracting edgelist.parquet file to /tmp/Rtmp3BjCtL/edgelist.parquet
+#> ℹ Extracting edgelist.parquet file to /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpzOzCiN/edgelist.parquet
 #> ✔ Returning FileSystemDataset
 
 # Convert to tbl_df

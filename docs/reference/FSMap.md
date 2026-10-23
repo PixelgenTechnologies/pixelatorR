@@ -71,20 +71,12 @@ library(dplyr)
 
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <chr>                                                 
-#> 1 <tibble [5 × 2]>      1 /home/ubuntu/R/library/pixelatorR/extdata/five_cells/…
+#> 1 <tibble [5 × 2]>      1 /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000g…
 
 # If the PXL has been moved, we can update the fs_map
 # Here we copy the test PXL file to a temporary location
@@ -99,9 +91,9 @@ FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) %>%
 # Now the fs_map has been updated with the correct path
 FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
-#>   id_map           sample pxl_file                            
-#>   <list>            <int> <fs::path>                          
-#> 1 <tibble [5 × 2]>      1 /tmp/Rtmp3BjCtL/file22fd4fc1c972.pxl
+#>   id_map           sample pxl_file                                              
+#>   <list>            <int> <fs::path>                                            
+#> 1 <tibble [5 × 2]>      1 …gs_mq8n51jtbc0000gn/T/RtmpzOzCiN/filefae31808d29f.pxl
 
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
@@ -112,21 +104,13 @@ FSMap(seur_obj)
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <chr>                                                 
-#> 1 <tibble [5 × 2]>      1 /home/ubuntu/R/library/pixelatorR/extdata/five_cells/…
+#> 1 <tibble [5 × 2]>      1 /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000g…
 
 library(pixelatorR)
 
 # Create example Seurat object
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 
 # Replace FSMap in Seurat object

@@ -389,7 +389,7 @@ UMIs can be converted to character vectors be specifying the
 
     PixelDB$components_edgelist(
       components,
-      umi_data_type = c("int64", "string", "suffixed_string"),
+      umi_data_type = c("int64", "string"),
       lazy = FALSE,
       include_all_columns = FALSE
     )
@@ -402,14 +402,11 @@ UMIs can be converted to character vectors be specifying the
 
 - `umi_data_type`:
 
-  One of "int64", "string" or "suffixed_string". Default is "int64".
+  One of "int64" or "string". Default is "int64".
 
   - "int64": The UMIs are encoded as int64
 
   - "string": The UMIs are encoded as character
-
-  - "suffixed_string": The UMIs are encoded as character with a suffix
-    '-umi1' or '-umi2' added
 
 - `lazy`:
 
@@ -547,7 +544,12 @@ sparse count matrix.
 
 #### Usage
 
-    PixelDB$components_cell_graph(components, markers = NULL, verbose = FALSE)
+    PixelDB$components_cell_graph(
+      components,
+      markers = NULL,
+      add_layouts = FALSE,
+      verbose = FALSE
+    )
 
 #### Arguments
 
@@ -560,6 +562,11 @@ sparse count matrix.
   An optional character vector of all possible marker names to set fixed
   columns on the counts matrix. If `NULL`, marker names are derived from
   the data.
+
+- `add_layouts`:
+
+  A logical specifying whether to load pre-computed 3D layouts from the
+  `layouts` table into each `CellGraph`. Default is `FALSE`.
 
 - `verbose`:
 
@@ -645,6 +652,7 @@ Nothing
 ## Examples
 
 ``` r
+
 ## ------------------------------------------------
 ## Method `PixelDB$new`
 ## ------------------------------------------------
@@ -653,14 +661,6 @@ library(dplyr)
 
 pxl_file <- minimal_pna_pxl_file()
 db <- PixelDB$new(pxl_file)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 
 
 ## ------------------------------------------------
@@ -668,14 +668,6 @@ db <- PixelDB$new(pxl_file)
 ## ------------------------------------------------
 
 db <- PixelDB$new(pxl_file)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 db$info()
 #> # A tibble: 10 × 6
 #>    database         schema name              column_names column_types temporary
@@ -720,14 +712,6 @@ db$query("SELECT * FROM proximity") %>% head()
 
 db$close()
 db$reconnect()
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Connected
 
 
@@ -932,11 +916,11 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name                     B2M  CD18  CD16
-#>   <chr>                  <dbl> <dbl> <dbl>
-#> 1 34739343391810798-umi1     1     0     0
-#> 2 54399852680662356-umi1     0     1     0
-#> 3 46889202488405884-umi1     0     0     1
+#>   name               CD59  CD58 `HLA-ABC`
+#>   <chr>             <dbl> <dbl>     <dbl>
+#> 1 44994728539690155     1     0         0
+#> 2 59143209764553641     1     0         0
+#> 3 20922039533436104     1     0         0
 
 
 ## ------------------------------------------------
@@ -946,14 +930,6 @@ db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 # Connect to a PNA database and load cell graphs
 pxl_file <- minimal_pna_pxl_file()
 db <- PixelDB$new(pxl_file)
-#> duckdb keeps downloaded extensions and secrets in a temporary directory:
-#> ℹ /tmp/Rtmp3BjCtL/duckdb
-#> This is removed when the R session ends.
-#> • Extensions are re-downloaded each session.
-#> • Secrets are lost.
-#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
-#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
-#> ℹ See ?duckdb_storage for details and alternatives.
 cgl <- db$components_cell_graph(c("0a45497c6bfbfb22"))
 cgl
 #> A CellGraphList with 1 loaded CellGraph object(s) out of 1 
@@ -968,8 +944,8 @@ cgl
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> /tmp/Rtmp3BjCtL/file22fd1835d60e.parquet 
-#>                                     TRUE 
+#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpzOzCiN/filefae3502de492.parquet 
+#>                                                                                 TRUE 
 
 
 ## ------------------------------------------------

@@ -6,7 +6,75 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## \[Unreleased\]
+## \[0.24.0\] - 2026-10-23
+
+### Added
+
+- `PixelDB$components_cell_graph()` gains an `add_layouts` argument
+  (default `FALSE`) to load precomputed layouts and align coordinates to
+  graph vertices via `integer64` hashing (`bit64`).
+- [`marginal_saturation()`](reference/marginal_saturation.md) and
+  [`marginal_saturation_curve()`](reference/marginal_saturation_curve.md)
+  to compute instantaneous node and edge discovery rates (`dN / dR` and
+  `dE / dR`) and marginal (Good-Turing) saturation at full sequencing
+  depth and across downsampling fractions.
+- `min_degree` parameter in
+  [`approximate_edge_saturation()`](reference/approximate_edge_saturation.md),
+  [`approximate_node_saturation()`](reference/approximate_node_saturation.md),
+  and
+  [`approximate_saturation_curve()`](reference/approximate_saturation_curve.md)
+  to optionally filter out degree-1 leaves.
+- [`FindAllProximityMarkers()`](reference/FindAllProximityMarkers.md)
+  runs one-versus-rest differential proximity tests for a single
+  grouping column. Each level is compared to all other levels pooled
+  together. Proximity scores are pivoted once with
+  [`ProximityScoresToAssay()`](reference/ProximityScoresToAssay.md) and
+  each comparison uses the matrix method of
+  [`DifferentialProximityAnalysis()`](reference/DifferentialProximityAnalysis.md).
+  `diff_threshold`, `min_pct`, `min_diff_pct`, and `min_cells_per_group`
+  apply to every input. `lazy = TRUE` fetches proximity scores with
+  [`ProximityScores()`](reference/ProximityScores.md) when they were not
+  loaded into the Seurat object.
+
+### Changed
+
+- The default color palette for a mapped
+  [`cell_plot()`](reference/cell_plot.md) color column is
+  `PixelgenGradient(7, "Cherry")`.
+- [`ReadPNA_Seurat()`](reference/ReadPNA_Seurat.md) keeps `__adata__obs`
+  columns matching `^k_core_` (for example `k_core_1`, `k_core_2`)
+  together with the fixed QC columns when `detailed_meta_data = FALSE`.
+- `PixelDB` now caches `counts()` per instance and lazily caches
+  per-table (`edgelist`, `layouts`) component `rowid` ranges to push
+  down row-group pruning on multi-component queries
+  (`components_cell_graph()`, `components_layout()`,
+  `components_marker_counts()`, and eager `components_edgelist()`).
+- `PixelDB$components_marker_counts()` now scans each component’s
+  edgelist once using a CTE instead of scanning twice for `umi1` and
+  `umi2`.
+- [`SummarizeProximityScores()`](reference/SummarizeProximityScores.md)
+  now computes `mean` and `median` summaries (including zero-padded
+  missing observations) directly in DuckDB when `detailed = FALSE`,
+  vectorizes post-collection calculations when `detailed = TRUE`, and
+  accepts multiple `proximity_metric` values (e.g.
+  `c("log2_ratio", "join_count_z")`).
+
+### Fixes
+
+- [`DensityScatterPlot()`](reference/DensityScatterPlot.md) rectangle
+  gates accept open bounds (`NA`, `-Inf` on a lower edge, or `Inf` on an
+  upper edge).
+- Fixed [`LoadCellGraphs()`](reference/LoadCellGraphs.md) on `PNAAssay`
+  and `MPXAssay` objects to filter `fs_map` by `cells_to_load` instead
+  of `cells`, preventing already-loaded graphs from being re-fetched
+  when `force = FALSE`.
+- Optimized
+  [`approximate_saturation_curve()`](reference/approximate_saturation_curve.md)
+  by pre-aggregating edge and node read-count histograms in DuckDB and
+  materializing component-filtered edgelists as temporary tables.
+- [`ProximityScoresToAssay()`](reference/ProximityScoresToAssay.md)
+  warns about components whose proximity scores are all zero. It
+  previously warned about components whose scores were all non-zero.
 
 ## \[0.23.0\] - 2026-10-13
 
@@ -511,7 +579,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Added reference PBMC dataset and load function `read_pbmc_reference`
-  that can be used for annotation.  
+  that can be used for annotation.\
 - Added `isotype_pls` to calculate isotype background score.
 - Added `export_plot` utility function to export ggplot objects to file.
 - Added `create_discrete_palette` to create palettes to color different
@@ -775,7 +843,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`RunDCA`).
 - Updated `subset` and `merge` methods for `MPXAssay` to have less
   stringent validation of the spatial metric tables (polarity and
-  colocalization scores).  
+  colocalization scores).\
 - Updated `ReadMPX_Seurat` to have less stringent validation of the
   spatial metric tables (polarity and colocalization scores).
 - `ColocalizationHeatmap` now allows legend titles and the legend range

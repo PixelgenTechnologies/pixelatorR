@@ -109,12 +109,6 @@ A `CellGraphAssay5` object with layers joined
 ``` r
 library(SeuratObject)
 #> Loading required package: sp
-#> ‘SeuratObject’ was built under R 4.6.0 but the current version is
-#> 4.6.1; it is recomended that you reinstall ‘SeuratObject’ as the ABI
-#> for R may have changed
-#> ‘SeuratObject’ was built with package ‘Matrix’ 1.7.5 but the current
-#> version is 1.7.6; it is recomended that you reinstall ‘SeuratObject’ as
-#> the ABI for ‘Matrix’ may have changed
 #> 
 #> Attaching package: ‘SeuratObject’
 #> The following objects are masked from ‘package:base’:

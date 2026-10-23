@@ -73,6 +73,7 @@ A ggplot object.
 ## Examples
 
 ``` r
+
 library(pixelatorR)
 
 # Load example data as a Seurat object
