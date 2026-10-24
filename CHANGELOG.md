@@ -61,6 +61,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   all zero. It previously warned about components whose scores were all
   non-zero.
 
+### Added
+
+- `AnnotateCells()` now stores per-cell prediction confidence scores in the
+  returned `Seurat` object metadata as `<group>_score` (e.g. `celltype.l1_score`,
+  `celltype.l2_score`) for both `method = "nnls"` and `method = "Seurat"`.
+
+### Changed
+
+- Improved the non-negative least squares cell type annotation algorithm in
+  `AnnotateCells()` (`method = "nnls"`, with `"nmf"` retained as a
+  backward-compatible alias) using within-group k-means sub-clustering, 15%
+  trimmed-mean reference centroids, signal-to-noise marker weighting, and
+  two-stage local candidate refinement.
+- Updated `AnnotateCells()` defaults to `method = "nnls"`,
+  `reference_assay = "PNA"`, `query_assay = "PNA"`, and
+  `normalization_method = "CLR"`.
+
 ## [0.23.0] - 2026-10-13
 
 ### Added
