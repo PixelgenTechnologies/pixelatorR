@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Package code, tests, and examples use the base R pipe `|>` instead of
+  magrittr's `%>%`. `lintr::pipe_consistency_linter()` now requires `|>`.
+  `dplyr::%>%` stays imported because tidygraph's `%N>%` and `%E>%` evaluate
+  it in the caller environment.
+
 ## [0.24.0] - 2026-10-23
 
 ### Added
@@ -30,10 +39,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Package code, tests, and examples use the base R pipe `|>` instead of
-  magrittr's `%>%`. `lintr::pipe_consistency_linter()` now requires `|>`.
-  `dplyr::%>%` stays imported because tidygraph's `%N>%` and `%E>%` evaluate
-  it in the caller environment.
 - The default color palette for a mapped `cell_plot()` color column is
   `PixelgenGradient(7, "Cherry")`.
 - `ReadPNA_Seurat()` keeps `__adata__obs` columns matching `^k_core_`
