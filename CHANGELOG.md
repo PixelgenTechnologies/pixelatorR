@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `dplyr::%>%` stays imported because tidygraph's `%N>%` and `%E>%` evaluate
   it in the caller environment.
 
+### Fixed
+
+- `PixelDB$components_cell_graph()` now supports passing a subset of markers
+  (or duplicate marker names) to `markers` without failing with `NA` indices in
+  `Matrix::sparseMatrix()`.
+
 ## [0.24.0] - 2026-10-23
 
 ### Added

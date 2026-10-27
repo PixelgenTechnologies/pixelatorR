@@ -229,6 +229,21 @@ test_that("PixelDB methods work as expected", {
   expect_equal(nrow(cgl_two[[1]]@layout$wpmds_3d), length(cgl_two[[1]]@nodes))
   expect_equal(colnames(cgl_two[[1]]@layout$wpmds_3d), c("x", "y", "z"))
 
+  # Subset of markers (and duplicate markers) preserves node count and filters non-matching nodes to 0
+  subset_markers <- c("HLA-ABC", "B2M", "HLA-ABC")
+  expect_no_error(
+    cgl_sub <- db$components_cell_graph(cells_two[1], markers = subset_markers)
+  )
+  expect_equal(
+    dim(cgl_sub[[1]]@counts),
+    c(length(cgl_one[[1]]@nodes), 2L)
+  )
+  expect_equal(colnames(cgl_sub[[1]]@counts), c("HLA-ABC", "B2M"))
+  expect_equal(
+    cgl_sub[[1]]@counts,
+    cgl_one[[1]]@counts[, c("HLA-ABC", "B2M"), drop = FALSE]
+  )
+
   # Verify rowid index was populated and cached
   idx_cache <- db$.__enclos_env__$private$component_index_cache
   expect_true("edgelist" %in% names(idx_cache))
