@@ -846,16 +846,20 @@ PixelDB <- R6Class(
         if (is.null(markers)) {
           marker_factor <- as.factor(marker_char)
           marker_levels <- levels(marker_factor)
+          i_idx <- seq_len(n)
           j <- as.integer(marker_factor)
           n_markers <- length(marker_levels)
         } else {
-          j <- match(marker_char, markers)
-          marker_levels <- markers
-          n_markers <- length(markers)
+          marker_levels <- unique(markers)
+          j <- match(marker_char, marker_levels)
+          keep <- !is.na(j)
+          i_idx <- which(keep)
+          j <- j[keep]
+          n_markers <- length(marker_levels)
         }
 
         X <- Matrix::sparseMatrix(
-          i = seq_len(n),
+          i = i_idx,
           j = j,
           x = 1,
           dims = c(n, n_markers),
