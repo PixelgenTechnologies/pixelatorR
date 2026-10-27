@@ -43,7 +43,7 @@ KeepLargestComponent.tbl_graph <- function(
     return(object)
   } else {
     graph_type_attribute <- attr(object, "type")
-    split_components <- object %>%
+    split_components <- object |>
       to_components()
     largest_component <- which.max(sapply(split_components, length))
     object_largest <- split_components[[largest_component]]

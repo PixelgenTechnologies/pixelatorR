@@ -58,7 +58,7 @@ library(ggplot2)
 edgelist <-
   ReadMPX_edgelist(system.file("extdata/five_cells", "five_cells.pxl",
     package = "pixelatorR"
-  )) \%>\%
+  )) |>
   rename(umi1 = upia, umi2 = upib, read_count = count)
 
 set.seed(37)
@@ -69,8 +69,8 @@ seqsat <- SequenceSaturationCurve(edgelist,
 
 # Calculate the mean sequencing saturation for each sample fraction
 seqsat_mean <-
-  seqsat \%>\%
-  group_by(sample_frac) \%>\%
+  seqsat |>
+  group_by(sample_frac) |>
   summarise(
     mean_node_saturation = mean(graph_node_saturation),
     mean_edge_saturation = mean(graph_edge_saturation)

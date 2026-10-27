@@ -80,32 +80,32 @@ FilterProximityScores.tbl_lazy <- function(
   }
   assert_single_value(name, "string")
 
-  object <- object %>%
-    {
+  object <- object |>
+    (\(.) {
       if (!is.null(background_threshold_pct)) {
         filter(., pmin(p1, p2) >= background_threshold_pct)
       } else {
         .
       }
-    } %>%
-    {
+    })() |>
+    (\(.) {
       if (!is.null(background_threshold_count)) {
         filter(., pmin(count_1, count_2) >= background_threshold_count)
       } else {
         .
       }
-    } %>%
-    {
+    })() |>
+    (\(.) {
       if (!is.null(min_cells_count)) {
-        group_by(., marker_1, marker_2) %>%
-          mutate(n_cells = n()) %>%
-          filter(n_cells >= min_cells_count) %>%
-          select(-n_cells) %>%
+        group_by(., marker_1, marker_2) |>
+          mutate(n_cells = n()) |>
+          filter(n_cells >= min_cells_count) |>
+          select(-n_cells) |>
           ungroup()
       } else {
         .
       }
-    } %>%
+    })() |>
     # Here we can set the name of the filtered table in the database
     compute(name = name, overwrite = TRUE)
 
@@ -124,13 +124,13 @@ FilterProximityScores.data.frame <- function(
   min_cells_count = NULL,
   ...
 ) {
-  object <- object %>%
-    arrow::to_duckdb() %>%
+  object <- object |>
+    arrow::to_duckdb() |>
     FilterProximityScores(
       background_threshold_pct = background_threshold_pct,
       background_threshold_count = background_threshold_count,
       min_cells_count = min_cells_count
-    ) %>%
+    ) |>
     collect()
 
   return(object)
@@ -149,25 +149,25 @@ FilterProximityScores.data.frame <- function(
 #' proximity_table <- ProximityScores(se)
 #'
 #' # Default method uses mean
-#' SummarizeProximityScores(proximity_table) %>% head()
+#' SummarizeProximityScores(proximity_table) |> head()
 #'
 #' # Switch to median
-#' SummarizeProximityScores(proximity_table, summary_stat = "median") %>% head()
+#' SummarizeProximityScores(proximity_table, summary_stat = "median") |> head()
 #'
 #' # Ignore missing values
-#' SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) %>% head()
+#' SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) |> head()
 #'
 #' # Return lists which can be used to compute custom summary statistics
-#' SummarizeProximityScores(proximity_table, detailed = TRUE) %>%
+#' SummarizeProximityScores(proximity_table, detailed = TRUE) |>
 #'   # It's important to do rowwise computations
-#'   rowwise() %>%
+#'   rowwise() |>
 #'   mutate(
 #'     sd = sd(unlist(log2_ratio_list)),
 #'     iqr = IQR(unlist(log2_ratio_list)),
 #'     mad = mad(unlist(log2_ratio_list)),
 #'     q90 = quantile(unlist(log2_ratio_list), 0.9)
-#'   ) %>%
-#'   select(marker_1, marker_2, sd, iqr, mad, q90) %>%
+#'   ) |>
+#'   select(marker_1, marker_2, sd, iqr, mad, q90) |>
 #'   ungroup()
 #'
 #' @export
@@ -513,15 +513,15 @@ SummarizeProximityScores.data.frame <- function(
   detailed = FALSE,
   ...
 ) {
-  object <- object %>%
-    arrow::to_duckdb() %>%
+  object <- object |>
+    arrow::to_duckdb() |>
     SummarizeProximityScores(
       proximity_metric = proximity_metric,
       group_vars = group_vars,
       include_missing_obs = include_missing_obs,
       summary_stat = summary_stat,
       detailed = detailed
-    ) %>%
+    ) |>
     collect()
 
   return(object)

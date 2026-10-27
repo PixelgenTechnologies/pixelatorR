@@ -77,7 +77,7 @@ FSMap.Seurat <- function(
 #' seur_obj <- ReadPNA_Seurat(pxl_file)
 #'
 #' # Replace FSMap in Seurat object
-#' FSMap(seur_obj) <- FSMap(seur_obj) %>%
+#' FSMap(seur_obj) <- FSMap(seur_obj) |>
 #'   mutate(pxl_file = fs::path_rel(pxl_file))
 #'
 #' @export
@@ -190,10 +190,10 @@ PolarizationScores.Seurat <- function(
     }
 
     # Add additional meta.data slots
-    pol_scores <- pol_scores %>%
+    pol_scores <- pol_scores |>
       left_join(
-        y = object[[]] %>%
-          as_tibble(rownames = "component") %>%
+        y = object[[]] |>
+          as_tibble(rownames = "component") |>
           select(component, all_of(meta_data_columns)),
         by = "component"
       )
@@ -267,10 +267,10 @@ ColocalizationScores.Seurat <- function(
     }
 
     # Add additional meta.data slots
-    coloc_scores <- coloc_scores %>%
+    coloc_scores <- coloc_scores |>
       left_join(
-        y = object[[]] %>%
-          as_tibble(rownames = "component") %>%
+        y = object[[]] |>
+          as_tibble(rownames = "component") |>
           select(component, all_of(meta_data_columns)),
         by = "component"
       )
@@ -365,7 +365,7 @@ ProximityScores.Seurat <- function(
     mdata <- .meta_data_columns(object, con, lazy, meta_data_columns)
 
     # Add additional meta.data slots
-    proximity_scores <- proximity_scores %>%
+    proximity_scores <- proximity_scores |>
       left_join(
         y = mdata,
         by = "component"
@@ -382,7 +382,7 @@ ProximityScores.Seurat <- function(
 #'
 #' @examples
 #' # Update proximity scores in Seurat object
-#' ProximityScores(seur_obj) <- ProximityScores(seur_obj) %>%
+#' ProximityScores(seur_obj) <- ProximityScores(seur_obj) |>
 #'   mutate(ratio = join_count / join_count_expected_mean)
 #'
 #' @export
@@ -442,7 +442,7 @@ Edgelists.Seurat <- function(
     mdata <- .meta_data_columns(object, con, lazy, meta_data_columns)
 
     # Add additional meta.data slots
-    edgelists <- edgelists %>%
+    edgelists <- edgelists |>
       left_join(
         y = mdata,
         by = "component"
@@ -487,8 +487,8 @@ Edgelists.Seurat <- function(
   }
 
   # Get selected meta data
-  mdata <- object[[]] %>%
-    select(all_of(meta_data_columns)) %>%
+  mdata <- object[[]] |>
+    select(all_of(meta_data_columns)) |>
     as_tibble(rownames = "component")
 
   if (lazy) {

@@ -28,23 +28,23 @@ node_markers_counts <- function(
   assert_x_in_y(c("upia", "upib", "marker"), colnames(component_edge_list))
 
   component_counts <-
-    component_edge_list %>%
-    group_by(upia, marker) %>%
-    count() %>%
-    pivot_wider(id_cols = "upia", names_from = "marker", values_from = "n", values_fill = 0) %>%
+    component_edge_list |>
+    group_by(upia, marker) |>
+    count() |>
+    pivot_wider(id_cols = "upia", names_from = "marker", values_from = "n", values_fill = 0) |>
     column_to_rownames("upia")
 
   if (k > 0) {
     # Simplify graph
     simple_graph <-
-      component_edge_list %>%
-      select(upia, upib) %>%
-      distinct() %>%
+      component_edge_list |>
+      select(upia, upib) |>
+      distinct() |>
       edgelist_to_simple_Anode_graph(verbose = FALSE)
 
     # fetch adjacency matrix
     adj_mat <-
-      connect(simple_graph[[1]], order = k) %>%
+      connect(simple_graph[[1]], order = k) |>
       as_adjacency_matrix()
     diag(adj_mat) <- 1
 

@@ -273,14 +273,14 @@ constant for the whole rotation.
 library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
 se <- ReadPNA_Seurat(pxl_file)
-se <- se \%>\%
+se <- se |>
   LoadCellGraphs(add_layouts = TRUE)
 
 # Use cell_plot() and cell_plot_animate() instead
 \dontrun{
 # Create a gif from a 3D layout
 cg <- CellGraphs(se)[[3]]
-df <- cg@layout$wpmds_3d \%>\%
+df <- cg@layout$wpmds_3d |>
   mutate(node_val = cg@counts[, "CD3e"])
 temp_gif <- fs::file_temp(ext = ".gif")
 render_rotating_layout(
@@ -303,18 +303,18 @@ magick::image_read(temp_gif)
 markers <- paste0("Marker", 1:3)
 df <- lapply(1:2, function(i) {
   set.seed(i)
-  cg <- simulate_bipartite_graph(n_nodes = 5e3, epsilon = 8) \%>\%
+  cg <- simulate_bipartite_graph(n_nodes = 5e3, epsilon = 8) |>
     add_binary_marker_counts_pol(marker_polarize = "Marker1", epsilon = 12)
-  xyz <- layout_with_weighted_pmds(cg@cellgraph, dim = 3) \%>\%
+  xyz <- layout_with_weighted_pmds(cg@cellgraph, dim = 3) |>
     as_tibble(.name_repair = ~ c("x", "y", "z"))
   lapply(colnames(cg@counts)[1:2], function(m) {
-    xyz \%>\%
-      mutate(node_val = cg@counts[, m] \%>\% as.character()) \%>\%
+    xyz |>
+      mutate(node_val = cg@counts[, m] |> as.character()) |>
       mutate(marker = m)
-  }) \%>\%
-    bind_rows() \%>\%
+  }) |>
+    bind_rows() |>
     mutate(cell = paste0("Cell", i))
-}) \%>\% bind_rows()
+}) |> bind_rows()
 
 temp_gif <- fs::file_temp(ext = ".gif")
 render_rotating_layout(

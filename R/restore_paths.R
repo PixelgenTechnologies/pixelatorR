@@ -61,8 +61,8 @@ RestorePaths.MPXAssay <- function(
   fs_map <- FSMap(object)
 
   # Get PXL file names
-  pxl_files <- fs_map %>%
-    pull(all_of("pxl_file")) %>%
+  pxl_files <- fs_map |>
+    pull(all_of("pxl_file")) |>
     basename()
 
   # Update pxl_files
@@ -78,8 +78,8 @@ RestorePaths.MPXAssay <- function(
   }
 
   # Update pxl_files
-  fs_map <- fs_map %>%
-    mutate(pxl_file = pxl_files_updated %>% as.character())
+  fs_map <- fs_map |>
+    mutate(pxl_file = pxl_files_updated |> as.character())
 
   FSMap(object) <- fs_map
 

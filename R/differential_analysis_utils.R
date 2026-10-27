@@ -4,8 +4,8 @@
 #'
 #' @noRd
 .select_group_data <- function(object, contrast_column, group_vars = NULL) {
-  group_data <- object %>%
-    {
+  group_data <- object |>
+    (\(.) {
       if (!is.null(group_vars)) {
         assert_vector(group_vars, type = "character", n = 1)
         if (!all(group_vars %in% colnames(.))) {
@@ -17,7 +17,7 @@
       } else {
         select(., all_of(contrast_column))
       }
-    } %>%
+    })() |>
     as_tibble(rownames = "component")
 }
 
@@ -67,18 +67,18 @@
   targets,
   drop_cols = NULL
 ) {
-  test_groups <- data %>% group_by(pick(all_of(group_cols)))
+  test_groups <- data |> group_by(pick(all_of(group_cols)))
 
-  keys <- test_groups %>% group_keys()
+  keys <- test_groups |> group_keys()
   if (!is.null(drop_cols)) {
     drop_cols <- intersect(drop_cols, colnames(keys))
     if (length(drop_cols) > 0) {
-      keys <- keys %>% select(-all_of(drop_cols))
+      keys <- keys |> select(-all_of(drop_cols))
     }
   }
-  keys <- keys %>%
-    filter(!!sym(contrast_column) %in% targets) %>%
-    distinct() %>%
+  keys <- keys |>
+    filter(!!sym(contrast_column) %in% targets) |>
+    distinct() |>
     mutate_all(as.character)
 
   list(test_groups = test_groups, keys = keys)
@@ -117,9 +117,9 @@
   cat_line()
   cli_div(theme = list(ul = list(`margin-left` = 2, before = "")))
   if (!is.null(group_vars)) {
-    ctrst <- keys %>% pull(!!sym(contrast_column))
-    grps <- keys %>%
-      select(-!!sym(contrast_column)) %>%
+    ctrst <- keys |> pull(!!sym(contrast_column))
+    grps <- keys |>
+      select(-!!sym(contrast_column)) |>
       apply(1, paste, collapse = ", ")
     cli_ul(glue::glue("{ctrst} ({grps}) vs {reference} ({grps})"), id = "ul")
   } else {
@@ -159,12 +159,12 @@
   group_vars = NULL
 ) {
   groups_keep <- c(reference, cur_keys[, contrast_column, drop = TRUE])
-  out <- test_groups %>%
+  out <- test_groups |>
     filter(!!sym(contrast_column) %in% groups_keep)
 
   if (!is.null(group_vars)) {
     for (nm in group_vars) {
-      out <- out %>%
+      out <- out |>
         filter(!!sym(nm) %in% cur_keys[, nm, drop = TRUE])
     }
   }
@@ -185,7 +185,7 @@
     return(res)
   }
   for (nm in group_vars) {
-    res <- res %>%
+    res <- res |>
       mutate(!!sym(nm) := cur_keys[, nm, drop = TRUE])
   }
   res
@@ -200,10 +200,10 @@
 #'
 #' @noRd
 .finalize_da_results <- function(res_list, p_adjust_method, group_vars = NULL) {
-  bind_rows(res_list) %>%
-    group_by(pick(all_of(group_vars))) %>%
-    mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
-    relocate(p_adj, .after = "p") %>%
+  bind_rows(res_list) |>
+    group_by(pick(all_of(group_vars))) |>
+    mutate(p_adj = p.adjust(p, p_adjust_method)) |>
+    relocate(p_adj, .after = "p") |>
     ungroup()
 }
 

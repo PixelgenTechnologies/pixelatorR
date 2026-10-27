@@ -65,7 +65,7 @@ temp_file <- fs::file_temp(ext = "pxl")
 fs::file_copy(path = pxl_file, temp_file)
 
 # Change file path in fs_map
-FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) \%>\%
+FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) |>
   mutate(pxl_file = temp_file)
 
 # Now the fs_map has been updated with the correct path
@@ -84,7 +84,7 @@ pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 
 # Replace FSMap in Seurat object
-FSMap(seur_obj) <- FSMap(seur_obj) \%>\%
+FSMap(seur_obj) <- FSMap(seur_obj) |>
   mutate(pxl_file = fs::path_rel(pxl_file))
 
 }

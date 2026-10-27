@@ -141,7 +141,7 @@ PixelDB <- R6Class(
     #' @return A \code{tbl_df} with information about tables in the PXL file
     #'
     info = function() {
-      DBI::dbGetQuery(private$con, "SHOW ALL TABLES") %>%
+      DBI::dbGetQuery(private$con, "SHOW ALL TABLES") |>
         as_tibble()
     },
     #' @description
@@ -151,7 +151,7 @@ PixelDB <- R6Class(
     #'
     #' @examples
     #' # Select the proximity score table
-    #' db$query("SELECT * FROM proximity") %>% head()
+    #' db$query("SELECT * FROM proximity") |> head()
     #'
     #' @return A \code{data.frame} with the results of the query
     #'
@@ -245,8 +245,8 @@ PixelDB <- R6Class(
     #'
     names = function() {
       self$check_connection()
-      self$info() %>%
-        pull(name) %>%
+      self$info() |>
+        pull(name) |>
         as.character()
     },
     #' @description
@@ -260,7 +260,7 @@ PixelDB <- R6Class(
     #'
     #' @examples
     #' # Fetch any table from the database
-    #' db$fetch_table("proximity") %>% head()
+    #' db$fetch_table("proximity") |> head()
     #'
     #' @return A \code{data.frame} with the table contents
     #'
@@ -293,7 +293,7 @@ PixelDB <- R6Class(
     #' db$fetch_table_subset(
     #'   "proximity",
     #'   columns_filter = list("component" = c("0a45497c6bfbfb22", "2708240b908e2eba"))
-    #' ) %>% head()
+    #' ) |> head()
     #'
     #' @return A \code{data.frame} with the table contents
     #'
@@ -320,7 +320,7 @@ PixelDB <- R6Class(
       column_filter_collapsed <- sapply(names(columns_filter), function(nm) {
         x <- columns_filter[[nm]]
         glue("{nm} IN ({glue_sql('{x*}', .con = private$con)})")
-      }) %>%
+      }) |>
         paste(collapse = " AND ")
       sql_query <- glue("SELECT * FROM {name} WHERE {column_filter_collapsed}")
       DBI::dbGetQuery(private$con, sql_query)
@@ -363,7 +363,7 @@ PixelDB <- R6Class(
     #' @examples
     #' # Fetch the proximity scores
     #' prox <- db$proximity()
-    #' prox %>% head()
+    #' prox |> head()
     #'
     #' @return A \code{tbl_df} with the proximity scores
     #'
@@ -377,7 +377,7 @@ PixelDB <- R6Class(
       } else {
         proximity_scores <- self$fetch_table("proximity")
       }
-      proximity_scores <- proximity_scores %>%
+      proximity_scores <- proximity_scores |>
         select(-matches("__index"))
 
       # Calculate log2ratio
@@ -396,7 +396,7 @@ PixelDB <- R6Class(
             )
           )
         }
-        proximity_scores <- proximity_scores %>%
+        proximity_scores <- proximity_scores |>
           mutate(
             log2_ratio = log2(
               pmax(join_count, 1) / pmax(join_count_expected_mean, 1)
@@ -404,10 +404,10 @@ PixelDB <- R6Class(
           )
       }
 
-      proximity_scores <- proximity_scores %>% compute()
+      proximity_scores <- proximity_scores |> compute()
 
       if (!lazy) {
-        proximity_scores <- proximity_scores %>% as_tibble()
+        proximity_scores <- proximity_scores |> as_tibble()
       }
 
       return(proximity_scores)
@@ -417,14 +417,14 @@ PixelDB <- R6Class(
     #'
     #' @examples
     #' # Fetch the cell meta data
-    #' db$cell_meta() %>% head()
+    #' db$cell_meta() |> head()
     #'
     #' @return A \code{data.frame} with the cell meta data
     #'
     cell_meta = function() {
       self$check_connection()
-      self$fetch_table("__adata__obs") %>%
-        data.frame(row.names = 1, check.names = FALSE) %>%
+      self$fetch_table("__adata__obs") |>
+        data.frame(row.names = 1, check.names = FALSE) |>
         mutate(across(where(bit64::is.integer64), ~ as.integer(.x)))
     },
     #' @description
@@ -432,14 +432,14 @@ PixelDB <- R6Class(
     #'
     #' @examples
     #' # Fetch the protein meta data
-    #' db$protein_meta() %>% head()
+    #' db$protein_meta() |> head()
     #'
     #' @return A \code{data.frame} with the protein meta data
     #'
     protein_meta = function() {
       self$check_connection()
-      self$fetch_table("__adata__var") %>%
-        data.frame(row.names = 1, check.names = FALSE) %>%
+      self$fetch_table("__adata__var") |>
+        data.frame(row.names = 1, check.names = FALSE) |>
         mutate(across(where(bit64::is.integer64), ~ as.integer(.x)))
     },
     #' @description
@@ -454,7 +454,7 @@ PixelDB <- R6Class(
     run_meta = function() {
       self$check_connection()
       string <- self$fetch_table("metadata")$value
-      jsonlite::fromJSON(string) %>%
+      jsonlite::fromJSON(string) |>
         as_tibble()
     },
     #' @description
@@ -473,7 +473,7 @@ PixelDB <- R6Class(
     #'
     #' @examples
     #' # Fetch edgelists
-    #' db$components_edgelist("0a45497c6bfbfb22") %>% head()
+    #' db$components_edgelist("0a45497c6bfbfb22") |> head()
     #'
     #' @return A \code{data.frame} with the component edgelist:
     #'  - umi1: A unique ID of the first RCA product
@@ -493,7 +493,7 @@ PixelDB <- R6Class(
                                    include_all_columns = FALSE) {
       self$check_connection()
       assert_vector(components, "character", n = 1, allow_null = TRUE)
-      assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
+      assert_x_in_y(components, self$counts() |> colnames(), allow_null = TRUE)
       assert_single_value(lazy, type = "bool")
       assert_single_value(include_all_columns, type = "bool")
 
@@ -510,21 +510,21 @@ PixelDB <- R6Class(
       } else {
         el <- tbl(private$con, "edgelist")
         if (!is.null(components)) {
-          el <- el %>%
+          el <- el |>
             filter(component %in% components)
         }
       }
 
       if (include_all_columns) {
-        el <- el %>%
+        el <- el |>
           mutate(across(any_of(c("read_count", "uei_count")), as.integer))
       } else {
-        el <- el %>%
+        el <- el |>
           select(-any_of(c("read_count", "uei_count")))
       }
 
       if (umi_data_type == "string") {
-        el <- el %>%
+        el <- el |>
           mutate(
             umi1 = as.character(umi1),
             umi2 = as.character(umi2)
@@ -544,7 +544,7 @@ PixelDB <- R6Class(
 
         el <- tbl(private$con, "edgelist_modified")
       } else {
-        el <- el %>% collect()
+        el <- el |> collect()
       }
       return(el)
     },
@@ -560,7 +560,7 @@ PixelDB <- R6Class(
     #' @examples
     #' # Fetch layouts (NOTE: This will only work if the layouts exist in the database)
     #' \dontrun{
-    #' db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
+    #' db$components_layout("0a45497c6bfbfb22")[[1]] |> head()
     #' }
     #'
     #' @return A list with \code{tbl_df}'s with the layout coordinates and optionally marker counts
@@ -570,13 +570,13 @@ PixelDB <- R6Class(
                                  verbose = TRUE) {
       self$check_connection()
       assert_vector(components, "character", allow_null = TRUE, n = 1)
-      assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
+      assert_x_in_y(components, self$counts() |> colnames(), allow_null = TRUE)
       assert_single_value(add_marker_counts, "bool")
 
       # Construct the SQL query
       base_select <- "SELECT CAST(index AS STRING) AS name, x, y, z FROM layouts"
 
-      components <- components %||% (self$counts() %>% colnames())
+      components <- components %||% (self$counts() |> colnames())
 
       if (verbose) {
         cli::cli_alert_info(
@@ -605,9 +605,9 @@ PixelDB <- R6Class(
         } else {
           glue::glue(" WHERE component IN ('{component}')")
         }
-        DBI::dbGetQuery(private$con, paste0(base_select, where_sql)) %>%
+        DBI::dbGetQuery(private$con, paste0(base_select, where_sql)) |>
           as_tibble()
-      }) %>%
+      }) |>
         set_names(nm = components)
 
       if (add_marker_counts) {
@@ -619,9 +619,9 @@ PixelDB <- R6Class(
           cli::cli_alert_info("Adding marker counts to layout tables...")
         }
         layout_list <- lapply_func(names(layout_list), function(nm) {
-          layout_list[[nm]] %>%
+          layout_list[[nm]] |>
             left_join(marker_counts[[nm]], by = c("name" = "name"))
-        }) %>%
+        }) |>
           set_names(nm = names(layout_list))
       }
 
@@ -650,9 +650,9 @@ PixelDB <- R6Class(
                                         verbose = FALSE) {
       self$check_connection()
       assert_vector(components, "character", allow_null = TRUE, n = 1)
-      assert_x_in_y(components, self$counts() %>% colnames(), allow_null = TRUE)
+      assert_x_in_y(components, self$counts() |> colnames(), allow_null = TRUE)
 
-      components <- components %||% (self$counts() %>% colnames())
+      components <- components %||% (self$counts() |> colnames())
 
       use_index <- length(components) > 1L || !is.null(private$component_index_cache[["edgelist"]])
       idx <- if (use_index) private$get_component_index("edgelist") else NULL
@@ -692,13 +692,13 @@ PixelDB <- R6Class(
         rownames(m) <- levels(name_f)
         colnames(m) <- levels(marker_f)
         return(m)
-      }) %>%
+      }) |>
         set_names(nm = components)
 
       if (!as_sparse) {
         component_list <- lapply(component_list, function(x) {
-          x %>%
-            as.matrix() %>%
+          x |>
+            as.matrix() |>
             as_tibble(rownames = "name")
         })
       }

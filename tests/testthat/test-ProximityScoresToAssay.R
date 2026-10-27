@@ -6,10 +6,10 @@ for (assay_version in c("v3", "v5")) {
   expect_no_error(seur_obj <- suppressWarnings(ReadPNA_Seurat(pxl_file, verbose = FALSE)))
   expect_no_error(pna_assay <- seur_obj[["PNA"]])
   expect_no_error(proximity <-
-    ProximityScores(seur_obj) %>%
+    ProximityScores(seur_obj) |>
     filter(log2_ratio != 0))
   expect_no_error(proximity_lazy <-
-    ProximityScores(seur_obj, lazy = TRUE) %>%
+    ProximityScores(seur_obj, lazy = TRUE) |>
     filter(log2_ratio != 0))
 
   test_that("ProximityScoresToAssay works as expected", {
@@ -34,7 +34,7 @@ for (assay_version in c("v3", "v5")) {
       x = c(-1.0496307677246, -1.66902676550963, -1.13093086982645),
       factors = list()
     )
-    expect_equal(prox_matrix %>% head(2), expected_result)
+    expect_equal(prox_matrix |> head(2), expected_result)
 
     # tbl_lazy
     expect_no_error(prox_matrix <- ProximityScoresToAssay(proximity))

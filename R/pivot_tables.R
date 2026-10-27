@@ -30,14 +30,14 @@ PolarizationScoresToAssay.data.frame <- function(
   assert_col_in_data(values_from, object)
 
   # Cast data.frame to wide format
-  pol_scores_wide_format <- object %>%
+  pol_scores_wide_format <- object |>
     pivot_wider(
       id_cols = "marker",
       names_from = "component",
       values_from = all_of(values_from),
       values_fill = 0
-    ) %>%
-    data.frame(row.names = 1, check.names = FALSE) %>%
+    ) |>
+    data.frame(row.names = 1, check.names = FALSE) |>
     as.matrix()
 
   # Replace missing values with 0
@@ -190,16 +190,16 @@ ColocalizationScoresToAssay.data.frame <- function(
   assert_col_in_data(values_from, object)
 
   # Cast data.frame to wide format
-  col_scores_wide_format <- object %>%
+  col_scores_wide_format <- object |>
     pivot_wider(
       id_cols = c("marker_1", "marker_2"),
       names_from = "component",
       values_from = all_of(values_from),
       values_fill = 0
-    ) %>%
-    dplyr::filter(marker_1 != marker_2) %>%
-    unite(marker_1, marker_2, col = "pair", sep = "/") %>%
-    data.frame(row.names = 1, check.names = FALSE) %>%
+    ) |>
+    dplyr::filter(marker_1 != marker_2) |>
+    unite(marker_1, marker_2, col = "pair", sep = "/") |>
+    data.frame(row.names = 1, check.names = FALSE) |>
     as.matrix()
 
   # Replace missing values with 0
@@ -445,7 +445,7 @@ ProximityScoresToAssay.data.frame <- function(
     )
   }
 
-  unique_markers <- unique(c(object %>% pull(marker_1), object %>% pull(marker_2)))
+  unique_markers <- unique(c(object |> pull(marker_1), object |> pull(marker_2)))
   invalid_markers <- stringr::str_detect(unique_markers, stringr::coll(separator))
   if (sum(invalid_markers) > 0) {
     cli::cli_abort(
@@ -468,9 +468,9 @@ ProximityScoresToAssay.data.frame <- function(
   separator = ":"
 ) {
   # Create pair column
-  object <- object %>%
-    mutate(pair = stringr::str_c(marker_1, separator, marker_2)) %>%
-    select(pair, component, all_of(values_from)) %>%
+  object <- object |>
+    mutate(pair = stringr::str_c(marker_1, separator, marker_2)) |>
+    select(pair, component, all_of(values_from)) |>
     collect()
   return(object)
 }
@@ -480,18 +480,18 @@ ProximityScoresToAssay.data.frame <- function(
 #' @noRd
 .cast_proximity_long_to_wide <- function(object, values_from = "log2_ratio") {
   # Cast values to wide format
-  pair <- object %>%
-    pull(pair) %>%
-    factor(levels = unique(.))
+  pair <- object |>
+    pull(pair) |>
+    (\(.) factor(., levels = unique(.)))()
 
-  components <- object %>%
-    pull(component) %>%
-    factor(levels = unique(.))
+  components <- object |>
+    pull(component) |>
+    (\(.) factor(., levels = unique(.)))()
 
   prox_wide <- Matrix::sparseMatrix(
     i = as.integer(pair),
     j = as.integer(components),
-    x = object %>% pull(all_of(values_from)),
+    x = object |> pull(all_of(values_from)),
     dimnames = list(
       levels(pair),
       levels(components)
@@ -507,7 +507,7 @@ ProximityScoresToAssay.data.frame <- function(
 
   # Warn about components with all zero proximity scores
   zero_prox_components <-
-    which(Matrix::colSums(prox_wide != 0) == 0) %>%
+    which(Matrix::colSums(prox_wide != 0) == 0) |>
     names()
 
   if (length(zero_prox_components) > 0) {
@@ -550,7 +550,7 @@ ProximityScoresToAssay.PNAAssay <- function(
     }
   }
 
-  proximity_matrix <- proximity_scores %>%
+  proximity_matrix <- proximity_scores |>
     ProximityScoresToAssay(
       values_from = values_from,
       separator = separator

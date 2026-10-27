@@ -1,5 +1,5 @@
-se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) %>%
-  LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1], verbose = FALSE))()
 
 cg <- CellGraphs(se)[[1]]
 g <- cg@cellgraph
@@ -32,7 +32,7 @@ test_that("layout_with_coarsened_pmds works as expected", {
     dimnames = list(NULL, c("x", "y", "z"))
   )
 
-  expect_equal(xyz %>% head(), expected_result, tolerance = 1e-6)
+  expect_equal(xyz |> head(), expected_result, tolerance = 1e-6)
 })
 
 test_that("layout_with_coarsened_pmds fails with invalid input", {

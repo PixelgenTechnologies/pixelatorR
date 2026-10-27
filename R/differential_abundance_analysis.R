@@ -23,8 +23,8 @@ NULL
 #' # Seurat objects
 #' se <- ReadMPX_Seurat(pxl_file)
 #' se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
-#' se$sample <- c("T", "C", "C", "C", "C") %>% rep(times = 10)
-#' se <- Seurat::NormalizeData(se %>% JoinLayers(), normalization.method = "CLR", margin = 2)
+#' se$sample <- c("T", "C", "C", "C", "C") |> rep(times = 10)
+#' se <- Seurat::NormalizeData(se |> JoinLayers(), normalization.method = "CLR", margin = 2)
 #'
 #' # Run DAA
 #' daa_markers <- RunDAA(se,
@@ -78,21 +78,21 @@ RunDAA.Seurat <- function(
     cli_alert_info("Splitting data by: {paste(c(group_vars), collapse = ', ')}")
   }
 
-  test_groups <- group_data %>%
-    {
+  test_groups <- group_data |>
+    (\(.) {
       if (!is.null(group_vars)) {
         group_by(., pick(all_of(group_vars)))
       } else {
         .
       }
-    }
+    })()
 
   # Get group keys
-  test_groups_keys <- test_groups %>% group_keys()
+  test_groups_keys <- test_groups |> group_keys()
   if (nrow(test_groups_keys) == 1) {
     group_data_split <- list(test_groups)
   } else {
-    group_data_split <- test_groups %>%
+    group_data_split <- test_groups |>
       group_split()
   }
 
@@ -110,14 +110,14 @@ RunDAA.Seurat <- function(
   }
 
   da_results_all <- lapply(seq_along(group_data_split), function(i) {
-    reference_cells <- group_data_split[[i]] %>%
-      filter(!!sym(contrast_column) == reference) %>%
+    reference_cells <- group_data_split[[i]] |>
+      filter(!!sym(contrast_column) == reference) |>
       pull(component)
 
     # Iterate over targets
     da_results_targets <- lapply(targets, function(target) {
-      target_cells <- group_data_split[[i]] %>%
-        filter(!!sym(contrast_column) == target) %>%
+      target_cells <- group_data_split[[i]] |>
+        filter(!!sym(contrast_column) == target) |>
         pull(component)
 
       cur_assay_subset <- try(
@@ -135,8 +135,8 @@ RunDAA.Seurat <- function(
         ))
       }
 
-      target_cells <- group_data_split[[i]] %>%
-        filter(!!sym(contrast_column) == target) %>%
+      target_cells <- group_data_split[[i]] |>
+        filter(!!sym(contrast_column) == target) |>
         pull(component)
       da_results_cur <- Seurat::FindMarkers(
         cur_assay_subset,
@@ -149,10 +149,10 @@ RunDAA.Seurat <- function(
       )
 
       # Add marker columns
-      da_results_cur <- da_results_cur %>%
-        mutate(marker = rownames(.)) %>%
-        relocate(marker, .before = "p_val") %>%
-        as_tibble() %>%
+      da_results_cur <- da_results_cur |>
+        (\(.) mutate(., marker = rownames(.)))() |>
+        relocate(marker, .before = "p_val") |>
+        as_tibble() |>
         mutate(target = target, reference = reference)
 
       # Add additional group columns
@@ -163,18 +163,18 @@ RunDAA.Seurat <- function(
       }
 
       return(da_results_cur)
-    }) %>%
+    }) |>
       bind_rows()
 
     return(da_results_targets)
-  }) %>%
+  }) |>
     bind_rows()
 
   # Adjust p-values
-  da_results_all <- da_results_all %>%
-    rename(p = p_val, pct_1 = pct.1, pct_2 = pct.2) %>%
-    select(-p_val_adj) %>%
-    mutate(p_adj = p.adjust(p, p_adjust_method)) %>%
+  da_results_all <- da_results_all |>
+    rename(p = p_val, pct_1 = pct.1, pct_2 = pct.2) |>
+    select(-p_val_adj) |>
+    mutate(p_adj = p.adjust(p, p_adjust_method)) |>
     relocate(p_adj, .after = "p")
 
   return(da_results_all)

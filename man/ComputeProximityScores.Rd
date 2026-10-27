@@ -170,28 +170,28 @@ permutations.
 
 \examples{
 library(dplyr)
-cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
-  LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE) \%>\%
-  CellGraphs() \%>\%
-  .[[1]]
+cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1], verbose = FALSE))() |>
+  CellGraphs() |>
+  (\(.) .[[1]])()
 
-ComputeProximityScores(cg) \%>\%
+ComputeProximityScores(cg) |>
   filter(join_count_z > 3)
 
 library(ggplot2)
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) \%>\%
-  LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1:2], verbose = FALSE))()
 
 # Compute proximity scores for selected cells
 proximity_scores <- ComputeProximityScores(se, cells = colnames(se)[1:2])
 
 # Compare with available proximity scores
-proximity_scores \%>\%
-  left_join(ProximityScores(se \%>\% subset(cells = colnames(se)[1:2])),
+proximity_scores |>
+  left_join(ProximityScores(se |> subset(cells = colnames(se)[1:2])),
     by = c("marker_1", "marker_2", "component"),
     suffix = c("_post", "_pre")
-  ) \%>\%
-  na.omit() \%>\%
+  ) |>
+  na.omit() |>
   ggplot(aes(log2_ratio_pre, log2_ratio_post)) +
   geom_abline() +
   geom_point() +

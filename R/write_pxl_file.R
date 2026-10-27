@@ -212,13 +212,13 @@ WriteMPX_pxl_file <- function(
     # Filter out layers that are not counts (raw count data)
     all_layers <- all_layers[str_detect(all_layers, "^counts\\.[0-9]+$")]
     # Sort layers by their sample index
-    all_layers <- all_layers %>% set_names(all_layers)
+    all_layers <- all_layers |> set_names(all_layers)
     all_layers <- all_layers[paste0("counts.", seq_along(all_layers))]
     X <- try(
       {
         lapply(all_layers, function(lr) {
           LayerData(cg_assay, layer = lr)
-        }) %>% Reduce(cbind, .)
+        }) |> (\(.) Reduce(cbind, .))()
       },
       silent = TRUE
     )
@@ -311,7 +311,7 @@ WriteMPX_pxl_file <- function(
 
   if (length(obs_cols_keep) > 0) {
     for (col_name in obs_cols_keep) {
-      col_vals <- object[[]] %>% pull(col_name)
+      col_vals <- object[[]] |> pull(col_name)
       encoding_type <- "array"
 
       # Switch data type depending on column type
@@ -367,7 +367,7 @@ WriteMPX_pxl_file <- function(
 
   # Only export selected faeture meta data columns if they are available
   if (length(feature_meta_data) > 0) {
-    var$create_dataset("marker", robj = feature_meta_data %>% pull(marker), chunk_dims = NULL)
+    var$create_dataset("marker", robj = feature_meta_data |> pull(marker), chunk_dims = NULL)
     .add_encoding_type_attr(var[["marker"]], type = "string-array")
     .add_encoding_version_attribute(var[["marker"]], version = "0.2.0")
     var_cols_of_interest <- c("antibody_count", "components", "antibody_pct", "nuclear", "control")
@@ -377,7 +377,7 @@ WriteMPX_pxl_file <- function(
     )
     if (length(var_cols_keep) > 0) {
       for (col_name in var_cols_keep) {
-        col_vals <- feature_meta_data %>% pull(col_name)
+        col_vals <- feature_meta_data |> pull(col_name)
         encoding_type <- "array"
         if (is.integer(col_vals)) {
           dtype <- hdf5r::h5types$int64_t
@@ -405,7 +405,7 @@ WriteMPX_pxl_file <- function(
     }
     hdf5r::h5attr(var, which = "column-order") <- var_cols_keep
   } else {
-    var$create_dataset("marker", robj = cg_assay %>% rownames(), chunk_dims = NULL)
+    var$create_dataset("marker", robj = cg_assay |> rownames(), chunk_dims = NULL)
   }
   .add_any_string_attr(var, "_index", "marker")
   .add_encoding_type_attr(var, type = "dataframe")
@@ -498,7 +498,7 @@ WriteMPX_pxl_file <- function(
     })
     merged_sample_json <- list(samples = lapply(json_files, function(f) {
       jsonlite::read_json(f)
-    }) %>%
+    }) |>
       set_names(nm = paste0("sample", seq_along(json_files))))
     jsonlite::write_json(merged_sample_json, file.path(pxl_folder, "metadata.json"), auto_unbox = TRUE)
     fs::file_delete(json_files)
@@ -529,12 +529,13 @@ WriteMPX_pxl_file <- function(
   )
 
   # Fetch polarization scores from Seurat object and write to a .parquet file
-  PolarizationScores(object) %>%
-    arrow::write_dataset(
+  PolarizationScores(object) |>
+    (\(.) arrow::write_dataset(
+      .,
       hive_style = FALSE, format = "parquet",
       compression = "zstd", path = pxl_folder,
       max_rows_per_group = nrow(.)
-    )
+    ))()
 
   # The file is written as part-0.parquet, so we need to rename it to polarization.parquet
   fs::file_move(
@@ -549,12 +550,13 @@ WriteMPX_pxl_file <- function(
   )
 
   # Fetch polarization scores from Seurat object and write to a .parquet file
-  ColocalizationScores(object) %>%
-    arrow::write_dataset(
+  ColocalizationScores(object) |>
+    (\(.) arrow::write_dataset(
+      .,
       hive_style = FALSE, format = "parquet",
       compression = "zstd", path = pxl_folder,
       max_rows_per_group = nrow(.)
-    )
+    ))()
 
   # The file is written as part-0.parquet, so we need to rename it to polarization.parquet
   fs::file_move(
@@ -597,7 +599,7 @@ WriteMPX_pxl_file <- function(
   })
 
   # Unnset fs_map
-  fs_map_unnest <- fs_map %>%
+  fs_map_unnest <- fs_map |>
     tidyr::unnest(cols = "id_map")
 
   # Update component IDs in edgelist parquet files
@@ -617,17 +619,17 @@ WriteMPX_pxl_file <- function(
 
     # Fetch the current_id and original_id to convert the component IDs
     # in the edgelist tables
-    fs_map_unnest_filtered <- fs_map_unnest %>%
-      filter(sample == i) %>%
-      select(current_id, original_id) %>%
-      rename(component = original_id) %>%
-      {
+    fs_map_unnest_filtered <- fs_map_unnest |>
+      filter(sample == i) |>
+      select(current_id, original_id) |>
+      rename(component = original_id) |>
+      (\(.) {
         if (component_dtype == "large_utf8") {
           mutate(., across(current_id, factor))
         } else {
           mutate(., across(everything(), factor))
         }
-      }
+      })()
 
     # Convert fs_map_unnest_filtered to an arrow table
     a_table <- arrow::arrow_table(fs_map_unnest_filtered,
@@ -638,13 +640,13 @@ WriteMPX_pxl_file <- function(
     )
 
     # Update component IDs in the edgelist table using a join operation
-    data <- data %>%
-      left_join(a_table, by = "component") %>%
-      select(-component) %>%
-      rename(component = current_id) %>%
-      mutate(component = as.character(component)) %>%
+    data <- data |>
+      left_join(a_table, by = "component") |>
+      select(-component) |>
+      rename(component = current_id) |>
+      mutate(component = as.character(component)) |>
       # Filter out components that are not in the current_id
-      filter(component %in% (levels(fs_map_unnest_filtered$current_id))) %>%
+      filter(component %in% (levels(fs_map_unnest_filtered$current_id))) |>
       # Force computation (this can be slow and requires the data to be loaded in memory)
       compute()
 
@@ -713,9 +715,9 @@ WriteMPX_pxl_file <- function(
       if (attr(cg@cellgraph, "type") == "bipartite") {
         node_names <- .strip_bipartite_node_suffix(node_names)
       }
-      ly %>%
-        as_tibble() %>%
-        mutate(name = node_names) %>%
+      ly |>
+        as_tibble() |>
+        mutate(name = node_names) |>
         relocate(name, .before = x)
     })
 
@@ -728,7 +730,7 @@ WriteMPX_pxl_file <- function(
         layout_type
       )
     })
-    layouts <- set_names(layouts, layout_types %>% unname())
+    layouts <- set_names(layouts, layout_types |> unname())
 
     merged_counts <- lapply(layouts, function(layout) {
       # Combine counts with layout
@@ -741,23 +743,23 @@ WriteMPX_pxl_file <- function(
           )
         )
       }
-      return(cg@counts %>% Matrix::t())
-    }) %>%
-      do.call(cbind, .)
+      return(cg@counts |> Matrix::t())
+    }) |>
+      (\(.) do.call(cbind, .))()
     colnames(merged_counts) <- seq_len(ncol(merged_counts))
 
     merged_layouts <- lapply(names(layouts), function(layout_type) {
       layout_tbl <- layouts[[layout_type]]
       # If the layout only has x,y columns, add a third z column of NAs
       if (ncol(layout_tbl) == 2 && !"z" %in% names(layout_tbl)) {
-        layout_tbl <- layout_tbl %>% mutate(z = NA_real_)
+        layout_tbl <- layout_tbl |> mutate(z = NA_real_)
       }
-      layout_tbl <- layout_tbl %>% select(all_of(c("name", "x", "y", "z")))
-      layout_tbl <- layout_tbl %>%
+      layout_tbl <- layout_tbl |> select(all_of(c("name", "x", "y", "z")))
+      layout_tbl <- layout_tbl |>
         mutate(layout = layout_type, component = nm, graph_projection = attr(cg@cellgraph, "type"))
       return(layout_tbl)
-    }) %>%
-      do.call(bind_rows, .)
+    }) |>
+      (\(.) do.call(bind_rows, .))()
 
     return(list(merged_counts = merged_counts, merged_layouts = merged_layouts))
   })
@@ -772,7 +774,7 @@ WriteMPX_pxl_file <- function(
   all_count_data_merged <- SeuratObject::RowMergeSparseMatrices(
     all_count_data_merged[[1]],
     all_count_data_merged[-1]
-  ) %>%
+  ) |>
     Matrix::t()
 
   cli_status_update(
@@ -781,7 +783,7 @@ WriteMPX_pxl_file <- function(
   )
 
   # merge all layouts
-  all_layout_merged <- lapply(all_data, function(data) data$merged_layouts) %>% do.call(bind_rows, .)
+  all_layout_merged <- lapply(all_data, function(data) data$merged_layouts) |> (\(.) do.call(bind_rows, .))()
 
   cli_status_update(
     id = sb,
@@ -799,13 +801,13 @@ WriteMPX_pxl_file <- function(
         rep(list(double()), 3),
         rep(list(arrow::string()), 3)
       )
-    ) %>%
+    ) |>
       set_names(nm = c(colnames(all_count_data_merged), colnames(all_layout_merged)))
   )
 
   # Merge data
   all_layout_and_counts_merged <-
-    cbind(all_count_data_merged %>% as.matrix(), all_layout_merged)
+    cbind(all_count_data_merged |> as.matrix(), all_layout_merged)
 
   # Convert data to arrow table
   layout_and_counts_arr <- arrow::arrow_table(all_layout_and_counts_merged,
@@ -813,7 +815,7 @@ WriteMPX_pxl_file <- function(
   )
 
   # Group by graph_projection, layout and component
-  layout_and_counts_arr <- layout_and_counts_arr %>%
+  layout_and_counts_arr <- layout_and_counts_arr |>
     group_by(graph_projection, layout, component)
 
   # Write dataset

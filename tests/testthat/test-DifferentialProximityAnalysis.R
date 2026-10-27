@@ -12,7 +12,7 @@ for (assay_version in c("v3", "v5")) {
   seur_obj_big <- merge(seur_obj, rep(list(seur_obj), 9), add.cell.ids = LETTERS[1:10])
 
   if (assay_version == "v5") {
-    seur_obj_big <- seur_obj_big %>% JoinLayers()
+    seur_obj_big <- seur_obj_big |> JoinLayers()
   }
 
   test_that("DifferentialProximityAnalysis works as expected", {
@@ -43,20 +43,20 @@ for (assay_version in c("v3", "v5")) {
       structure(
         c(CD4T = 931L, `CD16+ Mono` = 1206L),
         dim = 2L,
-        dimnames = list(
-          . = c("CD4T", "CD16+ Mono")
-        ),
+        dimnames = structure(list(
+          c("CD4T", "CD16+ Mono")
+        ), names = ""),
         class = "table"
       ),
-      de_results_multiple_targets$target %>% table() %>% sort()
+      de_results_multiple_targets$target |> table() |> sort()
     )
 
     # Test that contrast column can be factor
     prox_scores <-
       ProximityScores(seur_obj_big,
         meta_data_columns = "cell_type"
-      ) %>%
-      mutate(cell_type = factor(cell_type)) %>%
+      ) |>
+      mutate(cell_type = factor(cell_type)) |>
       filter(marker_1 == marker_2)
 
     expect_no_error({

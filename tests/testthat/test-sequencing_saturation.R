@@ -118,7 +118,7 @@ test_that("approximate_edge_saturation works as expected", {
   expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
   expect_no_error(edgesat <- approximate_edge_saturation(db))
   expect_equal(
-    head(edgesat %>% collect() %>% arrange(component), 2),
+    head(edgesat |> collect() |> arrange(component), 2),
     structure(
       list(
         component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
@@ -132,7 +132,7 @@ test_that("approximate_edge_saturation works as expected", {
   )
   expect_no_error(edgesat <- approximate_edge_saturation(db, components = "0a45497c6bfbfb22"))
   expect_equal(
-    edgesat %>% collect(),
+    edgesat |> collect(),
     structure(
       list(
         component = "0a45497c6bfbfb22",
@@ -150,7 +150,7 @@ test_that("approximate_edge_saturation works as expected", {
     min_degree = 2L
   ))
   expect_equal(
-    edgesat_deg2 %>% collect(),
+    edgesat_deg2 |> collect(),
     structure(
       list(
         component = "0a45497c6bfbfb22",
@@ -173,7 +173,7 @@ test_that("approximate_node_saturation works as expected", {
   expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
   expect_no_error(nodesat <- approximate_node_saturation(db))
   expect_equal(
-    head(nodesat %>% collect() %>% arrange(component), 2),
+    head(nodesat |> collect() |> arrange(component), 2),
     structure(
       list(
         component = c("0a45497c6bfbfb22", "2708240b908e2eba"),
@@ -187,7 +187,7 @@ test_that("approximate_node_saturation works as expected", {
   )
   expect_no_error(nodesat <- approximate_node_saturation(db, components = "0a45497c6bfbfb22"))
   expect_equal(
-    nodesat %>% collect(),
+    nodesat |> collect(),
     structure(
       list(
         component = "0a45497c6bfbfb22",
@@ -205,7 +205,7 @@ test_that("approximate_node_saturation works as expected", {
     node_reads_multiplier = 1
   ))
   expect_equal(
-    nodesat_m1 %>% collect(),
+    nodesat_m1 |> collect(),
     structure(
       list(
         component = "0a45497c6bfbfb22",
@@ -223,7 +223,7 @@ test_that("approximate_node_saturation works as expected", {
     min_degree = 2L
   ))
   expect_equal(
-    nodesat_deg2 %>% collect(),
+    nodesat_deg2 |> collect(),
     structure(
       list(
         component = "0a45497c6bfbfb22",
@@ -248,7 +248,7 @@ test_that("approximate_saturation_curve works as expected", {
   expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
   expect_no_error(sat_points <- approximate_saturation_curve(db, fracs = c(0.1, 0.2)))
   expect_equal(
-    head(sat_points %>% collect() %>% arrange(component), 2),
+    head(sat_points |> collect() |> arrange(component), 2),
     structure(
       list(
         component = c("0a45497c6bfbfb22", "0a45497c6bfbfb22"),
@@ -272,7 +272,7 @@ test_that("approximate_saturation_curve works as expected", {
   ))
   expect_equal(
     sat_points_comp,
-    head(sat_points %>% collect() %>% arrange(component), 2)
+    head(sat_points |> collect() |> arrange(component), 2)
   )
   expect_no_error(sat_points_deg2 <- approximate_saturation_curve(
     db,
@@ -296,7 +296,7 @@ test_that("approximate_saturation_curve works as expected", {
 # marginal_saturation and marginal_saturation_curve
 test_that("marginal_saturation and marginal_saturation_curve work as expected", {
   expect_no_error(db <- PixelDB$new(minimal_pna_pxl_file()))
-  expect_no_error(msat <- marginal_saturation(db, components = "0a45497c6bfbfb22") %>% collect())
+  expect_no_error(msat <- marginal_saturation(db, components = "0a45497c6bfbfb22") |> collect())
   expect_s3_class(msat, "tbl_df")
   expect_equal(msat$read_count, 289856)
   expect_equal(msat$nodes, 43543L)
@@ -315,7 +315,7 @@ test_that("marginal_saturation and marginal_saturation_curve work as expected", 
     db,
     components = "0a45497c6bfbfb22",
     min_degree = 2L
-  ) %>% collect())
+  ) |> collect())
   expect_equal(msat_deg2$nodes, 33731L)
   expect_equal(msat_deg2$degree, 2 * 97014 / 33731)
   expect_equal(msat_deg2$node_discovery_rate, 3494 / 289856)
@@ -373,15 +373,15 @@ test_that("marginal_saturation and marginal_saturation_curve work as expected", 
   # Uncollected lazy results should not be overwritten by later calls
   msat_lazy_1 <- marginal_saturation(db, components = "0a45497c6bfbfb22", min_degree = 1L)
   msat_lazy_2 <- marginal_saturation(db, components = "2708240b908e2eba", min_degree = 2L)
-  expect_equal(msat_lazy_1 %>% collect(), msat)
-  expect_equal((msat_lazy_2 %>% collect())$component, "2708240b908e2eba")
-  expect_equal((msat_lazy_2 %>% collect())$nodes, 28944L)
+  expect_equal(msat_lazy_1 |> collect(), msat)
+  expect_equal((msat_lazy_2 |> collect())$component, "2708240b908e2eba")
+  expect_equal((msat_lazy_2 |> collect())$nodes, 28944L)
 
   # Mixed use with components_edgelist(lazy = TRUE) on the same connection
   expect_no_error(lazy_el <- db$components_edgelist("0a45497c6bfbfb22", lazy = TRUE))
-  expect_no_error(marginal_saturation(db, components = "0a45497c6bfbfb22") %>% collect())
+  expect_no_error(marginal_saturation(db, components = "0a45497c6bfbfb22") |> collect())
   expect_no_error(db$components_edgelist("0a45497c6bfbfb22", lazy = TRUE))
-  expect_no_error(approximate_edge_saturation(db, components = "0a45497c6bfbfb22") %>% collect())
+  expect_no_error(approximate_edge_saturation(db, components = "0a45497c6bfbfb22") |> collect())
   expect_no_error(db$close())
 })
 
