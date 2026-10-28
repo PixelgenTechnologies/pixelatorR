@@ -354,22 +354,10 @@ ProximityScores.Seurat <- function(
   # Get proximity scores
   proximity_scores <- ProximityScores(pixel_assay, add_marker_counts, add_marker_proportions, lazy, calc_log2ratio, ...)
 
-  if (inherits(proximity_scores, "tbl_lazy")) {
-    con <- proximity_scores$src$con
-  } else {
-    con <- NULL
-  }
-
   # Add optional meta data columns to proximity scores table
   if (!is.null(meta_data_columns)) {
-    mdata <- .meta_data_columns(object, con, lazy, meta_data_columns)
-
-    # Add additional meta.data slots
-    proximity_scores <- proximity_scores |>
-      left_join(
-        y = mdata,
-        by = "component"
-      )
+    mdata <- .meta_data_columns(object, con = NULL, lazy = FALSE, meta_data_columns)
+    proximity_scores <- join_proximity_metadata(proximity_scores, mdata, by = "component")
   }
 
   return(proximity_scores)
@@ -431,25 +419,48 @@ Edgelists.Seurat <- function(
   # Get edgelist
   edgelists <- Edgelists(object[[assay]], lazy, union, ...)
 
-  if (inherits(edgelists, "tbl_lazy")) {
-    con <- edgelists$src$con
-  } else {
-    con <- NULL
-  }
-
   # Add optional meta data columns to edgelist table
   if (!is.null(meta_data_columns)) {
-    mdata <- .meta_data_columns(object, con, lazy, meta_data_columns)
-
-    # Add additional meta.data slots
-    edgelists <- edgelists |>
-      left_join(
-        y = mdata,
-        by = "component"
-      )
+    mdata <- .meta_data_columns(object, con = NULL, lazy = FALSE, meta_data_columns)
+    if (is.list(edgelists) && !inherits(edgelists, c("data.frame", "tbl_lazy"))) {
+      edgelists <- lapply(edgelists, function(el) {
+        join_proximity_metadata(el, mdata, by = "component")
+      })
+    } else {
+      edgelists <- join_proximity_metadata(edgelists, mdata, by = "component")
+    }
   }
 
   return(edgelists)
+}
+
+
+#' @rdname join_proximity_metadata
+#' @method join_proximity_metadata default
+#' @export
+join_proximity_metadata.default <- function(
+  proximity_scores,
+  mdata,
+  by = "component",
+  ...
+) {
+  left_join(proximity_scores, y = mdata, by = by)
+}
+
+
+#' @rdname join_proximity_metadata
+#' @method join_proximity_metadata tbl_lazy
+#' @export
+join_proximity_metadata.tbl_lazy <- function(
+  proximity_scores,
+  mdata,
+  by = "component",
+  ...
+) {
+  con <- proximity_scores$src$con
+  tbl_name <- paste0("pxl_mdata_", .generate_random_string(8))
+  copy_to(con, mdata, name = tbl_name, overwrite = TRUE)
+  left_join(proximity_scores, y = tbl(con, tbl_name), by = by)
 }
 
 

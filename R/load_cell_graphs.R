@@ -548,8 +548,47 @@ LoadCellGraphs.PNAAssay <- function(
     }
   }
 
+  # Load cell graphs per PXL source
+  cg_list_full <- fetch_cell_graphs(
+    fs_map = FSMap(object),
+    cells_to_load = cells_to_load,
+    add_layouts = add_layouts,
+    verbose = verbose,
+    ...
+  )
+
+  # Fill cellgraphs slot list with the loaded CellGraphs
+  slot(object, name = "cellgraphs")[names(cg_list_full)] <- cg_list_full
+
+  # Return object
+  if (verbose && check_global_verbosity()) {
+    cli_alert_success(
+      "Successfully loaded {length(cells_to_load)} {.cls CellGraph} object(s)."
+    )
+  }
+  return(object)
+}
+
+#' @rdname LoadCellGraphs
+#' @method LoadCellGraphs PNAAssay5
+#' @docType methods
+#' @export
+#'
+LoadCellGraphs.PNAAssay5 <- LoadCellGraphs.PNAAssay
+
+
+#' @rdname fetch_cell_graphs
+#' @method fetch_cell_graphs default
+#' @export
+fetch_cell_graphs.default <- function(
+  fs_map,
+  cells_to_load,
+  add_layouts = FALSE,
+  verbose = TRUE,
+  ...
+) {
   # Find where components are located
-  fs_map_unnested_filtered <- slot(object, name = "fs_map") |>
+  fs_map_unnested_filtered <- fs_map |>
     tidyr::unnest(cols = "id_map") |>
     filter(current_id %in% cells_to_load)
   fs_map_nested_filtered <- fs_map_unnested_filtered |>
@@ -596,26 +635,8 @@ LoadCellGraphs.PNAAssay <- function(
   }) |>
     unlist(recursive = FALSE)
 
-  # Fill cellgraphs slot list with the loaded CellGraphs
-  slot(object, name = "cellgraphs")[
-    fs_map_unnested_filtered$current_id
-  ] <- cg_list_full
-
-  # Return object
-  if (verbose && check_global_verbosity()) {
-    cli_alert_success(
-      "Successfully loaded {length(cells_to_load)} {.cls CellGraph} object(s)."
-    )
-  }
-  return(object)
+  return(cg_list_full[fs_map_unnested_filtered$current_id])
 }
-
-#' @rdname LoadCellGraphs
-#' @method LoadCellGraphs PNAAssay5
-#' @docType methods
-#' @export
-#'
-LoadCellGraphs.PNAAssay5 <- LoadCellGraphs.PNAAssay
 
 
 #' @param assay Assay name

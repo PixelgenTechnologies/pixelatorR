@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Exported S3 generics `validate_fs_map_paths()`, `lazy_load_table()`,
+  `join_proximity_metadata()`, and `fetch_cell_graphs()` and relaxed the
+  `fs_map` slot on `PNAAssay` and `PNAAssay5` to `ANY` while preserving
+  `fs_map` S3 classes across `subset()`, `merge()`, `RenameCells()`, and
+  `JoinLayers()`.
+
 ### Changed
 
 - Package code, tests, and examples use the base R pipe `|>` instead of
