@@ -724,13 +724,18 @@ ProximityScores.PNAAssay <- function(
     if (lazy) {
       proximity_scores <- join_proximity_metadata(
         proximity_scores,
-        all_counts |> rename(count_1 = count),
-        by = c("component", "marker_1" = "marker")
+        all_counts,
+        by = c("component", "marker_1" = "marker"),
+        name = "pxl_all_counts"
       ) |>
+        rename(count_1 = count) |>
         join_proximity_metadata(
-          all_counts |> rename(count_2 = count),
-          by = c("component", "marker_2" = "marker")
-        )
+          all_counts,
+          by = c("component", "marker_2" = "marker"),
+          name = "pxl_all_counts",
+          reuse = TRUE
+        ) |>
+        rename(count_2 = count)
     } else {
       proximity_scores <- proximity_scores |>
         left_join(all_counts, by = c("component", "marker_1" = "marker")) |>
@@ -1293,10 +1298,21 @@ merge.PNAAssay <- function(
       function(m) identical(class(m), first_class),
       logical(1)
     ))
-    fs_map <- do.call(bind_rows, fs_map_list) |> mutate(sample = seq_len(n()))
-    if (same_class) {
-      class(fs_map) <- first_class
+    if (!same_class) {
+      found_classes <- unique(vapply(
+        fs_map_list,
+        function(m) paste(class(m), collapse = "/"),
+        character(1)
+      ))
+      cli::cli_abort(
+        c(
+          "x" = "Cannot merge {.cls PNAAssay} objects with incompatible {.var fs_map} backend classes.",
+          "i" = "Found {.var fs_map} classes: {.val {found_classes}}"
+        )
+      )
     }
+    fs_map <- do.call(bind_rows, fs_map_list) |> mutate(sample = seq_len(n()))
+    class(fs_map) <- first_class
   }
 
   # Convert to PNAAssay and add cellgraphs

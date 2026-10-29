@@ -448,6 +448,10 @@ join_proximity_metadata.default <- function(
 }
 
 
+#' @param name Optional name for the temporary table created in the database.
+#'   When \code{NULL} (default), a unique temporary table name is generated.
+#' @param reuse Logical indicating whether to reuse an existing table named
+#'   \code{name} on the database connection instead of re-uploading \code{mdata}.
 #' @rdname join_proximity_metadata
 #' @method join_proximity_metadata tbl_lazy
 #' @export
@@ -455,11 +459,15 @@ join_proximity_metadata.tbl_lazy <- function(
   proximity_scores,
   mdata,
   by = "component",
+  name = NULL,
+  reuse = FALSE,
   ...
 ) {
   con <- proximity_scores$src$con
-  tbl_name <- paste0("pxl_mdata_", .generate_random_string(8))
-  copy_to(con, mdata, name = tbl_name, overwrite = TRUE)
+  tbl_name <- name %||% paste0("pxl_mdata_", .generate_random_string(8))
+  if (!isTRUE(reuse) || is.null(name) || !DBI::dbExistsTable(con, tbl_name)) {
+    copy_to(con, mdata, name = tbl_name, overwrite = TRUE)
+  }
   left_join(proximity_scores, y = tbl(con, tbl_name), by = by)
 }
 

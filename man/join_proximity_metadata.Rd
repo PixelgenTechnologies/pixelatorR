@@ -10,7 +10,14 @@ join_proximity_metadata(proximity_scores, mdata, by = "component", ...)
 
 \method{join_proximity_metadata}{default}(proximity_scores, mdata, by = "component", ...)
 
-\method{join_proximity_metadata}{tbl_lazy}(proximity_scores, mdata, by = "component", ...)
+\method{join_proximity_metadata}{tbl_lazy}(
+  proximity_scores,
+  mdata,
+  by = "component",
+  name = NULL,
+  reuse = FALSE,
+  ...
+)
 }
 \arguments{
 \item{proximity_scores}{A \code{data.frame} or \code{tbl_lazy} table.}
@@ -22,6 +29,12 @@ metadata columns to join.}
 Defaults to \code{"component"}.}
 
 \item{...}{Additional arguments passed to methods.}
+
+\item{name}{Optional name for the temporary table created in the database.
+When \code{NULL} (default), a unique temporary table name is generated.}
+
+\item{reuse}{Logical indicating whether to reuse an existing table named
+\code{name} on the database connection instead of re-uploading \code{mdata}.}
 }
 \value{
 \code{proximity_scores} with columns from \code{mdata} joined.

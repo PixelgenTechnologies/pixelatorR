@@ -147,6 +147,17 @@ test_that("FSMap S3 subclass and backend generics work and preserve class across
     expect_s3_class(FSMap(seur_sub_feats), "mock_fs_map")
     expect_equal(nrow(FSMap(seur_sub_feats)), 2L)
 
+    # Merging assays with incompatible fs_map backend classes aborts regardless of input order
+    seur_local <- ReadPNA_Seurat(minimal_pna_pxl_file(), load_proximity_scores = FALSE, verbose = FALSE)
+    expect_error(
+      merge(seur1, seur_local, add.cell.ids = c("A", "B")),
+      "incompatible `fs_map` backend classes"
+    )
+    expect_error(
+      merge(seur_local, seur1, add.cell.ids = c("A", "B")),
+      "incompatible `fs_map` backend classes"
+    )
+
     # JoinLayers preserves S3 class on PNAAssay5
     if (assay_version == "v5") {
       joined_assay <- JoinLayers(seur_merged[["PNA"]])
@@ -160,6 +171,7 @@ test_that("FSMap S3 subclass and backend generics work and preserve class across
       add_marker_proportions = TRUE,
       meta_data_columns = "n_umi"
     )
+    expect_true("pxl_all_counts" %in% DBI::dbListTables(prox_lazy$src$con))
     prox_df <- collect(prox_lazy)
     DBI::dbDisconnect(prox_lazy$src$con)
     expect_true(all(c("count_1", "count_2", "p1", "p2", "n_umi") %in% colnames(prox_df)))
