@@ -33,7 +33,12 @@ PNAAssay <- setClass(
   slots = list(
     cellgraphs = "list",
     proximity = "data.frame",
-    fs_map = "data.frame"
+    fs_map = "ANY"
+  ),
+  prototype = list(
+    cellgraphs = list(),
+    proximity = data.frame(),
+    fs_map = data.frame()
   )
 )
 
@@ -64,7 +69,12 @@ PNAAssay5 <- setClass(
   slots = list(
     cellgraphs = "list",
     proximity = "data.frame",
-    fs_map = "data.frame"
+    fs_map = "ANY"
+  ),
+  prototype = list(
+    cellgraphs = list(),
+    proximity = data.frame(),
+    fs_map = data.frame()
   )
 )
 
@@ -510,6 +520,8 @@ as.PNAAssay.Assay <- function(
   # Add fs_map
   if (!is.null(fs_map)) {
     slot(new_assay, name = "fs_map") <- fs_map
+  } else {
+    slot(new_assay, name = "fs_map") <- data.frame()
   }
 
   return(new_assay)
@@ -609,6 +621,8 @@ as.PNAAssay5.Assay5 <- function(
   # Add fs_map
   if (!is.null(fs_map)) {
     slot(new_assay, name = "fs_map") <- fs_map
+  } else {
+    slot(new_assay, name = "fs_map") <- data.frame()
   }
 
   return(new_assay)
@@ -674,7 +688,7 @@ ProximityScores.PNAAssay <- function(
   if (lazy) {
     # Load proximity scores from the PXL files
     fs_map <- FSMap(object)
-    proximity_scores <- .lazy_load_table(fs_map, "proximity", calc_log2ratio, rownames(object))
+    proximity_scores <- lazy_load_table(fs_map, "proximity", calc_log2ratio, rownames(object))
   } else {
     proximity_scores <- slot(object, name = "proximity")
 
@@ -708,16 +722,27 @@ ProximityScores.PNAAssay <- function(
       mutate(count = as.integer(count))
 
     if (lazy) {
-      # Copy to federated database to enable join operation
-      copy_to(proximity_scores$src$con, all_counts)
-      all_counts <- tbl(proximity_scores$src$con, "all_counts")
+      proximity_scores <- join_proximity_metadata(
+        proximity_scores,
+        all_counts,
+        by = c("component", "marker_1" = "marker"),
+        name = "pxl_all_counts"
+      ) |>
+        rename(count_1 = count) |>
+        join_proximity_metadata(
+          all_counts,
+          by = c("component", "marker_2" = "marker"),
+          name = "pxl_all_counts",
+          reuse = TRUE
+        ) |>
+        rename(count_2 = count)
+    } else {
+      proximity_scores <- proximity_scores |>
+        left_join(all_counts, by = c("component", "marker_1" = "marker")) |>
+        rename(count_1 = count) |>
+        left_join(all_counts, by = c("component", "marker_2" = "marker")) |>
+        rename(count_2 = count)
     }
-
-    proximity_scores <- proximity_scores |>
-      left_join(all_counts, by = c("component", "marker_1" = "marker")) |>
-      rename(count_1 = count) |>
-      left_join(all_counts, by = c("component", "marker_2" = "marker")) |>
-      rename(count_2 = count)
 
     if (add_marker_proportions) {
       if (inherits(object, "PNAAssay5")) {
@@ -730,15 +755,21 @@ ProximityScores.PNAAssay <- function(
       )
 
       if (lazy) {
-        copy_to(proximity_scores$src$con, numi, "numi")
-        numi <- tbl(proximity_scores$src$con, "numi")
+        proximity_scores <- join_proximity_metadata(
+          proximity_scores,
+          numi,
+          by = "component"
+        ) |>
+          mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) |>
+          select(-umi_count) |>
+          compute(name = "extended_proximity", overwrite = TRUE)
+      } else {
+        proximity_scores <- proximity_scores |>
+          left_join(numi, by = "component") |>
+          mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) |>
+          select(-umi_count) |>
+          compute(name = "extended_proximity", overwrite = TRUE)
       }
-
-      proximity_scores <- proximity_scores |>
-        left_join(numi, by = "component") |>
-        mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) |>
-        select(-umi_count) |>
-        compute(name = "extended_proximity", overwrite = TRUE)
     }
   }
 
@@ -817,7 +848,7 @@ Edgelists.PNAAssay <- function(
   ...
 ) {
   fs_map <- FSMap(object)
-  edgelists <- .lazy_load_table(fs_map, "edgelist", union = union)
+  edgelists <- lazy_load_table(fs_map, "edgelist", union = union)
 
   if (!lazy) {
     if (union) {
@@ -827,7 +858,9 @@ Edgelists.PNAAssay <- function(
       con <- edgelists[[1]]$src$con
       edgelists <- edgelists |> lapply(collect)
     }
-    DBI::dbDisconnect(con)
+    if (!is.null(con) && DBI::dbIsValid(con)) {
+      DBI::dbDisconnect(con)
+    }
   }
 
   return(edgelists)
@@ -1087,15 +1120,19 @@ subset.PNAAssay <- function(
   # Filter fs_map
   fs_map <- slot(x, name = "fs_map")
   if (length(fs_map) > 0) {
-    fs_map$id_map <- lapply(fs_map$id_map, function(x) {
-      x |> filter(current_id %in% cells)
-    })
+    orig_class <- class(fs_map)
+    if (!is.null(cells)) {
+      fs_map$id_map <- lapply(fs_map$id_map, function(x) {
+        x |> filter(current_id %in% cells)
+      })
+    }
     # Drop sample if id_map is empty
     rows_keep <- sapply(fs_map$id_map, nrow) > 0
     fs_map <- fs_map[rows_keep, ]
     fs_map <- na.omit(fs_map)
     # Update sample integer
     fs_map$sample <- seq_len(nrow(fs_map))
+    class(fs_map) <- orig_class
   }
 
   # convert standard assay to PNAAssay or PNAAssayy5
@@ -1252,9 +1289,30 @@ merge.PNAAssay <- function(
     }
   }
   if (!is.null(fs_map)) {
-    fs_map <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
+    fs_map_list <- lapply(seq_along(objects), function(i) {
       slot(objects[[i]], name = "fs_map")
-    })) |> mutate(sample = seq_len(n()))
+    })
+    first_class <- class(fs_map_list[[1]])
+    same_class <- all(vapply(
+      fs_map_list,
+      function(m) identical(class(m), first_class),
+      logical(1)
+    ))
+    if (!same_class) {
+      found_classes <- unique(vapply(
+        fs_map_list,
+        function(m) paste(class(m), collapse = "/"),
+        character(1)
+      ))
+      cli::cli_abort(
+        c(
+          "x" = "Cannot merge {.cls PNAAssay} objects with incompatible {.var fs_map} backend classes.",
+          "i" = "Found {.var fs_map} classes: {.val {found_classes}}"
+        )
+      )
+    }
+    fs_map <- do.call(bind_rows, fs_map_list) |> mutate(sample = seq_len(n()))
+    class(fs_map) <- first_class
   }
 
   # Convert to PNAAssay and add cellgraphs
@@ -1428,6 +1486,19 @@ merge.PNAAssay5 <- merge.PNAAssay
   }
 
   # Validate pxl files
+  validate_fs_map_paths(fs_map, call = call)
+
+  return(invisible(NULL))
+}
+
+#' @rdname validate_fs_map_paths
+#' @method validate_fs_map_paths default
+#' @export
+validate_fs_map_paths.default <- function(
+  fs_map,
+  call = caller_env(),
+  ...
+) {
   for (i in seq_len(nrow(fs_map))) {
     f <- fs_map$pxl_file[i]
     if (!fs::file_exists(f)) {
@@ -1440,6 +1511,5 @@ merge.PNAAssay5 <- merge.PNAAssay
       )
     }
   }
-
   return(invisible(NULL))
 }

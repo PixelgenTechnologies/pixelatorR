@@ -1,3 +1,28 @@
+#' @include generics.R
+NULL
+
+#' @rdname lazy_load_table
+#' @method lazy_load_table default
+#' @export
+lazy_load_table.default <- function(
+  fs_map,
+  table_name = "proximity",
+  calc_log2ratio = TRUE,
+  proteins_keep = NULL,
+  union = TRUE,
+  call = caller_env(),
+  ...
+) {
+  .lazy_load_table(
+    fs_map = fs_map,
+    table_name = table_name,
+    calc_log2ratio = calc_log2ratio,
+    proteins_keep = proteins_keep,
+    union = union,
+    call = call
+  )
+}
+
 #' Lazy load merged tables from multiple databases (PXL files)
 #'
 #' @param fs_map A \code{tbl_df} with information about the PXL file paths,
@@ -68,7 +93,8 @@
         "i" = "All PXL files must be unique.",
         "x" = "The following PXL file(s) are duplicated: ",
         "x" = "{.file {dup_pxl_files}}"
-      )
+      ),
+      call = call
     )
   }
 

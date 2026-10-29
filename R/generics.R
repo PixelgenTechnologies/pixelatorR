@@ -1670,3 +1670,128 @@ ComputeProximityScores <- function(
 ) {
   UseMethod(generic = "ComputeProximityScores", object = object)
 }
+
+
+#' Validate PXL file paths in an \code{fs_map} table
+#'
+#' S3 generic used to validate the \code{pxl_file} column of an \code{fs_map}
+#' table. The default method checks that each path exists on the local file
+#' system.
+#'
+#' @param fs_map A \code{tbl_df} with columns \code{id_map}, \code{sample},
+#'   and \code{pxl_file}.
+#' @param call The calling environment for error reporting.
+#' @param ... Additional arguments passed to methods.
+#'
+#' @return \code{NULL}, invisibly.
+#'
+#' @rdname validate_fs_map_paths
+#' @keywords internal
+#' @export
+#'
+validate_fs_map_paths <- function(
+  fs_map,
+  call = caller_env(),
+  ...
+) {
+  UseMethod(generic = "validate_fs_map_paths", object = fs_map)
+}
+
+
+#' Lazy load a table from one or more PXL sources
+#'
+#' S3 generic used by \code{\link{ProximityScores}} and
+#' \code{\link{Edgelists}} to lazily load tables from the sources referenced
+#' in \code{fs_map}.
+#'
+#' @param fs_map A \code{tbl_df} with information about the PXL sources and
+#'   component IDs.
+#' @param table_name The name of the table to load, e.g. \code{"proximity"} or
+#'   \code{"edgelist"}.
+#' @param calc_log2ratio A logical indicating whether to calculate the
+#'   log2 ratio proximity score. Only used for the \code{"proximity"} table.
+#' @param proteins_keep A character vector of protein names
+#'   (\code{marker_1}/\code{marker_2}) to keep in the proximity score table.
+#' @param union A logical indicating whether to union the results from
+#'   multiple sources into a single table. If \code{FALSE}, a named list of
+#'   lazy tables (one per source) is returned.
+#' @param call The calling environment for error reporting.
+#' @param ... Additional arguments passed to methods.
+#'
+#' @return A \code{tbl_lazy} table (when \code{union = TRUE}) or a named list
+#'   of \code{tbl_lazy} tables (when \code{union = FALSE}).
+#'
+#' @rdname lazy_load_table
+#' @keywords internal
+#' @export
+#'
+lazy_load_table <- function(
+  fs_map,
+  table_name = "proximity",
+  calc_log2ratio = TRUE,
+  proteins_keep = NULL,
+  union = TRUE,
+  call = caller_env(),
+  ...
+) {
+  UseMethod(generic = "lazy_load_table", object = fs_map)
+}
+
+
+#' Join component-level metadata onto a proximity or edgelist table
+#'
+#' S3 generic used to join a local \code{data.frame} of component-level
+#' metadata or marker counts onto an eager or lazy proximity/edgelist table.
+#'
+#' @param proximity_scores A \code{data.frame} or \code{tbl_lazy} table.
+#' @param mdata A local \code{data.frame} containing \code{component} and
+#'   metadata columns to join.
+#' @param by Join specification passed to \code{\link[dplyr]{left_join}}.
+#'   Defaults to \code{"component"}.
+#' @param ... Additional arguments passed to methods.
+#'
+#' @return \code{proximity_scores} with columns from \code{mdata} joined.
+#'
+#' @rdname join_proximity_metadata
+#' @keywords internal
+#' @export
+#'
+join_proximity_metadata <- function(
+  proximity_scores,
+  mdata,
+  by = "component",
+  ...
+) {
+  UseMethod(generic = "join_proximity_metadata", object = proximity_scores)
+}
+
+
+#' Fetch cell graphs from PXL sources
+#'
+#' S3 generic used by \code{\link{LoadCellGraphs}} on \code{\link{PNAAssay}}
+#' and \code{\link{PNAAssay5}} objects to extract \code{\link{CellGraph}}
+#' objects for a set of cells from the sources referenced in \code{fs_map}.
+#'
+#' @param fs_map A \code{tbl_df} with columns \code{id_map}, \code{sample},
+#'   and \code{pxl_file}.
+#' @param cells_to_load A character vector of current cell IDs to load.
+#' @param add_layouts Logical indicating whether to load precomputed layouts.
+#' @param verbose Print messages.
+#' @param ... Additional arguments passed to methods.
+#'
+#' @return A named list of \code{\link{CellGraph}} objects keyed by
+#'   \code{cells_to_load}.
+#'
+#' @rdname fetch_cell_graphs
+#' @keywords internal
+#' @export
+#'
+fetch_cell_graphs <- function(
+  fs_map,
+  cells_to_load,
+  add_layouts = FALSE,
+  verbose = TRUE,
+  ...
+) {
+  UseMethod(generic = "fetch_cell_graphs", object = fs_map)
+}
