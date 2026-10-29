@@ -151,11 +151,11 @@ test_that("FSMap S3 subclass and backend generics work and preserve class across
     seur_local <- ReadPNA_Seurat(minimal_pna_pxl_file(), load_proximity_scores = FALSE, verbose = FALSE)
     expect_error(
       merge(seur1, seur_local, add.cell.ids = c("A", "B")),
-      "incompatible `fs_map` backend classes"
+      "incompatible\\s+`fs_map`\\s+backend\\s+classes"
     )
     expect_error(
       merge(seur_local, seur1, add.cell.ids = c("A", "B")),
-      "incompatible `fs_map` backend classes"
+      "incompatible\\s+`fs_map`\\s+backend\\s+classes"
     )
 
     # JoinLayers preserves S3 class on PNAAssay5
