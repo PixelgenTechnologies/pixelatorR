@@ -141,7 +141,7 @@ AnnotateCells <- function(
   groups <- reference[[]][, reference_groups, drop = FALSE] |> as.list()
 
   object <- switch(method,
-    "Seurat" = .seurat_annotaton(
+    "Seurat" = .seurat_annotation(
       object,
       reference,
       query_assay,
@@ -154,7 +154,7 @@ AnnotateCells <- function(
       verbose,
       ...
     ),
-    "nnls" = .seeded_nmf_annotaton(
+    "nnls" = .nnls_annotation(
       object,
       reference,
       query_assay,
@@ -222,7 +222,7 @@ AnnotateCells <- function(
 #'
 #' @noRd
 #'
-.seurat_annotaton <- function(
+.seurat_annotation <- function(
   object,
   reference,
   query_assay,
@@ -395,7 +395,7 @@ AnnotateCells <- function(
   )
 }
 
-#' Run cell type annotation using seeded NMF
+#' Run cell type annotation using non-negative least squares (NNLS)
 #'
 #' @param object Seurat object containing the data to be annotated.
 #' @param reference Seurat object containing the reference data for annotation.
@@ -413,7 +413,7 @@ AnnotateCells <- function(
 #'
 #' @noRd
 #'
-.seeded_nmf_annotaton <- function(
+.nnls_annotation <- function(
   object,
   reference,
   query_assay,
@@ -428,7 +428,7 @@ AnnotateCells <- function(
 ) {
   expect_RcppML()
 
-  # When normalization is required for NMF: normalize the reference in place, and build
+  # When normalization is required for NNLS: normalize the reference in place, and build
   # a separate minimal Seurat from the query counts for NormalizeData.
   if (!skip_normalization) {
     if (verbose && check_global_verbosity()) {
@@ -475,7 +475,7 @@ AnnotateCells <- function(
   if (verbose && check_global_verbosity()) {
     cli::cli_alert_info(
       c(
-        "Running seeded NMF on query cells for cell type annotations {.str {names(groups)}} ",
+        "Running NNLS annotation on query cells for cell type annotations {.str {names(groups)}} ",
         "in reference data."
       )
     )
@@ -869,7 +869,7 @@ AnnotateCells <- function(
   ))
 }
 
-#' Compute feature-weighted reference matrices to be used for seeded NMF / NNLS
+#' Compute feature-weighted reference matrices to be used for NNLS annotation
 #'
 #' @param reference_data A matrix of protein abundance values for the reference dataset.
 #' @param nCells_per_group Maximum number of cells to sample per group in the `reference_data`.
