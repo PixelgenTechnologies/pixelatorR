@@ -219,12 +219,22 @@ test_that("annotate_cells fails with invalid input", {
   expect_error(seur <- AnnotateCells(seur, reference, quary_assay = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Invalid"))
-  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Seurat", normalization_method = "CLR", skip_normalization = FALSE))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_prediction_score = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", skip_normalization = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", predict_doublets = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_doublet_score = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Seurat", normalization_method = "LogNormalize", predict_doublets = TRUE))
+
+  unnormalized_ref <- read_pbmc_reference()
+  unnormalized_query <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE, load_proximity_scores = FALSE, verbose = FALSE)
+  expect_error(
+    AnnotateCells(seur, unnormalized_ref, skip_normalization = TRUE, verbose = FALSE),
+    regexp = "reference assay.*does not contain normalized data"
+  )
+  expect_error(
+    AnnotateCells(unnormalized_query, reference, reference_assay = "anot", reference_groups = "cell_type", skip_normalization = TRUE, verbose = FALSE),
+    regexp = "query assay.*does not contain normalized data"
+  )
 })
 
 test_that("Reading reference data works as expected", {

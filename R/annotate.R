@@ -97,12 +97,15 @@ AnnotateCells <- function(
   assert_class(object, "Seurat")
   assert_class(reference, "Seurat")
 
+  assert_single_value(reference_assay, "string")
+  assert_single_value(query_assay, "string")
+  assert_x_in_y(query_assay, SeuratObject::Assays(object))
+  assert_x_in_y(reference_assay, SeuratObject::Assays(reference))
+
   .assert_assay_layers_joined(object[[query_assay]], "query", query_assay)
   .assert_assay_layers_joined(reference[[reference_assay]], "reference", reference_assay)
 
   assert_col_in_data(summarize_by_column, object[[]], allow_null = TRUE)
-  assert_single_value(reference_assay, "string")
-  assert_single_value(query_assay, "string")
   assert_vector(reference_groups, "character", n = 1)
   for (ref_group in reference_groups) {
     assert_col_in_data(ref_group, reference[[]])
@@ -114,15 +117,9 @@ AnnotateCells <- function(
   }
   assert_single_value(skip_normalization, "bool")
   normalization_method <- match.arg(normalization_method, c("CLR", "LogNormalize", "SCT"))
-  if (normalization_method == "CLR" && method == "Seurat" && !skip_normalization) {
-    cli::cli_abort(
-      c(
-        "x" = paste0(
-          "CLR normalization is not supported with the {.val Seurat} method ",
-          "when {.arg skip_normalization} is {.val FALSE}."
-        )
-      )
-    )
+  if (skip_normalization) {
+    .assert_assay_normalized(object[[query_assay]], "query", query_assay)
+    .assert_assay_normalized(reference[[reference_assay]], "reference", reference_assay)
   }
   assert_single_value(min_prediction_score, "numeric")
   assert_within_limits(min_prediction_score, c(0, 1))
@@ -258,9 +255,25 @@ AnnotateCells <- function(
       }
     }
     if (class(assay_temp) != reference_class) {
+      ref_layers <- SeuratObject::Layers(reference[[reference_assay]])
+      ref_counts <- LayerData(reference[[reference_assay]], layer = "counts")
+      ref_data <- if ("data" %in% ref_layers) {
+        LayerData(reference[[reference_assay]], layer = "data")
+      } else {
+        NULL
+      }
       reference[[reference_assay]] <- switch(new_assay_class,
-        "Assay" = SeuratObject::CreateAssayObject(counts = LayerData(reference[[reference_assay]], layer = "counts")),
-        "Assay5" = SeuratObject::CreateAssay5Object(counts = LayerData(reference[[reference_assay]], layer = "counts"))
+        "Assay" = {
+          new_ref <- SeuratObject::CreateAssayObject(counts = ref_counts)
+          if (!is.null(ref_data)) {
+            LayerData(new_ref, layer = "data") <- ref_data
+          }
+          new_ref
+        },
+        "Assay5" = SeuratObject::CreateAssay5Object(
+          counts = ref_counts,
+          data = if (!is.null(ref_data)) as(ref_data, "dgCMatrix") else NULL
+        )
       )
     }
     if (class(assay_temp) != class(reference[[reference_assay]])) {
@@ -388,11 +401,42 @@ AnnotateCells <- function(
   }
   cli::cli_abort(
     c(
-      "x" = "The {role}assay {.val {assay_name}} has unjoined v5 layers ({.val {split_layers}}).",
+      "x" = "The {role} assay {.val {assay_name}} has unjoined v5 layers ({.val {split_layers}}).",
       "i" = "Call {.fn JoinLayers} on the {.cls Seurat} object (or on that assay)
-      after {.fn merge}, then retry {.fn AnnotateCells} with {.arg method} = {.val nmf}."
+      after {.fn merge}, then retry {.fn AnnotateCells}."
     )
   )
+}
+
+#' Fail fast when `skip_normalization = TRUE` and the assay has not been normalized.
+#'
+#' @param assay Assay from `object[[assay_name]]`.
+#' @param role `"query"` or `"reference"` for the error message.
+#' @param assay_name Assay name for the error message.
+#'
+#' @noRd
+#'
+.assert_assay_normalized <- function(assay, role, assay_name) {
+  lys <- SeuratObject::Layers(assay)
+  has_data <- "data" %in% lys && !identical(
+    SeuratObject::LayerData(assay, layer = "data"),
+    if ("counts" %in% lys) SeuratObject::LayerData(assay, layer = "counts") else NULL
+  )
+  if (!has_data || nrow(SeuratObject::LayerData(assay, layer = "data")) == 0L) {
+    cli::cli_abort(
+      c(
+        "x" = paste0(
+          "The {role} assay {.val {assay_name}} does not contain normalized data ",
+          "in its {.val data} layer."
+        ),
+        "i" = paste0(
+          "Normalize the {role} object first (e.g. with {.fn Seurat::NormalizeData}) ",
+          "or set {.arg skip_normalization = FALSE}."
+        )
+      )
+    )
+  }
+  invisible(NULL)
 }
 
 #' Run cell type annotation using non-negative least squares (NNLS)
