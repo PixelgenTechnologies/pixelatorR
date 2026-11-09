@@ -1288,21 +1288,6 @@ FindAllProximityMarkers.data.frame <- function(
   )
 
   where_clauses <- character()
-  if (is.finite(min_pct) && min_pct > 0) {
-    where_clauses <- c(
-      where_clauses,
-      paste0("GREATEST(pct_tgt, pct_ref) >= ", format(as.numeric(min_pct), scientific = FALSE))
-    )
-  }
-  if (is.finite(min_diff_pct)) {
-    where_clauses <- c(
-      where_clauses,
-      paste0(
-        "(GREATEST(pct_tgt, pct_ref) - LEAST(pct_tgt, pct_ref)) >= ",
-        format(as.numeric(min_diff_pct), scientific = FALSE)
-      )
-    )
-  }
   if (isTRUE(only_pos)) {
     where_clauses <- c(
       where_clauses,
@@ -1388,8 +1373,6 @@ FindAllProximityMarkers.data.frame <- function(
       SELECT
         grp_key, marker_1, marker_2, first_rn, n_tgt, n_ref, k_tgt, k_ref,
         neg_tgt, pos_tgt, neg_ref, pos_ref,
-        ROUND(CAST(k_tgt AS DOUBLE) / CAST(n_tgt AS DOUBLE), 3) AS pct_tgt,
-        ROUND(CAST(k_ref AS DOUBLE) / CAST(n_ref AS DOUBLE), 3) AS pct_ref,
         0.5 * (
           CASE WHEN ((n_tgt + 1) // 2) <= nn_tgt THEN list_extract(neg_tgt, (n_tgt + 1) // 2)
                WHEN ((n_tgt + 1) // 2) <= (n_tgt - np_tgt) THEN 0.0
@@ -1413,6 +1396,14 @@ FindAllProximityMarkers.data.frame <- function(
   )
 
   agg_df <- DBI::dbGetQuery(con, sql_query)
+  if (nrow(agg_df) > 0L) {
+    agg_df$pct_tgt <- round(agg_df$k_tgt / agg_df$n_tgt, digits = 3)
+    agg_df$pct_ref <- round(agg_df$k_ref / agg_df$n_ref, digits = 3)
+    pct_max <- pmax(agg_df$pct_tgt, agg_df$pct_ref)
+    pct_min <- pmin(agg_df$pct_tgt, agg_df$pct_ref)
+    keep <- (pct_max >= min_pct) & ((pct_max - pct_min) >= min_diff_pct)
+    agg_df <- agg_df[keep, , drop = FALSE]
+  }
   if (nrow(agg_df) == 0L) {
     return(tibble(
       grp_key = character(),
