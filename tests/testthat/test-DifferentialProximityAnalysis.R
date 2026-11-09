@@ -28,6 +28,21 @@ for (assay_version in c("v3", "v5")) {
       )
     })
 
+    # Test single comparison with verbose = TRUE
+    expect_no_error(
+      utils::capture.output(
+        DifferentialProximityAnalysis(
+          seur_obj_big,
+          contrast_column = "cell_type",
+          targets = "CD4T",
+          reference = "pDC",
+          diff_threshold = 1,
+          verbose = TRUE
+        ),
+        type = "message"
+      )
+    )
+
     # Test multiple targets
     expect_no_error({
       de_results_multiple_targets <- DifferentialProximityAnalysis(

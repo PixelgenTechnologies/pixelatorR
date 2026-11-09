@@ -148,21 +148,25 @@
 
   has_counts <- !is.null(test_groups) && "component" %in% colnames(test_groups)
   if (has_counts) {
-    counts_mat <- vapply(seq_len(n_rows), function(i) {
-      cur_keys <- keys[i, ]
-      cur_grp <- .filter_cur_group(
-        test_groups = test_groups,
-        cur_keys = cur_keys,
-        contrast_column = contrast_column,
-        reference = reference,
-        group_vars = group_vars
-      )
-      c_col <- cur_grp[[contrast_column]]
-      comp_col <- cur_grp[["component"]]
-      n_ref <- length(unique(comp_col[c_col == reference]))
-      n_tgt <- length(unique(comp_col[c_col != reference]))
-      c(n_tgt = n_tgt, n_ref = n_ref)
-    }, integer(2))
+    counts_mat <- matrix(
+      vapply(seq_len(n_rows), function(i) {
+        cur_keys <- keys[i, ]
+        cur_grp <- .filter_cur_group(
+          test_groups = test_groups,
+          cur_keys = cur_keys,
+          contrast_column = contrast_column,
+          reference = reference,
+          group_vars = group_vars
+        )
+        c_col <- cur_grp[[contrast_column]]
+        comp_col <- cur_grp[["component"]]
+        n_ref <- length(unique(comp_col[c_col == reference]))
+        n_tgt <- length(unique(comp_col[c_col != reference]))
+        c(n_tgt = n_tgt, n_ref = n_ref)
+      }, integer(2)),
+      nrow = 2L,
+      dimnames = list(c("n_tgt", "n_ref"), NULL)
+    )
     n_tgt_vec <- counts_mat["n_tgt", ]
     n_ref_vec <- counts_mat["n_ref", ]
     tgt_str <- format(n_tgt_vec, big.mark = ",", trim = TRUE)
