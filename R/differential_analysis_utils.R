@@ -99,6 +99,27 @@
 #' @param test_label Character. Name of the test, used in messages.
 #'
 #' @noRd
+#' Print the test setup and start a cli progress bar
+#'
+#' Emits a formatted \pkg{cli} summary table of the comparisons that will be run
+#' (including per-group cell counts and skipped status when \code{test_groups}
+#' is supplied) and starts a transient progress bar tracking iterations across
+#' \code{keys}.
+#'
+#' @param keys A tibble of group keys (e.g. from
+#'   \code{.compute_test_groups_keys()}).
+#' @param contrast_column The contrast column name.
+#' @param reference The reference level.
+#' @param targets Target levels of the contrast column.
+#' @param group_vars Optional grouping variables.
+#' @param verbose Logical. Whether to print messages.
+#' @param test_label Character. Name of the test, used in messages.
+#' @param test_groups Optional grouped tibble used to compute per-comparison
+#'   target and reference cell counts.
+#' @param min_cells_per_group Optional minimum number of cells per group used to
+#'   mark skipped comparisons in the overview table.
+#'
+#' @noRd
 .print_da_setup <- function(
   keys,
   contrast_column,
@@ -106,33 +127,244 @@
   targets,
   group_vars,
   verbose,
-  test_label = "Wilcoxon rank-sum test",
+  test_label = "Wilcoxon rank-sum",
+  test_groups = NULL,
+  min_cells_per_group = 0,
   env = rlang::caller_env()
 ) {
   if (!(verbose && check_global_verbosity())) {
     return(invisible(NULL))
   }
 
-  cli_alert_info("Running {test_label} across the following comparisons:")
-  cat_line()
-  cli_div(theme = list(ul = list(`margin-left` = 2, before = "")))
-  if (!is.null(group_vars)) {
-    ctrst <- keys |> pull(!!sym(contrast_column))
-    grps <- keys |>
-      select(-!!sym(contrast_column)) |>
-      apply(1, paste, collapse = ", ")
-    cli_ul(glue::glue("{ctrst} ({grps}) vs {reference} ({grps})"), id = "ul")
+  n_rows <- nrow(keys)
+  has_group_vars <- !is.null(group_vars) && length(group_vars) > 0L
+
+  contrasts <- paste0(keys[[contrast_column]], " vs ", reference)
+  grp_labels <- if (has_group_vars) {
+    apply(keys[, group_vars, drop = FALSE], 1, paste, collapse = ", ")
   } else {
-    cli_ul(glue::glue("{targets} vs {reference}"), id = "ul")
+    rep("-", n_rows)
   }
-  cli_end(id = "ul")
+
+  has_counts <- !is.null(test_groups) && "component" %in% colnames(test_groups)
+  if (has_counts) {
+    counts_mat <- vapply(seq_len(n_rows), function(i) {
+      cur_keys <- keys[i, ]
+      cur_grp <- .filter_cur_group(
+        test_groups = test_groups,
+        cur_keys = cur_keys,
+        contrast_column = contrast_column,
+        reference = reference,
+        group_vars = group_vars
+      )
+      c_col <- cur_grp[[contrast_column]]
+      comp_col <- cur_grp[["component"]]
+      n_ref <- length(unique(comp_col[c_col == reference]))
+      n_tgt <- length(unique(comp_col[c_col != reference]))
+      c(n_tgt = n_tgt, n_ref = n_ref)
+    }, integer(2))
+    n_tgt_vec <- counts_mat["n_tgt", ]
+    n_ref_vec <- counts_mat["n_ref", ]
+    tgt_str <- format(n_tgt_vec, big.mark = ",", trim = TRUE)
+    ref_str <- format(n_ref_vec, big.mark = ",", trim = TRUE)
+    status_str <- ifelse(
+      n_tgt_vec < min_cells_per_group | n_ref_vec < min_cells_per_group,
+      paste0(cli::col_yellow(cli::symbol$cross), " skipped (< ", min_cells_per_group, " cells)"),
+      cli::col_green(cli::symbol$tick)
+    )
+  }
+
+  cli::cli_rule(left = paste0("Differential Proximity Analysis (", test_label, ")"))
+
+  # Display contrast header only on first row of each consecutive contrast block
+  contrast_disp <- ifelse(
+    seq_len(n_rows) == 1L | contrasts != dplyr::lag(contrasts, default = ""),
+    contrasts,
+    ""
+  )
+
+  w_contrast <- max(nchar( c("Contrast", contrast_disp) ))
+  w_group <- if (has_group_vars) max(nchar(c("Group", grp_labels))) else 0L
+
+  if (has_counts) {
+    w_tgt <- max(nchar(c("Target", tgt_str)))
+    w_ref <- max(nchar(c("Reference", ref_str)))
+    if (has_group_vars) {
+      hdr <- paste0(
+        "  ",
+        cli::style_bold(format("Contrast", width = w_contrast)), "  ",
+        cli::style_bold(format("Group", width = w_group)), "  ",
+        cli::style_bold(format("Target", width = w_tgt, justify = "right")), "  ",
+        cli::style_bold(format("Reference", width = w_ref, justify = "right")), "  ",
+        cli::style_bold("Status")
+      )
+    } else {
+      hdr <- paste0(
+        "  ",
+        cli::style_bold(format("Contrast", width = w_contrast)), "  ",
+        cli::style_bold(format("Target", width = w_tgt, justify = "right")), "  ",
+        cli::style_bold(format("Reference", width = w_ref, justify = "right")), "  ",
+        cli::style_bold("Status")
+      )
+    }
+    cli::cli_verbatim(hdr)
+    for (i in seq_len(n_rows)) {
+      if (has_group_vars) {
+        line <- paste0(
+          "  ",
+          format(contrast_disp[i], width = w_contrast), "  ",
+          format(grp_labels[i], width = w_group), "  ",
+          format(tgt_str[i], width = w_tgt, justify = "right"), "  ",
+          format(ref_str[i], width = w_ref, justify = "right"), "  ",
+          status_str[i]
+        )
+      } else {
+        line <- paste0(
+          "  ",
+          format(contrast_disp[i], width = w_contrast), "  ",
+          format(tgt_str[i], width = w_tgt, justify = "right"), "  ",
+          format(ref_str[i], width = w_ref, justify = "right"), "  ",
+          status_str[i]
+        )
+      }
+      cli::cli_verbatim(line)
+    }
+  } else {
+    if (has_group_vars) {
+      hdr <- paste0(
+        "  ",
+        cli::style_bold(format("Contrast", width = w_contrast)), "  ",
+        cli::style_bold(format("Group", width = w_group))
+      )
+      cli::cli_verbatim(hdr)
+      for (i in seq_len(n_rows)) {
+        cli::cli_verbatim(paste0(
+          "  ",
+          format(contrast_disp[i], width = w_contrast), "  ",
+          format(grp_labels[i], width = w_group)
+        ))
+      }
+    } else {
+      hdr <- paste0("  ", cli::style_bold(format("Contrast", width = w_contrast)))
+      cli::cli_verbatim(hdr)
+      for (i in seq_len(n_rows)) {
+        cli::cli_verbatim(paste0("  ", format(contrast_disp[i], width = w_contrast)))
+      }
+    }
+  }
 
   cli_progress_bar(
-    glue("Running {test_label}:"),
-    total = nrow(keys),
-    clear = FALSE,
+    format = paste0(
+      "[{cli::pb_bar}] {cli::pb_percent} | ",
+      "{cli::pb_current}/{cli::pb_total} | {cli::pb_status}"
+    ),
+    total = n_rows,
+    clear = TRUE,
+    status = "starting",
     .envir = env
   )
+}
+
+#' Format a single DifferentialProximityAnalysis comparison status string
+#'
+#' @noRd
+.format_da_comparison_status <- function(
+  cur_keys,
+  contrast_column,
+  reference,
+  group_vars = NULL,
+  n_tgt = NULL,
+  n_ref = NULL
+) {
+  target <- as.character(cur_keys[, contrast_column, drop = TRUE])
+  grp_str <- if (!is.null(group_vars) && length(group_vars) > 0L) {
+    paste(as.character(cur_keys[, group_vars, drop = TRUE]), collapse = ", ")
+  } else {
+    NULL
+  }
+  cells_str <- if (!is.null(n_tgt) && !is.null(n_ref)) {
+    paste0(n_tgt, " vs ", n_ref, " cells")
+  } else {
+    NULL
+  }
+  details <- paste(c(grp_str, cells_str), collapse = ": ")
+  if (nzchar(details)) {
+    paste0(target, " vs ", reference, " (", details, ")")
+  } else {
+    paste0(target, " vs ", reference)
+  }
+}
+
+#' Abort with an informative message when no DifferentialProximityAnalysis comparisons produce results
+#'
+#' @noRd
+.abort_no_valid_da_results <- function(
+  n_total,
+  n_passed_cells,
+  min_cells_per_group,
+  contrast_column,
+  group_vars = NULL,
+  diff_threshold = NULL,
+  min_pct = NULL,
+  min_diff_pct = NULL,
+  only_pos = FALSE,
+  call = rlang::caller_env()
+) {
+  if (n_total == 0L) {
+    cli::cli_abort(
+      c(
+        "x" = "No comparisons found to test.",
+        "i" = "Check {.arg contrast_column} ({.val {contrast_column}}), {.arg targets}, and {.arg reference}."
+      ),
+      call = call
+    )
+  }
+
+  if (n_passed_cells == 0L) {
+    grp_hint <- if (!is.null(group_vars) && length(group_vars) > 0L) {
+      paste0(
+        "Consider using fewer {.arg group_vars} (currently {.val {group_vars}}) ",
+        "or lowering {.arg min_cells_per_group}."
+      )
+    } else {
+      "Consider lowering {.arg min_cells_per_group} or checking group sizes in {.arg contrast_column} ({.val {contrast_column}})."
+    }
+    cli::cli_abort(
+      c(
+        "x" = paste0(
+          "{?The/All {n_total}} comparison{?s} {?was/were} skipped because every target or ",
+          "reference group had fewer than {.arg min_cells_per_group} = ",
+          "{.val {min_cells_per_group}} cells."
+        ),
+        "i" = grp_hint
+      ),
+      call = call
+    )
+  }
+
+  n_skipped_cells <- n_total - n_passed_cells
+  msg_bullets <- c(
+    "x" = paste0(
+      "No marker pairs passed the pre-test filtering thresholds across the ",
+      "{n_passed_cells} comparison{?s} that met {.arg min_cells_per_group} ",
+      "({.val {min_cells_per_group}} cells)."
+    )
+  )
+  if (n_skipped_cells > 0L) {
+    msg_bullets <- c(
+      msg_bullets,
+      "!" = "{n_skipped_cells} of {n_total} comparison{?s} {?was/were} also skipped due to insufficient cells."
+    )
+  }
+  msg_bullets <- c(
+    msg_bullets,
+    "i" = paste0(
+      "Consider relaxing {.arg diff_threshold} ({.val {diff_threshold}}), ",
+      "{.arg min_pct} ({.val {min_pct}}), {.arg min_diff_pct} ({.val {min_diff_pct}})",
+      if (isTRUE(only_pos)) ", or {.code only_pos = TRUE}." else "."
+    )
+  )
+  cli::cli_abort(msg_bullets, call = call)
 }
 
 #' Filter a grouped test tibble to a single comparison

@@ -327,6 +327,36 @@ for (assay_version in c("v3", "v5")) {
       },
       class = "error"
     )
+
+    expect_error(
+      suppressWarnings(
+        DifferentialProximityAnalysis(
+          seur_obj,
+          contrast_column = "cell_type",
+          targets = "CD4T",
+          reference = "pDC",
+          min_cells_per_group = 1000,
+          lazy = TRUE,
+          verbose = FALSE
+        )
+      ),
+      "`min_cells_per_group` = 1000 cells"
+    )
+
+    expect_error(
+      suppressWarnings(
+        DifferentialProximityAnalysis(
+          seur_obj_big,
+          contrast_column = "cell_type",
+          targets = "CD4T",
+          reference = "pDC",
+          diff_threshold = 100,
+          lazy = FALSE,
+          verbose = FALSE
+        )
+      ),
+      "No marker pairs passed the pre-test filtering thresholds"
+    )
   })
 }
 

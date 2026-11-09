@@ -136,7 +136,9 @@ DifferentialProximityAnalysis.data.frame <- function(
     reference = reference,
     targets = targets,
     group_vars = group_vars,
-    verbose = verbose
+    verbose = verbose,
+    test_groups = test_groups,
+    min_cells_per_group = min_cells_per_group
   )
 
   # Create a list to store the results in
@@ -146,16 +148,24 @@ DifferentialProximityAnalysis.data.frame <- function(
 
   # iterate over group pairs
   for (i in seq_len(nrow(test_groups_keys))) {
-    if (verbose && check_global_verbosity()) {
-      cli_progress_update()
-    }
-
     # Fetch the current group keys
     # If group_vars=NULL, the key is simply one of targets.
     # Otherwise, the key is target + additional group_vars.
     cur_keys <- test_groups_keys[i, ]
     key <- as.character(cur_keys) |> paste(collapse = "_")
     groups_keep <- c(reference, cur_keys[, contrast_column, drop = TRUE])
+
+    if (verbose && check_global_verbosity()) {
+      cli_progress_update(
+        set = i,
+        status = .format_da_comparison_status(
+          cur_keys = cur_keys,
+          contrast_column = contrast_column,
+          reference = reference,
+          group_vars = group_vars
+        )
+      )
+    }
 
     # Filter data to the current comparison (contrast + group_vars)
     cur_test_groups <- .filter_cur_group(
@@ -340,20 +350,19 @@ DifferentialProximityAnalysis.Matrix <- function(
     reference = reference,
     targets = targets,
     group_vars = group_vars,
-    verbose = verbose
+    verbose = verbose,
+    test_groups = test_groups,
+    min_cells_per_group = min_cells_per_group
   )
 
   # Create a list to store the results in
   keys <- apply(test_groups_keys, 1, paste, collapse = "_")
   diff_prox_res <- rep(list(NULL), length(keys)) |>
     set_names(keys)
+  n_passed_cells <- 0L
 
   # iterate over group pairs
   for (i in seq_len(nrow(test_groups_keys))) {
-    if (verbose && check_global_verbosity()) {
-      cli_progress_update()
-    }
-
     # Fetch the current group keys
     cur_keys <- test_groups_keys[i, ]
     key <- as.character(cur_keys) |> paste(collapse = "_")
@@ -376,6 +385,19 @@ DifferentialProximityAnalysis.Matrix <- function(
 
     n_comps_reference <- length(components_reference)
     n_comps_target <- length(components_target)
+    if (verbose && check_global_verbosity()) {
+      cli_progress_update(
+        set = i,
+        status = .format_da_comparison_status(
+          cur_keys = cur_keys,
+          contrast_column = contrast_column,
+          reference = reference,
+          group_vars = group_vars,
+          n_tgt = n_comps_target,
+          n_ref = n_comps_reference
+        )
+      )
+    }
     if (n_comps_reference < min_cells_per_group || n_comps_target < min_cells_per_group) {
       target <- cur_keys[, contrast_column, drop = TRUE]
       if (ncol(cur_keys) > 1) {
@@ -404,6 +426,7 @@ DifferentialProximityAnalysis.Matrix <- function(
       next
     }
 
+    n_passed_cells <- n_passed_cells + 1L
     de_results <- .wilcox_de_test(
       object,
       cells_1 = components_target,
@@ -441,7 +464,17 @@ DifferentialProximityAnalysis.Matrix <- function(
 
   valid_results <- sapply(diff_prox_res, function(x) !is.null(x))
   if (!any(valid_results)) {
-    cli::cli_abort("No valid results were generated. Please check your input data and parameters.")
+    .abort_no_valid_da_results(
+      n_total = nrow(test_groups_keys),
+      n_passed_cells = n_passed_cells,
+      min_cells_per_group = min_cells_per_group,
+      contrast_column = contrast_column,
+      group_vars = group_vars,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos
+    )
   }
 
   .finalize_da_results(diff_prox_res, p_adjust_method, group_vars) |>
@@ -1523,7 +1556,9 @@ FindAllProximityMarkers.data.frame <- function(
     reference = reference,
     targets = targets,
     group_vars = group_vars,
-    verbose = verbose
+    verbose = verbose,
+    test_groups = test_groups,
+    min_cells_per_group = min_cells_per_group
   )
 
   keys <- apply(test_groups_keys, 1, paste, collapse = "_")
@@ -1607,12 +1642,23 @@ FindAllProximityMarkers.data.frame <- function(
     )
 
     for (i in valid_key_indices) {
-      if (verbose && check_global_verbosity()) {
-        cli_progress_update()
-      }
       cur_keys <- test_groups_keys[i, ]
       key <- paste(as.character(cur_keys), collapse = "_")
       grp_id <- paste0("g_", sprintf("%06d", i))
+      if (verbose && check_global_verbosity()) {
+        sz_row <- group_size_rows[[match(i, valid_key_indices)]]
+        cli_progress_update(
+          set = i,
+          status = .format_da_comparison_status(
+            cur_keys = cur_keys,
+            contrast_column = contrast_column,
+            reference = reference,
+            group_vars = group_vars,
+            n_tgt = sz_row$n_tgt,
+            n_ref = sz_row$n_ref
+          )
+        )
+      }
       sub_df <- agg_df[agg_df$grp_key == grp_id, , drop = FALSE]
       if (nrow(sub_df) == 0L) {
         if (isTRUE(only_pos)) {
@@ -1646,7 +1692,18 @@ FindAllProximityMarkers.data.frame <- function(
 
   valid_results <- sapply(diff_prox_res, function(x) !is.null(x))
   if (!any(valid_results)) {
-    cli::cli_abort("No valid results were generated. Please check your input data and parameters.")
+    .abort_no_valid_da_results(
+      n_total = nrow(test_groups_keys),
+      n_passed_cells = length(valid_key_indices),
+      min_cells_per_group = min_cells_per_group,
+      contrast_column = contrast_column,
+      group_vars = group_vars,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos,
+      call = call
+    )
   }
 
   .finalize_da_results(diff_prox_res, p_adjust_method, group_vars)
