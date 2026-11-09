@@ -365,7 +365,7 @@
     "i" = paste0(
       "Consider relaxing {.arg diff_threshold} ({.val {diff_threshold}}), ",
       "{.arg min_pct} ({.val {min_pct}}), {.arg min_diff_pct} ({.val {min_diff_pct}})",
-      if (isTRUE(only_pos)) ", or {.code only_pos = TRUE}." else "."
+      if (isTRUE(only_pos)) ", or setting {.code only_pos = FALSE}." else "."
     )
   )
   cli::cli_abort(msg_bullets, call = call)

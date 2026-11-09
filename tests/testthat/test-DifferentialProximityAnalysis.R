@@ -366,11 +366,30 @@ for (assay_version in c("v3", "v5")) {
           targets = "CD4T",
           reference = "pDC",
           diff_threshold = 100,
+          only_pos = TRUE,
           lazy = FALSE,
           verbose = FALSE
         )
       ),
-      "No marker pairs passed the pre-test filtering thresholds"
+      "only_pos = FALSE"
+    )
+
+    expect_warning(
+      expect_error(
+        DifferentialProximityAnalysis(
+          seur_obj,
+          contrast_column = "cell_type",
+          targets = "CD4T",
+          reference = "pDC",
+          min_cells_per_group = 1,
+          min_pct = 1,
+          min_diff_pct = 2,
+          lazy = TRUE,
+          verbose = FALSE
+        ),
+        "No marker pairs passed the pre-test filtering thresholds"
+      ),
+      "No features pass min_diff_pct threshold"
     )
   })
 }

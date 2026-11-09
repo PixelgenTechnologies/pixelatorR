@@ -1320,25 +1320,6 @@ FindAllProximityMarkers.data.frame <- function(
     add = TRUE
   )
 
-  where_clauses <- character()
-  if (isTRUE(only_pos)) {
-    where_clauses <- c(
-      where_clauses,
-      "(med_tgt - med_ref) > 0.0",
-      paste0("(med_tgt - med_ref) >= ", format(as.numeric(diff_threshold), scientific = FALSE))
-    )
-  } else if (is.finite(diff_threshold) && diff_threshold > 0) {
-    where_clauses <- c(
-      where_clauses,
-      paste0("ABS(med_tgt - med_ref) >= ", format(as.numeric(diff_threshold), scientific = FALSE))
-    )
-  }
-  where_sql <- if (length(where_clauses) > 0L) {
-    paste0("WHERE ", paste(where_clauses, collapse = " AND "))
-  } else {
-    ""
-  }
-
   sql_query <- glue::glue(
     "
     WITH prox_base AS (
@@ -1424,21 +1405,45 @@ FindAllProximityMarkers.data.frame <- function(
         ) AS med_ref
       FROM pair_counts
     )
-    SELECT * FROM pair_medians {where_sql} ORDER BY grp_key, first_rn
+    SELECT * FROM pair_medians ORDER BY grp_key, first_rn
     "
   )
 
   agg_df <- DBI::dbGetQuery(con, sql_query)
-  if (nrow(agg_df) > 0L) {
+  all_grp_keys <- as.character(group_sizes_tbl$grp_key)
+  empty_reasons <- set_names(rep(NA_character_, length(all_grp_keys)), all_grp_keys)
+
+  if (nrow(agg_df) == 0L) {
+    empty_reasons[] <- "min_pct"
+  } else {
     agg_df$pct_tgt <- round(agg_df$k_tgt / agg_df$n_tgt, digits = 3)
     agg_df$pct_ref <- round(agg_df$k_ref / agg_df$n_ref, digits = 3)
-    pct_max <- pmax(agg_df$pct_tgt, agg_df$pct_ref)
-    pct_min <- pmin(agg_df$pct_tgt, agg_df$pct_ref)
-    keep <- (pct_max >= min_pct) & ((pct_max - pct_min) >= min_diff_pct)
-    agg_df <- agg_df[keep, , drop = FALSE]
+    agg_df$diff_median <- agg_df$med_tgt - agg_df$med_ref
+
+    pass_pct <- pmax(agg_df$pct_tgt, agg_df$pct_ref) >= min_pct
+    pass_diff_pct <- pass_pct &
+      ((pmax(agg_df$pct_tgt, agg_df$pct_ref) - pmin(agg_df$pct_tgt, agg_df$pct_ref)) >= min_diff_pct)
+    pass_diff <- if (isTRUE(only_pos)) {
+      pass_diff_pct & (agg_df$diff_median > 0) & (agg_df$diff_median >= diff_threshold)
+    } else {
+      pass_diff_pct & (abs(agg_df$diff_median) >= diff_threshold)
+    }
+
+    for (gk in all_grp_keys) {
+      idx <- which(agg_df$grp_key == gk)
+      if (!any(pass_pct[idx])) {
+        empty_reasons[[gk]] <- "min_pct"
+      } else if (!any(pass_diff_pct[idx])) {
+        empty_reasons[[gk]] <- "min_diff_pct"
+      } else if (!any(pass_diff[idx])) {
+        empty_reasons[[gk]] <- if (isTRUE(only_pos)) "only_pos" else "min_diff"
+      }
+    }
+    agg_df <- agg_df[pass_diff, , drop = FALSE]
   }
+
   if (nrow(agg_df) == 0L) {
-    return(tibble(
+    out_empty <- tibble(
       grp_key = character(),
       marker_1 = character(),
       marker_2 = character(),
@@ -1448,10 +1453,11 @@ FindAllProximityMarkers.data.frame <- function(
       med_ref = numeric(),
       diff_median = numeric(),
       p = numeric()
-    ))
+    )
+    attr(out_empty, "empty_reasons") <- empty_reasons
+    return(out_empty)
   }
 
-  agg_df$diff_median <- agg_df$med_tgt - agg_df$med_ref
   agg_df$p <- .wilcox_from_sorted_lists(
     neg_tgt = agg_df$neg_tgt,
     pos_tgt = agg_df$pos_tgt,
@@ -1460,7 +1466,26 @@ FindAllProximityMarkers.data.frame <- function(
     n_tgt = agg_df$n_tgt,
     n_ref = agg_df$n_ref
   )
+  attr(agg_df, "empty_reasons") <- empty_reasons
   agg_df
+}
+
+
+#' Emit the same empty-comparison warning as `.wilcox_de_test()`.
+#'
+#' @noRd
+.warn_empty_wilcox_comparison <- function(reason, only_pos = FALSE) {
+  if (identical(reason, "min_pct")) {
+    cli::cli_warn("No features pass min_pct threshold; returning empty data.frame")
+  } else if (identical(reason, "min_diff_pct")) {
+    cli::cli_warn("No features pass min_diff_pct threshold; returning empty data.frame")
+  } else if (identical(reason, "only_pos") || isTRUE(only_pos)) {
+    cli::cli_warn(
+      "No features have a higher median in the target group; returning empty data.frame"
+    )
+  } else {
+    cli::cli_warn("No features pass min_diff threshold; returning empty data.frame")
+  }
 }
 
 
@@ -1641,6 +1666,7 @@ FindAllProximityMarkers.data.frame <- function(
       call = call
     )
 
+    empty_reasons <- attr(agg_df, "empty_reasons")
     for (i in valid_key_indices) {
       cur_keys <- test_groups_keys[i, ]
       key <- paste(as.character(cur_keys), collapse = "_")
@@ -1661,13 +1687,10 @@ FindAllProximityMarkers.data.frame <- function(
       }
       sub_df <- agg_df[agg_df$grp_key == grp_id, , drop = FALSE]
       if (nrow(sub_df) == 0L) {
-        if (isTRUE(only_pos)) {
-          cli::cli_warn(
-            "No features have a higher median in the target group; returning empty data.frame"
-          )
-        } else {
-          cli::cli_warn("No features pass min_diff threshold; returning empty data.frame")
-        }
+        .warn_empty_wilcox_comparison(
+          reason = empty_reasons[[grp_id]],
+          only_pos = only_pos
+        )
         next
       }
       diff_prox_res[[key]] <- tibble(
@@ -1818,6 +1841,7 @@ FindAllProximityMarkers.data.frame <- function(
       call = call
     )
 
+    empty_reasons <- attr(agg_df, "empty_reasons")
     for (i in valid_indices) {
       ident <- idents[[i]]
       grp_id <- paste0("g_", sprintf("%06d", i))
@@ -1826,13 +1850,10 @@ FindAllProximityMarkers.data.frame <- function(
       }
       sub_df <- agg_df[agg_df$grp_key == grp_id, , drop = FALSE]
       if (nrow(sub_df) == 0L) {
-        if (isTRUE(only_pos)) {
-          cli::cli_warn(
-            "No features have a higher median in the target group; returning empty data.frame"
-          )
-        } else {
-          cli::cli_warn("No features pass min_diff threshold; returning empty data.frame")
-        }
+        .warn_empty_wilcox_comparison(
+          reason = empty_reasons[[grp_id]],
+          only_pos = only_pos
+        )
         next
       }
       results[[i]] <- tibble(
