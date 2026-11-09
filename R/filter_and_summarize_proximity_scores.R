@@ -179,6 +179,7 @@ SummarizeProximityScores.tbl_lazy <- function(
   include_missing_obs = TRUE,
   summary_stat = c("mean", "median"),
   detailed = FALSE,
+  check_duplicates = !isTRUE(attr(object, "pxl_unique_keys")),
   ...
 ) {
   assert_vector(proximity_metric, "character", n = 1)
@@ -196,6 +197,7 @@ SummarizeProximityScores.tbl_lazy <- function(
   assert_col_in_data("marker_2", object)
   assert_col_in_data("component", object)
   assert_single_value(include_missing_obs, "bool")
+  assert_single_value(check_duplicates, "bool")
 
   head_df <- object |>
     head() |>
@@ -229,28 +231,30 @@ SummarizeProximityScores.tbl_lazy <- function(
     }
   }
 
-  # Check for the existence of duplicate rows
-  doublet_rows <- object |>
-    group_by(across(all_of(c(
-      "component",
-      "marker_1",
-      "marker_2",
-      group_vars
-    )))) |>
-    filter(n() > 1) |>
-    ungroup() |>
-    head(1) |>
-    collect()
+  # Check for the existence of duplicate rows when requested
+  if (isTRUE(check_duplicates)) {
+    doublet_rows <- object |>
+      group_by(across(all_of(c(
+        "component",
+        "marker_1",
+        "marker_2",
+        group_vars
+      )))) |>
+      filter(n() > 1) |>
+      ungroup() |>
+      head(1) |>
+      collect()
 
-  if (nrow(doublet_rows) > 0) {
-    duplicate_key_vars <- c("component", "marker_1", "marker_2", group_vars)
-    cli::cli_abort(
-      c(
-        "!" = "There are duplicate rows for some combinations of {.var {duplicate_key_vars}}",
-        "x" = "Component {.str {doublet_rows$component}} has multiple rows for marker pair
-        {.str {doublet_rows$marker_1}} and {.str {doublet_rows$marker_2}}."
+    if (nrow(doublet_rows) > 0) {
+      duplicate_key_vars <- c("component", "marker_1", "marker_2", group_vars)
+      cli::cli_abort(
+        c(
+          "!" = "There are duplicate rows for some combinations of {.var {duplicate_key_vars}}",
+          "x" = "Component {.str {doublet_rows$component}} has multiple rows for marker pair
+          {.str {doublet_rows$marker_1}} and {.str {doublet_rows$marker_2}}."
+        )
       )
-    )
+    }
   }
 
   # Set the summary function

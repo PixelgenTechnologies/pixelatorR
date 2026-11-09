@@ -445,7 +445,14 @@ ProximityScoresToAssay.data.frame <- function(
     )
   }
 
-  unique_markers <- unique(c(object |> pull(marker_1), object |> pull(marker_2)))
+  if (inherits(object, "tbl_lazy")) {
+    marker_pairs <- object |>
+      distinct(marker_1, marker_2) |>
+      collect()
+    unique_markers <- unique(c(marker_pairs$marker_1, marker_pairs$marker_2))
+  } else {
+    unique_markers <- unique(c(object$marker_1, object$marker_2))
+  }
   invalid_markers <- stringr::str_detect(unique_markers, stringr::coll(separator))
   if (sum(invalid_markers) > 0) {
     cli::cli_abort(
@@ -467,6 +474,61 @@ ProximityScoresToAssay.data.frame <- function(
   values_from = "log2_ratio",
   separator = ":"
 ) {
+  if (inherits(object, "tbl_lazy") && !inherits(object, "pxg_tbl_lazy")) {
+    con <- object$src$con
+    if (inherits(con, "duckdb_connection")) {
+      base_sql <- as.character(dbplyr::sql_render(object))
+      sep_lit <- DBI::dbQuoteString(con, separator)
+      val_col <- DBI::dbQuoteIdentifier(con, values_from)
+      sql <- glue::glue(
+        "WITH base AS (\n",
+        "  SELECT\n",
+        "    row_number() OVER () AS __rn,\n",
+        "    marker_1 || {sep_lit} || marker_2 AS pair,\n",
+        "    component,\n",
+        "    CAST({val_col} AS DOUBLE) AS {val_col}\n",
+        "  FROM ({base_sql}) __q\n",
+        "),\n",
+        "pair_ord AS (\n",
+        "  SELECT pair, MIN(__rn) AS __ord\n",
+        "  FROM base\n",
+        "  GROUP BY pair\n",
+        "  HAVING COUNT(*) FILTER (WHERE {val_col} IS NOT NULL AND {val_col} != 0) > 0\n",
+        "),\n",
+        "first_pair AS (SELECT pair FROM pair_ord ORDER BY __ord LIMIT 1),\n",
+        "first_comp AS (SELECT component FROM base WHERE __rn = 1),\n",
+        "pair_rows AS (\n",
+        "  SELECT po.pair, fc.component, 0.0 AS {val_col}, 1 AS __part, po.__ord\n",
+        "  FROM pair_ord po CROSS JOIN first_comp fc\n",
+        "),\n",
+        "comp_rows AS (\n",
+        "  SELECT fp.pair, b.component, 0.0 AS {val_col}, 2 AS __part, MIN(b.__rn) AS __ord\n",
+        "  FROM base b CROSS JOIN first_pair fp\n",
+        "  GROUP BY fp.pair, b.component\n",
+        "),\n",
+        "nz AS (\n",
+        "  SELECT pair, component, {val_col}, 3 AS __part, __rn AS __ord\n",
+        "  FROM base\n",
+        "  WHERE {val_col} IS NOT NULL AND {val_col} != 0\n",
+        ")\n",
+        "SELECT pair, component, {val_col} FROM (\n",
+        "  SELECT * FROM pair_rows\n",
+        "  UNION ALL\n",
+        "  SELECT * FROM comp_rows\n",
+        "  UNION ALL\n",
+        "  SELECT * FROM nz\n",
+        ") __u ORDER BY __part, __ord"
+      )
+      res <- tryCatch(
+        DBI::dbGetQuery(con, sql) |> as_tibble(),
+        error = function(e) NULL
+      )
+      if (!is.null(res) && nrow(res) > 0) {
+        return(res)
+      }
+    }
+  }
+
   # Create pair column
   object <- object |>
     mutate(pair = stringr::str_c(marker_1, separator, marker_2)) |>

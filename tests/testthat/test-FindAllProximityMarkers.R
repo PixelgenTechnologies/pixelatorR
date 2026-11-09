@@ -679,6 +679,7 @@ for (assay_version in c("v3", "v5")) {
       min_cells_per_group = 2,
       verbose = FALSE
     )
+    expect_equal(res_lazy, res_loaded)
     expect_equal(arrange_markers(res_lazy), arrange_markers(res_loaded))
   })
 }

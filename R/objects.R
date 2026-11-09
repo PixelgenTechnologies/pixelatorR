@@ -468,7 +468,12 @@ join_proximity_metadata.tbl_lazy <- function(
   if (!isTRUE(reuse) || is.null(name) || !DBI::dbExistsTable(con, tbl_name)) {
     copy_to(con, mdata, name = tbl_name, overwrite = TRUE)
   }
-  left_join(proximity_scores, y = tbl(con, tbl_name), by = by)
+  out <- left_join(proximity_scores, y = tbl(con, tbl_name), by = by)
+  rhs_by <- unname(by)
+  if (!anyDuplicated(mdata[, rhs_by, drop = FALSE])) {
+    attr(out, "pxl_unique_keys") <- attr(proximity_scores, "pxl_unique_keys")
+  }
+  out
 }
 
 

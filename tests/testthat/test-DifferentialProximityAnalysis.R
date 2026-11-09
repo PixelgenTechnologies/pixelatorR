@@ -141,6 +141,76 @@ for (assay_version in c("v3", "v5")) {
       head(de_with_transition$transition, 2),
       c("anti -> random", "anti -> random")
     )
+
+    # Verify that lazy = TRUE (single-pass DuckDB method) produces identical results to lazy = FALSE (Matrix method)
+    tmp_dir <- withr::local_tempdir()
+    se_lazy_list <- lapply(1:10, function(i) {
+      f <- file.path(tmp_dir, sprintf("S%d.pxl", i))
+      fs::file_copy(pxl_file, f, overwrite = TRUE)
+      s <- suppressWarnings(ReadPNA_Seurat(f, verbose = FALSE))
+      s$cell_type <- c("CD16+ Mono", "pDC", "CD4T", "CD4T", "CD4T")
+      s$batch <- ifelse(i <= 5, "B1", "B2")
+      s
+    })
+    seur_lazy_big <- merge(se_lazy_list[[1]], se_lazy_list[-1], add.cell.ids = LETTERS[1:10])
+    if (assay_version == "v5") {
+      seur_lazy_big <- seur_lazy_big |> JoinLayers()
+    }
+
+    res_eager_multi <- DifferentialProximityAnalysis(
+      seur_lazy_big,
+      contrast_column = "cell_type",
+      targets = c("CD4T", "CD16+ Mono"),
+      reference = "pDC",
+      diff_threshold = 0.05,
+      min_pct = 0.1,
+      min_diff_pct = 0.05,
+      min_exp_join_count = 1,
+      lazy = FALSE,
+      verbose = FALSE
+    )
+    res_lazy_multi <- DifferentialProximityAnalysis(
+      seur_lazy_big,
+      contrast_column = "cell_type",
+      targets = c("CD4T", "CD16+ Mono"),
+      reference = "pDC",
+      diff_threshold = 0.05,
+      min_pct = 0.1,
+      min_diff_pct = 0.05,
+      min_exp_join_count = 1,
+      lazy = TRUE,
+      verbose = FALSE
+    )
+    expect_equal(res_lazy_multi, res_eager_multi)
+
+    # Also test with group_vars and only_pos = TRUE
+    res_eager_grp <- DifferentialProximityAnalysis(
+      seur_lazy_big,
+      contrast_column = "cell_type",
+      targets = c("CD4T", "CD16+ Mono"),
+      reference = "pDC",
+      group_vars = "batch",
+      min_cells_per_group = 5,
+      diff_threshold = 0.1,
+      only_pos = TRUE,
+      metric_type = "co",
+      lazy = FALSE,
+      verbose = FALSE
+    )
+    res_lazy_grp <- DifferentialProximityAnalysis(
+      seur_lazy_big,
+      contrast_column = "cell_type",
+      targets = c("CD4T", "CD16+ Mono"),
+      reference = "pDC",
+      group_vars = "batch",
+      min_cells_per_group = 5,
+      diff_threshold = 0.1,
+      only_pos = TRUE,
+      metric_type = "co",
+      lazy = TRUE,
+      verbose = FALSE
+    )
+    expect_equal(res_lazy_grp, res_eager_grp)
   })
 
   test_that("DifferentialProximityAnalysis fails with invalid input", {

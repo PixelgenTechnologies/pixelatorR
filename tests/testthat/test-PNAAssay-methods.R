@@ -110,36 +110,45 @@ for (assay_version in c("v3", "v5")) {
     })
   })
 
-  if (assay_version == "v3") {
-    test_that("merge.PNAAssay keeps a valid meta.features slot when panels differ", {
-      # Simulate a different panel by dropping features from one object
-      pna_assay_small <- subset(
-        pna_assay,
-        features = rownames(pna_assay)[-(1:10)],
-        cells = colnames(pna_assay)
-      )
-      expect_equal(nrow(pna_assay_small@meta.features), nrow(pna_assay) - 10)
+  test_that("merge.PNAAssay warns and preserves feature metadata when panels differ", {
+    # Simulate a different panel by dropping features from one object
+    pna_assay_small <- suppressWarnings(subset(
+      pna_assay,
+      features = rownames(pna_assay)[-(1:10)],
+      cells = colnames(pna_assay)
+    ))
+    expect_warning(
+      pna_assay_merged <- merge(pna_assay, y = pna_assay_small, add.cell.ids = c("A", "B")),
+      regexp = "do not share identical protein panels"
+    )
+    expect_true(validObject(pna_assay_merged))
+    expect_equal(ncol(pna_assay_merged), 10)
+    expect_equal(nrow(pna_assay_merged), nrow(pna_assay))
 
-      expect_message(
-        pna_assay_merged <- merge(pna_assay, y = pna_assay_small, add.cell.ids = c("A", "B")),
-        regexp = "Meta features are not the same across objects"
-      )
-      expect_true(validObject(pna_assay_merged))
-      expect_equal(ncol(pna_assay_merged), 10)
-      expect_equal(nrow(pna_assay_merged), nrow(pna_assay))
-      # One meta.features row per feature, but no feature metadata columns
+    if (assay_version == "v3") {
+      expect_equal(nrow(pna_assay_small@meta.features), nrow(pna_assay) - 10)
       expect_equal(rownames(pna_assay_merged@meta.features), rownames(pna_assay_merged))
-      expect_equal(ncol(pna_assay_merged@meta.features), 0)
+      expect_true(all(c("control", "marker", "nuclear") %in% colnames(pna_assay_merged@meta.features)))
+      expect_equal(pna_assay_merged@meta.features$marker, rownames(pna_assay_merged))
+
+      # Also test merging smaller panel first (x has 148 features, y has 158)
+      expect_warning(
+        pna_assay_merged_rev <- merge(pna_assay_small, y = pna_assay, add.cell.ids = c("A", "B")),
+        regexp = "do not share identical protein panels"
+      )
+      expect_equal(rownames(pna_assay_merged_rev@meta.features), rownames(pna_assay_merged_rev))
+      expect_equal(pna_assay_merged_rev@meta.features$marker, rownames(pna_assay_merged_rev))
+
       # Downstream methods still work on the merged object
       expect_no_error(pna_assay_subset <- subset(pna_assay_merged, cells = colnames(pna_assay_merged)[1:2]))
       expect_equal(ncol(pna_assay_subset), 2)
 
-      # Identical panels keep the feature metadata
-      expect_no_message(pna_assay_merged <- merge(pna_assay, y = pna_assay, add.cell.ids = c("A", "B")))
-      expect_equal(rownames(pna_assay_merged@meta.features), rownames(pna_assay))
-      expect_true("marker" %in% colnames(pna_assay_merged@meta.features))
-    })
-  }
+      # Identical panels keep the feature metadata without warning
+      expect_no_warning(pna_assay_merged_same <- merge(pna_assay, y = pna_assay, add.cell.ids = c("A", "B")))
+      expect_equal(rownames(pna_assay_merged_same@meta.features), rownames(pna_assay))
+      expect_true("marker" %in% colnames(pna_assay_merged_same@meta.features))
+    }
+  })
 
   test_that("merge.PNAAssay fails when invalid input is provided", {
     expect_error(
