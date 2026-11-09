@@ -1162,6 +1162,8 @@ FindAllProximityMarkers.data.frame <- function(
 #' @param proximity_metric Numeric column used when building the matrix.
 #' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
 #' @param method \code{"seurat"} returns a matrix and \code{"legacy"} returns a table.
+#' @param cells_keep Optional character vector of cell IDs to retain before
+#'   materializing the lazy table.
 #'
 #' @return A sparse matrix of marker pairs by cells, or a proximity table for the legacy method.
 #'
@@ -1220,6 +1222,15 @@ FindAllProximityMarkers.data.frame <- function(
 #' correction) identical to \code{.wilcox_p_sparse_exact()} by shifting positive
 #' ranks by the implicit zero block \code{n_zero_tot} and accounting for both
 #' the zero tie block (\code{n_zero_tot^3 - n_zero_tot}) and non-zero ties.
+#'
+#' @param neg_tgt List of sorted negative numeric vectors in the target group.
+#' @param pos_tgt List of sorted positive numeric vectors in the target group.
+#' @param neg_ref List of sorted negative numeric vectors in the reference group.
+#' @param pos_ref List of sorted positive numeric vectors in the reference group.
+#' @param n_tgt Integer vector of total cells in the target group per row.
+#' @param n_ref Integer vector of total cells in the reference group per row.
+#'
+#' @return A numeric vector of two-sided Wilcoxon rank-sum p-values.
 #'
 #' @noRd
 .wilcox_from_sorted_lists <- function(
@@ -1285,6 +1296,18 @@ FindAllProximityMarkers.data.frame <- function(
 
 
 #' Execute single-pass zero-padded Wilcoxon differential proximity comparisons in DuckDB.
+#'
+#' @param lazy_prox A \code{tbl_lazy} proximity table.
+#' @param cells_tbl A \code{data.frame} mapping \code{component} to \code{grp_key} and \code{side} (\code{"tgt"} or \code{"ref"}).
+#' @param group_sizes_tbl A \code{data.frame} with columns \code{grp_key}, \code{n_tgt}, and \code{n_ref}.
+#' @param proximity_metric Name of the numeric proximity column to test.
+#' @param diff_threshold Minimum absolute median difference required to test a pair.
+#' @param min_pct Minimum fraction of cells with a non-zero score in either group.
+#' @param min_diff_pct Minimum difference in that fraction between the two groups.
+#' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
+#' @param call Calling environment used in error messages.
+#'
+#' @return A \code{data.frame} of filtered marker-pair summary statistics and Wilcoxon p-values across all comparisons.
 #'
 #' @noRd
 .run_duckdb_wilcox_comparisons <- function(
@@ -1473,6 +1496,12 @@ FindAllProximityMarkers.data.frame <- function(
 
 #' Emit the same empty-comparison warning as `.wilcox_de_test()`.
 #'
+#' @param reason Character string indicating which filter dropped all features
+#'   (\code{"min_pct"}, \code{"min_diff_pct"}, \code{"only_pos"}, or \code{"min_diff"}).
+#' @param only_pos Logical indicating whether only positive median differences were tested.
+#'
+#' @return Nothing. Called for its warning side effect.
+#'
 #' @noRd
 .warn_empty_wilcox_comparison <- function(reason, only_pos = FALSE) {
   if (identical(reason, "min_pct")) {
@@ -1490,6 +1519,27 @@ FindAllProximityMarkers.data.frame <- function(
 
 
 #' Fast single-pass DuckDB path for \code{DifferentialProximityAnalysis.Seurat(..., lazy = TRUE, method = "seurat")}.
+#'
+#' @param object A \code{Seurat} object.
+#' @param group_data_tbl A tibble of cell metadata with a \code{component} column.
+#' @param contrast_column The contrast column name.
+#' @param reference The reference level.
+#' @param targets Target levels of the contrast column.
+#' @param assay Name of the assay to read.
+#' @param group_vars Optional grouping variables.
+#' @param min_exp_join_count Minimum expected join count for a marker pair.
+#' @param min_cells_per_group Minimum cells required on each side of a comparison.
+#' @param diff_threshold Minimum absolute median difference required to test a pair.
+#' @param min_pct Minimum fraction of cells with a non-zero score in either group.
+#' @param min_diff_pct Minimum difference in that fraction between the two groups.
+#' @param proximity_metric Name of the numeric proximity column to test.
+#' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
+#' @param p_adjust_method Method for multiple-testing adjustment.
+#' @param verbose Logical indicating whether to print setup and progress messages.
+#' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
+#' @param ... Additional arguments (currently unused).
+#'
+#' @return A \code{tbl_df} of differential proximity results.
 #'
 #' @noRd
 .run_lazy_duckdb_dpa_seurat <- function(
@@ -1734,6 +1784,26 @@ FindAllProximityMarkers.data.frame <- function(
 
 
 #' Fast single-pass DuckDB path for \code{FindAllProximityMarkers.Seurat(..., lazy = TRUE)}.
+#'
+#' @param object A \code{Seurat} object.
+#' @param assay Name of the assay to read.
+#' @param label_chr Named character vector of group labels keyed by cell ID.
+#' @param idents Character vector of group levels to test.
+#' @param rest_label Label used for the pooled remainder group.
+#' @param group_by Metadata column name defining the groups.
+#' @param min_exp_join_count Minimum expected join count for a marker pair.
+#' @param min_cells_per_group Minimum cells required on each side of a comparison.
+#' @param diff_threshold Minimum absolute median difference required to test a pair.
+#' @param min_pct Minimum fraction of cells with a non-zero score in either group.
+#' @param min_diff_pct Minimum difference in that fraction between the two groups.
+#' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
+#' @param proximity_metric Name of the numeric proximity column to test.
+#' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
+#' @param p_adjust_method Method for multiple-testing adjustment.
+#' @param verbose Logical indicating whether to show a progress bar.
+#' @param call Calling environment used in error messages.
+#'
+#' @return A \code{tbl_df} of one-versus-rest differential proximity results.
 #'
 #' @noRd
 .run_lazy_duckdb_one_vs_rest_seurat <- function(

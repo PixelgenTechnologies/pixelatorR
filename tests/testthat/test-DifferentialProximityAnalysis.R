@@ -158,7 +158,9 @@ for (assay_version in c("v3", "v5")) {
     )
 
     # Verify that lazy = TRUE (single-pass DuckDB method) produces identical results to lazy = FALSE (Matrix method)
-    tmp_dir <- withr::local_tempdir()
+    tmp_dir <- tempfile("dpa_lazy_")
+    dir.create(tmp_dir, recursive = TRUE)
+    on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
     se_lazy_list <- lapply(1:10, function(i) {
       f <- file.path(tmp_dir, sprintf("S%d.pxl", i))
       fs::file_copy(pxl_file, f, overwrite = TRUE)

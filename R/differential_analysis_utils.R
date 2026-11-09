@@ -86,21 +86,6 @@
 
 #' Print the test setup and start a cli progress bar
 #'
-#' Emits a \pkg{cli} message describing the comparisons that will be run and
-#' starts a progress bar tracking iterations across \code{keys}.
-#'
-#' @param keys A tibble of group keys (e.g. from
-#'   \code{.compute_test_groups_keys()}).
-#' @param contrast_column The contrast column name.
-#' @param reference The reference level.
-#' @param targets Target levels of the contrast column.
-#' @param group_vars Optional grouping variables.
-#' @param verbose Logical. Whether to print messages.
-#' @param test_label Character. Name of the test, used in messages.
-#'
-#' @noRd
-#' Print the test setup and start a cli progress bar
-#'
 #' Emits a formatted \pkg{cli} summary table of the comparisons that will be run
 #' (including per-group cell counts and skipped status when \code{test_groups}
 #' is supplied) and starts a transient progress bar tracking iterations across
@@ -118,6 +103,7 @@
 #'   target and reference cell counts.
 #' @param min_cells_per_group Optional minimum number of cells per group used to
 #'   mark skipped comparisons in the overview table.
+#' @param env Calling environment in which to register the progress bar.
 #'
 #' @noRd
 .print_da_setup <- function(
@@ -271,6 +257,15 @@
 
 #' Format a single DifferentialProximityAnalysis comparison status string
 #'
+#' @param cur_keys A one-row tibble of the current comparison keys.
+#' @param contrast_column The contrast column name.
+#' @param reference The reference level.
+#' @param group_vars Optional grouping variables.
+#' @param n_tgt Optional integer number of target cells.
+#' @param n_ref Optional integer number of reference cells.
+#'
+#' @return A single formatted status string.
+#'
 #' @noRd
 .format_da_comparison_status <- function(
   cur_keys,
@@ -300,6 +295,19 @@
 }
 
 #' Abort with an informative message when no DifferentialProximityAnalysis comparisons produce results
+#'
+#' @param n_total Total number of requested comparisons.
+#' @param n_passed_cells Number of comparisons that met \code{min_cells_per_group}.
+#' @param min_cells_per_group Minimum cells required per group.
+#' @param contrast_column The contrast column name.
+#' @param group_vars Optional grouping variables.
+#' @param diff_threshold Optional minimum median difference threshold.
+#' @param min_pct Optional minimum non-zero fraction threshold.
+#' @param min_diff_pct Optional minimum non-zero fraction difference threshold.
+#' @param only_pos Logical indicating whether only positive median differences were tested.
+#' @param call Calling environment used in the error message.
+#'
+#' @return Nothing. Signals an error.
 #'
 #' @noRd
 .abort_no_valid_da_results <- function(

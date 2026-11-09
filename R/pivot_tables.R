@@ -429,6 +429,10 @@ ProximityScoresToAssay.data.frame <- function(
 
 #' Utility function to validate separator input for proximity scores pivoting
 #'
+#' @param object A \code{data.frame} or \code{tbl_lazy} with \code{marker_1} and \code{marker_2} columns.
+#' @param separator Single-character separator used to join marker names.
+#' @param call Calling environment used in error messages.
+#'
 #' @return Nothing. Used for its side effects.
 #'
 #' @noRd
@@ -467,6 +471,12 @@ ProximityScoresToAssay.data.frame <- function(
 
 
 #' Utility function to filter and format proximity scores for pivoting
+#'
+#' @param object A \code{data.frame} or \code{tbl_lazy} of proximity scores.
+#' @param values_from Name of the numeric column containing proximity scores.
+#' @param separator Single-character separator used to join \code{marker_1} and \code{marker_2}.
+#'
+#' @return A \code{tbl_df} with columns \code{pair}, \code{component}, and \code{values_from}.
 #'
 #' @noRd
 .prep_proximity_table <- function(
@@ -540,6 +550,11 @@ ProximityScoresToAssay.data.frame <- function(
 }
 
 #' Utility function to cast proximity scores to wide format
+#'
+#' @param object A \code{tbl_df} returned by \code{.prep_proximity_table()}.
+#' @param values_from Name of the numeric column containing proximity scores.
+#'
+#' @return A sparse matrix (\code{dgCMatrix}) of marker pairs by components.
 #'
 #' @noRd
 .cast_proximity_long_to_wide <- function(object, values_from = "log2_ratio") {
