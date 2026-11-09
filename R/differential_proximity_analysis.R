@@ -1322,92 +1322,94 @@ FindAllProximityMarkers.data.frame <- function(
   }
 
   sql_query <- glue::glue(
-    "WITH prox_base AS (\n",
-    "  SELECT row_number() OVER () AS __rn, *\n",
-    "  FROM ({base_sql}) __q\n",
-    "),\n",
-    "pair_order AS (\n",
-    "  SELECT marker_1, marker_2, MIN(__rn) AS first_rn\n",
-    "  FROM prox_base\n",
-    "  GROUP BY marker_1, marker_2\n",
-    "  HAVING COUNT(*) FILTER (WHERE {val_col} IS NOT NULL AND {val_col} != 0) > 0\n",
-    "),\n",
-    "nz AS (\n",
-    "  SELECT\n",
-    "    c.grp_key,\n",
-    "    c.side,\n",
-    "    p.marker_1,\n",
-    "    p.marker_2,\n",
-    "    CAST(p.{val_col} AS DOUBLE) AS val\n",
-    "  FROM prox_base p\n",
-    "  INNER JOIN {cells_tbl_name} c ON p.component = c.component\n",
-    "  WHERE p.{val_col} IS NOT NULL AND p.{val_col} != 0\n",
-    "),\n",
-    "pair_counts AS (\n",
-    "  SELECT\n",
-    "    g.grp_key,\n",
-    "    po.marker_1,\n",
-    "    po.marker_2,\n",
-    "    po.first_rn,\n",
-    "    g.n_tgt,\n",
-    "    g.n_ref,\n",
-    "    COALESCE(agg.k_tgt, 0) AS k_tgt,\n",
-    "    COALESCE(agg.k_ref, 0) AS k_ref,\n",
-    "    COALESCE(agg.nn_tgt, 0) AS nn_tgt,\n",
-    "    COALESCE(agg.np_tgt, 0) AS np_tgt,\n",
-    "    COALESCE(agg.nn_ref, 0) AS nn_ref,\n",
-    "    COALESCE(agg.np_ref, 0) AS np_ref,\n",
-    "    agg.neg_tgt,\n",
-    "    agg.pos_tgt,\n",
-    "    agg.neg_ref,\n",
-    "    agg.pos_ref\n",
-    "  FROM {groups_tbl_name} g\n",
-    "  CROSS JOIN pair_order po\n",
-    "  LEFT JOIN (\n",
-    "    SELECT\n",
-    "      grp_key,\n",
-    "      marker_1,\n",
-    "      marker_2,\n",
-    "      CAST(COUNT(*) FILTER (WHERE side = 'tgt') AS INTEGER) AS k_tgt,\n",
-    "      CAST(COUNT(*) FILTER (WHERE side = 'ref') AS INTEGER) AS k_ref,\n",
-    "      CAST(COUNT(*) FILTER (WHERE side = 'tgt' AND val < 0) AS INTEGER) AS nn_tgt,\n",
-    "      CAST(COUNT(*) FILTER (WHERE side = 'tgt' AND val > 0) AS INTEGER) AS np_tgt,\n",
-    "      CAST(COUNT(*) FILTER (WHERE side = 'ref' AND val < 0) AS INTEGER) AS nn_ref,\n",
-    "      CAST(COUNT(*) FILTER (WHERE side = 'ref' AND val > 0) AS INTEGER) AS np_ref,\n",
-    "      list_sort(LIST(val) FILTER (WHERE side = 'tgt' AND val < 0)) AS neg_tgt,\n",
-    "      list_sort(LIST(val) FILTER (WHERE side = 'tgt' AND val > 0)) AS pos_tgt,\n",
-    "      list_sort(LIST(val) FILTER (WHERE side = 'ref' AND val < 0)) AS neg_ref,\n",
-    "      list_sort(LIST(val) FILTER (WHERE side = 'ref' AND val > 0)) AS pos_ref\n",
-    "    FROM nz\n",
-    "    GROUP BY grp_key, marker_1, marker_2\n",
-    "  ) agg\n",
-    "  ON g.grp_key = agg.grp_key AND po.marker_1 = agg.marker_1 AND po.marker_2 = agg.marker_2\n",
-    "),\n",
-    "pair_medians AS (\n",
-    "  SELECT\n",
-    "    grp_key, marker_1, marker_2, first_rn, n_tgt, n_ref, k_tgt, k_ref,\n",
-    "    neg_tgt, pos_tgt, neg_ref, pos_ref,\n",
-    "    ROUND(CAST(k_tgt AS DOUBLE) / CAST(n_tgt AS DOUBLE), 3) AS pct_tgt,\n",
-    "    ROUND(CAST(k_ref AS DOUBLE) / CAST(n_ref AS DOUBLE), 3) AS pct_ref,\n",
-    "    0.5 * (\n",
-    "      CASE WHEN ((n_tgt + 1) // 2) <= nn_tgt THEN list_extract(neg_tgt, (n_tgt + 1) // 2)\n",
-    "           WHEN ((n_tgt + 1) // 2) <= (n_tgt - np_tgt) THEN 0.0\n",
-    "           ELSE list_extract(pos_tgt, ((n_tgt + 1) // 2) - (n_tgt - np_tgt)) END +\n",
-    "      CASE WHEN ((n_tgt + 2) // 2) <= nn_tgt THEN list_extract(neg_tgt, (n_tgt + 2) // 2)\n",
-    "           WHEN ((n_tgt + 2) // 2) <= (n_tgt - np_tgt) THEN 0.0\n",
-    "           ELSE list_extract(pos_tgt, ((n_tgt + 2) // 2) - (n_tgt - np_tgt)) END\n",
-    "    ) AS med_tgt,\n",
-    "    0.5 * (\n",
-    "      CASE WHEN ((n_ref + 1) // 2) <= nn_ref THEN list_extract(neg_ref, (n_ref + 1) // 2)\n",
-    "           WHEN ((n_ref + 1) // 2) <= (n_ref - np_ref) THEN 0.0\n",
-    "           ELSE list_extract(pos_ref, ((n_ref + 1) // 2) - (n_ref - np_ref)) END +\n",
-    "      CASE WHEN ((n_ref + 2) // 2) <= nn_ref THEN list_extract(neg_ref, (n_ref + 2) // 2)\n",
-    "           WHEN ((n_ref + 2) // 2) <= (n_ref - np_ref) THEN 0.0\n",
-    "           ELSE list_extract(pos_ref, ((n_ref + 2) // 2) - (n_ref - np_ref)) END\n",
-    "    ) AS med_ref\n",
-    "  FROM pair_counts\n",
-    ")\n",
-    "SELECT * FROM pair_medians {where_sql} ORDER BY grp_key, first_rn"
+    "
+    WITH prox_base AS (
+      SELECT row_number() OVER () AS __rn, *
+      FROM ({base_sql}) __q
+    ),
+    pair_order AS (
+      SELECT marker_1, marker_2, MIN(__rn) AS first_rn
+      FROM prox_base
+      GROUP BY marker_1, marker_2
+      HAVING COUNT(*) FILTER (WHERE {val_col} IS NOT NULL AND {val_col} != 0) > 0
+    ),
+    nz AS (
+      SELECT
+        c.grp_key,
+        c.side,
+        p.marker_1,
+        p.marker_2,
+        CAST(p.{val_col} AS DOUBLE) AS val
+      FROM prox_base p
+      INNER JOIN {cells_tbl_name} c ON p.component = c.component
+      WHERE p.{val_col} IS NOT NULL AND p.{val_col} != 0
+    ),
+    pair_counts AS (
+      SELECT
+        g.grp_key,
+        po.marker_1,
+        po.marker_2,
+        po.first_rn,
+        g.n_tgt,
+        g.n_ref,
+        COALESCE(agg.k_tgt, 0) AS k_tgt,
+        COALESCE(agg.k_ref, 0) AS k_ref,
+        COALESCE(agg.nn_tgt, 0) AS nn_tgt,
+        COALESCE(agg.np_tgt, 0) AS np_tgt,
+        COALESCE(agg.nn_ref, 0) AS nn_ref,
+        COALESCE(agg.np_ref, 0) AS np_ref,
+        agg.neg_tgt,
+        agg.pos_tgt,
+        agg.neg_ref,
+        agg.pos_ref
+      FROM {groups_tbl_name} g
+      CROSS JOIN pair_order po
+      LEFT JOIN (
+        SELECT
+          grp_key,
+          marker_1,
+          marker_2,
+          CAST(COUNT(*) FILTER (WHERE side = 'tgt') AS INTEGER) AS k_tgt,
+          CAST(COUNT(*) FILTER (WHERE side = 'ref') AS INTEGER) AS k_ref,
+          CAST(COUNT(*) FILTER (WHERE side = 'tgt' AND val < 0) AS INTEGER) AS nn_tgt,
+          CAST(COUNT(*) FILTER (WHERE side = 'tgt' AND val > 0) AS INTEGER) AS np_tgt,
+          CAST(COUNT(*) FILTER (WHERE side = 'ref' AND val < 0) AS INTEGER) AS nn_ref,
+          CAST(COUNT(*) FILTER (WHERE side = 'ref' AND val > 0) AS INTEGER) AS np_ref,
+          list_sort(LIST(val) FILTER (WHERE side = 'tgt' AND val < 0)) AS neg_tgt,
+          list_sort(LIST(val) FILTER (WHERE side = 'tgt' AND val > 0)) AS pos_tgt,
+          list_sort(LIST(val) FILTER (WHERE side = 'ref' AND val < 0)) AS neg_ref,
+          list_sort(LIST(val) FILTER (WHERE side = 'ref' AND val > 0)) AS pos_ref
+        FROM nz
+        GROUP BY grp_key, marker_1, marker_2
+      ) agg
+      ON g.grp_key = agg.grp_key AND po.marker_1 = agg.marker_1 AND po.marker_2 = agg.marker_2
+    ),
+    pair_medians AS (
+      SELECT
+        grp_key, marker_1, marker_2, first_rn, n_tgt, n_ref, k_tgt, k_ref,
+        neg_tgt, pos_tgt, neg_ref, pos_ref,
+        ROUND(CAST(k_tgt AS DOUBLE) / CAST(n_tgt AS DOUBLE), 3) AS pct_tgt,
+        ROUND(CAST(k_ref AS DOUBLE) / CAST(n_ref AS DOUBLE), 3) AS pct_ref,
+        0.5 * (
+          CASE WHEN ((n_tgt + 1) // 2) <= nn_tgt THEN list_extract(neg_tgt, (n_tgt + 1) // 2)
+               WHEN ((n_tgt + 1) // 2) <= (n_tgt - np_tgt) THEN 0.0
+               ELSE list_extract(pos_tgt, ((n_tgt + 1) // 2) - (n_tgt - np_tgt)) END +
+          CASE WHEN ((n_tgt + 2) // 2) <= nn_tgt THEN list_extract(neg_tgt, (n_tgt + 2) // 2)
+               WHEN ((n_tgt + 2) // 2) <= (n_tgt - np_tgt) THEN 0.0
+               ELSE list_extract(pos_tgt, ((n_tgt + 2) // 2) - (n_tgt - np_tgt)) END
+        ) AS med_tgt,
+        0.5 * (
+          CASE WHEN ((n_ref + 1) // 2) <= nn_ref THEN list_extract(neg_ref, (n_ref + 1) // 2)
+               WHEN ((n_ref + 1) // 2) <= (n_ref - np_ref) THEN 0.0
+               ELSE list_extract(pos_ref, ((n_ref + 1) // 2) - (n_ref - np_ref)) END +
+          CASE WHEN ((n_ref + 2) // 2) <= nn_ref THEN list_extract(neg_ref, (n_ref + 2) // 2)
+               WHEN ((n_ref + 2) // 2) <= (n_ref - np_ref) THEN 0.0
+               ELSE list_extract(pos_ref, ((n_ref + 2) // 2) - (n_ref - np_ref)) END
+        ) AS med_ref
+      FROM pair_counts
+    )
+    SELECT * FROM pair_medians {where_sql} ORDER BY grp_key, first_rn
+    "
   )
 
   agg_df <- DBI::dbGetQuery(con, sql_query)

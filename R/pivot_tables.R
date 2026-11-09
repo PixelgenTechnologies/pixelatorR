@@ -481,43 +481,45 @@ ProximityScoresToAssay.data.frame <- function(
       sep_lit <- DBI::dbQuoteString(con, separator)
       val_col <- DBI::dbQuoteIdentifier(con, values_from)
       sql <- glue::glue(
-        "WITH base AS (\n",
-        "  SELECT\n",
-        "    row_number() OVER () AS __rn,\n",
-        "    marker_1 || {sep_lit} || marker_2 AS pair,\n",
-        "    component,\n",
-        "    CAST({val_col} AS DOUBLE) AS {val_col}\n",
-        "  FROM ({base_sql}) __q\n",
-        "),\n",
-        "pair_ord AS (\n",
-        "  SELECT pair, MIN(__rn) AS __ord\n",
-        "  FROM base\n",
-        "  GROUP BY pair\n",
-        "  HAVING COUNT(*) FILTER (WHERE {val_col} IS NOT NULL AND {val_col} != 0) > 0\n",
-        "),\n",
-        "first_pair AS (SELECT pair FROM pair_ord ORDER BY __ord LIMIT 1),\n",
-        "first_comp AS (SELECT component FROM base WHERE __rn = 1),\n",
-        "pair_rows AS (\n",
-        "  SELECT po.pair, fc.component, 0.0 AS {val_col}, 1 AS __part, po.__ord\n",
-        "  FROM pair_ord po CROSS JOIN first_comp fc\n",
-        "),\n",
-        "comp_rows AS (\n",
-        "  SELECT fp.pair, b.component, 0.0 AS {val_col}, 2 AS __part, MIN(b.__rn) AS __ord\n",
-        "  FROM base b CROSS JOIN first_pair fp\n",
-        "  GROUP BY fp.pair, b.component\n",
-        "),\n",
-        "nz AS (\n",
-        "  SELECT pair, component, {val_col}, 3 AS __part, __rn AS __ord\n",
-        "  FROM base\n",
-        "  WHERE {val_col} IS NOT NULL AND {val_col} != 0\n",
-        ")\n",
-        "SELECT pair, component, {val_col} FROM (\n",
-        "  SELECT * FROM pair_rows\n",
-        "  UNION ALL\n",
-        "  SELECT * FROM comp_rows\n",
-        "  UNION ALL\n",
-        "  SELECT * FROM nz\n",
-        ") __u ORDER BY __part, __ord"
+        "
+        WITH base AS (
+          SELECT
+            row_number() OVER () AS __rn,
+            marker_1 || {sep_lit} || marker_2 AS pair,
+            component,
+            CAST({val_col} AS DOUBLE) AS {val_col}
+          FROM ({base_sql}) __q
+        ),
+        pair_ord AS (
+          SELECT pair, MIN(__rn) AS __ord
+          FROM base
+          GROUP BY pair
+          HAVING COUNT(*) FILTER (WHERE {val_col} IS NOT NULL AND {val_col} != 0) > 0
+        ),
+        first_pair AS (SELECT pair FROM pair_ord ORDER BY __ord LIMIT 1),
+        first_comp AS (SELECT component FROM base WHERE __rn = 1),
+        pair_rows AS (
+          SELECT po.pair, fc.component, 0.0 AS {val_col}, 1 AS __part, po.__ord
+          FROM pair_ord po CROSS JOIN first_comp fc
+        ),
+        comp_rows AS (
+          SELECT fp.pair, b.component, 0.0 AS {val_col}, 2 AS __part, MIN(b.__rn) AS __ord
+          FROM base b CROSS JOIN first_pair fp
+          GROUP BY fp.pair, b.component
+        ),
+        nz AS (
+          SELECT pair, component, {val_col}, 3 AS __part, __rn AS __ord
+          FROM base
+          WHERE {val_col} IS NOT NULL AND {val_col} != 0
+        )
+        SELECT pair, component, {val_col} FROM (
+          SELECT * FROM pair_rows
+          UNION ALL
+          SELECT * FROM comp_rows
+          UNION ALL
+          SELECT * FROM nz
+        ) __u ORDER BY __part, __ord
+        "
       )
       res <- tryCatch(
         DBI::dbGetQuery(con, sql) |> as_tibble(),
