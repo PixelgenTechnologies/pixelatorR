@@ -560,28 +560,25 @@ DifferentialProximityAnalysis.Seurat <- function(
 
   # Fast single-pass DuckDB path when lazy = TRUE and method = "seurat"
   if (isTRUE(lazy) && identical(method, "seurat")) {
-    fs_map <- tryCatch(FSMap(object, assay = assay), error = function(e) NULL)
-    if (!inherits(fs_map, "pxg_fs_map")) {
-      return(.run_lazy_duckdb_dpa_seurat(
-        object = object,
-        group_data_tbl = group_data,
-        contrast_column = contrast_column,
-        reference = reference,
-        targets = targets,
-        assay = assay,
-        group_vars = group_vars,
-        min_exp_join_count = min_exp_join_count,
-        min_cells_per_group = min_cells_per_group,
-        diff_threshold = diff_threshold,
-        min_pct = min_pct,
-        min_diff_pct = min_diff_pct,
-        proximity_metric = proximity_metric,
-        metric_type = metric_type,
-        p_adjust_method = p_adjust_method,
-        verbose = verbose,
-        ...
-      ))
-    }
+    return(.run_lazy_duckdb_dpa_seurat(
+      object = object,
+      group_data_tbl = group_data,
+      contrast_column = contrast_column,
+      reference = reference,
+      targets = targets,
+      assay = assay,
+      group_vars = group_vars,
+      min_exp_join_count = min_exp_join_count,
+      min_cells_per_group = min_cells_per_group,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      proximity_metric = proximity_metric,
+      metric_type = metric_type,
+      p_adjust_method = p_adjust_method,
+      verbose = verbose,
+      ...
+    ))
   }
 
   active_targets <- targets %||% setdiff(unique(group_data[, contrast_column, drop = TRUE]), reference)
@@ -974,28 +971,25 @@ FindAllProximityMarkers.Seurat <- function(
   .warn_missing_group_labels(label_chr, group_by)
 
   if (isTRUE(lazy)) {
-    fs_map <- tryCatch(FSMap(object, assay = assay), error = function(e) NULL)
-    if (!inherits(fs_map, "pxg_fs_map")) {
-      return(.run_lazy_duckdb_one_vs_rest_seurat(
-        object = object,
-        assay = assay,
-        label_chr = label_chr,
-        idents = idents,
-        rest_label = rest_label,
-        group_by = group_by,
-        min_exp_join_count = min_exp_join_count,
-        min_cells_per_group = min_cells_per_group,
-        diff_threshold = diff_threshold,
-        min_pct = min_pct,
-        min_diff_pct = min_diff_pct,
-        only_pos = only_pos,
-        proximity_metric = proximity_metric,
-        metric_type = metric_type,
-        p_adjust_method = p_adjust_method,
-        verbose = verbose,
-        call = call
-      ))
-    }
+    return(.run_lazy_duckdb_one_vs_rest_seurat(
+      object = object,
+      assay = assay,
+      label_chr = label_chr,
+      idents = idents,
+      rest_label = rest_label,
+      group_by = group_by,
+      min_exp_join_count = min_exp_join_count,
+      min_cells_per_group = min_cells_per_group,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos,
+      proximity_metric = proximity_metric,
+      metric_type = metric_type,
+      p_adjust_method = p_adjust_method,
+      verbose = verbose,
+      call = call
+    ))
   }
 
   proximity_matrix <- .load_proximity_for_da(
