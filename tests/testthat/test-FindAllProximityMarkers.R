@@ -469,9 +469,18 @@ test_that("FindAllProximityMarkers fails with invalid input", {
       df,
       group_by = "cluster",
       proximity_metric = "join_count_z",
+      min_cells_per_group = 0
+    ),
+    "positive number"
+  )
+  expect_error(
+    FindAllProximityMarkers(
+      df,
+      group_by = "cluster",
+      proximity_metric = "join_count_z",
       min_cells_per_group = -1
     ),
-    "non-negative"
+    "positive number"
   )
   expect_error(
     FindAllProximityMarkers(

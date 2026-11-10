@@ -56,6 +56,11 @@ DifferentialProximityAnalysis.data.frame <- function(
     proximity_metric, min_cells_per_group, FALSE,
     cl = NULL, data_type = "proximity"
   )
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
+    cli::cli_abort(
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0).")
+    )
+  }
   backend <- match.arg(backend, choices = c("dplyr", "data.table"))
   if (backend == "data.table") {
     expect_dtplyr()
@@ -308,6 +313,12 @@ DifferentialProximityAnalysis.Matrix <- function(
   ...
 ) {
   assert_single_value(only_pos, type = "bool")
+  assert_single_value(min_cells_per_group, type = "numeric")
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
+    cli::cli_abort(
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0).")
+    )
+  }
   # Validate group_data layout against the matrix `object`
   .validate_matrix_group_data(
     object = object,
@@ -531,6 +542,13 @@ DifferentialProximityAnalysis.Seurat <- function(
   # Validate input parameters
   assert_col_in_data(contrast_column, object[[]])
   assert_single_value(lazy, type = "bool")
+
+  assert_single_value(min_cells_per_group, type = "numeric")
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
+    cli::cli_abort(
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0).")
+    )
+  }
 
   # Use default assay if assay = NULL
   assay <- .validate_or_set_assay(object, assay)
@@ -1587,9 +1605,9 @@ FindAllProximityMarkers.data.frame <- function(
     call = call
   )
   assert_single_value(min_cells_per_group, type = "numeric", call = call)
-  if (is.na(min_cells_per_group) || min_cells_per_group < 0) {
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
     cli::cli_abort(
-      c("x" = "{.arg min_cells_per_group} must be a non-negative number."),
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0)."),
       call = call
     )
   }
@@ -2051,9 +2069,9 @@ FindAllProximityMarkers.data.frame <- function(
   call = caller_env()
 ) {
   assert_single_value(min_cells_per_group, type = "numeric", call = call)
-  if (is.na(min_cells_per_group) || min_cells_per_group < 0) {
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
     cli::cli_abort(
-      c("x" = "{.arg min_cells_per_group} must be a non-negative number."),
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0)."),
       call = call
     )
   }

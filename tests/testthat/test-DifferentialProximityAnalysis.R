@@ -327,10 +327,22 @@ for (assay_version in c("v3", "v5")) {
           seur_obj_big,
           contrast_column = "cell_type",
           reference = "B",
+          min_cells_per_group = 0
+        )
+      },
+      "positive number"
+    )
+
+    expect_error(
+      {
+        DifferentialProximityAnalysis(
+          seur_obj_big,
+          contrast_column = "cell_type",
+          reference = "B",
           min_cells_per_group = -1
         )
       },
-      class = "error"
+      "positive number"
     )
 
     expect_error(
