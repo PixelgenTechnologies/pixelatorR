@@ -1316,7 +1316,8 @@ FindAllProximityMarkers.data.frame <- function(
 #' Execute single-pass zero-padded Wilcoxon differential proximity comparisons in DuckDB.
 #'
 #' @param lazy_prox A \code{tbl_lazy} proximity table.
-#' @param cells_tbl A \code{data.frame} mapping \code{component} to \code{grp_key} and \code{side} (\code{"tgt"} or \code{"ref"}).
+#' @param cells_tbl A \code{data.frame} mapping \code{component} to
+#'   \code{grp_key} and \code{side} (\code{"tgt"} or \code{"ref"}).
 #' @param group_sizes_tbl A \code{data.frame} with columns \code{grp_key}, \code{n_tgt}, and \code{n_ref}.
 #' @param proximity_metric Name of the numeric proximity column to test.
 #' @param diff_threshold Minimum absolute median difference required to test a pair.

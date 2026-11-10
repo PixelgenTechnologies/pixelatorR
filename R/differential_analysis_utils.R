@@ -173,7 +173,7 @@
     ""
   )
 
-  w_contrast <- max(nchar( c("Contrast", contrast_disp) ))
+  w_contrast <- max(nchar(c("Contrast", contrast_disp)))
   w_group <- if (has_group_vars) max(nchar(c("Group", grp_labels))) else 0L
 
   if (has_counts) {
@@ -339,7 +339,10 @@
         "or lowering {.arg min_cells_per_group}."
       )
     } else {
-      "Consider lowering {.arg min_cells_per_group} or checking group sizes in {.arg contrast_column} ({.val {contrast_column}})."
+      paste0(
+        "Consider lowering {.arg min_cells_per_group} or checking group sizes in ",
+        "{.arg contrast_column} ({.val {contrast_column}})."
+      )
     }
     cli::cli_abort(
       c(
