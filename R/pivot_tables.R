@@ -484,7 +484,7 @@ ProximityScoresToAssay.data.frame <- function(
   values_from = "log2_ratio",
   separator = ":"
 ) {
-  if (inherits(object, "tbl_lazy") && !inherits(object, "pxg_tbl_lazy")) {
+  if (inherits(object, "tbl_lazy")) {
     con <- object$src$con
     if (inherits(con, "duckdb_connection")) {
       base_sql <- as.character(dbplyr::sql_render(object))
