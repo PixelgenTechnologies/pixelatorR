@@ -259,8 +259,7 @@ SummarizeProximityScores.tbl_lazy <- function(
 
   # Set the summary function
   prefix <- ifelse(summary_stat == "median", "median_", "mean_")
-  summary_fkn <- switch(
-    summary_stat,
+  summary_fkn <- switch(summary_stat,
     "median" = median,
     "mean" = mean
   )
