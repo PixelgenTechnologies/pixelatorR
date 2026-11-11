@@ -1229,8 +1229,9 @@ distance_from_node_set <- function(
 #' @param cg A CellGraph object containing the cell graph and count data.
 #' @param partition A character or factor vector indicating the partition of
 #' nodes into groups. Either `partition` or `partition_column` must be provided.
-#' @param partition_column A string indicating the name of the vertex attribute in
-#' the cell graph that contains the partition information.
+#' @param partition_column A string indicating the name of the column in
+#' \code{cg@meta.data} or the vertex attribute in \code{cg@cellgraph} that
+#' contains the partition information.
 #'
 #' @return A matrix of counts for each partition group, where rows correspond to
 #' partition groups and columns correspond to features (e.g., proteins).
@@ -1260,15 +1261,20 @@ partition_counts <- function(
   assert_single_value(partition_column, "string", allow_null = TRUE)
 
   if (!is.null(partition_column)) {
-    partition <- try(
-      cg@cellgraph %N>%
-        pull(!!sym(partition_column)),
-      silent = TRUE
-    )
-    if (inherits(partition, "try-error")) {
-      cli::cli_abort(
-        "Column '{partition_column}' not found in cell graph node attributes."
+    meta <- slot(cg, "meta.data")
+    if (ncol(meta) > 0L && partition_column %in% colnames(meta)) {
+      partition <- meta[[partition_column]]
+    } else {
+      partition <- try(
+        cg@cellgraph %N>%
+          pull(!!sym(partition_column)),
+        silent = TRUE
       )
+      if (inherits(partition, "try-error")) {
+        cli::cli_abort(
+          "Column '{partition_column}' not found in cell graph node metadata or attributes."
+        )
+      }
     }
   }
 
