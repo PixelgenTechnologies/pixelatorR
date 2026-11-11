@@ -393,7 +393,7 @@ ProximityScoresToAssay.tbl_lazy <- function(
   .validate_separator(object, separator)
 
   object <- .prep_proximity_table(object, values_from, separator)
-  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
+  prox_wide <- .cast_proximity_long_to_wide(object, values_from, sort_dims = TRUE)
 
   return(prox_wide)
 }
@@ -422,7 +422,7 @@ ProximityScoresToAssay.data.frame <- function(
   .validate_separator(object, separator)
 
   object <- .prep_proximity_table(object, values_from, separator)
-  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
+  prox_wide <- .cast_proximity_long_to_wide(object, values_from, sort_dims = TRUE)
 
   return(prox_wide)
 }
@@ -492,43 +492,30 @@ ProximityScoresToAssay.data.frame <- function(
       val_col <- DBI::dbQuoteIdentifier(con, values_from)
       sql <- glue::glue(
         "
-        WITH base AS (
+        WITH all_comps AS (
+          SELECT DISTINCT component
+          FROM ({base_sql}) __c
+        ),
+        nz AS (
           SELECT
-            row_number() OVER () AS __rn,
             marker_1 || {sep_lit} || marker_2 AS pair,
             component,
             CAST({val_col} AS DOUBLE) AS {val_col}
           FROM ({base_sql}) __q
+          WHERE {val_col} IS NOT NULL
+            AND NOT isnan(CAST({val_col} AS DOUBLE))
+            AND {val_col} != 0
         ),
-        pair_ord AS (
-          SELECT pair, MIN(__rn) AS __ord
-          FROM base
-          GROUP BY pair
-          HAVING COUNT(*) FILTER (WHERE {val_col} IS NOT NULL AND {val_col} != 0) > 0
-        ),
-        first_pair AS (SELECT pair FROM pair_ord ORDER BY __ord LIMIT 1),
-        first_comp AS (SELECT component FROM base WHERE __rn = 1),
-        pair_rows AS (
-          SELECT po.pair, fc.component, 0.0 AS {val_col}, 1 AS __part, po.__ord
-          FROM pair_ord po CROSS JOIN first_comp fc
-        ),
-        comp_rows AS (
-          SELECT fp.pair, b.component, 0.0 AS {val_col}, 2 AS __part, MIN(b.__rn) AS __ord
-          FROM base b CROSS JOIN first_pair fp
-          GROUP BY fp.pair, b.component
-        ),
-        nz AS (
-          SELECT pair, component, {val_col}, 3 AS __part, __rn AS __ord
-          FROM base
-          WHERE {val_col} IS NOT NULL AND {val_col} != 0
+        first_pair AS (
+          SELECT MIN(pair) AS pair FROM nz
         )
-        SELECT pair, component, {val_col} FROM (
-          SELECT * FROM pair_rows
-          UNION ALL
-          SELECT * FROM comp_rows
-          UNION ALL
-          SELECT * FROM nz
-        ) __u ORDER BY __part, __ord
+        SELECT fp.pair, ac.component, 0.0 AS {val_col}
+        FROM all_comps ac
+        CROSS JOIN first_pair fp
+        WHERE fp.pair IS NOT NULL
+        UNION ALL
+        SELECT pair, component, {val_col}
+        FROM nz
         "
       )
       res <- tryCatch(
@@ -553,19 +540,27 @@ ProximityScoresToAssay.data.frame <- function(
 #'
 #' @param object A \code{tbl_df} returned by \code{.prep_proximity_table()}.
 #' @param values_from Name of the numeric column containing proximity scores.
+#' @param sort_dims Logical; if \code{TRUE}, sort row and column names in C/radix
+#'   lexicographic order for deterministic layout across parallel SQL scans.
 #'
 #' @return A sparse matrix (\code{dgCMatrix}) of marker pairs by components.
 #'
 #' @noRd
-.cast_proximity_long_to_wide <- function(object, values_from = "log2_ratio") {
-  # Cast values to wide format
-  pair <- object |>
-    pull(pair) |>
-    (\(.) factor(., levels = unique(.)))()
-
-  components <- object |>
-    pull(component) |>
-    (\(.) factor(., levels = unique(.)))()
+.cast_proximity_long_to_wide <- function(
+  object,
+  values_from = "log2_ratio",
+  sort_dims = FALSE
+) {
+  pair_vals <- pull(object, pair)
+  comp_vals <- pull(object, component)
+  pair_levels <- unique(pair_vals)
+  comp_levels <- unique(comp_vals)
+  if (isTRUE(sort_dims)) {
+    pair_levels <- pair_levels[order(pair_levels, method = "radix")]
+    comp_levels <- comp_levels[order(comp_levels, method = "radix")]
+  }
+  pair <- factor(pair_vals, levels = pair_levels)
+  components <- factor(comp_vals, levels = comp_levels)
 
   prox_wide <- Matrix::sparseMatrix(
     i = as.integer(pair),
@@ -582,7 +577,7 @@ ProximityScoresToAssay.data.frame <- function(
 
   # Drop marker pairs with all zero proximity scores
   nonzero_pairs <- Matrix::rowSums(prox_wide != 0) > 0
-  prox_wide <- prox_wide[nonzero_pairs, ]
+  prox_wide <- prox_wide[nonzero_pairs, , drop = FALSE]
 
   # Warn about components with all zero proximity scores
   zero_prox_components <-

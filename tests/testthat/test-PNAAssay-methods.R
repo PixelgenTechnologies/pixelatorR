@@ -147,7 +147,39 @@ for (assay_version in c("v3", "v5")) {
       expect_no_warning(pna_assay_merged_same <- merge(pna_assay, y = pna_assay, add.cell.ids = c("A", "B")))
       expect_equal(rownames(pna_assay_merged_same@meta.features), rownames(pna_assay))
       expect_true("marker" %in% colnames(pna_assay_merged_same@meta.features))
+    } else {
+      # v5 PNAAssay5: control/nuclear metadata in [[]] is preserved without NAs regardless of merge order
+      mf_merged <- pna_assay_merged[[]]
+      expect_equal(rownames(mf_merged), rownames(pna_assay_merged))
+      expect_true(all(c("control", "nuclear") %in% colnames(mf_merged)))
+      expect_false(anyNA(mf_merged$control))
+      expect_false(anyNA(mf_merged$nuclear))
+
+      # Drop control features from second object to verify union when x has features missing from y
+      ctrl_feats <- rownames(pna_assay)[pna_assay[[]]$control == "yes"]
+      pna_assay_no_ctrl <- suppressWarnings(subset(
+        pna_assay,
+        features = setdiff(rownames(pna_assay), ctrl_feats),
+        cells = colnames(pna_assay)
+      ))
+      expect_warning(
+        pna_assay_merged_ctrl <- merge(pna_assay, y = pna_assay_no_ctrl, add.cell.ids = c("A", "B")),
+        regexp = "do not share identical protein panels"
+      )
+      expect_equal(pna_assay_merged_ctrl[[]][ctrl_feats, "control"], rep("yes", length(ctrl_feats)))
+      expect_false(anyNA(pna_assay_merged_ctrl[[]]$nuclear))
     }
+
+    # Identical panels in different row order should not warn about panel mismatch
+    pna_assay_reord <- suppressWarnings(subset(
+      pna_assay,
+      features = rev(rownames(pna_assay)),
+      cells = colnames(pna_assay)
+    ))
+    expect_no_warning(
+      merge(pna_assay, y = pna_assay_reord, add.cell.ids = c("A", "B")),
+      message = "do not share identical protein panels"
+    )
   })
 
   test_that("merge.PNAAssay fails when invalid input is provided", {

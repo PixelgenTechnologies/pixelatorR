@@ -455,7 +455,7 @@ DifferentialProximityAnalysis.Matrix <- function(
     }
 
     # Tidy up the results
-    diff_prox_res[[key]] <- tibble(
+    res_tbl <- tibble(
       target = cur_keys[, contrast_column, drop = TRUE],
       reference = reference,
       pct_tgt = de_results$pct_1,
@@ -466,6 +466,9 @@ DifferentialProximityAnalysis.Matrix <- function(
       p = de_results$p_val,
       pair = rownames(de_results)
     ) |>
+      tidyr::separate(pair, into = c("marker_1", "marker_2"), sep = ":")
+    ord <- order(res_tbl$marker_1, res_tbl$marker_2, method = "radix")
+    diff_prox_res[[key]] <- res_tbl[ord, , drop = FALSE] |>
       .append_group_vars(cur_keys = cur_keys, group_vars = group_vars)
   }
 
@@ -489,7 +492,7 @@ DifferentialProximityAnalysis.Matrix <- function(
   }
 
   .finalize_da_results(diff_prox_res, p_adjust_method, group_vars) |>
-    tidyr::separate(pair, into = c("marker_1", "marker_2"), sep = ":")
+    relocate(marker_1, marker_2, .after = "p_adj")
 }
 
 
@@ -1358,33 +1361,45 @@ FindAllProximityMarkers.data.frame <- function(
 
   sql_query <- glue::glue(
     "
-    WITH prox_base AS (
-      SELECT row_number() OVER () AS __rn, *
-      FROM ({base_sql}) __q
-    ),
-    pair_order AS (
-      SELECT marker_1, marker_2, MIN(__rn) AS first_rn
-      FROM prox_base
-      GROUP BY marker_1, marker_2
-      HAVING COUNT(*) FILTER (WHERE {val_col} IS NOT NULL AND {val_col} != 0) > 0
-    ),
-    nz AS (
+    WITH agg_and_pairs AS (
       SELECT
         c.grp_key,
-        c.side,
         p.marker_1,
         p.marker_2,
-        CAST(p.{val_col} AS DOUBLE) AS val
-      FROM prox_base p
-      INNER JOIN {cells_tbl_name} c ON p.component = c.component
-      WHERE p.{val_col} IS NOT NULL AND p.{val_col} != 0
+        CAST(COUNT(*) FILTER (WHERE c.side = 'tgt') AS INTEGER) AS k_tgt,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'ref') AS INTEGER) AS k_ref,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'tgt' AND CAST(p.{val_col} AS DOUBLE) < 0) AS INTEGER) AS nn_tgt,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'tgt' AND CAST(p.{val_col} AS DOUBLE) > 0) AS INTEGER) AS np_tgt,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'ref' AND CAST(p.{val_col} AS DOUBLE) < 0) AS INTEGER) AS nn_ref,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'ref' AND CAST(p.{val_col} AS DOUBLE) > 0) AS INTEGER) AS np_ref,
+        list_sort(
+          LIST(CAST(p.{val_col} AS DOUBLE)) FILTER (WHERE c.side = 'tgt' AND CAST(p.{val_col} AS DOUBLE) < 0)
+        ) AS neg_tgt,
+        list_sort(
+          LIST(CAST(p.{val_col} AS DOUBLE)) FILTER (WHERE c.side = 'tgt' AND CAST(p.{val_col} AS DOUBLE) > 0)
+        ) AS pos_tgt,
+        list_sort(
+          LIST(CAST(p.{val_col} AS DOUBLE)) FILTER (WHERE c.side = 'ref' AND CAST(p.{val_col} AS DOUBLE) < 0)
+        ) AS neg_ref,
+        list_sort(
+          LIST(CAST(p.{val_col} AS DOUBLE)) FILTER (WHERE c.side = 'ref' AND CAST(p.{val_col} AS DOUBLE) > 0)
+        ) AS pos_ref
+      FROM ({base_sql}) p
+      LEFT JOIN {cells_tbl_name} c ON p.component = c.component
+      WHERE p.{val_col} IS NOT NULL
+        AND NOT isnan(CAST(p.{val_col} AS DOUBLE))
+        AND p.{val_col} != 0
+      GROUP BY c.grp_key, p.marker_1, p.marker_2
+    ),
+    pair_set AS (
+      SELECT DISTINCT marker_1, marker_2
+      FROM agg_and_pairs
     ),
     pair_counts AS (
       SELECT
         g.grp_key,
         po.marker_1,
         po.marker_2,
-        po.first_rn,
         g.n_tgt,
         g.n_ref,
         COALESCE(agg.k_tgt, 0) AS k_tgt,
@@ -1398,30 +1413,15 @@ FindAllProximityMarkers.data.frame <- function(
         agg.neg_ref,
         agg.pos_ref
       FROM {groups_tbl_name} g
-      CROSS JOIN pair_order po
-      LEFT JOIN (
-        SELECT
-          grp_key,
-          marker_1,
-          marker_2,
-          CAST(COUNT(*) FILTER (WHERE side = 'tgt') AS INTEGER) AS k_tgt,
-          CAST(COUNT(*) FILTER (WHERE side = 'ref') AS INTEGER) AS k_ref,
-          CAST(COUNT(*) FILTER (WHERE side = 'tgt' AND val < 0) AS INTEGER) AS nn_tgt,
-          CAST(COUNT(*) FILTER (WHERE side = 'tgt' AND val > 0) AS INTEGER) AS np_tgt,
-          CAST(COUNT(*) FILTER (WHERE side = 'ref' AND val < 0) AS INTEGER) AS nn_ref,
-          CAST(COUNT(*) FILTER (WHERE side = 'ref' AND val > 0) AS INTEGER) AS np_ref,
-          list_sort(LIST(val) FILTER (WHERE side = 'tgt' AND val < 0)) AS neg_tgt,
-          list_sort(LIST(val) FILTER (WHERE side = 'tgt' AND val > 0)) AS pos_tgt,
-          list_sort(LIST(val) FILTER (WHERE side = 'ref' AND val < 0)) AS neg_ref,
-          list_sort(LIST(val) FILTER (WHERE side = 'ref' AND val > 0)) AS pos_ref
-        FROM nz
-        GROUP BY grp_key, marker_1, marker_2
-      ) agg
-      ON g.grp_key = agg.grp_key AND po.marker_1 = agg.marker_1 AND po.marker_2 = agg.marker_2
+      CROSS JOIN pair_set po
+      LEFT JOIN agg_and_pairs agg
+        ON g.grp_key = agg.grp_key
+        AND po.marker_1 = agg.marker_1
+        AND po.marker_2 = agg.marker_2
     ),
     pair_medians AS (
       SELECT
-        grp_key, marker_1, marker_2, first_rn, n_tgt, n_ref, k_tgt, k_ref,
+        grp_key, marker_1, marker_2, n_tgt, n_ref, k_tgt, k_ref,
         neg_tgt, pos_tgt, neg_ref, pos_ref,
         0.5 * (
           CASE WHEN ((n_tgt + 1) // 2) <= nn_tgt THEN list_extract(neg_tgt, (n_tgt + 1) // 2)
@@ -1441,7 +1441,7 @@ FindAllProximityMarkers.data.frame <- function(
         ) AS med_ref
       FROM pair_counts
     )
-    SELECT * FROM pair_medians ORDER BY grp_key, first_rn
+    SELECT * FROM pair_medians ORDER BY grp_key, marker_1, marker_2
     "
   )
 
@@ -2336,7 +2336,7 @@ FindAllProximityMarkers.data.frame <- function(
       next
     }
 
-    results[[i]] <- tibble(
+    res_tbl <- tibble(
       target = ident,
       pct_tgt = de_results$pct_1,
       pct_ref = de_results$pct_2,
@@ -2348,6 +2348,8 @@ FindAllProximityMarkers.data.frame <- function(
       marker_1 = sub(":.*$", "", rownames(de_results)),
       marker_2 = sub("^[^:]*:", "", rownames(de_results))
     )
+    ord <- order(res_tbl$marker_1, res_tbl$marker_2, method = "radix")
+    results[[i]] <- res_tbl[ord, , drop = FALSE]
   }
 
   out <- bind_rows(results)

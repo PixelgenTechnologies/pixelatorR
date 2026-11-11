@@ -103,7 +103,14 @@ for (assay_version in c("v3", "v5")) {
         class = c("tbl_df", "tbl", "data.frame")
       )
 
-    expect_equal(head(de_results1, 2), expected_data)
+    expect_equal(
+      de_results1 |>
+        filter(
+          marker_1 == "CD56",
+          marker_2 %in% c("HLA-ABC", "HLA-DR-DP-DQ")
+        ),
+      expected_data
+    )
     expect_true(all(c("med_tgt", "med_ref") %in% colnames(de_results)))
     expect_false(any(c("data_type", "alternative") %in% colnames(de_results)))
     expect_equal(de_results$diff_median, de_results$med_tgt - de_results$med_ref)
@@ -153,7 +160,12 @@ for (assay_version in c("v3", "v5")) {
     de_with_transition <- add_proximity_transition(de_results_filt, tau = 0.15)
     expect_true("transition" %in% colnames(de_with_transition))
     expect_equal(
-      head(de_with_transition$transition, 2),
+      de_with_transition |>
+        filter(
+          marker_1 == "CD56",
+          marker_2 %in% c("HLA-ABC", "HLA-DR-DP-DQ")
+        ) |>
+        pull(transition),
       c("anti -> random", "anti -> random")
     )
 
@@ -438,3 +450,48 @@ test_that("add_proximity_transition replaces an existing transition column", {
     c("random -> random", "random -> random", NA_character_)
   )
 })
+
+test_that("DuckDB Wilcoxon and lazy pivot guard against IEEE NaN values", {
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+
+  df <- tibble::tibble(
+    component = c("c1", "c2", "c3", "c4", "c1"),
+    marker_1 = c("CD3E", "CD3E", "CD3E", "CD3E", "CD4"),
+    marker_2 = c("CD4", "CD4", "CD4", "CD4", "CD8A"),
+    score = c(2.0, 2.5, -1.0, NaN, NaN)
+  )
+  DBI::dbWriteTable(con, "prox_nan", df)
+  lazy_nan <- dplyr::tbl(con, "prox_nan")
+
+  # Lazy pivot treats NaN identically to 0/NULL (drops CD4:CD8A which only had NaN, warns about c4)
+  expect_warning(
+    mat <- ProximityScoresToAssay(lazy_nan, values_from = "score"),
+    "only zero proximity scores"
+  )
+  expect_equal(rownames(mat), "CD3E:CD4")
+  expect_false(any(is.nan(as.numeric(mat))))
+
+  # DuckDB Wilcoxon treats NaN as missing/zero rather than > 0
+  cells_tbl <- data.frame(
+    grp_key = c("T", "T", "T", "T"),
+    side = c("tgt", "tgt", "ref", "ref"),
+    component = c("c1", "c2", "c3", "c4")
+  )
+  groups_tbl <- data.frame(grp_key = "T", n_tgt = 2L, n_ref = 2L)
+  res <- pixelatorR:::.run_duckdb_wilcox_comparisons(
+    lazy_prox = lazy_nan,
+    cells_tbl = cells_tbl,
+    group_sizes_tbl = groups_tbl,
+    proximity_metric = "score",
+    min_pct = 0,
+    min_diff_pct = -Inf,
+    diff_threshold = 0,
+    only_pos = FALSE
+  )
+  expect_equal(nrow(res), 1L)
+  expect_equal(res$pct_ref, 0.5)
+  expect_equal(res$med_ref, -0.5)
+  expect_false(any(is.nan(res$p)))
+})
+

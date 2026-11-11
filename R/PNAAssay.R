@@ -1247,11 +1247,11 @@ merge.PNAAssay <- function(
     )
   }
 
-  # Check if protein panels differ across objects
+  # Check if protein panels differ across objects (ignoring feature row order)
   feature_sets <- lapply(objects, rownames)
   panels_differ <- any(vapply(
     feature_sets[-1],
-    function(f) !identical(f, feature_sets[[1]]),
+    function(f) !setequal(f, feature_sets[[1]]),
     logical(1)
   ))
   if (panels_differ) {
@@ -1352,16 +1352,18 @@ merge.PNAAssay <- function(
     fs_map = fs_map
   )
 
-  # Add meta.features for PNAAssay (unioning feature metadata across objects)
+  # Union feature metadata across objects for both PNAAssay (v3) and PNAAssay5 (v5)
+  meta_dfs <- lapply(objects, function(obj) {
+    mf <- if (is(obj, "PNAAssay")) obj@meta.features else obj[[]]
+    mf <- mf |> select(any_of(c("control", "marker", "nuclear")))
+    mf$.feature_id <- rownames(obj)
+    mf
+  })
+  combined_mf <- bind_rows(meta_dfs)
+  combined_mf <- combined_mf[!duplicated(combined_mf$.feature_id), , drop = FALSE]
+  keep_cols <- setdiff(colnames(combined_mf), ".feature_id")
+
   if (is(merged_pna_assay, "PNAAssay")) {
-    meta_dfs <- lapply(objects, function(obj) {
-      mf <- obj@meta.features |> select(any_of(c("control", "marker", "nuclear")))
-      mf$.feature_id <- rownames(obj@meta.features)
-      mf
-    })
-    combined_mf <- bind_rows(meta_dfs)
-    combined_mf <- combined_mf[!duplicated(combined_mf$.feature_id), , drop = FALSE]
-    keep_cols <- setdiff(colnames(combined_mf), ".feature_id")
     if (length(keep_cols) > 0) {
       meta_features <- as.data.frame(
         combined_mf[, keep_cols, drop = FALSE],
@@ -1373,9 +1375,16 @@ merge.PNAAssay <- function(
     } else {
       meta_features <- data.frame(row.names = rownames(merged_pna_assay))
     }
-
-    # Place meta.features in PNAAssay
     merged_pna_assay@meta.features <- meta_features
+  } else if (is(merged_pna_assay, "PNAAssay5") && length(keep_cols) > 0) {
+    meta_features <- as.data.frame(
+      combined_mf[, keep_cols, drop = FALSE],
+      row.names = combined_mf$.feature_id,
+      check.names = FALSE
+    )
+    meta_features <- meta_features[rownames(merged_pna_assay), , drop = FALSE]
+    rownames(meta_features) <- rownames(merged_pna_assay)
+    merged_pna_assay[[colnames(meta_features)]] <- meta_features
   }
 
   return(merged_pna_assay)
