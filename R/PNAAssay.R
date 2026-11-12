@@ -1247,6 +1247,30 @@ merge.PNAAssay <- function(
     )
   }
 
+  # Check if protein panels differ across objects (ignoring feature row order)
+  feature_sets <- lapply(objects, rownames)
+  panels_differ <- any(vapply(
+    feature_sets[-1],
+    function(f) !setequal(f, feature_sets[[1]]),
+    logical(1)
+  ))
+  if (panels_differ) {
+    panel_sizes <- unique(lengths(feature_sets))
+    n_union <- length(Reduce(union, feature_sets))
+    cli::cli_warn(
+      c(
+        "!" = paste0(
+          "Objects being merged do not share identical protein panels ",
+          "(feature counts: {.val {panel_sizes}})."
+        ),
+        "i" = paste0(
+          "Taking the union of features ({.val {n_union}} total) ",
+          "and filling missing counts with 0."
+        )
+      )
+    )
+  }
+
   # Fetch standard assays
   standardassays <- lapply(objects, function(pna_assay) {
     assay <- as(object = pna_assay, Class = ifelse(is(pna_assay, "PNAAssay"), "Assay", "Assay5"))
@@ -1328,33 +1352,39 @@ merge.PNAAssay <- function(
     fs_map = fs_map
   )
 
-  # Add meta.features for PNAAssay
-  if (is(merged_pna_assay, "PNAAssay")) {
-    can_merge_meta_features <- TRUE
-    ob_features <- lapply(objects, function(x) rownames(x@meta.features))
-    for (i in 2:length(ob_features)) {
-      if (!identical(ob_features[[i]], ob_features[[1]])) {
-        cli_alert_danger(
-          c(
-            "Meta features are not the same across objects. ",
-            "Feature metadata is dropped from @meta.features in the merged object."
-          )
-        )
-        can_merge_meta_features <- FALSE
-        break
-      }
-    }
+  # Union feature metadata across objects for both PNAAssay (v3) and PNAAssay5 (v5)
+  meta_dfs <- lapply(objects, function(obj) {
+    mf <- if (is(obj, "PNAAssay")) obj@meta.features else obj[[]]
+    mf <- mf |> select(any_of(c("control", "marker", "nuclear")))
+    mf$.feature_id <- rownames(obj)
+    mf
+  })
+  combined_mf <- bind_rows(meta_dfs)
+  combined_mf <- combined_mf[!duplicated(combined_mf$.feature_id), , drop = FALSE]
+  keep_cols <- setdiff(colnames(combined_mf), ".feature_id")
 
-    if (can_merge_meta_features) {
-      meta_features <- objects[[1]]@meta.features |> select(any_of(c("control", "marker", "nuclear")))
+  if (is(merged_pna_assay, "PNAAssay")) {
+    if (length(keep_cols) > 0) {
+      meta_features <- as.data.frame(
+        combined_mf[, keep_cols, drop = FALSE],
+        row.names = combined_mf$.feature_id,
+        check.names = FALSE
+      )
+      meta_features <- meta_features[rownames(merged_pna_assay), , drop = FALSE]
+      rownames(meta_features) <- rownames(merged_pna_assay)
     } else {
-      # A valid Assay requires one meta.features row per feature, so keep the
-      # row names of the merged feature set and drop only the columns
       meta_features <- data.frame(row.names = rownames(merged_pna_assay))
     }
-
-    # Place meta.features in PNAAssay
     merged_pna_assay@meta.features <- meta_features
+  } else if (is(merged_pna_assay, "PNAAssay5") && length(keep_cols) > 0) {
+    meta_features <- as.data.frame(
+      combined_mf[, keep_cols, drop = FALSE],
+      row.names = combined_mf$.feature_id,
+      check.names = FALSE
+    )
+    meta_features <- meta_features[rownames(merged_pna_assay), , drop = FALSE]
+    rownames(meta_features) <- rownames(merged_pna_assay)
+    merged_pna_assay[[colnames(meta_features)]] <- meta_features
   }
 
   return(merged_pna_assay)

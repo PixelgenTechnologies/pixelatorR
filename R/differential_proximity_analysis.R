@@ -56,6 +56,11 @@ DifferentialProximityAnalysis.data.frame <- function(
     proximity_metric, min_cells_per_group, FALSE,
     cl = NULL, data_type = "proximity"
   )
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
+    cli::cli_abort(
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0).")
+    )
+  }
   backend <- match.arg(backend, choices = c("dplyr", "data.table"))
   if (backend == "data.table") {
     expect_dtplyr()
@@ -136,7 +141,9 @@ DifferentialProximityAnalysis.data.frame <- function(
     reference = reference,
     targets = targets,
     group_vars = group_vars,
-    verbose = verbose
+    verbose = verbose,
+    test_groups = test_groups,
+    min_cells_per_group = min_cells_per_group
   )
 
   # Create a list to store the results in
@@ -146,16 +153,24 @@ DifferentialProximityAnalysis.data.frame <- function(
 
   # iterate over group pairs
   for (i in seq_len(nrow(test_groups_keys))) {
-    if (verbose && check_global_verbosity()) {
-      cli_progress_update()
-    }
-
     # Fetch the current group keys
     # If group_vars=NULL, the key is simply one of targets.
     # Otherwise, the key is target + additional group_vars.
     cur_keys <- test_groups_keys[i, ]
     key <- as.character(cur_keys) |> paste(collapse = "_")
     groups_keep <- c(reference, cur_keys[, contrast_column, drop = TRUE])
+
+    if (verbose && check_global_verbosity()) {
+      cli_progress_update(
+        set = i,
+        status = .format_da_comparison_status(
+          cur_keys = cur_keys,
+          contrast_column = contrast_column,
+          reference = reference,
+          group_vars = group_vars
+        )
+      )
+    }
 
     # Filter data to the current comparison (contrast + group_vars)
     cur_test_groups <- .filter_cur_group(
@@ -298,6 +313,12 @@ DifferentialProximityAnalysis.Matrix <- function(
   ...
 ) {
   assert_single_value(only_pos, type = "bool")
+  assert_single_value(min_cells_per_group, type = "numeric")
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
+    cli::cli_abort(
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0).")
+    )
+  }
   # Validate group_data layout against the matrix `object`
   .validate_matrix_group_data(
     object = object,
@@ -340,20 +361,19 @@ DifferentialProximityAnalysis.Matrix <- function(
     reference = reference,
     targets = targets,
     group_vars = group_vars,
-    verbose = verbose
+    verbose = verbose,
+    test_groups = test_groups,
+    min_cells_per_group = min_cells_per_group
   )
 
   # Create a list to store the results in
   keys <- apply(test_groups_keys, 1, paste, collapse = "_")
   diff_prox_res <- rep(list(NULL), length(keys)) |>
     set_names(keys)
+  n_passed_cells <- 0L
 
   # iterate over group pairs
   for (i in seq_len(nrow(test_groups_keys))) {
-    if (verbose && check_global_verbosity()) {
-      cli_progress_update()
-    }
-
     # Fetch the current group keys
     cur_keys <- test_groups_keys[i, ]
     key <- as.character(cur_keys) |> paste(collapse = "_")
@@ -376,6 +396,19 @@ DifferentialProximityAnalysis.Matrix <- function(
 
     n_comps_reference <- length(components_reference)
     n_comps_target <- length(components_target)
+    if (verbose && check_global_verbosity()) {
+      cli_progress_update(
+        set = i,
+        status = .format_da_comparison_status(
+          cur_keys = cur_keys,
+          contrast_column = contrast_column,
+          reference = reference,
+          group_vars = group_vars,
+          n_tgt = n_comps_target,
+          n_ref = n_comps_reference
+        )
+      )
+    }
     if (n_comps_reference < min_cells_per_group || n_comps_target < min_cells_per_group) {
       target <- cur_keys[, contrast_column, drop = TRUE]
       if (ncol(cur_keys) > 1) {
@@ -404,6 +437,7 @@ DifferentialProximityAnalysis.Matrix <- function(
       next
     }
 
+    n_passed_cells <- n_passed_cells + 1L
     de_results <- .wilcox_de_test(
       object,
       cells_1 = components_target,
@@ -421,7 +455,7 @@ DifferentialProximityAnalysis.Matrix <- function(
     }
 
     # Tidy up the results
-    diff_prox_res[[key]] <- tibble(
+    res_tbl <- tibble(
       target = cur_keys[, contrast_column, drop = TRUE],
       reference = reference,
       pct_tgt = de_results$pct_1,
@@ -432,6 +466,9 @@ DifferentialProximityAnalysis.Matrix <- function(
       p = de_results$p_val,
       pair = rownames(de_results)
     ) |>
+      tidyr::separate(pair, into = c("marker_1", "marker_2"), sep = ":")
+    ord <- order(res_tbl$marker_1, res_tbl$marker_2, method = "radix")
+    diff_prox_res[[key]] <- res_tbl[ord, , drop = FALSE] |>
       .append_group_vars(cur_keys = cur_keys, group_vars = group_vars)
   }
 
@@ -441,11 +478,21 @@ DifferentialProximityAnalysis.Matrix <- function(
 
   valid_results <- sapply(diff_prox_res, function(x) !is.null(x))
   if (!any(valid_results)) {
-    cli::cli_abort("No valid results were generated. Please check your input data and parameters.")
+    .abort_no_valid_da_results(
+      n_total = nrow(test_groups_keys),
+      n_passed_cells = n_passed_cells,
+      min_cells_per_group = min_cells_per_group,
+      contrast_column = contrast_column,
+      group_vars = group_vars,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos
+    )
   }
 
   .finalize_da_results(diff_prox_res, p_adjust_method, group_vars) |>
-    tidyr::separate(pair, into = c("marker_1", "marker_2"), sep = ":")
+    relocate(marker_1, marker_2, .after = "p_adj")
 }
 
 
@@ -497,11 +544,50 @@ DifferentialProximityAnalysis.Seurat <- function(
 ) {
   # Validate input parameters
   assert_col_in_data(contrast_column, object[[]])
+  assert_single_value(lazy, type = "bool")
+
+  assert_single_value(min_cells_per_group, type = "numeric")
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
+    cli::cli_abort(
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0).")
+    )
+  }
 
   # Use default assay if assay = NULL
   assay <- .validate_or_set_assay(object, assay)
 
   method <- match.arg(method, choices = c("seurat", "legacy"))
+
+  # Add group data
+  group_data <- .select_group_data(object[[]], contrast_column, group_vars)
+
+  # Fast single-pass DuckDB path when lazy = TRUE and method = "seurat"
+  if (isTRUE(lazy) && identical(method, "seurat")) {
+    return(.run_lazy_duckdb_dpa_seurat(
+      object = object,
+      group_data_tbl = group_data,
+      contrast_column = contrast_column,
+      reference = reference,
+      targets = targets,
+      assay = assay,
+      group_vars = group_vars,
+      min_exp_join_count = min_exp_join_count,
+      min_cells_per_group = min_cells_per_group,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      proximity_metric = proximity_metric,
+      metric_type = metric_type,
+      p_adjust_method = p_adjust_method,
+      verbose = verbose,
+      ...
+    ))
+  }
+
+  active_targets <- targets %||% setdiff(unique(group_data[, contrast_column, drop = TRUE]), reference)
+  cells_keep <- group_data |>
+    filter(.data[[contrast_column]] %in% c(reference, active_targets)) |>
+    pull(component)
 
   # Fetch proximity scores
   proximity_data <- .load_proximity_for_da(
@@ -511,11 +597,10 @@ DifferentialProximityAnalysis.Seurat <- function(
     min_exp_join_count = min_exp_join_count,
     proximity_metric = proximity_metric,
     metric_type = metric_type,
-    method = method
+    method = method,
+    cells_keep = if (identical(method, "legacy")) cells_keep else NULL
   )
 
-  # Add group data
-  group_data <- .select_group_data(object[[]], contrast_column, group_vars)
   if (method == "seurat") {
     group_data <- group_data |>
       column_to_rownames("component")
@@ -869,6 +954,7 @@ FindAllProximityMarkers.Seurat <- function(
   )
 
   assay <- .validate_or_set_assay(object, assay, call = call)
+  assert_single_value(lazy, type = "bool", call = call)
   metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
   p_adjust_method <- match.arg(
     p_adjust_method,
@@ -886,6 +972,28 @@ FindAllProximityMarkers.Seurat <- function(
   )
   rest_label <- .make_rest_label(label_chr)
   .warn_missing_group_labels(label_chr, group_by)
+
+  if (isTRUE(lazy)) {
+    return(.run_lazy_duckdb_one_vs_rest_seurat(
+      object = object,
+      assay = assay,
+      label_chr = label_chr,
+      idents = idents,
+      rest_label = rest_label,
+      group_by = group_by,
+      min_exp_join_count = min_exp_join_count,
+      min_cells_per_group = min_cells_per_group,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos,
+      proximity_metric = proximity_metric,
+      metric_type = metric_type,
+      p_adjust_method = p_adjust_method,
+      verbose = verbose,
+      call = call
+    ))
+  }
 
   proximity_matrix <- .load_proximity_for_da(
     object = object,
@@ -1069,6 +1177,8 @@ FindAllProximityMarkers.data.frame <- function(
 #' @param proximity_metric Numeric column used when building the matrix.
 #' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
 #' @param method \code{"seurat"} returns a matrix and \code{"legacy"} returns a table.
+#' @param cells_keep Optional character vector of cell IDs to retain before
+#'   materializing the lazy table.
 #'
 #' @return A sparse matrix of marker pairs by cells, or a proximity table for the legacy method.
 #'
@@ -1080,7 +1190,8 @@ FindAllProximityMarkers.data.frame <- function(
   min_exp_join_count,
   proximity_metric,
   metric_type,
-  method
+  method,
+  cells_keep = NULL
 ) {
   method <- match.arg(method, choices = c("seurat", "legacy"))
   assert_single_value(lazy, type = "bool")
@@ -1107,14 +1218,756 @@ FindAllProximityMarkers.data.frame <- function(
     co = proximity_data |> filter(marker_1 != marker_2)
   ) |>
     filter(join_count_expected_mean >= min_exp_join_count)
+  if (!is.null(cells_keep)) {
+    proximity_data <- proximity_data |> filter(component %in% !!cells_keep)
+  }
   proximity_data <- proximity_data |> compute()
   if (method == "seurat") {
     proximity_data <- proximity_data |>
-      compute() |>
       ProximityScoresToAssay(values_from = proximity_metric) |>
       .pad_proximity_matrix(cells = colnames(object))
   }
   proximity_data
+}
+
+
+#' Compute exact Wilcoxon rank-sum p-values from sorted non-zero target and reference lists.
+#'
+#' Computes tie-corrected two-sided Wilcoxon rank-sum p-values (with continuity
+#' correction) identical to \code{.wilcox_p_sparse_exact()} by shifting positive
+#' ranks by the implicit zero block \code{n_zero_tot} and accounting for both
+#' the zero tie block (\code{n_zero_tot^3 - n_zero_tot}) and non-zero ties.
+#'
+#' @param neg_tgt List of sorted negative numeric vectors in the target group.
+#' @param pos_tgt List of sorted positive numeric vectors in the target group.
+#' @param neg_ref List of sorted negative numeric vectors in the reference group.
+#' @param pos_ref List of sorted positive numeric vectors in the reference group.
+#' @param n_tgt Integer vector of total cells in the target group per row.
+#' @param n_ref Integer vector of total cells in the reference group per row.
+#'
+#' @return A numeric vector of two-sided Wilcoxon rank-sum p-values.
+#'
+#' @noRd
+.wilcox_from_sorted_lists <- function(
+  neg_tgt,
+  pos_tgt,
+  neg_ref,
+  pos_ref,
+  n_tgt,
+  n_ref
+) {
+  n_rows <- length(n_tgt)
+  p_val <- rep(1.0, n_rows)
+  for (r in seq_len(n_rows)) {
+    nt <- as.numeric(n_tgt[[r]])
+    nr <- as.numeric(n_ref[[r]])
+    n_tot <- nt + nr
+    v_neg_t <- neg_tgt[[r]] %||% numeric()
+    v_pos_t <- pos_tgt[[r]] %||% numeric()
+    v_neg_r <- neg_ref[[r]] %||% numeric()
+    v_pos_r <- pos_ref[[r]] %||% numeric()
+
+    k_t <- length(v_neg_t) + length(v_pos_t)
+    k_r <- length(v_neg_r) + length(v_pos_r)
+    n_zero_t <- nt - k_t
+    n_zero_r <- nr - k_r
+    n_zero_tot <- n_zero_t + n_zero_r
+    n_neg_tot <- length(v_neg_t) + length(v_neg_r)
+
+    vals_nz <- c(v_neg_t, v_pos_t, v_neg_r, v_pos_r)
+    n_nz <- length(vals_nz)
+    if (n_nz == 0L) next
+
+    rk_nz <- rank(vals_nz, ties.method = "average")
+    pos_mask <- vals_nz > 0
+    rk_nz[pos_mask] <- rk_nz[pos_mask] + n_zero_tot
+
+    sum_rk_nz_t <- if (k_t > 0L) sum(rk_nz[seq_len(k_t)]) else 0.0
+    avg_rk_zero <- n_neg_tot + (n_zero_tot + 1.0) / 2.0
+    rank_sum_1 <- sum_rk_nz_t + n_zero_t * avg_rk_zero
+    u <- rank_sum_1 - nt * (nt + 1.0) / 2.0
+
+    tie_zero <- if (n_zero_tot > 1.0) n_zero_tot^3 - n_zero_tot else 0.0
+    tie_nonzero <- 0.0
+    if (n_nz > 1L) {
+      runs <- as.numeric(rle(sort(vals_nz))$lengths)
+      runs <- runs[runs > 1.0]
+      if (length(runs) > 0L) {
+        tie_nonzero <- sum(runs^3 - runs)
+      }
+    }
+    tie_const <- tie_zero + tie_nonzero
+    sigma <- sqrt(
+      (nt * nr / 12.0) * ((n_tot + 1.0) - tie_const / (n_tot * (n_tot - 1.0)))
+    )
+    if (is.finite(sigma) && sigma > 0.0) {
+      z <- u - (nt * nr) / 2.0
+      z <- (z - sign(z) * 0.5) / sigma
+      p_val[[r]] <- 2.0 * min(stats::pnorm(z), stats::pnorm(z, lower.tail = FALSE))
+    }
+  }
+  p_val
+}
+
+
+#' Execute single-pass zero-padded Wilcoxon differential proximity comparisons in DuckDB.
+#'
+#' @param lazy_prox A \code{tbl_lazy} proximity table.
+#' @param cells_tbl A \code{data.frame} mapping \code{component} to
+#'   \code{grp_key} and \code{side} (\code{"tgt"} or \code{"ref"}).
+#' @param group_sizes_tbl A \code{data.frame} with columns \code{grp_key}, \code{n_tgt}, and \code{n_ref}.
+#' @param proximity_metric Name of the numeric proximity column to test.
+#' @param diff_threshold Minimum absolute median difference required to test a pair.
+#' @param min_pct Minimum fraction of cells with a non-zero score in either group.
+#' @param min_diff_pct Minimum difference in that fraction between the two groups.
+#' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
+#' @param call Calling environment used in error messages.
+#'
+#' @return A \code{data.frame} of filtered marker-pair summary statistics and Wilcoxon p-values across all comparisons.
+#'
+#' @noRd
+.run_duckdb_wilcox_comparisons <- function(
+  lazy_prox,
+  cells_tbl,
+  group_sizes_tbl,
+  proximity_metric,
+  diff_threshold,
+  min_pct,
+  min_diff_pct,
+  only_pos,
+  call = caller_env()
+) {
+  assert_single_value(proximity_metric, type = "string", call = call)
+  assert_col_in_data(proximity_metric, lazy_prox, call = call)
+  assert_col_class(proximity_metric, lazy_prox, classes = "numeric", call = call)
+
+  con <- lazy_prox$src$con
+  base_sql <- as.character(dbplyr::sql_render(lazy_prox))
+  val_col <- as.character(DBI::dbQuoteIdentifier(con, proximity_metric))
+
+  cells_tbl_name <- paste0("__pxl_da_cells_", .generate_random_string(8))
+  groups_tbl_name <- paste0("__pxl_da_groups_", .generate_random_string(8))
+  DBI::dbWriteTable(con, cells_tbl_name, cells_tbl, overwrite = TRUE, temporary = TRUE)
+  DBI::dbWriteTable(con, groups_tbl_name, group_sizes_tbl, overwrite = TRUE, temporary = TRUE)
+  on.exit(
+    {
+      if (DBI::dbIsValid(con)) {
+        try(DBI::dbRemoveTable(con, cells_tbl_name), silent = TRUE)
+        try(DBI::dbRemoveTable(con, groups_tbl_name), silent = TRUE)
+      }
+    },
+    add = TRUE
+  )
+
+  sql_query <- glue::glue(
+    "
+    WITH agg_and_pairs AS (
+      SELECT
+        c.grp_key,
+        p.marker_1,
+        p.marker_2,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'tgt') AS INTEGER) AS k_tgt,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'ref') AS INTEGER) AS k_ref,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'tgt' AND CAST(p.{val_col} AS DOUBLE) < 0) AS INTEGER) AS nn_tgt,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'tgt' AND CAST(p.{val_col} AS DOUBLE) > 0) AS INTEGER) AS np_tgt,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'ref' AND CAST(p.{val_col} AS DOUBLE) < 0) AS INTEGER) AS nn_ref,
+        CAST(COUNT(*) FILTER (WHERE c.side = 'ref' AND CAST(p.{val_col} AS DOUBLE) > 0) AS INTEGER) AS np_ref,
+        list_sort(
+          LIST(CAST(p.{val_col} AS DOUBLE)) FILTER (WHERE c.side = 'tgt' AND CAST(p.{val_col} AS DOUBLE) < 0)
+        ) AS neg_tgt,
+        list_sort(
+          LIST(CAST(p.{val_col} AS DOUBLE)) FILTER (WHERE c.side = 'tgt' AND CAST(p.{val_col} AS DOUBLE) > 0)
+        ) AS pos_tgt,
+        list_sort(
+          LIST(CAST(p.{val_col} AS DOUBLE)) FILTER (WHERE c.side = 'ref' AND CAST(p.{val_col} AS DOUBLE) < 0)
+        ) AS neg_ref,
+        list_sort(
+          LIST(CAST(p.{val_col} AS DOUBLE)) FILTER (WHERE c.side = 'ref' AND CAST(p.{val_col} AS DOUBLE) > 0)
+        ) AS pos_ref
+      FROM ({base_sql}) p
+      LEFT JOIN {cells_tbl_name} c ON p.component = c.component
+      WHERE p.{val_col} IS NOT NULL
+        AND NOT isnan(CAST(p.{val_col} AS DOUBLE))
+        AND p.{val_col} != 0
+      GROUP BY c.grp_key, p.marker_1, p.marker_2
+    ),
+    pair_set AS (
+      SELECT DISTINCT marker_1, marker_2
+      FROM agg_and_pairs
+    ),
+    pair_counts AS (
+      SELECT
+        g.grp_key,
+        po.marker_1,
+        po.marker_2,
+        g.n_tgt,
+        g.n_ref,
+        COALESCE(agg.k_tgt, 0) AS k_tgt,
+        COALESCE(agg.k_ref, 0) AS k_ref,
+        COALESCE(agg.nn_tgt, 0) AS nn_tgt,
+        COALESCE(agg.np_tgt, 0) AS np_tgt,
+        COALESCE(agg.nn_ref, 0) AS nn_ref,
+        COALESCE(agg.np_ref, 0) AS np_ref,
+        agg.neg_tgt,
+        agg.pos_tgt,
+        agg.neg_ref,
+        agg.pos_ref
+      FROM {groups_tbl_name} g
+      CROSS JOIN pair_set po
+      LEFT JOIN agg_and_pairs agg
+        ON g.grp_key = agg.grp_key
+        AND po.marker_1 = agg.marker_1
+        AND po.marker_2 = agg.marker_2
+    ),
+    pair_medians AS (
+      SELECT
+        grp_key, marker_1, marker_2, n_tgt, n_ref, k_tgt, k_ref,
+        neg_tgt, pos_tgt, neg_ref, pos_ref,
+        0.5 * (
+          CASE WHEN ((n_tgt + 1) // 2) <= nn_tgt THEN list_extract(neg_tgt, (n_tgt + 1) // 2)
+               WHEN ((n_tgt + 1) // 2) <= (n_tgt - np_tgt) THEN 0.0
+               ELSE list_extract(pos_tgt, ((n_tgt + 1) // 2) - (n_tgt - np_tgt)) END +
+          CASE WHEN ((n_tgt + 2) // 2) <= nn_tgt THEN list_extract(neg_tgt, (n_tgt + 2) // 2)
+               WHEN ((n_tgt + 2) // 2) <= (n_tgt - np_tgt) THEN 0.0
+               ELSE list_extract(pos_tgt, ((n_tgt + 2) // 2) - (n_tgt - np_tgt)) END
+        ) AS med_tgt,
+        0.5 * (
+          CASE WHEN ((n_ref + 1) // 2) <= nn_ref THEN list_extract(neg_ref, (n_ref + 1) // 2)
+               WHEN ((n_ref + 1) // 2) <= (n_ref - np_ref) THEN 0.0
+               ELSE list_extract(pos_ref, ((n_ref + 1) // 2) - (n_ref - np_ref)) END +
+          CASE WHEN ((n_ref + 2) // 2) <= nn_ref THEN list_extract(neg_ref, (n_ref + 2) // 2)
+               WHEN ((n_ref + 2) // 2) <= (n_ref - np_ref) THEN 0.0
+               ELSE list_extract(pos_ref, ((n_ref + 2) // 2) - (n_ref - np_ref)) END
+        ) AS med_ref
+      FROM pair_counts
+    )
+    SELECT * FROM pair_medians ORDER BY grp_key, marker_1, marker_2
+    "
+  )
+
+  agg_df <- DBI::dbGetQuery(con, sql_query)
+  all_grp_keys <- as.character(group_sizes_tbl$grp_key)
+  empty_reasons <- set_names(rep(NA_character_, length(all_grp_keys)), all_grp_keys)
+
+  if (nrow(agg_df) == 0L) {
+    empty_reasons[] <- "min_pct"
+  } else {
+    agg_df$pct_tgt <- round(agg_df$k_tgt / agg_df$n_tgt, digits = 3)
+    agg_df$pct_ref <- round(agg_df$k_ref / agg_df$n_ref, digits = 3)
+    agg_df$diff_median <- agg_df$med_tgt - agg_df$med_ref
+
+    pass_pct <- pmax(agg_df$pct_tgt, agg_df$pct_ref) >= min_pct
+    pass_diff_pct <- pass_pct &
+      ((pmax(agg_df$pct_tgt, agg_df$pct_ref) - pmin(agg_df$pct_tgt, agg_df$pct_ref)) >= min_diff_pct)
+    pass_diff <- if (isTRUE(only_pos)) {
+      pass_diff_pct & (agg_df$diff_median > 0) & (agg_df$diff_median >= diff_threshold)
+    } else {
+      pass_diff_pct & (abs(agg_df$diff_median) >= diff_threshold)
+    }
+
+    for (gk in all_grp_keys) {
+      idx <- which(agg_df$grp_key == gk)
+      if (!any(pass_pct[idx])) {
+        empty_reasons[[gk]] <- "min_pct"
+      } else if (!any(pass_diff_pct[idx])) {
+        empty_reasons[[gk]] <- "min_diff_pct"
+      } else if (!any(pass_diff[idx])) {
+        empty_reasons[[gk]] <- if (isTRUE(only_pos)) "only_pos" else "min_diff"
+      }
+    }
+    agg_df <- agg_df[pass_diff, , drop = FALSE]
+  }
+
+  if (nrow(agg_df) == 0L) {
+    out_empty <- tibble(
+      grp_key = character(),
+      marker_1 = character(),
+      marker_2 = character(),
+      pct_tgt = numeric(),
+      pct_ref = numeric(),
+      med_tgt = numeric(),
+      med_ref = numeric(),
+      diff_median = numeric(),
+      p = numeric()
+    )
+    attr(out_empty, "empty_reasons") <- empty_reasons
+    return(out_empty)
+  }
+
+  agg_df$p <- .wilcox_from_sorted_lists(
+    neg_tgt = agg_df$neg_tgt,
+    pos_tgt = agg_df$pos_tgt,
+    neg_ref = agg_df$neg_ref,
+    pos_ref = agg_df$pos_ref,
+    n_tgt = agg_df$n_tgt,
+    n_ref = agg_df$n_ref
+  )
+  attr(agg_df, "empty_reasons") <- empty_reasons
+  agg_df
+}
+
+
+#' Emit the same empty-comparison warning as `.wilcox_de_test()`.
+#'
+#' @param reason Character string indicating which filter dropped all features
+#'   (\code{"min_pct"}, \code{"min_diff_pct"}, \code{"only_pos"}, or \code{"min_diff"}).
+#' @param only_pos Logical indicating whether only positive median differences were tested.
+#'
+#' @return Nothing. Called for its warning side effect.
+#'
+#' @noRd
+.warn_empty_wilcox_comparison <- function(reason, only_pos = FALSE) {
+  if (identical(reason, "min_pct")) {
+    cli::cli_warn("No features pass min_pct threshold; returning empty data.frame")
+  } else if (identical(reason, "min_diff_pct")) {
+    cli::cli_warn("No features pass min_diff_pct threshold; returning empty data.frame")
+  } else if (identical(reason, "only_pos") || isTRUE(only_pos)) {
+    cli::cli_warn(
+      "No features have a higher median in the target group; returning empty data.frame"
+    )
+  } else {
+    cli::cli_warn("No features pass min_diff threshold; returning empty data.frame")
+  }
+}
+
+
+#' Fast single-pass DuckDB path for \code{DifferentialProximityAnalysis.Seurat(..., lazy = TRUE, method = "seurat")}.
+#'
+#' @param object A \code{Seurat} object.
+#' @param group_data_tbl A tibble of cell metadata with a \code{component} column.
+#' @param contrast_column The contrast column name.
+#' @param reference The reference level.
+#' @param targets Target levels of the contrast column.
+#' @param assay Name of the assay to read.
+#' @param group_vars Optional grouping variables.
+#' @param min_exp_join_count Minimum expected join count for a marker pair.
+#' @param min_cells_per_group Minimum cells required on each side of a comparison.
+#' @param diff_threshold Minimum absolute median difference required to test a pair.
+#' @param min_pct Minimum fraction of cells with a non-zero score in either group.
+#' @param min_diff_pct Minimum difference in that fraction between the two groups.
+#' @param proximity_metric Name of the numeric proximity column to test.
+#' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
+#' @param p_adjust_method Method for multiple-testing adjustment.
+#' @param verbose Logical indicating whether to print setup and progress messages.
+#' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
+#' @param ... Additional arguments (currently unused).
+#'
+#' @return A \code{tbl_df} of differential proximity results.
+#'
+#' @noRd
+.run_lazy_duckdb_dpa_seurat <- function(
+  object,
+  group_data_tbl,
+  contrast_column,
+  reference,
+  targets,
+  assay,
+  group_vars,
+  min_exp_join_count,
+  min_cells_per_group,
+  diff_threshold,
+  min_pct,
+  min_diff_pct,
+  proximity_metric,
+  metric_type,
+  p_adjust_method,
+  verbose,
+  only_pos = FALSE,
+  ...
+) {
+  call <- caller_env()
+  assert_single_value(only_pos, type = "bool", call = call)
+  metric_type <- match.arg(metric_type, choices = c("all", "self", "co"))
+  p_adjust_method <- match.arg(
+    p_adjust_method,
+    choices = c("bonferroni", "holm", "hochberg", "hommel", "BH", "BY", "fdr")
+  )
+
+  group_data_df <- column_to_rownames(group_data_tbl, "component")
+  dummy_mat <- Matrix::sparseMatrix(
+    i = integer(0),
+    j = integer(0),
+    dims = c(1L, ncol(object)),
+    dimnames = list("pair1", colnames(object))
+  )
+  .validate_matrix_group_data(
+    object = dummy_mat,
+    group_data = group_data_df,
+    contrast_column = contrast_column,
+    reference = reference,
+    targets = targets,
+    group_vars = group_vars,
+    call = call
+  )
+  assert_single_value(min_cells_per_group, type = "numeric", call = call)
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
+    cli::cli_abort(
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0)."),
+      call = call
+    )
+  }
+
+  targets <- targets %||% setdiff(unique(group_data_df[, contrast_column, drop = TRUE]), reference)
+  grouped <- .compute_test_groups_keys(
+    data = group_data_tbl,
+    group_cols = c(contrast_column, group_vars),
+    contrast_column = contrast_column,
+    targets = targets
+  )
+  test_groups <- grouped$test_groups
+  test_groups_keys <- grouped$keys
+
+  proximity_data <- ProximityScores(object, assay = assay, lazy = TRUE)
+  con <- proximity_data$src$con
+  on.exit(
+    {
+      if (!is.null(con) && DBI::dbIsValid(con)) {
+        DBI::dbDisconnect(con, shutdown = TRUE)
+      }
+    },
+    add = TRUE
+  )
+  assert_single_value(proximity_metric, type = "string", call = call)
+  assert_col_in_data(proximity_metric, proximity_data, call = call)
+  assert_col_class(proximity_metric, proximity_data, classes = "numeric", call = call)
+
+  proximity_data <- switch(metric_type,
+    all = proximity_data,
+    self = proximity_data |> filter(marker_1 == marker_2),
+    co = proximity_data |> filter(marker_1 != marker_2)
+  ) |>
+    filter(join_count_expected_mean >= min_exp_join_count)
+
+  .print_da_setup(
+    keys = test_groups_keys,
+    contrast_column = contrast_column,
+    reference = reference,
+    targets = targets,
+    group_vars = group_vars,
+    verbose = verbose,
+    test_groups = test_groups,
+    min_cells_per_group = min_cells_per_group
+  )
+
+  keys <- apply(test_groups_keys, 1, paste, collapse = "_")
+  diff_prox_res <- set_names(rep(list(NULL), length(keys)), keys)
+
+  cell_rows <- list()
+  group_size_rows <- list()
+  valid_key_indices <- integer()
+
+  for (i in seq_len(nrow(test_groups_keys))) {
+    cur_keys <- test_groups_keys[i, ]
+    grp_id <- paste0("g_", sprintf("%06d", i))
+    cur_test_groups <- .filter_cur_group(
+      test_groups = test_groups,
+      cur_keys = cur_keys,
+      contrast_column = contrast_column,
+      reference = reference,
+      group_vars = group_vars
+    )
+    components_reference <- cur_test_groups |>
+      filter(!!sym(contrast_column) == reference) |>
+      pull(component)
+    components_target <- cur_test_groups |>
+      filter(!!sym(contrast_column) != reference) |>
+      pull(component)
+
+    n_comps_reference <- length(components_reference)
+    n_comps_target <- length(components_target)
+    if (n_comps_reference < min_cells_per_group || n_comps_target < min_cells_per_group) {
+      target <- cur_keys[, contrast_column, drop = TRUE]
+      if (ncol(cur_keys) > 1) {
+        cur_reference <- paste0(reference, " (", paste(cur_keys[, group_vars, drop = TRUE], collapse = ", "), ")")
+        cur_target <- paste0(target, " (", paste(cur_keys[, group_vars, drop = TRUE], collapse = ", "), ")")
+      } else {
+        cur_reference <- reference
+        cur_target <- target
+      }
+      if (n_comps_reference < min_cells_per_group && n_comps_target < min_cells_per_group) {
+        cli::cli_warn(
+          "Skipping {cur_target} vs {cur_reference} because both
+           groups have fewer than {.val {min_cells_per_group}} cells."
+        )
+      } else if (n_comps_reference < min_cells_per_group && n_comps_target >= min_cells_per_group) {
+        cli::cli_warn(
+          "Skipping {cur_target} vs {cur_reference} because the reference
+           group has fewer than {.val {min_cells_per_group}} cells."
+        )
+      } else if (n_comps_target < min_cells_per_group && n_comps_reference >= min_cells_per_group) {
+        cli::cli_warn(
+          "Skipping {cur_target} vs {cur_reference} because the target group
+           has fewer than {.val {min_cells_per_group}} cells."
+        )
+      }
+      next
+    }
+
+    valid_key_indices <- c(valid_key_indices, i)
+    cell_rows[[length(cell_rows) + 1L]] <- tibble(
+      component = c(components_target, components_reference),
+      grp_key = rep(grp_id, n_comps_target + n_comps_reference),
+      side = c(rep("tgt", n_comps_target), rep("ref", n_comps_reference))
+    )
+    group_size_rows[[length(group_size_rows) + 1L]] <- tibble(
+      grp_key = grp_id,
+      n_tgt = as.integer(n_comps_target),
+      n_ref = as.integer(n_comps_reference)
+    )
+  }
+
+  if (length(valid_key_indices) > 0L) {
+    agg_df <- .run_duckdb_wilcox_comparisons(
+      lazy_prox = proximity_data,
+      cells_tbl = bind_rows(cell_rows),
+      group_sizes_tbl = bind_rows(group_size_rows),
+      proximity_metric = proximity_metric,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos,
+      call = call
+    )
+
+    empty_reasons <- attr(agg_df, "empty_reasons")
+    for (i in valid_key_indices) {
+      cur_keys <- test_groups_keys[i, ]
+      key <- paste(as.character(cur_keys), collapse = "_")
+      grp_id <- paste0("g_", sprintf("%06d", i))
+      if (verbose && check_global_verbosity()) {
+        sz_row <- group_size_rows[[match(i, valid_key_indices)]]
+        cli_progress_update(
+          set = i,
+          status = .format_da_comparison_status(
+            cur_keys = cur_keys,
+            contrast_column = contrast_column,
+            reference = reference,
+            group_vars = group_vars,
+            n_tgt = sz_row$n_tgt,
+            n_ref = sz_row$n_ref
+          )
+        )
+      }
+      sub_df <- agg_df[agg_df$grp_key == grp_id, , drop = FALSE]
+      if (nrow(sub_df) == 0L) {
+        .warn_empty_wilcox_comparison(
+          reason = empty_reasons[[grp_id]],
+          only_pos = only_pos
+        )
+        next
+      }
+      diff_prox_res[[key]] <- tibble(
+        target = cur_keys[, contrast_column, drop = TRUE],
+        reference = reference,
+        pct_tgt = sub_df$pct_tgt,
+        pct_ref = sub_df$pct_ref,
+        med_tgt = sub_df$med_tgt,
+        med_ref = sub_df$med_ref,
+        diff_median = sub_df$diff_median,
+        p = sub_df$p,
+        marker_1 = sub_df$marker_1,
+        marker_2 = sub_df$marker_2
+      ) |>
+        .append_group_vars(cur_keys = cur_keys, group_vars = group_vars)
+    }
+  }
+
+  if (verbose && check_global_verbosity()) {
+    cli_progress_done()
+  }
+
+  valid_results <- sapply(diff_prox_res, function(x) !is.null(x))
+  if (!any(valid_results)) {
+    .abort_no_valid_da_results(
+      n_total = nrow(test_groups_keys),
+      n_passed_cells = length(valid_key_indices),
+      min_cells_per_group = min_cells_per_group,
+      contrast_column = contrast_column,
+      group_vars = group_vars,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos,
+      call = call
+    )
+  }
+
+  .finalize_da_results(diff_prox_res, p_adjust_method, group_vars)
+}
+
+
+#' Fast single-pass DuckDB path for \code{FindAllProximityMarkers.Seurat(..., lazy = TRUE)}.
+#'
+#' @param object A \code{Seurat} object.
+#' @param assay Name of the assay to read.
+#' @param label_chr Named character vector of group labels keyed by cell ID.
+#' @param idents Character vector of group levels to test.
+#' @param rest_label Label used for the pooled remainder group.
+#' @param group_by Metadata column name defining the groups.
+#' @param min_exp_join_count Minimum expected join count for a marker pair.
+#' @param min_cells_per_group Minimum cells required on each side of a comparison.
+#' @param diff_threshold Minimum absolute median difference required to test a pair.
+#' @param min_pct Minimum fraction of cells with a non-zero score in either group.
+#' @param min_diff_pct Minimum difference in that fraction between the two groups.
+#' @param only_pos If \code{TRUE}, test only pairs with a higher median in the target.
+#' @param proximity_metric Name of the numeric proximity column to test.
+#' @param metric_type One of \code{"all"}, \code{"self"}, or \code{"co"}.
+#' @param p_adjust_method Method for multiple-testing adjustment.
+#' @param verbose Logical indicating whether to show a progress bar.
+#' @param call Calling environment used in error messages.
+#'
+#' @return A \code{tbl_df} of one-versus-rest differential proximity results.
+#'
+#' @noRd
+.run_lazy_duckdb_one_vs_rest_seurat <- function(
+  object,
+  assay,
+  label_chr,
+  idents,
+  rest_label,
+  group_by,
+  min_exp_join_count,
+  min_cells_per_group,
+  diff_threshold,
+  min_pct,
+  min_diff_pct,
+  only_pos,
+  proximity_metric,
+  metric_type,
+  p_adjust_method,
+  verbose,
+  call = caller_env()
+) {
+  proximity_data <- ProximityScores(object, assay = assay, lazy = TRUE)
+  con <- proximity_data$src$con
+  on.exit(
+    {
+      if (!is.null(con) && DBI::dbIsValid(con)) {
+        DBI::dbDisconnect(con, shutdown = TRUE)
+      }
+    },
+    add = TRUE
+  )
+  assert_single_value(proximity_metric, type = "string", call = call)
+  assert_col_in_data(proximity_metric, proximity_data, call = call)
+  assert_col_class(proximity_metric, proximity_data, classes = "numeric", call = call)
+
+  proximity_data <- switch(metric_type,
+    all = proximity_data,
+    self = proximity_data |> filter(marker_1 == marker_2),
+    co = proximity_data |> filter(marker_1 != marker_2)
+  ) |>
+    filter(join_count_expected_mean >= min_exp_join_count)
+
+  cells <- colnames(object)
+  cell_labels <- .labels_for_cells(label_chr, cells, group_by)
+
+  if (verbose && check_global_verbosity()) {
+    cli::cli_progress_bar(
+      format = paste0(
+        "Running one-versus-rest proximity tests ",
+        "[{cli::pb_bar}] {cli::pb_percent} | ",
+        "{cli::pb_current}/{cli::pb_total} | {cli::pb_status}"
+      ),
+      total = length(idents),
+      clear = FALSE,
+      status = paste0("starting (rest = ", rest_label, ")")
+    )
+  }
+
+  cell_rows <- list()
+  group_size_rows <- list()
+  valid_indices <- integer()
+
+  for (i in seq_along(idents)) {
+    ident <- idents[[i]]
+    contrast <- .assign_one_vs_rest(cell_labels, ident, rest_label)
+    cells_target <- cells[!is.na(contrast) & contrast == ident]
+    cells_reference <- cells[!is.na(contrast) & contrast == rest_label]
+    n_tgt <- length(cells_target)
+    n_ref <- length(cells_reference)
+    if (n_tgt < min_cells_per_group || n_ref < min_cells_per_group) {
+      .warn_skip_one_vs_rest(
+        ident = ident,
+        rest_label = rest_label,
+        n_tgt = n_tgt,
+        n_ref = n_ref,
+        min_cells_per_group = min_cells_per_group
+      )
+      next
+    }
+    valid_indices <- c(valid_indices, i)
+    grp_id <- paste0("g_", sprintf("%06d", i))
+    cell_rows[[length(cell_rows) + 1L]] <- tibble(
+      component = c(cells_target, cells_reference),
+      grp_key = rep(grp_id, n_tgt + n_ref),
+      side = c(rep("tgt", n_tgt), rep("ref", n_ref))
+    )
+    group_size_rows[[length(group_size_rows) + 1L]] <- tibble(
+      grp_key = grp_id,
+      n_tgt = as.integer(n_tgt),
+      n_ref = as.integer(n_ref)
+    )
+  }
+
+  results <- vector("list", length(idents))
+  if (length(valid_indices) > 0L) {
+    agg_df <- .run_duckdb_wilcox_comparisons(
+      lazy_prox = proximity_data,
+      cells_tbl = bind_rows(cell_rows),
+      group_sizes_tbl = bind_rows(group_size_rows),
+      proximity_metric = proximity_metric,
+      diff_threshold = diff_threshold,
+      min_pct = min_pct,
+      min_diff_pct = min_diff_pct,
+      only_pos = only_pos,
+      call = call
+    )
+
+    empty_reasons <- attr(agg_df, "empty_reasons")
+    for (i in valid_indices) {
+      ident <- idents[[i]]
+      grp_id <- paste0("g_", sprintf("%06d", i))
+      if (verbose && check_global_verbosity()) {
+        cli::cli_progress_update(set = i)
+      }
+      sub_df <- agg_df[agg_df$grp_key == grp_id, , drop = FALSE]
+      if (nrow(sub_df) == 0L) {
+        .warn_empty_wilcox_comparison(
+          reason = empty_reasons[[grp_id]],
+          only_pos = only_pos
+        )
+        next
+      }
+      results[[i]] <- tibble(
+        target = ident,
+        pct_tgt = sub_df$pct_tgt,
+        pct_ref = sub_df$pct_ref,
+        med_tgt = sub_df$med_tgt,
+        med_rest = sub_df$med_ref,
+        diff_median = sub_df$diff_median,
+        p = sub_df$p,
+        p_adj = p.adjust(sub_df$p, method = p_adjust_method),
+        marker_1 = sub_df$marker_1,
+        marker_2 = sub_df$marker_2
+      )
+    }
+  }
+
+  out <- bind_rows(results)
+  if (nrow(out) == 0L) {
+    cli::cli_abort(
+      c(
+        "x" = "No one-versus-rest proximity tests produced results.",
+        "i" = "Check {.arg group_by} and {.arg min_cells_per_group}."
+      ),
+      call = call
+    )
+  }
+  if (verbose && check_global_verbosity()) {
+    cli::cli_progress_done()
+  }
+  out
 }
 
 
@@ -1211,9 +2064,9 @@ FindAllProximityMarkers.data.frame <- function(
   call = caller_env()
 ) {
   assert_single_value(min_cells_per_group, type = "numeric", call = call)
-  if (is.na(min_cells_per_group) || min_cells_per_group < 0) {
+  if (is.na(min_cells_per_group) || min_cells_per_group <= 0) {
     cli::cli_abort(
-      c("x" = "{.arg min_cells_per_group} must be a non-negative number."),
+      c("x" = "{.arg min_cells_per_group} must be a positive number (> 0)."),
       call = call
     )
   }
@@ -1483,7 +2336,7 @@ FindAllProximityMarkers.data.frame <- function(
       next
     }
 
-    results[[i]] <- tibble(
+    res_tbl <- tibble(
       target = ident,
       pct_tgt = de_results$pct_1,
       pct_ref = de_results$pct_2,
@@ -1495,6 +2348,8 @@ FindAllProximityMarkers.data.frame <- function(
       marker_1 = sub(":.*$", "", rownames(de_results)),
       marker_2 = sub("^[^:]*:", "", rownames(de_results))
     )
+    ord <- order(res_tbl$marker_1, res_tbl$marker_2, method = "radix")
+    results[[i]] <- res_tbl[ord, , drop = FALSE]
   }
 
   out <- bind_rows(results)

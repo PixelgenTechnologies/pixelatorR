@@ -157,12 +157,15 @@ lazy_load_table.default <- function(
     create_view_sql <- glue::glue("CREATE OR REPLACE VIEW {view_name} AS {union_sql}")
     DBI::dbExecute(con_federated, create_view_sql)
     lazy_table <- tbl(con_federated, view_name)
+    attr(lazy_table, "pxl_unique_keys") <- TRUE
   } else {
     # don’t union, return a list of lazy tables (one per DB)
     lazy_table <-
       queries |>
       lapply(function(query, db) {
-        tbl(con_federated, dbplyr::sql(query))
+        out <- tbl(con_federated, dbplyr::sql(query))
+        attr(out, "pxl_unique_keys") <- TRUE
+        out
       }) |>
       set_names(fs_map$sample)
   }

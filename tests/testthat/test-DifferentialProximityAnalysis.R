@@ -28,6 +28,21 @@ for (assay_version in c("v3", "v5")) {
       )
     })
 
+    # Test single comparison with verbose = TRUE
+    expect_no_error(
+      utils::capture.output(
+        DifferentialProximityAnalysis(
+          seur_obj_big,
+          contrast_column = "cell_type",
+          targets = "CD4T",
+          reference = "pDC",
+          diff_threshold = 1,
+          verbose = TRUE
+        ),
+        type = "message"
+      )
+    )
+
     # Test multiple targets
     expect_no_error({
       de_results_multiple_targets <- DifferentialProximityAnalysis(
@@ -88,7 +103,14 @@ for (assay_version in c("v3", "v5")) {
         class = c("tbl_df", "tbl", "data.frame")
       )
 
-    expect_equal(head(de_results1, 2), expected_data)
+    expect_equal(
+      de_results1 |>
+        filter(
+          marker_1 == "CD56",
+          marker_2 %in% c("HLA-ABC", "HLA-DR-DP-DQ")
+        ),
+      expected_data
+    )
     expect_true(all(c("med_tgt", "med_ref") %in% colnames(de_results)))
     expect_false(any(c("data_type", "alternative") %in% colnames(de_results)))
     expect_equal(de_results$diff_median, de_results$med_tgt - de_results$med_ref)
@@ -138,9 +160,86 @@ for (assay_version in c("v3", "v5")) {
     de_with_transition <- add_proximity_transition(de_results_filt, tau = 0.15)
     expect_true("transition" %in% colnames(de_with_transition))
     expect_equal(
-      head(de_with_transition$transition, 2),
+      de_with_transition |>
+        filter(
+          marker_1 == "CD56",
+          marker_2 %in% c("HLA-ABC", "HLA-DR-DP-DQ")
+        ) |>
+        pull(transition),
       c("anti -> random", "anti -> random")
     )
+
+    # Verify that lazy = TRUE (single-pass DuckDB method) produces identical results to lazy = FALSE (Matrix method)
+    tmp_dir <- tempfile("dpa_lazy_")
+    dir.create(tmp_dir, recursive = TRUE)
+    on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+    se_lazy_list <- lapply(1:10, function(i) {
+      f <- file.path(tmp_dir, sprintf("S%d.pxl", i))
+      fs::file_copy(pxl_file, f, overwrite = TRUE)
+      s <- suppressWarnings(ReadPNA_Seurat(f, verbose = FALSE))
+      s$cell_type <- c("CD16+ Mono", "pDC", "CD4T", "CD4T", "CD4T")
+      s$batch <- ifelse(i <= 5, "B1", "B2")
+      s
+    })
+    seur_lazy_big <- merge(se_lazy_list[[1]], se_lazy_list[-1], add.cell.ids = LETTERS[1:10])
+    if (assay_version == "v5") {
+      seur_lazy_big <- seur_lazy_big |> JoinLayers()
+    }
+
+    res_eager_multi <- DifferentialProximityAnalysis(
+      seur_lazy_big,
+      contrast_column = "cell_type",
+      targets = c("CD4T", "CD16+ Mono"),
+      reference = "pDC",
+      diff_threshold = 0.05,
+      min_pct = 0.1,
+      min_diff_pct = 0.05,
+      min_exp_join_count = 1,
+      lazy = FALSE,
+      verbose = FALSE
+    )
+    res_lazy_multi <- DifferentialProximityAnalysis(
+      seur_lazy_big,
+      contrast_column = "cell_type",
+      targets = c("CD4T", "CD16+ Mono"),
+      reference = "pDC",
+      diff_threshold = 0.05,
+      min_pct = 0.1,
+      min_diff_pct = 0.05,
+      min_exp_join_count = 1,
+      lazy = TRUE,
+      verbose = FALSE
+    )
+    expect_equal(res_lazy_multi, res_eager_multi)
+
+    # Also test with group_vars and only_pos = TRUE
+    res_eager_grp <- DifferentialProximityAnalysis(
+      seur_lazy_big,
+      contrast_column = "cell_type",
+      targets = c("CD4T", "CD16+ Mono"),
+      reference = "pDC",
+      group_vars = "batch",
+      min_cells_per_group = 5,
+      diff_threshold = 0.1,
+      only_pos = TRUE,
+      metric_type = "co",
+      lazy = FALSE,
+      verbose = FALSE
+    )
+    res_lazy_grp <- DifferentialProximityAnalysis(
+      seur_lazy_big,
+      contrast_column = "cell_type",
+      targets = c("CD4T", "CD16+ Mono"),
+      reference = "pDC",
+      group_vars = "batch",
+      min_cells_per_group = 5,
+      diff_threshold = 0.1,
+      only_pos = TRUE,
+      metric_type = "co",
+      lazy = TRUE,
+      verbose = FALSE
+    )
+    expect_equal(res_lazy_grp, res_eager_grp)
   })
 
   test_that("DifferentialProximityAnalysis fails with invalid input", {
@@ -240,10 +339,22 @@ for (assay_version in c("v3", "v5")) {
           seur_obj_big,
           contrast_column = "cell_type",
           reference = "B",
+          min_cells_per_group = 0
+        )
+      },
+      "positive number"
+    )
+
+    expect_error(
+      {
+        DifferentialProximityAnalysis(
+          seur_obj_big,
+          contrast_column = "cell_type",
+          reference = "B",
           min_cells_per_group = -1
         )
       },
-      class = "error"
+      "positive number"
     )
 
     expect_error(
@@ -256,6 +367,55 @@ for (assay_version in c("v3", "v5")) {
         )
       },
       class = "error"
+    )
+
+    expect_error(
+      suppressWarnings(
+        DifferentialProximityAnalysis(
+          seur_obj,
+          contrast_column = "cell_type",
+          targets = "CD4T",
+          reference = "pDC",
+          min_cells_per_group = 1000,
+          lazy = TRUE,
+          verbose = FALSE
+        )
+      ),
+      "`min_cells_per_group` = 1000 cells"
+    )
+
+    expect_error(
+      suppressWarnings(
+        DifferentialProximityAnalysis(
+          seur_obj_big,
+          contrast_column = "cell_type",
+          targets = "CD4T",
+          reference = "pDC",
+          diff_threshold = 100,
+          only_pos = TRUE,
+          lazy = FALSE,
+          verbose = FALSE
+        )
+      ),
+      "only_pos = FALSE"
+    )
+
+    expect_warning(
+      expect_error(
+        DifferentialProximityAnalysis(
+          seur_obj,
+          contrast_column = "cell_type",
+          targets = "CD4T",
+          reference = "pDC",
+          min_cells_per_group = 1,
+          min_pct = 1,
+          min_diff_pct = 2,
+          lazy = TRUE,
+          verbose = FALSE
+        ),
+        "No marker pairs passed the pre-test filtering thresholds"
+      ),
+      "No features pass min_diff_pct threshold"
     )
   })
 }
@@ -290,3 +450,48 @@ test_that("add_proximity_transition replaces an existing transition column", {
     c("random -> random", "random -> random", NA_character_)
   )
 })
+
+test_that("DuckDB Wilcoxon and lazy pivot guard against IEEE NaN values", {
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+
+  df <- tibble::tibble(
+    component = c("c1", "c2", "c3", "c4", "c1"),
+    marker_1 = c("CD3E", "CD3E", "CD3E", "CD3E", "CD4"),
+    marker_2 = c("CD4", "CD4", "CD4", "CD4", "CD8A"),
+    score = c(2.0, 2.5, -1.0, NaN, NaN)
+  )
+  DBI::dbWriteTable(con, "prox_nan", df)
+  lazy_nan <- dplyr::tbl(con, "prox_nan")
+
+  # Lazy pivot treats NaN identically to 0/NULL (drops CD4:CD8A which only had NaN, warns about c4)
+  expect_warning(
+    mat <- ProximityScoresToAssay(lazy_nan, values_from = "score"),
+    "only zero proximity scores"
+  )
+  expect_equal(rownames(mat), "CD3E:CD4")
+  expect_false(any(is.nan(as.numeric(mat))))
+
+  # DuckDB Wilcoxon treats NaN as missing/zero rather than > 0
+  cells_tbl <- data.frame(
+    grp_key = c("T", "T", "T", "T"),
+    side = c("tgt", "tgt", "ref", "ref"),
+    component = c("c1", "c2", "c3", "c4")
+  )
+  groups_tbl <- data.frame(grp_key = "T", n_tgt = 2L, n_ref = 2L)
+  res <- pixelatorR:::.run_duckdb_wilcox_comparisons(
+    lazy_prox = lazy_nan,
+    cells_tbl = cells_tbl,
+    group_sizes_tbl = groups_tbl,
+    proximity_metric = "score",
+    min_pct = 0,
+    min_diff_pct = -Inf,
+    diff_threshold = 0,
+    only_pos = FALSE
+  )
+  expect_equal(nrow(res), 1L)
+  expect_equal(res$pct_ref, 0.5)
+  expect_equal(res$med_ref, -0.5)
+  expect_false(any(is.nan(res$p)))
+})
+

@@ -1533,6 +1533,10 @@ FilterProximityScores <- function(
 #' @param summary_stat One of "mean" or "median"
 #' @param detailed Logical indicating whether to return lists which can be used to compute
 #' custom summary statistics. See examples for details
+#' @param check_duplicates Logical indicating whether to scan the lazy table for
+#' duplicate \code{(component, marker_1, marker_2)} rows before summarizing.
+#' Defaults to \code{!isTRUE(attr(object, "pxl_unique_keys"))}, which skips the
+#' scan on validated tables loaded directly from PXL files.
 #' @param ... Additional arguments. Currently not used.
 #'
 #' @return A \code{tbl_df} with summary statistics

@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `SummarizeProximityScores.tbl_lazy()` gains a `check_duplicates` argument
+  (default `!isTRUE(attr(object, "pxl_unique_keys"))`) to skip redundant
+  full-table duplicate scans on validated lazy tables loaded from `.pxl` files.
+- `merge.PNAAssay()` and `merge.PNAAssay5()` now emit a warning when protein
+  panels (`rownames`) differ across merged objects, and union feature metadata
+  (`control`, `marker`, `nuclear`) across merged assays instead of dropping it.
+
+### Changed
+
+- `DifferentialProximityAnalysis.Seurat()` and
+  `FindAllProximityMarkers.Seurat()` now compute zero-padded medians, detection
+  percentages, threshold filters, and exact tie-corrected Wilcoxon p-values in a
+  streaming single-pass DuckDB query when `lazy = TRUE` and `method = "seurat"`,
+  and return marker pairs in deterministic `(marker_1, marker_2)` order across
+  both lazy and in-memory paths.
+- `DifferentialProximityAnalysis()` and `FindAllProximityMarkers()` now display
+  a comparison setup summary table, enforce `min_cells_per_group > 0`, and raise
+  clearer errors when no comparisons or marker pairs pass filtering.
+- `ProximityScoresToAssay()` pushes marker deduplication and non-zero/non-`NA`
+  filtering into SQL on lazy tables before `collect()`, returning deterministically
+  ordered rows and columns across lazy and in-memory inputs.
+- `DESCRIPTION` now declares `Depends: R (>= 4.1.0)`.
+
 ### Fixed
 
 - `partition_counts` now look for `partition_column` in both node attributes 

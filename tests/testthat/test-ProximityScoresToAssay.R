@@ -34,17 +34,26 @@ for (assay_version in c("v3", "v5")) {
       x = c(-1.0496307677246, -1.66902676550963, -1.13093086982645),
       factors = list()
     )
-    expect_equal(prox_matrix |> head(2), expected_result)
+    expect_equal(
+      prox_matrix[
+        c("CD56:CD6", "CD56:HLA-ABC"),
+        c(
+          "c3c393e9a17c1981",
+          "d4074c845bb62800",
+          "efe0ed189cb499fc",
+          "0a45497c6bfbfb22",
+          "2708240b908e2eba"
+        )
+      ],
+      expected_result
+    )
 
-    # tbl_lazy
+    # tbl_lazy matches tbl_df identically (values and sorted row/col dimnames)
     expect_no_error(prox_matrix <- ProximityScoresToAssay(proximity))
     expect_no_error(prox_matrix_from_lazy <- ProximityScoresToAssay(proximity_lazy))
     expect_s4_class(prox_matrix_from_lazy, "dgCMatrix")
     expect_equal(dim(prox_matrix_from_lazy), c(6057, 5))
-    expect_equal(
-      dim(prox_matrix), dim(prox_matrix_from_lazy)
-    )
-    expect_equal(sum(prox_matrix) - sum(prox_matrix_from_lazy), 0) # should be 0
+    expect_equal(prox_matrix_from_lazy, prox_matrix)
 
     # PNAAssay
     expect_no_error(prox_assay <- ProximityScoresToAssay(pna_assay))
@@ -60,12 +69,12 @@ for (assay_version in c("v3", "v5")) {
     expect_equal(
       head(rownames(seur_conv)),
       c(
-        "CD56:CD6",
-        "CD56:HLA-ABC",
-        "CD56:CD80",
-        "CD56:HLA-DR",
-        "CD56:CD9",
-        "CD56:CD59"
+        "B2M:B2M",
+        "B2M:CD10",
+        "B2M:CD102",
+        "B2M:CD103",
+        "B2M:CD117",
+        "B2M:CD11a"
       )
     )
 

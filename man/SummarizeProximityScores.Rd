@@ -16,6 +16,7 @@ SummarizeProximityScores(object, ...)
   include_missing_obs = TRUE,
   summary_stat = c("mean", "median"),
   detailed = FALSE,
+  check_duplicates = !isTRUE(attr(object, "pxl_unique_keys")),
   ...
 )
 
@@ -48,6 +49,11 @@ as 0 when computing the summary statistics.}
 
 \item{detailed}{Logical indicating whether to return lists which can be used to compute
 custom summary statistics. See examples for details}
+
+\item{check_duplicates}{Logical indicating whether to scan the lazy table for
+duplicate \code{(component, marker_1, marker_2)} rows before summarizing.
+Defaults to \code{!isTRUE(attr(object, "pxl_unique_keys"))}, which skips the
+scan on validated tables loaded directly from PXL files.}
 }
 \value{
 A \code{tbl_df} with summary statistics

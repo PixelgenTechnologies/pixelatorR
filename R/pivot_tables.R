@@ -393,7 +393,7 @@ ProximityScoresToAssay.tbl_lazy <- function(
   .validate_separator(object, separator)
 
   object <- .prep_proximity_table(object, values_from, separator)
-  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
+  prox_wide <- .cast_proximity_long_to_wide(object, values_from, sort_dims = TRUE)
 
   return(prox_wide)
 }
@@ -422,12 +422,16 @@ ProximityScoresToAssay.data.frame <- function(
   .validate_separator(object, separator)
 
   object <- .prep_proximity_table(object, values_from, separator)
-  prox_wide <- .cast_proximity_long_to_wide(object, values_from)
+  prox_wide <- .cast_proximity_long_to_wide(object, values_from, sort_dims = TRUE)
 
   return(prox_wide)
 }
 
 #' Utility function to validate separator input for proximity scores pivoting
+#'
+#' @param object A \code{data.frame} or \code{tbl_lazy} with \code{marker_1} and \code{marker_2} columns.
+#' @param separator Single-character separator used to join marker names.
+#' @param call Calling environment used in error messages.
 #'
 #' @return Nothing. Used for its side effects.
 #'
@@ -445,7 +449,14 @@ ProximityScoresToAssay.data.frame <- function(
     )
   }
 
-  unique_markers <- unique(c(object |> pull(marker_1), object |> pull(marker_2)))
+  if (inherits(object, "tbl_lazy")) {
+    marker_pairs <- object |>
+      distinct(marker_1, marker_2) |>
+      collect()
+    unique_markers <- unique(c(marker_pairs$marker_1, marker_pairs$marker_2))
+  } else {
+    unique_markers <- unique(c(object$marker_1, object$marker_2))
+  }
   invalid_markers <- stringr::str_detect(unique_markers, stringr::coll(separator))
   if (sum(invalid_markers) > 0) {
     cli::cli_abort(
@@ -461,12 +472,62 @@ ProximityScoresToAssay.data.frame <- function(
 
 #' Utility function to filter and format proximity scores for pivoting
 #'
+#' @param object A \code{data.frame} or \code{tbl_lazy} of proximity scores.
+#' @param values_from Name of the numeric column containing proximity scores.
+#' @param separator Single-character separator used to join \code{marker_1} and \code{marker_2}.
+#'
+#' @return A \code{tbl_df} with columns \code{pair}, \code{component}, and \code{values_from}.
+#'
 #' @noRd
 .prep_proximity_table <- function(
   object,
   values_from = "log2_ratio",
   separator = ":"
 ) {
+  if (inherits(object, "tbl_lazy")) {
+    con <- object$src$con
+    if (inherits(con, "duckdb_connection")) {
+      base_sql <- as.character(dbplyr::sql_render(object))
+      sep_lit <- DBI::dbQuoteString(con, separator)
+      val_col <- DBI::dbQuoteIdentifier(con, values_from)
+      sql <- glue::glue(
+        "
+        WITH all_comps AS (
+          SELECT DISTINCT component
+          FROM ({base_sql}) __c
+        ),
+        nz AS (
+          SELECT
+            marker_1 || {sep_lit} || marker_2 AS pair,
+            component,
+            CAST({val_col} AS DOUBLE) AS {val_col}
+          FROM ({base_sql}) __q
+          WHERE {val_col} IS NOT NULL
+            AND NOT isnan(CAST({val_col} AS DOUBLE))
+            AND {val_col} != 0
+        ),
+        first_pair AS (
+          SELECT MIN(pair) AS pair FROM nz
+        )
+        SELECT fp.pair, ac.component, 0.0 AS {val_col}
+        FROM all_comps ac
+        CROSS JOIN first_pair fp
+        WHERE fp.pair IS NOT NULL
+        UNION ALL
+        SELECT pair, component, {val_col}
+        FROM nz
+        "
+      )
+      res <- tryCatch(
+        DBI::dbGetQuery(con, sql) |> as_tibble(),
+        error = function(e) NULL
+      )
+      if (!is.null(res) && nrow(res) > 0) {
+        return(res)
+      }
+    }
+  }
+
   # Create pair column
   object <- object |>
     mutate(pair = stringr::str_c(marker_1, separator, marker_2)) |>
@@ -477,16 +538,29 @@ ProximityScoresToAssay.data.frame <- function(
 
 #' Utility function to cast proximity scores to wide format
 #'
+#' @param object A \code{tbl_df} returned by \code{.prep_proximity_table()}.
+#' @param values_from Name of the numeric column containing proximity scores.
+#' @param sort_dims Logical; if \code{TRUE}, sort row and column names in C/radix
+#'   lexicographic order for deterministic layout across parallel SQL scans.
+#'
+#' @return A sparse matrix (\code{dgCMatrix}) of marker pairs by components.
+#'
 #' @noRd
-.cast_proximity_long_to_wide <- function(object, values_from = "log2_ratio") {
-  # Cast values to wide format
-  pair <- object |>
-    pull(pair) |>
-    (\(.) factor(., levels = unique(.)))()
-
-  components <- object |>
-    pull(component) |>
-    (\(.) factor(., levels = unique(.)))()
+.cast_proximity_long_to_wide <- function(
+  object,
+  values_from = "log2_ratio",
+  sort_dims = FALSE
+) {
+  pair_vals <- pull(object, pair)
+  comp_vals <- pull(object, component)
+  pair_levels <- unique(pair_vals)
+  comp_levels <- unique(comp_vals)
+  if (isTRUE(sort_dims)) {
+    pair_levels <- pair_levels[order(pair_levels, method = "radix")]
+    comp_levels <- comp_levels[order(comp_levels, method = "radix")]
+  }
+  pair <- factor(pair_vals, levels = pair_levels)
+  components <- factor(comp_vals, levels = comp_levels)
 
   prox_wide <- Matrix::sparseMatrix(
     i = as.integer(pair),
@@ -503,7 +577,7 @@ ProximityScoresToAssay.data.frame <- function(
 
   # Drop marker pairs with all zero proximity scores
   nonzero_pairs <- Matrix::rowSums(prox_wide != 0) > 0
-  prox_wide <- prox_wide[nonzero_pairs, ]
+  prox_wide <- prox_wide[nonzero_pairs, , drop = FALSE]
 
   # Warn about components with all zero proximity scores
   zero_prox_components <-
