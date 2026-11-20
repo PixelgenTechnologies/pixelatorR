@@ -74,21 +74,37 @@ library(pixelatorR)
 
 pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/Rtmp3OpCPp/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 el <- Edgelists(seur_obj[["PNA"]], lazy = FALSE)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/Rtmp3OpCPp/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 el
 #> # A tibble: 528,594 × 7
 #>    marker_1 marker_2    umi1    umi2 read_count uei_count component       
 #>    <chr>    <chr>    <int64> <int64>    <int64>   <int64> <chr>           
-#>  1 CD6      B2M        5.e16   8 e15          1         1 c3c393e9a17c1981
-#>  2 CD6      B2M        2.e16   4 e16          3         3 c3c393e9a17c1981
-#>  3 CD6      B2M        4 e16   6 e16          1         1 c3c393e9a17c1981
-#>  4 CD6      B2M        6 e16   6 e16          1         1 c3c393e9a17c1981
-#>  5 CD6      B2M        2.e16   6 e16          1         1 c3c393e9a17c1981
-#>  6 CD6      B2M        1.e16   6 e16          1         1 c3c393e9a17c1981
-#>  7 CD6      B2M        3 e16   5.e16          2         2 c3c393e9a17c1981
-#>  8 CD6      B2M        6 e16   4 e16          1         1 c3c393e9a17c1981
-#>  9 CD6      B2M        6 e16   5.e16          5         3 c3c393e9a17c1981
-#> 10 CD6      B2M        4 e16   5.e16          1         1 c3c393e9a17c1981
+#>  1 HLA-ABC  HLA-ABC    6 e16   5 e16         18         8 0a45497c6bfbfb22
+#>  2 HLA-ABC  HLA-ABC    6 e16   4 e16         10         4 0a45497c6bfbfb22
+#>  3 HLA-ABC  HLA-ABC    1.e16   4 e15         14         5 0a45497c6bfbfb22
+#>  4 HLA-ABC  HLA-ABC    5.e16   2.e16          2         1 0a45497c6bfbfb22
+#>  5 HLA-ABC  HLA-ABC    6 e16   6 e16          4         1 0a45497c6bfbfb22
+#>  6 HLA-ABC  HLA-ABC    1 e16   1.e16          1         1 0a45497c6bfbfb22
+#>  7 HLA-ABC  HLA-ABC    1.e16   1.e16         10         7 0a45497c6bfbfb22
+#>  8 HLA-ABC  HLA-ABC    6 e16   1.e16          2         2 0a45497c6bfbfb22
+#>  9 HLA-ABC  HLA-ABC    6 e15   3 e16         12         6 0a45497c6bfbfb22
+#> 10 HLA-ABC  CD162      6 e16   3 e16          2         1 0a45497c6bfbfb22
 #> # ℹ 528,584 more rows
 ```

@@ -39,14 +39,12 @@ installed. However, `pixelatorR` is currently only available on GitHub
 and can be install via `remotes` or `devtools`:
 
 ``` r
-
 remotes::install_github("PixelgenTechnologies/pixelatorR")
 ```
 
 ## Getting started
 
 ``` r
-
 library(pixelatorR)
 ```
 
@@ -55,17 +53,15 @@ can find publicly available data sets. To get started, you can download
 a PXL file and load it as a Seurat object:
 
 ``` r
-
 download.file(url = "https://pixelgen-technologies-datasets.s3.eu-north-1.amazonaws.com/mpx-datasets/pixelator/0.12.0/1k-human-pbmcs-v1.0-immunology-I/Sample01_human_pbmcs_unstimulated.dataset.pxl?download=1", 
               destfile = "PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
 ```
 
-\
+  
 
 Now, we can load the MPX data as a Seurat object with `ReadMPX_Seurat`:
 
 ``` r
-
 seur <- ReadMPX_Seurat("PBMC_data/Sample01_human_pbmcs_unstimulated.dataset.pxl")
 ```
 

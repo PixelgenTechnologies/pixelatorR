@@ -217,7 +217,7 @@ pxl_file <- minimal_mpx_pxl_file()
 
 # Load polarization scores
 polarization_table1 <- polarization_table2 <- ReadMPX_polarization(pxl_file)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpzk4Shw/temp_libpath13eb25903ebee/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /tmp/Rtmp1CpTfj/temp_libpath1faf6fd15ebd/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading polarization data
 #> ✔ Returning a 'tbl_df' object
 polarization_table1$sample <- "Sample1"

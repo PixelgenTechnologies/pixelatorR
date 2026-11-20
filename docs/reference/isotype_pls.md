@@ -79,7 +79,6 @@ or conditions).
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 
 seur <-

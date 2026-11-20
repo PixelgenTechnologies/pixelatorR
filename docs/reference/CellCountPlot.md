@@ -82,7 +82,6 @@ Other QC-plots: [`TauPlot()`](TauPlot.md)
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 
 # Load example data as a Seurat object

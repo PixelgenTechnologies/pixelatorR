@@ -123,7 +123,6 @@ To run the linter, you need to install `lintr`. Then you can use one of
 the the following commands:
 
 ``` r
-
 # Lint entire pacakge
 lintr::lint_package()
 
@@ -144,7 +143,6 @@ To style the code, you need to install `styler`. Then you can use one of
 the the following commands:
 
 ``` r
-
 # Style entire package
 styler::style_pkg(transformers = pixelatorR::pixelatorR_style())
 
