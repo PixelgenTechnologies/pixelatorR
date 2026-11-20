@@ -185,8 +185,8 @@ set.seed(123)
 dca_markers <- tidyr::expand_grid(
   marker_1 = paste0("M", 1:10),
   marker_2 = paste0("M", 1:10)
-) %>%
-  filter(marker_1 > marker_2) %>%
+) |>
+  filter(marker_1 > marker_2) |>
   mutate(estimate = rnorm(n(), 0, 1), p_adj = 10^(-rnorm(n(), 3, 2)))
 dca_markers
 #> # A tibble: 45 × 4
@@ -257,7 +257,7 @@ ColocalizationHeatmap(
 # We can specify the order of the markers with factor levels
 # but we need to turn off the clustering
 ColocalizationHeatmap(
-  dca_markers %>%
+  dca_markers |>
     mutate(
       marker_1 = factor(marker_1, levels = paste0("M", 1:10)),
       marker_2 = factor(marker_2, levels = paste0("M", 1:10))
@@ -276,8 +276,8 @@ ColocalizationHeatmap(
 # If there are multiple comparisons per marker pair, we need to subset
 # the data first
 dca_markers_two_tests <- bind_rows(
-  dca_markers %>% mutate(refrence = "ctrl", target = "stim1"),
-  dca_markers %>% mutate(refrence = "ctrl", target = "stim2")
+  dca_markers |> mutate(refrence = "ctrl", target = "stim1"),
+  dca_markers |> mutate(refrence = "ctrl", target = "stim2")
 )
 dca_markers_two_tests
 #> # A tibble: 90 × 6
@@ -302,7 +302,7 @@ ColocalizationHeatmap(dca_markers_two_tests)
 
 # We need to subset the data first
 ColocalizationHeatmap(
-  dca_markers_two_tests %>%
+  dca_markers_two_tests |>
     filter(target == "stim1")
 )
 

@@ -71,24 +71,24 @@ library(tidygraph)
 
 pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
-#> ℹ Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpzk4Shw/temp_libpath13eb25903ebee/pixelatorR/extdata/five_cells/five_cells.pxl
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpzk4Shw/temp_libpath13eb25903ebee/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 components <- colnames(counts)
 edgelist_split <-
-  edgelist %>%
-  select(upia, upib, component) %>%
-  distinct() %>%
-  group_by(component) %>%
-  group_split() %>%
+  edgelist |>
+  select(upia, upib, component) |>
+  distinct() |>
+  group_by(component) |>
+  group_split() |>
   setNames(nm = components)
 
 # Convert data into a list of CellGraph objects
 bipartite_graphs <- lapply(edgelist_split, function(x) {
-  x <- x %>% as_tbl_graph(directed = FALSE)
-  x <- x %>% mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
+  x <- x |> as_tbl_graph(directed = FALSE)
+  x <- x |> mutate(node_type = case_when(name %in% edgelist$upia ~ "A", TRUE ~ "B"))
   attr(x, "type") <- "bipartite"
   CreateCellGraphObject(cellgraph = x)
 })

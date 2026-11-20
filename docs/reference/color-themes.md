@@ -88,7 +88,7 @@ ggplot(mtcars, aes(cyl, wt, color = disp)) +
 
 
 # Divergent scale
-ggplot(mtcars %>% mutate(disp = scale(disp)), aes(cyl, gear, fill = disp)) +
+ggplot(mtcars |> mutate(disp = scale(disp)), aes(cyl, gear, fill = disp)) +
   geom_tile() +
   color_divergent_pixelgen(limits = c(-2, 2), hue_low = "cyans", hue_high = "beiges")
 

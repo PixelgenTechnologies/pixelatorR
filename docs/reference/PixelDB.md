@@ -137,7 +137,7 @@ A `data.frame` with the results of the query
 #### Examples
 
     # Select the proximity score table
-    db$query("SELECT * FROM proximity") %>% head()
+    db$query("SELECT * FROM proximity") |> head()
 
 ------------------------------------------------------------------------
 
@@ -228,7 +228,7 @@ A `data.frame` with the table contents
 #### Examples
 
     # Fetch any table from the database
-    db$fetch_table("proximity") %>% head()
+    db$fetch_table("proximity") |> head()
 
 ------------------------------------------------------------------------
 
@@ -263,7 +263,7 @@ A `data.frame` with the table contents
     db$fetch_table_subset(
       "proximity",
       columns_filter = list("component" = c("0a45497c6bfbfb22", "2708240b908e2eba"))
-    ) %>% head()
+    ) |> head()
 
 ------------------------------------------------------------------------
 
@@ -316,7 +316,7 @@ A `tbl_df` with the proximity scores
 
     # Fetch the proximity scores
     prox <- db$proximity()
-    prox %>% head()
+    prox |> head()
 
 ------------------------------------------------------------------------
 
@@ -335,7 +335,7 @@ A `data.frame` with the cell meta data
 #### Examples
 
     # Fetch the cell meta data
-    db$cell_meta() %>% head()
+    db$cell_meta() |> head()
 
 ------------------------------------------------------------------------
 
@@ -354,7 +354,7 @@ A `data.frame` with the protein meta data
 #### Examples
 
     # Fetch the protein meta data
-    db$protein_meta() %>% head()
+    db$protein_meta() |> head()
 
 ------------------------------------------------------------------------
 
@@ -443,7 +443,7 @@ returned:
 #### Examples
 
     # Fetch edgelists
-    db$components_edgelist("0a45497c6bfbfb22") %>% head()
+    db$components_edgelist("0a45497c6bfbfb22") |> head()
 
 ------------------------------------------------------------------------
 
@@ -485,7 +485,7 @@ counts
 
     # Fetch layouts (NOTE: This will only work if the layouts exist in the database)
     \dontrun{
-    db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
+    db$components_layout("0a45497c6bfbfb22")[[1]] |> head()
     }
 
 ------------------------------------------------------------------------
@@ -689,7 +689,7 @@ db$info()
 ## ------------------------------------------------
 
 # Select the proximity score table
-db$query("SELECT * FROM proximity") %>% head()
+db$query("SELECT * FROM proximity") |> head()
 #>   marker_1 marker_2 join_count join_count_expected_mean join_count_expected_sd
 #> 1     CD56     CD56          0                     0.00              0.0000000
 #> 2     CD56   mIgG2b          0                     0.03              0.1714466
@@ -740,7 +740,7 @@ db$names()
 ## ------------------------------------------------
 
 # Fetch any table from the database
-db$fetch_table("proximity") %>% head()
+db$fetch_table("proximity") |> head()
 #>   marker_1 marker_2 join_count join_count_expected_mean join_count_expected_sd
 #> 1     CD56     CD56          0                     0.00              0.0000000
 #> 2     CD56   mIgG2b          0                     0.03              0.1714466
@@ -765,7 +765,7 @@ db$fetch_table("proximity") %>% head()
 db$fetch_table_subset(
   "proximity",
   columns_filter = list("component" = c("0a45497c6bfbfb22", "2708240b908e2eba"))
-) %>% head()
+) |> head()
 #>   marker_1 marker_2 join_count join_count_expected_mean join_count_expected_sd
 #> 1    CD278    CD278          0                        0                      0
 #> 2    CD278   HLA-DQ          0                        0                      0
@@ -803,7 +803,7 @@ X[1:4, 1:4]
 
 # Fetch the proximity scores
 prox <- db$proximity()
-prox %>% head()
+prox |> head()
 #> # A tibble: 6 × 9
 #>   marker_1 marker_2 join_count join_count_expected_mean join_count_expected_sd
 #>   <chr>    <chr>         <dbl>                    <dbl>                  <dbl>
@@ -822,7 +822,7 @@ prox %>% head()
 ## ------------------------------------------------
 
 # Fetch the cell meta data
-db$cell_meta() %>% head()
+db$cell_meta() |> head()
 #>                  n_umi1 n_umi2 n_edges n_antibodies reads_in_component n_umi
 #> 0a45497c6bfbfb22  18560  24983   97014          149             289856 43543
 #> 2708240b908e2eba  16301  21364   79638          158             229977 37665
@@ -860,7 +860,7 @@ db$cell_meta() %>% head()
 ## ------------------------------------------------
 
 # Fetch the protein meta data
-db$protein_meta() %>% head()
+db$protein_meta() |> head()
 #>         antibody_count antibody_pct components control nuclear
 #> HLA-ABC         483065 0.0562623443        193      no      no
 #> B2M            1095103 0.1275461109        193      no      no
@@ -887,7 +887,7 @@ db$run_meta()
 ## ------------------------------------------------
 
 # Fetch edgelists
-db$components_edgelist("0a45497c6bfbfb22") %>% head()
+db$components_edgelist("0a45497c6bfbfb22") |> head()
 #> # A tibble: 6 × 5
 #>   marker_1 marker_2    umi1    umi2 component       
 #>   <chr>    <chr>    <int64> <int64> <chr>           
@@ -905,7 +905,7 @@ db$components_edgelist("0a45497c6bfbfb22") %>% head()
 
 # Fetch layouts (NOTE: This will only work if the layouts exist in the database)
 if (FALSE) { # \dontrun{
-db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
+db$components_layout("0a45497c6bfbfb22")[[1]] |> head()
 } # }
 
 
@@ -916,11 +916,11 @@ db$components_layout("0a45497c6bfbfb22")[[1]] %>% head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name               CD59  CD53 CD66b
-#>   <chr>             <dbl> <dbl> <dbl>
-#> 1 34769694748755495     1     0     0
-#> 2 71722293887312477     1     0     0
-#> 3 1301978838857048      1     0     0
+#>   name               CD59 CD85j `HLA-ABC`
+#>   <chr>             <dbl> <dbl>     <dbl>
+#> 1 10633477134735765     1     0         0
+#> 2 8960932204844131      1     0         0
+#> 3 71444033550177254     1     0         0
 
 
 ## ------------------------------------------------
@@ -944,8 +944,8 @@ cgl
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpHzVgLd/file107173dc678c2.parquet 
-#>                                                                                  TRUE 
+#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpatLuS1/file83bcbfd789.parquet 
+#>                                                                               TRUE 
 
 
 ## ------------------------------------------------

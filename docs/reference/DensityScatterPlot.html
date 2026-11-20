@@ -11,7 +11,7 @@ can be faceted by one or two variables and a gate can be plotted."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.24.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.26.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -92,9 +92,12 @@ can be faceted by one or two variables and a gate can be plotted.</p>
 
 <dt id="arg-plot-gate">plot_gate<a class="anchor" aria-label="anchor" href="#arg-plot-gate"></a></dt>
 <dd><p>Optional data frame containing gate parameters. For <code>gate_type = "rectangle"</code>, must contain columns
-'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. For gate_type = "quadrant", must contain
-columns 'x' and 'y' defining the position of the quadrant lines. The data frame can also contain the variables
-specified in 'facet_vars' to plot different gates in different facets.</p></dd>
+'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. <code>NA</code> and infinite values mean an open
+edge: <code>xmin</code> or <code>ymin</code> of <code>NA</code> or <code>-Inf</code> has no lower bound, and <code>xmax</code> or <code>ymax</code> of <code>NA</code> or <code>Inf</code> has no upper
+bound. <code>Inf</code> is not a lower bound and <code>-Inf</code> is not an upper bound. For gate_type = "quadrant", must contain
+columns 'x' and 'y' defining the position of the quadrant lines.
+The data frame can also contain the variables specified in 'facet_vars' to plot different gates in different
+facets.</p></dd>
 
 
 <dt id="arg-gate-type">gate_type<a class="anchor" aria-label="anchor" href="#arg-gate-type"></a></dt>

@@ -137,7 +137,7 @@ ProximityScores(seur_obj[["PNA"]])
 
 # Set proximity scores
 ProximityScores(seur_obj[["PNA"]]) <-
-  ProximityScores(seur_obj[["PNA"]]) %>%
+  ProximityScores(seur_obj[["PNA"]]) |>
   mutate(ratio = join_count / join_count_expected_mean)
 
 library(pixelatorR)
@@ -210,6 +210,6 @@ proximity
 #> #   log2_ratio <dbl>, count_1 <int>, count_2 <int>
 
 # Update proximity scores in Seurat object
-ProximityScores(seur_obj) <- ProximityScores(seur_obj) %>%
+ProximityScores(seur_obj) <- ProximityScores(seur_obj) |>
   mutate(ratio = join_count / join_count_expected_mean)
 ```

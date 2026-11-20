@@ -75,9 +75,9 @@ library(ggplot2)
 edgelist <-
   ReadMPX_edgelist(system.file("extdata/five_cells", "five_cells.pxl",
     package = "pixelatorR"
-  )) %>%
+  )) |>
   rename(umi1 = upia, umi2 = upib, read_count = count)
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpLOB2qz/temp_libpath8b0c7e0760b1/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpzk4Shw/temp_libpath13eb25903ebee/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 
@@ -89,8 +89,8 @@ seqsat <- SequenceSaturationCurve(edgelist,
 
 # Calculate the mean sequencing saturation for each sample fraction
 seqsat_mean <-
-  seqsat %>%
-  group_by(sample_frac) %>%
+  seqsat |>
+  group_by(sample_frac) |>
   summarise(
     mean_node_saturation = mean(graph_node_saturation),
     mean_edge_saturation = mean(graph_edge_saturation)

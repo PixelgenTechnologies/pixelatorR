@@ -6,6 +6,85 @@ The format is based on [Keep a
 Changelog](https://keepachangelog.com/en/1.0.0/), and this project
 adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## \[Unreleased\]
+
+### Changed
+
+- Container images published to GHCR and AWS ECR are now built as
+  multi-arch manifests (`linux/amd64` and `linux/arm64`).
+
+## \[0.26.0\]
+
+### Added
+
+- [`SummarizeProximityScores.tbl_lazy()`](reference/SummarizeProximityScores.md)
+  gains a `check_duplicates` argument (default
+  `!isTRUE(attr(object, "pxl_unique_keys"))`) to skip redundant
+  full-table duplicate scans on validated lazy tables loaded from `.pxl`
+  files.
+- [`merge.PNAAssay()`](reference/PNAAssay-methods.md) and
+  [`merge.PNAAssay5()`](reference/PNAAssay5-methods.md) now emit a
+  warning when protein panels (`rownames`) differ across merged objects,
+  and union feature metadata (`control`, `marker`, `nuclear`) across
+  merged assays instead of dropping it.
+
+### Changed
+
+- [`DifferentialProximityAnalysis.Seurat()`](reference/DifferentialProximityAnalysis.md)
+  and
+  [`FindAllProximityMarkers.Seurat()`](reference/FindAllProximityMarkers.md)
+  now compute zero-padded medians, detection percentages, threshold
+  filters, and exact tie-corrected Wilcoxon p-values in a streaming
+  single-pass DuckDB query when `lazy = TRUE` and `method = "seurat"`,
+  and return marker pairs in deterministic `(marker_1, marker_2)` order
+  across both lazy and in-memory paths.
+- [`DifferentialProximityAnalysis()`](reference/DifferentialProximityAnalysis.md)
+  and
+  [`FindAllProximityMarkers()`](reference/FindAllProximityMarkers.md)
+  now display a comparison setup summary table, enforce
+  `min_cells_per_group > 0`, and raise clearer errors when no
+  comparisons or marker pairs pass filtering.
+- [`ProximityScoresToAssay()`](reference/ProximityScoresToAssay.md)
+  pushes marker deduplication and non-zero/non-`NA` filtering into SQL
+  on lazy tables before `collect()`, returning deterministically ordered
+  rows and columns across lazy and in-memory inputs.
+- `DESCRIPTION` now declares `Depends: R (>= 4.1.0)`.
+
+### Fixed
+
+- `partition_counts` now look for `partition_column` in both node
+  attributes and node meta.data.
+
+## \[0.25.0\] - 2026-10-30
+
+### Added
+
+- Exported S3 generics
+  [`validate_fs_map_paths()`](reference/validate_fs_map_paths.md),
+  [`lazy_load_table()`](reference/lazy_load_table.md),
+  [`join_proximity_metadata()`](reference/join_proximity_metadata.md),
+  and [`fetch_cell_graphs()`](reference/fetch_cell_graphs.md) and
+  relaxed the `fs_map` slot on `PNAAssay` and `PNAAssay5` to `ANY` while
+  preserving `fs_map` S3 classes across
+  [`subset()`](https://rdrr.io/r/base/subset.html),
+  [`merge()`](https://rdrr.io/r/base/merge.html), `RenameCells()`, and
+  `JoinLayers()`.
+
+### Changed
+
+- Package code, tests, and examples use the base R pipe `|>` instead of
+  magrittr’s `%>%`.
+  [`lintr::pipe_consistency_linter()`](https://lintr.r-lib.org/reference/pipe_consistency_linter.html)
+  now requires `|>`. `dplyr::%>%` stays imported because tidygraph’s
+  `%N>%` and `%E>%` evaluate it in the caller environment.
+
+### Fixed
+
+- `PixelDB$components_cell_graph()` now supports passing a subset of
+  markers (or duplicate marker names) to `markers` without failing with
+  `NA` indices in
+  [`Matrix::sparseMatrix()`](https://rdrr.io/pkg/Matrix/man/sparseMatrix.html).
+
 ## \[0.24.0\] - 2026-10-23
 
 ### Added
@@ -75,6 +154,25 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - [`ProximityScoresToAssay()`](reference/ProximityScoresToAssay.md)
   warns about components whose proximity scores are all zero. It
   previously warned about components whose scores were all non-zero.
+
+### Added
+
+- [`AnnotateCells()`](reference/AnnotateCells.md) now stores per-cell
+  prediction confidence scores in the returned `Seurat` object metadata
+  as `<group>_score` (e.g. `celltype.l1_score`, `celltype.l2_score`) for
+  both `method = "nnls"` and `method = "Seurat"`.
+
+### Changed
+
+- Improved the non-negative least squares cell type annotation algorithm
+  in [`AnnotateCells()`](reference/AnnotateCells.md) (`method = "nnls"`,
+  with `"nmf"` retained as a backward-compatible alias) using
+  within-group k-means sub-clustering, 15% trimmed-mean reference
+  centroids, signal-to-noise marker weighting, and two-stage local
+  candidate refinement.
+- Updated [`AnnotateCells()`](reference/AnnotateCells.md) defaults to
+  `method = "nnls"`, `reference_assay = "PNA"`, `query_assay = "PNA"`,
+  and `normalization_method = "CLR"`.
 
 ## \[0.23.0\] - 2026-10-13
 

@@ -9,7 +9,7 @@ CellGraphAssay5 or a Seurat object"><meta property="og:image" content="/logo.png
 
     <a class="navbar-brand me-2" href="../index.html">pixelatorR</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.24.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.26.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,7 +123,7 @@ spatial metrics</p></div>
 <span class="r-in"><span><span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/copy.html" class="external-link">file_copy</a></span><span class="op">(</span>path <span class="op">=</span> <span class="va">pxl_file</span>, <span class="va">temp_file</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Change file path in fs_map</span></span></span>
-<span class="r-in"><span><span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">[[</span><span class="st">"PNA"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">[[</span><span class="st">"PNA"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span><span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">[[</span><span class="st">"PNA"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">[[</span><span class="st">"PNA"</span><span class="op">]</span><span class="op">]</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pxl_file <span class="op">=</span> <span class="va">temp_file</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Now the fs_map has been updated with the correct path</span></span></span>
@@ -131,7 +131,7 @@ spatial metrics</p></div>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   id_map           sample pxl_file                                              </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;list&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;fs::path&gt;</span>                                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;tibble [5 × 2]&gt;</span>      1 …s_mq8n51jtbc0000gn/T/RtmpHzVgLd/file10717564e654a.pxl</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">&lt;tibble [5 × 2]&gt;</span>      1 …9gs_mq8n51jtbc0000gn/T/RtmpatLuS1/file83b3fc629e0.pxl</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="va">pxl_file</span> <span class="op">&lt;-</span> <span class="fu"><a href="mpx_dataset.html">minimal_mpx_pxl_file</a></span><span class="op">(</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">seur_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="ReadMPX_Seurat.html">ReadMPX_Seurat</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span></span></span>
@@ -152,7 +152,7 @@ spatial metrics</p></div>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BB00;">✔</span> Created a <span style="color: #0000BB;">&lt;Seurat&gt;</span> object with <span style="color: #0000BB;">5</span> cells and <span style="color: #0000BB;">158</span> targeted surface proteins</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Replace FSMap in Seurat object</span></span></span>
-<span class="r-in"><span><span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span></span></span>
+<span class="r-in"><span><span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="fu">FSMap</span><span class="op">(</span><span class="va">seur_obj</span><span class="op">)</span> <span class="op">|&gt;</span></span></span>
 <span class="r-in"><span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span>pxl_file <span class="op">=</span> <span class="fu">fs</span><span class="fu">::</span><span class="fu"><a href="https://fs.r-lib.org/reference/path_math.html" class="external-link">path_rel</a></span><span class="op">(</span><span class="va">pxl_file</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span></span></span>
 </code></pre></div>

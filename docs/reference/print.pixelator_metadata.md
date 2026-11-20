@@ -58,9 +58,9 @@ meta_data
 
 # Multiple files with less detail
 pxl_files <- c(pxl_file, pxl_file)
-meta_data_merged <- lapply(pxl_files, ReadMPX_metadata) %>%
+meta_data_merged <- lapply(pxl_files, ReadMPX_metadata) |>
   bind_rows()
-meta_data_merged %>% print(detailed = FALSE)
+meta_data_merged |> print(detailed = FALSE)
 #> Sample 1 name:       Mock_data
 #> Pixelator version:   0.12.0
 #> 

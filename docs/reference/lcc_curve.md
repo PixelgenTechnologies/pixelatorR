@@ -122,11 +122,11 @@ if (FALSE) { # \dontrun{
 library(ggplot2)
 library(dplyr)
 pxl_file <- minimal_pna_pxl_file()
-components <- ReadPNA_counts(pxl_file) %>% colnames()
+components <- ReadPNA_counts(pxl_file) |> colnames()
 
 # Select fractions based on average read depth
 db <- PixelDB$new(pxl_file)
-avg_reads <- db$cell_meta()$reads %>% mean()
+avg_reads <- db$cell_meta()$reads |> mean()
 fracs <- (10^seq(4, log10(avg_reads), length.out = 20))[-20] / avg_reads
 
 lcc_df <- lcc_curve(pxl_file, components, fracs = fracs)
@@ -139,10 +139,10 @@ ggplot(lcc_df, aes(frac, n_nodes, color = component)) +
   guides(color = "none")
 
 # Compute graph stability (LCC / max theoretical nodes)
-nodesat <- approximate_node_saturation(db) %>% collect()
+nodesat <- approximate_node_saturation(db) |> collect()
 db$close()
 
-lcc_df <- lcc_df %>%
+lcc_df <- lcc_df |>
   left_join(nodesat, by = "component")
 
 ggplot(lcc_df, aes(frac, n_nodes / nodes, color = component)) +

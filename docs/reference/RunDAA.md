@@ -171,8 +171,8 @@ pxl_file <- minimal_mpx_pxl_file()
 se <- ReadMPX_Seurat(pxl_file)
 #> ✔ Created a 'Seurat' object with 5 cells and 80 targeted surface proteins
 se <- merge(se, rep(list(se), 9), add.cell.ids = LETTERS[1:10])
-se$sample <- c("T", "C", "C", "C", "C") %>% rep(times = 10)
-se <- Seurat::NormalizeData(se %>% JoinLayers(), normalization.method = "CLR", margin = 2)
+se$sample <- c("T", "C", "C", "C", "C") |> rep(times = 10)
+se <- Seurat::NormalizeData(se |> JoinLayers(), normalization.method = "CLR", margin = 2)
 #> Normalizing layer: counts
 #> Normalizing across cells
 

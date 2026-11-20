@@ -54,10 +54,14 @@ DensityScatterPlot(
 
   Optional data frame containing gate parameters. For
   `gate_type = "rectangle"`, must contain columns 'xmin', 'xmax',
-  'ymin', 'ymax' defining the rectangular gate boundaries. For gate_type
-  = "quadrant", must contain columns 'x' and 'y' defining the position
-  of the quadrant lines. The data frame can also contain the variables
-  specified in 'facet_vars' to plot different gates in different facets.
+  'ymin', 'ymax' defining the rectangular gate boundaries. `NA` and
+  infinite values mean an open edge: `xmin` or `ymin` of `NA` or `-Inf`
+  has no lower bound, and `xmax` or `ymax` of `NA` or `Inf` has no upper
+  bound. `Inf` is not a lower bound and `-Inf` is not an upper bound.
+  For gate_type = "quadrant", must contain columns 'x' and 'y' defining
+  the position of the quadrant lines. The data frame can also contain
+  the variables specified in 'facet_vars' to plot different gates in
+  different facets.
 
 - gate_type:
 

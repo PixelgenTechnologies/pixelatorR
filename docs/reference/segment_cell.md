@@ -121,8 +121,8 @@ type.
 
 ``` r
 library(dplyr)
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-  LoadCellGraphs(cells = colnames(.)[2], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[2], verbose = FALSE))()
 cg <- CellGraphs(se)[[2]]
 
 # Get cell type weights

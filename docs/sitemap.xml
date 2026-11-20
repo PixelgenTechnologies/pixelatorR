@@ -131,6 +131,7 @@
 <url><loc>/reference/expand_adjacency_matrix.html</loc></url>
 <url><loc>/reference/export_plot.html</loc></url>
 <url><loc>/reference/fast_pmds.html</loc></url>
+<url><loc>/reference/fetch_cell_graphs.html</loc></url>
 <url><loc>/reference/fetch_node_neighborhoods.html</loc></url>
 <url><loc>/reference/get_duckdb_config.html</loc></url>
 <url><loc>/reference/graph-conversion.html</loc></url>
@@ -139,10 +140,12 @@
 <url><loc>/reference/index.html</loc></url>
 <url><loc>/reference/inspect_pxl_file.html</loc></url>
 <url><loc>/reference/isotype_pls.html</loc></url>
+<url><loc>/reference/join_proximity_metadata.html</loc></url>
 <url><loc>/reference/layout_coordinates_utils.html</loc></url>
 <url><loc>/reference/layout_with_coarsened_pmds.html</loc></url>
 <url><loc>/reference/layout_with_spectral.html</loc></url>
 <url><loc>/reference/layout_with_weighted_pmds.html</loc></url>
+<url><loc>/reference/lazy_load_table.html</loc></url>
 <url><loc>/reference/lcc_curve.html</loc></url>
 <url><loc>/reference/lcc_sizes.html</loc></url>
 <url><loc>/reference/local_G.html</loc></url>
@@ -172,5 +175,6 @@
 <url><loc>/reference/theme_pixelgen.html</loc></url>
 <url><loc>/reference/two_bit_encoding.html</loc></url>
 <url><loc>/reference/type_check_helpers.html</loc></url>
+<url><loc>/reference/validate_fs_map_paths.html</loc></url>
 </urlset>
 

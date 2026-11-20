@@ -85,7 +85,7 @@ temp_file <- fs::file_temp(ext = "pxl")
 fs::file_copy(path = pxl_file, temp_file)
 
 # Change file path in fs_map
-FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) %>%
+FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) |>
   mutate(pxl_file = temp_file)
 
 # Now the fs_map has been updated with the correct path
@@ -93,7 +93,7 @@ FSMap(seur_obj[["PNA"]])
 #> # A tibble: 1 × 3
 #>   id_map           sample pxl_file                                              
 #>   <list>            <int> <fs::path>                                            
-#> 1 <tibble [5 × 2]>      1 …s_mq8n51jtbc0000gn/T/RtmpHzVgLd/file10717564e654a.pxl
+#> 1 <tibble [5 × 2]>      1 …9gs_mq8n51jtbc0000gn/T/RtmpatLuS1/file83b3fc629e0.pxl
 
 pxl_file <- minimal_mpx_pxl_file()
 seur_obj <- ReadMPX_Seurat(pxl_file)
@@ -114,6 +114,6 @@ seur_obj <- ReadPNA_Seurat(pxl_file)
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 
 # Replace FSMap in Seurat object
-FSMap(seur_obj) <- FSMap(seur_obj) %>%
+FSMap(seur_obj) <- FSMap(seur_obj) |>
   mutate(pxl_file = fs::path_rel(pxl_file))
 ```

@@ -205,13 +205,13 @@ standard deviation of the join counts across all permutations.
 
 ``` r
 library(dplyr)
-cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-  LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE) %>%
-  CellGraphs() %>%
-  .[[1]]
+cg <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1], verbose = FALSE))() |>
+  CellGraphs() |>
+  (\(.) .[[1]])()
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 
-ComputeProximityScores(cg) %>%
+ComputeProximityScores(cg) |>
   filter(join_count_z > 3)
 #> # A tibble: 167 × 7
 #>    join_count join_count_expected_mean join_count_expected_sd marker_1 marker_2
@@ -230,20 +230,20 @@ ComputeProximityScores(cg) %>%
 #> # ℹ 2 more variables: join_count_z <dbl>, log2_ratio <dbl>
 
 library(ggplot2)
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-  LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1:2], verbose = FALSE))()
 #> ✔ Created a <Seurat> object with 5 cells and 158 targeted surface proteins
 
 # Compute proximity scores for selected cells
 proximity_scores <- ComputeProximityScores(se, cells = colnames(se)[1:2])
 
 # Compare with available proximity scores
-proximity_scores %>%
-  left_join(ProximityScores(se %>% subset(cells = colnames(se)[1:2])),
+proximity_scores |>
+  left_join(ProximityScores(se |> subset(cells = colnames(se)[1:2])),
     by = c("marker_1", "marker_2", "component"),
     suffix = c("_post", "_pre")
-  ) %>%
-  na.omit() %>%
+  ) |>
+  na.omit() |>
   ggplot(aes(log2_ratio_pre, log2_ratio_post)) +
   geom_abline() +
   geom_point() +
