@@ -4,6 +4,7 @@
 \name{RenameCells.PNAAssay5}
 \alias{RenameCells.PNAAssay5}
 \alias{PNAAssay5-methods}
+\alias{dimnames<-.PNAAssay5}
 \alias{show,PNAAssay5-method}
 \alias{subset.PNAAssay5}
 \alias{merge.PNAAssay5}
@@ -11,6 +12,8 @@
 \title{PNAAssay5 Methods}
 \usage{
 \method{RenameCells}{PNAAssay5}(object, new.names = NULL, ...)
+
+\method{dimnames}{PNAAssay5}(x) <- value
 
 \S4method{show}{PNAAssay5}(object)
 
@@ -32,6 +35,12 @@
 
 \item{new.names}{A character vector with new cell IDs. The length of the vector
 must be equal to the number of cells in the object and the names must be unique.}
+
+\item{value}{A list of length two with the feature names (first element) and
+the cell names (second element). Only cell names can be changed. Cell names
+are renamed in the same way as with \code{RenameCells}, so that the cell
+graphs, proximity scores and file-sample map stay consistent with the new
+cell IDs.}
 
 \item{...}{Additional arguments passed to other methods}
 
@@ -66,6 +75,9 @@ Join Layers Together
 \section{Functions}{
 \itemize{
 \item \code{RenameCells(PNAAssay5)}: Rename cell IDs of a \code{PNAAssay5} object
+
+\item \code{dimnames(PNAAssay5) <- value}: Set the dimension names of a \code{PNAAssay5}
+object. This is the method used by \code{colnames<-}.
 
 \item \code{show(PNAAssay5)}: Show method for \code{PNAAssay5} objects
 

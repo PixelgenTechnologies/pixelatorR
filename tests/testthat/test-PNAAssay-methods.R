@@ -47,6 +47,40 @@ for (assay_version in c("v3", "v5")) {
     expect_error(RenameCells(pna_assay, new.names = "Invalid"))
   })
 
+  # dimnames<- method
+  test_that("colnames<- keeps PNAAssay slots in sync with the new cell IDs", {
+    new_names <- paste0("A_", colnames(pna_assay))
+    pna_assay_renamed <- pna_assay
+    colnames(pna_assay_renamed) <- new_names
+    expect_s4_class(pna_assay_renamed, expected_class)
+    expect_equal(colnames(pna_assay_renamed), new_names)
+    expect_equal(names(CellGraphs(pna_assay_renamed)), new_names)
+    expect_equal(
+      FSMap(pna_assay_renamed)$id_map[[1]]$current_id |> sort(),
+      sort(new_names)
+    )
+    expect_equal(
+      pna_assay_renamed |>
+        ProximityScores(lazy = TRUE) |>
+        dplyr::distinct(component) |>
+        dplyr::pull(component) |>
+        sort(),
+      sort(new_names)
+    )
+
+    seur_obj_renamed <- seur_obj
+    colnames(seur_obj_renamed) <- new_names
+    expect_equal(
+      FSMap(seur_obj_renamed)$id_map[[1]]$current_id |> sort(),
+      sort(new_names)
+    )
+  })
+
+  test_that("colnames<- fails when feature names are changed", {
+    pna_assay_renamed <- pna_assay
+    expect_error(rownames(pna_assay_renamed) <- paste0("X_", rownames(pna_assay)))
+  })
+
   # JoinLayers method
   if (assay_version == "v5") {
     test_that("JoinLayers.PNAAssay5 method works as expected", {
