@@ -652,7 +652,6 @@ Nothing
 ## Examples
 
 ``` r
-
 ## ------------------------------------------------
 ## Method `PixelDB$new`
 ## ------------------------------------------------
@@ -661,6 +660,14 @@ library(dplyr)
 
 pxl_file <- minimal_pna_pxl_file()
 db <- PixelDB$new(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/Rtmp3OpCPp/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 
 
 ## ------------------------------------------------
@@ -668,6 +675,14 @@ db <- PixelDB$new(pxl_file)
 ## ------------------------------------------------
 
 db <- PixelDB$new(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/Rtmp3OpCPp/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 db$info()
 #> # A tibble: 10 × 6
 #>    database         schema name              column_names column_types temporary
@@ -712,6 +727,14 @@ db$query("SELECT * FROM proximity") |> head()
 
 db$close()
 db$reconnect()
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/Rtmp3OpCPp/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 #> ✔ Connected
 
 
@@ -916,11 +939,11 @@ db$components_layout("0a45497c6bfbfb22")[[1]] |> head()
 # Fetch marker counts
 db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 #> # A tibble: 3 × 4
-#>   name               CD59 CD85j `HLA-ABC`
-#>   <chr>             <dbl> <dbl>     <dbl>
-#> 1 10633477134735765     1     0         0
-#> 2 8960932204844131      1     0         0
-#> 3 71444033550177254     1     0         0
+#>   name                B2M  CD18  CD16
+#>   <chr>             <dbl> <dbl> <dbl>
+#> 1 20908764047174569     1     0     0
+#> 2 43490672832343381     0     1     0
+#> 3 51674837241388374     0     0     1
 
 
 ## ------------------------------------------------
@@ -930,6 +953,14 @@ db$components_marker_counts("0a45497c6bfbfb22")[[1]][1:3, 1:4]
 # Connect to a PNA database and load cell graphs
 pxl_file <- minimal_pna_pxl_file()
 db <- PixelDB$new(pxl_file)
+#> duckdb keeps downloaded extensions and secrets in a temporary directory:
+#> ℹ /tmp/Rtmp3OpCPp/duckdb
+#> This is removed when the R session ends.
+#> • Extensions are re-downloaded each session.
+#> • Secrets are lost.
+#> ℹ Run duckdb(shared_home = TRUE) (or create ~/.duckdb) to keep them (suitable for most users).
+#> ℹ Run duckdb(shared_home = FALSE) to accept the temporary directory (and silence this message).
+#> ℹ See ?duckdb_storage for details and alternatives.
 cgl <- db$components_cell_graph(c("0a45497c6bfbfb22"))
 cgl
 #> A CellGraphList with 1 loaded CellGraph object(s) out of 1 
@@ -944,8 +975,8 @@ cgl
 tmp_parquet_file <- fs::file_temp(ext = "parquet")
 db$export_parquet(tmp_parquet_file, "proximity")
 fs::file_exists(tmp_parquet_file)
-#> /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/RtmpatLuS1/file83bcbfd789.parquet 
-#>                                                                               TRUE 
+#> /tmp/Rtmp3OpCPp/file200c11369983.parquet 
+#>                                     TRUE 
 
 
 ## ------------------------------------------------

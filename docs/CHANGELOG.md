@@ -8,6 +8,8 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## \[Unreleased\]
 
+## \[0.26.1\] - 2026-11-20
+
 ### Changed
 
 - Container images published to GHCR and AWS ECR are now built as
@@ -677,7 +679,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Added reference PBMC dataset and load function `read_pbmc_reference`
-  that can be used for annotation.\
+  that can be used for annotation.  
 - Added `isotype_pls` to calculate isotype background score.
 - Added `export_plot` utility function to export ggplot objects to file.
 - Added `create_discrete_palette` to create palettes to color different
@@ -941,7 +943,7 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   (`RunDCA`).
 - Updated `subset` and `merge` methods for `MPXAssay` to have less
   stringent validation of the spatial metric tables (polarity and
-  colocalization scores).\
+  colocalization scores).  
 - Updated `ReadMPX_Seurat` to have less stringent validation of the
   spatial metric tables (polarity and colocalization scores).
 - `ColocalizationHeatmap` now allows legend titles and the legend range

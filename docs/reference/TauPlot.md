@@ -42,7 +42,6 @@ Other QC-plots: [`CellCountPlot()`](CellCountPlot.md)
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 
 # Load example data as a Seurat object

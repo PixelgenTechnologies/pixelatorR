@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.26.1] - 2026-11-20
+
 ### Changed
 
 - Container images published to GHCR and AWS ECR are now built as multi-arch

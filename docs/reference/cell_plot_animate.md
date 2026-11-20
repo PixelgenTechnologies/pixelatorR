@@ -101,7 +101,7 @@ file <- tempfile(fileext = ".gif")
 cell_plot(layout_data) |>
   cell_coord_rotate(axis = "y") |>
   cell_plot_animate(file, frames = 2, width = 160, height = 160, res = 72)
-#> ℹ Encoding /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpatLuS1/file83b…
-#> ✔ Encoding /var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T//RtmpatLuS1/file83b…
+#> ℹ Encoding /tmp/Rtmp3OpCPp/file200c631fef2c.gif
+#> ✔ Encoding /tmp/Rtmp3OpCPp/file200c631fef2c.gif [15ms]
 #> 
 ```

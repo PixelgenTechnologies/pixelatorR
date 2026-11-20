@@ -94,16 +94,15 @@ A `MPXAssay` object
 ## Examples
 
 ``` r
-
 library(pixelatorR)
 library(dplyr)
 library(tidygraph)
 
 pxl_file <- minimal_mpx_pxl_file()
 counts <- ReadMPX_counts(pxl_file)
-#> ℹ Loading count data from /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpzk4Shw/temp_libpath13eb25903ebee/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading count data from /tmp/Rtmp1CpTfj/temp_libpath1faf6fd15ebd/pixelatorR/extdata/five_cells/five_cells.pxl
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
-#> ℹ Loading item(s) from: /private/var/folders/gw/bdcqhnvs0m9gs_mq8n51jtbc0000gn/T/Rtmpzk4Shw/temp_libpath13eb25903ebee/pixelatorR/extdata/five_cells/five_cells.pxl
+#> ℹ Loading item(s) from: /tmp/Rtmp1CpTfj/temp_libpath1faf6fd15ebd/pixelatorR/extdata/five_cells/five_cells.pxl
 #> →   Loading edgelist data
 #> ✔ Returning a 'tbl_df' object
 components <- colnames(counts)

@@ -132,6 +132,8 @@ A ggplot object.
 ``` r
 library(pixelatorR)
 library(Seurat)
+#> v6.0 adds significant improvements in speed and efficiency, particularly for large datasets.
+#> For more information, see https://satijalab.org/seurat/articles/announcements.
 
 set.seed(123)
 

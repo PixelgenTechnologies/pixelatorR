@@ -78,7 +78,6 @@ a renderer recomputes the illumination mask.
 ## Examples
 
 ``` r
-
 library(dplyr)
 set.seed(1)
 
