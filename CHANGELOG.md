@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `colnames<-` on a `PNAAssay` or `PNAAssay5` (including through a `Seurat` object)
+  now keeps the cell graphs, proximity scores and `fs_map` in sync with the new
+  cell IDs. Previously `fs_map` kept the old IDs, so lazily loaded proximity
+  scores could not be matched to cells.
+
 ## [0.26.1] - 2026-11-20
 
 ### Changed

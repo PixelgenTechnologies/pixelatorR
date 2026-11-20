@@ -447,6 +447,61 @@ RenameCells.PNAAssay <- function(
 #'
 RenameCells.PNAAssay5 <- RenameCells.PNAAssay
 
+#' @param value A list of length two with the feature names (first element) and
+#' the cell names (second element). Only cell names can be changed. Cell names
+#' are renamed in the same way as with \code{RenameCells}, so that the cell
+#' graphs, proximity scores and file-sample map stay consistent with the new
+#' cell IDs.
+#'
+#' @describeIn PNAAssay-methods Set the dimension names of a \code{PNAAssay}
+#' or \code{PNAAssay5} object. This is the method used by \code{colnames<-}.
+#' @method dimnames<- PNAAssay
+#' @concept assay
+#' @docType methods
+#'
+#' @examples
+#' library(pixelatorR)
+#' library(SeuratObject)
+#'
+#' pxl_file <- minimal_pna_pxl_file()
+#' seur_obj <- ReadPNA_Seurat(pxl_file)
+#' pna_assay <- seur_obj[["PNA"]]
+#' colnames(pna_assay) <- paste0(colnames(pna_assay), "-new")
+#' colnames(pna_assay)
+#'
+#' @export
+`dimnames<-.PNAAssay` <- function(
+  x,
+  value
+) {
+  if (!is.list(value) || length(value) != 2L) {
+    cli::cli_abort(
+      c("x" = "{.arg value} must be a list of length 2 with feature and cell names.")
+    )
+  }
+  if (!identical(as.character(value[[1L]]), rownames(x))) {
+    cli::cli_abort(
+      c("x" = "Renaming features is not supported for {.cls {class(x)}} objects.")
+    )
+  }
+  new_cell_names <- value[[2L]]
+  if (identical(as.character(new_cell_names), colnames(x))) {
+    return(x)
+  }
+  new_cell_names <- as.character(new_cell_names)
+  RenameCells(x, new.names = new_cell_names) |>
+    return()
+}
+
+#' @describeIn PNAAssay5-methods Set the dimension names of a \code{PNAAssay5}
+#' object. This is the method used by \code{colnames<-}.
+#' @concept assay
+#' @method dimnames<- PNAAssay5
+#' @docType methods
+#' @export
+#'
+`dimnames<-.PNAAssay5` <- `dimnames<-.PNAAssay`
+
 
 #' @param cellgraphs A list of \code{\link{CellGraph}} objects
 #' @param proximity A \code{tbl_df} with proximity scores

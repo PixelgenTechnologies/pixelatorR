@@ -4,12 +4,15 @@
 \name{RenameCells.PNAAssay}
 \alias{RenameCells.PNAAssay}
 \alias{PNAAssay-methods}
+\alias{dimnames<-.PNAAssay}
 \alias{show,PNAAssay-method}
 \alias{subset.PNAAssay}
 \alias{merge.PNAAssay}
 \title{PNAAssay Methods}
 \usage{
 \method{RenameCells}{PNAAssay}(object, new.names = NULL, ...)
+
+\method{dimnames}{PNAAssay}(x) <- value
 
 \S4method{show}{PNAAssay}(object)
 
@@ -29,6 +32,12 @@
 
 \item{new.names}{A character vector with new cell IDs. The length of the vector
 must be equal to the number of cells in the object and the names must be unique.}
+
+\item{value}{A list of length two with the feature names (first element) and
+the cell names (second element). Only cell names can be changed. Cell names
+are renamed in the same way as with \code{RenameCells}, so that the cell
+graphs, proximity scores and file-sample map stay consistent with the new
+cell IDs.}
 
 \item{...}{Arguments passed to other methods}
 
@@ -59,6 +68,9 @@ packages
 \item \code{RenameCells(PNAAssay)}: Rename cell IDs of a \code{PNAAssay} or
 \code{PNAAssay5} object
 
+\item \code{dimnames(PNAAssay) <- value}: Set the dimension names of a \code{PNAAssay}
+or \code{PNAAssay5} object. This is the method used by \code{colnames<-}.
+
 \item \code{show(PNAAssay)}: Show method for \code{PNAAssay} objects
 
 \item \code{subset(PNAAssay)}: Subset a \code{PNAAssay} or a
@@ -76,6 +88,15 @@ pxl_file <- minimal_pna_pxl_file()
 seur_obj <- ReadPNA_Seurat(pxl_file)
 pna_assay <- seur_obj[["PNA"]]
 pna_assay <- RenameCells(pna_assay, new.names = paste0(colnames(pna_assay), "-new"))
+colnames(pna_assay)
+
+library(pixelatorR)
+library(SeuratObject)
+
+pxl_file <- minimal_pna_pxl_file()
+seur_obj <- ReadPNA_Seurat(pxl_file)
+pna_assay <- seur_obj[["PNA"]]
+colnames(pna_assay) <- paste0(colnames(pna_assay), "-new")
 colnames(pna_assay)
 
 library(pixelatorR)
