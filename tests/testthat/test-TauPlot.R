@@ -29,15 +29,15 @@ test_that("TauPlot works for Seurat objects", {
   })
 
   # With group variable (factor)
-  seur_obj$sampleID <- sample(c("A", "B"), ncol(seur_obj), replace = TRUE) %>% as.factor()
+  seur_obj$sampleID <- sample(c("A", "B"), ncol(seur_obj), replace = TRUE) |> as.factor()
   expect_no_error({
     tau_plot <- TauPlot(seur_obj, group_by = "sampleID")
   })
 
   # With 0.18 PXL file format
   expect_no_error(
-    seur_obj@meta.data <- seur_obj[[]] %>%
-      rename(mean_molecules_per_a_pixel = mean_umi_per_upia) %>%
+    seur_obj@meta.data <- seur_obj[[]] |>
+      rename(mean_molecules_per_a_pixel = mean_umi_per_upia) |>
       select(-all_of("umi_per_upia"))
   )
   expect_no_error({

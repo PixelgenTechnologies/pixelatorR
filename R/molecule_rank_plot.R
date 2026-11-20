@@ -65,8 +65,8 @@ MoleculeRankPlot.data.frame <- function(
       cli_alert_warning("Column {.str {group_by}} not found in 'object'")
       group_by <- NULL
     } else {
-      object <- object %>%
-        mutate(!!sym(group_by) := factor(!!sym(group_by))) %>%
+      object <- object |>
+        mutate(!!sym(group_by) := factor(!!sym(group_by))) |>
         group_by_at(group_by)
     }
   } else {
@@ -78,9 +78,9 @@ MoleculeRankPlot.data.frame <- function(
   }
 
   object <-
-    object %>%
-    rename(molecules = !!sym(molecules_column)) %>%
-    select(molecules, any_of(group_by)) %>%
+    object |>
+    rename(molecules = !!sym(molecules_column)) |>
+    select(molecules, any_of(group_by)) |>
     mutate(rank = rank(-molecules, ties.method = "random"))
 
   # Set min/max umi thresholds if not specified
@@ -91,7 +91,7 @@ MoleculeRankPlot.data.frame <- function(
     n_umi_max_threshold <- Inf
   }
 
-  object <- object %>%
+  object <- object |>
     mutate(
       umi_category = case_when(
         molecules < n_umi_min_threshold ~ "Low",
@@ -100,25 +100,25 @@ MoleculeRankPlot.data.frame <- function(
       )
     )
 
-  umi_outliers <- object %>%
-    {
+  umi_outliers <- object |>
+    (\(.) {
       if (split) {
         group_by(., umi_category, !!sym(group_by))
       } else {
         group_by(., umi_category)
       }
-    } %>%
+    })() |>
     count()
 
   # Create edge rank plot
-  cellrank_plot <- object %>%
-    {
+  cellrank_plot <- object |>
+    (\(.) {
       if (!is.null(group_by)) {
         ggplot(., aes(x = rank, y = molecules, color = !!sym(group_by)))
       } else {
         ggplot(., aes(x = rank, y = molecules))
       }
-    } +
+    })() +
     {
       if (split) {
         geom_point(size = 0.5, color = "black")
@@ -172,7 +172,7 @@ MoleculeRankPlot.data.frame <- function(
     y_max_thresh <- if (is.finite(n_umi_max_threshold)) n_umi_max_threshold else max_val
 
     # Calculate the exact visual center for each zone (Geometric Mean)
-    umi_outliers <- umi_outliers %>%
+    umi_outliers <- umi_outliers |>
       mutate(
         y_position = case_when(
           umi_category == "Low" ~ sqrt(as.numeric(min_val) * as.numeric(y_min_thresh)),

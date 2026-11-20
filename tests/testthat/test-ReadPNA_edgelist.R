@@ -26,16 +26,16 @@ test_that("ReadPNA_edgelist works as expected", {
         "tbl", "data.frame"
       )
     )
-  expect_identical(head(el %>% arrange(umi1), 2), expected_data)
+  expect_identical(head(el |> arrange(umi1), 2), expected_data)
 
   # tbl_lazy
   expect_no_error(el <- ReadPNA_edgelist(pxl_file))
   expect_equal(c("marker_1", "marker_2", "umi1", "umi2", "read_count", "uei_count", "component"), colnames(el))
   expect_s3_class(el, "tbl_lazy")
-  expect_equal(dim(el %>% collect()), c(528594, 7))
+  expect_equal(dim(el |> collect()), c(528594, 7))
 
   expect_no_error(el <- ReadPNA_edgelist(pxl_file, cells = "c3c393e9a17c1981"))
-  expect_equal(dim(el %>% collect()), c(110657, 7))
+  expect_equal(dim(el |> collect()), c(110657, 7))
 })
 
 test_that("ReadPNA_edgelist works when uei_count is missing", {

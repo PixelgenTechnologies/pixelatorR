@@ -88,24 +88,24 @@
 #' library(Matrix)
 #'
 #' # Load a CellGraph object with PNA data
-#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-#'   LoadCellGraphs(cells = colnames(.)[1], add_layouts = TRUE)
+#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[1], add_layouts = TRUE))()
 #' cg <- CellGraphs(se)[[1]]
 #'
-#' protein_props <- cg@counts %>%
-#'   Matrix::colSums() %>%
+#' protein_props <- cg@counts |>
+#'   Matrix::colSums() |>
 #'   prop.table()
 #' patch_props <- protein_props
 #' patch_props["CD8"] <- 0.4
-#' patch_props <- patch_props %>% prop.table()
+#' patch_props <- patch_props |> prop.table()
 #'
 #' # Here we'll create an artifical patch by replacing node counts
 #' # in a small region
 #' inds <- 1
 #' patch_size <- 1000
-#' xyz <- cg@layout$wpmds_3d %>% as.matrix()
+#' xyz <- cg@layout$wpmds_3d |> as.matrix()
 #' xyz_center <- xyz[inds, , drop = FALSE]
-#' dists <- 1 - cos_dist(A = xyz_center, B = xyz) %>% as.vector()
+#' dists <- 1 - cos_dist(A = xyz_center, B = xyz) |> as.vector()
 #' inds_replace <- order(dists)[1:patch_size]
 #' counts_with_patch <- cg@counts
 #'
@@ -142,8 +142,8 @@
 #' )
 #'
 #' # Visualize patch
-#' xyz <- cg@layout$wpmds_3d %>%
-#'   mutate(patch = cg@cellgraph %>% pull(patch))
+#' xyz <- cg@layout$wpmds_3d |>
+#'   mutate(patch = cg@cellgraph |> pull(patch))
 #'
 #' plotly::plot_ly(
 #'   xyz,
@@ -158,18 +158,18 @@
 #' )
 #'
 #' # Check protein composition
-#' gg <- tibble(patch = cg@cellgraph %>% pull(patch) %>% as.factor()) %>%
-#'   bind_cols(as.matrix(cg@counts)) %>%
-#'   group_by(patch) %>%
-#'   summarize(across(where(is.numeric), ~ sum(.x))) %>%
-#'   tidyr::pivot_longer(where(is.numeric)) %>%
-#'   group_by(patch) %>%
+#' gg <- tibble(patch = cg@cellgraph |> pull(patch) |> as.factor()) |>
+#'   bind_cols(as.matrix(cg@counts)) |>
+#'   group_by(patch) |>
+#'   summarize(across(where(is.numeric), ~ sum(.x))) |>
+#'   tidyr::pivot_longer(where(is.numeric)) |>
+#'   group_by(patch) |>
 #'   mutate(value = value / sum(value))
-#' lvls <- gg %>%
-#'   arrange(desc(patch), value) %>%
-#'   pull(name) %>%
+#' lvls <- gg |>
+#'   arrange(desc(patch), value) |>
+#'   pull(name) |>
 #'   unique()
-#' ggplot(gg %>% mutate(name = factor(name, lvls)), aes(name, patch, fill = value)) +
+#' ggplot(gg |> mutate(name = factor(name, lvls)), aes(name, patch, fill = value)) +
 #'   geom_tile() +
 #'   scale_fill_gradientn(
 #'     colours = c("lightgrey", "mistyrose", "red", "darkred"),
@@ -262,20 +262,20 @@ patch_detection <- function(
 
   # Split graph into connected components and remove small components with fewer
   # than patch_nodes_threshold nodes
-  g_patch <- g_patch %>%
-    mutate(comp = igraph::components(.)$membership) %>%
-    group_by(comp) %>%
+  g_patch <- g_patch |>
+    (\(.) mutate(., comp = igraph::components(.)$membership))() |>
+    group_by(comp) |>
     mutate(n = n())
   # Mark small communities as potential patches
   small_patches <- g_patch %N>%
-    as_tibble() %>%
-    filter(between(n, 2, patch_nodes_threshold)) %>%
-    group_by(comp) %>%
-    mutate(potential_patch = cur_group_id()) %>%
-    ungroup() %>%
+    as_tibble() |>
+    filter(between(n, 2, patch_nodes_threshold)) |>
+    group_by(comp) |>
+    mutate(potential_patch = cur_group_id()) |>
+    ungroup() |>
     select(-n, -comp)
-  g_exp_patch_list <- g_patch %>%
-    filter(n >= patch_nodes_threshold) %>%
+  g_exp_patch_list <- g_patch |>
+    filter(n >= patch_nodes_threshold) |>
     to_components()
 
   if (length(g_exp_patch_list) == 0) {
@@ -305,19 +305,19 @@ patch_detection <- function(
       )
     }
     g_patch_nodes <- lapply(seq_along(g_exp_patch_list), function(i) {
-      g_exp_patch_list[[i]] %>%
-        mutate(community = igraph::cluster_leiden(
+      g_exp_patch_list[[i]] |>
+        (\(.) mutate(., community = igraph::cluster_leiden(
           .,
           resolution = leiden_resolution,
           objective_function = "modularity"
-        )$membership) %>%
-        as_tibble() %>%
+        )$membership))() |>
+        as_tibble() |>
         mutate(patch = paste0(community, "_", i))
-    }) %>%
-      bind_rows() %>%
-      select(-contains("community")) %>%
-      group_by(patch) %>%
-      mutate(n = n()) %>%
+    }) |>
+      bind_rows() |>
+      select(-contains("community")) |>
+      group_by(patch) |>
+      mutate(n = n()) |>
       filter(n >= patch_nodes_threshold)
     if (verbose) {
       cli::cli_alert_info(
@@ -329,27 +329,27 @@ patch_detection <- function(
     }
   } else {
     g_patch_nodes <- lapply(seq_along(g_exp_patch_list), function(i) {
-      g_exp_patch_list[[i]] %N>% as_tibble() %>%
+      g_exp_patch_list[[i]] %N>% as_tibble() |>
         mutate(patch = paste0("0_", i))
-    }) %>%
+    }) |>
       bind_rows()
   }
 
-  g_patch_nodes <- g_patch_nodes %>%
-    group_by(patch) %>%
-    count(name = "size") %>%
-    arrange(-size) %>%
-    ungroup() %>%
-    mutate(group = as.integer(row_number())) %>%
-    right_join(g_patch_nodes, by = "patch") %>%
-    select(-size) %>%
-    ungroup() %>%
+  g_patch_nodes <- g_patch_nodes |>
+    group_by(patch) |>
+    count(name = "size") |>
+    arrange(-size) |>
+    ungroup() |>
+    mutate(group = as.integer(row_number())) |>
+    right_join(g_patch_nodes, by = "patch") |>
+    select(-size) |>
+    ungroup() |>
     select(name, patch = group)
 
   # Add group labels to original graph
   g <- cg@cellgraph %N>%
-    select(-matches("patch")) %>%
-    left_join(g_patch_nodes, by = c("name" = "name")) %>%
+    select(-matches("patch")) |>
+    left_join(g_patch_nodes, by = c("name" = "name")) |>
     mutate(
       patch = case_when(
         is.na(patch) ~ 0L,
@@ -359,7 +359,7 @@ patch_detection <- function(
 
   # Add additional small patch node labels
   if (nrow(small_patches) > 0) {
-    g <- g %>%
+    g <- g |>
       left_join(small_patches, by = "name")
   }
 
@@ -391,24 +391,24 @@ patch_detection <- function(
   s = 0.5
 ) {
   # Get adjacency matrix
-  A <- cg@cellgraph %>% igraph::as_adjacency_matrix()
+  A <- cg@cellgraph |> igraph::as_adjacency_matrix()
 
   # Expand adjacency matrix
   A_exp <- expand_adjacency_matrix(A, k = k)
 
   # Define initial patch nodes
-  patch_nodes_i <- (cg@counts[, patch_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
+  patch_nodes_i <- (cg@counts[, patch_markers, drop = FALSE] |> Matrix::rowSums()) == 1
 
   # Define receiver nodes to block later if desired
   if (!is.null(receiver_markers)) {
-    receiver_nodes <- (cg@counts[, receiver_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
+    receiver_nodes <- (cg@counts[, receiver_markers, drop = FALSE] |> Matrix::rowSums()) == 1
   } else {
     receiver_nodes <- rep(FALSE, nrow(cg@counts))
   }
 
   # Update patch_nodes to include outside nodes connecting at least
   # 2 patch nodes within k steps (using expanded adjacency matrix)
-  k_step_nodes <- (A_exp[patch_nodes_i, ] %>% Matrix::colSums()) > 1L
+  k_step_nodes <- (A_exp[patch_nodes_i, ] |> Matrix::colSums()) > 1L
   patch_nodes <- patch_nodes_i | k_step_nodes
 
   # Update patch_nodes to include outside nodes connecting at least
@@ -426,8 +426,8 @@ patch_detection <- function(
 
   if (!is.null(receiver_markers)) {
     receiver_nodes <- receiver_nodes &
-      (((A[, !patch_nodes] %>% Matrix::rowSums()) > 0) |
-        ((A[, receiver_nodes] %>% Matrix::rowSums()) > 0))
+      (((A[, !patch_nodes] |> Matrix::rowSums()) > 0) |
+        ((A[, receiver_nodes] |> Matrix::rowSums()) > 0))
   }
 
   # Define final patch nodes and subset adjacency matrix
@@ -435,7 +435,7 @@ patch_detection <- function(
   A_patch <- A[patch_nodes_final, patch_nodes_final]
 
   # Construct initial patch graph
-  g_patch <- igraph::graph_from_adjacency_matrix(A_patch, mode = "undirected") %>%
+  g_patch <- igraph::graph_from_adjacency_matrix(A_patch, mode = "undirected") |>
     as_tbl_graph(directed = FALSE)
 
   # Remove nodes with out degree > 1 and coreness == 1 which are located
@@ -449,7 +449,7 @@ patch_detection <- function(
   A_patch <- igraph::as_adjacency_matrix(g_patch)
   orphaned_patch_nodes <- Matrix::rowSums(A_patch) == 0
   nodes_keep <- names(orphaned_patch_nodes[!orphaned_patch_nodes])
-  g_patch <- g_patch %>%
+  g_patch <- g_patch |>
     filter(name %in% nodes_keep)
 
   return(g_patch)
@@ -477,20 +477,20 @@ patch_detection <- function(
   s = 0.01
 ) {
   # Get adjacency matrix
-  A <- cg@cellgraph %>% igraph::as_adjacency_matrix()
+  A <- cg@cellgraph |> igraph::as_adjacency_matrix()
 
   # Define initial patch nodes
-  patch_nodes_i <- (cg@counts[, patch_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
+  patch_nodes_i <- (cg@counts[, patch_markers, drop = FALSE] |> Matrix::rowSums()) == 1
 
   # Block receiver nodes if desired
   if (!is.null(receiver_markers)) {
-    receiver_nodes <- (cg@counts[, receiver_markers, drop = FALSE] %>% Matrix::rowSums()) == 1
+    receiver_nodes <- (cg@counts[, receiver_markers, drop = FALSE] |> Matrix::rowSums()) == 1
   } else {
     receiver_nodes <- rep(FALSE, nrow(cg@counts))
   }
 
-  patch_counts <- cg@counts[, patch_markers, drop = FALSE] %>% Matrix::rowSums()
-  counts <- matrix(patch_counts, ncol = 1, dimnames = list(.cg_node_map(cg), "patch_counts")) %>%
+  patch_counts <- cg@counts[, patch_markers, drop = FALSE] |> Matrix::rowSums()
+  counts <- matrix(patch_counts, ncol = 1, dimnames = list(.cg_node_map(cg), "patch_counts")) |>
     as("dgCMatrix")
 
   gi_mat <-
@@ -509,7 +509,7 @@ patch_detection <- function(
   A_patch <- A[patch_nodes_final, patch_nodes_final]
 
   # Construct patch graph
-  g_patch <- igraph::graph_from_adjacency_matrix(A_patch, mode = "undirected") %>%
+  g_patch <- igraph::graph_from_adjacency_matrix(A_patch, mode = "undirected") |>
     as_tbl_graph(directed = FALSE)
 
   # Remove nodes with out degree > 1 and coreness == 1 which are located
@@ -530,10 +530,10 @@ patch_detection <- function(
 #'
 #' @noRd
 .core_1_filter <- function(g_patch, A, patch_nodes_i, patch_nodes_final) {
-  nodes_remove <- ((A[patch_nodes_final, !patch_nodes_final] %>% Matrix::rowSums()) > 1) &
+  nodes_remove <- ((A[patch_nodes_final, !patch_nodes_final] |> Matrix::rowSums()) > 1) &
     (igraph::coreness(g_patch) == 1) &
     !patch_nodes_i[patch_nodes_final]
-  g_patch <- g_patch %>% filter(!nodes_remove)
+  g_patch <- g_patch |> filter(!nodes_remove)
   return(g_patch)
 }
 
@@ -614,7 +614,7 @@ identify_markers_for_patch_analysis <- function(
   assert_single_value(target_population, "string")
   assert_col_in_data(group_by, object[[]])
   assert_col_class(group_by, object[[]], c("character", "factor"))
-  group_vec <- object[[]] %>% pull(all_of(group_by))
+  group_vec <- object[[]] |> pull(all_of(group_by))
   assert_x_in_y(receiver_population, group_vec)
   assert_x_in_y(target_population, group_vec)
   assert_single_value(abundance_difference, "numeric")
@@ -625,24 +625,24 @@ identify_markers_for_patch_analysis <- function(
   assert_single_value(seed, "integer")
 
   cells <- colnames(object)[group_vec %in% c(receiver_population, target_population)]
-  counts <- object %>%
-    subset(cells = cells) %>%
-    JoinLayers() %>%
-    LayerData(layer = "counts") %>%
+  counts <- object |>
+    subset(cells = cells) |>
+    JoinLayers() |>
+    LayerData(layer = "counts") |>
     as.matrix()
 
   # Get protein proportions for target and receiver populations
   group_vec <- group_vec[group_vec %in% c(receiver_population, target_population)]
-  target_props <- counts[, group_vec %in% target_population] %>%
-    Matrix::rowSums() %>%
+  target_props <- counts[, group_vec %in% target_population] |>
+    Matrix::rowSums() |>
     prop.table()
-  receiver_props <- counts[, group_vec %in% receiver_population] %>%
-    Matrix::rowSums() %>%
+  receiver_props <- counts[, group_vec %in% receiver_population] |>
+    Matrix::rowSums() |>
     prop.table()
 
   # Run NMF
   nm <- RcppML::nmf(counts, k = 2, verbose = FALSE)
-  w <- nm$w %>% prop.table(margin = 2)
+  w <- nm$w |> prop.table(margin = 2)
   cor_receiver_w1 <- cor(w[, 1], receiver_props)
   cor_target_w1 <- cor(w[, 1], target_props)
   if (max(c(cor_receiver_w1, cor_target_w1)) < 0.9) {
@@ -667,14 +667,14 @@ identify_markers_for_patch_analysis <- function(
     hup = receiver_unmixed_props,
     tp = target_props,
     hp = receiver_props
-  ) %>%
+  ) |>
     mutate(
       label = case_when(
         (tup > abundance_difference * hup) & (hup < min_freq) ~ glue::glue("marker for {target_population}"),
         (hup > abundance_difference * tup) & (tup < min_freq) ~ glue::glue("marker for {receiver_population}"),
         TRUE ~ "Unspecific"
       )
-    ) %>%
+    ) |>
     rename(
       receiver_freq = hp,
       target_freq = tp,
@@ -688,7 +688,7 @@ identify_markers_for_patch_analysis <- function(
       df,
       receiver_population,
       target_population
-    ) %>%
+    ) |>
       print()
   }
 
@@ -707,14 +707,14 @@ visualize_patch_analysis_markers <- function(
   target_population
 ) {
   dfm <- bind_rows(
-    df %>%
-      select(marker, receiver_freq, target_freq, label) %>%
+    df |>
+      select(marker, receiver_freq, target_freq, label) |>
       mutate(type = "True"),
-    df %>%
-      select(marker, receiver_unmixed_freq, target_unmixed_freq, label) %>%
-      rename(receiver_freq = receiver_unmixed_freq, target_freq = target_unmixed_freq) %>%
+    df |>
+      select(marker, receiver_unmixed_freq, target_unmixed_freq, label) |>
+      rename(receiver_freq = receiver_unmixed_freq, target_freq = target_unmixed_freq) |>
       mutate(type = "Estimated")
-  ) %>%
+  ) |>
     mutate(type = factor(type, c("True", "Estimated")))
   cols <- set_names(
     c("#4A73C0", "#DB5D61", "lightgrey"),
@@ -739,23 +739,23 @@ visualize_patch_analysis_markers <- function(
     facet_grid(~type) +
     guides(size = "none") +
     scale_color_manual(values = cols)
-  est_props <- df %>%
-    na.omit() %>%
-    group_by(label) %>%
+  est_props <- df |>
+    na.omit() |>
+    group_by(label) |>
     summarize(
       hp_tot = sum(receiver_freq),
       tp_tot = sum(target_freq),
       hup_tot = sum(receiver_unmixed_freq),
       tup_tot = sum(target_unmixed_freq)
-    ) %>%
-    pivot_longer(all_of(c("hp_tot", "tp_tot", "hup_tot", "tup_tot"))) %>%
+    ) |>
+    pivot_longer(all_of(c("hp_tot", "tp_tot", "hup_tot", "tup_tot"))) |>
     mutate(type = if_else(
       stringr::str_detect(name, "hup|tup"), "Estimated", "True"
-    )) %>%
+    )) |>
     mutate(name = case_when(
       name %in% c("hp_tot", "hup_tot") ~ receiver_population,
       name %in% c("tp_tot", "tup_tot") ~ target_population
-    )) %>%
+    )) |>
     mutate(type = factor(type, c("True", "Estimated")))
   p2 <- ggplot(est_props, aes(name, value, fill = label)) +
     geom_col() +
@@ -814,7 +814,7 @@ expand_adjacency_matrix <- function(
   }
 
   if (use_weights && k == 1L) {
-    A <- (A / Matrix::rowSums(A)) %>% Matrix::t()
+    A <- (A / Matrix::rowSums(A)) |> Matrix::t()
   }
 
   # Expand neighborhood when k > 1
@@ -822,7 +822,7 @@ expand_adjacency_matrix <- function(
     Matrix::diag(A) <- 1
     if (use_weights) {
       # Use incoming transition probabilities as weights
-      A <- (A / Matrix::rowSums(A)) %>% Matrix::t()
+      A <- (A / Matrix::rowSums(A)) |> Matrix::t()
     } else {
       # Switch to pattern matrix for faster multiplication when not using weights
       A <- as(A, "ngCMatrix")

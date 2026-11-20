@@ -22,6 +22,6 @@ test_that("edgelist_to_simple_Anode_graph fails when invalid input is provided",
 
 test_that("edgelist_to_simple_bipart_graph works as expected", {
   # data.frame
-  el_tbl_df <- as_tibble(el) %>% filter(component == "RCVCMP0000217")
+  el_tbl_df <- as_tibble(el) |> filter(component == "RCVCMP0000217")
   expect_no_error(anode <- edgelist_to_simple_bipart_graph(el_tbl_df))
 })

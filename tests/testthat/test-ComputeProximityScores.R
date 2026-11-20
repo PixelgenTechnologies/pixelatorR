@@ -1,6 +1,6 @@
 library(dplyr)
-se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-  LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1:2], verbose = FALSE))()
 
 cg_list <- CellGraphs(se)[1:2]
 cg <- cg_list[[1]]
@@ -25,7 +25,7 @@ test_that("ComputeProximityScores works as expected", {
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     ),
-    head(prox %>% arrange(marker_1, marker_2), 2)
+    head(prox |> arrange(marker_1, marker_2), 2)
   )
 
   old_locale <- Sys.getlocale("LC_COLLATE")
@@ -49,7 +49,7 @@ test_that("ComputeProximityScores works as expected", {
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     ),
-    head(prox %>% arrange(marker_1, marker_2), 2)
+    head(prox |> arrange(marker_1, marker_2), 2)
   )
 
   # list
@@ -75,7 +75,7 @@ test_that("ComputeProximityScores works as expected", {
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     ),
-    head(prox_k2 %>% arrange(marker_1, marker_2), 2),
+    head(prox_k2 |> arrange(marker_1, marker_2), 2),
     tolerance = 1e-6
   )
 })

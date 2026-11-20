@@ -173,20 +173,20 @@ setMethod(
 #' db <- PixelDB$new(minimal_pna_pxl_file())
 #'
 #' # Select a component ID and load the edgelist
-#' sel_comp <- db$cell_meta() %>%
-#'   rownames() %>%
+#' sel_comp <- db$cell_meta() |>
+#'   rownames() |>
 #'   head(1)
 #' component_edgelist <- db$components_edgelist(
 #'   components = sel_comp,
 #'   umi_data_type = "string"
-#' ) %>%
+#' ) |>
 #'   select(umi1, umi2)
 #'
 #' # Define node types for the bipartite graph
 #' umi_node_type <- bind_rows(
-#'   component_edgelist %>% select(name = umi1) %>% mutate(node_type = "umi1"),
-#'   component_edgelist %>% select(name = umi2) %>% mutate(node_type = "umi2")
-#' ) %>%
+#'   component_edgelist |> select(name = umi1) |> mutate(node_type = "umi1"),
+#'   component_edgelist |> select(name = umi2) |> mutate(node_type = "umi2")
+#' ) |>
 #'   distinct()
 #'
 #' # Create a bipartite graph from the edgelist and add node types
@@ -817,9 +817,9 @@ setMethod(
     }
     cat(
       "A CellGraph object containing a", col_br_blue(graph_type), "graph with",
-      slot(object = object, name = "cellgraph") %>% length() %>% col_br_blue(),
+      slot(object = object, name = "cellgraph") |> length() |> col_br_blue(),
       "nodes and",
-      slot(object = object, name = "cellgraph") %>% gsize() %>% col_br_blue(),
+      slot(object = object, name = "cellgraph") |> gsize() |> col_br_blue(),
       "edges"
     )
     if (is.null(n_markers)) {

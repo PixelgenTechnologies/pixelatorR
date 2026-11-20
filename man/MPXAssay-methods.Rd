@@ -80,17 +80,17 @@ counts <- ReadMPX_counts(pxl_file)
 edgelist <- ReadMPX_item(pxl_file, items = "edgelist")
 components <- colnames(counts)
 edgelist_split <-
-  edgelist \%>\%
-  select(upia, upib, component) \%>\%
-  distinct() \%>\%
-  group_by(component) \%>\%
-  group_split() \%>\%
+  edgelist |>
+  select(upia, upib, component) |>
+  distinct() |>
+  group_by(component) |>
+  group_split() |>
   setNames(nm = components)
 
 # Convert data into a list of CellGraph objects
 bipartite_graphs <- lapply(edgelist_split, function(x) {
-  x <- x \%>\% as_tbl_graph(directed = FALSE)
-  x <- x \%>\% mutate(node_type = case_when(name \%in\% edgelist$upia ~ "A", TRUE ~ "B"))
+  x <- x |> as_tbl_graph(directed = FALSE)
+  x <- x |> mutate(node_type = case_when(name \%in\% edgelist$upia ~ "A", TRUE ~ "B"))
   attr(x, "type") <- "bipartite"
   CreateCellGraphObject(cellgraph = x)
 })

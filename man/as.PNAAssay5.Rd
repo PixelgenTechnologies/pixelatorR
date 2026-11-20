@@ -39,7 +39,7 @@ assay <- CreateAssay5Object(
 )
 pna_assay5 <- as.PNAAssay5(
   assay,
-  cellgraphs = rep(list(NULL), ncol(counts)) \%>\%
+  cellgraphs = rep(list(NULL), ncol(counts)) |>
     setNames(colnames(counts))
 )
 pna_assay5

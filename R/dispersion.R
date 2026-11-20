@@ -47,7 +47,7 @@ CalculateDispersion.matrix <- function(
       }
     )
 
-  object %>%
+  object |>
     apply(margin, dispersion_function)
 }
 

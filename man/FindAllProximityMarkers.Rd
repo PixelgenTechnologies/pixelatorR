@@ -144,7 +144,7 @@ example_data <- tidyr::expand_grid(
   marker_1 = c("CD19", "CD3E"),
   marker_2 = c("CD19", "CD3E"),
   component = paste0("cell", seq_len(12))
-) \%>\%
+) |>
   mutate(
     join_count_z = rnorm(n()),
     seurat_clusters = dplyr::case_when(

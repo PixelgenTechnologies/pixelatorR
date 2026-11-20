@@ -99,8 +99,8 @@
 #' library(dplyr)
 #' # Load example data as a Seurat object
 #' pxl_file <- minimal_mpx_pxl_file()
-#' seur_obj <- ReadMPX_Seurat(pxl_file) %>%
-#'   LoadCellGraphs(cells = colnames(.)[1]) %>%
+#' seur_obj <- ReadMPX_Seurat(pxl_file) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[1]))() |>
 #'   ComputeLayout(layout_method = "pmds", dim = 3)
 #' cg <- CellGraphs(seur_obj)[[1]]
 #' g <- CellGraphData(cg, "cellgraph")
@@ -200,7 +200,7 @@ local_G <- function(
         diag(A) <- 1
       }
       # Compute transition probabilities
-      W <- compute_transition_probabilities(A, k = k, remove_self_loops = (type == "gi")) %>% Matrix::t()
+      W <- compute_transition_probabilities(A, k = k, remove_self_loops = (type == "gi")) |> Matrix::t()
     } else {
       # If no normalization is desired, use the adjacency matrix where
       # each weight is 1

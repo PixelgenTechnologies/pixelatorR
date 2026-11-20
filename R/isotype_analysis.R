@@ -120,9 +120,9 @@ isotype_pls <-
 
     # transpose to cells × features
     X <-
-      object %>%
-      LayerData(layer = layer) %>%
-      as.matrix() %>%
+      object |>
+      LayerData(layer = layer) |>
+      as.matrix() |>
       t()
 
     if (scale) {

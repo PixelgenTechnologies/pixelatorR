@@ -29,7 +29,7 @@
 #' @export
 pack_2bits <- function(seq) {
   assert_vector(seq, "character", n = 1)
-  seq_lens <- sapply(seq, nchar) %>% unique()
+  seq_lens <- sapply(seq, nchar) |> unique()
   if (!length(seq_lens) == 1) {
     cli::cli_abort(
       c(
@@ -42,15 +42,15 @@ pack_2bits <- function(seq) {
   lookup <- c(A = 0L, C = 1L, G = 2L, T = 3L)
 
   # Convert sequence string into individual bases
-  seq_chars <- strsplit(seq, split = "") %>%
-    lapply(rev) %>%
-    do.call(rbind, .)
+  seq_chars <- strsplit(seq, split = "") |>
+    lapply(rev) |>
+    (\(.) do.call(rbind, .))()
 
   # Initialize packed as 64-bit integer
   packed <- bit64::as.integer64(0)
 
   for (i in seq_len(ncol(seq_chars))) {
-    val <- lookup[seq_chars[, i]] %>% unname()
+    val <- lookup[seq_chars[, i]] |> unname()
     val_is_na <- is.na(val)
     if (any(val_is_na)) {
       cli::cli_abort(

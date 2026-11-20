@@ -6,8 +6,8 @@ seur_obj <- ReadMPX_Seurat(pxl_file)
 pxl_file_new <- fs::path_temp("test.pxl")
 
 # Load cell graphs and compute layouts
-seur_obj <- seur_obj %>%
-  LoadCellGraphs(cells = colnames(.)[1:2]) %>%
+seur_obj <- seur_obj |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1:2]))() |>
   ComputeLayout(dim = 3, layout_method = "pmds")
 
 # Export layouts to a pxl file
@@ -24,7 +24,7 @@ test_that("ReadMPX_layouts works as expected", {
   expect_equal(names(layouts), "pmds_3d")
   expect_equal(dim(layouts[[1]][[1]]), c(3507, 4))
   expect_equal(
-    layouts$pmds_3d[[1]] %>% head(),
+    layouts$pmds_3d[[1]] |> head(),
     structure(
       list(
         name = c(

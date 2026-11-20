@@ -52,7 +52,7 @@ library(tibble)
 xyz <- matrix(rnorm(600, mean = 100, sd = 20),
   ncol = 3,
   dimnames = list(NULL, c("x", "y", "z"))
-) \%>\%
+) |>
   as_tibble()
 
 # Visualize random points

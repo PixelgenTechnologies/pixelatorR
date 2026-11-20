@@ -2,9 +2,9 @@ pxl_file <- system.file("extdata/five_cells",
   "five_cells.pxl",
   package = "pixelatorR"
 )
-seur_obj <- ReadMPX_Seurat(pxl_file) %>%
-  LoadCellGraphs(cells = colnames(.)[2])
-g <- CellGraphs(seur_obj)[[2]] %>%
+seur_obj <- ReadMPX_Seurat(pxl_file) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[2]))()
+g <- CellGraphs(seur_obj)[[2]] |>
   CellGraphData("cellgraph")
 
 
@@ -13,8 +13,8 @@ test_that("layout_with_weighted_pmds works as expected", {
 
   # Compute weighted layout (cos_dist)
   expect_no_error({
-    layout <- g %>%
-      layout_with_weighted_pmds(pivots = 200, dim = 3, method = "cos_dist") %>%
+    layout <- g |>
+      layout_with_weighted_pmds(pivots = 200, dim = 3, method = "cos_dist") |>
       as_tibble(.name_repair = ~ c("x", "y", "z"))
   })
   layout_expected <- structure(
@@ -45,12 +45,12 @@ test_that("layout_with_weighted_pmds works as expected", {
     row.names = c(NA, -6L),
     class = c("tbl_df", "tbl", "data.frame")
   )
-  expect_equal(head(layout) %>% mutate(across(everything(), ~ abs(.x))), layout_expected %>% mutate(across(everything(), ~ abs(.x))))
+  expect_equal(head(layout) |> mutate(across(everything(), ~ abs(.x))), layout_expected |> mutate(across(everything(), ~ abs(.x))))
 
   # Compute weighted layout (prob_dist)
   expect_no_error({
-    layout <- g %>%
-      layout_with_weighted_pmds(pivots = 200, dim = 3, method = "prob_dist") %>%
+    layout <- g |>
+      layout_with_weighted_pmds(pivots = 200, dim = 3, method = "prob_dist") |>
       as_tibble(.name_repair = ~ c("x", "y", "z"))
   })
   layout_expected <- structure(
@@ -81,7 +81,7 @@ test_that("layout_with_weighted_pmds works as expected", {
     row.names = c(NA, -6L),
     class = c("tbl_df", "tbl", "data.frame")
   )
-  expect_equal(head(layout) %>% mutate(across(everything(), ~ abs(.x))), layout_expected %>% mutate(across(everything(), ~ abs(.x))))
+  expect_equal(head(layout) |> mutate(across(everything(), ~ abs(.x))), layout_expected |> mutate(across(everything(), ~ abs(.x))))
 })
 
 test_that("layout_with_weighted_pmds fails with invalid input", {

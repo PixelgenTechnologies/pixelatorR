@@ -102,8 +102,8 @@
 #' library(dplyr)
 #' library(tibble)
 #'
-#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) %>%
-#'   LoadCellGraphs(cells = colnames(.)[2], add_layouts = TRUE)
+#' se <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[2], add_layouts = TRUE))()
 #' cg <- CellGraphs(se)[[2]]
 #'
 #' # Compute local scores using analytical method
@@ -182,7 +182,7 @@ local_proximity <- function(
     )
   }
 
-  if (!"node_type" %in% (object@cellgraph %N>% as_tibble() %>% names())) {
+  if (!"node_type" %in% (object@cellgraph %N>% as_tibble() |> names())) {
     cli::cli_abort(
       c("x" = "Node column {.val node_type} is missing from the graph")
     )
@@ -192,7 +192,7 @@ local_proximity <- function(
   g <- object@cellgraph %N>% arrange(node_type)
 
   # Validate node types
-  node_types <- table(g %>% pull(node_type))
+  node_types <- table(g |> pull(node_type))
   if (!all(sort(names(node_types)) == c("umi1", "umi2"))) {
     cli::cli_abort(
       c("x" = "Node types must be named {.val umi1} and {.val umi2}.")
@@ -200,11 +200,11 @@ local_proximity <- function(
   }
 
   # Count nodes of each type
-  nA <- node_types["umi1"] %>% as.integer()
-  nB <- node_types["umi2"] %>% as.integer()
+  nA <- node_types["umi1"] |> as.integer()
+  nB <- node_types["umi2"] |> as.integer()
 
   # Sort count matrix according to the new node sorting
-  counts <- object@counts[match(g %>% pull(name), .cg_node_map(object)), , drop = FALSE]
+  counts <- object@counts[match(g |> pull(name), .cg_node_map(object)), , drop = FALSE]
 
   # Validate markers
   assert_x_in_y(markers, colnames(counts))
@@ -214,7 +214,7 @@ local_proximity <- function(
     A <- igraph::as_adjacency_matrix(g)
     A_k <- expand_adjacency_matrix(A, k = k)
   } else {
-    A_k <- A_k[g %>% pull(name), g %>% pull(name)]
+    A_k <- A_k[g |> pull(name), g |> pull(name)]
   }
 
   # Include center node in the neighborhood
@@ -246,7 +246,7 @@ local_proximity <- function(
 
   # Sort results to match input graph
   orig_names <- object@cellgraph %N>% pull(name)
-  sorted_names <- g %>% pull(name)
+  sorted_names <- g |> pull(name)
   idx <- match(orig_names, sorted_names)
   log2_ratio <- switch(mode,
     "self-clustering" = log2_ratio[idx, , drop = FALSE],
@@ -279,33 +279,33 @@ local_proximity <- function(
   # For the analytical method, we compute the expected node counts
   # using the marker frequencies multiplied by the neighborhood size.
   # UMI1/UMI2 are handled separately since they have different frequencies.
-  degree_exp_A <- A_k[, 1:nA] %>% Matrix::rowSums()
-  degree_exp_B <- A_k[, (nA + 1):(nA + nB)] %>% Matrix::rowSums()
+  degree_exp_A <- A_k[, 1:nA] |> Matrix::rowSums()
+  degree_exp_B <- A_k[, (nA + 1):(nA + nB)] |> Matrix::rowSums()
 
   # Compute marker frequencies for each node type
   if (!exists("freq1", inherits = FALSE)) {
-    freq1 <- (counts[1:nA, , drop = FALSE] %>% Matrix::colSums()) / nA
+    freq1 <- (counts[1:nA, , drop = FALSE] |> Matrix::colSums()) / nA
   }
   if (mode != "self-clustering") {
     if (mode == "all") {
-      freq1 <- freq1 %>% min()
+      freq1 <- freq1 |> min()
     }
     if (mode == "any") {
-      freq1 <- freq1 %>% sum()
+      freq1 <- freq1 |> sum()
     }
     local_stat_exp_A <- freq1 * degree_exp_A
   } else {
     local_stat_exp_A <- outer(degree_exp_A, freq1)
   }
   if (!exists("freq2", inherits = FALSE)) {
-    freq2 <- (counts[(nA + 1):(nA + nB), , drop = FALSE] %>% Matrix::colSums()) / nB
+    freq2 <- (counts[(nA + 1):(nA + nB), , drop = FALSE] |> Matrix::colSums()) / nB
   }
   if (mode != "self-clustering") {
     if (mode == "all") {
-      freq2 <- freq2 %>% min()
+      freq2 <- freq2 |> min()
     }
     if (mode == "any") {
-      freq2 <- freq2 %>% sum()
+      freq2 <- freq2 |> sum()
     }
     local_stat_exp_B <- freq2 * degree_exp_B
   }

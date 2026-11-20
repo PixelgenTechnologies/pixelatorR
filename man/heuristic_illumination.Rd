@@ -88,7 +88,7 @@ illum <- heuristic_illumination(layout)
 \dontrun{
 temp_gif <- fs::file_temp(ext = ".gif")
 render_rotating_layout(
-  data = layout \%>\%
+  data = layout |>
     mutate(node_val = illum),
   pt_size = 0.8,
   width = 740,

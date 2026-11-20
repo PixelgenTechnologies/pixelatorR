@@ -171,20 +171,20 @@ Plot2DGraph <- function(
         c("x" = "Missing layout {.str {layout_method}} for component '{.val {cell_id}}'")
       )
     }
-    layout <- layout %>% select(x, y)
+    layout <- layout |> select(x, y)
 
     # Add node marker counts if needed
     if (!is.null(marker)) {
       if (marker != "node_type") {
         graph <- graph %N>%
-          mutate(marker = component_graph@counts[, marker]) %>%
-          {
+          mutate(marker = component_graph@counts[, marker]) |>
+          (\(.) {
             if (log_scale && !inherits(pixel_assay, c("PNAAssay", "PNAAssay5"))) {
               mutate(., marker = log1p(marker))
             } else {
               .
             }
-          }
+          })()
       }
     }
 
@@ -200,17 +200,17 @@ Plot2DGraph <- function(
     if (!is.null(marker)) {
       if (marker != "node_type") {
         # Rearrange layout
-        order <- order(graph %>% pull(marker))
-        layout <- data.frame(layout, row.names = graph %>% pull(name))
-        graph <- graph %>%
+        order <- order(graph |> pull(marker))
+        layout <- data.frame(layout, row.names = graph |> pull(name))
+        graph <- graph |>
           arrange(marker)
-        layout <- layout[order, ] %>% as_tibble()
+        layout <- layout[order, ] |> as_tibble()
       }
     }
 
     data <- list(graph = graph, layout = layout, type = attr(graph, "type"), layout_type = layout_method)
     return(data)
-  }) %>%
+  }) |>
     set_names(nm = cells)
 
   # Set limits
@@ -220,17 +220,17 @@ Plot2DGraph <- function(
         if (is.null(x)) {
           return(NULL)
         }
-        x$graph %>% pull(marker)
-      }) %>%
-        unlist() %>%
+        x$graph |> pull(marker)
+      }) |>
+        unlist() |>
         max()
-      limits <- c(rep(list(c(0, max_val)), length(data_list))) %>% set_names(names(data_list))
+      limits <- c(rep(list(c(0, max_val)), length(data_list))) |> set_names(names(data_list))
     } else {
       limits <- lapply(data_list, function(x) {
         if (is.null(x)) {
           return(NULL)
         }
-        c(0, max(x$graph %>% pull(marker)))
+        c(0, max(x$graph |> pull(marker)))
       })
     }
   }
@@ -241,7 +241,7 @@ Plot2DGraph <- function(
       return(patchwork::plot_spacer() + theme(plot.background = element_rect(fill = NA, colour = NA)))
     }
     # Visualize the graph with ggraph
-    p <- data_list[[nm]]$graph %>%
+    p <- data_list[[nm]]$graph |>
       ggraph(layout = data_list[[nm]]$layout) +
       {
         # Add edges if map_edges=TRUE
@@ -449,7 +449,7 @@ Plot2DGraphM <- function(
       # Fetch color legend from first plot
       # and save it for later
       if (ncols == i) {
-        legends[[marker]] <- .get_legend(p) %>% wrap_elements()
+        legends[[marker]] <- .get_legend(p) |> wrap_elements()
       }
 
       # Remove the color legend and plot title.
@@ -470,7 +470,7 @@ Plot2DGraphM <- function(
   })
 
   # Combine all plots into a list
-  plots <- plots %>% Reduce(c, .)
+  plots <- plots |> (\(.) Reduce(c, .))()
 
   # Final plot
   p <- wrap_plots(c(title_plots, plots),
@@ -660,15 +660,15 @@ Plot3DGraph <- function(
   # Add node marker counts if needed
   if (!is.null(marker)) {
     if (marker != "node_type") {
-      layout <- layout %>%
-        mutate(marker = component_graph@counts[, marker, drop = TRUE]) %>%
-        {
+      layout <- layout |>
+        mutate(marker = component_graph@counts[, marker, drop = TRUE]) |>
+        (\(.) {
           if (log_scale && !inherits(pixel_assay, c("PNAAssay", "PNAAssay5"))) {
             mutate(., marker = log1p(marker))
           } else {
             .
           }
-        }
+        })()
     }
   }
 
@@ -676,7 +676,7 @@ Plot3DGraph <- function(
   if ((attr(graph, "type") == "bipartite")) {
     layout$node_type <- graph %N>% pull(node_type)
     if (!show_Bnodes && !inherits(pixel_assay, c("PNAAssay", "PNAAssay5"))) {
-      layout <- layout %>%
+      layout <- layout |>
         filter(node_type %in% c("A", "UMI1", "umi1"))
     }
   }
@@ -684,8 +684,8 @@ Plot3DGraph <- function(
   # Project data to sphere if project=TRUE
   if (project) {
     # Normalize 3D coordinates to a sphere
-    layout_sphere <- layout %>%
-      select(x, y, z) %>%
+    layout_sphere <- layout |>
+      select(x, y, z) |>
       project_layout_coordinates_on_unit_sphere()
     layout[, c("x", "y", "z")] <- layout_sphere
   }
@@ -702,18 +702,18 @@ Plot3DGraph <- function(
   )
   if (!is.null(marker)) {
     if (marker == "node_type") {
-      fig <- fig %>%
+      fig <- fig |>
         plotly::add_markers(color = ~node_type, colors = c("blue", "orange"))
     } else {
-      fig <- fig %>%
+      fig <- fig |>
         plotly::add_markers(color = ~marker, colors = colors)
     }
   } else {
-    fig <- fig %>%
+    fig <- fig |>
       plotly::add_markers()
   }
 
-  fig <- fig %>%
+  fig <- fig |>
     plotly::layout(
       scene = list(
         aspectmode = aspectmode,

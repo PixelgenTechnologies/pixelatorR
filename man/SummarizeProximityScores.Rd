@@ -16,6 +16,7 @@ SummarizeProximityScores(object, ...)
   include_missing_obs = TRUE,
   summary_stat = c("mean", "median"),
   detailed = FALSE,
+  check_duplicates = !isTRUE(attr(object, "pxl_unique_keys")),
   ...
 )
 
@@ -48,6 +49,11 @@ as 0 when computing the summary statistics.}
 
 \item{detailed}{Logical indicating whether to return lists which can be used to compute
 custom summary statistics. See examples for details}
+
+\item{check_duplicates}{Logical indicating whether to scan the lazy table for
+duplicate \code{(component, marker_1, marker_2)} rows before summarizing.
+Defaults to \code{!isTRUE(attr(object, "pxl_unique_keys"))}, which skips the
+scan on validated tables loaded directly from PXL files.}
 }
 \value{
 A \code{tbl_df} with summary statistics
@@ -75,25 +81,25 @@ se <- ReadPNA_Seurat(pxl_file)
 proximity_table <- ProximityScores(se)
 
 # Default method uses mean
-SummarizeProximityScores(proximity_table) \%>\% head()
+SummarizeProximityScores(proximity_table) |> head()
 
 # Switch to median
-SummarizeProximityScores(proximity_table, summary_stat = "median") \%>\% head()
+SummarizeProximityScores(proximity_table, summary_stat = "median") |> head()
 
 # Ignore missing values
-SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) \%>\% head()
+SummarizeProximityScores(proximity_table, include_missing_obs = FALSE) |> head()
 
 # Return lists which can be used to compute custom summary statistics
-SummarizeProximityScores(proximity_table, detailed = TRUE) \%>\%
+SummarizeProximityScores(proximity_table, detailed = TRUE) |>
   # It's important to do rowwise computations
-  rowwise() \%>\%
+  rowwise() |>
   mutate(
     sd = sd(unlist(log2_ratio_list)),
     iqr = IQR(unlist(log2_ratio_list)),
     mad = mad(unlist(log2_ratio_list)),
     q90 = quantile(unlist(log2_ratio_list), 0.9)
-  ) \%>\%
-  select(marker_1, marker_2, sd, iqr, mad, q90) \%>\%
+  ) |>
+  select(marker_1, marker_2, sd, iqr, mad, q90) |>
   ungroup()
 
 }

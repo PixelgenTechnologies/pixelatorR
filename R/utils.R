@@ -98,7 +98,7 @@
       )
     }
     # Check component names
-    cells_in_polarization <- cell_ids %in% (polarization$component %>% unique())
+    cells_in_polarization <- cell_ids %in% (polarization$component |> unique())
     if (!all(cells_in_polarization)) {
       if (verbose && check_global_verbosity()) {
         cli_alert_warning(glue(
@@ -109,7 +109,7 @@
       return(polarization)
     }
     # Check marker names
-    markers_in_polarization <- markers %in% (polarization$marker %>% unique())
+    markers_in_polarization <- markers %in% (polarization$marker |> unique())
     if (!all(markers_in_polarization)) {
       if (verbose && check_global_verbosity()) {
         cli_alert_warning(glue(
@@ -157,7 +157,7 @@
       )
     }
     # Check component names
-    cells_in_colocalization <- cell_ids %in% (colocalization$component %>% unique())
+    cells_in_colocalization <- cell_ids %in% (colocalization$component |> unique())
     if (!all(cells_in_colocalization)) {
       if (verbose && check_global_verbosity()) {
         cli_alert_warning(glue(
@@ -168,7 +168,7 @@
       return(colocalization)
     }
     # Check marker names
-    all_markers <- c(colocalization$marker_1 %>% unique(), colocalization$marker_2 %>% unique()) %>% unique()
+    all_markers <- c(colocalization$marker_1 |> unique(), colocalization$marker_2 |> unique()) |> unique()
     if (!all(markers %in% all_markers)) {
       if (verbose && check_global_verbosity()) {
         cli_alert_warning(glue(

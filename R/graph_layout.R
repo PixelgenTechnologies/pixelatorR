@@ -131,7 +131,7 @@ ComputeLayout.tbl_graph <- function(
         arg = "custom_layout_function"
       )
     }
-    layout <- layout %>%
+    layout <- layout |>
       as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_len(dim)])
   } else {
     # Check and select a layout method
@@ -151,13 +151,13 @@ ComputeLayout.tbl_graph <- function(
           }
         )
 
-      layout <- object %>%
+      layout <- object |>
         layout_function(dim = dim, pivots = pivots, ...)
     }
 
-    layout <- layout %>%
-      as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_len(dim)]) %>%
-      bind_cols(object %N>% as_tibble()) %>%
+    layout <- layout |>
+      as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_len(dim)]) |>
+      bind_cols(object %N>% as_tibble()) |>
       select(any_of(c("x", "y", "z")))
   }
 
@@ -615,7 +615,7 @@ ComputeLayout.Seurat <- function(
 #' xyz <- matrix(rnorm(600, mean = 100, sd = 20),
 #'   ncol = 3,
 #'   dimnames = list(NULL, c("x", "y", "z"))
-#' ) %>%
+#' ) |>
 #'   as_tibble()
 #'
 #' # Visualize random points
@@ -751,11 +751,11 @@ project_layout_coordinates_on_unit_sphere <- function(
 
   layout <- center_layout_coordinates(layout)
 
-  radii <- layout %>%
-    mutate(across(contains(c("x", "y", "z")), ~ .x^2)) %>%
+  radii <- layout |>
+    mutate(across(contains(c("x", "y", "z")), ~ .x^2)) |>
     rowSums()
   radii <- sqrt(radii)
-  layout <- layout %>%
+  layout <- layout |>
     mutate(across(contains(c("x", "y", "z")), ~ .x / radii))
 
   return(layout)

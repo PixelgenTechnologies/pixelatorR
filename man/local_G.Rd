@@ -142,8 +142,8 @@ The weighting scheme is ignored if \code{W} is provided.
 library(dplyr)
 # Load example data as a Seurat object
 pxl_file <- minimal_mpx_pxl_file()
-seur_obj <- ReadMPX_Seurat(pxl_file) \%>\%
-  LoadCellGraphs(cells = colnames(.)[1]) \%>\%
+seur_obj <- ReadMPX_Seurat(pxl_file) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1]))() |>
   ComputeLayout(layout_method = "pmds", dim = 3)
 cg <- CellGraphs(seur_obj)[[1]]
 g <- CellGraphData(cg, "cellgraph")

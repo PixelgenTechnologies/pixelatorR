@@ -1,5 +1,5 @@
-se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) %>%
-  LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1], verbose = FALSE))()
 
 cg <- CellGraphs(se)[[1]]
 g <- cg@cellgraph
@@ -47,7 +47,7 @@ test_that("layout_with_spectral works as expected", {
   )
 
   # Iterative SVD differs slightly across BLAS builds; compare magnitudes.
-  expect_equal(abs(xyz %>% head()), abs(expected_result), tolerance = 1e-3)
+  expect_equal(abs(xyz |> head()), abs(expected_result), tolerance = 1e-3)
   expect_equal(nrow(xyz), length(g))
   expect_equal(colnames(xyz), c("x", "y", "z"))
 
@@ -83,7 +83,7 @@ test_that("layout_with_spectral works as expected", {
     dimnames = list(NULL, c("x", "y", "z"))
   )
 
-  expect_equal(abs(xyz %>% head()), abs(expected_result), tolerance = 1e-3)
+  expect_equal(abs(xyz |> head()), abs(expected_result), tolerance = 1e-3)
 
   # Eigen normalized path
   expect_no_error(xyz <- layout_with_spectral(g, solver = "eigen", seed = 123))
@@ -113,7 +113,7 @@ test_that("layout_with_spectral works as expected", {
     dimnames = list(NULL, c("x", "y", "z"))
   )
 
-  expect_equal(abs(xyz %>% head()), abs(expected_result), tolerance = 1e-3)
+  expect_equal(abs(xyz |> head()), abs(expected_result), tolerance = 1e-3)
 })
 
 test_that("layout_with_spectral applies jitter when requested", {

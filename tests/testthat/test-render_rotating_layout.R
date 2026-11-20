@@ -56,8 +56,8 @@ test_that("render_rotating_layout works as expected", {
     width = 300, height = 300
   ))
   gif <- magick::image_read(gif_file)
-  magick::image_info(gif)$width %>% expect_equal(300)
-  magick::image_info(gif)$height %>% expect_equal(300)
+  magick::image_info(gif)$width |> expect_equal(300)
+  magick::image_info(gif)$height |> expect_equal(300)
 
   # Change resolution
   lifecycle::expect_deprecated(render_rotating_layout(xyz, gif_file,
@@ -112,7 +112,7 @@ test_that("render_rotating_layout works as expected", {
   ))
 
   # Use illumination mask with factor node_val and shadow palette
-  xyz_factor <- xyz %>%
+  xyz_factor <- xyz |>
     mutate(node_val = factor(ifelse(node_val > 0.9, "high", "low")))
   lifecycle::expect_deprecated(render_rotating_layout(xyz_factor, gif_file,
     frames = 2, show_first_frame = FALSE,

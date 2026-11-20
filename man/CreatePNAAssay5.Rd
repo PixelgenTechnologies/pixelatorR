@@ -45,7 +45,7 @@ pxl_file <- minimal_pna_pxl_file()
 counts <- ReadPNA_counts(pxl_file)
 pna_assay5 <- CreatePNAAssay5(
   counts = counts,
-  cellgraphs = rep(list(NULL), ncol(counts)) \%>\%
+  cellgraphs = rep(list(NULL), ncol(counts)) |>
     setNames(colnames(counts))
 )
 pna_assay5

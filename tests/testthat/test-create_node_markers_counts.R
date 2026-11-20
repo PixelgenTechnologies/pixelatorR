@@ -2,13 +2,13 @@ edge_list <-
   ReadMPX_item(
     system.file("extdata/five_cells", "five_cells.pxl", package = "pixelatorR"),
     items = "edgelist"
-  ) %>%
+  ) |>
   filter(component == "RCVCMP0000217")
 
 test_that("node_markers_counts works as expected", {
   # Test default settings
   node_marker_counts <-
-    edge_list %>%
+    edge_list |>
     node_markers_counts()
   expect_type(node_marker_counts, "integer")
   expect_equal(ncol(node_marker_counts), 79)
@@ -16,7 +16,7 @@ test_that("node_markers_counts works as expected", {
 
   # Test with k > 0
   node_marker_counts_k10 <-
-    edge_list %>%
+    edge_list |>
     node_markers_counts(k = 2)
   expect_type(node_marker_counts, "integer")
   expect_equal(ncol(node_marker_counts), 79)

@@ -55,7 +55,7 @@ db$info()
 ## ------------------------------------------------
 
 # Select the proximity score table
-db$query("SELECT * FROM proximity") \%>\% head()
+db$query("SELECT * FROM proximity") |> head()
 
 
 ## ------------------------------------------------
@@ -87,7 +87,7 @@ db$names()
 ## ------------------------------------------------
 
 # Fetch any table from the database
-db$fetch_table("proximity") \%>\% head()
+db$fetch_table("proximity") |> head()
 
 
 ## ------------------------------------------------
@@ -98,7 +98,7 @@ db$fetch_table("proximity") \%>\% head()
 db$fetch_table_subset(
   "proximity",
   columns_filter = list("component" = c("0a45497c6bfbfb22", "2708240b908e2eba"))
-) \%>\% head()
+) |> head()
 
 
 ## ------------------------------------------------
@@ -116,7 +116,7 @@ X[1:4, 1:4]
 
 # Fetch the proximity scores
 prox <- db$proximity()
-prox \%>\% head()
+prox |> head()
 
 
 ## ------------------------------------------------
@@ -124,7 +124,7 @@ prox \%>\% head()
 ## ------------------------------------------------
 
 # Fetch the cell meta data
-db$cell_meta() \%>\% head()
+db$cell_meta() |> head()
 
 
 ## ------------------------------------------------
@@ -132,7 +132,7 @@ db$cell_meta() \%>\% head()
 ## ------------------------------------------------
 
 # Fetch the protein meta data
-db$protein_meta() \%>\% head()
+db$protein_meta() |> head()
 
 
 ## ------------------------------------------------
@@ -148,7 +148,7 @@ db$run_meta()
 ## ------------------------------------------------
 
 # Fetch edgelists
-db$components_edgelist("0a45497c6bfbfb22") \%>\% head()
+db$components_edgelist("0a45497c6bfbfb22") |> head()
 
 
 ## ------------------------------------------------
@@ -157,7 +157,7 @@ db$components_edgelist("0a45497c6bfbfb22") \%>\% head()
 
 # Fetch layouts (NOTE: This will only work if the layouts exist in the database)
 \dontrun{
-db$components_layout("0a45497c6bfbfb22")[[1]] \%>\% head()
+db$components_layout("0a45497c6bfbfb22")[[1]] |> head()
 }
 
 
@@ -299,7 +299,7 @@ A \code{data.frame} with the results of the query
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Select the proximity score table
-db$query("SELECT * FROM proximity") \%>\% head()
+db$query("SELECT * FROM proximity") |> head()
 
 }
 \if{html}{\out{</div>}}
@@ -408,7 +408,7 @@ A \code{data.frame} with the table contents
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch any table from the database
-db$fetch_table("proximity") \%>\% head()
+db$fetch_table("proximity") |> head()
 
 }
 \if{html}{\out{</div>}}
@@ -445,7 +445,7 @@ A \code{data.frame} with the table contents
 db$fetch_table_subset(
   "proximity",
   columns_filter = list("component" = c("0a45497c6bfbfb22", "2708240b908e2eba"))
-) \%>\% head()
+) |> head()
 
 }
 \if{html}{\out{</div>}}
@@ -504,7 +504,7 @@ A \code{tbl_df} with the proximity scores
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch the proximity scores
 prox <- db$proximity()
-prox \%>\% head()
+prox |> head()
 
 }
 \if{html}{\out{</div>}}
@@ -527,7 +527,7 @@ A \code{data.frame} with the cell meta data
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch the cell meta data
-db$cell_meta() \%>\% head()
+db$cell_meta() |> head()
 
 }
 \if{html}{\out{</div>}}
@@ -550,7 +550,7 @@ A \code{data.frame} with the protein meta data
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch the protein meta data
-db$protein_meta() \%>\% head()
+db$protein_meta() |> head()
 
 }
 \if{html}{\out{</div>}}
@@ -636,7 +636,7 @@ This column is optional and is only returned if it is present in the edgelist ta
 \subsection{Examples}{
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch edgelists
-db$components_edgelist("0a45497c6bfbfb22") \%>\% head()
+db$components_edgelist("0a45497c6bfbfb22") |> head()
 
 }
 \if{html}{\out{</div>}}
@@ -677,7 +677,7 @@ A list with \code{tbl_df}'s with the layout coordinates and optionally marker co
 \if{html}{\out{<div class="r example copy">}}
 \preformatted{# Fetch layouts (NOTE: This will only work if the layouts exist in the database)
 \dontrun{
-db$components_layout("0a45497c6bfbfb22")[[1]] \%>\% head()
+db$components_layout("0a45497c6bfbfb22")[[1]] |> head()
 }
 
 }

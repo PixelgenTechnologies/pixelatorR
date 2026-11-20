@@ -1,3 +1,28 @@
+#' @include generics.R
+NULL
+
+#' @rdname lazy_load_table
+#' @method lazy_load_table default
+#' @export
+lazy_load_table.default <- function(
+  fs_map,
+  table_name = "proximity",
+  calc_log2ratio = TRUE,
+  proteins_keep = NULL,
+  union = TRUE,
+  call = caller_env(),
+  ...
+) {
+  .lazy_load_table(
+    fs_map = fs_map,
+    table_name = table_name,
+    calc_log2ratio = calc_log2ratio,
+    proteins_keep = proteins_keep,
+    union = union,
+    call = call
+  )
+}
+
 #' Lazy load merged tables from multiple databases (PXL files)
 #'
 #' @param fs_map A \code{tbl_df} with information about the PXL file paths,
@@ -68,7 +93,8 @@
         "i" = "All PXL files must be unique.",
         "x" = "The following PXL file(s) are duplicated: ",
         "x" = "{.file {dup_pxl_files}}"
-      )
+      ),
+      call = call
     )
   }
 
@@ -80,7 +106,7 @@
     # Attach each PXL file database
     DBI::dbExecute(con_federated, glue::glue("ATTACH '{fs_map$pxl_file[i]}' AS db{i} (TYPE duckdb, READ_ONLY)"))
     # Copy the ID map to the federated database
-    copy_to(con_federated, fs_map$id_map[[i]] %>% rename(component = original_id), glue::glue("id_map{i}"))
+    copy_to(con_federated, fs_map$id_map[[i]] |> rename(component = original_id), glue::glue("id_map{i}"))
     # If proteins_keep is provided, filter the data to include only those proteins
     if (!is.null(proteins_keep) && table_name == "proximity") {
       copy_to(con_federated, tibble(marker = proteins_keep), glue::glue("proteins_keep{i}"))
@@ -88,7 +114,7 @@
   }
 
   # Select column names to keep
-  column_names <- DBI::dbGetQuery(con_federated, glue::glue("SELECT * FROM db1.{table_name} LIMIT 1")) %>% names()
+  column_names <- DBI::dbGetQuery(con_federated, glue::glue("SELECT * FROM db1.{table_name} LIMIT 1")) |> names()
   column_names <- column_names[!stringr::str_detect(column_names, "__index_level_0__")]
   column_names <- paste(setdiff(column_names, "component"), collapse = ", ")
 
@@ -131,13 +157,16 @@
     create_view_sql <- glue::glue("CREATE OR REPLACE VIEW {view_name} AS {union_sql}")
     DBI::dbExecute(con_federated, create_view_sql)
     lazy_table <- tbl(con_federated, view_name)
+    attr(lazy_table, "pxl_unique_keys") <- TRUE
   } else {
     # don’t union, return a list of lazy tables (one per DB)
     lazy_table <-
-      queries %>%
+      queries |>
       lapply(function(query, db) {
-        tbl(con_federated, dbplyr::sql(query))
-      }) %>%
+        out <- tbl(con_federated, dbplyr::sql(query))
+        attr(out, "pxl_unique_keys") <- TRUE
+        out
+      }) |>
       set_names(fs_map$sample)
   }
 

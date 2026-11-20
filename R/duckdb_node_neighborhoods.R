@@ -18,10 +18,10 @@
 #' )
 #'
 #' # Compare output with node neighborhoods from CellGraph
-#' cg <- se %>%
-#'   LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE) %>%
-#'   CellGraphs() %>%
-#'   .[[1]]
+#' cg <- se |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[1], verbose = FALSE))() |>
+#'   CellGraphs() |>
+#'   (\(.) .[[1]])()
 #'
 #' A <- igraph::as_adjacency_matrix(cg@cellgraph)
 #' A2 <- expand_adjacency_matrix(A, k = 2)
@@ -62,8 +62,8 @@ fetch_node_neighborhoods <- function(
   el <- Edgelists(object, lazy = TRUE)
 
   node_nbs_matrix_list <- pbapply::pblapply(components, function(nm) {
-    .fetch_node_neighborhoods_duckdb(el$src$con, nm, nodes_per_component, k) %>%
-      .convert_nbs_table_to_matrix() %>%
+    .fetch_node_neighborhoods_duckdb(el$src$con, nm, nodes_per_component, k) |>
+      .convert_nbs_table_to_matrix() |>
       Matrix::t()
   })
 
@@ -168,8 +168,8 @@ fetch_node_neighborhoods <- function(
 ) {
   # SQL already returns distinct (start_node, umi, marker)
   # We just ensure it's clean before factoring
-  node_nbs_counts <- node_nbs %>%
-    dplyr::select(start_node, umi, marker) %>%
+  node_nbs_counts <- node_nbs |>
+    dplyr::select(start_node, umi, marker) |>
     dplyr::distinct()
 
   # Construct neighborhood count matrix

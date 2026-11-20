@@ -76,16 +76,16 @@ AbundanceColocalizationPlot <- function(
     FetchData(object,
       vars = c(markers_x, markers_y),
       layer = layer
-    ) %>%
+    ) |>
     as_tibble(rownames = "component")
 
   plot_data <-
-    plot_data %>%
+    plot_data |>
     pivot_longer(
       cols = all_of(markers_x),
       names_to = "marker_x",
       values_to = "value_x"
-    ) %>%
+    ) |>
     pivot_longer(
       cols = all_of(markers_y),
       names_to = "marker_y",
@@ -100,21 +100,21 @@ AbundanceColocalizationPlot <- function(
   assert_col_class(coloc_score, coloc_scores, classes = "numeric")
 
   coloc_scores <-
-    coloc_scores %>%
-    select(component, marker_1, marker_2, coloc_score = all_of(coloc_score)) %>%
-    filter(marker_1 %in% c(markers_x, markers_y)) %>%
-    filter(marker_2 %in% c(markers_x, markers_y)) %>%
-    filter(marker_1 != marker_2) %>%
-    bind_rows(select(., component, marker_1 = marker_2, marker_2 = marker_1, coloc_score))
+    coloc_scores |>
+    select(component, marker_1, marker_2, coloc_score = all_of(coloc_score)) |>
+    filter(marker_1 %in% c(markers_x, markers_y)) |>
+    filter(marker_2 %in% c(markers_x, markers_y)) |>
+    filter(marker_1 != marker_2) |>
+    (\(.) bind_rows(., select(., component, marker_1 = marker_2, marker_2 = marker_1, coloc_score)))()
 
   plot_data <-
-    plot_data %>%
+    plot_data |>
     left_join(coloc_scores,
       by = c("component",
         "marker_x" = "marker_1",
         "marker_y" = "marker_2"
       )
-    ) %>%
+    ) |>
     mutate(
       marker_x = factor(marker_x, levels = markers_x),
       marker_y = factor(marker_y, levels = markers_y)
@@ -123,13 +123,13 @@ AbundanceColocalizationPlot <- function(
   # Make plot
   if (length(pt_size) == 1) {
     plot <-
-      plot_data %>%
+      plot_data |>
       ggplot(aes(value_x, value_y,
         color = coloc_score
       ))
   } else {
     plot <-
-      plot_data %>%
+      plot_data |>
       ggplot(aes(value_x, value_y,
         color = coloc_score,
         size = abs(coloc_score)

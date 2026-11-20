@@ -33,7 +33,12 @@ PNAAssay <- setClass(
   slots = list(
     cellgraphs = "list",
     proximity = "data.frame",
-    fs_map = "data.frame"
+    fs_map = "ANY"
+  ),
+  prototype = list(
+    cellgraphs = list(),
+    proximity = data.frame(),
+    fs_map = data.frame()
   )
 )
 
@@ -64,7 +69,12 @@ PNAAssay5 <- setClass(
   slots = list(
     cellgraphs = "list",
     proximity = "data.frame",
-    fs_map = "data.frame"
+    fs_map = "ANY"
+  ),
+  prototype = list(
+    cellgraphs = list(),
+    proximity = data.frame(),
+    fs_map = data.frame()
   )
 )
 
@@ -102,7 +112,7 @@ PNAAssay5 <- setClass(
 #' counts <- ReadPNA_counts(pxl_file)
 #' pna_assay <- CreatePNAAssay(
 #'   counts = counts,
-#'   cellgraphs = rep(list(NULL), ncol(counts)) %>%
+#'   cellgraphs = rep(list(NULL), ncol(counts)) |>
 #'     setNames(colnames(counts))
 #' )
 #' pna_assay
@@ -179,7 +189,7 @@ CreatePNAAssay <- function(
 #' counts <- ReadPNA_counts(pxl_file)
 #' pna_assay5 <- CreatePNAAssay5(
 #'   counts = counts,
-#'   cellgraphs = rep(list(NULL), ncol(counts)) %>%
+#'   cellgraphs = rep(list(NULL), ncol(counts)) |>
 #'     setNames(colnames(counts))
 #' )
 #' pna_assay5
@@ -289,7 +299,7 @@ CellGraphs.PNAAssay5 <- CellGraphs.PNAAssay
 ) {
   # Clean cellgraphs slot if value = NULL
   if (is.null(x = value)) {
-    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) %>% set_names(nm = colnames(object))
+    slot(object = object, name = "cellgraphs") <- rep(list(NULL), ncol(object)) |> set_names(nm = colnames(object))
     return(object)
   }
 
@@ -406,9 +416,9 @@ RenameCells.PNAAssay <- function(
   name_conversion <- tibble(new = new.names, component = orig.names)
   proximity <- slot(object, name = "proximity")
   if (length(proximity) > 0) {
-    proximity <- proximity %>%
-      left_join(y = name_conversion, by = "component") %>%
-      select(-component) %>%
+    proximity <- proximity |>
+      left_join(y = name_conversion, by = "component") |>
+      select(-component) |>
       rename(component = new)
   }
   slot(pna_assay_renamed, name = "proximity") <- proximity
@@ -416,8 +426,8 @@ RenameCells.PNAAssay <- function(
   # Handle fs_map
   fs_map <- slot(object, name = "fs_map")
   if (nrow(fs_map) > 0) {
-    fs_map$id_map <- fs_map %>%
-      pull(id_map) %>%
+    fs_map$id_map <- fs_map |>
+      pull(id_map) |>
       lapply(function(x) {
         x$current_id <- new.names[x$current_id]
         return(x)
@@ -461,7 +471,7 @@ RenameCells.PNAAssay5 <- RenameCells.PNAAssay
 #' )
 #' pna_assay <- as.PNAAssay(
 #'   assay,
-#'   cellgraphs = rep(list(NULL), ncol(counts)) %>%
+#'   cellgraphs = rep(list(NULL), ncol(counts)) |>
 #'     setNames(colnames(counts))
 #' )
 #' pna_assay
@@ -490,7 +500,7 @@ as.PNAAssay.Assay <- function(
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) |> set_names(nm = colnames(x))
   }
 
   # Check fs_map
@@ -510,6 +520,8 @@ as.PNAAssay.Assay <- function(
   # Add fs_map
   if (!is.null(fs_map)) {
     slot(new_assay, name = "fs_map") <- fs_map
+  } else {
+    slot(new_assay, name = "fs_map") <- data.frame()
   }
 
   return(new_assay)
@@ -560,7 +572,7 @@ setAs(
 #' )
 #' pna_assay5 <- as.PNAAssay5(
 #'   assay,
-#'   cellgraphs = rep(list(NULL), ncol(counts)) %>%
+#'   cellgraphs = rep(list(NULL), ncol(counts)) |>
 #'     setNames(colnames(counts))
 #' )
 #' pna_assay5
@@ -589,7 +601,7 @@ as.PNAAssay5.Assay5 <- function(
       }
     }
   } else {
-    cellgraphs <- rep(list(NULL), ncol(x)) %>% set_names(nm = colnames(x))
+    cellgraphs <- rep(list(NULL), ncol(x)) |> set_names(nm = colnames(x))
   }
 
   # Check fs_map
@@ -609,6 +621,8 @@ as.PNAAssay5.Assay5 <- function(
   # Add fs_map
   if (!is.null(fs_map)) {
     slot(new_assay, name = "fs_map") <- fs_map
+  } else {
+    slot(new_assay, name = "fs_map") <- data.frame()
   }
 
   return(new_assay)
@@ -674,7 +688,7 @@ ProximityScores.PNAAssay <- function(
   if (lazy) {
     # Load proximity scores from the PXL files
     fs_map <- FSMap(object)
-    proximity_scores <- .lazy_load_table(fs_map, "proximity", calc_log2ratio, rownames(object))
+    proximity_scores <- lazy_load_table(fs_map, "proximity", calc_log2ratio, rownames(object))
   } else {
     proximity_scores <- slot(object, name = "proximity")
 
@@ -702,43 +716,60 @@ ProximityScores.PNAAssay <- function(
         )
       )
     }
-    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") %>%
-      rownames_to_column("component") %>%
-      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count") %>%
+    all_counts <- FetchData(object, vars = rownames(object), layer = "counts") |>
+      rownames_to_column("component") |>
+      pivot_longer(where(is.numeric), names_to = "marker", values_to = "count") |>
       mutate(count = as.integer(count))
 
     if (lazy) {
-      # Copy to federated database to enable join operation
-      copy_to(proximity_scores$src$con, all_counts)
-      all_counts <- tbl(proximity_scores$src$con, "all_counts")
+      proximity_scores <- join_proximity_metadata(
+        proximity_scores,
+        all_counts,
+        by = c("component", "marker_1" = "marker"),
+        name = "pxl_all_counts"
+      ) |>
+        rename(count_1 = count) |>
+        join_proximity_metadata(
+          all_counts,
+          by = c("component", "marker_2" = "marker"),
+          name = "pxl_all_counts",
+          reuse = TRUE
+        ) |>
+        rename(count_2 = count)
+    } else {
+      proximity_scores <- proximity_scores |>
+        left_join(all_counts, by = c("component", "marker_1" = "marker")) |>
+        rename(count_1 = count) |>
+        left_join(all_counts, by = c("component", "marker_2" = "marker")) |>
+        rename(count_2 = count)
     }
-
-    proximity_scores <- proximity_scores %>%
-      left_join(all_counts, by = c("component", "marker_1" = "marker")) %>%
-      rename(count_1 = count) %>%
-      left_join(all_counts, by = c("component", "marker_2" = "marker")) %>%
-      rename(count_2 = count)
 
     if (add_marker_proportions) {
       if (inherits(object, "PNAAssay5")) {
-        object <- object %>% JoinLayers()
+        object <- object |> JoinLayers()
       }
-      numi <- LayerData(object, layer = "counts") %>% Matrix::colSums()
+      numi <- LayerData(object, layer = "counts") |> Matrix::colSums()
       numi <- tibble(
         component = names(numi),
-        umi_count = numi %>% unname()
+        umi_count = numi |> unname()
       )
 
       if (lazy) {
-        copy_to(proximity_scores$src$con, numi, "numi")
-        numi <- tbl(proximity_scores$src$con, "numi")
+        proximity_scores <- join_proximity_metadata(
+          proximity_scores,
+          numi,
+          by = "component"
+        ) |>
+          mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) |>
+          select(-umi_count) |>
+          compute(name = "extended_proximity", overwrite = TRUE)
+      } else {
+        proximity_scores <- proximity_scores |>
+          left_join(numi, by = "component") |>
+          mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) |>
+          select(-umi_count) |>
+          compute(name = "extended_proximity", overwrite = TRUE)
       }
-
-      proximity_scores <- proximity_scores %>%
-        left_join(numi, by = "component") %>%
-        mutate(p1 = count_1 / umi_count, p2 = count_2 / umi_count) %>%
-        select(-umi_count) %>%
-        compute(name = "extended_proximity", overwrite = TRUE)
     }
   }
 
@@ -759,7 +790,7 @@ ProximityScores.PNAAssay5 <- ProximityScores.PNAAssay
 #' @examples
 #' # Set proximity scores
 #' ProximityScores(seur_obj[["PNA"]]) <-
-#'   ProximityScores(seur_obj[["PNA"]]) %>%
+#'   ProximityScores(seur_obj[["PNA"]]) |>
 #'   mutate(ratio = join_count / join_count_expected_mean)
 #'
 #' @export
@@ -817,17 +848,19 @@ Edgelists.PNAAssay <- function(
   ...
 ) {
   fs_map <- FSMap(object)
-  edgelists <- .lazy_load_table(fs_map, "edgelist", union = union)
+  edgelists <- lazy_load_table(fs_map, "edgelist", union = union)
 
   if (!lazy) {
     if (union) {
       con <- edgelists$src$con
-      edgelists <- edgelists %>% collect()
+      edgelists <- edgelists |> collect()
     } else {
       con <- edgelists[[1]]$src$con
-      edgelists <- edgelists %>% lapply(collect)
+      edgelists <- edgelists |> lapply(collect)
     }
-    DBI::dbDisconnect(con)
+    if (!is.null(con) && DBI::dbIsValid(con)) {
+      DBI::dbDisconnect(con)
+    }
   }
 
   return(edgelists)
@@ -885,7 +918,7 @@ FSMap.PNAAssay5 <- FSMap.PNAAssay
 #' fs::file_copy(path = pxl_file, temp_file)
 #'
 #' # Change file path in fs_map
-#' FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) %>%
+#' FSMap(seur_obj[["PNA"]]) <- FSMap(seur_obj[["PNA"]]) |>
 #'   mutate(pxl_file = temp_file)
 #'
 #' # Now the fs_map has been updated with the correct path
@@ -1077,25 +1110,29 @@ subset.PNAAssay <- function(
   proximity <- slot(x, name = "proximity")
   if (length(proximity) > 0) {
     if (!is.null(cells)) {
-      proximity <- proximity %>% filter(component %in% cells)
+      proximity <- proximity |> filter(component %in% cells)
     }
     if (!is.null(features)) {
-      proximity <- proximity %>% filter(marker_1 %in% features & marker_2 %in% features)
+      proximity <- proximity |> filter(marker_1 %in% features & marker_2 %in% features)
     }
   }
 
   # Filter fs_map
   fs_map <- slot(x, name = "fs_map")
   if (length(fs_map) > 0) {
-    fs_map$id_map <- lapply(fs_map$id_map, function(x) {
-      x %>% filter(current_id %in% cells)
-    })
+    orig_class <- class(fs_map)
+    if (!is.null(cells)) {
+      fs_map$id_map <- lapply(fs_map$id_map, function(x) {
+        x |> filter(current_id %in% cells)
+      })
+    }
     # Drop sample if id_map is empty
     rows_keep <- sapply(fs_map$id_map, nrow) > 0
     fs_map <- fs_map[rows_keep, ]
     fs_map <- na.omit(fs_map)
     # Update sample integer
     fs_map$sample <- seq_len(nrow(fs_map))
+    class(fs_map) <- orig_class
   }
 
   # convert standard assay to PNAAssay or PNAAssayy5
@@ -1191,8 +1228,8 @@ merge.PNAAssay <- function(
       )
     }
     objects <- lapply(seq_along(objects), function(i) {
-      objects[[i]] %>%
-        RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) %>%
+      objects[[i]] |>
+        RenameCells(new.names = paste0(add.cell.ids[i], "_", colnames(objects[[i]])) |>
           set_names(nm = colnames(objects[[i]])))
     })
   }
@@ -1206,6 +1243,30 @@ merge.PNAAssay <- function(
         "i" = "Found non-unique cell IDs across samples. {.var add.cell.ids} must be specified. ",
         " " = "Alternatively, make sure that each separate object has unique cell IDs.",
         "x" = "Duplicated IDs: {.val {names(unique_names)[unique_names > 1]}}"
+      )
+    )
+  }
+
+  # Check if protein panels differ across objects (ignoring feature row order)
+  feature_sets <- lapply(objects, rownames)
+  panels_differ <- any(vapply(
+    feature_sets[-1],
+    function(f) !setequal(f, feature_sets[[1]]),
+    logical(1)
+  ))
+  if (panels_differ) {
+    panel_sizes <- unique(lengths(feature_sets))
+    n_union <- length(Reduce(union, feature_sets))
+    cli::cli_warn(
+      c(
+        "!" = paste0(
+          "Objects being merged do not share identical protein panels ",
+          "(feature counts: {.val {panel_sizes}})."
+        ),
+        "i" = paste0(
+          "Taking the union of features ({.val {n_union}} total) ",
+          "and filling missing counts with 0."
+        )
       )
     )
   }
@@ -1236,12 +1297,12 @@ merge.PNAAssay <- function(
   # Merge cellgraphs list
   cellgraphs_new <- Reduce(c, lapply(objects, function(pna_assay) {
     return(pna_assay@cellgraphs)
-  })) %>% set_names(nm = colnames(new_assay))
+  })) |> set_names(nm = colnames(new_assay))
 
   # Merge spatial metrics tables
   proximity <- lapply(objects, function(object) {
     slot(object, name = "proximity")
-  }) %>% bind_rows()
+  }) |> bind_rows()
 
   # Merge fs_map
   fs_map <- tibble()
@@ -1252,9 +1313,30 @@ merge.PNAAssay <- function(
     }
   }
   if (!is.null(fs_map)) {
-    fs_map <- do.call(bind_rows, lapply(seq_along(objects), function(i) {
+    fs_map_list <- lapply(seq_along(objects), function(i) {
       slot(objects[[i]], name = "fs_map")
-    })) %>% mutate(sample = seq_len(n()))
+    })
+    first_class <- class(fs_map_list[[1]])
+    same_class <- all(vapply(
+      fs_map_list,
+      function(m) identical(class(m), first_class),
+      logical(1)
+    ))
+    if (!same_class) {
+      found_classes <- unique(vapply(
+        fs_map_list,
+        function(m) paste(class(m), collapse = "/"),
+        character(1)
+      ))
+      cli::cli_abort(
+        c(
+          "x" = "Cannot merge {.cls PNAAssay} objects with incompatible {.var fs_map} backend classes.",
+          "i" = "Found {.var fs_map} classes: {.val {found_classes}}"
+        )
+      )
+    }
+    fs_map <- do.call(bind_rows, fs_map_list) |> mutate(sample = seq_len(n()))
+    class(fs_map) <- first_class
   }
 
   # Convert to PNAAssay and add cellgraphs
@@ -1270,33 +1352,39 @@ merge.PNAAssay <- function(
     fs_map = fs_map
   )
 
-  # Add meta.features for PNAAssay
-  if (is(merged_pna_assay, "PNAAssay")) {
-    can_merge_meta_features <- TRUE
-    ob_features <- lapply(objects, function(x) rownames(x@meta.features))
-    for (i in 2:length(ob_features)) {
-      if (!identical(ob_features[[i]], ob_features[[1]])) {
-        cli_alert_danger(
-          c(
-            "Meta features are not the same across objects. ",
-            "Feature metadata is dropped from @meta.features in the merged object."
-          )
-        )
-        can_merge_meta_features <- FALSE
-        break
-      }
-    }
+  # Union feature metadata across objects for both PNAAssay (v3) and PNAAssay5 (v5)
+  meta_dfs <- lapply(objects, function(obj) {
+    mf <- if (is(obj, "PNAAssay")) obj@meta.features else obj[[]]
+    mf <- mf |> select(any_of(c("control", "marker", "nuclear")))
+    mf$.feature_id <- rownames(obj)
+    mf
+  })
+  combined_mf <- bind_rows(meta_dfs)
+  combined_mf <- combined_mf[!duplicated(combined_mf$.feature_id), , drop = FALSE]
+  keep_cols <- setdiff(colnames(combined_mf), ".feature_id")
 
-    if (can_merge_meta_features) {
-      meta_features <- objects[[1]]@meta.features %>% select(any_of(c("control", "marker", "nuclear")))
+  if (is(merged_pna_assay, "PNAAssay")) {
+    if (length(keep_cols) > 0) {
+      meta_features <- as.data.frame(
+        combined_mf[, keep_cols, drop = FALSE],
+        row.names = combined_mf$.feature_id,
+        check.names = FALSE
+      )
+      meta_features <- meta_features[rownames(merged_pna_assay), , drop = FALSE]
+      rownames(meta_features) <- rownames(merged_pna_assay)
     } else {
-      # A valid Assay requires one meta.features row per feature, so keep the
-      # row names of the merged feature set and drop only the columns
       meta_features <- data.frame(row.names = rownames(merged_pna_assay))
     }
-
-    # Place meta.features in PNAAssay
     merged_pna_assay@meta.features <- meta_features
+  } else if (is(merged_pna_assay, "PNAAssay5") && length(keep_cols) > 0) {
+    meta_features <- as.data.frame(
+      combined_mf[, keep_cols, drop = FALSE],
+      row.names = combined_mf$.feature_id,
+      check.names = FALSE
+    )
+    meta_features <- meta_features[rownames(merged_pna_assay), , drop = FALSE]
+    rownames(meta_features) <- rownames(merged_pna_assay)
+    merged_pna_assay[[colnames(meta_features)]] <- meta_features
   }
 
   return(merged_pna_assay)
@@ -1345,7 +1433,7 @@ merge.PNAAssay5 <- merge.PNAAssay
       )
     }
     # Check component names
-    cells_in_proximity <- cell_ids %in% (proximity$component %>% unique())
+    cells_in_proximity <- cell_ids %in% (proximity$component |> unique())
     if (!all(cells_in_proximity)) {
       if (verbose && check_global_verbosity()) {
         cli_alert_warning(glue(
@@ -1356,7 +1444,7 @@ merge.PNAAssay5 <- merge.PNAAssay
       return(proximity)
     }
     # Check marker names
-    all_markers <- c(proximity$marker_1 %>% unique(), proximity$marker_2 %>% unique()) %>% unique()
+    all_markers <- c(proximity$marker_1 |> unique(), proximity$marker_2 |> unique()) |> unique()
     if (!all(markers %in% all_markers)) {
       if (verbose && check_global_verbosity()) {
         cli_alert_warning(glue(
@@ -1428,6 +1516,19 @@ merge.PNAAssay5 <- merge.PNAAssay
   }
 
   # Validate pxl files
+  validate_fs_map_paths(fs_map, call = call)
+
+  return(invisible(NULL))
+}
+
+#' @rdname validate_fs_map_paths
+#' @method validate_fs_map_paths default
+#' @export
+validate_fs_map_paths.default <- function(
+  fs_map,
+  call = caller_env(),
+  ...
+) {
   for (i in seq_len(nrow(fs_map))) {
     f <- fs_map$pxl_file[i]
     if (!fs::file_exists(f)) {
@@ -1440,6 +1541,5 @@ merge.PNAAssay5 <- merge.PNAAssay
       )
     }
   }
-
   return(invisible(NULL))
 }

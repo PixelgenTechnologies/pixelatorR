@@ -18,9 +18,9 @@ for (assay_version in c("v3", "v5")) {
           paste0("Feature", 1:100),
           paste0("Cell", 1:2000)
         )
-      ) %>%
+      ) |>
         as("dgCMatrix")
-    ) %>%
+    ) |>
     AddMetaData(
       metadata = data.frame(
         sample = rep(c("A", "B"), each = 1000),
@@ -583,7 +583,7 @@ for (assay_version in c("v3", "v5")) {
         c("Feature1", "Feature2"),
         paste0("Cell", seq_len(n_cells))
       )
-    ) %>%
+    ) |>
       as("dgCMatrix")
     object_asym <- CreateSeuratObject(counts = counts)
 

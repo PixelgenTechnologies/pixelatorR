@@ -140,7 +140,7 @@ test_that("PixelDB methods work as expected", {
       row.names = c(NA, -2L),
       class = c("tbl_df", "tbl", "data.frame")
     )
-  expect_equal(prox %>% head(n = 2), expected_prox)
+  expect_equal(prox |> head(n = 2), expected_prox)
 
   # cell_meta method
   expect_no_error(cell_meta <- db$cell_meta())
@@ -160,7 +160,7 @@ test_that("PixelDB methods work as expected", {
   # components_edgelist method
   expect_no_error(el <- db$components_edgelist("c3c393e9a17c1981"))
   expect_equal(
-    el %>% sapply(class),
+    el |> sapply(class),
     c(
       marker_1 = "character",
       marker_2 = "character",
@@ -173,7 +173,7 @@ test_that("PixelDB methods work as expected", {
 
   expect_no_error(el <- db$components_edgelist("c3c393e9a17c1981", umi_data_type = "string"))
   expect_equal(
-    el %>% sapply(class),
+    el |> sapply(class),
     c(
       marker_1 = "character",
       marker_2 = "character",
@@ -192,7 +192,7 @@ test_that("PixelDB methods work as expected", {
   )
 
   expect_equal(
-    el_lazy %>% collect(),
+    el_lazy |> collect(),
     el
   )
 
@@ -228,6 +228,21 @@ test_that("PixelDB methods work as expected", {
   expect_named(cgl_two[[1]]@layout, "wpmds_3d")
   expect_equal(nrow(cgl_two[[1]]@layout$wpmds_3d), length(cgl_two[[1]]@nodes))
   expect_equal(colnames(cgl_two[[1]]@layout$wpmds_3d), c("x", "y", "z"))
+
+  # Subset of markers (and duplicate markers) preserves node count and filters non-matching nodes to 0
+  subset_markers <- c("HLA-ABC", "B2M", "HLA-ABC")
+  expect_no_error(
+    cgl_sub <- db$components_cell_graph(cells_two[1], markers = subset_markers)
+  )
+  expect_equal(
+    dim(cgl_sub[[1]]@counts),
+    c(length(cgl_one[[1]]@nodes), 2L)
+  )
+  expect_equal(colnames(cgl_sub[[1]]@counts), c("HLA-ABC", "B2M"))
+  expect_equal(
+    cgl_sub[[1]]@counts,
+    cgl_one[[1]]@counts[, c("HLA-ABC", "B2M"), drop = FALSE]
+  )
 
   # Verify rowid index was populated and cached
   idx_cache <- db$.__enclos_env__$private$component_index_cache

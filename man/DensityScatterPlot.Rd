@@ -35,9 +35,12 @@ DensityScatterPlot(
 \item{facet_vars}{Optional character vector of length 1 or 2 specifying variables to facet by.}
 
 \item{plot_gate}{Optional data frame containing gate parameters. For \code{gate_type = "rectangle"}, must contain columns
-'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. For gate_type = "quadrant", must contain
-columns 'x' and 'y' defining the position of the quadrant lines. The data frame can also contain the variables
-specified in 'facet_vars' to plot different gates in different facets.}
+'xmin', 'xmax', 'ymin', 'ymax' defining the rectangular gate boundaries. \code{NA} and infinite values mean an open
+edge: \code{xmin} or \code{ymin} of \code{NA} or \code{-Inf} has no lower bound, and \code{xmax} or \code{ymax} of \code{NA} or \code{Inf} has no upper
+bound. \code{Inf} is not a lower bound and \code{-Inf} is not an upper bound. For gate_type = "quadrant", must contain
+columns 'x' and 'y' defining the position of the quadrant lines.
+The data frame can also contain the variables specified in 'facet_vars' to plot different gates in different
+facets.}
 
 \item{gate_type}{Optional string specifying the gate type. Must be either "rectangle" or "quadrant".
 Required if \code{plot_gate} is provided.}

@@ -77,7 +77,7 @@ FSMap.Seurat <- function(
 #' seur_obj <- ReadPNA_Seurat(pxl_file)
 #'
 #' # Replace FSMap in Seurat object
-#' FSMap(seur_obj) <- FSMap(seur_obj) %>%
+#' FSMap(seur_obj) <- FSMap(seur_obj) |>
 #'   mutate(pxl_file = fs::path_rel(pxl_file))
 #'
 #' @export
@@ -190,10 +190,10 @@ PolarizationScores.Seurat <- function(
     }
 
     # Add additional meta.data slots
-    pol_scores <- pol_scores %>%
+    pol_scores <- pol_scores |>
       left_join(
-        y = object[[]] %>%
-          as_tibble(rownames = "component") %>%
+        y = object[[]] |>
+          as_tibble(rownames = "component") |>
           select(component, all_of(meta_data_columns)),
         by = "component"
       )
@@ -267,10 +267,10 @@ ColocalizationScores.Seurat <- function(
     }
 
     # Add additional meta.data slots
-    coloc_scores <- coloc_scores %>%
+    coloc_scores <- coloc_scores |>
       left_join(
-        y = object[[]] %>%
-          as_tibble(rownames = "component") %>%
+        y = object[[]] |>
+          as_tibble(rownames = "component") |>
           select(component, all_of(meta_data_columns)),
         by = "component"
       )
@@ -354,22 +354,10 @@ ProximityScores.Seurat <- function(
   # Get proximity scores
   proximity_scores <- ProximityScores(pixel_assay, add_marker_counts, add_marker_proportions, lazy, calc_log2ratio, ...)
 
-  if (inherits(proximity_scores, "tbl_lazy")) {
-    con <- proximity_scores$src$con
-  } else {
-    con <- NULL
-  }
-
   # Add optional meta data columns to proximity scores table
   if (!is.null(meta_data_columns)) {
-    mdata <- .meta_data_columns(object, con, lazy, meta_data_columns)
-
-    # Add additional meta.data slots
-    proximity_scores <- proximity_scores %>%
-      left_join(
-        y = mdata,
-        by = "component"
-      )
+    mdata <- .meta_data_columns(object, con = NULL, lazy = FALSE, meta_data_columns)
+    proximity_scores <- join_proximity_metadata(proximity_scores, mdata, by = "component")
   }
 
   return(proximity_scores)
@@ -382,7 +370,7 @@ ProximityScores.Seurat <- function(
 #'
 #' @examples
 #' # Update proximity scores in Seurat object
-#' ProximityScores(seur_obj) <- ProximityScores(seur_obj) %>%
+#' ProximityScores(seur_obj) <- ProximityScores(seur_obj) |>
 #'   mutate(ratio = join_count / join_count_expected_mean)
 #'
 #' @export
@@ -431,25 +419,75 @@ Edgelists.Seurat <- function(
   # Get edgelist
   edgelists <- Edgelists(object[[assay]], lazy, union, ...)
 
-  if (inherits(edgelists, "tbl_lazy")) {
-    con <- edgelists$src$con
-  } else {
-    con <- NULL
-  }
-
   # Add optional meta data columns to edgelist table
   if (!is.null(meta_data_columns)) {
-    mdata <- .meta_data_columns(object, con, lazy, meta_data_columns)
-
-    # Add additional meta.data slots
-    edgelists <- edgelists %>%
-      left_join(
-        y = mdata,
-        by = "component"
-      )
+    mdata <- .meta_data_columns(object, con = NULL, lazy = FALSE, meta_data_columns)
+    if (is.list(edgelists) && !inherits(edgelists, c("data.frame", "tbl_lazy"))) {
+      edgelists <- lapply(edgelists, function(el) {
+        join_proximity_metadata(el, mdata, by = "component")
+      })
+    } else {
+      edgelists <- join_proximity_metadata(edgelists, mdata, by = "component")
+    }
   }
 
   return(edgelists)
+}
+
+
+#' @rdname join_proximity_metadata
+#' @method join_proximity_metadata default
+#' @export
+join_proximity_metadata.default <- function(
+  proximity_scores,
+  mdata,
+  by = "component",
+  ...
+) {
+  left_join(proximity_scores, y = mdata, by = by)
+}
+
+
+#' @param name Optional name for the temporary table created in the database.
+#'   When \code{NULL} (default), a unique temporary table name is generated.
+#' @param reuse Logical indicating whether to reuse an existing table named
+#'   \code{name} on the database connection instead of re-uploading \code{mdata}.
+#' @rdname join_proximity_metadata
+#' @method join_proximity_metadata tbl_lazy
+#' @export
+join_proximity_metadata.tbl_lazy <- function(
+  proximity_scores,
+  mdata,
+  by = "component",
+  name = NULL,
+  reuse = FALSE,
+  ...
+) {
+  con <- proximity_scores$src$con
+  tbl_name <- name %||% paste0("pxl_mdata_", .generate_random_string(8))
+  if (!isTRUE(reuse) || is.null(name) || !DBI::dbExistsTable(con, tbl_name)) {
+    copy_to(con, mdata, name = tbl_name, overwrite = TRUE)
+  }
+  out <- left_join(proximity_scores, y = tbl(con, tbl_name), by = by)
+  rhs_by <- if (inherits(by, "dplyr_join_by")) {
+    if (all(by$condition == "==")) by$y else NULL
+  } else if (is.character(by)) {
+    unname(by)
+  } else if (is.null(by)) {
+    intersect(colnames(proximity_scores), colnames(mdata))
+  } else {
+    NULL
+  }
+  if (
+    length(rhs_by) > 0L &&
+      all(rhs_by %in% colnames(mdata)) &&
+      !anyDuplicated(mdata[, rhs_by, drop = FALSE])
+  ) {
+    attr(out, "pxl_unique_keys") <- attr(proximity_scores, "pxl_unique_keys")
+  } else {
+    attr(out, "pxl_unique_keys") <- NULL
+  }
+  out
 }
 
 
@@ -487,8 +525,8 @@ Edgelists.Seurat <- function(
   }
 
   # Get selected meta data
-  mdata <- object[[]] %>%
-    select(all_of(meta_data_columns)) %>%
+  mdata <- object[[]] |>
+    select(all_of(meta_data_columns)) |>
     as_tibble(rownames = "component")
 
   if (lazy) {

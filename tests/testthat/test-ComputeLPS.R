@@ -2,14 +2,14 @@ library(pixelatorR)
 library(dplyr)
 library(SeuratObject)
 
-se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) %>%
-  LoadCellGraphs(cells = colnames(.)[1:2], verbose = FALSE)
+se <- ReadPNA_Seurat(minimal_pna_pxl_file(), verbose = FALSE) |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1:2], verbose = FALSE))()
 
 cg_list <- CellGraphs(se)[1:2]
 set.seed(123)
 cg_small_list <- lapply(cg_list, function(cg) {
-  nodes <- cg@cellgraph %>%
-    pull(name) %>%
+  nodes <- cg@cellgraph |>
+    pull(name) |>
     sample(min(5000, length(cg@cellgraph)))
   subset(cg, nodes = nodes)
 })

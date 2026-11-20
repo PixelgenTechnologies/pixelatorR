@@ -279,7 +279,7 @@ theme_pixelgen <- function() {
 #'   color_sequential_pixelgen()
 #'
 #' # Divergent scale
-#' ggplot(mtcars %>% mutate(disp = scale(disp)), aes(cyl, gear, fill = disp)) +
+#' ggplot(mtcars |> mutate(disp = scale(disp)), aes(cyl, gear, fill = disp)) +
 #'   geom_tile() +
 #'   color_divergent_pixelgen(limits = c(-2, 2), hue_low = "cyans", hue_high = "beiges")
 #'
@@ -298,7 +298,7 @@ color_discrete_pixelgen <- function(
   assert_single_value(aes_type, type = "string", allow_null = TRUE)
   assert_vector(indices, type = "integer", allow_null = TRUE)
   if (!is.null(hue) || !is.null(level)) {
-    cols <- PixelgenAccentColors(hue, level) %>% unname()
+    cols <- PixelgenAccentColors(hue, level) |> unname()
     if (!is.null(indices)) {
       cols <- cols[indices]
     }
@@ -314,9 +314,9 @@ color_discrete_pixelgen <- function(
     if (shuffle && is.null(indices)) {
       columns <- sample(columns)
     }
-    cols <- Pixelgen_accent_colors[rows, columns] %>%
-      as.matrix() %>%
-      t() %>%
+    cols <- Pixelgen_accent_colors[rows, columns] |>
+      as.matrix() |>
+      t() |>
       as.vector()
   }
   if (is.null(aes_type)) {
@@ -374,7 +374,7 @@ color_divergent_pixelgen <- function(
   aes_type = NULL
 ) {
   assert_single_value(aes_type, type = "string", allow_null = TRUE)
-  cols_low <- PixelgenAccentColors(hue_low, level = NULL) %>% rev()
+  cols_low <- PixelgenAccentColors(hue_low, level = NULL) |> rev()
   cols_high <- PixelgenAccentColors(hue_high, level = NULL)
   list(
     scale_fill_gradientn(colors = c(cols_low, "#FFFFFF", cols_high), limits = limits),
@@ -470,24 +470,24 @@ Pixelgen_accent_colors <-
 show_accent_colors <- function(
   label_discrete_order = FALSE
 ) {
-  accent_colors <- Pixelgen_accent_colors %>%
-    mutate(level = factor(paste0(seq_len(n())), levels = seq_len(n()))) %>%
-    pivot_longer(cols = colnames(Pixelgen_accent_colors), names_to = "hue", values_to = "color") %>%
+  accent_colors <- Pixelgen_accent_colors |>
+    mutate(level = factor(paste0(seq_len(n())), levels = seq_len(n()))) |>
+    pivot_longer(cols = colnames(Pixelgen_accent_colors), names_to = "hue", values_to = "color") |>
     mutate(hue = factor(hue, levels = names(Pixelgen_accent_colors)))
 
   if (label_discrete_order) {
     rows <- paste0(c(7, 6, 8, 5, 9, 4, 10, 3, 11, 2, 12, 1))
     columns <- names(Pixelgen_accent_colors)[c(1, 3, 5, 7, 2, 4, 6, 8, 9, 10, 11)]
     ord <- tibble(
-      level = rep(rows, each = length(columns)) %>% factor(levels = levels(accent_colors$level)),
-      hue = rep(columns, times = length(rows)) %>% factor(levels = levels(accent_colors$hue)),
-    ) %>%
-      mutate(label = seq_len(n())) %>%
+      level = rep(rows, each = length(columns)) |> factor(levels = levels(accent_colors$level)),
+      hue = rep(columns, times = length(rows)) |> factor(levels = levels(accent_colors$hue)),
+    ) |>
+      mutate(label = seq_len(n())) |>
       mutate(text_color = if_else(
         level %in% paste0(1:6),
         "#000000", "#FFFFFF"
       ))
-    accent_colors <- accent_colors %>%
+    accent_colors <- accent_colors |>
       left_join(ord, by = c("level", "hue"))
   }
 
@@ -557,8 +557,8 @@ PixelgenAccentColors <- function(
 
   # Get colors
   colors <-
-    Pixelgen_accent_colors[level, hue] %>%
-    unlist() %>%
+    Pixelgen_accent_colors[level, hue] |>
+    unlist() |>
     set_names(paste0(
       rep(hue, each = length(level)),
       rep(level, length(hue))
@@ -585,7 +585,7 @@ create_discrete_palette <-
 
     if (n_distinct(conditions) <= 2) {
       sample_palette <-
-        c(Pixelgen_accent_colors$blues[4], Pixelgen_accent_colors$beiges[6]) %>%
+        c(Pixelgen_accent_colors$blues[4], Pixelgen_accent_colors$beiges[6]) |>
         rep(10)
     } else if (n_distinct(conditions) <= 6) {
       sample_palette <-
@@ -593,8 +593,8 @@ create_discrete_palette <-
           PixelgenAccentColors(hue = c("blues"), level = c(4, 6)),
           PixelgenAccentColors(hue = c("beiges"), level = c(6, 9)),
           PixelgenAccentColors(hue = c("pinks"), level = c(5, 6))
-        ) %>%
-        unname() %>%
+        ) |>
+        unname() |>
         rep(10)
     } else if (n_distinct(conditions) > 6) {
       sample_palette <-
@@ -606,8 +606,8 @@ create_discrete_palette <-
           PixelgenAccentColors(hue = c("yellows"), level = c(5, 7)),
           PixelgenAccentColors(hue = c("purples"), level = c(4, 6)),
           PixelgenAccentColors(hue = c("greys"), level = c(4, 6))
-        ) %>%
-        unname() %>%
+        ) |>
+        unname() |>
         rep(10)
     }
 

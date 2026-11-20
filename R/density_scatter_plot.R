@@ -494,7 +494,7 @@ DensityScatterPlot <- function(
     object,
     vars = c(facet_vars, marker1, marker2),
     layer = layer
-  ) %>%
+  ) |>
     rename(
       marker1 = !!marker1,
       marker2 = !!marker2
@@ -502,15 +502,15 @@ DensityScatterPlot <- function(
 
   group_vars <- if (!is.null(facet_vars)) facet_vars else character(0)
 
-  plot_data <- plot_data %>%
-    group_by(across(all_of(group_vars))) %>%
-    mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) %>%
+  plot_data <- plot_data |>
+    group_by(across(all_of(group_vars))) |>
+    mutate(dens = .get2Ddensity(marker1, marker2, n = grid_n, ...)) |>
     ungroup()
 
   if (scale_density) {
-    plot_data <- plot_data %>%
-      group_by(across(all_of(group_vars))) %>%
-      mutate(dens = dens / max(dens, na.rm = TRUE)) %>%
+    plot_data <- plot_data |>
+      group_by(across(all_of(group_vars))) |>
+      mutate(dens = dens / max(dens, na.rm = TRUE)) |>
       ungroup()
   }
 
@@ -564,12 +564,12 @@ DensityScatterPlot <- function(
 
     if (!is.null(plot_gate)) {
       # Finite edges still expand shared axes. Open edges must not.
-      gate_coords <- plot_gate %>%
+      gate_coords <- plot_gate |>
         select(any_of(c(
           "x", "y",
           "xmin", "xmax",
           "ymin", "ymax"
-        ))) %>%
+        ))) |>
         unlist()
       scale_range <- range(
         c(
@@ -606,13 +606,13 @@ DensityScatterPlot <- function(
   if (!is.null(facet_vars)) {
     join_vars <- intersect(facet_vars, names(plot_gate))
     if (length(join_vars) > 0) {
-      gate_data <- plot_gate %>%
+      gate_data <- plot_gate |>
         inner_join(
           unique(gg$data[, facet_vars, drop = FALSE]),
           by = join_vars
         )
     } else {
-      gate_data <- plot_gate %>%
+      gate_data <- plot_gate |>
         cross_join(unique(gg$data[, facet_vars, drop = FALSE]))
     }
   } else {
@@ -627,29 +627,29 @@ DensityScatterPlot <- function(
   # Group data by facet variables if they exist
   plot_data <- gg$data
   if (!is.null(facet_vars)) {
-    plot_data <- plot_data %>%
+    plot_data <- plot_data |>
       group_by(!!!syms(facet_vars))
   }
 
   # Calculate points inside gates for each facet group
   if (!is.null(facet_vars)) {
-    gate_data <- gate_data %>%
+    gate_data <- gate_data |>
       left_join(plot_data,
         by = facet_vars,
         relationship = "many-to-many"
       )
   } else {
-    gate_data <- plot_data %>%
+    gate_data <- plot_data |>
       cross_join(gate_data)
   }
 
   if (gate_type == "rectangle") {
     gate_summary <-
-      gate_data %>%
+      gate_data |>
       group_by(
         !!!syms(facet_vars),
         xmin, xmax, ymin, ymax
-      ) %>%
+      ) |>
       summarise(
         # NA matches an open edge. -Inf and Inf compare as unbounded.
         n_inside = sum(
@@ -662,14 +662,14 @@ DensityScatterPlot <- function(
       )
   } else if (gate_type == "quadrant") {
     gate_summary <-
-      gate_data %>%
+      gate_data |>
       crossing(
         quadrant = c("top_left", "top_right", "bottom_left", "bottom_right")
-      ) %>%
+      ) |>
       group_by(
         !!!syms(facet_vars),
         quadrant, x, y
-      ) %>%
+      ) |>
       summarise(
         n_inside = sum(
           (quadrant == "top_left" & marker1 < x & marker2 > y) |
@@ -750,7 +750,7 @@ DensityScatterPlot <- function(
       gg <- fix_scale(gg, "x", x_range)
       gg <- fix_scale(gg, "y", y_range)
 
-      gate_summary <- gate_summary %>%
+      gate_summary <- gate_summary |>
         mutate(
           xmin = if_else(is.finite(xmin), as.numeric(xmin), x_range[1]),
           xmax = if_else(is.finite(xmax), as.numeric(xmax), x_range[2]),
@@ -761,7 +761,7 @@ DensityScatterPlot <- function(
 
     # Calculate annotation positions
     gate_labels <-
-      gate_summary %>%
+      gate_summary |>
       mutate(
         x = (xmin + xmax) / 2,
         y = ymax,
@@ -788,8 +788,8 @@ DensityScatterPlot <- function(
 
     # Calculate annotation positions
     gate_labels <-
-      gate_summary %>%
-      ungroup() %>%
+      gate_summary |>
+      ungroup() |>
       mutate(
         x = case_when(
           quadrant %in% c("top_left", "bottom_left") ~
@@ -813,16 +813,16 @@ DensityScatterPlot <- function(
     gg <-
       gg +
       geom_vline(
-        data = gate_summary %>%
-          select(any_of(facet_vars), x) %>%
+        data = gate_summary |>
+          select(any_of(facet_vars), x) |>
           distinct(),
         aes(xintercept = x),
         linetype = "dashed",
         color = "black"
       ) +
       geom_hline(
-        data = gate_summary %>%
-          select(any_of(facet_vars), y) %>%
+        data = gate_summary |>
+          select(any_of(facet_vars), y) |>
           distinct(),
         aes(yintercept = y),
         linetype = "dashed",

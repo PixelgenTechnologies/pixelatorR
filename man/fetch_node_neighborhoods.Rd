@@ -39,10 +39,10 @@ node_nbs_matrix <- fetch_node_neighborhoods(
 )
 
 # Compare output with node neighborhoods from CellGraph
-cg <- se \%>\%
-  LoadCellGraphs(cells = colnames(.)[1], verbose = FALSE) \%>\%
-  CellGraphs() \%>\%
-  .[[1]]
+cg <- se |>
+  (\(.) LoadCellGraphs(., cells = colnames(.)[1], verbose = FALSE))() |>
+  CellGraphs() |>
+  (\(.) .[[1]])()
 
 A <- igraph::as_adjacency_matrix(cg@cellgraph)
 A2 <- expand_adjacency_matrix(A, k = 2)

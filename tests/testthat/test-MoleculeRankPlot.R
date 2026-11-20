@@ -31,7 +31,7 @@ test_that("MoleculeRankPlot works for Seurat objects", {
   expect_no_error({
     moleculerank_plot <- MoleculeRankPlot(seur_obj_pna, group_by = "sample_id", split = TRUE)
   })
-  expect_equal(moleculerank_plot@facet$params$facets %>% names(), "sample_id")
+  expect_equal(moleculerank_plot@facet$params$facets |> names(), "sample_id")
 
   # rug
   expect_no_error({

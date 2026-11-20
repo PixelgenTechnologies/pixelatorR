@@ -7,13 +7,13 @@ proximity_missing_cols <- ProximityScores(seur_obj)
 test_that("FilterProximityScores works as expected", {
   expect_no_error(suppressWarnings(proximity_filtered <- FilterProximityScores(proximity, background_threshold_pct = 0.001)))
   expect_no_error(proximity_filtered_lazy <- FilterProximityScores(proximity_lazy, background_threshold_pct = 0.001))
-  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy %>% collect()))
+  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy |> collect()))
   expect_no_error(proximity_filtered <- FilterProximityScores(proximity, background_threshold_count = 10))
   expect_no_error(proximity_filtered_lazy <- FilterProximityScores(proximity_lazy, background_threshold_count = 10))
-  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy %>% collect()))
+  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy |> collect()))
   expect_no_error(proximity_filtered <- FilterProximityScores(proximity, min_cells_count = 2))
   expect_no_error(proximity_filtered_lazy <- FilterProximityScores(proximity_lazy, min_cells_count = 2))
-  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy %>% collect()))
+  expect_equal(dim(proximity_filtered), dim(proximity_filtered_lazy |> collect()))
 })
 
 test_that("FilterProximityScores fails with invalid input", {

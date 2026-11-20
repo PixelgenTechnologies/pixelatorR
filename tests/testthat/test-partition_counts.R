@@ -32,6 +32,17 @@ test_that("partition_counts works as expected", {
     as.matrix(res[, colnames(expected_counts)]),
     expected_counts
   )
+
+  cg_meta <- cg
+  cg_meta@cellgraph <- cg_meta@cellgraph %N>% select(-partition)
+  cg_meta@meta.data$partition <- partition
+  expect_no_error(
+    res_meta <- partition_counts(cg_meta, partition_column = "partition")
+  )
+  expect_equal(
+    as.matrix(res_meta[, colnames(expected_counts)]),
+    expected_counts
+  )
 })
 
 

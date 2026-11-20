@@ -10,41 +10,266 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Optional git tag (e.g. v0.26.0 or v0.23.0) to build and republish as multi-arch"
+        required: false
+        type: string
+        default: ""
+      latest:
+        description: "Also update the 'latest' tag when republishing 'tag'"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
-  id-token: write
-  actions: write
   contents: read
-  packages: write
+
+env:
+  GHCR_IMAGE: ghcr.io/pixelgentechnologies/pixelatorr
+  ECR_IMAGE: 890888997283.dkr.ecr.eu-north-1.amazonaws.com/pixelatorr
+  PUSH_IMAGE: ${{ github.event_name != 'pull_request' }}
 
 jobs:
-  build-and-push-container:
-    name: "Build and push container"
-    runs-on: ubuntu-latest
+  build:
+    name: "Build (${{ matrix.platform }})"
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      id-token: write
+      actions: write
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            platform: linux/amd64
+            arch: amd64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            arch: arm64
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v6
 
-      - uses: ./.github/actions/setup-image-build-env
+      - name: Validate target tag
+        if: inputs.tag != ''
+        env:
+          TARGET_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "${TARGET_TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid tag '${TARGET_TAG}'. Expected SemVer tag matching vX.Y.Z (e.g. v0.26.0)."
+            exit 1
+          fi
+
+      - name: Checkout target tag source
+        if: inputs.tag != ''
+        uses: actions/checkout@v6
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          path: tag-source
+
+      - name: Resolve target tag SHA
+        id: tag_ref
+        if: inputs.tag != ''
+        run: |
+          TAG_SHA="$(git -C tag-source rev-parse --short=7 HEAD)"
+          echo "short_sha=${TAG_SHA}" >> "${GITHUB_OUTPUT}"
+
+      - name: Set up image build environment
+        uses: ./.github/actions/setup-image-build-env
+        with:
+          push: ${{ env.PUSH_IMAGE }}
+          setup-qemu: "false"
 
       - name: Docker meta
         id: meta
-        uses: docker/metadata-action@v5
+        if: inputs.tag == ''
+        uses: docker/metadata-action@v6
         with:
           images: |
-            ghcr.io/pixelgentechnologies/pixelatorR
-            890888997283.dkr.ecr.eu-north-1.amazonaws.com/pixelatorr
+            ${{ env.GHCR_IMAGE }}
+            ${{ env.ECR_IMAGE }}
           tags: |
             type=ref,event=branch
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
             type=sha
 
-      - name: Build and push to ghcr and aws
-        uses: docker/build-push-action@v4
+      - name: Docker meta (target tag)
+        id: meta_tag
+        if: inputs.tag != ''
+        uses: docker/metadata-action@v6
         with:
-          context: .
-          platforms: linux/amd64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          images: |
+            ${{ env.GHCR_IMAGE }}
+            ${{ env.ECR_IMAGE }}
+          flavor: |
+            latest=${{ inputs.latest && 'true' || 'false' }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ inputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }}
+            type=raw,value=sha-${{ steps.tag_ref.outputs.short_sha }}
+
+      - name: Build container image
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.tag != '' && 'tag-source' || '.' }}
+          platforms: ${{ matrix.platform }}
+          load: true
+          tags: pixelatorr:smoke-${{ matrix.arch }}
+          labels: ${{ steps.meta.outputs.labels || steps.meta_tag.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.arch }}
+          cache-to: type=gha,mode=max,ignore-error=true,scope=${{ matrix.arch }}
+
+      - name: Smoke check container image
+        run: |
+          docker run --rm "pixelatorr:smoke-${{ matrix.arch }}" R -e "library(pixelatorR)"
+          docker image rm "pixelatorr:smoke-${{ matrix.arch }}"
+
+      - name: Push platform digest to GHCR and AWS ECR
+        id: push_digest
+        if: env.PUSH_IMAGE == 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ inputs.tag != '' && 'tag-source' || '.' }}
+          platforms: ${{ matrix.platform }}
+          labels: ${{ steps.meta.outputs.labels || steps.meta_tag.outputs.labels }}
+          outputs: |
+            type=image,"name=${{ env.GHCR_IMAGE }},${{ env.ECR_IMAGE }}",push-by-digest=true,name-canonical=true,push=true
+          cache-from: type=gha,scope=${{ matrix.arch }}
+
+      - name: Export platform digest
+        if: env.PUSH_IMAGE == 'true'
+        env:
+          DIGEST: ${{ steps.push_digest.outputs.digest }}
+          ARCH: ${{ matrix.arch }}
+        run: |
+          if [[ -z "${DIGEST}" ]]; then
+            echo "::error::Missing image digest output from build-push-action"
+            exit 1
+          fi
+          mkdir -p /tmp/digests
+          printf '%s\n' "${DIGEST}" > "/tmp/digests/${ARCH}.txt"
+
+      - name: Upload platform digest
+        if: env.PUSH_IMAGE == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: digests-${{ matrix.arch }}
+          path: /tmp/digests/${{ matrix.arch }}.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  merge-manifest:
+    name: "Merge and push multi-arch manifests"
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name != 'pull_request'
+    permissions:
+      id-token: write
+      actions: read
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Resolve target tag SHA
+        id: tag_ref
+        if: inputs.tag != ''
+        env:
+          TARGET_TAG: ${{ inputs.tag }}
+        run: |
+          git fetch --no-tags --depth=1 origin "refs/tags/${TARGET_TAG}:refs/tags/${TARGET_TAG}"
+          TAG_SHA="$(git rev-parse --short=7 "refs/tags/${TARGET_TAG}^{commit}")"
+          echo "short_sha=${TAG_SHA}" >> "${GITHUB_OUTPUT}"
+
+      - name: Download platform digests
+        uses: actions/download-artifact@v7
+        with:
+          path: /tmp/digests
+          pattern: digests-*
+          merge-multiple: true
+
+      - name: Set up image build environment
+        uses: ./.github/actions/setup-image-build-env
+        with:
+          push: "true"
+          setup-qemu: "false"
+
+      - name: Docker meta
+        id: meta
+        if: inputs.tag == ''
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ${{ env.GHCR_IMAGE }}
+            ${{ env.ECR_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{version}},value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.event.release.tag_name }},enable=${{ github.event_name == 'release' }}
+            type=sha
+
+      - name: Docker meta (target tag)
+        id: meta_tag
+        if: inputs.tag != ''
+        uses: docker/metadata-action@v6
+        with:
+          images: |
+            ${{ env.GHCR_IMAGE }}
+            ${{ env.ECR_IMAGE }}
+          flavor: |
+            latest=${{ inputs.latest && 'true' || 'false' }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ inputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ inputs.tag }}
+            type=raw,value=sha-${{ steps.tag_ref.outputs.short_sha }}
+
+      - name: Create and push multi-arch manifests
+        env:
+          TAG_NAMES: ${{ steps.meta.outputs.tag-names || steps.meta_tag.outputs.tag-names }}
+        run: |
+          set -euo pipefail
+
+          AMD64_DIGEST="$(tr -d '[:space:]' < /tmp/digests/amd64.txt)"
+          ARM64_DIGEST="$(tr -d '[:space:]' < /tmp/digests/arm64.txt)"
+
+          for digest in "${AMD64_DIGEST}" "${ARM64_DIGEST}"; do
+            if [[ ! "${digest}" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+              echo "::error::Invalid digest '${digest}'"
+              exit 1
+            fi
+          done
+
+          mapfile -t TAG_LIST < <(printf '%s\n' "${TAG_NAMES}" | sed '/^[[:space:]]*$/d')
+          if [[ "${#TAG_LIST[@]}" -eq 0 ]]; then
+            echo "::error::No tags generated by docker/metadata-action"
+            exit 1
+          fi
+
+          for image in "${GHCR_IMAGE}" "${ECR_IMAGE}"; do
+            tag_args=()
+            for tag_name in "${TAG_LIST[@]}"; do
+              tag_args+=(--tag "${image}:${tag_name}")
+            done
+            echo "Creating multi-arch manifest for ${image}: ${TAG_LIST[*]}"
+            docker buildx imagetools create \
+              "${tag_args[@]}" \
+              "${image}@${AMD64_DIGEST}" \
+              "${image}@${ARM64_DIGEST}"
+
+            first_ref="${image}:${TAG_LIST[0]}"
+            echo "Inspecting published manifest ${first_ref}"
+            manifest_info="$(docker buildx imagetools inspect "${first_ref}")"
+            printf '%s\n' "${manifest_info}"
+            grep -q "linux/amd64" <<< "${manifest_info}"
+            grep -q "linux/arm64" <<< "${manifest_info}"
+          done

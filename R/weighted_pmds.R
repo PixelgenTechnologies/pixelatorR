@@ -27,13 +27,13 @@
 #' library(dplyr)
 #'
 #' pxl_file <- minimal_mpx_pxl_file()
-#' seur_obj <- ReadMPX_Seurat(pxl_file) %>%
-#'   LoadCellGraphs(cells = colnames(.)[1])
+#' seur_obj <- ReadMPX_Seurat(pxl_file) |>
+#'   (\(.) LoadCellGraphs(., cells = colnames(.)[1]))()
 #'
 #' # compute weighted pMDS layout
-#' g <- CellGraphs(seur_obj)[[1]] %>%
+#' g <- CellGraphs(seur_obj)[[1]] |>
 #'   CellGraphData("cellgraph")
-#' layout <- layout_with_weighted_pmds(g, dim = 3) %>%
+#' layout <- layout_with_weighted_pmds(g, dim = 3) |>
 #'   as_tibble(.name_repair = ~ c("x", "y", "z"))
 #' plotly::plot_ly(
 #'   layout,
@@ -46,7 +46,7 @@
 #' )
 #'
 #' # or using ComputeLayout and cell_plot()
-#' seur_obj <- seur_obj %>%
+#' seur_obj <- seur_obj |>
 #'   # Compute weighted pMDS layout
 #'   ComputeLayout(layout_method = "wpmds", dim = 3)
 #'
@@ -223,7 +223,7 @@ cos_distance_weights <- function(
   # fetch scores and place in graph edge table
   scores <- 2 - cdist2
   g <- g %E>%
-    select(-any_of(c("scores"))) %>%
+    select(-any_of(c("scores"))) |>
     mutate(scores = scores)
 
   return(g)
@@ -278,7 +278,7 @@ prob_distance_weights <- function(
 
   # Prepare the vertex pairs vector for igraph mapping: c(from1, to1, from2, to2, ...)
   # Interleave the 'i' and 'j' coordinates
-  vp_pairs <- P_triplets %>% select(i, j)
+  vp_pairs <- P_triplets |> select(i, j)
 
   # Fast lookup of edge IDs corresponding to these vertex pairs
   # multi = FALSE prevents issues if duplicate edge pairs exist

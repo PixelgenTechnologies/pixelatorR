@@ -1,6 +1,6 @@
 options(Seurat.object.assay.version = "v3")
 seur <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE, load_proximity_scores = FALSE, verbose = FALSE)
-seur <- suppressWarnings(merge(seur, list(seur, seur, seur))) %>%
+seur <- suppressWarnings(merge(seur, list(seur, seur, seur))) |>
   Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
 
 set.seed(123)
@@ -19,12 +19,33 @@ reference <- SeuratObject::CreateSeuratObject(
     cell_type = c(rep("CD4T", 10), rep("pDC", 10), rep("Mono CD16+", 10)),
     row.names = paste0("cell", 1:30)
   )
-) %>%
+) |>
   Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
 
 test_that("annotate_cells works as expected", {
-  # NMF default
+  # NMF/NNLS default
   expect_no_error(seur_anno <- AnnotateCells(
+    seur,
+    reference,
+    query_assay = "PNA",
+    reference_assay = "anot",
+    reference_groups = "cell_type",
+    skip_normalization = TRUE,
+    verbose = FALSE
+  ))
+  expect_equal(
+    seur_anno$cell_type |> unname(),
+    c(
+      "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+",
+      "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T",
+      "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T"
+    )
+  )
+  expect_true("cell_type_score" %in% colnames(seur_anno[[]]))
+  expect_true(all(seur_anno$cell_type_score >= 0 & seur_anno$cell_type_score <= 1))
+
+  # Backwards compatibility: method = "nmf" is an alias for "nnls"
+  expect_no_error(seur_nmf <- AnnotateCells(
     seur,
     reference,
     query_assay = "PNA",
@@ -34,14 +55,7 @@ test_that("annotate_cells works as expected", {
     skip_normalization = TRUE,
     verbose = FALSE
   ))
-  expect_equal(
-    seur_anno$cell_type %>% unname(),
-    c(
-      "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+",
-      "pDC", "CD4T", "CD4T", "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T",
-      "CD4T", "Mono CD16+", "pDC", "CD4T", "CD4T", "CD4T"
-    )
-  )
+  expect_equal(seur_nmf$cell_type, seur_anno$cell_type)
 
   # NMF threshold
   expect_no_error(seur <- AnnotateCells(
@@ -56,7 +70,7 @@ test_that("annotate_cells works as expected", {
     verbose = FALSE
   ))
   expect_equal(
-    seur$cell_type %>% unname(),
+    seur$cell_type |> unname(),
     c(
       "Mono CD16+", "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+",
       "Unknown", "CD4T", "CD4T", "CD4T", "Mono CD16+", "Unknown", "CD4T",
@@ -68,13 +82,13 @@ test_that("annotate_cells works as expected", {
   reference <- read_pbmc_reference()
   expect_no_error(
     seur_sub <-
-      seur %>%
-      Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE) %>%
+      seur |>
+      Seurat::NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE) |>
       # Z score scaling
-      Seurat::ScaleData(verbose = FALSE) %>%
-      Seurat::RunPCA(npcs = 3, features = rownames(seur), verbose = FALSE) %>%
-      Seurat::FindNeighbors(reduction = "pca", dims = 1:3, verbose = FALSE) %>%
-      Seurat::FindClusters(resolution = 0.5, verbose = FALSE) %>%
+      Seurat::ScaleData(verbose = FALSE) |>
+      Seurat::RunPCA(npcs = 3, features = rownames(seur), verbose = FALSE) |>
+      Seurat::FindNeighbors(reduction = "pca", dims = 1:3, verbose = FALSE) |>
+      Seurat::FindClusters(resolution = 0.5, verbose = FALSE) |>
       subset(features = head(rownames(seur), 50))
   )
 
@@ -100,6 +114,52 @@ test_that("annotate_cells works as expected", {
     LayerData(seur_anno, "data"),
     LayerData(seur_sub, "data")
   )
+
+  # Test that two-stage F-weighted NNLS separates closely related subtypes (e.g. CD4 TCM vs CD4 TEM vs Naive CD4 T)
+  subtypes_to_test <- c("CD4 TCM", "CD4 TEM", "Naive CD4 T")
+  sub_cells <- colnames(reference)[reference$celltype.l2 %in% subtypes_to_test]
+  query_sub <- subset(reference, cells = sub_cells)
+  query_sub <- AnnotateCells(
+    query_sub,
+    reference,
+    reference_groups = c("celltype.l1", "celltype.l2"),
+    query_assay = "PNA",
+    reference_assay = "PNA",
+    method = "nnls",
+    verbose = FALSE
+  )
+  expect_gt(mean(query_sub$celltype.l2 == reference$celltype.l2[sub_cells]), 0.80)
+
+  # Test optional NNLS doublet prediction
+  ref_counts <- LayerData(reference, "counts")
+  cd4_cell <- colnames(reference)[which(reference$celltype.l1 == "CD4 T")[1L]]
+  mono_cell <- colnames(reference)[which(reference$celltype.l1 == "Mono")[1L]]
+  b_cell <- colnames(reference)[which(reference$celltype.l1 == "B")[1L]]
+  sim_doublet_counts <- cbind(
+    singlet_cd4 = ref_counts[, cd4_cell],
+    singlet_mono = ref_counts[, mono_cell],
+    doublet_cd4_mono = ref_counts[, cd4_cell] + ref_counts[, mono_cell],
+    doublet_b_cd4 = ref_counts[, b_cell] + ref_counts[, cd4_cell]
+  )
+  query_dbl <- SeuratObject::CreateSeuratObject(
+    counts = as(sim_doublet_counts, "dgCMatrix"),
+    assay = "PNA"
+  )
+  query_dbl <- AnnotateCells(
+    query_dbl,
+    reference,
+    reference_groups = c("celltype.l1", "celltype.l2"),
+    query_assay = "PNA",
+    reference_assay = "PNA",
+    method = "nnls",
+    predict_doublets = TRUE,
+    min_doublet_score = 0.4,
+    verbose = FALSE
+  )
+  expect_contains(colnames(query_dbl[[]]), c("doublet_score", "doublet_pair"))
+  expect_equal(unname(is.na(query_dbl$doublet_pair)), c(TRUE, TRUE, FALSE, FALSE))
+  expect_gt(query_dbl$doublet_score["doublet_cd4_mono"], 0.4)
+  expect_gt(query_dbl$doublet_score["doublet_b_cd4"], 0.4)
 })
 
 test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
@@ -114,7 +174,7 @@ test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
   ))
   seur_merged <- suppressWarnings(merge(seur_v5, seur_v5, add.cell.ids = c("A", "B")))
   expect_no_error(
-    ref <- read_pbmc_reference() %>%
+    ref <- read_pbmc_reference() |>
       NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
   )
 
@@ -133,7 +193,7 @@ test_that("AnnotateCells requires JoinLayers after merge on Assay5", {
   )
 
   expect_no_error(
-    seur_joined <- JoinLayers(seur_merged) %>%
+    seur_joined <- JoinLayers(seur_merged) |>
       NormalizeData(normalization.method = "CLR", margin = 2, verbose = FALSE)
   )
   expect_no_error(
@@ -161,6 +221,20 @@ test_that("annotate_cells fails with invalid input", {
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_prediction_score = "Invalid"))
   expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", skip_normalization = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", predict_doublets = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "nmf", min_doublet_score = "Invalid"))
+  expect_error(seur <- AnnotateCells(seur, reference, reference_assay = "anot", reference_groups = "cell_type", method = "Seurat", normalization_method = "LogNormalize", predict_doublets = TRUE))
+
+  unnormalized_ref <- read_pbmc_reference()
+  unnormalized_query <- ReadPNA_Seurat(minimal_pna_pxl_file(), overwrite = TRUE, load_proximity_scores = FALSE, verbose = FALSE)
+  expect_error(
+    AnnotateCells(seur, unnormalized_ref, skip_normalization = TRUE, verbose = FALSE),
+    regexp = "reference assay.*does not contain normalized data"
+  )
+  expect_error(
+    AnnotateCells(unnormalized_query, reference, reference_assay = "anot", reference_groups = "cell_type", skip_normalization = TRUE, verbose = FALSE),
+    regexp = "query assay.*does not contain normalized data"
+  )
 })
 
 test_that("Reading reference data works as expected", {

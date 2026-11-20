@@ -5,33 +5,33 @@ library(tibble)
 xyz <- matrix(rnorm(600, mean = 100, sd = 20),
   ncol = 3,
   dimnames = list(NULL, c("x", "y", "z"))
-) %>%
+) |>
   as_tibble()
 
 test_that("Layout coordinate utility functions work as expected", {
   # project_layout_coordinates_on_unit_sphere
-  xyz %>%
-    project_layout_coordinates_on_unit_sphere() %>%
-    mutate(across(x:z, ~ .x^2)) %>%
-    rowSums() %>%
-    sqrt() %>%
-    expect_equal(., rep(1, nrow(xyz)))
+  xyz |>
+    project_layout_coordinates_on_unit_sphere() |>
+    mutate(across(x:z, ~ .x^2)) |>
+    rowSums() |>
+    sqrt() |>
+    expect_equal(rep(1, nrow(xyz)))
 
   # normalize_layout_coordinates
-  xyz %>%
-    normalize_layout_coordinates() %>%
-    mutate(across(x:z, ~ .x^2)) %>%
-    rowSums() %>%
-    sqrt() %>%
-    median() %>%
-    expect_equal(., 1)
+  xyz |>
+    normalize_layout_coordinates() |>
+    mutate(across(x:z, ~ .x^2)) |>
+    rowSums() |>
+    sqrt() |>
+    median() |>
+    expect_equal(1)
 
   # center_layout_coordinates
-  xyz %>%
-    center_layout_coordinates() %>%
-    apply(2, mean) %>%
-    near(., y = 0, tol = 1e-10) %>%
-    all() %>%
+  xyz |>
+    center_layout_coordinates() |>
+    apply(2, mean) |>
+    near(y = 0, tol = 1e-10) |>
+    all() |>
     expect_true()
 })
 
