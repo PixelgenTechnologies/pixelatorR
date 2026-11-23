@@ -429,7 +429,7 @@ RenameCells.PNAAssay <- function(
     fs_map$id_map <- fs_map |>
       pull(id_map) |>
       lapply(function(x) {
-        x$current_id <- new.names[x$current_id]
+        x$current_id <- unname(new.names[x$current_id])
         return(x)
       })
   }
