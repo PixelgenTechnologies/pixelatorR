@@ -81,6 +81,19 @@ for (assay_version in c("v3", "v5")) {
     expect_error(rownames(pna_assay_renamed) <- paste0("X_", rownames(pna_assay)))
   })
 
+  test_that("dimnames<- fails when value is not feature and cell names", {
+    expect_error(
+      dimnames(pna_assay) <- "invalid",
+      "must be a list of length 2"
+    )
+  })
+
+  test_that("dimnames<- leaves the object unchanged when cell names are unchanged", {
+    pna_assay_same <- pna_assay
+    dimnames(pna_assay_same) <- list(rownames(pna_assay), colnames(pna_assay))
+    expect_identical(pna_assay_same, pna_assay)
+  })
+
   # JoinLayers method
   if (assay_version == "v5") {
     test_that("JoinLayers.PNAAssay5 method works as expected", {
