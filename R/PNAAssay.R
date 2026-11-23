@@ -489,8 +489,7 @@ RenameCells.PNAAssay5 <- RenameCells.PNAAssay
     return(x)
   }
   new_cell_names <- as.character(new_cell_names)
-  RenameCells(x, new.names = new_cell_names) |>
-    return()
+  return(RenameCells(x, new.names = new_cell_names))
 }
 
 #' @describeIn PNAAssay5-methods Set the dimension names of a \code{PNAAssay5}
