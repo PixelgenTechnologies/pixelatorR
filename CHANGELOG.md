@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `PixelDB$protein_meta()` now copies missing marker columns (such as `control`)
+  from the `panels` table when present in the PXL file.
 - `colnames<-` on a `PNAAssay` or `PNAAssay5` (including through a `Seurat` object)
   now keeps the cell graphs, proximity scores and `fs_map` in sync with the new
   cell IDs. Previously `fs_map` kept the old IDs, so lazily loaded proximity

@@ -428,7 +428,9 @@ PixelDB <- R6Class(
         mutate(across(where(bit64::is.integer64), ~ as.integer(.x)))
     },
     #' @description
-    #' Fetches the __adata__var meta data
+    #' Fetches the protein meta data from \code{__adata__var}, adding any missing
+    #' columns from the \code{panels} table (matched by \code{marker_id}) when
+    #' present in the database.
     #'
     #' @examples
     #' # Fetch the protein meta data
@@ -438,9 +440,38 @@ PixelDB <- R6Class(
     #'
     protein_meta = function() {
       self$check_connection()
-      self$fetch_table("__adata__var") |>
-        data.frame(row.names = 1, check.names = FALSE) |>
+      var_meta <- self$fetch_table("__adata__var") |>
+        data.frame(row.names = 1, check.names = FALSE)
+
+      if ("panels" %in% self$names()) {
+        panels <- self$fetch_table("panels")
+        if (!"marker_id" %in% colnames(panels)) {
+          cli::cli_abort(
+            c("x" = "The {.str panels} table does not contain the required {.str marker_id} column")
+          )
+        }
+        missing_cols <- setdiff(colnames(panels), c("marker_id", colnames(var_meta)))
+        if (length(missing_cols) > 0L) {
+          join_key <- ".marker_id"
+          while (join_key %in% c(colnames(var_meta), missing_cols)) {
+            join_key <- paste0(".", join_key)
+          }
+          panels_sub <- panels |>
+            mutate(marker_id = as.character(.data$marker_id)) |>
+            distinct(.data$marker_id, .keep_all = TRUE) |>
+            select(all_of(c("marker_id", missing_cols)))
+
+          var_meta <- var_meta |>
+            rownames_to_column(var = join_key) |>
+            left_join(panels_sub, by = set_names("marker_id", join_key)) |>
+            column_to_rownames(var = join_key)
+        }
+      }
+
+      var_meta <- var_meta |>
         mutate(across(where(bit64::is.integer64), ~ as.integer(.x)))
+
+      return(var_meta)
     },
     #' @description
     #' Fetch the run meta data
