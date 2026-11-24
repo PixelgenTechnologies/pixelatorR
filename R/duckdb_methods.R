@@ -452,19 +452,15 @@ PixelDB <- R6Class(
         }
         missing_cols <- setdiff(colnames(panels), c("marker_id", colnames(var_meta)))
         if (length(missing_cols) > 0L) {
-          join_key <- ".marker_id"
-          while (join_key %in% c(colnames(var_meta), missing_cols)) {
-            join_key <- paste0(".", join_key)
-          }
           panels_sub <- panels |>
             mutate(marker_id = as.character(.data$marker_id)) |>
             distinct(.data$marker_id, .keep_all = TRUE) |>
             select(all_of(c("marker_id", missing_cols)))
 
           var_meta <- var_meta |>
-            rownames_to_column(var = join_key) |>
-            left_join(panels_sub, by = set_names("marker_id", join_key)) |>
-            column_to_rownames(var = join_key)
+            rownames_to_column(var = ".marker_id") |>
+            left_join(panels_sub, by = c(".marker_id" = "marker_id")) |>
+            column_to_rownames(var = ".marker_id")
         }
       }
 
