@@ -5,6 +5,14 @@ for (assay_version in c("v3", "v5")) {
   seur_obj <- ReadMPX_Seurat(pxl_file, overwrite = TRUE)
   seur_obj <- LoadCellGraphs(seur_obj, cells = colnames(seur_obj)[1:2])
   seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds")
+  seur_obj <- ComputeLayout(seur_obj, layout_method = "spectral")
+
+  test_that("Plot3DGraph works with spectral layouts", {
+    layout_plot <- lifecycle::expect_deprecated(
+      Plot3DGraph(seur_obj, cell_id = colnames(seur_obj)[1], layout_method = "spectral_3d", marker = "CD14")
+    )
+    expect_s3_class(layout_plot, "plotly")
+  })
 
   test_that("Plot3DGraph works as expected", {
     layout_plot <- lifecycle::expect_deprecated(

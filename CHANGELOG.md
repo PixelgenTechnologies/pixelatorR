@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The default `layout_method` in `ComputeLayout()` is now `"spectral"` instead of
   `"cpmds"`. Use `layout_method = "cpmds"` to get the previous behavior.
+- `Plot2DGraph()`, `Plot2DGraphM()` and `Plot3DGraph()` now accept spectral layouts
+  (`"spectral_3d"`, and `"spectral"` for the 2D plots) and use `"spectral_3d"` as
+  the default `layout_method`.
 
 ### Fixed
 

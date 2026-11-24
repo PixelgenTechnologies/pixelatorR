@@ -464,11 +464,11 @@ ComputeLayout.PNAAssay5 <- ComputeLayout.PNAAssay
 #'
 #' @examples
 #' # Seurat method
-#' seur <- ComputeLayout(seur, layout_method = "cpmds")
+#' seur <- ComputeLayout(seur)
 #'
 #' # Use cell_plot() to visualize the layout
 #' \dontrun{
-#' Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "cpmds_3d")
+#' Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "spectral_3d")
 #' }
 #'
 #' @export

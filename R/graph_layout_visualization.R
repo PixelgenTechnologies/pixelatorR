@@ -49,15 +49,15 @@
 #' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
-#' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-#' Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3E")
+#' seur <- ComputeLayout(seur, layout_method = "spectral", dim = 2)
+#' Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "spectral", marker = "CD3E")
 #'
 #' # PNA
 #' pxl_file <- minimal_pna_pxl_file()
 #' seur <- ReadPNA_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
-#' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-#' Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3e")
+#' seur <- ComputeLayout(seur, layout_method = "spectral", dim = 2)
+#' Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "spectral", marker = "CD3e")
 #' }
 #'
 #' @export
@@ -67,7 +67,7 @@ Plot2DGraph <- function(
   cells,
   marker = NULL,
   assay = NULL,
-  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"),
+  layout_method = c("spectral_3d", "cpmds_3d", "wpmds_3d", "pmds_3d", "spectral", "cpmds", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
@@ -102,11 +102,15 @@ Plot2DGraph <- function(
   assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select a layout method
-  layout_method <- match.arg(layout_method, choices = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"))
+  layout_method <- match.arg(layout_method, choices = c("spectral_3d", "cpmds_3d", "wpmds_3d", "pmds_3d", "spectral", "cpmds", "wpmds", "pmds"))
   layout_method_ext <-
     switch(layout_method,
+      "spectral" = "spectral layout",
+      "cpmds" = "coarsened pivot MDS (cpmds)",
       "pmds" = "pivot MDS (pmds)",
       "wpmds" = "weighted pivot MDS (wpmds)",
+      "spectral_3d" = "spectral layout",
+      "cpmds_3d" = "coarsened pivot MDS (cpmds)",
       "pmds_3d" = "pivot MDS (pmds)",
       "wpmds_3d" = "weighted pivot MDS (wpmds)"
     )
@@ -336,15 +340,15 @@ Plot2DGraph <- function(
 #' pxl_file <- minimal_mpx_pxl_file()
 #' seur <- ReadMPX_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, load_as = "Anode")
-#' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
+#' seur <- ComputeLayout(seur, layout_method = "spectral", dim = 2)
+#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "spectral", markers = c("CD20", "CD4"))
 #'
 #' # PNA
 #' pxl_file <- minimal_pna_pxl_file()
 #' seur <- ReadPNA_Seurat(pxl_file)
 #' seur <- LoadCellGraphs(seur, cells = colnames(seur)[2:3], add_layouts = TRUE)
-#' seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "cpmds", markers = c("CD20", "CD4"))
+#' seur <- ComputeLayout(seur, layout_method = "spectral", dim = 2)
+#' Plot2DGraphM(seur, cells = colnames(seur)[2:3], layout_method = "spectral", markers = c("CD20", "CD4"))
 #' }
 #'
 #' @export
@@ -354,7 +358,7 @@ Plot2DGraphM <- function(
   cells,
   markers,
   assay = NULL,
-  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"),
+  layout_method = c("spectral_3d", "cpmds_3d", "wpmds_3d", "pmds_3d", "spectral", "cpmds", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
@@ -566,7 +570,7 @@ Plot3DGraph <- function(
   cell_id,
   marker = NULL,
   assay = NULL,
-  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d"),
+  layout_method = c("spectral_3d", "cpmds_3d", "wpmds_3d", "pmds_3d"),
   project = FALSE,
   aspectmode = c("data", "cube"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
@@ -636,7 +640,7 @@ Plot3DGraph <- function(
   }
 
 
-  layout_method <- match.arg(layout_method, choices = c("cpmds_3d", "wpmds_3d", "pmds_3d"))
+  layout_method <- match.arg(layout_method, choices = c("spectral_3d", "cpmds_3d", "wpmds_3d", "pmds_3d"))
   if (!layout_method %in% names(component_graph@layout)) {
     cli::cli_abort(
       c("x" = "Missing layout {.str {layout_method}} for component '{.val {cell_id}}'")
