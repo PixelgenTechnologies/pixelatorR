@@ -218,6 +218,9 @@ For all other classes, the input object with the layout stored in the
 }
 \description{
 Computes graph layouts for component graphs.
+
+Note that the "spectral" layout method is not supported for MPX graphs.
+Use another \code{layout_method} for MPX data.
 }
 \examples{
 library(pixelatorR)

@@ -5,6 +5,9 @@ NULL
 #'
 #' Computes graph layouts for component graphs.
 #'
+#' Note that the "spectral" layout method is not supported for MPX graphs.
+#' Use another \code{layout_method} for MPX data.
+#'
 #' @param layout_method The method for calculating the graph layout:
 #' spectral layout ("spectral"; see \code{\link{layout_with_spectral}}),
 #' coarsened Pivot MDS ("cpmds"), Pivot MDS ("pmds"), or weighted Pivot MDS
@@ -139,6 +142,14 @@ ComputeLayout.tbl_graph <- function(
     layout_method <- match.arg(layout_method, choices = c("spectral", "cpmds", "pmds", "wpmds"))
 
     if (layout_method == "spectral") {
+      if (.is_mpx_graph(object)) {
+        cli::cli_abort(
+          c(
+            "x" = "The {.str spectral} layout method is not supported for MPX graphs.",
+            "i" = "Pick another layout method with {.var layout_method}, such as {.str cpmds}, {.str wpmds} or {.str pmds}."
+          )
+        )
+      }
       layout <- layout_with_spectral(object, dim = dim, ...)
     } else {
       layout_function <-
@@ -173,6 +184,30 @@ ComputeLayout.tbl_graph <- function(
   }
 
   return(layout)
+}
+
+#' Check if a graph was created from MPX data
+#'
+#' Uses the \code{assay_type} attribute when available. Graphs without it are
+#' treated as MPX if they are not bipartite (MPX projections) or if their
+#' \code{node_type} node attribute contains MPX node types ("A" or "B").
+#'
+#' @param g A \code{tbl_graph} or \code{igraph} object
+#'
+#' @return A logical value
+#'
+#' @noRd
+.is_mpx_graph <- function(g) {
+  assay_type <- attr(g, "assay_type")
+  if (!is.null(assay_type)) {
+    return(identical(assay_type, "MPX"))
+  }
+  graph_type <- attr(g, "type")
+  if (!is.null(graph_type) && graph_type %in% c("Anode", "linegraph")) {
+    return(TRUE)
+  }
+  node_types <- igraph::vertex_attr(g, "node_type")
+  !is.null(node_types) && any(node_types %in% c("A", "B"))
 }
 
 #' @param layout_name The name of the computed layout. If this name is not given,

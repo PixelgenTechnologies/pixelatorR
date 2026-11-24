@@ -87,7 +87,7 @@ pxl_file <- system.file("extdata/five_cells",
 )
 seur_obj <- ReadMPX_Seurat(pxl_file) |>
   LoadCellGraphs() |>
-  ComputeLayout(dim = 3)
+  ComputeLayout(layout_method = "cpmds", dim = 3)
 temp_pxl_file <- fs::file_temp(ext = ".pxl")
 WriteMPX_pxl_file(seur_obj, temp_pxl_file)
 
