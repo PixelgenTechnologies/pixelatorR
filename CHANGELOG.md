@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The default `layout_method` in `ComputeLayout()` is now `"spectral"` instead of
+  `"cpmds"`. Use `layout_method = "cpmds"` to get the previous behavior.
+
 ### Fixed
 
 - `colnames<-` on a `PNAAssay` or `PNAAssay5` (including through a `Seurat` object)

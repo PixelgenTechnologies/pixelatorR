@@ -196,6 +196,12 @@ test_that("ComputeLayout works with 'cpmds' option", {
   expect_equal(c("x", "y", "z"), colnames(CellGraphs(se)[[1]]@layout[["cpmds_3d"]]))
 })
 
+test_that("ComputeLayout uses 'spectral' as the default layout method", {
+  expect_no_error(se_default <- se |> ComputeLayout(verbose = FALSE))
+  expect_true("spectral_3d" %in% names(CellGraphs(se_default)[[1]]@layout))
+  expect_false("cpmds_3d" %in% names(CellGraphs(se_default)[[1]]@layout))
+})
+
 test_that("ComputeLayout works as expected on a CellGraphList", {
   cgl <- CellGraphs(se)
   expect_s3_class(cgl, "CellGraphList")
