@@ -539,7 +539,9 @@ db$cell_meta() |> head()
 \if{html}{\out{<a id="method-PixelDB-protein_meta"></a>}}
 \if{latex}{\out{\hypertarget{method-PixelDB-protein_meta}{}}}
 \subsection{Method \code{protein_meta()}}{
-Fetches the __adata__var meta data
+Fetches the protein meta data from \code{__adata__var}, adding any missing
+columns from the \code{panels} table (matched by \code{marker_id}) when
+present in the database.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{PixelDB$protein_meta()}\if{html}{\out{</div>}}
 }
