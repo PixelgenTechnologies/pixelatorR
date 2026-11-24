@@ -102,7 +102,10 @@ Plot2DGraph <- function(
   assert_single_value(marker, type = "string", allow_null = TRUE)
 
   # Check and select a layout method
-  layout_method <- match.arg(layout_method, choices = c("spectral_3d", "cpmds_3d", "wpmds_3d", "pmds_3d", "spectral", "cpmds", "wpmds", "pmds"))
+  layout_method <- match.arg(
+    layout_method,
+    choices = c("spectral_3d", "cpmds_3d", "wpmds_3d", "pmds_3d", "spectral", "cpmds", "wpmds", "pmds")
+  )
   layout_method_ext <-
     switch(layout_method,
       "spectral" = "spectral layout",

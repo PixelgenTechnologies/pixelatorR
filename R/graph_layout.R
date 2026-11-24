@@ -146,7 +146,10 @@ ComputeLayout.tbl_graph <- function(
         cli::cli_abort(
           c(
             "x" = "The {.str spectral} layout method is not supported for MPX graphs.",
-            "i" = "Pick another layout method with {.var layout_method}, such as {.str cpmds}, {.str wpmds} or {.str pmds}."
+            "i" = paste(
+              "Pick another layout method with {.var layout_method},",
+              "such as {.str cpmds}, {.str wpmds} or {.str pmds}."
+            )
           )
         )
       }
