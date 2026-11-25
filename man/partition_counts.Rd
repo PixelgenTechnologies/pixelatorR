@@ -12,8 +12,9 @@ partition_counts(cg, partition = NULL, partition_column = NULL)
 \item{partition}{A character or factor vector indicating the partition of
 nodes into groups. Either \code{partition} or \code{partition_column} must be provided.}
 
-\item{partition_column}{A string indicating the name of the vertex attribute in
-the cell graph that contains the partition information.}
+\item{partition_column}{A string indicating the name of the column in
+\code{cg@meta.data} or the vertex attribute in \code{cg@cellgraph} that
+contains the partition information.}
 }
 \value{
 A matrix of counts for each partition group, where rows correspond to

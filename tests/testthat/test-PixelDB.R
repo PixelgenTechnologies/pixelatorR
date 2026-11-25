@@ -244,11 +244,14 @@ test_that("PixelDB methods work as expected", {
     cgl_one[[1]]@counts[, c("HLA-ABC", "B2M"), drop = FALSE]
   )
 
-  # Verify rowid index was populated and cached
+  # Sorted edgelist skips the full-table rowid index scan, while unsorted layouts falls back to rowid index
+  sorted_cache <- db$.__enclos_env__$private$table_sorted_cache
+  expect_true(isTRUE(sorted_cache$edgelist))
+  expect_false(isTRUE(sorted_cache$layouts))
   idx_cache <- db$.__enclos_env__$private$component_index_cache
-  expect_true("edgelist" %in% names(idx_cache))
+  expect_false("edgelist" %in% names(idx_cache))
   expect_true("layouts" %in% names(idx_cache))
-  expect_equal(nrow(idx_cache$edgelist), ncol(db$counts()))
+  expect_equal(nrow(idx_cache$layouts), ncol(db$counts()))
 
   # export parquet method
   tmp_parquet_file <- fs::file_temp(ext = "parquet")
@@ -283,6 +286,61 @@ test_that("PixelDB methods fails with invalid input", {
   expect_error(db$components_cell_graph(c("0a45497c6bfbfb22", "0a45497c6bfbfb22")))
   expect_error(db$components_cell_graph("0a45497c6bfbfb22", add_layouts = "Invalid"))
   expect_no_error(db$close())
+})
+
+test_that("PixelDB components_cell_graph falls back to rowid index when edgelist is unsorted", {
+  tmp_pxl <- tempfile(fileext = ".pxl")
+  fs::file_copy(pxl_file, tmp_pxl)
+  on.exit(unlink(tmp_pxl), add = TRUE)
+
+  # Reverse component order in edgelist so it is no longer sorted ascending
+  con_rw <- DBI::dbConnect(duckdb::duckdb(), dbdir = tmp_pxl, read_only = FALSE)
+  DBI::dbExecute(con_rw, "CREATE OR REPLACE TABLE edgelist AS SELECT * FROM edgelist ORDER BY component DESC")
+  DBI::dbDisconnect(con_rw, shutdown = TRUE)
+
+  db_unsorted <- PixelDB$new(tmp_pxl, threads = 1L)
+  on.exit(db_unsorted$close(), add = TRUE)
+  cells_two <- c("0a45497c6bfbfb22", "2708240b908e2eba")
+  cgl <- db_unsorted$components_cell_graph(cells_two)
+  expect_named(cgl, cells_two)
+  expect_false(isTRUE(db_unsorted$.__enclos_env__$private$table_sorted_cache$edgelist))
+  expect_true("edgelist" %in% names(db_unsorted$.__enclos_env__$private$component_index_cache))
+})
+
+test_that("PixelDB respects pixelatorR.read_only option", {
+  tmp_pxl <- tempfile(fileext = ".pxl")
+  fs::file_copy(pxl_file, tmp_pxl)
+  on.exit(unlink(tmp_pxl), add = TRUE)
+
+  # Default is read-only
+  db_ro <- PixelDB$new(tmp_pxl)
+  on.exit(db_ro$close(), add = TRUE)
+  expect_true(db_ro$.__enclos_env__$private$read_only)
+  expect_error(
+    DBI::dbExecute(db_ro$.__enclos_env__$private$con, "CREATE TABLE tmp_test (x INT)")
+  )
+  db_ro$close()
+
+  # Invalid option value fails validation
+  old_opt <- options(pixelatorR.read_only = "invalid")
+  on.exit(options(old_opt), add = TRUE)
+  expect_error(PixelDB$new(tmp_pxl))
+  options(old_opt)
+
+  # Setting pixelatorR.read_only = FALSE opens writable connection and persists across reconnect
+  old_opt <- options(pixelatorR.read_only = FALSE)
+  db_rw <- PixelDB$new(tmp_pxl)
+  options(old_opt)
+  on.exit(db_rw$close(), add = TRUE)
+
+  expect_false(db_rw$.__enclos_env__$private$read_only)
+  expect_no_error(
+    DBI::dbExecute(db_rw$.__enclos_env__$private$con, "CREATE TABLE tmp_test (x INT)")
+  )
+  expect_message(db_rw$reconnect(), "Connected")
+  expect_no_error(
+    DBI::dbExecute(db_rw$.__enclos_env__$private$con, "DROP TABLE tmp_test")
+  )
 })
 
 write_null_pxl <- function(path, reason) {
@@ -339,4 +397,162 @@ test_that("PixelDB throws descriptive error when PXL file is empty (marked as nu
     "Reason: failed {step} with } brace",
     fixed = TRUE
   )
+})
+
+write_protein_meta_test_pxl <- function(
+  path,
+  panels_df = NULL,
+  var_has_control = FALSE
+) {
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = path)
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+
+  var_df <- data.frame(
+    index = c("CD3E", "mIgG1", "mIgG2a", "mIgG2b", "rabbit-IgG", "unlisted"),
+    antibody_count = bit64::as.integer64(c(30L, 1L, 2L, 2L, 1L, 7L)),
+    antibody_pct = c(0.6976744, 0.0232558, 0.0465116, 0.0465116, 0.0232558, 0.1627907),
+    components = bit64::as.integer64(c(2L, 1L, 1L, 2L, 1L, 2L)),
+    check.names = FALSE
+  )
+  if (var_has_control) {
+    var_df$control <- c("no", "yes", "yes", "no", "yes", "no")
+  }
+  DBI::dbWriteTable(con, "__adata__var", var_df)
+
+  if (!is.null(panels_df)) {
+    DBI::dbWriteTable(con, "panels", panels_df)
+  }
+}
+
+test_that("PixelDB$protein_meta copies missing panel columns as expected", {
+  tmp_dir <- tempfile()
+  dir.create(tmp_dir)
+  on.exit(unlink(tmp_dir, recursive = TRUE), add = TRUE)
+
+  panels_df <- data.frame(
+    row_nr = bit64::as.integer64(c(4L, 3L, 2L, 1L, 0L, 5L)),
+    marker_id = c("rabbit-IgG", "mIgG2b", "mIgG2a", "mIgG1", "CD3E", "panel_only"),
+    control = c(TRUE, TRUE, TRUE, TRUE, FALSE, FALSE),
+    full_name = c("Rabbit IgG", "Mouse IgG2b", "Mouse IgG2a", "Mouse IgG1", "CD3 epsilon", "Panel Only"),
+    alt_id = c("", "", "", "", "T3E", ""),
+    uniprot_id = c("", "", "", "", "P07766", ""),
+    sequence_1 = c("AAAA", "AAAC", "AAAG", "AAAT", "AACA", "AACC"),
+    sequence_2 = c("TTTT", "TTTG", "TTTC", "TTTA", "TTGT", "TTGG"),
+    sample_hashing = c(FALSE, FALSE, FALSE, FALSE, FALSE, TRUE),
+    source_id = bit64::as.integer64(c(0L, 0L, 0L, 0L, 0L, 0L)),
+    check.names = FALSE
+  )
+
+  # File with panels table fills missing columns matched by marker_id
+  pxl_with_panels <- file.path(tmp_dir, "with_panels.pxl")
+  write_protein_meta_test_pxl(pxl_with_panels, panels_df = panels_df)
+  db <- PixelDB$new(pxl_with_panels)
+  pm_with_panels <- db$protein_meta()
+  db$close()
+
+  expect_equal(
+    pm_with_panels,
+    structure(
+      list(
+        antibody_count = c(30L, 1L, 2L, 2L, 1L, 7L),
+        antibody_pct = c(0.6976744, 0.0232558, 0.0465116, 0.0465116, 0.0232558, 0.1627907),
+        components = c(2L, 1L, 1L, 2L, 1L, 2L),
+        row_nr = c(0L, 1L, 2L, 3L, 4L, NA),
+        control = c(FALSE, TRUE, TRUE, TRUE, TRUE, NA),
+        full_name = c("CD3 epsilon", "Mouse IgG1", "Mouse IgG2a", "Mouse IgG2b", "Rabbit IgG", NA),
+        alt_id = c("T3E", "", "", "", "", NA),
+        uniprot_id = c("P07766", "", "", "", "", NA),
+        sequence_1 = c("AACA", "AAAT", "AAAG", "AAAC", "AAAA", NA),
+        sequence_2 = c("TTGT", "TTTA", "TTTC", "TTTG", "TTTT", NA),
+        sample_hashing = c(FALSE, FALSE, FALSE, FALSE, FALSE, NA),
+        source_id = c(0L, 0L, 0L, 0L, 0L, NA)
+      ),
+      row.names = c("CD3E", "mIgG1", "mIgG2a", "mIgG2b", "rabbit-IgG", "unlisted"),
+      class = "data.frame"
+    )
+  )
+
+  # File without panels table returns only __adata__var columns
+  pxl_no_panels <- file.path(tmp_dir, "no_panels.pxl")
+  write_protein_meta_test_pxl(pxl_no_panels, panels_df = NULL)
+  db <- PixelDB$new(pxl_no_panels)
+  pm_no_panels <- db$protein_meta()
+  db$close()
+
+  expect_equal(
+    pm_no_panels,
+    structure(
+      list(
+        antibody_count = c(30L, 1L, 2L, 2L, 1L, 7L),
+        antibody_pct = c(0.6976744, 0.0232558, 0.0465116, 0.0465116, 0.0232558, 0.1627907),
+        components = c(2L, 1L, 1L, 2L, 1L, 2L)
+      ),
+      row.names = c("CD3E", "mIgG1", "mIgG2a", "mIgG2b", "rabbit-IgG", "unlisted"),
+      class = "data.frame"
+    )
+  )
+
+  # File that already has control on __adata__var keeps those values while adding other missing columns
+  pxl_var_ctrl <- file.path(tmp_dir, "var_has_control.pxl")
+  write_protein_meta_test_pxl(pxl_var_ctrl, panels_df = panels_df, var_has_control = TRUE)
+  db <- PixelDB$new(pxl_var_ctrl)
+  pm_var_ctrl <- db$protein_meta()
+  db$close()
+
+  expect_equal(
+    pm_var_ctrl,
+    structure(
+      list(
+        antibody_count = c(30L, 1L, 2L, 2L, 1L, 7L),
+        antibody_pct = c(0.6976744, 0.0232558, 0.0465116, 0.0465116, 0.0232558, 0.1627907),
+        components = c(2L, 1L, 1L, 2L, 1L, 2L),
+        control = c("no", "yes", "yes", "no", "yes", "no"),
+        row_nr = c(0L, 1L, 2L, 3L, 4L, NA),
+        full_name = c("CD3 epsilon", "Mouse IgG1", "Mouse IgG2a", "Mouse IgG2b", "Rabbit IgG", NA),
+        alt_id = c("T3E", "", "", "", "", NA),
+        uniprot_id = c("P07766", "", "", "", "", NA),
+        sequence_1 = c("AACA", "AAAT", "AAAG", "AAAC", "AAAA", NA),
+        sequence_2 = c("TTGT", "TTTA", "TTTC", "TTTG", "TTTT", NA),
+        sample_hashing = c(FALSE, FALSE, FALSE, FALSE, FALSE, NA),
+        source_id = c(0L, 0L, 0L, 0L, 0L, NA)
+      ),
+      row.names = c("CD3E", "mIgG1", "mIgG2a", "mIgG2b", "rabbit-IgG", "unlisted"),
+      class = "data.frame"
+    )
+  )
+
+  # File where panels has no missing columns returns __adata__var unchanged
+  pxl_no_missing <- file.path(tmp_dir, "no_missing_cols.pxl")
+  write_protein_meta_test_pxl(
+    pxl_no_missing,
+    panels_df = panels_df[, c("marker_id", "control")],
+    var_has_control = TRUE
+  )
+  db <- PixelDB$new(pxl_no_missing)
+  pm_no_missing <- db$protein_meta()
+  db$close()
+
+  expect_equal(
+    pm_no_missing,
+    structure(
+      list(
+        antibody_count = c(30L, 1L, 2L, 2L, 1L, 7L),
+        antibody_pct = c(0.6976744, 0.0232558, 0.0465116, 0.0465116, 0.0232558, 0.1627907),
+        components = c(2L, 1L, 1L, 2L, 1L, 2L),
+        control = c("no", "yes", "yes", "no", "yes", "no")
+      ),
+      row.names = c("CD3E", "mIgG1", "mIgG2a", "mIgG2b", "rabbit-IgG", "unlisted"),
+      class = "data.frame"
+    )
+  )
+
+  # Malformed panels table without marker_id errors clearly
+  pxl_bad_panels <- file.path(tmp_dir, "bad_panels.pxl")
+  write_protein_meta_test_pxl(
+    pxl_bad_panels,
+    panels_df = data.frame(control = c(TRUE, FALSE))
+  )
+  db <- PixelDB$new(pxl_bad_panels)
+  on.exit(db$close(), add = TRUE)
+  expect_error(db$protein_meta(), regexp = "marker_id")
 })

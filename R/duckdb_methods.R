@@ -74,6 +74,10 @@ PixelDB <- R6Class(
     #' Set up a connection to a PXL file
     #'
     #' @param file A path to a PXL file
+    #' @param threads Optional integer specifying the number of DuckDB execution threads
+    #'   for this connection (e.g. \code{1L} inside parallel worker processes).
+    #' @param memory_limit Optional string specifying the DuckDB buffer pool memory limit
+    #'   for this connection (e.g. \code{"512MB"}).
     #'
     #' @examples
     #' library(dplyr)
@@ -83,32 +87,26 @@ PixelDB <- R6Class(
     #'
     #' @return An \code{R6} object representing the PXL database
     #'
-    initialize = function(file) {
-      private$file <- normalizePath(file)
-      private$component_index_cache <- list()
-      assert_pxl_file(file)
-      code <- try(
-        {
-          private$con <-
-            DBI::dbConnect(
-              duckdb::duckdb(),
-              bigint = "integer64",
-              dbdir = private$file,
-              config = get_duckdb_config(),
-              read_only = TRUE
-            )
-        },
-        silent = TRUE
-      )
-      if (inherits(code, "try-error")) {
-        cli::cli_abort(
-          c(
-            "i" = "The PXL file must contain PNA data.",
-            "i" = "The PXL file might be blocked by another connection",
-            "x" = "Failed to connect to the database."
-          )
-        )
+    initialize = function(file,
+                          threads = NULL,
+                          memory_limit = NULL) {
+      read_only <- getOption("pixelatorR.read_only", TRUE)
+      assert_single_value(read_only, "bool")
+      if (!is.null(threads)) {
+        threads <- as.integer(threads)
+        assert_single_value(threads, "integer")
       }
+      if (!is.null(memory_limit)) {
+        assert_single_value(memory_limit, "string")
+      }
+      assert_pxl_file(file)
+      private$file <- normalizePath(file)
+      private$read_only <- read_only
+      private$threads <- threads
+      private$memory_limit <- memory_limit
+      private$component_index_cache <- list()
+      private$table_sorted_cache <- list()
+      private$open_connection()
 
       # Check if the PXL file is marked as empty/null
       tables <- DBI::dbListTables(private$con)
@@ -184,32 +182,11 @@ PixelDB <- R6Class(
     #' @return Nothing
     #'
     reconnect = function() {
-      if (DBI::dbIsValid(private$con)) {
+      if (!is.null(private$con) && DBI::dbIsValid(private$con)) {
         DBI::dbDisconnect(private$con) # Close old connection if needed
       }
       assert_pxl_file(private$file)
-      code <- try(
-        {
-          private$con <-
-            DBI::dbConnect(
-              duckdb::duckdb(),
-              bigint = "integer64",
-              dbdir = private$file,
-              config = get_duckdb_config(),
-              read_only = TRUE
-            )
-        },
-        silent = TRUE
-      )
-      if (inherits(code, "try-error")) {
-        cli::cli_abort(
-          c(
-            "i" = "The PXL file must contain PNA data.",
-            "i" = "The PXL file might be blocked by another connection",
-            "x" = "Failed to connect to the database."
-          )
-        )
-      }
+      private$open_connection()
       cli::cli_inform(
         c("v" = "Connected")
       )
@@ -428,7 +405,9 @@ PixelDB <- R6Class(
         mutate(across(where(bit64::is.integer64), ~ as.integer(.x)))
     },
     #' @description
-    #' Fetches the __adata__var meta data
+    #' Fetches the protein meta data from \code{__adata__var}, adding any missing
+    #' columns from the \code{panels} table (matched by \code{marker_id}) when
+    #' present in the database.
     #'
     #' @examples
     #' # Fetch the protein meta data
@@ -438,9 +417,34 @@ PixelDB <- R6Class(
     #'
     protein_meta = function() {
       self$check_connection()
-      self$fetch_table("__adata__var") |>
-        data.frame(row.names = 1, check.names = FALSE) |>
+      var_meta <- self$fetch_table("__adata__var") |>
+        data.frame(row.names = 1, check.names = FALSE)
+
+      if ("panels" %in% self$names()) {
+        panels <- self$fetch_table("panels")
+        if (!"marker_id" %in% colnames(panels)) {
+          cli::cli_abort(
+            c("x" = "The {.str panels} table does not contain the required {.str marker_id} column")
+          )
+        }
+        missing_cols <- setdiff(colnames(panels), c("marker_id", colnames(var_meta)))
+        if (length(missing_cols) > 0L) {
+          panels_sub <- panels |>
+            mutate(marker_id = as.character(.data$marker_id)) |>
+            distinct(.data$marker_id, .keep_all = TRUE) |>
+            select(all_of(c("marker_id", missing_cols)))
+
+          var_meta <- var_meta |>
+            rownames_to_column(var = ".marker_id") |>
+            left_join(panels_sub, by = c(".marker_id" = "marker_id")) |>
+            column_to_rownames(var = ".marker_id")
+        }
+      }
+
+      var_meta <- var_meta |>
         mutate(across(where(bit64::is.integer64), ~ as.integer(.x)))
+
+      return(var_meta)
     },
     #' @description
     #' Fetch the run meta data
@@ -584,7 +588,10 @@ PixelDB <- R6Class(
         )
       }
 
-      use_index <- length(components) > 1L || !is.null(private$component_index_cache[["layouts"]])
+      lay_sorted <- private$is_table_sorted("layouts")
+      use_index <- !lay_sorted && (
+        length(components) > 1L || !is.null(private$component_index_cache[["layouts"]])
+      )
       idx <- if (use_index) private$get_component_index("layouts") else NULL
       contiguous <- !is.null(idx) && isTRUE(attr(idx, "contiguous"))
       sub_idx <- if (!is.null(idx)) idx[match(components, idx$component), , drop = FALSE] else NULL
@@ -654,7 +661,10 @@ PixelDB <- R6Class(
 
       components <- components %||% (self$counts() |> colnames())
 
-      use_index <- length(components) > 1L || !is.null(private$component_index_cache[["edgelist"]])
+      el_sorted <- private$is_table_sorted("edgelist")
+      use_index <- !el_sorted && (
+        length(components) > 1L || !is.null(private$component_index_cache[["edgelist"]])
+      )
       idx <- if (use_index) private$get_component_index("edgelist") else NULL
       contiguous <- !is.null(idx) && isTRUE(attr(idx, "contiguous"))
       sub_idx <- if (!is.null(idx)) idx[match(components, idx$component), , drop = FALSE] else NULL
@@ -765,7 +775,10 @@ PixelDB <- R6Class(
         add = TRUE
       )
 
-      use_el_index <- length(components) > 1L || !is.null(private$component_index_cache[["edgelist"]])
+      el_sorted <- private$is_table_sorted("edgelist")
+      use_el_index <- !el_sorted && (
+        length(components) > 1L || !is.null(private$component_index_cache[["edgelist"]])
+      )
       idx_el <- if (use_el_index) private$get_component_index("edgelist") else NULL
       el_contig <- !is.null(idx_el) && isTRUE(attr(idx_el, "contiguous"))
       sub_el <- if (!is.null(idx_el)) idx_el[match(components, idx_el$component), , drop = FALSE] else NULL
@@ -774,7 +787,10 @@ PixelDB <- R6Class(
       lay_contig <- FALSE
       sub_lay <- NULL
       if (add_layouts) {
-        use_lay_index <- length(components) > 1L || !is.null(private$component_index_cache[["layouts"]])
+        lay_sorted <- private$is_table_sorted("layouts")
+        use_lay_index <- !lay_sorted && (
+          length(components) > 1L || !is.null(private$component_index_cache[["layouts"]])
+        )
         idx_lay <- if (use_lay_index) private$get_component_index("layouts") else NULL
         lay_contig <- !is.null(idx_lay) && isTRUE(attr(idx_lay, "contiguous"))
         sub_lay <- if (!is.null(idx_lay)) idx_lay[match(components, idx_lay$component), , drop = FALSE] else NULL
@@ -988,16 +1004,93 @@ PixelDB <- R6Class(
     #' @return Nothing
     #'
     close = function() {
-      if (DBI::dbIsValid(private$con)) {
-        DBI::dbDisconnect(private$con)
+      if (!is.null(private$con) && DBI::dbIsValid(private$con)) {
+        DBI::dbDisconnect(private$con, shutdown = TRUE)
       }
     }
   ),
   private = list(
     file = NULL,
     con = NULL,
+    read_only = TRUE,
+    threads = NULL,
+    memory_limit = NULL,
     counts_cache = NULL,
     component_index_cache = NULL,
+    table_sorted_cache = NULL,
+    open_connection = function() {
+      cfg <- get_duckdb_config()
+      if (!is.null(private$threads)) {
+        cfg$threads <- as.character(private$threads)
+      }
+      if (!is.null(private$memory_limit)) {
+        cfg$memory_limit <- private$memory_limit
+      }
+      code <- try(
+        {
+          private$con <-
+            DBI::dbConnect(
+              duckdb::duckdb(),
+              bigint = "integer64",
+              dbdir = private$file,
+              config = cfg,
+              read_only = private$read_only
+            )
+        },
+        silent = TRUE
+      )
+      if (inherits(code, "try-error")) {
+        cli::cli_abort(
+          c(
+            "i" = "The PXL file must contain PNA data.",
+            "i" = "The PXL file might be blocked by another connection",
+            "x" = "Failed to connect to the database."
+          )
+        )
+      }
+    },
+    is_table_sorted = function(table_name) {
+      cached <- private$table_sorted_cache[[table_name]]
+      if (!is.null(cached)) {
+        return(cached)
+      }
+      if (!is.null(private$component_index_cache[[table_name]])) {
+        idx <- private$component_index_cache[[table_name]]
+        is_sorted <- isTRUE(attr(idx, "contiguous")) &&
+          !is.unsorted(idx$component[order(idx$min_id)])
+        private$table_sorted_cache[[table_name]] <- is_sorted
+        return(is_sorted)
+      }
+      all_comps <- sort(colnames(self$counts()))
+      if (length(all_comps) <= 1L) {
+        private$table_sorted_cache[[table_name]] <- TRUE
+        return(TRUE)
+      }
+      k <- min(16L, length(all_comps))
+      probe_comps <- unique(all_comps[round(seq(1L, length(all_comps), length.out = k))])
+      in_sql <- glue::glue_sql("{probe_comps*}", .con = private$con)
+      q <- DBI::dbGetQuery(
+        private$con,
+        paste0(
+          "SELECT component, MIN(rowid) AS min_id, MAX(rowid) AS max_id, COUNT(*) AS n_rows ",
+          "FROM ", table_name, " WHERE component IN (", in_sql, ") GROUP BY component"
+        )
+      )
+      if (nrow(q) == 0L) {
+        private$table_sorted_cache[[table_name]] <- TRUE
+        return(TRUE)
+      }
+      q$component <- as.character(q$component)
+      q$min_id <- as.numeric(q$min_id)
+      q$max_id <- as.numeric(q$max_id)
+      q$n_rows <- as.numeric(q$n_rows)
+      present_probes <- probe_comps[probe_comps %in% q$component]
+      q <- q[match(present_probes, q$component), , drop = FALSE]
+      is_sorted <- all((q$max_id - q$min_id + 1) == q$n_rows) &&
+        !is.unsorted(q$min_id)
+      private$table_sorted_cache[[table_name]] <- is_sorted
+      is_sorted
+    },
     get_component_index = function(table_name) {
       if (is.null(private$component_index_cache[[table_name]])) {
         idx <- DBI::dbGetQuery(
@@ -1019,6 +1112,13 @@ PixelDB <- R6Class(
     build_component_source = function(table_name, components = NULL, select_expr = "*") {
       if (is.null(components)) {
         return(paste0("SELECT ", select_expr, " FROM ", table_name))
+      }
+      if (private$is_table_sorted(table_name)) {
+        in_sql <- glue::glue_sql("{components*}", .con = private$con)
+        return(paste0(
+          "SELECT ", select_expr, " FROM ", table_name,
+          " WHERE component IN (", in_sql, ")"
+        ))
       }
       idx <- private$get_component_index(table_name)
       if (!isTRUE(attr(idx, "contiguous"))) {
@@ -1067,8 +1167,8 @@ PixelDB <- R6Class(
       paste(branches, collapse = " UNION ALL ")
     },
     finalize = function() {
-      if (DBI::dbIsValid(private$con)) {
-        DBI::dbDisconnect(private$con)
+      if (!is.null(private$con) && DBI::dbIsValid(private$con)) {
+        DBI::dbDisconnect(private$con, shutdown = TRUE)
       }
     }
   ),

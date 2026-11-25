@@ -7,8 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `PixelDB$new()` gains optional `threads` and `memory_limit` arguments to
+  configure DuckDB execution threads and buffer pool memory per connection, and
+  respects the internal `pixelatorR.read_only` R option (default `TRUE`).
+
 ### Changed
 
+- `PixelDB` now detects when `edgelist` or `layouts` tables are already sorted
+  and contiguous by `component`, skipping the upfront full-table `rowid` index
+  scan on component queries while falling back to the `rowid` index for unsorted
+  tables.
+- `PixelDB$close()` and `PixelDB$finalize()` now pass `shutdown = TRUE` to
+  `DBI::dbDisconnect()` for cleaner DuckDB resource release.
 - The default `layout_method` in `ComputeLayout()` is now `"spectral"` instead of
   `"cpmds"`. Use `layout_method = "cpmds"` to get the previous behavior.
 - `ComputeLayout()` now fails with an informative error when the `"spectral"`
@@ -19,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `PixelDB$protein_meta()` now copies missing marker columns (such as `control`)
+  from the `panels` table when present in the PXL file.
 - `colnames<-` on a `PNAAssay` or `PNAAssay5` (including through a `Seurat` object)
   now keeps the cell graphs, proximity scores and `fs_map` in sync with the new
   cell IDs. Previously `fs_map` kept the old IDs, so lazily loaded proximity
