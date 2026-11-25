@@ -24,6 +24,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `ReadPNA_edgelist(..., lazy = TRUE)` and `ReadPNA_proximity(..., lazy = TRUE)`
+  now keep their underlying `PixelDB` object reachable via `$src$pixel_db` for
+  the lifetime of the returned `tbl_lazy`, preventing garbage collection from
+  closing the DuckDB connection before queries complete, while still closing the
+  connection immediately if input validation fails.
 - `PixelDB$protein_meta()` now copies missing marker columns (such as `control`)
   from the `panels` table when present in the PXL file.
 - `colnames<-` on a `PNAAssay` or `PNAAssay5` (including through a `Seurat` object)

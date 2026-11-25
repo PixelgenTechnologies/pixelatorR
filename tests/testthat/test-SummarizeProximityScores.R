@@ -232,3 +232,5 @@ test_that("SummarizeProximityScores fails with invalid input", {
     regexp = "(duplicate rows|multiple rows)"
   )
 })
+
+DBI::dbDisconnect(proximity_lazy$src$con, shutdown = TRUE)

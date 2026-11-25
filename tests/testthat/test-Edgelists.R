@@ -48,13 +48,17 @@ for (assay_version in c("v3", "v5")) {
     expect_no_error(el <- Edgelists(merged_seurat_obj, meta_data_columns = "sample_id"))
     expect_true(inherits(el, "tbl_lazy"))
     expect_true("sample_id" %in% colnames(el))
-    DBI::dbDisconnect(el$src$con)
+    DBI::dbDisconnect(el$src$con, shutdown = TRUE)
 
     expect_no_error(el <- Edgelists(merged_seurat_obj, union = FALSE))
     expect_true(inherits(el, "list"))
     expect_true(inherits(el[[1]], "tbl_lazy"))
     expect_equal(length(el), 2)
-    DBI::dbDisconnect(el[[1]]$src$con)
+    lapply(el, function(x) {
+      if (DBI::dbIsValid(x$src$con)) {
+        DBI::dbDisconnect(x$src$con, shutdown = TRUE)
+      }
+    })
   })
 
   test_that("Edgelists method fails with invalid input", {
