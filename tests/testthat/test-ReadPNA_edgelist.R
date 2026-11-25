@@ -30,12 +30,23 @@ test_that("ReadPNA_edgelist works as expected", {
 
   # tbl_lazy
   expect_no_error(el <- ReadPNA_edgelist(pxl_file))
+  on.exit(if (DBI::dbIsValid(el$src$con)) DBI::dbDisconnect(el$src$con, shutdown = TRUE), add = TRUE)
   expect_equal(c("marker_1", "marker_2", "umi1", "umi2", "read_count", "uei_count", "component"), colnames(el))
   expect_s3_class(el, "tbl_lazy")
   expect_equal(dim(el |> collect()), c(528594, 7))
+  DBI::dbDisconnect(el$src$con, shutdown = TRUE)
 
-  expect_no_error(el <- ReadPNA_edgelist(pxl_file, cells = "c3c393e9a17c1981"))
-  expect_equal(dim(el |> collect()), c(110657, 7))
+  expect_no_error(el_cell <- ReadPNA_edgelist(pxl_file, cells = "c3c393e9a17c1981"))
+  on.exit(if (DBI::dbIsValid(el_cell$src$con)) DBI::dbDisconnect(el_cell$src$con, shutdown = TRUE), add = TRUE)
+  expect_equal(dim(el_cell |> collect()), c(110657, 7))
+})
+
+test_that("ReadPNA_edgelist lazy connection stays open across garbage collection", {
+  el <- ReadPNA_edgelist(pxl_file, cells = "c3c393e9a17c1981", lazy = TRUE)
+  on.exit(DBI::dbDisconnect(el$src$con, shutdown = TRUE), add = TRUE)
+  gc()
+  expect_true(DBI::dbIsValid(el$src$con))
+  expect_equal(nrow(el |> dplyr::filter(read_count >= 1L) |> collect()), 110657L)
 })
 
 test_that("ReadPNA_edgelist works when uei_count is missing", {

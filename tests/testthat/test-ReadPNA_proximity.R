@@ -14,8 +14,17 @@ test_that("ReadPNA_proximity works as expected", {
 
   # tbl_lazy
   expect_no_error(proximity <- suppressWarnings(ReadPNA_proximity(pxl_file, lazy = TRUE, verbose = FALSE)))
+  on.exit(DBI::dbDisconnect(proximity$src$con, shutdown = TRUE), add = TRUE)
   expect_s3_class(proximity, "tbl_lazy")
   expect_equal(expected_names, colnames(proximity))
+})
+
+test_that("ReadPNA_proximity lazy connection stays open across garbage collection", {
+  proximity <- suppressWarnings(ReadPNA_proximity(pxl_file, lazy = TRUE, verbose = FALSE))
+  on.exit(DBI::dbDisconnect(proximity$src$con, shutdown = TRUE), add = TRUE)
+  gc()
+  expect_true(DBI::dbIsValid(proximity$src$con))
+  expect_equal(nrow(proximity |> dplyr::select(marker_1, marker_2) |> collect()), 58696L)
 })
 
 test_that("ReadPNA_proximity fails with invalid input", {

@@ -25,13 +25,26 @@ for (assay_version in c("v3", "v5")) {
     expect_length(ProximityScores(pna_assay), 0)
 
     # Lazy load
-    expect_no_error(proximity_from_seur_lazy <- ProximityScores(seur_obj, lazy = TRUE, add_marker_counts = TRUE))
+    expect_no_error(proximity_from_seur_lazy_counts <- ProximityScores(seur_obj, lazy = TRUE, add_marker_counts = TRUE))
+    on.exit(
+      if (DBI::dbIsValid(proximity_from_seur_lazy_counts$src$con)) {
+        DBI::dbDisconnect(proximity_from_seur_lazy_counts$src$con, shutdown = TRUE)
+      },
+      add = TRUE
+    )
+    DBI::dbDisconnect(proximity_from_seur_lazy_counts$src$con, shutdown = TRUE)
     expect_no_error(proximity_from_seur_lazy <- ProximityScores(seur_obj, lazy = TRUE, add_marker_proportions = TRUE))
+    on.exit(
+      if (DBI::dbIsValid(proximity_from_seur_lazy$src$con)) {
+        DBI::dbDisconnect(proximity_from_seur_lazy$src$con, shutdown = TRUE)
+      },
+      add = TRUE
+    )
     expect_true(all(c("count_1", "count_2", "p1", "p2") %in% colnames(proximity_from_seur_lazy)))
     expect_identical(nrow(collect(proximity_from_seur_lazy)), nrow(proximity))
     expect_true(all(colnames(proximity) %in% colnames(proximity_from_seur_lazy)))
 
-    DBI::dbDisconnect(proximity_from_seur_lazy$src$con)
+    DBI::dbDisconnect(proximity_from_seur_lazy$src$con, shutdown = TRUE)
   })
 
   test_that("ProximityScores fails with invalid input", {

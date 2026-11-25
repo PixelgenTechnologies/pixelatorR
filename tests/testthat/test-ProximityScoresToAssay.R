@@ -156,4 +156,6 @@ for (assay_version in c("v3", "v5")) {
     # separator must be absent from marker names
     expect_error(ProximityScoresToAssay(proximity, separator = "-"))
   })
+
+  DBI::dbDisconnect(proximity_lazy$src$con, shutdown = TRUE)
 }

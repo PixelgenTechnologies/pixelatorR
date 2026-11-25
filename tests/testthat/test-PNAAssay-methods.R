@@ -59,9 +59,10 @@ for (assay_version in c("v3", "v5")) {
       FSMap(pna_assay_renamed)$id_map[[1]]$current_id |> sort(),
       sort(new_names)
     )
+    prox_lazy <- ProximityScores(pna_assay_renamed, lazy = TRUE)
+    on.exit(DBI::dbDisconnect(prox_lazy$src$con, shutdown = TRUE), add = TRUE)
     expect_equal(
-      pna_assay_renamed |>
-        ProximityScores(lazy = TRUE) |>
+      prox_lazy |>
         dplyr::distinct(component) |>
         dplyr::pull(component) |>
         sort(),

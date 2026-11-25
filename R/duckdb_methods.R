@@ -406,7 +406,11 @@ PixelDB <- R6Class(
 
       proximity_scores <- proximity_scores |> compute()
 
-      if (!lazy) {
+      if (lazy) {
+        # Keep this PixelDB instance reachable for the lifetime of the lazy table
+        # so finalize() does not disconnect private$con while queries are running.
+        proximity_scores$src$pixel_db <- self
+      } else {
         proximity_scores <- proximity_scores |> as_tibble()
       }
 
@@ -570,6 +574,9 @@ PixelDB <- R6Class(
         )
 
         el <- tbl(private$con, "edgelist_modified")
+        # Keep this PixelDB instance reachable for the lifetime of the lazy table
+        # so finalize() does not disconnect private$con while queries are running.
+        el$src$pixel_db <- self
       } else {
         el <- el |> collect()
       }

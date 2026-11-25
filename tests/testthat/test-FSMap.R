@@ -173,7 +173,7 @@ test_that("FSMap S3 subclass and backend generics work and preserve class across
     )
     expect_true("pxl_all_counts" %in% DBI::dbListTables(prox_lazy$src$con))
     prox_df <- collect(prox_lazy)
-    DBI::dbDisconnect(prox_lazy$src$con)
+    DBI::dbDisconnect(prox_lazy$src$con, shutdown = TRUE)
     expect_true(all(c("count_1", "count_2", "p1", "p2", "n_umi") %in% colnames(prox_df)))
     expect_gt(nrow(prox_df), 0L)
 

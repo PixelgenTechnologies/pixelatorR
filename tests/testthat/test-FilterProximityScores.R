@@ -23,3 +23,5 @@ test_that("FilterProximityScores fails with invalid input", {
   expect_error(proximity_filtered <- FilterProximityScores(proximity, min_cells_count = "Invalid"))
   expect_error(proximity_filtered <- FilterProximityScores(proximity_missing_cols, background_threshold_pct = 0.001))
 })
+
+DBI::dbDisconnect(proximity_lazy$src$con, shutdown = TRUE)

@@ -297,9 +297,8 @@ ReadPNA_edgelist <- function(
 
   # Connect to database
   db <- PixelDB$new(pxl_file)
-  if (!lazy) {
-    on.exit(db$close())
-  }
+  close_on_exit <- TRUE
+  on.exit(if (close_on_exit) db$close())
 
   available_components <- db$counts() |> colnames()
   if (!any(cells %in% available_components) && !is.null(cells)) {
@@ -312,6 +311,10 @@ ReadPNA_edgelist <- function(
   }
 
   el <- db$components_edgelist(cells, umi_data_type, lazy, include_all_columns = TRUE)
+
+  if (lazy) {
+    close_on_exit <- FALSE
+  }
 
   return(el)
 }
@@ -410,15 +413,18 @@ ReadPNA_proximity <- function(
 
   # Setup connection to PXL file
   db <- PixelDB$new(pxl_file)
-  if (!lazy) {
-    on.exit(db$close())
-  }
+  close_on_exit <- TRUE
+  on.exit(if (close_on_exit) db$close())
 
   # Fetch proximity scores table
   proximity_scores <- db$proximity(calc_log2_ratio, lazy)
 
   if (verbose && check_global_verbosity()) {
     cli_alert_success("Returning a {.cls {class(proximity_scores)[1]}} with the PNA proximity scores")
+  }
+
+  if (lazy) {
+    close_on_exit <- FALSE
   }
 
   return(proximity_scores)
