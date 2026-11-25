@@ -244,11 +244,14 @@ test_that("PixelDB methods work as expected", {
     cgl_one[[1]]@counts[, c("HLA-ABC", "B2M"), drop = FALSE]
   )
 
-  # Verify rowid index was populated and cached
+  # Sorted edgelist skips the full-table rowid index scan, while unsorted layouts falls back to rowid index
+  sorted_cache <- db$.__enclos_env__$private$table_sorted_cache
+  expect_true(isTRUE(sorted_cache$edgelist))
+  expect_false(isTRUE(sorted_cache$layouts))
   idx_cache <- db$.__enclos_env__$private$component_index_cache
-  expect_true("edgelist" %in% names(idx_cache))
+  expect_false("edgelist" %in% names(idx_cache))
   expect_true("layouts" %in% names(idx_cache))
-  expect_equal(nrow(idx_cache$edgelist), ncol(db$counts()))
+  expect_equal(nrow(idx_cache$layouts), ncol(db$counts()))
 
   # export parquet method
   tmp_parquet_file <- fs::file_temp(ext = "parquet")
@@ -283,6 +286,61 @@ test_that("PixelDB methods fails with invalid input", {
   expect_error(db$components_cell_graph(c("0a45497c6bfbfb22", "0a45497c6bfbfb22")))
   expect_error(db$components_cell_graph("0a45497c6bfbfb22", add_layouts = "Invalid"))
   expect_no_error(db$close())
+})
+
+test_that("PixelDB components_cell_graph falls back to rowid index when edgelist is unsorted", {
+  tmp_pxl <- tempfile(fileext = ".pxl")
+  fs::file_copy(pxl_file, tmp_pxl)
+  on.exit(unlink(tmp_pxl), add = TRUE)
+
+  # Reverse component order in edgelist so it is no longer sorted ascending
+  con_rw <- DBI::dbConnect(duckdb::duckdb(), dbdir = tmp_pxl, read_only = FALSE)
+  DBI::dbExecute(con_rw, "CREATE OR REPLACE TABLE edgelist AS SELECT * FROM edgelist ORDER BY component DESC")
+  DBI::dbDisconnect(con_rw, shutdown = TRUE)
+
+  db_unsorted <- PixelDB$new(tmp_pxl, threads = 1L)
+  on.exit(db_unsorted$close(), add = TRUE)
+  cells_two <- c("0a45497c6bfbfb22", "2708240b908e2eba")
+  cgl <- db_unsorted$components_cell_graph(cells_two)
+  expect_named(cgl, cells_two)
+  expect_false(isTRUE(db_unsorted$.__enclos_env__$private$table_sorted_cache$edgelist))
+  expect_true("edgelist" %in% names(db_unsorted$.__enclos_env__$private$component_index_cache))
+})
+
+test_that("PixelDB respects pixelatorR.read_only option", {
+  tmp_pxl <- tempfile(fileext = ".pxl")
+  fs::file_copy(pxl_file, tmp_pxl)
+  on.exit(unlink(tmp_pxl), add = TRUE)
+
+  # Default is read-only
+  db_ro <- PixelDB$new(tmp_pxl)
+  on.exit(db_ro$close(), add = TRUE)
+  expect_true(db_ro$.__enclos_env__$private$read_only)
+  expect_error(
+    DBI::dbExecute(db_ro$.__enclos_env__$private$con, "CREATE TABLE tmp_test (x INT)")
+  )
+  db_ro$close()
+
+  # Invalid option value fails validation
+  old_opt <- options(pixelatorR.read_only = "invalid")
+  on.exit(options(old_opt), add = TRUE)
+  expect_error(PixelDB$new(tmp_pxl))
+  options(old_opt)
+
+  # Setting pixelatorR.read_only = FALSE opens writable connection and persists across reconnect
+  old_opt <- options(pixelatorR.read_only = FALSE)
+  db_rw <- PixelDB$new(tmp_pxl)
+  options(old_opt)
+  on.exit(db_rw$close(), add = TRUE)
+
+  expect_false(db_rw$.__enclos_env__$private$read_only)
+  expect_no_error(
+    DBI::dbExecute(db_rw$.__enclos_env__$private$con, "CREATE TABLE tmp_test (x INT)")
+  )
+  expect_message(db_rw$reconnect(), "Connected")
+  expect_no_error(
+    DBI::dbExecute(db_rw$.__enclos_env__$private$con, "DROP TABLE tmp_test")
+  )
 })
 
 write_null_pxl <- function(path, reason) {

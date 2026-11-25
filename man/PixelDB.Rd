@@ -228,13 +228,19 @@ db$close()
 \subsection{Method \code{new()}}{
 Set up a connection to a PXL file
 \subsection{Usage}{
-\if{html}{\out{<div class="r">}}\preformatted{PixelDB$new(file)}\if{html}{\out{</div>}}
+\if{html}{\out{<div class="r">}}\preformatted{PixelDB$new(file, threads = NULL, memory_limit = NULL)}\if{html}{\out{</div>}}
 }
 
 \subsection{Arguments}{
 \if{html}{\out{<div class="arguments">}}
 \describe{
 \item{\code{file}}{A path to a PXL file}
+
+\item{\code{threads}}{Optional integer specifying the number of DuckDB execution threads
+for this connection (e.g. \code{1L} inside parallel worker processes).}
+
+\item{\code{memory_limit}}{Optional string specifying the DuckDB buffer pool memory limit
+for this connection (e.g. \code{"512MB"}).}
 }
 \if{html}{\out{</div>}}
 }

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `PixelDB$new()` gains optional `threads` and `memory_limit` arguments to
+  configure DuckDB execution threads and buffer pool memory per connection, and
+  respects the internal `pixelatorR.read_only` R option (default `TRUE`).
+
+### Changed
+
+- `PixelDB` now detects when `edgelist` or `layouts` tables are already sorted
+  and contiguous by `component`, skipping the upfront full-table `rowid` index
+  scan on component queries while falling back to the `rowid` index for unsorted
+  tables.
+- `PixelDB$close()` and `PixelDB$finalize()` now pass `shutdown = TRUE` to
+  `DBI::dbDisconnect()` for cleaner DuckDB resource release.
+
 ### Fixed
 
 - `PixelDB$protein_meta()` now copies missing marker columns (such as `control`)
