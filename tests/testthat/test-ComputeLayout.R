@@ -9,7 +9,7 @@ for (assay_version in c("v3", "v5")) {
 
   test_that("ComputeLayout works as expected", {
     # Seurat object
-    expect_no_error(se <- se |> ComputeLayout())
+    expect_no_error(se <- se |> ComputeLayout(layout_method = "cpmds"))
 
     # CellGraphAssay
     layout_method <- "pmds_3d"
@@ -43,6 +43,18 @@ for (assay_version in c("v3", "v5")) {
     expect_no_error(se <- se |> ComputeLayout(layout_method = layout_method, dim = 3))
     expect_true(layout_method_3d %in% names(CellGraphs(se)[[1]]@layout))
     expect_equal(c("x", "y", "z"), colnames(CellGraphs(se)[[1]]@layout[[layout_method_3d]]))
+  })
+
+  test_that("ComputeLayout fails with the spectral method on MPX data", {
+    cg <- CellGraphs(se)[[colnames(se)[1]]]
+    msg <- "another layout method"
+
+    expect_error(ComputeLayout(cg@cellgraph), msg)
+    expect_error(ComputeLayout(cg@cellgraph, layout_method = "spectral"), msg)
+    expect_error(ComputeLayout(cg), msg)
+    expect_error(ComputeLayout(se[["mpxCells"]], verbose = FALSE), msg)
+    expect_error(ComputeLayout(se, layout_method = "spectral", verbose = FALSE), msg)
+    expect_error(ComputeLayout(CellGraphs(se), verbose = FALSE), msg)
   })
 
   test_that("ComputeLayout works as expected with a custom layout function", {
@@ -194,6 +206,12 @@ test_that("ComputeLayout works with 'cpmds' option", {
   expect_no_error(se <- se |> ComputeLayout(layout_method = "cpmds"))
   expect_true("cpmds_3d" %in% names(CellGraphs(se)[[1]]@layout))
   expect_equal(c("x", "y", "z"), colnames(CellGraphs(se)[[1]]@layout[["cpmds_3d"]]))
+})
+
+test_that("ComputeLayout uses 'spectral' as the default layout method", {
+  expect_no_error(se_default <- se |> ComputeLayout(verbose = FALSE))
+  expect_true("spectral_3d" %in% names(CellGraphs(se_default)[[1]]@layout))
+  expect_false("cpmds_3d" %in% names(CellGraphs(se_default)[[1]]@layout))
 })
 
 test_that("ComputeLayout works as expected on a CellGraphList", {

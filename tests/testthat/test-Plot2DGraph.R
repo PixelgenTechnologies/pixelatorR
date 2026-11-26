@@ -7,6 +7,16 @@ for (assay_version in c("v3", "v5")) {
   seur_obj <- ComputeLayout(seur_obj, layout_method = "pmds")
   seur_obj <- ComputeLayout(seur_obj, layout_method = "cpmds")
 
+  test_that("Plot2DGraph works with spectral layouts on PNA data", {
+    seur_pna <- ReadPNA_Seurat(minimal_pna_pxl_file()) |>
+      (\(.) LoadCellGraphs(., cells = colnames(.)[1], verbose = FALSE))() |>
+      ComputeLayout(layout_method = "spectral", verbose = FALSE)
+    layout_plot <- lifecycle::expect_deprecated(
+      Plot2DGraph(seur_pna, cells = colnames(seur_pna)[1], layout_method = "spectral_3d")
+    )
+    expect_s3_class(layout_plot, "ggplot")
+  })
+
   test_that("Plot2DGraph works as expected", {
     layout_plot <- lifecycle::expect_deprecated(
       Plot2DGraph(seur_obj, cells = colnames(seur_obj)[1], layout_method = "pmds_3d")

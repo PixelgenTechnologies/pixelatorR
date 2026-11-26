@@ -18,7 +18,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{tbl_graph}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -31,7 +31,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraph}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -45,7 +45,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphList}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -61,7 +61,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{MPXAssay}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -77,7 +77,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -93,7 +93,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{CellGraphAssay5}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -109,7 +109,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{PNAAssay}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -125,7 +125,7 @@ ComputeLayout(object, ...)
 
 \method{ComputeLayout}{PNAAssay5}(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -142,7 +142,7 @@ ComputeLayout(object, ...)
 \method{ComputeLayout}{Seurat}(
   object,
   assay = NULL,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -164,8 +164,9 @@ or \code{Seurat} object}
 \item{...}{Additional parameters passed to other methods}
 
 \item{layout_method}{The method for calculating the graph layout:
-coarsened Pivot MDS ("cpmds"), weighted Pivot MDS ("wpmds"), Pivot MDS
-("pmds"), or spectral layout ("spectral"; see \code{\link{layout_with_spectral}})}
+spectral layout ("spectral"; see \code{\link{layout_with_spectral}}),
+coarsened Pivot MDS ("cpmds"), Pivot MDS ("pmds"), or weighted Pivot MDS
+("wpmds"). The default is "spectral".}
 
 \item{dim}{An integer specifying the dimensions of the layout (2 or 3). Note that
 for "cpmds", "pmds" and "wpmds", the x and y coordinates will be identical regardless if
@@ -217,6 +218,9 @@ For all other classes, the input object with the layout stored in the
 }
 \description{
 Computes graph layouts for component graphs.
+
+Note that the "spectral" layout method is not supported for MPX graphs.
+Use another \code{layout_method} for MPX data.
 }
 \examples{
 library(pixelatorR)
@@ -265,7 +269,7 @@ seur <- ComputeLayout(seur)
 
 # Use cell_plot() to visualize the layout
 \dontrun{
-Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "cpmds_3d")
+Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "spectral_3d")
 }
 
 }

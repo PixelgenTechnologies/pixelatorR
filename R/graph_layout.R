@@ -5,9 +5,13 @@ NULL
 #'
 #' Computes graph layouts for component graphs.
 #'
+#' Note that the "spectral" layout method is not supported for MPX graphs.
+#' Use another \code{layout_method} for MPX data.
+#'
 #' @param layout_method The method for calculating the graph layout:
-#' coarsened Pivot MDS ("cpmds"), weighted Pivot MDS ("wpmds"), Pivot MDS
-#' ("pmds"), or spectral layout ("spectral"; see \code{\link{layout_with_spectral}})
+#' spectral layout ("spectral"; see \code{\link{layout_with_spectral}}),
+#' coarsened Pivot MDS ("cpmds"), Pivot MDS ("pmds"), or weighted Pivot MDS
+#' ("wpmds"). The default is "spectral".
 #' @param dim An integer specifying the dimensions of the layout (2 or 3). Note that
 #' for "cpmds", "pmds" and "wpmds", the x and y coordinates will be identical regardless if
 #' dim is set to 2 or 3.
@@ -71,7 +75,7 @@ NULL
 #'
 ComputeLayout.tbl_graph <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   dim = 3,
   normalize_layout = FALSE,
   project_on_unit_sphere = FALSE,
@@ -135,9 +139,20 @@ ComputeLayout.tbl_graph <- function(
       as_tibble(.name_repair = function(x) c("x", "y", "z")[seq_len(dim)])
   } else {
     # Check and select a layout method
-    layout_method <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds", "spectral"))
+    layout_method <- match.arg(layout_method, choices = c("spectral", "cpmds", "pmds", "wpmds"))
 
     if (layout_method == "spectral") {
+      if (.is_mpx_graph(object)) {
+        cli::cli_abort(
+          c(
+            "x" = "The {.str spectral} layout method is not supported for MPX graphs.",
+            "i" = paste(
+              "Pick another layout method with {.var layout_method},",
+              "such as {.str cpmds}, {.str wpmds} or {.str pmds}."
+            )
+          )
+        )
+      }
       layout <- layout_with_spectral(object, dim = dim, ...)
     } else {
       layout_function <-
@@ -174,6 +189,30 @@ ComputeLayout.tbl_graph <- function(
   return(layout)
 }
 
+#' Check if a graph was created from MPX data
+#'
+#' Uses the \code{assay_type} attribute when available. Graphs without it are
+#' treated as MPX if they are not bipartite (MPX projections) or if their
+#' \code{node_type} node attribute contains MPX node types ("A" or "B").
+#'
+#' @param g A \code{tbl_graph} or \code{igraph} object
+#'
+#' @return A logical value
+#'
+#' @noRd
+.is_mpx_graph <- function(g) {
+  assay_type <- attr(g, "assay_type")
+  if (!is.null(assay_type)) {
+    return(identical(assay_type, "MPX"))
+  }
+  graph_type <- attr(g, "type")
+  if (!is.null(graph_type) && graph_type %in% c("Anode", "linegraph")) {
+    return(TRUE)
+  }
+  node_types <- igraph::vertex_attr(g, "node_type")
+  !is.null(node_types) && any(node_types %in% c("A", "B"))
+}
+
 #' @param layout_name The name of the computed layout. If this name is not given,
 #' the \code{layout_method} will be used as the name. If \code{dim = 3}, a suffix
 #' of "_3d" will be added to the layout name. This behavior is ignored if \code{layout_name}
@@ -191,7 +230,7 @@ ComputeLayout.tbl_graph <- function(
 #'
 ComputeLayout.CellGraph <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -203,7 +242,7 @@ ComputeLayout.CellGraph <- function(
   ...
 ) {
   if (is.null(custom_layout_function) && is.null(layout_name)) {
-    layout_name <- match.arg(layout_method, choices = c("cpmds", "pmds", "wpmds", "spectral"))
+    layout_name <- match.arg(layout_method, choices = c("spectral", "cpmds", "pmds", "wpmds"))
     # Add suffix _3d if dim = 3
     if (dim == 3) {
       layout_name <- paste0(layout_name, "_3d")
@@ -260,7 +299,7 @@ ComputeLayout.CellGraph <- function(
 #'
 ComputeLayout.CellGraphList <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -315,7 +354,7 @@ ComputeLayout.CellGraphList <- function(
 #'
 ComputeLayout.MPXAssay <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -395,7 +434,7 @@ ComputeLayout.CellGraphAssay5 <- ComputeLayout.MPXAssay
 #'
 ComputeLayout.PNAAssay <- function(
   object,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,
@@ -467,7 +506,7 @@ ComputeLayout.PNAAssay5 <- ComputeLayout.PNAAssay
 #'
 #' # Use cell_plot() to visualize the layout
 #' \dontrun{
-#' Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "cpmds_3d")
+#' Plot3DGraph(seur, cell_id = colnames(seur)[4], layout_method = "spectral_3d")
 #' }
 #'
 #' @export
@@ -475,7 +514,7 @@ ComputeLayout.PNAAssay5 <- ComputeLayout.PNAAssay
 ComputeLayout.Seurat <- function(
   object,
   assay = NULL,
-  layout_method = c("cpmds", "pmds", "wpmds", "spectral"),
+  layout_method = c("spectral", "cpmds", "pmds", "wpmds"),
   layout_name = NULL,
   dim = 3,
   normalize_layout = FALSE,

@@ -9,7 +9,7 @@ Plot2DGraph(
   cells,
   marker = NULL,
   assay = NULL,
-  layout_method = c("cpmds_3d", "wpmds_3d", "pmds_3d", "cpmds", "wpmds", "pmds"),
+  layout_method = c("spectral_3d", "cpmds_3d", "wpmds_3d", "pmds_3d", "spectral", "cpmds", "wpmds", "pmds"),
   colors = c("lightgrey", "mistyrose", "red", "darkred"),
   map_nodes = TRUE,
   map_edges = FALSE,
@@ -89,8 +89,8 @@ Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "
 pxl_file <- minimal_pna_pxl_file()
 seur <- ReadPNA_Seurat(pxl_file)
 seur <- LoadCellGraphs(seur, cells = colnames(seur)[1])
-seur <- ComputeLayout(seur, layout_method = "cpmds", dim = 2)
-Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "cpmds", marker = "CD3e")
+seur <- ComputeLayout(seur, layout_method = "spectral", dim = 2)
+Plot2DGraph(seur, cells = colnames(seur)[1], layout_method = "spectral", marker = "CD3e")
 }
 
 }
