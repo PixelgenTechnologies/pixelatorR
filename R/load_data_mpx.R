@@ -613,6 +613,74 @@ print.pixelator_metadata <- function(
 }
 
 
+#' Select layout parquet entries from a PXL file
+#'
+#' Archive entry names are joined onto the extraction directory by
+#' \code{utils::unzip}, so the archive is rejected if any layout entry
+#' name could resolve outside of that directory. Only entries that match
+#' the hive-styled layout partitioning are returned for extraction.
+#'
+#' @param entries A character vector with archive entry names
+#' @param filename Path to the PXL file, used in error messages
+#'
+#' @return A tibble with columns \code{file} (the entry name) and
+#' \code{component}
+#'
+#' @noRd
+.select_mpx_layout_entries <- function(entries, filename) {
+  segments <- strsplit(entries, "/", fixed = TRUE)
+  unsafe <- startsWith(entries, "/") |
+    grepl("\\", entries, fixed = TRUE) |
+    grepl("^[A-Za-z]:", entries) |
+    vapply(segments, function(s) any(s == "" | grepl("^[. ]+$", s)), logical(1))
+  if (any(unsafe)) {
+    cli::cli_abort(
+      c(
+        "x" = "File {.file {filename}} contains layout entries with unsafe paths: ",
+        " " = "{.val {entries[unsafe]}}"
+      )
+    )
+  }
+
+  layout_pattern <- paste0(
+    "^layouts\\.parquet/graph_projection=[^/]+/layout=[^/]+/",
+    "component=([^/]+)/[^/]+\\.parquet$"
+  )
+  matches <- stringr::str_match(entries, layout_pattern)
+  is_layout <- !is.na(matches[, 1])
+  if (!any(is_layout)) {
+    cli::cli_abort(
+      c("x" = "File {.file {filename}} does not contain any layouts.")
+    )
+  }
+
+  tibble(
+    file = entries[is_layout],
+    component = matches[is_layout, 2]
+  )
+}
+
+
+#' Check that extracted archive entries stayed inside the extraction directory
+#'
+#' @param exdir The extraction directory
+#' @param entries A character vector with the extracted entry names
+#' @param filename Path to the PXL file, used in error messages
+#'
+#' @noRd
+.assert_extracted_within <- function(exdir, entries, filename) {
+  root <- normalizePath(exdir, winslash = "/", mustWork = TRUE)
+  extracted <- normalizePath(file.path(exdir, entries), winslash = "/", mustWork = FALSE)
+  outside <- !file.exists(extracted) | !startsWith(extracted, paste0(root, "/"))
+  if (any(outside)) {
+    .delete_temp_resource(exdir)
+    cli::cli_abort(
+      c("x" = "Failed to extract layouts from {.file {filename}} into {.path {exdir}}.")
+    )
+  }
+}
+
+
 #' Load layouts from an PXL file containing MPX data
 #'
 #' Layouts can be pre-computed with the Pixelator data processing pipeline and
@@ -655,12 +723,11 @@ ReadMPX_layouts <- function(
     )
   }
 
-  # Create temporary directory
-  temp_layout_dir <- .create_unique_temp_dir("temp_layouts")
-
-  # Unzip layout parquet files
-  layout_files <- pxl_file_info$file[[which(pxl_file_info$file_type == "layouts.parquet")]]
-  cells <- cells %||% layout_files$component
+  layout_files <- .select_mpx_layout_entries(
+    pxl_file_info$file[[which(pxl_file_info$file_type == "layouts.parquet")]]$file,
+    filename = filename
+  )
+  cells <- cells %||% unique(layout_files$component)
   if (!all(cells %in% layout_files$component)) {
     cli::cli_abort(
       c("x" = "File {.file {filename}} does not contain any layouts for all selected {.var cells}.")
@@ -668,7 +735,13 @@ ReadMPX_layouts <- function(
   }
   layout_files <- layout_files |>
     filter(component %in% cells)
+
+  # Create temporary directory
+  temp_layout_dir <- .create_unique_temp_dir("temp_layouts")
+
+  # Unzip layout parquet files
   utils::unzip(filename, files = layout_files$file, exdir = temp_layout_dir)
+  .assert_extracted_within(temp_layout_dir, layout_files$file, filename = filename)
 
   # Load hive-styled parquet files
   coords <- arrow::open_dataset(temp_layout_dir)
