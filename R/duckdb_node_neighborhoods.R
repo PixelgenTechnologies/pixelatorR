@@ -94,8 +94,13 @@ fetch_node_neighborhoods <- function(
   nodes_per_component,
   k
 ) {
+  assert_single_value(component, "string")
+  assert_single_value(nodes_per_component, "integer", allow_null = TRUE)
+  assert_single_value(k, "integer")
+
   # If nodes_per_component is NULL, use 'ALL' for the SQL LIMIT clause
-  limit_val <- if (is.null(nodes_per_component)) "ALL" else nodes_per_component
+  limit_val <- if (is.null(nodes_per_component)) "ALL" else sprintf("%d", as.integer(nodes_per_component))
+  k <- sprintf("%d", as.integer(k))
 
   node_nbs <- DBI::dbGetQuery(
     con,
@@ -105,7 +110,7 @@ fetch_node_neighborhoods <- function(
         comp_edges AS (
             SELECT umi1, umi2, marker_1, marker_2
             FROM combined_edgelist
-            WHERE component = '{component}'
+            WHERE component = ?
         ),
         -- 2. Create the proteins view from the isolated edges
         proteins_cte AS (
@@ -151,7 +156,8 @@ fetch_node_neighborhoods <- function(
         FROM distinct_nodes dn
         JOIN proteins_cte p_start ON dn.start_node = p_start.name
         JOIN proteins_cte p_reached ON dn.node_id = p_reached.name;
-        ")
+        "),
+    params = list(component)
   )
 
   return(node_nbs)

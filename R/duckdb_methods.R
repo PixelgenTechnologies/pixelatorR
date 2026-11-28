@@ -606,20 +606,12 @@ PixelDB <- R6Class(
       lapply_func <- ifelse(verbose, pbapply::pblapply, lapply)
 
       layout_list <- lapply_func(seq_along(components), function(i) {
-        component <- components[[i]]
-        where_sql <- if (!is.null(sub_idx) && !is.na(sub_idx$min_id[[i]])) {
-          if (contiguous) {
-            sprintf(" WHERE rowid BETWEEN %.0f AND %.0f", sub_idx$min_id[[i]], sub_idx$max_id[[i]])
-          } else {
-            sprintf(
-              " WHERE (rowid BETWEEN %.0f AND %.0f) AND component = '%s'",
-              sub_idx$min_id[[i]], sub_idx$max_id[[i]], component
-            )
-          }
-        } else {
-          glue::glue(" WHERE component IN ('{component}')")
-        }
-        DBI::dbGetQuery(private$con, paste0(base_select, where_sql)) |>
+        where <- private$component_filter(components[[i]], sub_idx, i, contiguous)
+        DBI::dbGetQuery(
+          private$con,
+          paste(base_select, where$sql),
+          params = where$params
+        ) |>
           as_tibble()
       }) |>
         set_names(nm = components)
@@ -679,26 +671,14 @@ PixelDB <- R6Class(
       lapply_func <- ifelse(verbose, pbapply::pblapply, lapply)
 
       component_list <- lapply_func(seq_along(components), function(i) {
-        x <- components[[i]]
-        where_sql <- if (!is.null(sub_idx) && !is.na(sub_idx$min_id[[i]])) {
-          if (contiguous) {
-            sprintf("WHERE rowid BETWEEN %.0f AND %.0f", sub_idx$min_id[[i]], sub_idx$max_id[[i]])
-          } else {
-            sprintf(
-              "WHERE (rowid BETWEEN %.0f AND %.0f) AND component = '%s'",
-              sub_idx$min_id[[i]], sub_idx$max_id[[i]], x
-            )
-          }
-        } else {
-          sprintf("WHERE component IN ('%s')", x)
-        }
+        where <- private$component_filter(components[[i]], sub_idx, i, contiguous)
         sql_query <- paste0(
-          "WITH src AS (SELECT umi1, umi2, marker_1, marker_2 FROM edgelist ", where_sql, ") ",
+          "WITH src AS (SELECT umi1, umi2, marker_1, marker_2 FROM edgelist ", where$sql, ") ",
           "SELECT CAST(umi1 AS STRING) AS name, marker_1 AS marker FROM src ",
           "UNION ",
           "SELECT CAST(umi2 AS STRING) AS name, marker_2 AS marker FROM src"
         )
-        data <- DBI::dbGetQuery(private$con, sql_query)
+        data <- DBI::dbGetQuery(private$con, sql_query, params = where$params)
         name_f <- factor(data$name, levels = unique(data$name))
         marker_f <- factor(data$marker, levels = unique(data$marker))
         m <- Matrix::sparseMatrix(
@@ -813,22 +793,12 @@ PixelDB <- R6Class(
 
       cg_list <- lapply(seq_along(components), function(i) {
         cell <- components[[i]]
-        el_where <- if (!is.null(sub_el) && !is.na(sub_el$min_id[[i]])) {
-          if (el_contig) {
-            sprintf("WHERE rowid BETWEEN %.0f AND %.0f", sub_el$min_id[[i]], sub_el$max_id[[i]])
-          } else {
-            sprintf(
-              "WHERE (rowid BETWEEN %.0f AND %.0f) AND component = '%s'",
-              sub_el$min_id[[i]], sub_el$max_id[[i]], cell
-            )
-          }
-        } else {
-          sprintf("WHERE component = '%s'", cell)
-        }
+        el_where <- private$component_filter(cell, sub_el, i, el_contig)
 
         e <- DBI::dbGetQuery(
           private$con,
-          paste0("SELECT umi1, umi2, marker_1, marker_2 FROM edgelist ", el_where)
+          paste0("SELECT umi1, umi2, marker_1, marker_2 FROM edgelist ", el_where$sql),
+          params = el_where$params
         )
 
         E <- nrow(e)
@@ -891,21 +861,11 @@ PixelDB <- R6Class(
 
         layout_slot <- NULL
         if (add_layouts) {
-          lay_where <- if (!is.null(sub_lay) && !is.na(sub_lay$min_id[[i]])) {
-            if (lay_contig) {
-              sprintf("WHERE rowid BETWEEN %.0f AND %.0f", sub_lay$min_id[[i]], sub_lay$max_id[[i]])
-            } else {
-              sprintf(
-                "WHERE (rowid BETWEEN %.0f AND %.0f) AND component = '%s'",
-                sub_lay$min_id[[i]], sub_lay$max_id[[i]], cell
-              )
-            }
-          } else {
-            sprintf("WHERE component = '%s'", cell)
-          }
+          lay_where <- private$component_filter(cell, sub_lay, i, lay_contig)
           lay_df <- DBI::dbGetQuery(
             private$con,
-            paste0("SELECT index, x, y, z FROM layouts ", lay_where)
+            paste0("SELECT index, x, y, z FROM layouts ", lay_where$sql),
+            params = lay_where$params
           )
           h_lay <- bit64::hashmap(lay_df$index)
           lay_pos <- bit64::hashpos(h_lay, u)
@@ -1097,6 +1057,24 @@ PixelDB <- R6Class(
         !is.unsorted(q$min_id)
       private$table_sorted_cache[[table_name]] <- is_sorted
       is_sorted
+    },
+    # Component ids come from the PXL file, so they must only ever be bound as
+    # query parameters, never spliced into the SQL text.
+    component_filter = function(component, sub_idx, i, contiguous) {
+      if (!is.null(sub_idx) && !is.na(sub_idx$min_id[[i]])) {
+        rowid_sql <- sprintf(
+          "rowid BETWEEN %.0f AND %.0f",
+          sub_idx$min_id[[i]], sub_idx$max_id[[i]]
+        )
+        if (contiguous) {
+          return(list(sql = paste0("WHERE ", rowid_sql), params = NULL))
+        }
+        return(list(
+          sql = paste0("WHERE (", rowid_sql, ") AND component = ?"),
+          params = list(component)
+        ))
+      }
+      list(sql = "WHERE component = ?", params = list(component))
     },
     get_component_index = function(table_name) {
       if (is.null(private$component_index_cache[[table_name]])) {
