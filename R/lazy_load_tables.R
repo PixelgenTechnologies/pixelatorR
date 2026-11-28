@@ -104,7 +104,8 @@ lazy_load_table.default <- function(
   # Attach the source databases
   for (i in seq_len(nrow(fs_map))) {
     # Attach each PXL file database
-    DBI::dbExecute(con_federated, glue::glue("ATTACH '{fs_map$pxl_file[i]}' AS db{i} (TYPE duckdb, READ_ONLY)"))
+    pxl_path_sql <- DBI::dbQuoteString(con_federated, fs_map$pxl_file[i])
+    DBI::dbExecute(con_federated, glue::glue("ATTACH {pxl_path_sql} AS db{i} (TYPE duckdb, READ_ONLY)"))
     # Copy the ID map to the federated database
     copy_to(con_federated, fs_map$id_map[[i]] |> rename(component = original_id), glue::glue("id_map{i}"))
     # If proteins_keep is provided, filter the data to include only those proteins
